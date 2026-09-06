@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\OperServ\Bot;
 
 use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
-use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
@@ -18,7 +17,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 #[CoversClass(OperServBot::class)]
 final class OperServBotTest extends TestCase
@@ -237,6 +235,14 @@ final class OperServBotTest extends TestCase
     }
 
     #[Test]
+    public function getUserLookupReturnsConfiguredLookup(): void
+    {
+        $bot = $this->createBot();
+
+        self::assertSame($this->userLookup, $bot->getUserLookup());
+    }
+
+    #[Test]
     public function getUidReturnsConfiguredUid(): void
     {
         $bot = $this->createBot();
@@ -246,22 +252,6 @@ final class OperServBotTest extends TestCase
             '001',
         ));
         self::assertSame($this->operservUid, $bot->getUid());
-    }
-
-    #[Test]
-    public function botImplementsOperServNotifierInterface(): void
-    {
-        $bot = $this->createBot();
-
-        self::assertInstanceOf(OperServNotifierInterface::class, $bot);
-    }
-
-    #[Test]
-    public function botImplementsEventSubscriberInterface(): void
-    {
-        $bot = $this->createBot();
-
-        self::assertInstanceOf(EventSubscriberInterface::class, $bot);
     }
 
     #[Test]

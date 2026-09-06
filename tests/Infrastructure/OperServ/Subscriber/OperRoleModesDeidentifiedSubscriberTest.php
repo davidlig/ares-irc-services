@@ -127,6 +127,37 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onUserDeidentifiedWithNoServerSidDoesNothing(): void
+    {
+        $event = new UserDeidentifiedEvent('UID123', 42, 'TestNick');
+
+        $role = $this->createStub(OperRole::class);
+        $role->method('getUserModes')->willReturn(['H']);
+
+        $ircop = $this->createStub(OperIrcop::class);
+        $ircop->method('getRole')->willReturn($role);
+
+        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepository->method('findByNickId')->willReturn($ircop);
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $connectionHolder = new ActiveConnectionHolder();
+        $connectionHolder->setProtocolModule($module);
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::never())->method('applyModeChange');
+
+        $subscriber = new OperRoleModesDeidentifiedSubscriber(
+            $ircopRepository,
+            $connectionHolder,
+            $userLookup,
+            new NullLogger(),
+        );
+
+        $subscriber->onUserDeidentified($event);
+    }
+
+    #[Test]
     public function onUserDeidentifiedWithRoleAndModesAppliesNegativeSvsmode(): void
     {
         $event = new UserDeidentifiedEvent('001ABC', 42, 'TestNick');
@@ -177,11 +208,19 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
     private function createModeSupportStub(): UserModeSupportInterface
     {
         $support = $this->createStub(UserModeSupportInterface::class);
-        $support->method('buildModeParams')->willReturnCallback(
-            static fn (string $sign, array $modes): array => [$sign . implode('', $modes), []],
-        );
+        $support->method('buildModeParams')->willReturnCallback(self::buildModeParams(...));
 
         return $support;
+    }
+
+    /**
+     * @param array<int, string> $modes
+     *
+     * @return array{string, list<string>}
+     */
+    private static function buildModeParams(string $sign, array $modes): array
+    {
+        return [$sign . implode('', $modes), []];
     }
 
     private function injectServerSid(ActiveConnectionHolder $holder, string $sid): void

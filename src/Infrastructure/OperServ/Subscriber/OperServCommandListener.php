@@ -26,12 +26,22 @@ final readonly class OperServCommandListener implements ServiceCommandListenerIn
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
+    public function getSendNotice(): SendNoticePort
+    {
+        return $this->sendNotice;
+    }
+
+    public function getMessageTypeResolver(): UserMessageTypeResolver
+    {
+        return $this->messageTypeResolver;
+    }
+
     public function getServiceName(): string
     {
         return $this->operServBot->getNick();
     }
 
-    public function getServiceUid(): ?string
+    public function getServiceUid(): string
     {
         return $this->operServBot->getUid();
     }

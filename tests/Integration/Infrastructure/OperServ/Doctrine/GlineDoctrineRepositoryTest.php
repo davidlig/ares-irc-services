@@ -16,25 +16,28 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 #[CoversClass(GlineDoctrineRepository::class)]
 final class GlineDoctrineRepositoryTest extends KernelTestCase
 {
-    private ?EntityManagerInterface $em = null;
+    private EntityManagerInterface $em;
 
-    private ?GlineRepositoryInterface $repository = null;
+    private GlineRepositoryInterface $repository;
 
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->em = self::getContainer()->get(EntityManagerInterface::class);
-        $this->repository = self::getContainer()->get(GlineRepositoryInterface::class);
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $em);
+        $this->em = $em;
+
+        $repository = self::getContainer()->get(GlineRepositoryInterface::class);
+        self::assertInstanceOf(GlineRepositoryInterface::class, $repository);
+        $this->repository = $repository;
 
         $this->em->createQuery('DELETE FROM App\Domain\OperServ\Entity\Gline g')->execute();
     }
 
     protected function tearDown(): void
     {
-        if (null !== $this->em) {
-            $this->em->createQuery('DELETE FROM App\Domain\OperServ\Entity\Gline g')->execute();
-            $this->em->flush();
-        }
+        $this->em->createQuery('DELETE FROM App\Domain\OperServ\Entity\Gline g')->execute();
+        $this->em->flush();
 
         parent::tearDown();
     }

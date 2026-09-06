@@ -82,6 +82,10 @@ final class PseudoClientUidGeneratorTest extends TestCase
 
         $uid = $generator->generate();
 
+        if (null === $uid) {
+            self::fail('Expected a generated UID.');
+        }
+
         self::assertStringStartsWith('002Z', $uid);
     }
 

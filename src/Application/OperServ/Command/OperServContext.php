@@ -16,11 +16,14 @@ use DateTimeZone;
 
 final readonly class OperServContext implements IrcopContextInterface
 {
+    /**
+     * @param string[]           $args
+     * @param 'NOTICE'|'PRIVMSG' $messageType
+     */
     public function __construct(
         public ?SenderView $sender,
         public ?RegisteredNick $senderAccount,
         public string $command,
-        /** @var string[] */
         public array $args,
         private OperServNotifierInterface $notifier,
         private TranslationInterface $translator,
@@ -42,6 +45,9 @@ final readonly class OperServContext implements IrcopContextInterface
         return $this->senderAccount;
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function reply(string $key, array $params = []): void
     {
         $message = $this->translator->trans($key, $this->wrapParams($params), 'operserv', $this->language);
@@ -89,11 +95,17 @@ final readonly class OperServContext implements IrcopContextInterface
         return $this->accessHelper;
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function trans(string $key, array $params = []): string
     {
         return $this->translator->trans($key, $this->wrapParams($params), 'operserv', $this->language);
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function transForDomain(string $key, string $domain, array $params = []): string
     {
         return $this->translator->trans($key, $this->wrapParams($params), $domain, $this->language);
@@ -117,7 +129,11 @@ final readonly class OperServContext implements IrcopContextInterface
         return $this->notifier->getNick();
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, mixed>
+     */
     private function wrapParams(array $params): array
     {
         $wrapped = $this->serviceNicks->getAllPlaceholders($this->notifier->getNick());

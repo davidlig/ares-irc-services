@@ -38,6 +38,7 @@ final class RawCommandTest extends TestCase
         return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
+    /** @param list<string> $args */
     private function createContext(
         ?SenderView $sender,
         array $args,
@@ -106,7 +107,7 @@ final class RawCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
     /** @var list<string> */
@@ -466,6 +467,7 @@ final class RawCommandTest extends TestCase
 
     // ---------- Helpers ----------
 
+    /** @param list<string> $messages */
     private function stubNotifier(array &$messages): OperServNotifierInterface
     {
         $notifier = $this->createStub(OperServNotifierInterface::class);

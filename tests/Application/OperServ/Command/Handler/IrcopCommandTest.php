@@ -37,6 +37,23 @@ use ReflectionClass;
 #[CoversClass(IrcopCommand::class)]
 final class IrcopCommandTest extends TestCase
 {
+    #[Test]
+    public function exposesAccessHelper(): void
+    {
+        $accessHelper = $this->createAccessHelper(true);
+        $command = new IrcopCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class),
+            $accessHelper,
+            $this->createModeApplier(),
+            $this->createOperclassApplier(),
+            $this->createStub(EventBusInterface::class),
+        );
+
+        self::assertSame($accessHelper, $command->getAccessHelper());
+    }
+
     private function createAccessHelper(bool $isRoot): IrcopAccessHelper
     {
         $rootUsers = $isRoot ? 'TestUser' : '';
@@ -68,6 +85,7 @@ final class IrcopCommandTest extends TestCase
         return new IrcopOperclassApplier($identifiedRegistry, $connectionHolder, $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(RegisteredNickRepositoryInterface::class));
     }
 
+    /** @param list<string> $args */
     private function createContext(
         ?SenderView $sender,
         array $args,

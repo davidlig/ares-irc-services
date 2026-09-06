@@ -22,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
 use ReflectionClass;
+use Stringable;
 
 #[CoversClass(ForcedVhostApplier::class)]
 final class ForcedVhostApplierTest extends TestCase
@@ -118,6 +119,33 @@ final class ForcedVhostApplierTest extends TestCase
         $result = $applier->applyForcedVhostIfApplicable(123, '_davidlig_', 'UID1');
 
         self::assertTrue($result);
+    }
+
+    #[Test]
+    public function applyForcedVhostReturnsFalseWhenServerSidIsMissing(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $role->changeForcedVhostPattern('admin.network');
+        $ircop = OperIrcop::create(123, $role);
+        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepository->method('findByNickId')->willReturn($ircop);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getServerSid')->willReturn(null);
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            new IdentifiedSessionRegistry(),
+            $notifier,
+            $this->createStub(NetworkUserLookupPort::class),
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        self::assertFalse($applier->applyForcedVhostIfApplicable(123, 'davidlig', 'UID1'));
     }
 
     #[Test]
@@ -361,9 +389,11 @@ final class ForcedVhostApplierTest extends TestCase
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
 
         $logger = new class extends AbstractLogger {
+            /** @var list<array{message: string|Stringable, context: array<string, mixed>}> */
             public array $warnings = [];
 
-            public function log($level, $message, array $context = []): void
+            /** @param array<string, mixed> $context */
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
             {
                 if ('warning' === $level) {
                     $this->warnings[] = ['message' => $message, 'context' => $context];
@@ -492,9 +522,11 @@ final class ForcedVhostApplierTest extends TestCase
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
 
         $logger = new class extends AbstractLogger {
+            /** @var list<array{message: string|Stringable, context: array<string, mixed>}> */
             public array $warnings = [];
 
-            public function log($level, $message, array $context = []): void
+            /** @param array<string, mixed> $context */
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
             {
                 if ('warning' === $level) {
                     $this->warnings[] = ['message' => $message, 'context' => $context];
@@ -557,9 +589,11 @@ final class ForcedVhostApplierTest extends TestCase
         $connectionHolder->method('getServerSid')->willReturn('001');
 
         $logger = new class extends AbstractLogger {
+            /** @var list<array{message: string|Stringable, context: array<string, mixed>}> */
             public array $infos = [];
 
-            public function log($level, $message, array $context = []): void
+            /** @param array<string, mixed> $context */
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
             {
                 if ('info' === $level) {
                     $this->infos[] = ['message' => $message, 'context' => $context];

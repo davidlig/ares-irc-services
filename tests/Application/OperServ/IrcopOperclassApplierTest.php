@@ -23,7 +23,7 @@ use ReflectionClass;
 #[CoversClass(IrcopOperclassApplier::class)]
 final class IrcopOperclassApplierTest extends TestCase
 {
-    private function createModule(ProtocolServiceActionsInterface $actions, string $serverSid = '001'): ActiveConnectionHolderInterface
+    private function createModule(ProtocolServiceActionsInterface $actions, ?string $serverSid = '001'): ActiveConnectionHolderInterface
     {
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($actions);
@@ -100,6 +100,22 @@ final class IrcopOperclassApplierTest extends TestCase
 
         self::assertTrue($this->createApplier($identifiedRegistry, $this->createModule($actions))->applyForNick('TestNick', $role));
         self::assertSame([['001', 'UID123', 'TestNick', 'services:admin']], $actions->operclassCalls);
+    }
+
+    #[Test]
+    public function applyAndRemoveReturnFalseWhenServerSidIsMissing(): void
+    {
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID123', 'TestNick');
+        $actions = new RecordingOperclassActions();
+        $holder = $this->createModule($actions, null);
+        $role = OperRole::create('ADMIN');
+        $role->changeOperclass('services:admin');
+        $applier = $this->createApplier($identifiedRegistry, $holder);
+
+        self::assertFalse($applier->applyForNick('TestNick', $role));
+        self::assertFalse($applier->removeForNick('TestNick'));
+        self::assertSame([], $actions->operclassCalls);
     }
 
     #[Test]

@@ -255,6 +255,8 @@ final class OperServCommandListenerTest extends TestCase
         );
 
         self::assertSame('OperServ', $listener->getServiceName());
+        self::assertSame($sendNotice, $listener->getSendNotice());
+        self::assertSame($userMessageTypeResolver, $listener->getMessageTypeResolver());
     }
 
     #[Test]

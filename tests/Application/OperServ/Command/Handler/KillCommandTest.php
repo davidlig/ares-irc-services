@@ -6,13 +6,11 @@ namespace App\Tests\Application\OperServ\Command\Handler;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
-use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\OperServ\Command\Handler\KillCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
-use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
@@ -37,6 +35,23 @@ use ReflectionClass;
 #[CoversClass(KillCommand::class)]
 final class KillCommandTest extends TestCase
 {
+    #[Test]
+    public function exposesAccessHelper(): void
+    {
+        $accessHelper = $this->createAccessHelper(true);
+        $command = new KillCommand(
+            $this->createStub(NetworkUserLookupPort::class),
+            new RootUserRegistry(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $accessHelper,
+            $this->createStub(ActiveConnectionHolderInterface::class),
+            new NullLogger(),
+        );
+
+        self::assertSame($accessHelper, $command->getAccessHelper());
+    }
+
     private function createAccessHelper(bool $isRoot): IrcopAccessHelper
     {
         $rootUsers = $isRoot ? 'TestUser' : '';
@@ -47,18 +62,7 @@ final class KillCommandTest extends TestCase
         return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
-    private function createModeApplier(): IrcopModeApplier
-    {
-        $identifiedRegistry = new IdentifiedSessionRegistry();
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
-        $connectionHolder->method('getProtocolModule')->willReturn(null);
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $userLookup = $this->createStub(NetworkUserLookupPort::class);
-
-        return new IrcopModeApplier($identifiedRegistry, $connectionHolder, $ircopRepo, $nickRepo, $userLookup, new NullLogger());
-    }
-
+    /** @param list<string> $args */
     private function createContext(
         ?SenderView $sender,
         array $args,
@@ -182,7 +186,7 @@ final class KillCommandTest extends TestCase
     #[Test]
     public function userNotOnlineGetsUserNotOnlineError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -206,8 +210,8 @@ final class KillCommandTest extends TestCase
     #[Test]
     public function targetIsRootGetsProtectedRootError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'RootUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'RootUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -240,8 +244,8 @@ final class KillCommandTest extends TestCase
     #[Test]
     public function targetIsIrcopGetsProtectedIrcopError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -284,8 +288,8 @@ final class KillCommandTest extends TestCase
     #[Test]
     public function targetIsOperButNotIdentifiedIsNotProtected(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -322,8 +326,8 @@ final class KillCommandTest extends TestCase
     #[Test]
     public function targetIsOperIdentifiedButNickNotInRepoIsNotProtected(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -364,8 +368,8 @@ final class KillCommandTest extends TestCase
     #[Test]
     public function successKillExecutesKill(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'BadUser', 'i', 'h', 'c', 'c29saWFkZWQh', false, false, 'SID1', 'c', 'i', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'BadUser', 'i', 'h', 'c', 'c29saWFkZWQh', false, false, 'SID1', 'c', 'i');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -402,8 +406,8 @@ final class KillCommandTest extends TestCase
     #[Test]
     public function noProtocolModuleLogsErrorAndReturns(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'BadUser', 'i', 'h', 'c', 'c29saWFkZWQh', false, false, 'SID1', 'c', 'i', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'BadUser', 'i', 'h', 'c', 'c29saWFkZWQh', false, false, 'SID1', 'c', 'i');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -434,8 +438,8 @@ final class KillCommandTest extends TestCase
     #[Test]
     public function noServerSidLogsErrorAndReturns(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'BadUser', 'i', 'h', 'c', 'c29saWFkZWQh', false, false, 'SID1', 'c', 'i', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'BadUser', 'i', 'h', 'c', 'c29saWFkZWQh', false, false, 'SID1', 'c', 'i');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -482,8 +486,8 @@ final class KillCommandTest extends TestCase
     #[Test]
     public function getAuditDataReturnsDataAfterKill(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'BadUser', 'myident', 'myhost.com', 'c', 'dGVzdA==', false, false, 'SID1', 'c', 'i', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'BadUser', 'myident', 'myhost.com', 'c', 'dGVzdA==', false, false, 'SID1', 'c', 'i');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {

@@ -52,6 +52,10 @@ final readonly class OperRoleModesDeidentifiedSubscriber implements EventSubscri
         }
 
         $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return;
+        }
+
         $serviceActions = $module->getServiceActions();
         $userModeSupport = $module->getUserModeSupport();
 

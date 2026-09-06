@@ -10,10 +10,13 @@ use App\Application\Port\TranslationInterface;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use DateTimeImmutable;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+
+use function is_string;
 
 #[CoversClass(PurgeExpiredMotdsTask::class)]
 final class PurgeExpiredMotdsTaskTest extends TestCase
@@ -82,11 +85,25 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
             if ('motd.list.shown_count' === $id) {
-                return 'shown ' . $params['%count%'] . ' times';
+                $count = $params['%count%'] ?? null;
+                if (!is_string($count)) {
+                    throw new LogicException('Expected a string MOTD count.');
+                }
+
+                return 'shown ' . $count . ' times';
             }
 
             if ('motd.debug.finalized' === $id) {
-                return 'MOTD message #' . $params['%id%'] . ' has ended: [' . $params['%type%'] . '] ' . $params['%message%'] . ' | ' . $params['%date%'] . ' | ' . $params['%shown_count%'];
+                $idValue = $params['%id%'] ?? null;
+                $type = $params['%type%'] ?? null;
+                $message = $params['%message%'] ?? null;
+                $date = $params['%date%'] ?? null;
+                $shownCount = $params['%shown_count%'] ?? null;
+                if (!is_string($idValue) || !is_string($type) || !is_string($message) || !is_string($date) || !is_string($shownCount)) {
+                    throw new LogicException('Expected string MOTD translation parameters.');
+                }
+
+                return 'MOTD message #' . $idValue . ' has ended: [' . $type . '] ' . $message . ' | ' . $date . ' | ' . $shownCount;
             }
 
             return $id;

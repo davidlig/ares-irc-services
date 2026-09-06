@@ -22,6 +22,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function is_string;
+
 #[CoversClass(OperServContext::class)]
 final class OperServContextTest extends TestCase
 {
@@ -88,14 +90,14 @@ final class OperServContextTest extends TestCase
         $sender = $this->createSender(uid: 'testUid123');
         $notifier->expects($this->once())
             ->method('sendMessage')
-            ->with('testUid123', 'Translated message', 'notice');
+            ->with('testUid123', 'Translated message', 'NOTICE');
 
         $context = $this->createContext(
             sender: $sender,
             notifier: $notifier,
             translator: $translator,
             language: 'en',
-            messageType: 'notice'
+            messageType: 'NOTICE'
         );
 
         $context->reply('test.key', ['param' => 'value']);
@@ -155,7 +157,11 @@ final class OperServContextTest extends TestCase
         $notifier->method('getNick')->willReturn('OperServ');
 
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params): string => $id . '|' . ($params['%key%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params): string {
+            $value = $params['%key%'] ?? '';
+
+            return $id . '|' . (is_string($value) ? $value : '');
+        });
 
         $context = $this->createContext(notifier: $notifier, translator: $translator);
 
@@ -369,6 +375,10 @@ final class OperServContextTest extends TestCase
         ]);
     }
 
+    /**
+     * @param list<string>       $args
+     * @param 'NOTICE'|'PRIVMSG' $messageType
+     */
     private function createContext(
         ?SenderView $sender = null,
         ?RegisteredNick $senderAccount = null,
@@ -378,7 +388,7 @@ final class OperServContextTest extends TestCase
         ?TranslationInterface $translator = null,
         string $language = 'en',
         string $timezone = 'UTC',
-        string $messageType = 'notice',
+        string $messageType = 'NOTICE',
         ?OperServCommandRegistry $registry = null,
         ?IrcopAccessHelper $accessHelper = null,
     ): OperServContext {

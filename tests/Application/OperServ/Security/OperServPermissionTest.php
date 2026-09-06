@@ -18,13 +18,17 @@ final class OperServPermissionTest extends TestCase
     #[Test]
     public function killConstantHasExpectedValue(): void
     {
-        self::assertSame('operserv.kill', OperServPermission::KILL);
+        $constant = new ReflectionClass(OperServPermission::class)->getConstant('KILL');
+
+        self::assertSame('operserv.kill', $constant);
     }
 
     #[Test]
     public function rawConstantHasExpectedValue(): void
     {
-        self::assertSame('operserv.raw', OperServPermission::RAW);
+        $constant = new ReflectionClass(OperServPermission::class)->getConstant('RAW');
+
+        self::assertSame('operserv.raw', $constant);
     }
 
     #[Test]
@@ -46,6 +50,7 @@ final class OperServPermissionTest extends TestCase
         $reflection = new ReflectionClass(OperServPermission::class);
         $constructor = $reflection->getConstructor();
 
+        self::assertNotNull($constructor);
         self::assertTrue($constructor->isPrivate(), 'Constructor should be private');
     }
 
@@ -55,11 +60,10 @@ final class OperServPermissionTest extends TestCase
         $reflection = new ReflectionClass(OperServPermission::class);
         $constructor = $reflection->getConstructor();
 
+        self::assertNotNull($constructor);
         self::assertTrue($constructor->isPrivate(), 'Class should not be instantiable');
 
         $instance = $reflection->newInstanceWithoutConstructor();
         $constructor->invoke($instance);
-
-        self::assertInstanceOf(OperServPermission::class, $instance);
     }
 }

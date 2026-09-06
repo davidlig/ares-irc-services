@@ -167,7 +167,8 @@ class Gline
             return false;
         }
 
-        $atPos = strpos($mask, '@');
+        $atPos = (int) strpos($mask, '@');
+
         $userPart = substr($mask, 0, $atPos);
         $hostPart = substr($mask, $atPos + 1);
 
@@ -204,6 +205,9 @@ class Gline
         return false;
     }
 
+    /**
+     * @return array{user: string, host: string}
+     */
     public static function parseUserHost(string $mask): array
     {
         $atPos = strpos($mask, '@');

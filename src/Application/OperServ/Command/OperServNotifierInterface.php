@@ -8,6 +8,9 @@ interface OperServNotifierInterface
 {
     public function sendNotice(string $targetUidOrNick, string $message): void;
 
+    /**
+     * @param 'NOTICE'|'PRIVMSG' $messageType
+     */
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void;
 
     public function getNick(): string;

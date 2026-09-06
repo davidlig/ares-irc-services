@@ -40,9 +40,12 @@ final readonly class IrcopAccessHelper
         return $this->roleRepository->hasPermission($ircop->getRole()->getId(), $permission);
     }
 
+    /**
+     * @param list<string> $permissions
+     */
     public function hasAnyPermission(int $nickId, string $nickLower, array $permissions): bool
     {
-        return array_any($permissions, fn ($permission) => $this->hasPermission($nickId, $nickLower, $permission));
+        return array_any($permissions, fn (string $permission): bool => $this->hasPermission($nickId, $nickLower, $permission));
     }
 
     public function isIrcop(int $nickId, string $nickLower): bool

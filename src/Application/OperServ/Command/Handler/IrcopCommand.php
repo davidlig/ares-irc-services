@@ -10,8 +10,10 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\EventBusInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
+use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Event\OperIrcopChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -32,6 +34,11 @@ final readonly class IrcopCommand implements OperServCommandInterface
         private IrcopOperclassApplier $operclassApplier,
         private EventBusInterface $eventDispatcher,
     ) {}
+
+    public function getAccessHelper(): IrcopAccessHelper
+    {
+        return $this->accessHelper;
+    }
 
     public function getName(): string
     {

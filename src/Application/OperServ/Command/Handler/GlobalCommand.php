@@ -21,6 +21,7 @@ use Psr\Log\LoggerInterface;
 use ValueError;
 
 use function array_slice;
+use function assert;
 use function implode;
 use function sprintf;
 use function strtolower;
@@ -89,7 +90,7 @@ final class GlobalCommand implements OperServCommandInterface, IrcopAuditableCom
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return OperServPermission::GLOBAL;
     }
@@ -123,9 +124,13 @@ final class GlobalCommand implements OperServCommandInterface, IrcopAuditableCom
         return $this->sendFromPseudoClient($context, $maskArg, $typeArg, $message);
     }
 
+    /**
+     * @param 'NOTICE'|'PRIVMSG' $typeArg
+     */
     private function sendFromService(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message): CommandOutcome
     {
         $sender = $context->getSender();
+        assert(null !== $sender);
 
         $this->logger->info('GLOBAL: using existing service', [
             'nickname' => $nickname,
@@ -137,9 +142,13 @@ final class GlobalCommand implements OperServCommandInterface, IrcopAuditableCom
         return $this->broadcastAndReply($context, $nickname, $uid, $typeArg, $message, false);
     }
 
+    /**
+     * @param 'NOTICE'|'PRIVMSG' $typeArg
+     */
     private function sendFromPseudoClient(OperServContext $context, string $maskArg, string $typeArg, string $message): CommandOutcome
     {
         $sender = $context->getSender();
+        assert(null !== $sender);
 
         try {
             $mask = GlobalMessageMask::fromString($maskArg);
@@ -162,12 +171,18 @@ final class GlobalCommand implements OperServCommandInterface, IrcopAuditableCom
         }
 
         $module = $this->connectionHolder->getProtocolModule();
-        if (null !== $module) {
-            $serverSid = $this->connectionHolder->getServerSid();
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null !== $module && null !== $serverSid) {
             $uid = $this->uidGenerator->generate();
+            if (null === $uid) {
+                $this->logger->error('GLOBAL: failed to generate UID');
+
+                return CommandOutcome::rejected();
+            }
+
             $reason = sprintf('Global message pseudo-client (sender: %s)', $sender->nick);
 
-            $module->getNickReservation()->reserveNickWithDuration($nickname, self::DURATION_SECONDS, $reason);
+            $module->getNickReservation()?->reserveNickWithDuration($nickname, self::DURATION_SECONDS, $reason);
             $module->getServiceActions()->introducePseudoClient($serverSid, $mask->nickname, $mask->ident, $mask->vhost, $uid, $mask->nickname);
 
             $this->logger->info('GLOBAL: pseudo-client introduced', [
@@ -184,6 +199,9 @@ final class GlobalCommand implements OperServCommandInterface, IrcopAuditableCom
         return CommandOutcome::rejected();
     }
 
+    /**
+     * @param 'NOTICE'|'PRIVMSG' $typeArg
+     */
     private function trySendViaService(OperServContext $context, string $nickname, string $typeArg, string $message): ?CommandOutcome
     {
         $serviceUid = $this->serviceUidRegistry->getUidByNickname($nickname);
@@ -213,6 +231,9 @@ final class GlobalCommand implements OperServCommandInterface, IrcopAuditableCom
         return null;
     }
 
+    /**
+     * @param 'NOTICE'|'PRIVMSG' $typeArg
+     */
     private function broadcastAndReply(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message, bool $isPseudoClient): CommandOutcome
     {
         $uids = $this->userLookup->listConnectedUids();
@@ -239,7 +260,7 @@ final class GlobalCommand implements OperServCommandInterface, IrcopAuditableCom
             'uid' => $uid,
             'recipients' => $count,
             'type' => $typeArg,
-            'sender' => $sender?->nick ?? 'unknown',
+            'sender' => $sender->nick ?? 'unknown',
         ]);
 
         return CommandOutcome::success(new IrcopAuditData(

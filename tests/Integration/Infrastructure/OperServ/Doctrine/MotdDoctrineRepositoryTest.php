@@ -30,7 +30,9 @@ final class MotdDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $motd = Motd::create('Welcome to the network!', 'NickServ', 'PRIVMSG', 1);
         $this->repository->save($motd);
 
-        $found = $this->repository->findById($motd->getId());
+        $id = $motd->getId();
+        self::assertNotNull($id);
+        $found = $this->repository->findById($id);
         self::assertNotNull($found);
         self::assertSame('Welcome to the network!', $found->getText());
         self::assertSame('NickServ', $found->getBotNickname());
@@ -49,7 +51,9 @@ final class MotdDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->repository->save($motd);
         $this->entityManager->clear();
 
-        $found = $this->repository->findById($motd->getId());
+        $id = $motd->getId();
+        self::assertNotNull($id);
+        $found = $this->repository->findById($id);
         self::assertNotNull($found);
         self::assertSame(2, $found->getShownCount());
     }
@@ -88,6 +92,7 @@ final class MotdDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $motd = Motd::create('Temp', 'NickServ', 'PRIVMSG');
         $this->repository->save($motd);
         $id = $motd->getId();
+        self::assertNotNull($id);
 
         $this->repository->remove($motd);
 
@@ -114,6 +119,9 @@ final class MotdDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $id1 = $motd1->getId();
         $id2 = $motd2->getId();
         $id3 = $motd3->getId();
+        self::assertNotNull($id1);
+        self::assertNotNull($id2);
+        self::assertNotNull($id3);
 
         $this->repository->deleteByNickId(42);
 

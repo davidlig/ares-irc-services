@@ -43,8 +43,13 @@ final readonly class IrcopOperclassApplier
             return false;
         }
 
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return false;
+        }
+
         $actions->setUserOperclass(
-            $this->connectionHolder->getServerSid(),
+            $serverSid,
             $uid,
             $registeredNick,
             $operclass,
@@ -62,8 +67,13 @@ final readonly class IrcopOperclassApplier
             return false;
         }
 
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return false;
+        }
+
         $actions->setUserOperclass(
-            $this->connectionHolder->getServerSid(),
+            $serverSid,
             $uid,
             $registeredNick,
             null,

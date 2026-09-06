@@ -18,7 +18,7 @@ final class OperServIrcopPermissionTest extends TestCase
     {
         $permission = new OperServIrcopPermission();
 
-        self::assertInstanceOf(PermissionProviderInterface::class, $permission);
+        self::assertContains(PermissionProviderInterface::class, class_implements($permission));
     }
 
     #[Test]

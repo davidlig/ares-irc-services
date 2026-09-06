@@ -91,7 +91,7 @@ class OperRole
     }
 
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
     public function getUserModes(): array
     {
@@ -100,12 +100,15 @@ class OperRole
         }
 
         $decoded = json_decode($this->userModes, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
 
-        return is_array($decoded) ? $decoded : [];
+        return array_values(array_filter($decoded, 'is_string'));
     }
 
     /**
-     * @param array<int, string> $modes
+     * @param list<string> $modes
      */
     public function changeUserModes(array $modes): void
     {
@@ -115,7 +118,8 @@ class OperRole
             return;
         }
 
-        $this->userModes = json_encode(array_values(array_unique($modes)));
+        $encoded = json_encode(array_values(array_unique($modes)));
+        $this->userModes = false !== $encoded ? $encoded : null;
     }
 
     public function getForcedVhostPattern(): ?string

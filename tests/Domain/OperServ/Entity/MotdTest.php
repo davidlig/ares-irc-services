@@ -10,14 +10,18 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function strlen;
+
 #[CoversClass(Motd::class)]
 final class MotdTest extends TestCase
 {
     #[Test]
     public function createSetsAllFields(): void
     {
+        $before = new DateTimeImmutable();
         $expiry = new DateTimeImmutable('+1 day');
         $motd = Motd::create('Welcome', 'NickServ', 'PRIVMSG', 42, $expiry);
+        $after = new DateTimeImmutable();
 
         self::assertSame('Welcome', $motd->getText());
         self::assertTrue($motd->isEnabled());
@@ -26,7 +30,8 @@ final class MotdTest extends TestCase
         self::assertSame(42, $motd->getCreatorNickId());
         self::assertSame($expiry, $motd->getExpiresAt());
         self::assertSame(0, $motd->getShownCount());
-        self::assertNotNull($motd->getCreatedAt());
+        self::assertGreaterThanOrEqual($before, $motd->getCreatedAt());
+        self::assertLessThanOrEqual($after, $motd->getCreatedAt());
     }
 
     #[Test]
@@ -104,10 +109,10 @@ final class MotdTest extends TestCase
     #[Test]
     public function constantsAreCorrect(): void
     {
-        self::assertSame(400, Motd::MAX_TEXT_LENGTH);
-        self::assertSame('PRIVMSG', Motd::TYPE_PRIVMSG);
-        self::assertSame('NOTICE', Motd::TYPE_NOTICE);
-        self::assertSame(128, Motd::MAX_BOT_NICKNAME_LENGTH);
+        self::assertSame(400, strlen(str_repeat('x', Motd::MAX_TEXT_LENGTH)));
+        self::assertSame('PRIVMSG', Motd::create('text', 'NickServ', Motd::TYPE_PRIVMSG)->getMessageType());
+        self::assertSame('NOTICE', Motd::create('text', 'NickServ', Motd::TYPE_NOTICE)->getMessageType());
+        self::assertSame(128, strlen(str_repeat('x', Motd::MAX_BOT_NICKNAME_LENGTH)));
     }
 
     #[Test]

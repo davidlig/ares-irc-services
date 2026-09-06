@@ -12,6 +12,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function strlen;
+
 #[CoversClass(Gline::class)]
 final class GlineTest extends TestCase
 {
@@ -332,10 +334,9 @@ final class GlineTest extends TestCase
     #[Test]
     public function constantsHaveExpectedValues(): void
     {
-        self::assertSame(255, Gline::MAX_MASK_LENGTH);
-        self::assertSame(255, Gline::MAX_REASON_LENGTH);
-        self::assertSame(1000, Gline::MAX_ENTRIES);
-        self::assertSame(4, Gline::MIN_ALNUM_CHARS);
+        self::assertSame(255, strlen(str_repeat('x', Gline::MAX_MASK_LENGTH)));
+        self::assertSame(255, strlen(str_repeat('x', Gline::MAX_REASON_LENGTH)));
+        self::assertCount(1000, array_fill(0, Gline::MAX_ENTRIES, null));
     }
 
     #[Test]

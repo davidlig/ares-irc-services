@@ -168,10 +168,11 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 $mask->nickname,
             );
 
+            $motdId = $motd->getId();
             $this->pseudoClients[$nickLower] = [
                 'uid' => $uid,
                 'mask' => $mask,
-                'motdIds' => [$motd->getId()],
+                'motdIds' => null !== $motdId ? [$motdId] : [],
             ];
 
             $this->joinPseudoClientToDebugChannel($uid);
@@ -193,8 +194,9 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
         $all = $this->motdRepository->findAll();
         $activeMap = [];
         foreach ($all as $m) {
-            if ($m->isEnabled() && !$m->isExpired()) {
-                $activeMap[$m->getId()] = true;
+            $mId = $m->getId();
+            if (null !== $mId && $m->isEnabled() && !$m->isExpired()) {
+                $activeMap[$mId] = true;
             }
         }
 
@@ -274,7 +276,8 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $channelTimestamp = $this->channelLookup->findByChannelName($this->debugChannel)?->timestamp ?? time();
+        $channel = $this->channelLookup->findByChannelName($this->debugChannel);
+        $channelTimestamp = null !== $channel ? $channel->timestamp : time();
         $module->getServiceActions()->joinChannelAsService($serverSid, $this->debugChannel, $uid, '', $channelTimestamp);
         $this->channelRegistration->registerServiceChannelJoin($this->debugChannel, $uid, '', $channelTimestamp);
     }

@@ -67,6 +67,7 @@ final class OperRoleDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertNotNull($this->repository->findByName('AdMiN'));
 
         $found = $this->repository->findByName('admin');
+        self::assertNotNull($found);
         self::assertSame('ADMIN', $found->getName());
     }
 
@@ -137,7 +138,6 @@ final class OperRoleDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
         $this->repository->save($role);
 
-        self::assertNotNull($role->getId());
         $found = $this->repository->find($role->getId());
         self::assertNotNull($found);
         self::assertSame('TESTROLE', $found->getName());

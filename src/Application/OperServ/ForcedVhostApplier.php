@@ -42,6 +42,9 @@ final readonly class ForcedVhostApplier
                     $vhost = $forcedVhost->generateVhost($nickname);
 
                     $serverSid = $this->connectionHolder->getServerSid();
+                    if (null === $serverSid) {
+                        return false;
+                    }
                     $this->notifier->setUserVhost($uid, $vhost, $serverSid);
 
                     $this->logger->info('ForcedVhostApplier: applied forced vhost', [
@@ -92,10 +95,13 @@ final readonly class ForcedVhostApplier
                 continue;
             }
 
+            $serverSid = $this->connectionHolder->getServerSid();
+
             if (null === $newPattern || '' === $newPattern) {
                 $personalVhost = $this->vhostDisplayResolver->getDisplayVhost($nick->getVhost());
-                $serverSid = $this->connectionHolder->getServerSid();
-                $this->notifier->setUserVhost($uid, $personalVhost, $serverSid);
+                if (null !== $serverSid) {
+                    $this->notifier->setUserVhost($uid, $personalVhost, $serverSid);
+                }
                 $this->logger->info('ForcedVhostApplier: restored personal vhost (role pattern removed)', [
                     'nickId' => $nickId,
                     'uid' => $uid,
@@ -118,8 +124,9 @@ final readonly class ForcedVhostApplier
             $forcedVhost = ForcedVhost::fromPattern($newPattern);
             $vhost = $forcedVhost->generateVhost($user->nick);
 
-            $serverSid = $this->connectionHolder->getServerSid();
-            $this->notifier->setUserVhost($uid, $vhost, $serverSid);
+            if (null !== $serverSid) {
+                $this->notifier->setUserVhost($uid, $vhost, $serverSid);
+            }
 
             $this->logger->info('ForcedVhostApplier: updated forced vhost for role change', [
                 'nickId' => $nickId,

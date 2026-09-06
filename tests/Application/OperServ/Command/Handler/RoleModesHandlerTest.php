@@ -359,7 +359,7 @@ final class RoleModesHandlerTest extends RoleHandlerTestCase
             new RoleVhostHandler(
                 $roleRepo,
                 $vhostApplier,
-                new VhostValidator('virtual'),
+                new VhostValidator(),
                 $this->createStub(EventBusInterface::class),
             ),
             $accessHelper,

@@ -36,6 +36,11 @@ final class KillCommand implements OperServCommandInterface, IrcopAuditableComma
         private readonly LoggerInterface $logger,
     ) {}
 
+    public function getAccessHelper(): IrcopAccessHelper
+    {
+        return $this->accessHelper;
+    }
+
     public function getName(): string
     {
         return 'KILL';
@@ -81,7 +86,7 @@ final class KillCommand implements OperServCommandInterface, IrcopAuditableComma
         return true;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return OperServPermission::KILL;
     }

@@ -179,6 +179,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
 
         $permissionRegistry = new PermissionRegistry([
             new readonly class('TestService', ['PERM_ONE', 'PERM_TWO']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -189,6 +190,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;
@@ -240,6 +242,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
 
         $permissionRegistry = new PermissionRegistry([
             new readonly class('OperServ', ['operserv.kill', 'operserv.other']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -250,6 +253,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;
@@ -306,6 +310,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
 
         $permissionRegistry = new PermissionRegistry([
             new readonly class('OperServ', ['operserv.kill']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -316,12 +321,14 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;
                 }
             },
             new readonly class('NickServ', ['nickserv.drop']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -332,12 +339,14 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;
                 }
             },
             new readonly class('ChanServ', ['chanserv.suspend']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -348,6 +357,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;
@@ -397,6 +407,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
 
         $permissionRegistry = new PermissionRegistry([
             new readonly class('Unknown', ['unknown.perm']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -407,6 +418,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;
@@ -446,6 +458,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
 
         $permissionRegistry = new PermissionRegistry([
             new readonly class('TestService', ['PERM_ONE']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -456,6 +469,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;
@@ -779,6 +793,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
 
         $permissionRegistry = new PermissionRegistry([
             new readonly class('TestService', ['PERM_ONE', 'PERM_TWO']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -789,6 +804,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;
@@ -835,6 +851,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
 
         $permissionRegistry = new PermissionRegistry([
             new readonly class('TestService', ['PERM_ONE', 'PERM_TWO']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -845,6 +862,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;
@@ -856,6 +874,47 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
         $cmd->execute($this->createContext($sender, ['PERMS', 'FULLROLE', 'ADD', 'ALL'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.add.all_skipped', $messages);
+    }
+
+    #[Test]
+    public function permsAddAllSkipsPermissionThatDisappearsFromRegistry(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+        $role = OperRole::create('DYNAMIC', 'Dynamic role', false);
+        $roleRepository = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepository->method('findByName')->willReturn($role);
+        $permissionRepository = $this->createStub(OperPermissionRepositoryInterface::class);
+        $provider = new class implements PermissionProviderInterface {
+            private int $calls = 0;
+
+            public function getServiceName(): string
+            {
+                return 'Dynamic';
+            }
+
+            /** @return list<string> */
+            public function getPermissions(): array
+            {
+                ++$this->calls;
+
+                return 1 === $this->calls ? ['DYNAMIC_PERMISSION'] : [];
+            }
+        };
+        $registry = new OperServCommandRegistry([]);
+        $command = $this->createCmd($roleRepository, $permissionRepository, $accessHelper, new PermissionRegistry([$provider]));
+
+        $command->execute($this->createContext($sender, ['PERMS', 'DYNAMIC', 'ADD', 'ALL'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.perms.add.all_empty', $messages);
     }
 
     #[Test]
@@ -981,6 +1040,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
 
         $permissionRegistry = new PermissionRegistry([
             new readonly class('TestService', ['operserv.kill']) implements PermissionProviderInterface {
+                /** @param list<string> $permissions */
                 public function __construct(
                     private string $serviceName,
                     private array $permissions,
@@ -991,6 +1051,7 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
                     return $this->serviceName;
                 }
 
+                /** @return list<string> */
                 public function getPermissions(): array
                 {
                     return $this->permissions;

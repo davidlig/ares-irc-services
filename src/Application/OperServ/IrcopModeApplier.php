@@ -52,13 +52,16 @@ final readonly class IrcopModeApplier
 
         if (null !== $uid && null !== $module && null !== $user) {
             $currentModes = $this->parseModes($user->modes);
-            $toApply = array_diff($modes, $currentModes);
+            $toApply = array_values(array_diff($modes, $currentModes));
 
             if (empty($toApply)) {
                 $this->logger->debug('IrcopModeApplier: user already has all modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modes]);
                 $result = true;
             } else {
                 $serverSid = $this->connectionHolder->getServerSid();
+                if (null === $serverSid) {
+                    return false;
+                }
                 $serviceActions = $module->getServiceActions();
                 $userModeSupport = $module->getUserModeSupport();
 
@@ -97,13 +100,16 @@ final readonly class IrcopModeApplier
 
         if (null !== $uid && null !== $module && null !== $user) {
             $currentModes = $this->parseModes($user->modes);
-            $toRemove = array_intersect($modes, $currentModes);
+            $toRemove = array_values(array_intersect($modes, $currentModes));
 
             if (empty($toRemove)) {
                 $this->logger->debug('IrcopModeApplier: user does not have any of the modes to remove', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modes]);
                 $result = true;
             } else {
                 $serverSid = $this->connectionHolder->getServerSid();
+                if (null === $serverSid) {
+                    return false;
+                }
                 $serviceActions = $module->getServiceActions();
                 $userModeSupport = $module->getUserModeSupport();
 
@@ -122,19 +128,23 @@ final readonly class IrcopModeApplier
     /**
      * Update modes for all identified users with a specific role.
      * Only sends mode changes for modes that differ between old and new.
+     *
+     * @param list<string> $oldModes
+     * @param list<string> $newModes
      */
     public function updateModesForRole(int $roleId, array $oldModes, array $newModes): void
     {
-        $toRemove = array_diff($oldModes, $newModes);
-        $toAdd = array_diff($newModes, $oldModes);
+        $toRemove = array_values(array_diff($oldModes, $newModes));
+        $toAdd = array_values(array_diff($newModes, $oldModes));
 
         if (empty($toRemove) && empty($toAdd)) {
             return;
         }
 
         $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            $this->logger->debug('IrcopModeApplier: no protocol module for role update');
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $module || null === $serverSid) {
+            $this->logger->debug('IrcopModeApplier: no protocol module or server SID for role update');
 
             return;
         }
@@ -159,11 +169,10 @@ final readonly class IrcopModeApplier
 
             $currentModes = $this->parseModes($user->modes);
 
-            $serverSid = $this->connectionHolder->getServerSid();
             $serviceActions = $module->getServiceActions();
             $userModeSupport = $module->getUserModeSupport();
 
-            $modesToRemove = array_intersect($toRemove, $currentModes);
+            $modesToRemove = array_values(array_intersect($toRemove, $currentModes));
             if (!empty($modesToRemove)) {
                 [$modeStr, $params] = $userModeSupport->buildModeParams('-', $modesToRemove);
                 $this->logger->info('IrcopModeApplier: removing modes for role change', [
@@ -175,7 +184,7 @@ final readonly class IrcopModeApplier
                 $this->userLookup->applyModeChange($uid, '-' . implode('', $modesToRemove));
             }
 
-            $modesToAdd = array_diff($toAdd, $currentModes);
+            $modesToAdd = array_values(array_diff($toAdd, $currentModes));
             if (!empty($modesToAdd)) {
                 [$modeStr, $params] = $userModeSupport->buildModeParams('+', $modesToAdd);
                 $this->logger->info('IrcopModeApplier: applying modes for role change', [
@@ -191,10 +200,15 @@ final readonly class IrcopModeApplier
 
     /**
      * Parse mode string (e.g. "+ioqrtwxH") into an array of individual modes.
+     *
+     * @return list<string>
      */
     private function parseModes(string $modesStr): array
     {
         $modes = ltrim($modesStr, '+');
+        if ('' === $modes) {
+            return [];
+        }
 
         return str_split($modes);
     }

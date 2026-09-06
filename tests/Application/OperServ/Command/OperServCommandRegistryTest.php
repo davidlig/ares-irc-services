@@ -123,9 +123,11 @@ final class OperServCommandRegistryTest extends TestCase
         self::assertContains($h2, $all);
     }
 
+    /** @param list<string> $aliases */
     private function createHandler(string $name, array $aliases = []): OperServCommandInterface
     {
         return new class($name, $aliases) implements OperServCommandInterface {
+            /** @param list<string> $aliases */
             public function __construct(
                 private readonly string $name,
                 private readonly array $aliases,
@@ -136,6 +138,7 @@ final class OperServCommandRegistryTest extends TestCase
                 return $this->name;
             }
 
+            /** @return list<string> */
             public function getAliases(): array
             {
                 return $this->aliases;

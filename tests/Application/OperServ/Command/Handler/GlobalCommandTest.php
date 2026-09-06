@@ -45,6 +45,7 @@ final class GlobalCommandTest extends TestCase
         return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
+    /** @param list<string> $args */
     private function createContext(
         ?SenderView $sender,
         array $args,
@@ -219,7 +220,7 @@ final class GlobalCommandTest extends TestCase
     #[Test]
     public function executeWithInvalidTypeRepliesError(): void
     {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg) use (&$messages): void {
@@ -241,7 +242,7 @@ final class GlobalCommandTest extends TestCase
     #[Test]
     public function executeWithInvalidMaskRepliesError(): void
     {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg) use (&$messages): void {
@@ -263,7 +264,7 @@ final class GlobalCommandTest extends TestCase
     #[Test]
     public function executeWithConnectedNicknameRepliesError(): void
     {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg) use (&$messages): void {
@@ -273,7 +274,7 @@ final class GlobalCommandTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
-        $connectedUser = new SenderView('UID2', 'TestBot', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', '', '');
+        $connectedUser = new SenderView('UID2', 'TestBot', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', '');
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn($connectedUser);
 
@@ -289,7 +290,7 @@ final class GlobalCommandTest extends TestCase
     #[Test]
     public function executeWithRegisteredNicknameRepliesError(): void
     {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg) use (&$messages): void {
@@ -318,7 +319,7 @@ final class GlobalCommandTest extends TestCase
     #[Test]
     public function executeWithNoProtocolModuleReturnsEarly(): void
     {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg) use (&$messages): void {
@@ -349,7 +350,7 @@ final class GlobalCommandTest extends TestCase
     #[Test]
     public function executeSendsMessageToAllUsers(): void
     {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 
@@ -402,9 +403,32 @@ final class GlobalCommandTest extends TestCase
     }
 
     #[Test]
+    public function executeRejectsWhenPseudoClientUidCannotBeGenerated(): void
+    {
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($this->createStub(ProtocolServiceActionsInterface::class));
+        $connectionHolder = $this->createMock(ActiveConnectionHolderInterface::class);
+        $connectionHolder->expects(self::exactly(2))->method('getServerSid')->willReturnOnConsecutiveCalls('001', null);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+        $command = $this->createCommand(connectionHolder: $connectionHolder);
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
+
+        $outcome = $command->execute($this->createContext(
+            $sender,
+            ['SomeBot!ident@host', 'PRIVMSG', 'Hello'],
+            $this->createStub(OperServNotifierInterface::class),
+            $translator,
+        ));
+
+        self::assertFalse($outcome->success);
+    }
+
+    #[Test]
     public function executeSendsToAllUsersIncludingSender(): void
     {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 
@@ -461,7 +485,7 @@ final class GlobalCommandTest extends TestCase
     #[Test]
     public function executeWithServiceNicknameUsesExistingServiceUid(): void
     {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 
@@ -519,7 +543,7 @@ final class GlobalCommandTest extends TestCase
     {
         // When passing "NickServ!ident@host", it should detect NickServ is a service
         // and use its existing UID instead of creating a pseudo-client
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 
@@ -567,7 +591,7 @@ final class GlobalCommandTest extends TestCase
     #[Test]
     public function getAuditDataReturnsDataAfterBroadcast(): void
     {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 

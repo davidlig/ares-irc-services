@@ -23,6 +23,8 @@ use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function is_array;
+
 #[CoversClass(OperServDebugNotifier::class)]
 final class OperServDebugNotifierTest extends TestCase
 {
@@ -189,7 +191,8 @@ final class OperServDebugNotifierTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info')->with('KILL', self::callback(static fn (array $context) => isset($context['extra'])
-                && 'value' === $context['extra']['key']));
+                && is_array($context['extra'])
+                && 'value' === ($context['extra']['key'] ?? null)));
 
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
@@ -360,6 +363,7 @@ final class OperServDebugNotifierTest extends TestCase
             ->willReturnCallback(static function (string $key, array $params = []): string {
                 if ('debug.actionWithDuration' === $key) {
                     self::assertArrayHasKey('%duration%', $params);
+                    self::assertIsString($params['%duration%']);
 
                     return 'GLINE added with duration ' . $params['%duration%'];
                 }
@@ -415,6 +419,24 @@ final class OperServDebugNotifierTest extends TestCase
         $debug = $this->createDebugNotifier();
 
         self::assertSame('operserv', $debug->getServiceName());
+    }
+
+    #[Test]
+    public function getUserLookupReturnsConfiguredLookup(): void
+    {
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $debug = $this->createDebugNotifier(userLookup: $userLookup);
+
+        self::assertSame($userLookup, $debug->getUserLookup());
+    }
+
+    #[Test]
+    public function getIdentifiedRegistryReturnsConfiguredRegistry(): void
+    {
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $debug = $this->createDebugNotifier(identifiedRegistry: $identifiedRegistry);
+
+        self::assertSame($identifiedRegistry, $debug->getIdentifiedRegistry());
     }
 
     private function createDebugNotifier(

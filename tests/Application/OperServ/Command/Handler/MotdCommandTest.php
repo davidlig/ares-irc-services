@@ -20,9 +20,12 @@ use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use DateTimeImmutable;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(MotdCommand::class)]
 final class MotdCommandTest extends TestCase
@@ -41,8 +44,13 @@ final class MotdCommandTest extends TestCase
         return new ServiceNicknameRegistry([]);
     }
 
-    private function createContext(array $args, ?SenderView $sender = null, ?TranslationInterface $translator = null, ?OperServNotifierInterface $notifier = null): OperServContext
-    {
+    /** @param list<string> $args */
+    private function createContext(
+        array $args,
+        ?SenderView $sender = null,
+        ?TranslationInterface $translator = null,
+        ?OperServNotifierInterface $notifier = null,
+    ): OperServContext {
         $sender ??= new SenderView(
             uid: '001ABC',
             nick: 'TestOper',
@@ -55,8 +63,14 @@ final class MotdCommandTest extends TestCase
             serverSid: '001',
         );
 
-        $translator ??= $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+        if (null === $translator) {
+            $translator = $this->createMock(TranslationInterface::class);
+        }
+        if ($translator instanceof MockObject) {
+            $translator->expects(self::atLeastOnce())
+                ->method('trans')
+                ->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+        }
 
         $notifier ??= $this->createStub(OperServNotifierInterface::class);
 
@@ -456,6 +470,15 @@ final class MotdCommandTest extends TestCase
 
         $command = new MotdCommand($this->createStub(MotdRepositoryInterface::class));
         $command->execute($this->createContext(['ADD', 'NickServ', 'PRIVMSG', '5x', 'Hello'], notifier: $notifier));
+    }
+
+    #[Test]
+    public function parseDurationRejectsInvalidInputWhenCalledDirectly(): void
+    {
+        $method = new ReflectionClass(MotdCommand::class)->getMethod('parseDuration');
+
+        $this->expectException(InvalidArgumentException::class);
+        $method->invoke(new MotdCommand($this->createStub(MotdRepositoryInterface::class)), '5x');
     }
 
     #[Test]

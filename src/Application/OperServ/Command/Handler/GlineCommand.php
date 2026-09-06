@@ -95,7 +95,12 @@ final class GlineCommand implements OperServCommandInterface, IrcopAuditableComm
         return true;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getAccessHelper(): IrcopAccessHelper
+    {
+        return $this->accessHelper;
+    }
+
+    public function getRequiredPermission(): string
     {
         return OperServPermission::GLINE;
     }

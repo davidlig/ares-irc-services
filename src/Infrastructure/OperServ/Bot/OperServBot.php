@@ -69,11 +69,19 @@ final class OperServBot implements OperServNotifierInterface, ServiceNicknamePro
         ]);
     }
 
+    public function getUserLookup(): NetworkUserLookupPort
+    {
+        return $this->userLookup;
+    }
+
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
         $this->sendNoticePort->sendNotice($this->uid, $targetUidOrNick, $message);
     }
 
+    /**
+     * @param 'NOTICE'|'PRIVMSG' $messageType
+     */
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
     {
         $this->sendNoticePort->sendMessage($this->uid, $targetUidOrNick, $message, $messageType);

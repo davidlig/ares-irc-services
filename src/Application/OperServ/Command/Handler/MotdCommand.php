@@ -14,6 +14,7 @@ use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use DateTimeImmutable;
+use InvalidArgumentException;
 
 use function array_slice;
 use function count;
@@ -99,7 +100,7 @@ final class MotdCommand implements OperServCommandInterface, IrcopAuditableComma
         return true;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return OperServPermission::MOTD;
     }
@@ -126,7 +127,7 @@ final class MotdCommand implements OperServCommandInterface, IrcopAuditableComma
 
     private function doAdd(OperServContext $context): CommandOutcome
     {
-        $args = $context->args;
+        $args = array_values($context->args);
 
         $errorKey = $this->validateMotdAdd($context, $args);
         if (null !== $errorKey) {
@@ -134,7 +135,7 @@ final class MotdCommand implements OperServCommandInterface, IrcopAuditableComma
         }
 
         $botNickname = $args[1];
-        $messageType = strtoupper($args[2]);
+        $messageType = 'PRIVMSG' === strtoupper($args[2]) ? 'PRIVMSG' : 'NOTICE';
         $duration = $args[3];
         $expiresAt = '0' === $duration ? null : $this->parseDuration($duration);
         $text = implode(' ', array_slice($args, 4));
@@ -159,6 +160,9 @@ final class MotdCommand implements OperServCommandInterface, IrcopAuditableComma
         ));
     }
 
+    /**
+     * @param list<string> $args
+     */
     private function validateMotdAdd(OperServContext $context, array $args): ?string
     {
         return (function () use ($context, $args): ?string {
@@ -184,6 +188,7 @@ final class MotdCommand implements OperServCommandInterface, IrcopAuditableComma
             }
 
             $text = implode(' ', array_slice($args, 4));
+            // @phpstan-ignore identical.alwaysFalse
             if ('' === $text) {
                 $context->reply('motd.add.syntax_hint', ['%syntax%' => $context->trans('motd.add.syntax')]);
 
@@ -305,15 +310,18 @@ final class MotdCommand implements OperServCommandInterface, IrcopAuditableComma
 
     private function parseDuration(string $raw): DateTimeImmutable
     {
-        preg_match('/^(\d+)([smhd])$/i', $raw, $m);
+        if (1 !== preg_match('/^(\d+)([smhd])$/i', $raw, $m)) {
+            throw new InvalidArgumentException(sprintf('Invalid duration: "%s".', $raw));
+        }
+
         $number = (int) $m[1];
         $unit = strtolower($m[2]);
 
         $seconds = match ($unit) {
-            's' => $number,
             'm' => $number * 60,
             'h' => $number * 3600,
             'd' => $number * 86400,
+            default => $number,
         };
 
         return new DateTimeImmutable()->modify('+' . $seconds . ' seconds');

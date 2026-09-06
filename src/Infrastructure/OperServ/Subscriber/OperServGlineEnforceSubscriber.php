@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\OperServ\Subscriber;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
@@ -62,7 +63,7 @@ final readonly class OperServGlineEnforceSubscriber implements EventSubscriberIn
         ]);
     }
 
-    private function sendGline(Gline $gline, string $serverSid, object $serviceActions): void
+    private function sendGline(Gline $gline, string $serverSid, ProtocolServiceActionsInterface $serviceActions): void
     {
         $parts = Gline::parseUserHost($gline->getMask());
         $duration = null === $gline->getExpiresAt()

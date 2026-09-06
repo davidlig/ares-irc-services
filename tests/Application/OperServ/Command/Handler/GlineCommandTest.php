@@ -112,6 +112,14 @@ final class GlineCommandTest extends TestCase
     }
 
     #[Test]
+    public function exposesAccessHelper(): void
+    {
+        $accessHelper = $this->createAccessHelper(false);
+
+        self::assertSame($accessHelper, $this->createCommand($accessHelper)->getAccessHelper());
+    }
+
+    #[Test]
     public function unknownSubcommandReturnsError(): void
     {
         $sender = $this->createSender();
@@ -318,7 +326,7 @@ final class GlineCommandTest extends TestCase
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(
-            new SenderView('UID123', 'BadUser', 'badident', 'badhost1234.com', 'clines', 'test==', false, true, 'SID1', 'h', 'o', 'badhost1234.com')
+            new SenderView('UID123', 'BadUser', 'badident', 'badhost1234.com', 'clines', 'test==', false, true, 'SID1', 'badhost1234.com', 'o')
         );
 
         $glineRepo = $this->createMock(GlineRepositoryInterface::class);
@@ -860,7 +868,7 @@ final class GlineCommandTest extends TestCase
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(
-            new SenderView('UIDROOT', 'TestUser', 'ident', 'host999.com', 'clines', 'test==', false, true, 'SID1', 'h', 'o', 'host999.com')
+            new SenderView('UIDROOT', 'TestUser', 'ident', 'host999.com', 'clines', 'test==', false, true, 'SID1', 'host999.com', 'o')
         );
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -965,7 +973,7 @@ final class GlineCommandTest extends TestCase
         // IRCop is online with nick!ident@host format
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(
-            new SenderView('UIDIRCOP', 'IrcopNick', 'myident', 'specialhost.net', 'clines', 'test==', false, true, 'SID1', 'h', 'o', 'specialhost.net')
+            new SenderView('UIDIRCOP', 'IrcopNick', 'myident', 'specialhost.net', 'clines', 'test==', false, true, 'SID1', 'specialhost.net', 'o')
         );
 
         $cmd = new GlineCommand(
@@ -1012,7 +1020,7 @@ final class GlineCommandTest extends TestCase
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(
-            new SenderView('UIDIRCOP', 'IrcopNick', 'ident123', 'host456.com', 'clines', 'test==', false, true, 'SID1', 'h', 'o', 'host456.com')
+            new SenderView('UIDIRCOP', 'IrcopNick', 'ident123', 'host456.com', 'clines', 'test==', false, true, 'SID1', 'host456.com', 'o')
         );
 
         $cmd = new GlineCommand(
@@ -1394,14 +1402,14 @@ final class GlineCommandTest extends TestCase
         self::assertNull($auditData->reason);
     }
 
-    private function createCommand(): GlineCommand
+    private function createCommand(?IrcopAccessHelper $accessHelper = null): GlineCommand
     {
         $glineRepo = $this->createStub(GlineRepositoryInterface::class);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $rootRegistry = new RootUserRegistry('');
-        $accessHelper = $this->createAccessHelper(false);
+        $accessHelper ??= $this->createAccessHelper(false);
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
 
         return new GlineCommand(
@@ -1444,9 +1452,10 @@ final class GlineCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'TestUser', 'ident', 'host.com', 'clines', 'aBcDeF=', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'TestUser', 'ident', 'host.com', 'clines', 'aBcDeF=', false, true, 'SID1', 'h', 'o');
     }
 
+    /** @param list<string> $messages */
     private function createNotifier(array &$messages): OperServNotifierInterface
     {
         $notifier = $this->createStub(OperServNotifierInterface::class);
@@ -1476,6 +1485,7 @@ final class GlineCommandTest extends TestCase
         return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
+    /** @param list<string> $args */
     private function createContext(
         ?SenderView $sender,
         array $args,

@@ -535,14 +535,12 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $n = $this->createStub(RegisteredNickRepositoryInterface::class);
         $n->method('findByNick')->willReturn(null);
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
-        $c->method('getProtocolModule')->willReturn(null);
-        $c->method('getServerSid')->willReturn(null);
+        $c = $this->createMock(ActiveConnectionHolderInterface::class);
+        $c->expects(self::once())->method('getProtocolModule')->willReturn(null);
+        $c->expects(self::once())->method('getServerSid')->willReturn(null);
 
         $x = $this->sub(r: $r, u: $u, c: $c, l: $l, n: $n);
         $x->onSyncComplete();
-
-        self::assertTrue(true);
     }
 
     #[Test]

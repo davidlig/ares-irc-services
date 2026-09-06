@@ -96,7 +96,7 @@ final readonly class RoleModesHandler
             return;
         }
 
-        $modes = array_unique(str_split(ltrim($modesArg, '+')));
+        $modes = array_values(array_unique(str_split(ltrim($modesArg, '+'))));
         $invalidModes = array_diff($modes, $validModes);
         if (!empty($invalidModes)) {
             $context->reply('role.modes.set.invalid_modes', [

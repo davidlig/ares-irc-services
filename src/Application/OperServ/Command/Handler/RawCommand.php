@@ -81,7 +81,7 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
         return true;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return OperServPermission::RAW;
     }
@@ -133,7 +133,7 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
             return null;
         }
 
-        $args = $context->args;
+        $args = array_values($context->args);
         if (count($args) < 3 || 'DB' !== strtoupper($args[0])) {
             return null;
         }
@@ -169,7 +169,7 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
      */
     private function handleIns(OperServContext $context, array $args, UdbRawCommandHandlerInterface $handler): CommandOutcome
     {
-        if (count($args) < 5 || '' === trim($args[3] ?? '')) {
+        if (count($args) < 5 || '' === trim($args[3])) {
             $context->reply('raw.udb.syntax');
 
             return CommandOutcome::rejected();
@@ -185,7 +185,7 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
      */
     private function handleDel(OperServContext $context, array $args, UdbRawCommandHandlerInterface $handler): CommandOutcome
     {
-        if (4 !== count($args) || '' === trim($args[3] ?? '')) {
+        if (4 !== count($args) || '' === trim($args[3])) {
             $context->reply('raw.udb.syntax');
 
             return CommandOutcome::rejected();
@@ -212,7 +212,7 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
 
         $auditData = new IrcopAuditData(
             target: $auditLine,
-            reason: sprintf('Executed by %s', $sender?->nick ?? 'unknown'),
+            reason: sprintf('Executed by %s', $sender->nick ?? 'unknown'),
         );
 
         $context->reply('raw.udb.done');

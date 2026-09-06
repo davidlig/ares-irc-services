@@ -38,6 +38,9 @@ class Motd
 
     private function __construct() {}
 
+    /**
+     * @param 'NOTICE'|'PRIVMSG' $messageType
+     */
     public static function create(
         string $text,
         string $botNickname,
@@ -59,7 +62,7 @@ class Motd
         return $motd;
     }
 
-    public function getId(): int
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -79,9 +82,12 @@ class Motd
         return $this->botNickname;
     }
 
+    /**
+     * @return 'NOTICE'|'PRIVMSG'
+     */
     public function getMessageType(): string
     {
-        return $this->messageType;
+        return 'PRIVMSG' === $this->messageType ? 'PRIVMSG' : 'NOTICE';
     }
 
     public function getCreatorNickId(): ?int

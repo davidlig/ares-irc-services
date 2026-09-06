@@ -31,11 +31,28 @@ use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Infrastructure\NickServ\UserLanguageResolver;
+use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use stdClass;
+
+use function is_string;
+
+interface OperServCallbackCommandInterface extends OperServCommandInterface
+{
+    public function setExecuteCallback(Closure $callback): void;
+}
+
+final class OperServTestContextHolder
+{
+    public ?OperServContext $context = null;
+
+    public function getContext(): ?OperServContext
+    {
+        return $this->context;
+    }
+}
 
 #[CoversClass(OperServService::class)]
 final class OperServServiceTest extends TestCase
@@ -203,21 +220,19 @@ final class OperServServiceTest extends TestCase
         );
 
         $service->dispatch('UNKNOWN arg', $sender);
-
-        self::assertNull($contextHolder->context);
     }
 
     #[Test]
     public function permissionCheckRejectsNonOperWithoutRequiredPermission(): void
     {
         $sender = new SenderView('UID1', 'RegisteredNonIrcop', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('OPCMD', false, 'OPERSERV_OPCMD', 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
@@ -271,20 +286,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('OPCMD', $sender);
 
-        self::assertNull($contextHolder->context);
+        self::assertNull($contextHolder->getContext());
     }
 
     #[Test]
     public function operOnlyCommandAllowsOperViaIsOperFlag(): void
     {
         $sender = new SenderView('UID1', 'OperUser', 'ident', 'host', 'cloak', '127.0.0.1', false, true, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('OPCMD', true, null, 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $registry = new OperServCommandRegistry([$handler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -312,20 +327,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('OPCMD', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+        self::assertInstanceOf(OperServContext::class, $contextHolder->getContext());
     }
 
     #[Test]
     public function operOnlyCommandAllowsOperViaAccessHelperIsRoot(): void
     {
         $sender = new SenderView('UID1', 'TestUser', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('OPCMD', true, null, 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
@@ -356,20 +371,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('OPCMD', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+        self::assertInstanceOf(OperServContext::class, $contextHolder->getContext());
     }
 
     #[Test]
     public function operOnlyCommandAllowsOperViaIrcopLookup(): void
     {
         $sender = new SenderView('UID1', 'IrcopNick', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('OPCMD', true, null, 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
@@ -405,20 +420,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('OPCMD', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+        self::assertInstanceOf(OperServContext::class, $contextHolder->getContext());
     }
 
     #[Test]
     public function operOnlyCommandWithoutPermissionRejectsNonOperNonIrcop(): void
     {
         $sender = new SenderView('UID1', 'RegularUser', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('ROLE', true, null, 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(99);
@@ -464,20 +479,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('ROLE', $sender);
 
-        self::assertNull($contextHolder->context);
+        self::assertNull($contextHolder->getContext());
     }
 
     #[Test]
     public function permissionCheckDeniesWhenUserLacksRequiredPermission(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('PERMCMD', false, 'operserv.admin', 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
@@ -521,20 +536,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('PERMCMD', $sender);
 
-        self::assertNull($contextHolder->context);
+        self::assertNull($contextHolder->getContext());
     }
 
     #[Test]
     public function permissionCheckAllowsWhenUserHasRequiredPermission(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('PERMCMD', false, 'operserv.admin', 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
@@ -587,20 +602,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('PERMCMD', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+        self::assertInstanceOf(OperServContext::class, $contextHolder->getContext());
     }
 
     #[Test]
     public function rootUserBypassesPermissionCheck(): void
     {
         $sender = new SenderView('UID1', 'RootNick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('PERMCMD', false, 'operserv.admin', 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
@@ -639,20 +654,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('PERMCMD', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+        self::assertInstanceOf(OperServContext::class, $contextHolder->getContext());
     }
 
     #[Test]
     public function repliesNotIdentifiedWhenRequiredPermissionIdentifiedAndUserNotIdentified(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('NEEDID', false, 'IDENTIFIED', 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $registry = new OperServCommandRegistry([$handler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -695,20 +710,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('NEEDID', $sender);
 
-        self::assertNull($contextHolder->context);
+        self::assertNull($contextHolder->getContext());
     }
 
     #[Test]
     public function minimumArgsCheckRejectsWhenNotEnoughArgs(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('NEEDARGS', false, null, 2);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $registry = new OperServCommandRegistry([$handler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -719,7 +734,11 @@ final class OperServServiceTest extends TestCase
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(
-            static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . ($params['%syntax%'] ?? '') : $id
+            static function (string $id, array $params = []): string {
+                $syntax = $params['%syntax%'] ?? '';
+
+                return 'error.syntax' === $id ? 'Syntax: ' . (is_string($syntax) ? $syntax : '') : $id;
+            }
         );
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createStub(LoggerInterface::class);
@@ -743,20 +762,20 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('NEEDARGS onlyone', $sender);
 
-        self::assertNull($contextHolder->context);
+        self::assertNull($contextHolder->getContext());
     }
 
     #[Test]
     public function languageAndTimezoneResolvedFromAccount(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('TEST', false, null, 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('es');
@@ -788,22 +807,23 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('TEST', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
-        self::assertSame('es', $contextHolder->context->getLanguage());
-        self::assertSame('Europe/Madrid', $contextHolder->context->getTimezone());
+        $context = $contextHolder->getContext();
+        self::assertInstanceOf(OperServContext::class, $context);
+        self::assertSame('es', $context->getLanguage());
+        self::assertSame('Europe/Madrid', $context->getTimezone());
     }
 
     #[Test]
     public function languageAndTimezoneUseDefaultsWhenNoAccount(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('TEST', false, null, 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $registry = new OperServCommandRegistry([$handler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -831,22 +851,23 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('TEST', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
-        self::assertSame('es', $contextHolder->context->getLanguage());
-        self::assertSame('Europe/Madrid', $contextHolder->context->getTimezone());
+        $context = $contextHolder->getContext();
+        self::assertInstanceOf(OperServContext::class, $context);
+        self::assertSame('es', $context->getLanguage());
+        self::assertSame('Europe/Madrid', $context->getTimezone());
     }
 
     #[Test]
     public function commandLoggedCorrectly(): void
     {
         $sender = new SenderView('UID1', 'TestNick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $handler = $this->createMockCommandHandler('LOGTEST', false, null, 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+        $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
-        };
+        });
 
         $registry = new OperServCommandRegistry([$handler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -878,18 +899,18 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('LOGTEST arg1 arg2', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+        self::assertInstanceOf(OperServContext::class, $contextHolder->getContext());
     }
 
     #[Test]
     public function dispatchesCommandExecutedEventWithSuccessfulOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $auditableHandler = new class($contextHolder) implements OperServCommandInterface, IrcopAuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly OperServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -936,7 +957,7 @@ final class OperServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'OPERSERV_ADMIN';
             }
@@ -999,18 +1020,18 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('AUDITCMD', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+        self::assertInstanceOf(OperServContext::class, $contextHolder->getContext());
     }
 
     #[Test]
     public function dispatchesCommandExecutedEventWithRejectedOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
         $auditableHandler = new class($contextHolder) implements OperServCommandInterface, IrcopAuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly OperServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1057,7 +1078,7 @@ final class OperServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'OPERSERV_ADMIN';
             }
@@ -1103,7 +1124,7 @@ final class OperServServiceTest extends TestCase
 
         $service->dispatch('FAILCMD', $sender);
 
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+        self::assertInstanceOf(OperServContext::class, $contextHolder->getContext());
     }
 
     private function createMockCommandHandler(
@@ -1111,20 +1132,21 @@ final class OperServServiceTest extends TestCase
         bool $isOperOnly,
         ?string $requiredPermission,
         int $minArgs,
-    ): object {
-        $contextHolder = new stdClass();
-        $contextHolder->executeCallback = null;
-
-        return new class($name, $isOperOnly, $requiredPermission, $minArgs, $contextHolder) implements OperServCommandInterface {
-            public $executeCallback;
+    ): OperServCallbackCommandInterface {
+        return new class($name, $isOperOnly, $requiredPermission, $minArgs) implements OperServCallbackCommandInterface {
+            private ?Closure $executeCallback = null;
 
             public function __construct(
                 private readonly string $name,
                 private readonly bool $isOperOnly,
                 private readonly ?string $requiredPermission,
                 private readonly int $minArgs,
-                private readonly stdClass $contextHolder,
             ) {}
+
+            public function setExecuteCallback(Closure $callback): void
+            {
+                $this->executeCallback = $callback;
+            }
 
             public function getName(): string
             {

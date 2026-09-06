@@ -222,7 +222,6 @@ final class OperRoleTest extends TestCase
         $idProp->setValue($role, 123);
 
         self::assertSame(123, $role->getId());
-        self::assertIsInt($role->getId());
     }
 
     #[Test]
@@ -256,6 +255,16 @@ final class OperRoleTest extends TestCase
     public function getUserModesReturnsEmptyArrayWhenNoModesSet(): void
     {
         $role = OperRole::create('Test');
+
+        self::assertSame([], $role->getUserModes());
+    }
+
+    #[Test]
+    public function getUserModesReturnsEmptyArrayForInvalidJson(): void
+    {
+        $role = OperRole::create('Test');
+        $property = new ReflectionClass(OperRole::class)->getProperty('userModes');
+        $property->setValue($role, '{invalid');
 
         self::assertSame([], $role->getUserModes());
     }

@@ -22,6 +22,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use UnexpectedValueException;
+
+use function is_string;
 
 #[CoversClass(IrcopModeApplier::class)]
 final class IrcopModeApplierTest extends TestCase
@@ -45,7 +48,18 @@ final class IrcopModeApplierTest extends TestCase
     {
         $support = $this->createStub(UserModeSupportInterface::class);
         $support->method('buildModeParams')->willReturnCallback(
-            static fn (string $sign, array $modes): array => [$sign . implode('', $modes), []],
+            static function (string $sign, array $modes): array {
+                $modeString = '';
+                foreach ($modes as $mode) {
+                    if (!is_string($mode)) {
+                        throw new UnexpectedValueException('User modes must be strings.');
+                    }
+
+                    $modeString .= $mode;
+                }
+
+                return [$sign . $modeString, []];
+            },
         );
 
         return $support;
@@ -58,6 +72,63 @@ final class IrcopModeApplierTest extends TestCase
         $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
 
         return $module;
+    }
+
+    #[Test]
+    public function applyAndRemoveReturnFalseWhenServerSidIsMissing(): void
+    {
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID123', 'TestNick');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn(new SenderView(
+            'UID123',
+            'TestNick',
+            'test',
+            'host.test',
+            'hidden.host',
+            'AAAA',
+            isIdentified: true,
+            modes: '+i',
+        ));
+        $actions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $actions->expects(self::never())->method('setUserMode');
+        $module = $this->createModuleWithUserModeSupport($actions);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+        $connectionHolder->method('getServerSid')->willReturn(null);
+        $applyRole = OperRole::create('ADMIN', 'Admin role');
+        $applyRole->changeUserModes(['H']);
+        $removeRole = OperRole::create('ADMIN', 'Admin role');
+        $removeRole->changeUserModes(['i']);
+        $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
+
+        self::assertFalse($applier->applyModesForNick('TestNick', $applyRole));
+        self::assertFalse($applier->removeModesForNick('TestNick', $removeRole));
+    }
+
+    #[Test]
+    public function emptyCurrentModesAreHandledWhenRemovingModes(): void
+    {
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID123', 'TestNick');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn(new SenderView(
+            'UID123',
+            'TestNick',
+            'test',
+            'host.test',
+            'hidden.host',
+            'AAAA',
+            isIdentified: true,
+            modes: '',
+        ));
+        $module = $this->createModuleWithUserModeSupport($this->createStub(ProtocolServiceActionsInterface::class));
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+        $role = OperRole::create('ADMIN', 'Admin role');
+        $role->changeUserModes(['H']);
+
+        self::assertTrue($this->createApplier($identifiedRegistry, $connectionHolder, $userLookup)->removeModesForNick('TestNick', $role));
     }
 
     #[Test]
@@ -88,6 +159,11 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn(null);
 
+        $packedIp = inet_pton('10.0.0.1');
+        if (false === $packedIp) {
+            self::fail('Expected a packed IPv4 address.');
+        }
+
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn(new SenderView(
             uid: 'UID123',
@@ -95,7 +171,7 @@ final class IrcopModeApplierTest extends TestCase
             ident: 'test',
             hostname: 'host.test',
             cloakedHost: 'hidden.host',
-            ipBase64: base64_encode(inet_pton('10.0.0.1')),
+            ipBase64: base64_encode($packedIp),
             isIdentified: true,
         ));
 
@@ -389,7 +465,7 @@ final class IrcopModeApplierTest extends TestCase
 
         $applier->updateModesForRole(1, ['H', 'W'], ['H', 'W']);
 
-        self::assertTrue(true);
+        self::assertSame(['H', 'W'], $role->getUserModes());
     }
 
     #[Test]
@@ -422,7 +498,7 @@ final class IrcopModeApplierTest extends TestCase
 
         $applier->updateModesForRole($roleId, [], ['H', 'q']);
 
-        self::assertTrue(true);
+        self::assertSame(['H', 'q'], $role->getUserModes());
     }
 
     #[Test]
@@ -530,7 +606,7 @@ final class IrcopModeApplierTest extends TestCase
 
         $applier->updateModesForRole($roleId, [], ['q']);
 
-        self::assertTrue(true);
+        self::assertSame(['q'], $role->getUserModes());
     }
 
     #[Test]
@@ -576,7 +652,7 @@ final class IrcopModeApplierTest extends TestCase
 
         $applier->updateModesForRole($roleId, [], ['q']);
 
-        self::assertTrue(true);
+        self::assertSame(['q'], $role->getUserModes());
     }
 
     #[Test]

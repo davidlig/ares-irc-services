@@ -52,6 +52,7 @@ abstract class RoleHandlerTestCase extends TestCase
         return new IrcopAccessHelper($rootRegistry, $adminRepo, $roleRepo);
     }
 
+    /** @param list<string> $ircOpModes */
     protected function createCmd(
         OperRoleRepositoryInterface $roleRepo,
         OperPermissionRepositoryInterface $permRepo,
@@ -114,13 +115,14 @@ abstract class RoleHandlerTestCase extends TestCase
             new RoleVhostHandler(
                 $roleRepo,
                 $vhostApplier,
-                new VhostValidator('virtual'),
+                new VhostValidator(),
                 $eventDispatcher ?? $this->createStub(EventBusInterface::class),
             ),
             $accessHelper,
         );
     }
 
+    /** @param list<string> $args */
     protected function createContext(
         ?SenderView $sender,
         array $args,

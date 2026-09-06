@@ -23,6 +23,7 @@ final readonly class RootUserRegistry
         return isset($this->rootNicksLower[strtolower($nick)]);
     }
 
+    /** @return list<string> */
     public function getRootNicks(): array
     {
         return array_keys($this->rootNicksLower);

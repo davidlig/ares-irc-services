@@ -25,6 +25,11 @@ final readonly class RoleCommand implements OperServCommandInterface
         private IrcopAccessHelper $accessHelper,
     ) {}
 
+    public function getAccessHelper(): IrcopAccessHelper
+    {
+        return $this->accessHelper;
+    }
+
     public function getName(): string
     {
         return 'ROLE';

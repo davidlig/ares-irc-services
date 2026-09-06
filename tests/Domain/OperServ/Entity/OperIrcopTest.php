@@ -19,6 +19,7 @@ final class OperIrcopTest extends TestCase
     public function createWithAllParameters(): void
     {
         $role = $this->createStub(OperRole::class);
+        $before = new DateTimeImmutable();
 
         $ircop = OperIrcop::create(
             nickId: 42,
@@ -26,12 +27,14 @@ final class OperIrcopTest extends TestCase
             addedById: 10,
             reason: 'Promoted to operator',
         );
+        $after = new DateTimeImmutable();
 
         self::assertSame(42, $ircop->getNickId());
         self::assertSame($role, $ircop->getRole());
         self::assertSame(10, $ircop->getAddedById());
         self::assertSame('Promoted to operator', $ircop->getReason());
-        self::assertInstanceOf(DateTimeImmutable::class, $ircop->getAddedAt());
+        self::assertGreaterThanOrEqual($before, $ircop->getAddedAt());
+        self::assertLessThanOrEqual($after, $ircop->getAddedAt());
     }
 
     #[Test]
@@ -125,7 +128,6 @@ final class OperIrcopTest extends TestCase
 
         $afterCreate = new DateTimeImmutable();
 
-        self::assertInstanceOf(DateTimeImmutable::class, $ircop->getAddedAt());
         self::assertGreaterThanOrEqual($beforeCreate, $ircop->getAddedAt());
         self::assertLessThanOrEqual($afterCreate, $ircop->getAddedAt());
     }

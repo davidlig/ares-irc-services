@@ -20,6 +20,16 @@ use PHPUnit\Framework\Attributes\Test;
 final class RoleCommandTest extends RoleHandlerTestCase
 {
     #[Test]
+    public function exposesAccessHelper(): void
+    {
+        $accessHelper = $this->createAccessHelper(true);
+        $roleRepository = $this->createStub(OperRoleRepositoryInterface::class);
+        $command = $this->createCmd($roleRepository, $this->createStub(OperPermissionRepositoryInterface::class), $accessHelper, new PermissionRegistry([]));
+
+        self::assertSame($accessHelper, $command->getAccessHelper());
+    }
+
+    #[Test]
     public function nonRootUserGetsRootOnlyError(): void
     {
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);

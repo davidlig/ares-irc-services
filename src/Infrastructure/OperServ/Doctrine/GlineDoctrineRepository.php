@@ -46,32 +46,44 @@ final readonly class GlineDoctrineRepository implements GlineRepositoryInterface
     {
         $lowerPattern = strtolower($pattern);
 
-        return $this->em
+        /** @var array<mixed> $result */
+        $result = $this->em
             ->createQuery(
                 'SELECT g FROM App\Domain\OperServ\Entity\Gline g WHERE LOWER(g.mask) LIKE :pattern ORDER BY g.createdAt DESC'
             )
             ->setParameter('pattern', '%' . $lowerPattern . '%')
             ->getResult();
+
+        /* @var array<Gline> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof Gline));
     }
 
     public function findExpired(): array
     {
-        return $this->em
+        /** @var array<mixed> $result */
+        $result = $this->em
             ->createQuery(
                 'SELECT g FROM App\Domain\OperServ\Entity\Gline g WHERE g.expiresAt IS NOT NULL AND g.expiresAt < :now ORDER BY g.createdAt DESC'
             )
-            ->setParameter('now', new DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'))
             ->getResult();
+
+        /* @var array<Gline> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof Gline));
     }
 
     public function findActive(): array
     {
-        return $this->em
+        /** @var array<mixed> $result */
+        $result = $this->em
             ->createQuery(
                 'SELECT g FROM App\Domain\OperServ\Entity\Gline g WHERE g.expiresAt IS NULL OR g.expiresAt > :now ORDER BY g.createdAt DESC'
             )
-            ->setParameter('now', new DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'))
             ->getResult();
+
+        /* @var array<Gline> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof Gline));
     }
 
     public function countAll(): int

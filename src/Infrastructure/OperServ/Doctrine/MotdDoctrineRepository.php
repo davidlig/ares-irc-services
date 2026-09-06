@@ -36,7 +36,8 @@ final readonly class MotdDoctrineRepository implements MotdRepositoryInterface
 
     public function findActive(): array
     {
-        return $this->em
+        /** @var array<mixed> $result */
+        $result = $this->em
             ->createQuery(
                 'SELECT m FROM App\Domain\OperServ\Entity\Motd m
                  WHERE m.enabled = true
@@ -44,6 +45,9 @@ final readonly class MotdDoctrineRepository implements MotdRepositoryInterface
                  ORDER BY m.createdAt ASC'
             )
             ->getResult();
+
+        /* @var array<Motd> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof Motd));
     }
 
     public function countActive(): int
@@ -59,7 +63,8 @@ final readonly class MotdDoctrineRepository implements MotdRepositoryInterface
 
     public function findExpired(): array
     {
-        return $this->em
+        /** @var array<mixed> $result */
+        $result = $this->em
             ->createQuery(
                 'SELECT m FROM App\Domain\OperServ\Entity\Motd m
                  WHERE m.expiresAt IS NOT NULL
@@ -67,6 +72,9 @@ final readonly class MotdDoctrineRepository implements MotdRepositoryInterface
                  ORDER BY m.createdAt ASC'
             )
             ->getResult();
+
+        /* @var array<Motd> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof Motd));
     }
 
     public function deleteByNickId(int $nickId): void

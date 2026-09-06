@@ -71,16 +71,16 @@ final readonly class ForcedVhost
 
     public static function cleanNickname(string $nickname): string
     {
-        $cleaned = preg_replace('/[^a-zA-Z0-9.\-]/', '', $nickname);
+        $cleaned = (string) preg_replace('/[^a-zA-Z0-9.\-]/', '', $nickname);
 
-        if ('' === $cleaned || null === $cleaned) {
+        if ('' === $cleaned) {
             return 'user';
         }
 
-        $cleaned = preg_replace('/^[.\-]+/', '', $cleaned);
-        $cleaned = preg_replace('/[.\-]+$/', '', $cleaned);
-        $cleaned = preg_replace('/\.\./', '.', $cleaned);
-        $cleaned = preg_replace('/--/', '-', $cleaned);
+        $cleaned = (string) preg_replace('/^[.\-]+/', '', $cleaned);
+        $cleaned = (string) preg_replace('/[.\-]+$/', '', $cleaned);
+        $cleaned = (string) preg_replace('/\.\./', '.', $cleaned);
+        $cleaned = (string) preg_replace('/--/', '-', $cleaned);
 
         if ('' === $cleaned) {
             return 'user';

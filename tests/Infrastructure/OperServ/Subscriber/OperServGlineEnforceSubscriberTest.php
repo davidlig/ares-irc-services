@@ -100,14 +100,8 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn(null);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $warningLogged = false;
-        $logger = new class($warningLogged) extends NullLogger {
-            private bool $warningLogged;
-
-            public function __construct(bool &$warningLogged)
-            {
-                $this->warningLogged = &$warningLogged;
-            }
+        $logger = new class extends NullLogger {
+            public bool $warningLogged = false;
 
             public function warning(string|Stringable $message, array $context = []): void
             {
@@ -126,7 +120,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
 
         $subscriber->onSyncComplete($event);
 
-        self::assertTrue($warningLogged);
+        self::assertTrue($logger->warningLogged);
     }
 
     #[Test]
@@ -142,14 +136,8 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn(null);
 
-        $warningLogged = false;
-        $logger = new class($warningLogged) extends NullLogger {
-            private bool $warningLogged;
-
-            public function __construct(bool &$warningLogged)
-            {
-                $this->warningLogged = &$warningLogged;
-            }
+        $logger = new class extends NullLogger {
+            public bool $warningLogged = false;
 
             public function warning(string|Stringable $message, array $context = []): void
             {
@@ -168,7 +156,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
 
         $subscriber->onSyncComplete($event);
 
-        self::assertTrue($warningLogged);
+        self::assertTrue($logger->warningLogged);
     }
 
     #[Test]

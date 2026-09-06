@@ -62,7 +62,7 @@ final readonly class RolePermissionsHandler
             $assignedPermissions[] = $permission->getName();
         }
 
-        $availablePermissions = array_diff($this->permissionRegistry->getAllPermissions(), $assignedPermissions);
+        $availablePermissions = array_values(array_diff($this->permissionRegistry->getAllPermissions(), $assignedPermissions));
 
         if ([] === $assignedPermissions && [] === $availablePermissions) {
             $context->reply('role.perms.list.empty', ['%role%' => $role->getName()]);
@@ -144,7 +144,12 @@ final readonly class RolePermissionsHandler
                 continue;
             }
 
-            $role->addPermission($this->findOrCreate($permissionName));
+            $perm = $this->findOrCreate($permissionName);
+            if (null === $perm) {
+                continue;
+            }
+
+            $role->addPermission($perm);
             ++$added;
         }
 
@@ -235,7 +240,7 @@ final readonly class RolePermissionsHandler
 
     private function resolveDescription(string $permission, OperServContext $context): string
     {
-        $domain = str_contains($permission, '.') ? strstr($permission, '.', true) : 'operserv';
+        $domain = str_contains($permission, '.') ? (strstr($permission, '.', true) ?: 'operserv') : 'operserv';
         $description = $context->transForDomain('permissions.' . $permission, $domain);
 
         if (str_starts_with($description, 'permissions.') && 'operserv' !== $domain) {

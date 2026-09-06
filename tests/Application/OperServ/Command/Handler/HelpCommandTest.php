@@ -35,6 +35,7 @@ final class HelpCommandTest extends TestCase
         return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
+    /** @param list<string> $args */
     private function createContext(
         ?SenderView $sender,
         array $args,

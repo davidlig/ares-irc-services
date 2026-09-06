@@ -115,9 +115,7 @@ final class OperRoleModesSubscriberTest extends TestCase
             ->with('001', '001ABCD', '+os', []);
 
         $userModeSupport = $this->createStub(UserModeSupportInterface::class);
-        $userModeSupport->method('buildModeParams')->willReturnCallback(
-            static fn (string $sign, array $modes): array => [$sign . implode('', $modes), []],
-        );
+        $userModeSupport->method('buildModeParams')->willReturnCallback(self::buildModeParams(...));
 
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getServiceActions')->willReturn($serviceActions);
@@ -173,5 +171,15 @@ final class OperRoleModesSubscriberTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             new NullLogger(),
         );
+    }
+
+    /**
+     * @param array<int, string> $modes
+     *
+     * @return array{string, list<string>}
+     */
+    private static function buildModeParams(string $sign, array $modes): array
+    {
+        return [$sign . implode('', $modes), []];
     }
 }
