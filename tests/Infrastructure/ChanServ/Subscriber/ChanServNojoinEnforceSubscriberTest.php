@@ -790,7 +790,7 @@ final class ChanServNojoinEnforceSubscriberTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $channelView = new ChannelView('#test', '+nt', null, 1, [['roleLetter' => '']]);
+        $channelView = new ChannelView('#test', '+nt', null, 1, [['uid' => '', 'roleLetter' => '']]);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 

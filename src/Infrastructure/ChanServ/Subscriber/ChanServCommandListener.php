@@ -42,7 +42,7 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
         return $this->chanServBot->getNick();
     }
 
-    public function getServiceUid(): ?string
+    public function getServiceUid(): string
     {
         return $this->chanServBot->getUid();
     }

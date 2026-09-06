@@ -14,6 +14,7 @@ use App\Application\Command\IrcopAuditData;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
 use function array_slice;
+use function assert;
 use function implode;
 use function trim;
 
@@ -69,7 +70,7 @@ final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCom
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::FORBID;
     }
@@ -129,9 +130,12 @@ final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCom
 
     private function performForbid(ChanServContext $context, string $channelName, string $reason): CommandOutcome
     {
+        $sender = $context->sender;
+        assert(null !== $sender);
+
         $existing = $this->channelRepository->findByChannelName($channelName);
 
-        $this->forbiddenService->forbid($channelName, $reason, $context->sender->nick);
+        $this->forbiddenService->forbid($channelName, $reason, $sender->nick);
 
         $auditData = new IrcopAuditData(
             target: $channelName,

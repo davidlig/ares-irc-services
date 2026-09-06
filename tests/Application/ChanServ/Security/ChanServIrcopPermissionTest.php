@@ -19,6 +19,7 @@ final class ChanServIrcopPermissionTest extends TestCase
     {
         $permission = new ChanServIrcopPermission();
 
+        // @phpstan-ignore staticMethod.alreadyNarrowedType
         self::assertInstanceOf(PermissionProviderInterface::class, $permission);
     }
 

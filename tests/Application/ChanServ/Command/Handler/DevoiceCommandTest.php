@@ -32,6 +32,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(DevoiceCommand::class)]
 final class DevoiceCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -55,6 +58,27 @@ final class DevoiceCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
+    }
+
+    #[Test]
+    public function executeReturnsEarlyWhenSenderIsNull(): void
+    {
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->expects(self::never())->method('findByChannelName');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $command = new DevoiceCommand(
+            $channelRepository,
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        $command->execute($this->createContext(null, null, [], $notifier, $this->createStub(TranslationInterface::class)));
     }
 
     #[Test]

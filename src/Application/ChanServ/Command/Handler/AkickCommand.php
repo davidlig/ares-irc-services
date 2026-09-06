@@ -11,6 +11,7 @@ use App\Application\Port\BurstCompletePort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelView;
 use App\Application\Port\EventBusInterface;
+use App\Application\Port\SenderView;
 use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\ChanServ\Entity\ChannelAkick;
 use App\Domain\ChanServ\Entity\ChannelLevel;
@@ -20,6 +21,7 @@ use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 use function array_slice;
@@ -101,7 +103,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -143,16 +145,21 @@ final readonly class AkickCommand implements ChanServCommandInterface
             return;
         }
 
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $sub = strtoupper($context->args[1] ?? '');
         switch ($sub) {
             case 'LIST':
-                $this->doList($context, $channel, $channelName);
+                $this->doList($context, $channel, $channelName, $senderAccount);
                 break;
             case 'ADD':
-                $this->doAdd($context, $channel, $channelName);
+                $this->doAdd($context, $channel, $channelName, $senderAccount, $sender);
                 break;
             case 'DEL':
-                $this->doDel($context, $channel, $channelName);
+                $this->doDel($context, $channel, $channelName, $senderAccount, $sender);
                 break;
             default:
                 $context->reply('akick.unknown_sub', ['%sub%' => $sub]);
@@ -166,7 +173,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
             return;
         }
 
-        $view = $context->getChannelView($channelName);
+        $view = $this->channelLookup->findByChannelName($channelName);
         if (null === $view) {
             return;
         }
@@ -204,10 +211,10 @@ final readonly class AkickCommand implements ChanServCommandInterface
         }
     }
 
-    private function doList(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
+    private function doList(ChanServContext $context, RegisteredChannel $channel, string $channelName, RegisteredNick $senderAccount): void
     {
         if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK LIST');
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK LIST');
         }
 
         $entries = $this->akickRepository->listByChannel($channel->getId());
@@ -242,10 +249,10 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $this->applyAkickBansIfBurstComplete($context, $channel, $channelName);
     }
 
-    private function doAdd(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
+    private function doAdd(ChanServContext $context, RegisteredChannel $channel, string $channelName, RegisteredNick $senderAccount, SenderView $sender): void
     {
         if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK ADD');
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK ADD');
         }
 
         $mask = $this->validateAndGetMask($context, $channel);
@@ -253,7 +260,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
             return;
         }
 
-        $this->completeAdd($context, $channel, $channelName, $mask);
+        $this->completeAdd($context, $channel, $channelName, $mask, $senderAccount, $sender);
     }
 
     private function validateAndGetMask(ChanServContext $context, RegisteredChannel $channel): ?string
@@ -348,7 +355,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return false;
     }
 
-    private function completeAdd(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $mask): void
+    private function completeAdd(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $mask, RegisteredNick $senderAccount, SenderView $sender): void
     {
         $expiresAt = null;
         $reason = null;
@@ -391,7 +398,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
         $akick = ChannelAkick::create(
             $channel->getId(),
-            $context->senderAccount->getId(),
+            $senderAccount->getId(),
             $mask,
             $reason,
             $expiresAt,
@@ -401,15 +408,15 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
         // Apply ban immediately if burst is complete and user is in channel
         if ($this->burstCompletePort && $this->burstCompletePort->isComplete()) {
-            $view = $context->getChannelView($channelName);
+            $view = $this->channelLookup->findByChannelName($channelName);
             if (null !== $view) {
                 $this->applyAkickBanToChannelMembers($context, $akick, $view);
             }
         }
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
-        $performedByNickId = $context->senderAccount?->getId();
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
+        $performedByNickId = $senderAccount->getId();
 
         $this->eventDispatcher->dispatch(new ChannelAkickChangedEvent(
             channelId: $channel->getId(),
@@ -417,7 +424,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
             action: 'ADD',
             mask: $mask,
             reason: $reason,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -427,17 +434,17 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
         $noticeReason = null === $reason ? $context->trans('akick.list.no_reason') : $reason;
         $channelNotice = $context->trans('akick.add.notice_channel', [
-            '%from%' => $context->sender->nick,
+            '%from%' => $sender->nick,
             '%mask%' => $mask,
             '%reason%' => $noticeReason,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $channelNotice);
     }
 
-    private function doDel(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
+    private function doDel(ChanServContext $context, RegisteredChannel $channel, string $channelName, RegisteredNick $senderAccount, SenderView $sender): void
     {
         if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK DEL');
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK DEL');
         }
 
         if (count($context->args) < 3) {
@@ -464,9 +471,9 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $mask = $akick->getMask();
         $this->akickRepository->remove($akick);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
-        $performedByNickId = $context->senderAccount?->getId();
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
+        $performedByNickId = $senderAccount->getId();
 
         $this->eventDispatcher->dispatch(new ChannelAkickChangedEvent(
             channelId: $channel->getId(),
@@ -474,7 +481,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
             action: 'DEL',
             mask: $mask,
             reason: null,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -483,7 +490,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $context->reply('akick.del.done', ['%mask%' => $mask]);
 
         $channelNotice = $context->trans('akick.del.notice_channel', [
-            '%from%' => $context->sender->nick,
+            '%from%' => $sender->nick,
             '%mask%' => $mask,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $channelNotice);
@@ -518,7 +525,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
     {
         $exclamationPos = strpos($mask, '!');
 
-        $nickPattern = substr($mask, 0, $exclamationPos);
+        $nickPattern = false === $exclamationPos ? $mask : substr($mask, 0, $exclamationPos);
 
         // If nick pattern is only wildcards (* or combinations like **), it's not targeting any specific nick
         // so we should not block it (host-based bans like *!*@*.isp.com should be allowed)
@@ -542,7 +549,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
     }
 
     /**
-     * @return string[] List of protected nicknames (founder, successor, and access list members)
+     * @return list<string> List of protected nicknames (founder, successor, and access list members)
      */
     private function getProtectedNicks(RegisteredChannel $channel): array
     {

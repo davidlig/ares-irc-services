@@ -7,6 +7,7 @@ namespace App\Infrastructure\ChanServ\Subscriber;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelSyncCompletedRegistryInterface;
 use App\Application\Port\UidResolverInterface;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
 use Psr\Log\LoggerInterface;
@@ -60,7 +61,7 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
         $this->persistTopicIfReady($channelName, $registered, $event);
     }
 
-    private function persistTopicIfReady(string $channelName, object $registered, ChannelTopicReceivedEvent $event): void
+    private function persistTopicIfReady(string $channelName, RegisteredChannel $registered, ChannelTopicReceivedEvent $event): void
     {
         if (!$this->syncCompletedRegistry->isSyncCompleted($channelName)) {
             $this->logger->debug('ChanServ topic from wire not persisted (channel sync not yet completed)', ['channel' => $channelName]);

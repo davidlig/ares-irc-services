@@ -32,6 +32,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(DeopCommand::class)]
 final class DeopCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -55,6 +58,25 @@ final class DeopCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
+    }
+
+    #[Test]
+    public function executeReturnsEarlyWhenSenderIsNull(): void
+    {
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->expects(self::never())->method('findByChannelName');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $command = new DeopCommand(
+            $channelRepository,
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        $command->execute($this->createContext(null, null, [], $notifier, $this->createStub(TranslationInterface::class)));
     }
 
     #[Test]
@@ -171,7 +193,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['#test', ''], $notifier, $translator));
 
@@ -195,7 +216,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         $this->expectException(ChannelNotRegisteredException::class);
@@ -225,7 +245,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['#test', 'Nick'], $notifier, $translator));
 
@@ -258,7 +277,6 @@ final class DeopCommandTest extends TestCase
             $levelRepo,
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'TargetNick'], $notifier, $translator));
@@ -410,7 +428,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertSame('DEOP', $cmd->getName());
@@ -425,7 +442,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertSame([], $cmd->getAliases());
@@ -440,7 +456,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertSame(2, $cmd->getMinArgs());
@@ -455,7 +470,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertSame('deop.syntax', $cmd->getSyntaxKey());
@@ -470,7 +484,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertSame('deop.help', $cmd->getHelpKey());
@@ -485,7 +498,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertSame(21, $cmd->getOrder());
@@ -500,7 +512,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertSame('deop.short', $cmd->getShortDescKey());
@@ -515,7 +526,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertSame([], $cmd->getSubCommandHelp());
@@ -530,7 +540,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertFalse($cmd->isOperOnly());
@@ -545,7 +554,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
@@ -560,7 +568,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertFalse($cmd->allowsSuspendedChannel());
@@ -575,7 +582,6 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertFalse($cmd->allowsForbiddenChannel());

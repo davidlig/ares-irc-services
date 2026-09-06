@@ -101,6 +101,23 @@ final class RestoreCommandTest extends TestCase
     }
 
     #[Test]
+    public function executeReturnsRejectedWhenValidatedChannelHasNoSender(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->markPendingDeletion();
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('findByChannelName')->willReturn($channel);
+        $dropService = $this->createMock(ChanDropService::class);
+        $dropService->expects(self::never())->method('restoreChannel');
+        $messages = [];
+
+        $outcome = new RestoreCommand($repository, $dropService)->execute($this->createContextWithoutSender(['#test'], $messages));
+
+        self::assertFalse($outcome->success);
+        self::assertSame([], $messages);
+    }
+
+    #[Test]
     public function executeRepliesInvalidChannel(): void
     {
         $messages = [];
@@ -130,19 +147,28 @@ final class RestoreCommandTest extends TestCase
         );
     }
 
-    /** @param string[] $args */
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContext(array $args, array &$messages): ChanServContext
     {
-        return $this->createContextWithSender(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', ''), $args, $messages);
+        return $this->createContextWithSender(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o'), $args, $messages);
     }
 
-    /** @param string[] $args */
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContextWithoutSender(array $args, array &$messages): ChanServContext
     {
         return $this->createContextWithSender(null, $args, $messages);
     }
 
-    /** @param string[] $args */
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContextWithSender(?SenderView $sender, array $args, array &$messages): ChanServContext
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);

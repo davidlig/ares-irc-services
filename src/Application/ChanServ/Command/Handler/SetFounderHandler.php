@@ -15,6 +15,7 @@ use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
@@ -65,7 +66,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         $this->executeFounderTransfer($context, $channel, $newAccount, $newNickname, $validation);
     }
 
-    private function validateFounderTransfer(ChanServContext $context, RegisteredChannel $channel, string $newNickname, $newAccount): ?string
+    private function validateFounderTransfer(ChanServContext $context, RegisteredChannel $channel, string $newNickname, RegisteredNick $newAccount): ?string
     {
         $founderTransferKey = $this->validateFounderAccount($context, $channel, $newNickname, $newAccount);
         if (null === $founderTransferKey) {
@@ -80,7 +81,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         return $founderTransferKey;
     }
 
-    private function validateFounderAccount(ChanServContext $context, RegisteredChannel $channel, string $newNickname, $newAccount): ?string
+    private function validateFounderAccount(ChanServContext $context, RegisteredChannel $channel, string $newNickname, RegisteredNick $newAccount): ?string
     {
         if (NickStatus::Suspended === $newAccount->getStatus()) {
             $context->reply('set.founder.suspended', ['%nickname%' => $newNickname]);
@@ -96,7 +97,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         return $this->validateFounderSelfAndSuccessor($context, $channel, $newNickname, $newAccount);
     }
 
-    private function validateFounderSelfAndSuccessor(ChanServContext $context, RegisteredChannel $channel, string $newNickname, $newAccount): ?string
+    private function validateFounderSelfAndSuccessor(ChanServContext $context, RegisteredChannel $channel, string $newNickname, RegisteredNick $newAccount): ?string
     {
         if ($newAccount->getId() === $channel->getFounderNickId()) {
             $context->reply('set.founder.cannot_be_self');
@@ -112,7 +113,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         return 'valid';
     }
 
-    private function validateFounderLimit(ChanServContext $context, RegisteredChannel $channel, string $newNickname, $newAccount): ?string
+    private function validateFounderLimit(ChanServContext $context, RegisteredChannel $channel, string $newNickname, RegisteredNick $newAccount): ?string
     {
         $existingChannelsByNewFounder = $this->channelRepository->findByFounderNickId($newAccount->getId());
         if (count($existingChannelsByNewFounder) >= $this->maxChannelsPerNick) {
@@ -124,7 +125,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         return 'valid';
     }
 
-    private function executeFounderTransfer(ChanServContext $context, RegisteredChannel $channel, $newAccount, string $newNickname, string $validationKey): void
+    private function executeFounderTransfer(ChanServContext $context, RegisteredChannel $channel, RegisteredNick $newAccount, string $newNickname, string $validationKey): void
     {
         if ($context->isLevelFounder) {
             $this->directTransfer($context, $channel, $newAccount->getId());
@@ -135,7 +136,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         $this->executeEmailTokenFlow($context, $channel, $newAccount, $newNickname);
     }
 
-    private function executeEmailTokenFlow(ChanServContext $context, RegisteredChannel $channel, $newAccount, string $newNickname): void
+    private function executeEmailTokenFlow(ChanServContext $context, RegisteredChannel $channel, RegisteredNick $newAccount, string $newNickname): void
     {
         $currentFounder = $this->nickRepository->findById($channel->getFounderNickId());
         $founderEmail = $currentFounder?->getEmail();
@@ -222,9 +223,14 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             return;
         }
 
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $oldFounderNickId = $channel->getFounderNickId();
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $channel->changeFounder($newFounderNickId);
@@ -240,7 +246,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             channelName: $channel->getName(),
             oldFounderNickId: $oldFounderNickId,
             newFounderNickId: $newFounderNickId,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -252,7 +258,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         $context->reply('set.founder.updated', ['%nickname%' => $newFounderNick]);
 
         $notice = $context->trans('set.founder.notice_channel', [
-            '%from%' => $context->sender->nick,
+            '%from%' => $sender->nick,
             '%nickname%' => $newFounderNick,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
@@ -260,9 +266,14 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 
     private function directTransfer(ChanServContext $context, RegisteredChannel $channel, int $newFounderNickId): void
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $oldFounderNickId = $channel->getFounderNickId();
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $channel->changeFounder($newFounderNickId);
@@ -278,7 +289,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             channelName: $channel->getName(),
             oldFounderNickId: $oldFounderNickId,
             newFounderNickId: $newFounderNickId,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -290,7 +301,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         $context->reply('set.founder.updated', ['%nickname%' => $newFounderNick]);
 
         $notice = $context->trans('set.founder.notice_channel', [
-            '%from%' => $context->sender->nick,
+            '%from%' => $sender->nick,
             '%nickname%' => $newFounderNick,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);

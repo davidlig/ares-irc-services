@@ -31,6 +31,7 @@ use function count;
 #[CoversClass(LevelsCommand::class)]
 final class LevelsCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,

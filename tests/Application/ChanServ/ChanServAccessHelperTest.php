@@ -204,7 +204,7 @@ final class ChanServAccessHelperTest extends TestCase
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturnCallback(
-            static fn (int $c, string $key): ?ChannelLevel => match ($key) {
+            static fn (int $c, string $key): ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel(1, $key, 400),
                 ChannelLevel::KEY_AUTOOP => new ChannelLevel(1, $key, 200),
                 default => new ChannelLevel(1, $key, 0),
@@ -230,7 +230,7 @@ final class ChanServAccessHelperTest extends TestCase
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturnCallback(
-            static fn (int $c, string $key): ?ChannelLevel => match ($key) {
+            static fn (int $c, string $key): ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel(1, $key, 400),
                 ChannelLevel::KEY_AUTOOP => new ChannelLevel(1, $key, 300),
                 default => new ChannelLevel(1, $key, 0),
@@ -256,7 +256,7 @@ final class ChanServAccessHelperTest extends TestCase
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturnCallback(
-            static fn (int $c, string $key): ?ChannelLevel => match ($key) {
+            static fn (int $c, string $key): ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel(1, $key, 499),
                 ChannelLevel::KEY_AUTOOP => new ChannelLevel(1, $key, 400),
                 ChannelLevel::KEY_AUTOHALFOP => new ChannelLevel(1, $key, 300),
@@ -284,7 +284,7 @@ final class ChanServAccessHelperTest extends TestCase
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturnCallback(
-            static fn (int $c, string $key): ?ChannelLevel => match ($key) {
+            static fn (int $c, string $key): ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel(1, $key, 499),
                 ChannelLevel::KEY_AUTOOP => new ChannelLevel(1, $key, 400),
                 ChannelLevel::KEY_AUTOHALFOP => new ChannelLevel(1, $key, 300),
@@ -312,7 +312,7 @@ final class ChanServAccessHelperTest extends TestCase
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturnCallback(
-            static fn (int $c, string $key): ?ChannelLevel => new ChannelLevel(1, $key, 100)
+            static fn (int $c, string $key): ChannelLevel => new ChannelLevel(1, $key, 100)
         );
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['v', 'h', 'o', 'a']);

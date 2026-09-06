@@ -30,6 +30,22 @@ use Psr\Log\NullLogger;
 final class ChanServAkickEnforceSubscriberTest extends TestCase
 {
     #[Test]
+    public function getChanservNickReturnsConfiguredNickname(): void
+    {
+        $subscriber = new ChanServAkickEnforceSubscriber(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAkickRepositoryInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(ChannelServiceActionsPort::class),
+            'ChanServ',
+            new NullLogger(),
+        );
+
+        self::assertSame('ChanServ', $subscriber->getChanservNick());
+    }
+
+    #[Test]
     public function kicksUserMatchingAkickMask(): void
     {
         $akick = ChannelAkick::create(1, 2, '*!*@*.isp.com', 'Spammer');
@@ -626,7 +642,7 @@ final class ChanServAkickEnforceSubscriberTest extends TestCase
         $channelView2 = new ChannelView('#test2', '+nt', null, 1, [['uid' => 'UID2', 'roleLetter' => '']]);
 
         $channelLookup = $this->createStub(ChannelLookupPort::class);
-        $channelLookup->method('findByChannelName')->willReturnCallback(static fn (string $name): ?ChannelView => '#test1' === $name ? $channelView1 : $channelView2);
+        $channelLookup->method('findByChannelName')->willReturnCallback(static fn (string $name): ChannelView => '#test1' === $name ? $channelView1 : $channelView2);
 
         $kickCount = 0;
         $channelServiceActions = $this->createStub(ChannelServiceActionsPort::class);

@@ -29,6 +29,7 @@ final readonly class ChanServContext implements IrcopContextInterface
         private TranslationInterface $translator,
         private string $language,
         private string $timezone,
+        /** @var 'NOTICE'|'PRIVMSG' */
         private string $messageType,
         private ChanServCommandRegistry $registry,
         private ChannelLookupPort $channelLookup,
@@ -48,6 +49,9 @@ final readonly class ChanServContext implements IrcopContextInterface
         return $this->senderAccount;
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function reply(string $key, array $params = []): void
     {
         $message = $this->translator->trans($key, $this->wrapParams($params), 'chanserv', $this->language);
@@ -100,6 +104,9 @@ final readonly class ChanServContext implements IrcopContextInterface
         return $this->registry;
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function trans(string $key, array $params = []): string
     {
         return $this->translator->trans($key, $this->wrapParams($params), 'chanserv', $this->language);

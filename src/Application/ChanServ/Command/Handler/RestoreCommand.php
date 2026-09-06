@@ -11,7 +11,10 @@ use App\Application\ChanServ\Service\ChanDropService;
 use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+
+use function assert;
 
 final class RestoreCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
@@ -65,7 +68,7 @@ final class RestoreCommand implements ChanServCommandInterface, IrcopAuditableCo
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::RESTORE;
     }
@@ -99,7 +102,7 @@ final class RestoreCommand implements ChanServCommandInterface, IrcopAuditableCo
         return $this->performRestore($context, ...$validation);
     }
 
-    /** @return array{string, object}|null */
+    /** @return array{string, RegisteredChannel}|null */
     private function validateRestore(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -119,8 +122,8 @@ final class RestoreCommand implements ChanServCommandInterface, IrcopAuditableCo
         return $this->checkRestoreDeletionStatus($context, $channel, $channelName);
     }
 
-    /** @return array{string, object}|null */
-    private function checkRestoreDeletionStatus(ChanServContext $context, object $channel, string $channelName): ?array
+    /** @return array{string, RegisteredChannel}|null */
+    private function checkRestoreDeletionStatus(ChanServContext $context, RegisteredChannel $channel, string $channelName): ?array
     {
         if (!$channel->isPendingDeletion()) {
             $context->reply('restore.not_pending_deletion', ['%channel%' => $channelName]);
@@ -131,9 +134,12 @@ final class RestoreCommand implements ChanServCommandInterface, IrcopAuditableCo
         return [$channelName, $channel];
     }
 
-    private function performRestore(ChanServContext $context, string $channelName, object $channel): CommandOutcome
+    private function performRestore(ChanServContext $context, string $channelName, RegisteredChannel $channel): CommandOutcome
     {
-        $this->dropService->restoreChannel($channel, $context->sender->nick);
+        $sender = $context->sender;
+        assert(null !== $sender);
+
+        $this->dropService->restoreChannel($channel, $sender->nick);
         $context->reply('restore.success', ['%channel%' => $channelName]);
 
         return CommandOutcome::success(new IrcopAuditData(target: $channelName));

@@ -1202,8 +1202,8 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->modeSupportProvider->method('getSupport')->willReturn($modeSupport);
         $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $this->channelServiceActions->expects(self::exactly(2))->method('setChannelMemberMode');
-        $this->channelServiceActions->expects(self::exactly(2))->method('setChannelMemberMode')->willReturnCallback(static function (string $channel, string $uid, string $mode, bool $add): void {
-            static $calls = 0;
+        $calls = 0;
+        $this->channelServiceActions->expects(self::exactly(2))->method('setChannelMemberMode')->willReturnCallback(static function (string $channel, string $uid, string $mode, bool $add) use (&$calls): void {
             ++$calls;
             if (1 === $calls) {
                 self::assertSame('o', $mode);
@@ -2219,8 +2219,8 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->modeSupportProvider->method('getSupport')->willReturn($modeSupport);
         $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $this->channelServiceActions->expects(self::exactly(2))->method('setChannelMemberMode');
-        $this->channelServiceActions->expects(self::exactly(2))->method('setChannelMemberMode')->willReturnCallback(static function (string $channel, string $uid, string $mode, bool $add): void {
-            static $calls = 0;
+        $calls = 0;
+        $this->channelServiceActions->expects(self::exactly(2))->method('setChannelMemberMode')->willReturnCallback(static function (string $channel, string $uid, string $mode, bool $add) use (&$calls): void {
             ++$calls;
             self::assertSame('v', $mode);
             self::assertFalse($add);

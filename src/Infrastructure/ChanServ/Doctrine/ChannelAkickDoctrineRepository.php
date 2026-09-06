@@ -39,6 +39,7 @@ class ChannelAkickDoctrineRepository implements ChannelAkickRepositoryInterface
             ->getRepository(ChannelAkick::class)
             ->findBy(['channelId' => $channelId], ['createdAt' => 'ASC']);
 
+        // @phpstan-ignore instanceof.alwaysTrue
         return array_filter($result, static fn ($row): bool => $row instanceof ChannelAkick);
     }
 
@@ -64,12 +65,15 @@ class ChannelAkickDoctrineRepository implements ChannelAkickRepositoryInterface
      */
     public function findExpired(): array
     {
-        return $this->em
+        /** @var ChannelAkick[] $result */
+        $result = $this->em
             ->createQuery(
                 'SELECT a FROM App\Domain\ChanServ\Entity\ChannelAkick a WHERE a.expiresAt IS NOT NULL AND a.expiresAt < :now'
             )
-            ->setParameter('now', new DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'))
             ->getResult();
+
+        return $result;
     }
 
     /**
@@ -87,6 +91,7 @@ class ChannelAkickDoctrineRepository implements ChannelAkickRepositoryInterface
             ->getRepository(ChannelAkick::class)
             ->findBy(['channelId' => $channelIds]);
 
+        // @phpstan-ignore instanceof.alwaysTrue
         return array_filter($result, static fn ($row): bool => $row instanceof ChannelAkick);
     }
 

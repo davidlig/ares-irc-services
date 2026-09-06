@@ -152,7 +152,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
                 continue;
             }
 
-            $letterRank = self::RANK_ORDER[$letter] ?? 0;
+            $letterRank = self::RANK_ORDER[$letter];
             $desired = $memberCtx['desired'];
             $sender = $memberCtx['sender'];
             $desiredRank = self::RANK_ORDER[$desired] ?? 0;
@@ -427,7 +427,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         $ops = [];
 
         foreach ($view->members as $member) {
-            $uid = $member['uid'] ?? '';
+            $uid = $member['uid'];
             if ('' === $uid || $this->uidRegistry->getUid('chanserv') === $uid) {
                 continue;
             }
@@ -443,6 +443,8 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
     /**
      * Computes mode operations for a single member based on current and desired rank.
+     *
+     * @param array{uid: string, roleLetter: string, prefixLetters?: list<string>} $member
      *
      * @return list<array{uid: string, letter: string, add: bool}>
      */
@@ -461,7 +463,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
         $sender = $memberCtx['sender'];
         $desired = $memberCtx['desired'];
-        $currentLetter = $member['roleLetter'] ?? '';
+        $currentLetter = $member['roleLetter'];
         $effectiveDesired = $sender->isIdentified ? $desired : '';
         $currentRank = self::RANK_ORDER[$currentLetter] ?? 0;
         $desiredRank = self::RANK_ORDER[$effectiveDesired] ?? 0;
@@ -479,7 +481,11 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         );
     }
 
-    /** @return list<array{uid: string, letter: string, add: bool}> */
+    /**
+     * @param array{uid: string, roleLetter: string, prefixLetters?: list<string>} $member
+     *
+     * @return list<array{uid: string, letter: string, add: bool}>
+     */
     private function determineSyncAction(
         RegisteredChannel $channel,
         string $channelName,
@@ -513,6 +519,8 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     }
 
     /**
+     * @param array{uid: string, roleLetter: string, prefixLetters?: list<string>} $member
+     *
      * @return list<array{uid: string, letter: string, add: bool}>
      */
     private function collectOpsWhenRankAboveDesired(
@@ -531,7 +539,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             if (!in_array($letter, $supported, true) || !in_array($letter, $hasLetters, true)) {
                 continue;
             }
-            $letterRank = self::RANK_ORDER[$letter] ?? 0;
+            $letterRank = self::RANK_ORDER[$letter];
             if ($letterRank <= $desiredRank) {
                 continue;
             }

@@ -10,9 +10,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use ReflectionMethod;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_key_exists;
+use function is_string;
 
 #[CoversClass(ChanServDebugNotifier::class)]
 final class ChanServDebugNotifierTest extends TestCase
@@ -185,8 +187,8 @@ final class ChanServDebugNotifierTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
             'debug.founder_action' => 'Level-founder action',
-            'debug.prefix_reason' => 'Reason: ' . ($params['%reason%'] ?? ''),
-            'debug.action_message' => ($params['%operator%'] ?? '') . ' ' . ($params['%command%'] ?? '') . ' ' . ($params['%target%'] ?? '') . ' ' . ($params['%reason%'] ?? ''),
+            'debug.prefix_reason' => 'Reason: ' . (isset($params['%reason%']) && is_string($params['%reason%']) ? $params['%reason%'] : ''),
+            'debug.action_message' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' ' . (isset($params['%command%']) && is_string($params['%command%']) ? $params['%command%'] : '') . ' ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' ' . (isset($params['%reason%']) && is_string($params['%reason%']) ? $params['%reason%'] : ''),
             default => $id,
         });
 
@@ -211,7 +213,7 @@ final class ChanServDebugNotifierTest extends TestCase
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
-            'debug.action_with_value' => ($params['%operator%'] ?? '') . ' SET ' . ($params['%target%'] ?? '') . ' Option: ' . ($params['%option%'] ?? '') . '=' . ($params['%value%'] ?? ''),
+            'debug.action_with_value' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' SET ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' Option: ' . (isset($params['%option%']) && is_string($params['%option%']) ? $params['%option%'] : '') . '=' . (isset($params['%value%']) && is_string($params['%value%']) ? $params['%value%'] : ''),
             default => $id,
         });
 
@@ -236,7 +238,7 @@ final class ChanServDebugNotifierTest extends TestCase
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
-            'debug.action_with_option' => ($params['%operator%'] ?? '') . ' SUSPEND ' . ($params['%target%'] ?? '') . ' Option: ' . ($params['%option%'] ?? ''),
+            'debug.action_with_option' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' SUSPEND ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' Option: ' . (isset($params['%option%']) && is_string($params['%option%']) ? $params['%option%'] : ''),
             default => $id,
         });
 
@@ -264,7 +266,7 @@ final class ChanServDebugNotifierTest extends TestCase
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
-            'debug.action_with_option' => ($params['%operator%'] ?? '') . ' SASET ' . ($params['%target%'] ?? '') . ' Option: ' . ($params['%option%'] ?? ''),
+            'debug.action_with_option' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' SASET ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' Option: ' . (isset($params['%option%']) && is_string($params['%option%']) ? $params['%option%'] : ''),
             default => $id,
         });
 
@@ -291,8 +293,8 @@ final class ChanServDebugNotifierTest extends TestCase
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
-            'debug.prefix_reason' => 'Reason: ' . ($params['%reason%'] ?? ''),
-            'debug.action_message' => ($params['%operator%'] ?? '') . ' ' . ($params['%command%'] ?? '') . ' ' . ($params['%target%'] ?? '') . ' ' . ($params['%reason%'] ?? ''),
+            'debug.prefix_reason' => 'Reason: ' . (isset($params['%reason%']) && is_string($params['%reason%']) ? $params['%reason%'] : ''),
+            'debug.action_message' => (isset($params['%operator%']) && is_string($params['%operator%']) ? $params['%operator%'] : '') . ' ' . (isset($params['%command%']) && is_string($params['%command%']) ? $params['%command%'] : '') . ' ' . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : '') . ' ' . (isset($params['%reason%']) && is_string($params['%reason%']) ? $params['%reason%'] : ''),
             default => $id,
         });
 
@@ -316,6 +318,17 @@ final class ChanServDebugNotifierTest extends TestCase
         $notifier->ensureChannelJoined();
 
         self::assertTrue($notifier->isConfigured());
+    }
+
+    #[Test]
+    public function logToChannelReturnsWhenDebugChannelIsNull(): void
+    {
+        $notifier = $this->createNotifier(debugChannel: null);
+        $method = new ReflectionMethod($notifier, 'logToChannel');
+
+        $method->invoke($notifier, 'OperUser', 'DROP', '#test', null, null, null, []);
+
+        self::assertFalse($notifier->isConfigured());
     }
 
     private function createNotifier(

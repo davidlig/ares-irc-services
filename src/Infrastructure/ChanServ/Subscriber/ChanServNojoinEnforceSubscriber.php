@@ -138,6 +138,7 @@ final readonly class ChanServNojoinEnforceSubscriber implements EventSubscriberI
         $channelName = $channel->getName();
 
         foreach ($view->members as $member) {
+            // @phpstan-ignore nullCoalesce.offset
             $uid = $member['uid'] ?? '';
             if ('' === $uid) {
                 continue;

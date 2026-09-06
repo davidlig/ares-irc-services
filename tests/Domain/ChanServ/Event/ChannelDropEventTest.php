@@ -29,8 +29,11 @@ final class ChannelDropEventTest extends TestCase
     #[Test]
     public function defaultOccurredAtWhenNotProvided(): void
     {
+        $before = new DateTimeImmutable();
         $event = new ChannelDropEvent(1, '#test', '#test', 'manual');
+        $after = new DateTimeImmutable();
 
-        self::assertInstanceOf(DateTimeImmutable::class, $event->occurredAt);
+        self::assertGreaterThanOrEqual($before, $event->occurredAt);
+        self::assertLessThanOrEqual($after, $event->occurredAt);
     }
 }

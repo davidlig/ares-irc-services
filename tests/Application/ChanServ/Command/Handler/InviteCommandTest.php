@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(InviteCommand::class)]
 final class InviteCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,

@@ -6,7 +6,6 @@ namespace App\Application\ChanServ\Maintenance;
 
 use App\Application\ChanServ\Service\ChanDropService;
 use App\Application\Maintenance\MaintenanceTaskInterface;
-use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -44,10 +43,6 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
         $expired = $this->channelRepository->findPendingDeletionBefore($threshold);
 
         foreach ($expired as $channel) {
-            if (!$channel instanceof RegisteredChannel) {
-                continue;
-            }
-
             $this->dropService->hardDropChannel($channel, 'manual-grace-expired', null);
             $this->logger->info(sprintf(
                 'Maintenance [%s]: permanently deleted channel %s (id %d) after DROP grace period.',

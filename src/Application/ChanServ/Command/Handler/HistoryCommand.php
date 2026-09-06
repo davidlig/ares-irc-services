@@ -16,8 +16,10 @@ use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 use function array_slice;
+use function assert;
 use function count;
 use function implode;
+use function is_scalar;
 use function sprintf;
 use function strtolower;
 use function strtoupper;
@@ -91,7 +93,7 @@ final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCo
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::HISTORY;
     }
@@ -153,6 +155,9 @@ final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCo
 
     private function handleAdd(ChanServContext $context, int $channelId, string $channelName): CommandOutcome
     {
+        $sender = $context->sender;
+        assert(null !== $sender);
+
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
 
@@ -168,14 +173,14 @@ final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCo
             return CommandOutcome::rejected();
         }
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->historyService->recordAction(
             channelId: $channelId,
             action: 'HISTORY_ADD',
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -336,6 +341,9 @@ final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCo
         return $performedBy;
     }
 
+    /**
+     * @param array<string, mixed> $extraData
+     */
     private function translateMessage(string $message, array $extraData, ChanServContext $context): string
     {
         if (!str_starts_with($message, 'history.message.')) {
@@ -345,85 +353,93 @@ final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCo
         $params = [];
 
         if (isset($extraData['old_founder'])) {
-            $params['%old_founder%'] = $extraData['old_founder'] ?? '(none)';
+            $params['%old_founder%'] = $this->stringifyExtra($extraData['old_founder']);
         }
 
         if (isset($extraData['new_founder'])) {
-            $params['%new_founder%'] = $extraData['new_founder'];
+            $params['%new_founder%'] = $this->stringifyExtra($extraData['new_founder']);
         }
 
         if (isset($extraData['old_successor'])) {
-            $params['%old_successor%'] = $extraData['old_successor'] ?? '(none)';
+            $params['%old_successor%'] = $this->stringifyExtra($extraData['old_successor']);
         }
 
         if (isset($extraData['new_successor'])) {
-            $params['%new_successor%'] = $extraData['new_successor'] ?? '(none)';
+            $params['%new_successor%'] = $this->stringifyExtra($extraData['new_successor']);
         }
 
         if (isset($extraData['target_nickname'])) {
-            $params['%target_nickname%'] = $extraData['target_nickname'];
+            $params['%target_nickname%'] = $this->stringifyExtra($extraData['target_nickname']);
         }
 
         if (isset($extraData['level'])) {
-            $params['%level%'] = $extraData['level'];
+            $params['%level%'] = $this->stringifyExtra($extraData['level']);
         }
 
         if (isset($extraData['mask'])) {
-            $params['%mask%'] = $extraData['mask'];
+            $params['%mask%'] = $this->stringifyExtra($extraData['mask']);
         }
 
         return $context->trans($message, $params);
     }
 
+    /**
+     * @param array<string, mixed> $extraData
+     */
     private function formatExtraData(array $extraData, ChanServContext $context): string
     {
         $parts = [];
 
         if (isset($extraData['duration'])) {
-            $parts[] = $context->trans('history.extra.duration', ['%value%' => $extraData['duration']]);
+            $parts[] = $context->trans('history.extra.duration', ['%value%' => $this->stringifyExtra($extraData['duration'])]);
         }
 
         if (isset($extraData['expires_at'])) {
-            $parts[] = $context->trans('history.extra.expires_at', ['%value%' => $extraData['expires_at']]);
+            $parts[] = $context->trans('history.extra.expires_at', ['%value%' => $this->stringifyExtra($extraData['expires_at'])]);
         }
 
         if (isset($extraData['old_founder'])) {
-            $parts[] = $context->trans('history.extra.old_founder', ['%value%' => $extraData['old_founder'] ?? '(none)']);
+            $parts[] = $context->trans('history.extra.old_founder', ['%value%' => $this->stringifyExtra($extraData['old_founder'])]);
         }
 
         if (isset($extraData['new_founder'])) {
-            $parts[] = $context->trans('history.extra.new_founder', ['%value%' => $extraData['new_founder']]);
+            $parts[] = $context->trans('history.extra.new_founder', ['%value%' => $this->stringifyExtra($extraData['new_founder'])]);
         }
 
         if (isset($extraData['old_successor'])) {
-            $parts[] = $context->trans('history.extra.old_successor', ['%value%' => $extraData['old_successor'] ?? '(none)']);
+            $parts[] = $context->trans('history.extra.old_successor', ['%value%' => $this->stringifyExtra($extraData['old_successor'])]);
         }
 
         if (isset($extraData['new_successor'])) {
-            $parts[] = $context->trans('history.extra.new_successor', ['%value%' => $extraData['new_successor'] ?? '(none)']);
+            $parts[] = $context->trans('history.extra.new_successor', ['%value%' => $this->stringifyExtra($extraData['new_successor'])]);
         }
 
         if (isset($extraData['target_nickname'])) {
-            $parts[] = $context->trans('history.extra.target_nickname', ['%value%' => $extraData['target_nickname']]);
+            $parts[] = $context->trans('history.extra.target_nickname', ['%value%' => $this->stringifyExtra($extraData['target_nickname'])]);
         }
 
         if (isset($extraData['level'])) {
-            $parts[] = $context->trans('history.extra.level', ['%value%' => $extraData['level']]);
+            $parts[] = $context->trans('history.extra.level', ['%value%' => $this->stringifyExtra($extraData['level'])]);
         }
 
         if (isset($extraData['mask'])) {
-            $parts[] = $context->trans('history.extra.mask', ['%value%' => $extraData['mask']]);
+            $parts[] = $context->trans('history.extra.mask', ['%value%' => $this->stringifyExtra($extraData['mask'])]);
         }
 
         if (isset($extraData['ip'])) {
-            $parts[] = $context->trans('history.extra.ip', ['%value%' => $extraData['ip']]);
+            $parts[] = $context->trans('history.extra.ip', ['%value%' => $this->stringifyExtra($extraData['ip'])]);
         }
 
         if (isset($extraData['host'])) {
-            $parts[] = $context->trans('history.extra.host', ['%value%' => $extraData['host']]);
+            $parts[] = $context->trans('history.extra.host', ['%value%' => $this->stringifyExtra($extraData['host'])]);
         }
 
         return implode(', ', $parts);
+    }
+
+    private function stringifyExtra(mixed $value): string
+    {
+        return is_scalar($value) ? (string) $value : '';
     }
 
     private function decodeIp(string $ipBase64): string

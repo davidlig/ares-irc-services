@@ -223,7 +223,8 @@ final class ChanServBotTest extends TestCase
     public function setChannelModesWhenModuleNullReturnsEarly(): void
     {
         $this->bot->setChannelModes('#channel', '+k', ['secretkey']);
-        self::assertTrue(true);
+
+        self::assertNull($this->connectionHolder->getProtocolModule());
     }
 
     #[Test]

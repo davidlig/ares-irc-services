@@ -266,9 +266,13 @@ final class UnforbidCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,

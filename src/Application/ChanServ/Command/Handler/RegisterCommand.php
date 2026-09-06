@@ -16,6 +16,7 @@ use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 
 use function array_slice;
 use function count;
@@ -87,7 +88,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -139,7 +140,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         $this->performRegister($context, $channelName, $description, $validation);
     }
 
-    /** @return array{senderAccount: object, isPrivileged: bool}|null */
+    /** @return array{senderAccount: RegisteredNick, isPrivileged: bool}|null */
     private function validateRegisterPrerequisites(ChanServContext $context, string $channelName, string $channelNameLower): ?array
     {
         $channelView = $context->getChannelView($channelName);
@@ -159,14 +160,14 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return $this->validateRegisterPermissions($context, $channelName, $channelView, $senderAccount);
     }
 
-    /** @return array{senderAccount: object, isPrivileged: bool}|null */
-    private function validateRegisterPermissions(ChanServContext $context, string $channelName, $channelView, $senderAccount): ?array
+    /** @return array{senderAccount: RegisteredNick, isPrivileged: bool}|null */
+    private function validateRegisterPermissions(ChanServContext $context, string $channelName, ChannelView $channelView, RegisteredNick $senderAccount): ?array
     {
         $sender = $context->sender;
         $isPrivileged = (null !== $sender && $sender->isOper)
-            || $this->rootRegistry->isRoot($context->sender?->nick ?? '');
+            || $this->rootRegistry->isRoot($context->sender->nick ?? '');
 
-        if (!$isPrivileged && !$this->senderHasRequiredChannelPrefix($channelView, $sender?->uid ?? '')) {
+        if (!$isPrivileged && (null === $sender || !$this->senderHasRequiredChannelPrefix($channelView, $sender->uid))) {
             $context->reply('register.insufficient_channel_rank', ['%channel%' => $channelName]);
 
             return null;
@@ -179,7 +180,11 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return ['senderAccount' => $senderAccount, 'isPrivileged' => $isPrivileged];
     }
 
-    /** @return array{senderAccount: object, isPrivileged: bool}|null */
+    /**
+     * @param array{senderAccount: RegisteredNick, isPrivileged: bool} $prelim
+     *
+     * @return array{senderAccount: RegisteredNick, isPrivileged: bool}|null
+     */
     private function validateRegisterLimits(ChanServContext $context, string $channelName, array $prelim): ?array
     {
         $senderAccount = $prelim['senderAccount'];
@@ -204,6 +209,9 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return $prelim;
     }
 
+    /**
+     * @param array{senderAccount: RegisteredNick, isPrivileged: bool} $validation
+     */
     private function performRegister(ChanServContext $context, string $channelName, string $description, array $validation): void
     {
         $senderAccount = $validation['senderAccount'];
@@ -237,11 +245,11 @@ final readonly class RegisterCommand implements ChanServCommandInterface
     private function senderHasRequiredChannelPrefix(ChannelView $channelView, string $senderUid): bool
     {
         foreach ($channelView->members as $member) {
-            if (($member['uid'] ?? '') !== $senderUid) {
+            if ($member['uid'] !== $senderUid) {
                 continue;
             }
 
-            $prefixLetters = $member['prefixLetters'] ?? [$member['roleLetter'] ?? ''];
+            $prefixLetters = $member['prefixLetters'] ?? [$member['roleLetter']];
             foreach ($prefixLetters as $letter) {
                 if (in_array($letter, self::REQUIRED_REGISTER_PREFIX_MODES, true)) {
                     return true;

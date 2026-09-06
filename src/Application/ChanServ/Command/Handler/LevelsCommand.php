@@ -112,7 +112,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }

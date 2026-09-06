@@ -9,6 +9,7 @@ use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelSuccessorChangedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 
@@ -39,7 +40,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
         $this->performSuccessorChange($context, $channel, $nickname, $validation);
     }
 
-    private function validateSuccessorNick(ChanServContext $context, RegisteredChannel $channel, string $nickname): ?object
+    private function validateSuccessorNick(ChanServContext $context, RegisteredChannel $channel, string $nickname): ?RegisteredNick
     {
         $account = $this->nickRepository->findByNick($nickname);
         if (null === $account) {
@@ -51,9 +52,9 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
         return $this->validateSuccessorStatus($context, $channel, $nickname, $account);
     }
 
-    private function validateSuccessorStatus(ChanServContext $context, RegisteredChannel $channel, string $nickname, object $account): ?object
+    private function validateSuccessorStatus(ChanServContext $context, RegisteredChannel $channel, string $nickname, RegisteredNick $account): ?RegisteredNick
     {
-        return (static function () use ($context, $channel, $nickname, $account): ?object {
+        return (static function () use ($context, $channel, $nickname, $account): ?RegisteredNick {
             if (NickStatus::Suspended === $account->getStatus()) {
                 $context->reply('set.successor.suspended', ['%nickname%' => $nickname]);
 
@@ -76,12 +77,17 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
 
     private function clearSuccessor(ChanServContext $context, RegisteredChannel $channel): void
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $oldSuccessorNickId = $channel->getSuccessorNickId();
         $channel->assignSuccessor(null);
         $this->channelRepository->save($channel);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new ChannelSuccessorChangedEvent(
@@ -89,25 +95,30 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
             channelName: $channel->getName(),
             oldSuccessorNickId: $oldSuccessorNickId,
             newSuccessorNickId: null,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
         ));
 
         $context->reply('set.successor.cleared');
-        $notice = $context->trans('set.successor.notice_channel_cleared', ['%from%' => $context->sender->nick]);
+        $notice = $context->trans('set.successor.notice_channel_cleared', ['%from%' => $sender->nick]);
         $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
     }
 
-    private function performSuccessorChange(ChanServContext $context, RegisteredChannel $channel, string $nickname, object $account): void
+    private function performSuccessorChange(ChanServContext $context, RegisteredChannel $channel, string $nickname, RegisteredNick $account): void
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $oldSuccessorNickId = $channel->getSuccessorNickId();
         $channel->assignSuccessor($account->getId());
         $this->channelRepository->save($channel);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new ChannelSuccessorChangedEvent(
@@ -115,7 +126,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
             channelName: $channel->getName(),
             oldSuccessorNickId: $oldSuccessorNickId,
             newSuccessorNickId: $account->getId(),
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -123,7 +134,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
 
         $context->reply('set.successor.updated', ['%nickname%' => $nickname]);
         $notice = $context->trans('set.successor.notice_channel', [
-            '%from%' => $context->sender->nick,
+            '%from%' => $sender->nick,
             '%nickname%' => $nickname,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);

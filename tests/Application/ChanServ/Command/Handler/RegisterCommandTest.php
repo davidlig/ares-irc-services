@@ -34,6 +34,9 @@ use ReflectionProperty;
 #[CoversClass(RegisterCommand::class)]
 final class RegisterCommandTest extends TestCase
 {
+    /**
+     * @return array<string, array{string}>
+     */
     public static function requiredRegisterPrefixProvider(): array
     {
         return [
@@ -43,6 +46,9 @@ final class RegisterCommandTest extends TestCase
         ];
     }
 
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -186,7 +192,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -218,7 +224,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -382,7 +388,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 42);
         });
@@ -402,7 +408,7 @@ final class RegisterCommandTest extends TestCase
 
         $dispatchedEvent = null;
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function ($event) use (&$dispatchedEvent): object {
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvent): object {
             $dispatchedEvent = $event;
 
             return $event;
@@ -485,7 +491,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -542,7 +548,7 @@ final class RegisterCommandTest extends TestCase
         $account->method('getId')->willReturn(2);
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -576,7 +582,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -610,7 +616,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('existsByChannelName')->with('#testchan')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -823,7 +829,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -857,7 +863,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -890,7 +896,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -924,7 +930,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -958,7 +964,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });
@@ -992,7 +998,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
             $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setValue($channel, 1);
         });

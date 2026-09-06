@@ -15,15 +15,19 @@ use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ChannelSuspensionService::class)]
 final class ChannelSuspensionServiceTest extends TestCase
 {
+    /** @var ChannelLookupPort&Stub */
     private ChannelLookupPort $channelLookup;
 
+    /** @var ActiveChannelModeSupportProviderInterface&Stub */
     private ActiveChannelModeSupportProviderInterface $modeSupportProvider;
 
+    /** @var ChannelModeSupportInterface&Stub */
     private ChannelModeSupportInterface $modeSupport;
 
     protected function setUp(): void
@@ -182,7 +186,8 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('hasPermanentChannelMode')->willReturn(false);
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
 
-        $translatedArgs = [];
+        /** @var array{id: string, params: array{'%reason%': string}, domain: ?string, locale: ?string} $translatedArgs */
+        $translatedArgs = ['id' => '', 'params' => ['%reason%' => ''], 'domain' => null, 'locale' => null];
         $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())
             ->method('trans')
@@ -275,7 +280,8 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('hasPermanentChannelMode')->willReturn(false);
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
 
-        $translatedArgs = [];
+        /** @var array{params: array{'%reason%': string}} $translatedArgs */
+        $translatedArgs = ['params' => ['%reason%' => '']];
         $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())
             ->method('trans')
@@ -297,7 +303,7 @@ final class ChannelSuspensionServiceTest extends TestCase
 
         $this->createService(translator: $translator)->enforceSuspension($channel);
 
-        self::assertSame('', $translatedArgs['params']['%reason%']);
+        self::assertSame('', $translatedArgs['params']['%reason%'] ?? null);
     }
 
     #[Test]

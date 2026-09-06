@@ -11,9 +11,11 @@ use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\Port\EventBusInterface;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
+use function assert;
 use function sprintf;
 
 final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
@@ -68,7 +70,7 @@ final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditable
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::SUSPEND;
     }
@@ -103,7 +105,7 @@ final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditable
         return $this->performUnsuspend($context, ...$validation);
     }
 
-    /** @return array{string, object}|null */
+    /** @return array{string, RegisteredChannel}|null */
     private function validateUnsuspend(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -125,8 +127,8 @@ final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditable
         return $this->checkUnsuspendStatus($context, $channel, $channelName);
     }
 
-    /** @return array{string, object}|null */
-    private function checkUnsuspendStatus(ChanServContext $context, object $channel, string $channelName): ?array
+    /** @return array{string, RegisteredChannel}|null */
+    private function checkUnsuspendStatus(ChanServContext $context, RegisteredChannel $channel, string $channelName): ?array
     {
         if (!$channel->isSuspended()) {
             $context->reply('unsuspend.not_suspended', ['%channel%' => $channelName]);
@@ -137,20 +139,23 @@ final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditable
         return [$channelName, $channel];
     }
 
-    private function performUnsuspend(ChanServContext $context, string $channelName, object $channel): CommandOutcome
+    private function performUnsuspend(ChanServContext $context, string $channelName, RegisteredChannel $channel): CommandOutcome
     {
+        $sender = $context->sender;
+        assert(null !== $sender);
+
         $channel->unsuspend();
         $this->channelRepository->save($channel);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new ChannelUnsuspendedEvent(
             channelId: $channel->getId(),
             channelName: $channel->getName(),
             channelNameLower: $channel->getNameLower(),
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,

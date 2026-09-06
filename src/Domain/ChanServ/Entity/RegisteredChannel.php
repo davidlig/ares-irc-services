@@ -47,7 +47,7 @@ class RegisteredChannel
     /** Channel modes to lock when MLOCK is on (e.g. +nt or +ntl). Empty when active but no modes to lock. */
     private string $mlock = '';
 
-    /** Params for MLOCK modes that take one (e.g. l => 100, k => key). Key = mode letter. */
+    /** @var array<string, string> Params for MLOCK modes that take one (e.g. l => 100, k => key). Key = mode letter. */
     private array $mlockParams = [];
 
     private bool $secure = false;
@@ -266,6 +266,9 @@ class RegisteredChannel
         $this->topicLock = $on;
     }
 
+    /**
+     * @param array<string, string> $params
+     */
     public function configureMlock(bool $active, string $modeString = '', array $params = []): void
     {
         $this->mlockActive = $active;

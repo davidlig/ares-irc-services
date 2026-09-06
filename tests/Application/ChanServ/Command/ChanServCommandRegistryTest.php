@@ -54,9 +54,15 @@ final class ChanServCommandRegistryTest extends TestCase
         self::assertContains($h2, $all);
     }
 
+    /**
+     * @param string[] $aliases
+     */
     private function createHandler(string $name, array $aliases = []): ChanServCommandInterface
     {
         return new class($name, $aliases) implements ChanServCommandInterface {
+            /**
+             * @param string[] $aliases
+             */
             public function __construct(
                 private readonly string $name,
                 private readonly array $aliases,
@@ -67,6 +73,9 @@ final class ChanServCommandRegistryTest extends TestCase
                 return $this->name;
             }
 
+            /**
+             * @return string[]
+             */
             public function getAliases(): array
             {
                 return $this->aliases;

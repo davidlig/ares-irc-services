@@ -57,6 +57,9 @@ use ReflectionMethod;
 #[CoversClass(VoiceCommand::class)]
 final class UsesLevelFounderTest extends TestCase
 {
+    /**
+     * @return array<string, array{class-string, bool}>
+     */
     public static function commandDataProvider(): array
     {
         return [
@@ -85,6 +88,9 @@ final class UsesLevelFounderTest extends TestCase
         ];
     }
 
+    /**
+     * @param class-string $handlerClass
+     */
     #[Test]
     #[DataProvider('commandDataProvider')]
     public function usesLevelFounderReturnsExpectedValue(string $handlerClass, bool $expected): void

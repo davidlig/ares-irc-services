@@ -202,7 +202,7 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
         $eventDispatcher
             ->expects($matcher)
             ->method('dispatch')
-            ->willReturnCallback(static function (object $dropEvent) use ($matcher): object {
+            ->willReturnCallback(static function (ChannelDropCleanupEvent|ChannelDropEvent $dropEvent) use ($matcher): object {
                 match ($matcher->numberOfInvocations()) {
                     1 => self::assertInstanceOf(ChannelDropCleanupEvent::class, $dropEvent),
                     2 => self::assertInstanceOf(ChannelDropEvent::class, $dropEvent),
@@ -294,7 +294,7 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
         $eventDispatcher
             ->expects($matcher)
             ->method('dispatch')
-            ->willReturnCallback(static function (object $dropEvent) use ($matcher): object {
+            ->willReturnCallback(static function (ChannelDropCleanupEvent|ChannelDropEvent $dropEvent) use ($matcher): object {
                 match ($matcher->numberOfInvocations()) {
                     1 => self::assertInstanceOf(ChannelDropCleanupEvent::class, $dropEvent),
                     2 => self::assertInstanceOf(ChannelDropEvent::class, $dropEvent),

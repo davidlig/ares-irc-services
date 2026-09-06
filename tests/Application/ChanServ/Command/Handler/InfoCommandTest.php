@@ -30,6 +30,9 @@ use ReflectionClass;
 #[CoversClass(InfoCommand::class)]
 final class InfoCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         array $args,
         ChanServNotifierInterface $notifier,

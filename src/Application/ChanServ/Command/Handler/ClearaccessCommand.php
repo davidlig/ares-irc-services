@@ -10,6 +10,7 @@ use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
@@ -67,7 +68,7 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::CLEARACCESS;
     }
@@ -114,7 +115,7 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
         return CommandOutcome::success($auditData);
     }
 
-    /** @return array{string, object, int}|null */
+    /** @return array{string, RegisteredChannel, int}|null */
     private function validateClearaccess(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -128,7 +129,7 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
         return $this->validateClearaccessChannel($context, $channelName);
     }
 
-    /** @return array{string, object, int}|null */
+    /** @return array{string, RegisteredChannel, int}|null */
     private function validateClearaccessChannel(ChanServContext $context, string $channelName): ?array
     {
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));

@@ -16,6 +16,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelSuccessorChangedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -33,9 +34,10 @@ final class SetSuccessorHandlerTest extends TestCase
         TranslationInterface $translator,
         string $senderNick = 'Founder',
         string $ipBase64 = 'ip',
+        bool $withoutSender = false,
     ): ChanServContext {
         return new ChanServContext(
-            new SenderView('UID1', $senderNick, 'i', 'h', 'c', $ipBase64),
+            $withoutSender ? null : new SenderView('UID1', $senderNick, 'i', 'h', 'c', $ipBase64),
             null,
             'SET',
             ['#test', 'SUCCESSOR', 'NewSuccessor'],
@@ -78,6 +80,24 @@ final class SetSuccessorHandlerTest extends TestCase
 
         self::assertSame(['set.successor.cleared'], $messages);
         self::assertCount(1, $channelNotices);
+    }
+
+    #[Test]
+    public function emptyValueReturnsWithoutChangingSuccessorWhenSenderIsNull(): void
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::never())->method('assignSuccessor');
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->expects(self::never())->method('save');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $handler = new SetSuccessorHandler(
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(EventBusInterface::class),
+        );
+
+        $handler->handle($this->createContext($notifier, $this->createStub(TranslationInterface::class), withoutSender: true), $channel, '   ');
     }
 
     #[Test]
@@ -208,6 +228,27 @@ final class SetSuccessorHandlerTest extends TestCase
     }
 
     #[Test]
+    public function validNickReturnsWithoutChangingSuccessorWhenSenderIsNull(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::Registered);
+        $account->method('getId')->willReturn(20);
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::once())->method('isFounder')->with(20)->willReturn(false);
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->expects(self::never())->method('save');
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->expects(self::once())->method('findByNick')->with('Successor')->willReturn($account);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $handler = new SetSuccessorHandler($channelRepository, $nickRepository, $eventDispatcher);
+        $handler->handle($this->createContext($notifier, $this->createStub(TranslationInterface::class), withoutSender: true), $channel, 'Successor');
+    }
+
+    #[Test]
     public function validNickWithWildcardIpDispatchesEventWithStarIp(): void
     {
         $account = $this->createStub(RegisteredNick::class);
@@ -224,7 +265,7 @@ final class SetSuccessorHandlerTest extends TestCase
         $nickRepo->expects(self::once())->method('findByNick')->with('Successor')->willReturn($account);
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (ChannelSuccessorChangedEvent $e) use (&$dispatchedIp): ChannelSuccessorChangedEvent {
             $dispatchedIp = $e->performedByIp;
 
             return $e;
@@ -258,7 +299,7 @@ final class SetSuccessorHandlerTest extends TestCase
         $nickRepo->expects(self::once())->method('findByNick')->with('Successor')->willReturn($account);
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (ChannelSuccessorChangedEvent $e) use (&$dispatchedIp): ChannelSuccessorChangedEvent {
             $dispatchedIp = $e->performedByIp;
 
             return $e;

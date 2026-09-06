@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\ChanServ;
 
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
@@ -27,6 +28,7 @@ use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -37,6 +39,7 @@ use function base64_decode;
 use function count;
 use function in_array;
 use function inet_ntop;
+use function is_string;
 use function sprintf;
 
 use const PREG_SPLIT_NO_EMPTY;
@@ -73,8 +76,10 @@ final readonly class ChanServService implements ChanServDispatchPort
      */
     public function dispatch(string $rawText, SenderView $sender): void
     {
-        $parts = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY);
-        $cmdName = strtoupper(array_shift($parts) ?? '');
+        $parts = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $cmdPart = array_shift($parts);
+        $cmdName = strtoupper(is_string($cmdPart) ? $cmdPart : '');
+        /** @var list<string> $args */
         $args = $parts;
 
         if ('' === $cmdName) {
@@ -97,7 +102,10 @@ final readonly class ChanServService implements ChanServDispatchPort
         $this->executeHandler($handler, $sender, $cmdName, $args);
     }
 
-    private function executeHandler(object $handler, SenderView $sender, string $cmdName, array $args): void
+    /**
+     * @param list<string> $args
+     */
+    private function executeHandler(ChanServCommandInterface $handler, SenderView $sender, string $cmdName, array $args): void
     {
         $account = $this->nickRepository->findByNick($sender->nick);
         $language = $this->languageResolver->resolveFromAccount($sender, $account);
@@ -189,7 +197,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         }
     }
 
-    private function validateDispatchContext(ChanServContext $context, object $handler, bool $isLevelFounder): ?string
+    private function validateDispatchContext(ChanServContext $context, ChanServCommandInterface $handler, bool $isLevelFounder): ?string
     {
         if (count($context->args) < $handler->getMinArgs()) {
             $context->reply('error.syntax', [
@@ -206,7 +214,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         return $this->validateSuspendedAndPending($context, $handler, $isLevelFounder);
     }
 
-    private function validateSuspendedAndPending(ChanServContext $context, object $handler, bool $isLevelFounder): ?string
+    private function validateSuspendedAndPending(ChanServContext $context, ChanServCommandInterface $handler, bool $isLevelFounder): ?string
     {
         if ($this->isSuspendedChannelViolation($context, $handler, $isLevelFounder)) {
             return 'suspended';
@@ -215,7 +223,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         return $this->isPendingDeletionViolation($context, $handler);
     }
 
-    private function isForbiddenChannelViolation(ChanServContext $context, object $handler): bool
+    private function isForbiddenChannelViolation(ChanServContext $context, ChanServCommandInterface $handler): bool
     {
         if ($handler->allowsForbiddenChannel()) {
             return false;
@@ -234,7 +242,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         return false;
     }
 
-    private function isSuspendedChannelViolation(ChanServContext $context, object $handler, bool $isLevelFounder): bool
+    private function isSuspendedChannelViolation(ChanServContext $context, ChanServCommandInterface $handler, bool $isLevelFounder): bool
     {
         if ($handler->allowsSuspendedChannel() || $isLevelFounder) {
             return false;
@@ -253,7 +261,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         return false;
     }
 
-    private function isPendingDeletionViolation(ChanServContext $context, object $handler): ?string
+    private function isPendingDeletionViolation(ChanServContext $context, ChanServCommandInterface $handler): ?string
     {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName || in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
@@ -270,13 +278,16 @@ final readonly class ChanServService implements ChanServDispatchPort
         return null;
     }
 
-    private function dispatchFounderAuditEvent(object $handler, ChanServContext $context, SenderView $sender, string $cmdName, array $args, bool $isLevelFounder, $account): void
+    /**
+     * @param list<string> $args
+     */
+    private function dispatchFounderAuditEvent(ChanServCommandInterface $handler, ChanServContext $context, SenderView $sender, string $cmdName, array $args, bool $isLevelFounder, ?RegisteredNick $account): void
     {
         if ($isLevelFounder && null !== $account && $handler->usesLevelFounder()) {
             $auditChannelName = $context->getChannelNameArg(0);
             if (null !== $auditChannelName) {
                 $auditChannel = $this->channelRepository->findByChannelName($auditChannelName);
-                if (null !== $auditChannel && !$auditChannel->isFounder($account->getId())) {
+                if (null !== $auditChannel && !$auditChannel->isFounder((int) $account->getId())) {
                     $auditExtra = ['founder_action' => true];
                     if (count($args) >= 2) {
                         $auditExtra['option'] = strtoupper($args[1]);

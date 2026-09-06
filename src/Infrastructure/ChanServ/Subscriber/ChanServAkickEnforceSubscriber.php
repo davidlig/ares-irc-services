@@ -8,6 +8,8 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
@@ -35,6 +37,11 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
+    public function getChanservNick(): string
+    {
+        return $this->chanservNick;
+    }
+
     public static function getSubscribedEvents(): array
     {
         return [
@@ -61,13 +68,13 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
         $this->checkAkickMatch($channel, $channelName, $uid, $user);
     }
 
-    private function checkAkickMatch(object $channel, string $channelName, string $uid, object $user): void
+    private function checkAkickMatch(RegisteredChannel $channel, string $channelName, string $uid, SenderView $user): void
     {
         $userMask = $user->toUserMask();
 
         $akicks = $this->akickRepository->listByChannel($channel->getId());
 
-        $matching = array_find($akicks, static fn ($akick) => !$akick->isExpired() && $akick->matches((string) $userMask));
+        $matching = array_find($akicks, static fn ($akick) => !$akick->isExpired() && $akick->matches($userMask));
         if (null !== $matching) {
             $this->enforceAkick($channelName, $matching->getMask(), $uid, $matching->getReason());
         }

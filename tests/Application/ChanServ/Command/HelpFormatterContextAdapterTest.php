@@ -39,7 +39,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
         ChanServNotifierInterface $notifier,
         TranslationInterface $translator,
         ChanServCommandRegistry $registry,
-        $channelModeSupport = null,
+        ?ChannelModeSupportInterface $channelModeSupport = null,
+        ?NetworkUserLookupPort $userLookup = null,
     ): ChanServContext {
         return new ChanServContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -54,7 +55,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $registry,
             $this->createStub(ChannelLookupPort::class),
             $channelModeSupport ?? new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
+            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
     }
@@ -657,7 +658,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return ChanServPermission::DROP;
             }
@@ -769,7 +770,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return ChanServPermission::DROP;
             }
@@ -793,7 +794,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$dropCmd]);
 
-        $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
@@ -837,7 +838,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function getIrcopCommandsReturnsEmptyForNonOper(): void
     {
-        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'o');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
@@ -871,7 +872,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function hasIrcopAccessReturnsTrueForRoot(): void
     {
-        $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
@@ -912,7 +913,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function hasIrcopAccessReturnsFalseForOperWithoutIrcopRole(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
@@ -940,6 +941,9 @@ final class HelpFormatterContextAdapterTest extends TestCase
         );
 
         $chanServPermission = new readonly class('ChanServ', [ChanServPermission::DROP]) implements PermissionProviderInterface {
+            /**
+             * @param string[] $perms
+             */
             public function __construct(private string $name, private array $perms) {}
 
             public function getServiceName(): string
@@ -947,6 +951,9 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return $this->name;
             }
 
+            /**
+             * @return string[]
+             */
             public function getPermissions(): array
             {
                 return $this->perms;
@@ -967,7 +974,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function hasIrcopAccessReturnsTrueForOperWithChanServPermission(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
@@ -995,6 +1002,9 @@ final class HelpFormatterContextAdapterTest extends TestCase
         );
 
         $chanServPermission = new readonly class('ChanServ', [ChanServPermission::DROP]) implements PermissionProviderInterface {
+            /**
+             * @param string[] $perms
+             */
             public function __construct(private string $name, private array $perms) {}
 
             public function getServiceName(): string
@@ -1002,6 +1012,9 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return $this->name;
             }
 
+            /**
+             * @return string[]
+             */
             public function getPermissions(): array
             {
                 return $this->perms;
@@ -1082,7 +1095,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return ChanServPermission::DROP;
             }
@@ -1174,7 +1187,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$dropCmd, $infoCmd]);
 
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
@@ -1202,6 +1215,9 @@ final class HelpFormatterContextAdapterTest extends TestCase
         );
 
         $chanServPermission = new readonly class('ChanServ', [ChanServPermission::DROP]) implements PermissionProviderInterface {
+            /**
+             * @param string[] $perms
+             */
             public function __construct(private string $name, private array $perms) {}
 
             public function getServiceName(): string
@@ -1209,6 +1225,9 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return $this->name;
             }
 
+            /**
+             * @return string[]
+             */
             public function getPermissions(): array
             {
                 return $this->perms;

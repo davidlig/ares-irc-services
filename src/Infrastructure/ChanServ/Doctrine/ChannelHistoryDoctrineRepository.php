@@ -45,9 +45,11 @@ final readonly class ChannelHistoryDoctrineRepository implements ChannelHistoryR
             $qb->setFirstResult($offset);
         }
 
+        /** @var array<mixed> $result */
         $result = $qb->getQuery()->getResult();
 
-        return array_filter($result, static fn ($row): bool => $row instanceof ChannelHistory);
+        /* @var array<ChannelHistory> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof ChannelHistory));
     }
 
     public function countByChannelId(int $channelId): int
@@ -82,7 +84,9 @@ final readonly class ChannelHistoryDoctrineRepository implements ChannelHistoryR
             ->where('h.channelId = :channelId')
             ->setParameter('channelId', $channelId);
 
-        return $qb->getQuery()->execute();
+        $result = $qb->getQuery()->execute();
+
+        return is_numeric($result) ? (int) $result : 0;
     }
 
     public function deleteOlderThan(DateTimeImmutable $threshold): int
@@ -90,8 +94,10 @@ final readonly class ChannelHistoryDoctrineRepository implements ChannelHistoryR
         $qb = $this->em->createQueryBuilder();
         $qb->delete(ChannelHistory::class, 'h')
             ->where('h.performedAt < :threshold')
-            ->setParameter('threshold', $threshold);
+            ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
 
-        return $qb->getQuery()->execute();
+        $result = $qb->getQuery()->execute();
+
+        return is_numeric($result) ? (int) $result : 0;
     }
 }

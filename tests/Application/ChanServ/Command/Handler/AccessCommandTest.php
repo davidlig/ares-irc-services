@@ -19,6 +19,7 @@ use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelAccessChangedEvent;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
@@ -29,11 +30,17 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+
+use function assert;
 
 #[CoversClass(AccessCommand::class)]
 final class AccessCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -61,6 +68,9 @@ final class AccessCommandTest extends TestCase
         );
     }
 
+    /**
+     * @return array{RegisteredChannelRepositoryInterface&Stub, ChannelAccessRepositoryInterface&Stub, RegisteredNickRepositoryInterface&Stub, ChanServAccessHelper}
+     */
     private function createStubReposAndHelper(): array
     {
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -333,6 +343,7 @@ final class AccessCommandTest extends TestCase
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+            assert($e instanceof ChannelAccessChangedEvent);
             $dispatchedIp = $e->performedByIp;
 
             return $e;
@@ -369,6 +380,7 @@ final class AccessCommandTest extends TestCase
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+            assert($e instanceof ChannelAccessChangedEvent);
             $dispatchedIp = $e->performedByIp;
 
             return $e;

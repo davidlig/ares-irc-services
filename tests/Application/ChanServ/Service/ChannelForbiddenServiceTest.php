@@ -16,6 +16,7 @@ use App\Domain\ChanServ\Event\ChannelUnforbiddenEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -23,16 +24,22 @@ use ReflectionClass;
 #[CoversClass(ChannelForbiddenService::class)]
 final class ChannelForbiddenServiceTest extends TestCase
 {
+    /** @var RegisteredChannelRepositoryInterface&Stub */
     private RegisteredChannelRepositoryInterface $channelRepository;
 
+    /** @var ChanDropService&Stub */
     private ChanDropService $dropService;
 
+    /** @var ChannelServiceActionsPort&Stub */
     private ChannelServiceActionsPort $channelServiceActions;
 
+    /** @var ChannelLookupPort&Stub */
     private ChannelLookupPort $channelLookup;
 
+    /** @var EventBusInterface&Stub */
     private EventBusInterface $eventDispatcher;
 
+    /** @var LoggerInterface&Stub */
     private LoggerInterface $logger;
 
     protected function setUp(): void
@@ -85,6 +92,9 @@ final class ChannelForbiddenServiceTest extends TestCase
         return $channel;
     }
 
+    /**
+     * @return RegisteredChannelRepositoryInterface&Stub
+     */
     private function repositoryThatSavesAndSetsId(): RegisteredChannelRepositoryInterface
     {
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);

@@ -13,6 +13,7 @@ use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -72,7 +73,7 @@ final readonly class AdminCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -95,6 +96,11 @@ final readonly class AdminCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         if (!$context->getChannelModeSupport()->hasAdmin()) {
             $context->reply('admin.not_supported');
 
@@ -111,7 +117,7 @@ final readonly class AdminCommand implements ChanServCommandInterface
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('admin.notice_grant', [
-                '%from%' => $context->sender->nick,
+                '%from%' => $sender->nick,
                 '%to%' => $targetNick,
                 '%mode%' => '+a',
             ])
@@ -182,7 +188,7 @@ final readonly class AdminCommand implements ChanServCommandInterface
     }
 
     /** @return array{string, string, RegisteredChannel, SenderView}|null */
-    private function validateAdminSecureCheck(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount, SenderView $targetSender): ?array
+    private function validateAdminSecureCheck(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, RegisteredNick $targetAccount, SenderView $targetSender): ?array
     {
         if (!$context->isLevelFounder && $channel->isSecure()) {
             $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);

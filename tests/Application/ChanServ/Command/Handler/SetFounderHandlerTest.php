@@ -34,9 +34,14 @@ use RuntimeException;
 use stdClass;
 use Symfony\Component\Messenger\Envelope;
 
+use function is_string;
+
 #[CoversClass(SetFounderHandler::class)]
 final class SetFounderHandlerTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ChanServNotifierInterface $notifier,
         TranslationInterface $translator,
@@ -44,9 +49,10 @@ final class SetFounderHandlerTest extends TestCase
         string $senderNick = 'Founder',
         bool $isLevelFounder = false,
         string $ipBase64 = 'ip',
+        bool $withoutSender = false,
     ): ChanServContext {
         return new ChanServContext(
-            new SenderView('UID1', $senderNick, 'i', 'h', 'c', $ipBase64),
+            $withoutSender ? null : new SenderView('UID1', $senderNick, 'i', 'h', 'c', $ipBase64),
             null,
             'SET',
             $args,
@@ -394,6 +400,48 @@ final class SetFounderHandlerTest extends TestCase
     }
 
     #[Test]
+    public function validTokenWithMissingSenderStopsBeforeTransfer(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(null);
+
+        $tokens = new FounderChangeTokenRegistry();
+        $tokens->store(1, 20, 'valid-token', new DateTimeImmutable('+1 hour'));
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($newAccount);
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $nickRepository->method('findById')->willReturn($currentFounder);
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByFounderNickId')->willReturn([]);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetFounderHandler(
+            $channelRepository,
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $nickRepository,
+            $tokens,
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $translator,
+        );
+        $handler->handle($this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder', 'valid-token'], withoutSender: true), $channel, 'NewFounder');
+
+        self::assertSame([], $messages);
+    }
+
+    #[Test]
     public function validTokenChangesFounderRemovesAccessDispatchesEventAndReplies(): void
     {
         $newAccount = $this->createStub(RegisteredNick::class);
@@ -493,7 +541,7 @@ final class SetFounderHandlerTest extends TestCase
         $registry->store(1, 20, 'valid-token', new DateTimeImmutable()->modify('+1 hour'));
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (ChannelFounderChangedEvent $e) use (&$dispatchedIp): ChannelFounderChangedEvent {
             $dispatchedIp = $e->performedByIp;
 
             return $e;
@@ -550,7 +598,7 @@ final class SetFounderHandlerTest extends TestCase
         $registry->store(1, 20, 'valid-token', new DateTimeImmutable()->modify('+1 hour'));
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (ChannelFounderChangedEvent $e) use (&$dispatchedIp): ChannelFounderChangedEvent {
             $dispatchedIp = $e->performedByIp;
 
             return $e;
@@ -1039,7 +1087,7 @@ final class SetFounderHandlerTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . (is_string($params['%email_hint%'] ?? null) ? $params['%email_hint%'] : ''));
         $envelope = new Envelope(new stdClass());
         $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
@@ -1088,7 +1136,7 @@ final class SetFounderHandlerTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . (is_string($params['%email_hint%'] ?? null) ? $params['%email_hint%'] : ''));
         $envelope = new Envelope(new stdClass());
         $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
@@ -1137,7 +1185,7 @@ final class SetFounderHandlerTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . (is_string($params['%email_hint%'] ?? null) ? $params['%email_hint%'] : ''));
         $envelope = new Envelope(new stdClass());
         $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
@@ -1226,6 +1274,42 @@ final class SetFounderHandlerTest extends TestCase
         self::assertInstanceOf(ChannelFounderChangedEvent::class, $dispatched);
         self::assertSame(['set.founder.updated'], $messages);
         self::assertCount(1, $channelNotices);
+    }
+
+    #[Test]
+    public function directTransferReturnsWithoutChangingFounderWhenSenderIsNull(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(null);
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByFounderNickId')->willReturn([]);
+        $channelRepository->expects(self::never())->method('save');
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->expects(self::once())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $translator = $this->createStub(TranslationInterface::class);
+
+        $handler = new SetFounderHandler(
+            $channelRepository,
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $nickRepository,
+            new FounderChangeTokenRegistry(),
+            $eventDispatcher,
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $translator,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder'], isLevelFounder: true, withoutSender: true),
+            $channel,
+            'NewFounder',
+        );
     }
 
     #[Test]

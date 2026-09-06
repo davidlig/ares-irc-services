@@ -14,6 +14,9 @@ final readonly class ChannelHistoryService
         private ChannelHistoryRepositoryInterface $historyRepository,
     ) {}
 
+    /**
+     * @param array<string, mixed> $extraData
+     */
     public function recordAction(
         int $channelId,
         string $action,

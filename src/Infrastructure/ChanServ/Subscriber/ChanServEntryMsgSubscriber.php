@@ -6,6 +6,7 @@ namespace App\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -47,7 +48,7 @@ final readonly class ChanServEntryMsgSubscriber implements EventSubscriberInterf
         $this->sendEntryMsg($channel, $uid, $event->channel->value);
     }
 
-    private function sendEntryMsg(object $channel, string $uid, string $channelName): void
+    private function sendEntryMsg(RegisteredChannel $channel, string $uid, string $channelName): void
     {
         if ($channel->isBlocked()) {
             return;

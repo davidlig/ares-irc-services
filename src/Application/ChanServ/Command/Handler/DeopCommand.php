@@ -7,6 +7,7 @@ namespace App\Application\ChanServ\Command\Handler;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -75,7 +76,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -98,6 +99,11 @@ final readonly class DeopCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $validation = $this->validateDeopExecute($context);
         if (null === $validation) {
             return;
@@ -105,7 +111,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
 
         [$channelName, $targetNick, $channel, $targetSender] = $validation;
         $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'o', false, $channel->getCreatedAt()->getTimestamp());
-        $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans('op.notice_grant', ['%from%' => $context->sender->nick, '%to%' => $targetNick, '%mode%' => '-o']));
+        $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans('op.notice_grant', ['%from%' => $sender->nick, '%to%' => $targetNick, '%mode%' => '-o']));
         $context->reply('deop.done', ['%nickname%' => $targetNick]);
     }
 
@@ -141,6 +147,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
 
             return null;
         }
+        $senderLevel = ChannelAccess::FOUNDER_LEVEL;
         if (!$context->isLevelFounder) {
             $requiredLevel = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_OPDEOP);
             $senderLevel = $this->effectiveAccessLevel($channel, $senderAccount->getId(), true);

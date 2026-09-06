@@ -49,6 +49,7 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
             ->getRepository(RegisteredChannel::class)
             ->findBy(['founderNickId' => $founderNickId], ['name' => 'ASC']);
 
+        // @phpstan-ignore instanceof.alwaysTrue
         return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
     }
 
@@ -61,6 +62,7 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
             ->getRepository(RegisteredChannel::class)
             ->findBy(['successorNickId' => $successorNickId], ['name' => 'ASC']);
 
+        // @phpstan-ignore instanceof.alwaysTrue
         return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
     }
 
@@ -73,6 +75,7 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
             ->getRepository(RegisteredChannel::class)
             ->findBy([], ['name' => 'ASC']);
 
+        // @phpstan-ignore instanceof.alwaysTrue
         return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
     }
 
@@ -94,9 +97,13 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
             ->from(RegisteredChannel::class, 'c')
             ->where('COALESCE(c.lastUsedAt, c.createdAt) < :threshold')
             ->andWhere('c.noExpire = false')
-            ->setParameter('threshold', $threshold);
+            ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
 
-        return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
+        /** @var array<mixed> $result */
+        $result = $qb->getQuery()->getResult();
+
+        /* @var array<RegisteredChannel> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
     }
 
     public function clearSuccessorNickId(int $successorNickId): void
@@ -118,9 +125,13 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
             ->andWhere('c.suspendedUntil IS NOT NULL')
             ->andWhere('c.suspendedUntil <= :now')
             ->setParameter('status', ChannelStatus::Suspended)
-            ->setParameter('now', new DateTimeImmutable());
+            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'));
 
-        return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
+        /** @var array<mixed> $result */
+        $result = $qb->getQuery()->getResult();
+
+        /* @var array<RegisteredChannel> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
     }
 
     public function findPendingDeletionBefore(DateTimeImmutable $threshold): array
@@ -132,9 +143,13 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
             ->andWhere('c.pendingDeletionAt IS NOT NULL')
             ->andWhere('c.pendingDeletionAt <= :threshold')
             ->setParameter('status', ChannelStatus::PendingDeletion)
-            ->setParameter('threshold', $threshold);
+            ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
 
-        return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
+        /** @var array<mixed> $result */
+        $result = $qb->getQuery()->getResult();
+
+        /* @var array<RegisteredChannel> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
     }
 
     public function findForbiddenChannels(): array
@@ -145,6 +160,10 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
             ->where('c.status = :status')
             ->setParameter('status', ChannelStatus::Forbidden);
 
-        return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
+        /** @var array<mixed> $result */
+        $result = $qb->getQuery()->getResult();
+
+        /* @var array<RegisteredChannel> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
     }
 }

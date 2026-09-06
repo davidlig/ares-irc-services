@@ -19,8 +19,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionProperty;
 
-use function in_array;
-
 #[CoversClass(ChanDropService::class)]
 final class ChanDropServiceTest extends TestCase
 {
@@ -35,7 +33,7 @@ final class ChanDropServiceTest extends TestCase
         $calls = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
-            static function (object $event) use (&$calls): void {
+            static function (ChannelDropCleanupEvent|ChannelDropEvent $event) use (&$calls): void {
                 $calls[] = match ($event::class) {
                     ChannelDropCleanupEvent::class => 'cleanup',
                     ChannelDropEvent::class => 'post-commit',
@@ -98,8 +96,8 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('delete');
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->with(self::callback(static fn (object $event): bool => 'inactivity' === $event->reason
-                && in_array($event::class, [ChannelDropCleanupEvent::class, ChannelDropEvent::class], true)));
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->with(self::callback(static fn (object $event): bool => ($event instanceof ChannelDropCleanupEvent || $event instanceof ChannelDropEvent)
+            && 'inactivity' === $event->reason));
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(

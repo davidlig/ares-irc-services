@@ -11,6 +11,7 @@ use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
 use function array_slice;
@@ -70,7 +71,7 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::CLEARUSERS;
     }
@@ -128,7 +129,7 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
         return CommandOutcome::success($auditData);
     }
 
-    /** @return array{string, object, string}|null */
+    /** @return array{string, ChannelView, string}|null */
     private function validateClearusers(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -150,7 +151,7 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
         return $this->validateClearusersView($context, $channelName);
     }
 
-    /** @return array{string, object, string}|null */
+    /** @return array{string, ChannelView, string}|null */
     private function validateClearusersView(ChanServContext $context, string $channelName): ?array
     {
         $view = $context->getChannelView($channelName);

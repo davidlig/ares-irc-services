@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ;
 
+use function is_string;
+
 /**
  * Holds channel names that need rank sync. Snapshot at message start so we run
  * sync only for channels that were already pending (from a previous message),
@@ -29,7 +31,10 @@ final class ChannelRankSyncPendingRegistry
     {
         foreach ($channels as $channel) {
             if (method_exists($channel, 'getName')) {
-                $this->add($channel->getName());
+                $name = $channel->getName();
+                if (is_string($name)) {
+                    $this->add($name);
+                }
             }
         }
     }

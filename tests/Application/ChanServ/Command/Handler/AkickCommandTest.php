@@ -21,6 +21,7 @@ use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelAkick;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelAkickChangedEvent;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
@@ -32,11 +33,17 @@ use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+
+use function assert;
 
 #[CoversClass(AkickCommand::class)]
 final class AkickCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -63,6 +70,9 @@ final class AkickCommandTest extends TestCase
         );
     }
 
+    /**
+     * @return array{RegisteredChannelRepositoryInterface&Stub, ChannelAkickRepositoryInterface&Stub, RegisteredNickRepositoryInterface&Stub, ChannelAccessRepositoryInterface&Stub, ChanServAccessHelper}
+     */
     private function createStubReposAndHelper(): array
     {
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -76,6 +86,29 @@ final class AkickCommandTest extends TestCase
             $accessRepo,
             new ChanServAccessHelper($accessRepo, $levelRepo),
         ];
+    }
+
+    #[Test]
+    public function executeReturnsEarlyWhenSenderIsNull(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        [$channelRepository, $akickRepository, $nickRepository, $accessRepository, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepository = $this->createChannelMock();
+        $command = new AkickCommand(
+            $channelRepository,
+            $akickRepository,
+            $nickRepository,
+            $accessRepository,
+            $accessHelper,
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(EventBusInterface::class),
+        );
+
+        $command->execute($this->createContext(null, $account, ['#test', 'LIST'], $notifier, $this->createStub(TranslationInterface::class)));
     }
 
     private function createChannelMock(int $channelId = 1, int $founderNickId = 1): RegisteredChannelRepositoryInterface
@@ -224,6 +257,7 @@ final class AkickCommandTest extends TestCase
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+            assert($e instanceof ChannelAkickChangedEvent);
             $dispatchedIp = $e->performedByIp;
 
             return $e;
@@ -260,6 +294,7 @@ final class AkickCommandTest extends TestCase
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+            assert($e instanceof ChannelAkickChangedEvent);
             $dispatchedIp = $e->performedByIp;
 
             return $e;

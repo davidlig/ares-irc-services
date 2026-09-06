@@ -8,6 +8,7 @@ use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\EventBusInterface;
+use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -86,7 +87,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -121,8 +122,9 @@ final readonly class AccessCommand implements ChanServCommandInterface
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
 
+        $sender = $context->sender;
         $senderAccount = $context->senderAccount;
-        if (null === $senderAccount) {
+        if (null === $sender || null === $senderAccount) {
             $context->reply('error.not_identified');
 
             return;
@@ -131,23 +133,23 @@ final readonly class AccessCommand implements ChanServCommandInterface
         $sub = strtoupper($context->args[1] ?? '');
         switch ($sub) {
             case 'LIST':
-                $this->doList($context, $channel, $channelName);
+                $this->doList($context, $channel, $channelName, $senderAccount);
                 break;
             case 'ADD':
-                $this->doAdd($context, $channel, $channelName);
+                $this->doAdd($context, $channel, $channelName, $sender, $senderAccount);
                 break;
             case 'DEL':
-                $this->doDel($context, $channel, $channelName);
+                $this->doDel($context, $channel, $channelName, $sender, $senderAccount);
                 break;
             default:
                 $context->reply('access.unknown_sub', ['%sub%' => $sub]);
         }
     }
 
-    private function doList(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
+    private function doList(ChanServContext $context, RegisteredChannel $channel, string $channelName, RegisteredNick $senderAccount): void
     {
         if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_ACCESSLIST, $channelName, 'ACCESS LIST');
+            $this->accessHelper->requireLevel($channel, (int) $senderAccount->getId(), ChannelLevel::KEY_ACCESSLIST, $channelName, 'ACCESS LIST');
         }
 
         $entries = $this->accessRepository->listByChannel($channel->getId());
@@ -173,10 +175,10 @@ final readonly class AccessCommand implements ChanServCommandInterface
         }
     }
 
-    private function doAdd(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
+    private function doAdd(ChanServContext $context, RegisteredChannel $channel, string $channelName, SenderView $sender, RegisteredNick $senderAccount): void
     {
         if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_ACCESSCHANGE, $channelName, 'ACCESS ADD');
+            $this->accessHelper->requireLevel($channel, (int) $senderAccount->getId(), ChannelLevel::KEY_ACCESSCHANGE, $channelName, 'ACCESS ADD');
         }
 
         $data = $this->validateAddArgs($context);
@@ -191,11 +193,11 @@ final readonly class AccessCommand implements ChanServCommandInterface
             return;
         }
 
-        if (!$this->ensureCanAddAccess($context, $channel, $channelName, $data['nickname'], $data['level'], $targetAccount)) {
+        if (!$this->ensureCanAddAccess($context, $channel, $channelName, $data['nickname'], $data['level'], $targetAccount, $senderAccount)) {
             return;
         }
 
-        $this->performAddAccess($channel, $channelName, $data['nickname'], $data['level'], $targetAccount, $context);
+        $this->performAddAccess($channel, $channelName, $data['nickname'], $data['level'], $targetAccount, $context, $sender, $senderAccount);
     }
 
     /** @return array{nickname: string, level: int}|null */
@@ -229,12 +231,13 @@ final readonly class AccessCommand implements ChanServCommandInterface
         string $nickname,
         int $level,
         RegisteredNick $targetAccount,
+        RegisteredNick $senderAccount,
     ): bool {
         if ($context->isLevelFounder) {
             return $this->ensureCanAddAccessAsFounder($context, $channel, $targetAccount);
         }
 
-        return $this->ensureCanAddAccessAsMember($context, $channel, $level, $targetAccount);
+        return $this->ensureCanAddAccessAsMember($context, $channel, $level, $targetAccount, $senderAccount);
     }
 
     private function ensureCanAddAccessAsFounder(
@@ -242,14 +245,22 @@ final readonly class AccessCommand implements ChanServCommandInterface
         RegisteredChannel $channel,
         RegisteredNick $targetAccount,
     ): bool {
-        if ($channel->isFounder($targetAccount->getId())) {
+        if ($channel->isFounder((int) $targetAccount->getId())) {
             $context->reply('access.founder_not_in_list');
 
             return false;
         }
 
-        $count = $this->accessRepository->countByChannel($channel->getId());
-        $existing = $this->accessRepository->findByChannelAndNick($channel->getId(), $targetAccount->getId());
+        return $this->ensureCanAddAccessMaxEntriesFounder($context, $channel, $targetAccount);
+    }
+
+    private function ensureCanAddAccessMaxEntriesFounder(
+        ChanServContext $context,
+        RegisteredChannel $channel,
+        RegisteredNick $targetAccount,
+    ): bool {
+        $count = $this->accessRepository->countByChannel((int) $channel->getId());
+        $existing = $this->accessRepository->findByChannelAndNick((int) $channel->getId(), (int) $targetAccount->getId());
         if (null === $existing && $count >= ChannelAccess::MAX_ENTRIES_PER_CHANNEL) {
             $context->reply('access.max_entries', ['%max%' => (string) ChannelAccess::MAX_ENTRIES_PER_CHANNEL]);
 
@@ -264,37 +275,39 @@ final readonly class AccessCommand implements ChanServCommandInterface
         RegisteredChannel $channel,
         int $level,
         RegisteredNick $targetAccount,
+        RegisteredNick $senderAccount,
     ): bool {
-        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $context->senderAccount->getId(), true);
+        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, (int) $senderAccount->getId(), true);
         if ($level >= $senderLevel) {
             $context->reply('access.cannot_manage_level');
 
             return false;
         }
 
-        if ($channel->isFounder($targetAccount->getId())) {
+        if ($channel->isFounder((int) $targetAccount->getId())) {
             $context->reply('access.founder_not_in_list');
 
             return false;
         }
 
-        return $this->ensureCanAddAccessMaxEntries($context, $channel, $targetAccount);
+        return $this->ensureCanAddAccessMaxEntries($context, $channel, $targetAccount, $senderAccount);
     }
 
     private function ensureCanAddAccessMaxEntries(
         ChanServContext $context,
         RegisteredChannel $channel,
         RegisteredNick $targetAccount,
+        RegisteredNick $senderAccount,
     ): bool {
-        $count = $this->accessRepository->countByChannel($channel->getId());
-        $existing = $this->accessRepository->findByChannelAndNick($channel->getId(), $targetAccount->getId());
+        $count = $this->accessRepository->countByChannel((int) $channel->getId());
+        $existing = $this->accessRepository->findByChannelAndNick((int) $channel->getId(), (int) $targetAccount->getId());
         if (null === $existing && $count >= ChannelAccess::MAX_ENTRIES_PER_CHANNEL) {
             $context->reply('access.max_entries', ['%max%' => (string) ChannelAccess::MAX_ENTRIES_PER_CHANNEL]);
 
             return false;
         }
 
-        if (null !== $existing && !$this->accessHelper->canManageLevel($channel, $context->senderAccount->getId(), $existing->getLevel())) {
+        if (null !== $existing && !$this->accessHelper->canManageLevel($channel, (int) $senderAccount->getId(), $existing->getLevel())) {
             $context->reply('access.cannot_manage_level');
 
             return false;
@@ -310,28 +323,30 @@ final readonly class AccessCommand implements ChanServCommandInterface
         int $level,
         RegisteredNick $targetAccount,
         ChanServContext $context,
+        SenderView $sender,
+        RegisteredNick $senderAccount,
     ): void {
-        $existing = $this->accessRepository->findByChannelAndNick($channel->getId(), $targetAccount->getId());
+        $existing = $this->accessRepository->findByChannelAndNick((int) $channel->getId(), (int) $targetAccount->getId());
         if (null !== $existing) {
             $existing->updateLevel($level);
             $this->accessRepository->save($existing);
         } else {
-            $access = new ChannelAccess($channel->getId(), $targetAccount->getId(), $level);
+            $access = new ChannelAccess((int) $channel->getId(), (int) $targetAccount->getId(), $level);
             $this->accessRepository->save($access);
         }
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
-        $performedByNickId = $context->senderAccount?->getId();
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
+        $performedByNickId = $senderAccount->getId();
 
         $this->eventDispatcher->dispatch(new ChannelAccessChangedEvent(
-            channelId: $channel->getId(),
+            channelId: (int) $channel->getId(),
             channelName: $channelName,
             action: 'ADD',
-            targetNickId: $targetAccount->getId(),
+            targetNickId: (int) $targetAccount->getId(),
             targetNickname: $nickname,
             level: $level,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -339,30 +354,30 @@ final readonly class AccessCommand implements ChanServCommandInterface
 
         $context->reply('access.add.done', ['%nickname%' => $nickname, '%level%' => (string) $level]);
         $channelNotice = $context->trans('access.add.notice_channel', [
-            '%from%' => $context->sender->nick,
+            '%from%' => $sender->nick,
             '%to%' => $nickname,
             '%level%' => (string) $level,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $channelNotice);
     }
 
-    private function doDel(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
+    private function doDel(ChanServContext $context, RegisteredChannel $channel, string $channelName, SenderView $sender, RegisteredNick $senderAccount): void
     {
         if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_ACCESSCHANGE, $channelName, 'ACCESS DEL');
+            $this->accessHelper->requireLevel($channel, (int) $senderAccount->getId(), ChannelLevel::KEY_ACCESSCHANGE, $channelName, 'ACCESS DEL');
         }
 
-        $validationResult = $this->validateDelAccess($context, $channel);
+        $validationResult = $this->validateDelAccess($context, $channel, $senderAccount);
         if (null === $validationResult) {
             return;
         }
 
         [$nickname, $targetAccount, $existing] = $validationResult;
-        $this->performDelAccess($context, $channel, $channelName, $nickname, $targetAccount, $existing);
+        $this->performDelAccess($context, $channel, $channelName, $nickname, $targetAccount, $existing, $sender, $senderAccount);
     }
 
     /** @return array{string, RegisteredNick, ChannelAccess}|null */
-    private function validateDelAccess(ChanServContext $context, RegisteredChannel $channel): ?array
+    private function validateDelAccess(ChanServContext $context, RegisteredChannel $channel, RegisteredNick $senderAccount): ?array
     {
         $nickname = trim($context->args[2] ?? '');
         if ('' === $nickname) {
@@ -378,7 +393,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
             return null;
         }
 
-        return $this->validateDelAccessExisting($context, $channel, $nickname, $targetAccount);
+        return $this->validateDelAccessExisting($context, $channel, $nickname, $targetAccount, $senderAccount);
     }
 
     /** @return array{string, RegisteredNick, ChannelAccess}|null */
@@ -387,15 +402,16 @@ final readonly class AccessCommand implements ChanServCommandInterface
         RegisteredChannel $channel,
         string $nickname,
         RegisteredNick $targetAccount,
+        RegisteredNick $senderAccount,
     ): ?array {
-        $existing = $this->accessRepository->findByChannelAndNick($channel->getId(), $targetAccount->getId());
+        $existing = $this->accessRepository->findByChannelAndNick((int) $channel->getId(), (int) $targetAccount->getId());
         if (null === $existing) {
             $context->reply('access.del.not_in_list', ['%nickname%' => $nickname]);
 
             return null;
         }
 
-        if (!$context->isLevelFounder && !$this->accessHelper->canManageLevel($channel, $context->senderAccount->getId(), $existing->getLevel())) {
+        if (!$context->isLevelFounder && !$this->accessHelper->canManageLevel($channel, (int) $senderAccount->getId(), $existing->getLevel())) {
             $context->reply('access.cannot_manage_level');
 
             return null;
@@ -411,21 +427,23 @@ final readonly class AccessCommand implements ChanServCommandInterface
         string $nickname,
         RegisteredNick $targetAccount,
         ChannelAccess $existing,
+        SenderView $sender,
+        RegisteredNick $senderAccount,
     ): void {
         $this->accessRepository->remove($existing);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
-        $performedByNickId = $context->senderAccount?->getId();
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
+        $performedByNickId = $senderAccount->getId();
 
         $this->eventDispatcher->dispatch(new ChannelAccessChangedEvent(
-            channelId: $channel->getId(),
+            channelId: (int) $channel->getId(),
             channelName: $channelName,
             action: 'DEL',
-            targetNickId: $targetAccount->getId(),
+            targetNickId: (int) $targetAccount->getId(),
             targetNickname: $nickname,
             level: null,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -433,7 +451,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
 
         $context->reply('access.del.done', ['%nickname%' => $nickname]);
         $channelNotice = $context->trans('access.del.notice_channel', [
-            '%from%' => $context->sender->nick,
+            '%from%' => $sender->nick,
             '%to%' => $nickname,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $channelNotice);

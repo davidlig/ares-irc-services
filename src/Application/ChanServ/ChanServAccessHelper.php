@@ -89,6 +89,9 @@ final readonly class ChanServAccessHelper
         return $prefix;
     }
 
+    /**
+     * @param list<string> $supported
+     */
     private function resolveAutoPrefix(int $level, int $channelId, array $supported): string
     {
         $candidates = [

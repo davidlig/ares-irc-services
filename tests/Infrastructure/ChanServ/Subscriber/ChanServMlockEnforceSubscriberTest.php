@@ -390,7 +390,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
         $this->burstCompletePort->expects(self::never())->method('isComplete');
 
-        $event = new ChannelModesChangedEvent($channel, '+nt', []);
+        $event = new ChannelModesChangedEvent($channel);
         $this->subscriber->onChannelModesChanged($event);
     }
 
@@ -417,7 +417,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
         $this->burstCompletePort->expects(self::never())->method('isComplete');
 
-        $event = new ChannelModesChangedEvent($channel, '+nt', []);
+        $event = new ChannelModesChangedEvent($channel);
         $this->subscriber->onChannelModesChanged($event);
     }
 
@@ -450,7 +450,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
         $this->burstCompletePort->expects(self::never())->method('isComplete');
 
-        $event = new ChannelModesChangedEvent($channel, '+nt', []);
+        $event = new ChannelModesChangedEvent($channel);
         $this->subscriber->onChannelModesChanged($event);
     }
 
@@ -507,7 +507,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
 
         $this->burstCompletePort->expects(self::never())->method('isComplete');
 
-        $event = new ChannelModesChangedEvent($channel, '+ntms', []);
+        $event = new ChannelModesChangedEvent($channel);
         $this->subscriber->onChannelModesChanged($event);
     }
 
@@ -1308,7 +1308,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->method('setChannelModes');
         $this->burstCompletePort->expects(self::never())->method('isComplete');
 
-        $event = new ChannelModesChangedEvent($channel, '+nt', []);
+        $event = new ChannelModesChangedEvent($channel);
         $this->subscriber->onChannelModesChanged($event);
     }
 
@@ -1537,7 +1537,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
         $this->burstCompletePort->expects(self::never())->method('isComplete');
 
-        $event = new ChannelModesChangedEvent($channel, '+nt', []);
+        $event = new ChannelModesChangedEvent($channel);
         $this->subscriber->onChannelModesChanged($event);
     }
 }

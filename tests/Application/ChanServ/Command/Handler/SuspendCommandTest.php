@@ -155,6 +155,17 @@ final class SuspendCommandTest extends TestCase
     }
 
     #[Test]
+    public function executeWithEmptyDurationRepliesSyntaxError(): void
+    {
+        $messages = [];
+        $context = $this->createContext($this->createSender(), ['#test', '', 'abuse'], $messages);
+
+        $this->createCommand()->execute($context);
+
+        self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
     public function executeWithNonRegisteredChannelRepliesNotRegistered(): void
     {
         $sender = $this->createSender();
@@ -237,11 +248,12 @@ final class SuspendCommandTest extends TestCase
         $suspensionService = $this->createMock(ChannelSuspensionService::class);
         $suspensionService->expects(self::once())->method('enforceSuspension')->with($channel);
 
+        /** @var list<object> $dispatchedEvents */
         $dispatchedEvents = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+            ->willReturnCallback(static function (ChannelSuspendedEvent $event) use (&$dispatchedEvents): ChannelSuspendedEvent {
                 $dispatchedEvents[] = $event;
 
                 return $event;
@@ -352,7 +364,7 @@ final class SuspendCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
     private function createChannelWithId(string $channelName, int $id): RegisteredChannel
@@ -366,6 +378,10 @@ final class SuspendCommandTest extends TestCase
         return $channel;
     }
 
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,
@@ -403,7 +419,7 @@ final class SuspendCommandTest extends TestCase
     #[Test]
     public function executeWithHourDurationParsesHours(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $channel = $this->createChannelWithId('#test', 1);
         $messages = [];
 
@@ -431,7 +447,7 @@ final class SuspendCommandTest extends TestCase
     #[Test]
     public function executeWithMinuteDurationParsesMinutes(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $channel = $this->createChannelWithId('#test', 1);
         $messages = [];
 
@@ -459,7 +475,7 @@ final class SuspendCommandTest extends TestCase
     #[Test]
     public function executeWithEmptyIpBase64DecodesAsAsterisk(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o');
         $channel = $this->createChannelWithId('#test', 1);
         $messages = [];
 
@@ -470,9 +486,10 @@ final class SuspendCommandTest extends TestCase
         $suspensionService = $this->createMock(ChannelSuspensionService::class);
         $suspensionService->expects(self::once())->method('enforceSuspension');
 
+        /** @var list<object> $dispatchedEvents */
         $dispatchedEvents = [];
         $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelSuspendedEvent $event) use (&$dispatchedEvents): ChannelSuspendedEvent {
             $dispatchedEvents[] = $event;
 
             return $event;
@@ -496,7 +513,7 @@ final class SuspendCommandTest extends TestCase
     #[Test]
     public function executeWithAsteriskIpBase64DecodesAsAsterisk(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '*', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '*', false, true, 'SID1', 'h', 'o');
         $channel = $this->createChannelWithId('#test', 1);
         $messages = [];
 
@@ -507,9 +524,10 @@ final class SuspendCommandTest extends TestCase
         $suspensionService = $this->createMock(ChannelSuspensionService::class);
         $suspensionService->expects(self::once())->method('enforceSuspension');
 
+        /** @var list<object> $dispatchedEvents */
         $dispatchedEvents = [];
         $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelSuspendedEvent $event) use (&$dispatchedEvents): ChannelSuspendedEvent {
             $dispatchedEvents[] = $event;
 
             return $event;
@@ -525,6 +543,7 @@ final class SuspendCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(ChannelSuspendedEvent::class, $dispatchedEvents[0]);
         self::assertSame('*', $dispatchedEvents[0]->performedByIp);
     }
 
@@ -532,7 +551,7 @@ final class SuspendCommandTest extends TestCase
     public function executeWithInvalidBase64IpFallsBackToRawString(): void
     {
         $invalidBase64 = '!!!invalid!!!';
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $invalidBase64, false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $invalidBase64, false, true, 'SID1', 'h', 'o');
         $channel = $this->createChannelWithId('#test', 1);
         $messages = [];
 
@@ -543,9 +562,10 @@ final class SuspendCommandTest extends TestCase
         $suspensionService = $this->createMock(ChannelSuspensionService::class);
         $suspensionService->expects(self::once())->method('enforceSuspension');
 
+        /** @var list<object> $dispatchedEvents */
         $dispatchedEvents = [];
         $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelSuspendedEvent $event) use (&$dispatchedEvents): ChannelSuspendedEvent {
             $dispatchedEvents[] = $event;
 
             return $event;
@@ -561,6 +581,7 @@ final class SuspendCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(ChannelSuspendedEvent::class, $dispatchedEvents[0]);
         self::assertSame($invalidBase64, $dispatchedEvents[0]->performedByIp);
     }
 

@@ -14,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use stdClass;
 
 #[CoversClass(PurgeInactiveChannelsTask::class)]
 final class PurgeInactiveChannelsTaskTest extends TestCase
@@ -139,24 +138,5 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         self::assertCount(1, $logMessages);
         self::assertStringContainsString('deleted channel #test', $logMessages[0]);
         self::assertStringContainsString('inactivity', $logMessages[0]);
-    }
-
-    #[Test]
-    public function runSkipsNonRegisteredChannelInstancesInResult(): void
-    {
-        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findRegisteredInactiveSince')->willReturn([new stdClass()]);
-        $channelRepo->expects(self::never())->method('delete');
-        $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::never())->method('dispatch');
-
-        $task = new PurgeInactiveChannelsTask(
-            $channelRepo,
-            $eventDispatcher,
-            $this->createStub(LoggerInterface::class),
-            3600,
-            90,
-        );
-        $task->run();
     }
 }

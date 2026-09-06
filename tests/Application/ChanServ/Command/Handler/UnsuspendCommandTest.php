@@ -236,6 +236,22 @@ final class UnsuspendCommandTest extends TestCase
     }
 
     #[Test]
+    public function executeReturnsRejectedWhenValidatedChannelHasNoSender(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Test channel');
+        $channel->suspend('Abuse', null);
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+        $messages = [];
+
+        $outcome = new UnsuspendCommand($channelRepository, $this->createStub(EventBusInterface::class))
+            ->execute($this->createContext(null, null, ['#test'], $messages, $channelRepository));
+
+        self::assertFalse($outcome->success);
+        self::assertEmpty($messages);
+    }
+
+    #[Test]
     public function getAuditDataReturnsDataAfterExecute(): void
     {
         $sender = $this->createSender();
@@ -273,9 +289,13 @@ final class UnsuspendCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -371,7 +391,7 @@ final class UnsuspendCommandTest extends TestCase
     #[Test]
     public function executeWithEmptyIpBase64DecodesAsAsterisk(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o');
         $channel = RegisteredChannel::register('#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
@@ -382,9 +402,10 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
         $channelRepository->expects(self::once())->method('save');
 
+        /** @var list<object> $dispatchedEvents */
         $dispatchedEvents = [];
         $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use (&$dispatchedEvents): ChannelUnsuspendedEvent {
             $dispatchedEvents[] = $event;
 
             return $event;
@@ -405,7 +426,7 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithInvalidBase64IpFallsBackToRawString(): void
     {
         $invalidBase64 = '!!!invalid!!!';
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $invalidBase64, false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $invalidBase64, false, true, 'SID1', 'h', 'o');
         $channel = RegisteredChannel::register('#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
@@ -416,9 +437,10 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
         $channelRepository->expects(self::once())->method('save');
 
+        /** @var list<object> $dispatchedEvents */
         $dispatchedEvents = [];
         $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+        $eventDispatcher->method('dispatch')->willReturnCallback(static function (ChannelUnsuspendedEvent $event) use (&$dispatchedEvents): ChannelUnsuspendedEvent {
             $dispatchedEvents[] = $event;
 
             return $event;
@@ -431,6 +453,7 @@ final class UnsuspendCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(ChannelUnsuspendedEvent::class, $dispatchedEvents[0]);
         self::assertSame($invalidBase64, $dispatchedEvents[0]->performedByIp);
     }
 }

@@ -6,7 +6,6 @@ namespace App\Application\ChanServ\Maintenance;
 
 use App\Application\Maintenance\MaintenanceTaskInterface;
 use App\Application\Port\EventBusInterface;
-use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use DateTimeImmutable;
@@ -55,15 +54,11 @@ final readonly class PurgeInactiveChannelsTask implements MaintenanceTaskInterfa
         $inactive = $this->channelRepository->findRegisteredInactiveSince($threshold);
 
         foreach ($inactive as $channel) {
-            if (!$channel instanceof RegisteredChannel) {
-                continue;
-            }
-
             $channelId = $channel->getId();
             $channelName = $channel->getName();
             $channelNameLower = $channel->getNameLower();
             $lastActivity = $channel->getLastUsedAt() ?? $channel->getCreatedAt();
-            $lastActivityStr = null !== $lastActivity ? $lastActivity->format('Y-m-d H:i:s') : 'n/a';
+            $lastActivityStr = $lastActivity->format('Y-m-d H:i:s');
 
             $this->eventDispatcher->dispatch(new ChannelDropEvent(
                 $channelId,

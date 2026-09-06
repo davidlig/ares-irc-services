@@ -29,6 +29,8 @@ interface ChannelAkickRepositoryInterface
     public function findExpired(): array;
 
     /**
+     * @param list<int> $channelIds
+     *
      * @return ChannelAkick[] All AKICK entries for channels belonging to a nick (for cleanup on nick drop)
      */
     public function findByChannelIds(array $channelIds): array;

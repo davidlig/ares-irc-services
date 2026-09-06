@@ -10,6 +10,7 @@ use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
 use function in_array;
@@ -66,7 +67,7 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         return true;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::NOEXPIRE;
     }
@@ -76,6 +77,7 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
     public function allowsForbiddenChannel(): bool
     {
         return false;
@@ -86,6 +88,9 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         return false;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getHelpParams(): array
     {
         return [];
@@ -105,7 +110,7 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         return $this->performNoexpire($context, ...$validation);
     }
 
-    /** @return array{string, object, bool}|null */
+    /** @return array{string, RegisteredChannel, bool}|null */
     private function validateNoexpire(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -127,7 +132,7 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         return $this->validateNoexpireChannel($context, $channelName, $action);
     }
 
-    /** @return array{string, object, bool}|null */
+    /** @return array{string, RegisteredChannel, bool}|null */
     private function validateNoexpireChannel(ChanServContext $context, string $channelName, string $action): ?array
     {
         $channel = $this->channelRepository->findByChannelName($channelName);
@@ -147,8 +152,8 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         return $this->validateNoexpireSuspended($context, $channel, $channelName, $action);
     }
 
-    /** @return array{string, object, bool}|null */
-    private function validateNoexpireSuspended(ChanServContext $context, object $channel, string $channelName, string $action): ?array
+    /** @return array{string, RegisteredChannel, bool}|null */
+    private function validateNoexpireSuspended(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $action): ?array
     {
         if ($channel->isSuspended()) {
             $context->reply('noexpire.suspended', ['%channel%' => $channelName]);
@@ -161,7 +166,7 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         return [$channelName, $channel, $newValue];
     }
 
-    private function performNoexpire(ChanServContext $context, string $channelName, object $channel, bool $newValue): CommandOutcome
+    private function performNoexpire(ChanServContext $context, string $channelName, RegisteredChannel $channel, bool $newValue): CommandOutcome
     {
         $channel->changeNoExpire($newValue);
         $this->channelRepository->save($channel);

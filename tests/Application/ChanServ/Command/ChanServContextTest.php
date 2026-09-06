@@ -23,6 +23,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function is_string;
+
 #[CoversClass(ChanServContext::class)]
 final class ChanServContextTest extends TestCase
 {
@@ -89,6 +91,9 @@ final class ChanServContextTest extends TestCase
         ]);
     }
 
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ChanServNotifierInterface $notifier,
@@ -210,7 +215,7 @@ final class ChanServContextTest extends TestCase
         });
         $notifier->method('getNick')->willReturn('ChanServ');
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params, string $domain, ?string $locale): string => $id . '|' . ($params['%name%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params, string $domain, ?string $locale): string => $id . '|' . (is_string($params['%name%'] ?? null) ? $params['%name%'] : ''));
         $context = $this->createContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
             $notifier,

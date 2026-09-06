@@ -15,6 +15,7 @@ use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -77,7 +78,7 @@ final readonly class OpCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -100,6 +101,11 @@ final readonly class OpCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $validation = $this->validateOpExecute($context);
         if (null === $validation) {
             return;
@@ -110,7 +116,7 @@ final readonly class OpCommand implements ChanServCommandInterface
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('op.notice_grant', [
-                '%from%' => $context->sender->nick,
+                '%from%' => $sender->nick,
                 '%to%' => $targetNick,
                 '%mode%' => '+o',
             ])
@@ -172,7 +178,7 @@ final readonly class OpCommand implements ChanServCommandInterface
     }
 
     /** @return array{string, string, RegisteredChannel, string}|null */
-    private function validateOpTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount): ?array
+    private function validateOpTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, RegisteredNick $targetAccount): ?array
     {
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {

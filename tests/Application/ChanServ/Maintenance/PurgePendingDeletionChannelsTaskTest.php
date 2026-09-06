@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use stdClass;
 
 #[CoversClass(PurgePendingDeletionChannelsTask::class)]
 final class PurgePendingDeletionChannelsTaskTest extends TestCase
@@ -49,7 +48,7 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
 
                 return $expected->format('Y-m-d') === $threshold->format('Y-m-d');
             }))
-            ->willReturn([$channel, new stdClass()]);
+            ->willReturn([$channel]);
 
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::once())->method('hardDropChannel')->with($channel, 'manual-grace-expired', null);

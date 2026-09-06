@@ -8,11 +8,13 @@ use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -72,7 +74,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -95,6 +97,11 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $validation = $this->validateDevoiceExecute($context);
         if (null === $validation) {
             return;
@@ -105,7 +112,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('voice.notice_grant', [
-                '%from%' => $context->sender->nick,
+                '%from%' => $sender->nick,
                 '%to%' => $targetNick,
                 '%mode%' => '-v',
             ])
@@ -152,11 +159,11 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
             $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_VOICEDEVOICE, $channelName, 'DEVOICE');
         }
 
-        return $this->validateDevoiceTarget($context, $channel, $channelName, $targetNick);
+        return $this->validateDevoiceTarget($context, $channel, $channelName, $targetNick, $senderAccount);
     }
 
     /** @return array{string, string, RegisteredChannel, SenderView}|null */
-    private function validateDevoiceTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    private function validateDevoiceTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, RegisteredNick $senderAccount): ?array
     {
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
@@ -164,14 +171,14 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
 
             return null;
         }
-        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $context->senderAccount->getId(), true);
+        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $senderAccount->getId(), true);
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         if (null === $targetAccount) {
             $targetLevel = ChannelAccess::LEVEL_UNREGISTERED;
         } else {
             $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
         }
-        $isSelfTarget = null !== $targetAccount && null !== $context->senderAccount && $targetAccount->getId() === $context->senderAccount->getId();
+        $isSelfTarget = null !== $targetAccount && $targetAccount->getId() === $senderAccount->getId();
         if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEVOICE', '%channel%' => $channelName]);
 

@@ -8,10 +8,12 @@ use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -71,7 +73,7 @@ final readonly class HalfopCommand implements ChanServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -94,6 +96,11 @@ final readonly class HalfopCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         if (!$context->getChannelModeSupport()->hasHalfOp()) {
             $context->reply('halfop.not_supported');
 
@@ -110,7 +117,7 @@ final readonly class HalfopCommand implements ChanServCommandInterface
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('halfop.notice_grant', [
-                '%from%' => $context->sender->nick,
+                '%from%' => $sender->nick,
                 '%to%' => $targetNick,
                 '%mode%' => '+h',
             ])
@@ -168,7 +175,7 @@ final readonly class HalfopCommand implements ChanServCommandInterface
     }
 
     /** @return array{string, string, RegisteredChannel, SenderView}|null */
-    private function validateHalfopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount): ?array
+    private function validateHalfopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, RegisteredNick $targetAccount): ?array
     {
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {

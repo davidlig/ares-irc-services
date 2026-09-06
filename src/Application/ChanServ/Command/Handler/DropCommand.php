@@ -12,8 +12,10 @@ use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
+use function assert;
 use function strcasecmp;
 
 final class DropCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
@@ -69,7 +71,7 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::DROP;
     }
@@ -90,6 +92,9 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
         return false;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getHelpParams(): array
     {
         return [];
@@ -109,7 +114,7 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
         return $this->performDrop($context, ...$validation);
     }
 
-    /** @return array{string, object, bool}|null */
+    /** @return array{string, RegisteredChannel, bool}|null */
     private function validateDrop(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -132,8 +137,8 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
         return $this->validateDropAccess($context, $channel, $channelName, $force);
     }
 
-    /** @return array{string, object, bool}|null */
-    private function validateDropAccess(ChanServContext $context, object $channel, string $channelName, bool $force): ?array
+    /** @return array{string, RegisteredChannel, bool}|null */
+    private function validateDropAccess(ChanServContext $context, RegisteredChannel $channel, string $channelName, bool $force): ?array
     {
         if ($channel->isPendingDeletion() && !$force) {
             $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
@@ -150,16 +155,19 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
         return [$channelName, $channel, $force];
     }
 
-    private function performDrop(ChanServContext $context, string $channelName, object $channel, bool $force): CommandOutcome
+    private function performDrop(ChanServContext $context, string $channelName, RegisteredChannel $channel, bool $force): CommandOutcome
     {
+        $sender = $context->sender;
+        assert(null !== $sender);
+
         if ($force) {
-            $this->dropService->hardDropChannel($channel, 'manual-force', $context->sender->nick);
+            $this->dropService->hardDropChannel($channel, 'manual-force', $sender->nick);
             $context->reply('drop.force_success', ['%channel%' => $channelName]);
 
             return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: ['force' => true]));
         }
 
-        $this->dropService->softDropChannel($channel, $context->sender->nick);
+        $this->dropService->softDropChannel($channel, $sender->nick);
 
         $context->reply('drop.success', ['%channel%' => $channelName]);
 

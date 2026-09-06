@@ -204,7 +204,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
             ->update(RegisteredChannel::class, 'c')
             ->set('c.lastUsedAt', ':date')
             ->where('c.nameLower = :name')
-            ->setParameter('date', new DateTimeImmutable('-60 days'))
+            ->setParameter('date', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
             ->setParameter('name', '#old')
             ->getQuery()
             ->execute();
@@ -246,7 +246,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
             ->set('c.lastUsedAt', ':date')
             ->set('c.noExpire', ':noExpire')
             ->where('c.nameLower = :name')
-            ->setParameter('date', new DateTimeImmutable('-60 days'))
+            ->setParameter('date', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
             ->setParameter('noExpire', true)
             ->setParameter('name', '#protected')
             ->getQuery()
@@ -260,7 +260,7 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
             ->update(RegisteredChannel::class, 'c')
             ->set('c.lastUsedAt', ':date')
             ->where('c.nameLower = :name')
-            ->setParameter('date', new DateTimeImmutable('-60 days'))
+            ->setParameter('date', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
             ->setParameter('name', '#normal')
             ->getQuery()
             ->execute();

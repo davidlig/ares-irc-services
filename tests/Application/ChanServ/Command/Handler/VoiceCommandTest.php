@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(VoiceCommand::class)]
 final class VoiceCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -55,6 +56,27 @@ final class VoiceCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
+    }
+
+    #[Test]
+    public function executeReturnsEarlyWhenSenderIsNull(): void
+    {
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->expects(self::never())->method('findByChannelName');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $command = new VoiceCommand(
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        $command->execute($this->createContext(null, null, [], $notifier, $this->createStub(TranslationInterface::class)));
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

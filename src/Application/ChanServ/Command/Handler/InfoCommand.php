@@ -241,7 +241,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
 
     private function isSenderChannelFounder(ChanServContext $context, RegisteredChannel $channel): bool
     {
-        if (!$context->sender->isIdentified) {
+        if (null === $context->sender || !$context->sender->isIdentified) {
             return false;
         }
 

@@ -8,6 +8,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
+use App\Application\Port\SenderView;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\NickServ\Security\IrcServiceUser;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -16,6 +17,9 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 use function in_array;
 use function strtolower;
 
+/**
+ * @extends Voter<string, ChanServContext>
+ */
 final class ChanServLevelFounderVoter extends Voter
 {
     public function __construct(
@@ -23,6 +27,11 @@ final class ChanServLevelFounderVoter extends Voter
         private readonly RootUserRegistry $rootRegistry,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
     ) {}
+
+    public function getIrcopRepository(): OperIrcopRepositoryInterface
+    {
+        return $this->ircopRepository;
+    }
 
     protected function supports(string $attribute, mixed $subject): bool
     {
@@ -41,6 +50,7 @@ final class ChanServLevelFounderVoter extends Voter
 
         // @codeCoverageIgnoreStart
         // Defensive: IrcServiceUser is always created with a valid SenderView
+        // @phpstan-ignore identical.alwaysFalse
         if (null === $sender) {
             return false;
         }
@@ -51,7 +61,7 @@ final class ChanServLevelFounderVoter extends Voter
         return $result;
     }
 
-    private function checkLevelFounder($sender, IrcServiceUser $user, ChanServContext $subject): bool
+    private function checkLevelFounder(SenderView $sender, IrcServiceUser $user, ChanServContext $subject): bool
     {
         $senderNickLower = strtolower($sender->nick);
 

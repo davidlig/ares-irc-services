@@ -41,13 +41,16 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
 
     public function notify(string $message): void
     {
-        if (!$this->isConfigured()) {
+        if (null === $this->debugChannel || '' === $this->debugChannel) {
             return;
         }
 
         $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
     }
 
+    /**
+     * @param array<string, mixed> $extra
+     */
     public function log(
         string $operator,
         string $command,
@@ -64,6 +67,9 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
         }
     }
 
+    /**
+     * @param array<string, mixed> $extra
+     */
     private function logToFile(
         string $operator,
         string $command,
@@ -98,6 +104,9 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
         $this->logger->info($command, $context);
     }
 
+    /**
+     * @param array<string, mixed> $extra
+     */
     private function logToChannel(
         string $operator,
         string $command,
@@ -107,6 +116,10 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
         ?string $reason,
         array $extra,
     ): void {
+        if (null === $this->debugChannel || '' === $this->debugChannel) {
+            return;
+        }
+
         $coloredOperator = self::COLOR_BLUE . $operator . self::COLOR_RESET;
         $coloredCommand = self::COLOR_RED . $command . self::COLOR_RESET;
         $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;

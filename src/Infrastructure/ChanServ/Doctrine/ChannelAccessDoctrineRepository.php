@@ -40,6 +40,7 @@ class ChannelAccessDoctrineRepository implements ChannelAccessRepositoryInterfac
             ->getRepository(ChannelAccess::class)
             ->findBy(['channelId' => $channelId], ['level' => 'DESC']);
 
+        // @phpstan-ignore instanceof.alwaysTrue
         return array_filter($result, static fn ($row): bool => $row instanceof ChannelAccess);
     }
 
@@ -72,11 +73,13 @@ class ChannelAccessDoctrineRepository implements ChannelAccessRepositoryInterfac
 
     public function deleteByChannelId(int $channelId): int
     {
-        return (int) $this->em
+        $result = $this->em
             ->createQuery(
                 'DELETE FROM App\Domain\ChanServ\Entity\ChannelAccess a WHERE a.channelId = :channelId'
             )
             ->setParameter('channelId', $channelId)
             ->execute();
+
+        return is_numeric($result) ? (int) $result : 0;
     }
 }

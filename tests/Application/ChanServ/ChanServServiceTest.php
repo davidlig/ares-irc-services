@@ -40,7 +40,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use stdClass;
+
+use function is_string;
+
+final class ChanServTestContextHolder
+{
+    public ?ChanServContext $context = null;
+}
 
 #[CoversClass(ChanServService::class)]
 final class ChanServServiceTest extends TestCase
@@ -123,10 +129,9 @@ final class ChanServServiceTest extends TestCase
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
         $logger = $this->createStub(LoggerInterface::class);
 
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -286,11 +291,10 @@ final class ChanServServiceTest extends TestCase
     public function repliesPermissionDeniedWhenHandlerRequiresPermissionAndUserLacksIt(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $permissionHandler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -337,7 +341,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'CHANSERV_OP_TEST';
             }
@@ -404,11 +408,10 @@ final class ChanServServiceTest extends TestCase
     public function blocksNormalCommandOnPendingDeletionChannel(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -525,11 +528,10 @@ final class ChanServServiceTest extends TestCase
     public function repliesNotIdentifiedWhenRequiredPermissionIdentifiedAndNoAccount(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $identifiedHandler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -576,7 +578,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'IDENTIFIED';
             }
@@ -638,11 +640,10 @@ final class ChanServServiceTest extends TestCase
     public function repliesSyntaxWhenArgsBelowMinArgs(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $minArgsHandler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -717,7 +718,7 @@ final class ChanServServiceTest extends TestCase
 
         $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . ($params['syntax'] ?? '') : $id
+            static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . (is_string($params['syntax'] ?? null) ? $params['syntax'] : '') : $id
         );
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, self::stringContains('Syntax:'), 'NOTICE');
@@ -1178,11 +1179,10 @@ final class ChanServServiceTest extends TestCase
     public function dispatchesCommandExecutedEventWithSuccessfulOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $auditableHandler = new class($contextHolder) implements ChanServCommandInterface, IrcopAuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1229,7 +1229,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'CHANSPORT_FOUNDER';
             }
@@ -1316,11 +1316,10 @@ final class ChanServServiceTest extends TestCase
     public function dispatchesCommandExecutedEventForNonAuditableHandler(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $nonAuditableHandler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1367,7 +1366,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'CHANSERV_OP';
             }
@@ -1435,11 +1434,10 @@ final class ChanServServiceTest extends TestCase
     public function dispatchesCommandExecutedEventWithRejectedOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $auditableHandler = new class($contextHolder) implements ChanServCommandInterface, IrcopAuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1486,7 +1484,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'CHANSERV_OP';
             }
@@ -1598,11 +1596,10 @@ final class ChanServServiceTest extends TestCase
     public function blocksCommandOnSuspendedChannel(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1719,11 +1716,10 @@ final class ChanServServiceTest extends TestCase
     public function allowsCommandOnSuspendedChannelWhenAllowed(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1825,11 +1821,10 @@ final class ChanServServiceTest extends TestCase
     public function doesNotBlockCommandWhenChannelFoundButNotCurrentlySuspended(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1937,11 +1932,10 @@ final class ChanServServiceTest extends TestCase
     public function doesNotBlockCommandWhenChannelNotFoundForSuspendedCheck(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -2043,11 +2037,10 @@ final class ChanServServiceTest extends TestCase
     public function repliesForbiddenWhenChannelIsForbiddenAndHandlerDoesNotAllowForbidden(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -2173,11 +2166,10 @@ final class ChanServServiceTest extends TestCase
     public function blocksCommandOnForbiddenChannelEvenForLevelFounder(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -2302,12 +2294,11 @@ final class ChanServServiceTest extends TestCase
     #[Test]
     public function dispatchesLevelFounderAuditEventWhenIrcopIsNotRealFounder(): void
     {
-        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', base64_encode(inet_pton('127.0.0.1')), true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', base64_encode(inet_pton('127.0.0.1') ?: ''), true, false, '001', 'cloak');
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -2354,7 +2345,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'IDENTIFIED';
             }
@@ -2457,11 +2448,10 @@ final class ChanServServiceTest extends TestCase
     public function doesNotDispatchLevelFounderAuditEventWhenIrcopIsRealFounder(): void
     {
         $sender = new SenderView('UID1', 'FounderNick', 'ident', 'host', 'cloak', 'AQ', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -2508,7 +2498,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'IDENTIFIED';
             }
@@ -2598,11 +2588,10 @@ final class ChanServServiceTest extends TestCase
     public function doesNotDispatchLevelFounderAuditEventWhenNotLevelFounder(): void
     {
         $sender = new SenderView('UID1', 'RegularUser', 'ident', 'host', 'cloak', 'AQ', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -2649,7 +2638,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'IDENTIFIED';
             }
@@ -2737,12 +2726,11 @@ final class ChanServServiceTest extends TestCase
     #[Test]
     public function doesNotDispatchLevelFounderAuditEventWhenCommandDoesNotUseLevelFounder(): void
     {
-        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', base64_encode(inet_pton('127.0.0.1')), true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', base64_encode(inet_pton('127.0.0.1') ?: ''), true, false, '001', 'cloak');
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -2789,7 +2777,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'IDENTIFIED';
             }
@@ -2869,12 +2857,11 @@ final class ChanServServiceTest extends TestCase
     #[Test]
     public function doesNotDispatchLevelFounderAuditEventForPublicCommand(): void
     {
-        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', base64_encode(inet_pton('127.0.0.1')), true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', base64_encode(inet_pton('127.0.0.1') ?: ''), true, false, '001', 'cloak');
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -3003,11 +2990,10 @@ final class ChanServServiceTest extends TestCase
     public function dispatchesLevelFounderAuditEventWithWildcardIpReturnsAsterisk(): void
     {
         $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', '*', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -3054,7 +3040,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'IDENTIFIED';
             }
@@ -3156,11 +3142,10 @@ final class ChanServServiceTest extends TestCase
     public function dispatchesLevelFounderAuditEventWithInvalidBase64IpReturnsOriginalString(): void
     {
         $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', '!!invalid-base64!!', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -3207,7 +3192,7 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'IDENTIFIED';
             }

@@ -33,6 +33,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(HalfopCommand::class)]
 final class HalfopCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -56,6 +59,27 @@ final class HalfopCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
+    }
+
+    #[Test]
+    public function executeReturnsEarlyWhenSenderIsNull(): void
+    {
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->expects(self::never())->method('findByChannelName');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $command = new HalfopCommand(
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        $command->execute($this->createContext(null, null, [], $notifier, $this->createStub(TranslationInterface::class)));
     }
 
     #[Test]

@@ -133,7 +133,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         if (null !== $module && '' !== $sid) {
             if (null === $channelTimestamp) {
                 $view = $this->channelLookup->findByChannelName($channelName);
-                $channelTimestamp ??= $view?->timestamp;
+                $channelTimestamp = $view?->timestamp;
             }
             $module->getServiceActions()->inviteUserToChannel($sid, $channelName, $targetUid, $this->uid, $channelTimestamp);
         }
@@ -153,7 +153,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         $actualTimestamp = $channelTimestamp;
         if (null === $actualTimestamp) {
             $view = $this->channelLookup->findByChannelName($channelName);
-            $actualTimestamp = $view?->timestamp ?? time();
+            $actualTimestamp = $view->timestamp ?? time();
         }
 
         $module->getServiceActions()->joinChannelAsService($sid, $channelName, $this->uid, $maxPrefix, $actualTimestamp);

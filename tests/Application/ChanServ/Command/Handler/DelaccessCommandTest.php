@@ -17,6 +17,7 @@ use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelAccessChangedEvent;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(DelaccessCommand::class)]
 final class DelaccessCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -92,6 +94,29 @@ final class DelaccessCommandTest extends TestCase
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['#test'], $notifier, $translator));
 
         self::assertSame(['error.not_identified'], $messages);
+    }
+
+    #[Test]
+    public function executeReturnsWithoutChangingAccessWhenSenderIsNull(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(2);
+        $accessEntry = $this->createStub(ChannelAccess::class);
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+        $accessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $accessRepository->method('findByChannelAndNick')->willReturn($accessEntry);
+        $accessRepository->expects(self::never())->method('remove');
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $command = new DelaccessCommand($channelRepository, $accessRepository, $eventDispatcher);
+        $command->execute($this->createContext(null, $account, ['#test'], $notifier, $this->createStub(TranslationInterface::class)));
     }
 
     #[Test]
@@ -193,7 +218,7 @@ final class DelaccessCommandTest extends TestCase
         $accessRepo->expects(self::once())->method('remove');
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (ChannelAccessChangedEvent $e) use (&$dispatchedIp): ChannelAccessChangedEvent {
             $dispatchedIp = $e->performedByIp;
 
             return $e;
@@ -224,7 +249,7 @@ final class DelaccessCommandTest extends TestCase
         $accessRepo->expects(self::once())->method('remove');
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (ChannelAccessChangedEvent $e) use (&$dispatchedIp): ChannelAccessChangedEvent {
             $dispatchedIp = $e->performedByIp;
 
             return $e;

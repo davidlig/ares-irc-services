@@ -13,11 +13,13 @@ use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\Port\EventBusInterface;
 use App\Application\Shared\Time\RelativeExpiryParser;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelSuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use DateTimeImmutable;
 
 use function array_slice;
+use function assert;
 use function sprintf;
 use function strtolower;
 
@@ -74,7 +76,7 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::SUSPEND;
     }
@@ -109,7 +111,7 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
         return $this->performSuspend($context, ...$validation);
     }
 
-    /** @return array{string, object, string, string, ?DateTimeImmutable}|null */
+    /** @return array{string, RegisteredChannel, string, string, ?DateTimeImmutable}|null */
     private function validateSuspend(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -120,7 +122,14 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
             return null;
         }
 
-        $durationStr = $context->args[1];
+        $durationStr = $context->args[1] ?? '';
+
+        if ('' === $durationStr) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+            return null;
+        }
+
         $reasonParts = array_slice($context->args, 2);
         $reason = trim(implode(' ', $reasonParts));
 
@@ -133,7 +142,7 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
         return $this->validateSuspendChannel($context, $channelName, $durationStr, $reason);
     }
 
-    /** @return array{string, object, string, string, ?DateTimeImmutable}|null */
+    /** @return array{string, RegisteredChannel, string, string, ?DateTimeImmutable}|null */
     private function validateSuspendChannel(ChanServContext $context, string $channelName, string $durationStr, string $reason): ?array
     {
         $channel = $this->channelRepository->findByChannelName($channelName);
@@ -153,8 +162,8 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
         return $this->parseSuspendExpiry($context, $channel, $channelName, $durationStr, $reason);
     }
 
-    /** @return array{string, object, string, string, ?DateTimeImmutable}|null */
-    private function parseSuspendExpiry(ChanServContext $context, object $channel, string $channelName, string $durationStr, string $reason): ?array
+    /** @return array{string, RegisteredChannel, string, string, ?DateTimeImmutable}|null */
+    private function parseSuspendExpiry(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $durationStr, string $reason): ?array
     {
         $expiresAt = RelativeExpiryParser::parse($durationStr);
 
@@ -167,15 +176,18 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
         return [$channelName, $channel, $durationStr, $reason, $expiresAt];
     }
 
-    private function performSuspend(ChanServContext $context, string $channelName, object $channel, string $durationStr, string $reason, ?DateTimeImmutable $expiresAt): CommandOutcome
+    private function performSuspend(ChanServContext $context, string $channelName, RegisteredChannel $channel, string $durationStr, string $reason, ?DateTimeImmutable $expiresAt): CommandOutcome
     {
+        $sender = $context->sender;
+        assert(null !== $sender);
+
         $channel->suspend($reason, $expiresAt);
         $this->channelRepository->save($channel);
 
         $this->suspensionService->enforceSuspension($channel);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new ChannelSuspendedEvent(
@@ -185,7 +197,7 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
             reason: $reason,
             duration: '0' === strtolower($durationStr) ? null : $durationStr,
             expiresAt: $expiresAt,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,

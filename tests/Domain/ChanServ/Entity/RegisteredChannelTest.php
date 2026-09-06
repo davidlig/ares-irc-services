@@ -20,7 +20,9 @@ final class RegisteredChannelTest extends TestCase
     #[Test]
     public function registerCreatesChannelWithInitialState(): void
     {
+        $before = new DateTimeImmutable();
         $channel = RegisteredChannel::register('#test', 1, 'A channel');
+        $after = new DateTimeImmutable();
 
         self::assertSame('#test', $channel->getName());
         self::assertSame('#test', $channel->getNameLower());
@@ -35,7 +37,8 @@ final class RegisteredChannelTest extends TestCase
         self::assertNull($channel->getTopic());
         self::assertTrue($channel->isFounder(1));
         self::assertFalse($channel->isFounder(2));
-        self::assertInstanceOf(DateTimeImmutable::class, $channel->getCreatedAt());
+        self::assertGreaterThanOrEqual($before, $channel->getCreatedAt());
+        self::assertLessThanOrEqual($after, $channel->getCreatedAt());
     }
 
     #[Test]

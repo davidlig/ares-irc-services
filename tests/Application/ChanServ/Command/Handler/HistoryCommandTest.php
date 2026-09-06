@@ -744,6 +744,7 @@ final class HistoryCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertContains('history.add.success', $messages);
+        self::assertNotNull($savedHistory);
         self::assertSame('*', $savedHistory->getExtraData()['ip']);
     }
 
@@ -774,6 +775,7 @@ final class HistoryCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertContains('history.add.success', $messages);
+        self::assertNotNull($savedHistory);
         self::assertSame('*', $savedHistory->getExtraData()['ip']);
     }
 
@@ -804,6 +806,7 @@ final class HistoryCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertContains('history.add.success', $messages);
+        self::assertNotNull($savedHistory);
         self::assertSame('invalid!base64', $savedHistory->getExtraData()['ip']);
     }
 
@@ -834,6 +837,7 @@ final class HistoryCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertContains('history.add.success', $messages);
+        self::assertNotNull($savedHistory);
         self::assertSame('AQID', $savedHistory->getExtraData()['ip']);
     }
 
@@ -983,7 +987,7 @@ final class HistoryCommandTest extends TestCase
 
     private function createSender(string $ipBase64 = 'fwAAAQ=='): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $ipBase64, false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $ipBase64, false, true, 'SID1', 'h', 'o');
     }
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
@@ -1009,6 +1013,10 @@ final class HistoryCommandTest extends TestCase
         return $channel;
     }
 
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContext(
         array $args,
         array &$messages,
@@ -1047,6 +1055,7 @@ final class HistoryCommandTest extends TestCase
         );
     }
 
+    /** @param array<string> $args */
     private function createContextWithNullSender(array $args, ChannelHistoryRepositoryInterface $historyRepo): ChanServContext
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -1071,6 +1080,10 @@ final class HistoryCommandTest extends TestCase
         );
     }
 
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContextWithIp(
         array $args,
         array &$messages,

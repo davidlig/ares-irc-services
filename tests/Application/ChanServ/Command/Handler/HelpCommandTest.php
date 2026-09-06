@@ -29,6 +29,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         array $args,
         ChanServNotifierInterface $notifier,

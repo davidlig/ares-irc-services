@@ -147,9 +147,12 @@ final class ChannelAkickTest extends TestCase
     #[Test]
     public function getCreatedAtReturnsSetTime(): void
     {
+        $before = new DateTimeImmutable();
         $akick = ChannelAkick::create(1, 2, '*!*@host.com');
+        $after = new DateTimeImmutable();
 
-        self::assertNotNull($akick->getCreatedAt());
+        self::assertGreaterThanOrEqual($before, $akick->getCreatedAt());
+        self::assertLessThanOrEqual($after, $akick->getCreatedAt());
     }
 
     #[Test]

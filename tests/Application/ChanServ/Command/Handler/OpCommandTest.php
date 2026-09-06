@@ -32,6 +32,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(OpCommand::class)]
 final class OpCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -55,6 +58,24 @@ final class OpCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
+    }
+
+    #[Test]
+    public function executeReturnsEarlyWhenSenderIsNull(): void
+    {
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $translator = $this->createStub(TranslationInterface::class);
+
+        $command = new OpCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        $command->execute($this->createContext(null, null, [], $notifier, $translator));
     }
 
     #[Test]
@@ -367,7 +388,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertSame('OP', $cmd->getName());
     }
@@ -381,7 +401,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertSame([], $cmd->getAliases());
     }
@@ -395,7 +414,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertSame(2, $cmd->getMinArgs());
     }
@@ -409,7 +427,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertSame('op.syntax', $cmd->getSyntaxKey());
     }
@@ -423,7 +440,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertSame('op.help', $cmd->getHelpKey());
     }
@@ -437,7 +453,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertSame(20, $cmd->getOrder());
     }
@@ -451,7 +466,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertSame('op.short', $cmd->getShortDescKey());
     }
@@ -465,7 +479,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertSame([], $cmd->getSubCommandHelp());
     }
@@ -479,7 +492,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertFalse($cmd->isOperOnly());
     }
@@ -493,7 +505,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
     }
@@ -507,7 +518,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertFalse($cmd->allowsSuspendedChannel());
@@ -522,7 +532,6 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createServiceNicks(),
         );
 
         self::assertFalse($cmd->allowsForbiddenChannel());

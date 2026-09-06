@@ -63,7 +63,7 @@ final class UnforbidCommand implements ChanServCommandInterface, IrcopAuditableC
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return ChanServPermission::FORBID;
     }

@@ -48,6 +48,12 @@ final class ChanServLevelFounderVoterTest extends TestCase
     }
 
     #[Test]
+    public function getIrcopRepositoryReturnsConfiguredRepository(): void
+    {
+        self::assertSame($this->ircopRepository, $this->voter->getIrcopRepository());
+    }
+
+    #[Test]
     public function voteAbstainsForUnsupportedAttribute(): void
     {
         $context = $this->createChanServContext(null, null);

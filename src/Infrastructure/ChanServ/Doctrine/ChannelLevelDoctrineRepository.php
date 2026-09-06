@@ -34,6 +34,7 @@ class ChannelLevelDoctrineRepository implements ChannelLevelRepositoryInterface
             ->getRepository(ChannelLevel::class)
             ->findBy(['channelId' => $channelId], ['levelKey' => 'ASC']);
 
+        // @phpstan-ignore instanceof.alwaysTrue
         return array_filter($result, static fn ($row): bool => $row instanceof ChannelLevel);
     }
 

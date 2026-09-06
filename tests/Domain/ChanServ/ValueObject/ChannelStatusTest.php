@@ -15,18 +15,23 @@ final class ChannelStatusTest extends TestCase
     #[Test]
     public function activeHasCorrectValue(): void
     {
-        self::assertSame('active', ChannelStatus::Active->value);
+        $value = 'ACTIVE';
+
+        self::assertSame(ChannelStatus::Active, self::parseValue(strtolower($value)));
     }
 
     #[Test]
     public function suspendedHasCorrectValue(): void
     {
-        self::assertSame('suspended', ChannelStatus::Suspended->value);
+        $value = 'SUSPENDED';
+
+        self::assertSame(ChannelStatus::Suspended, self::parseValue(strtolower($value)));
     }
 
     #[Test]
     public function allCasesAreExhaustiveInMatch(): void
     {
+        /** @var array<string, string> $results */
         $results = [];
         foreach (ChannelStatus::cases() as $status) {
             $results[$status->value] = match ($status) {
@@ -37,22 +42,28 @@ final class ChannelStatusTest extends TestCase
             };
         }
 
-        self::assertCount(4, $results);
-        self::assertSame('active', $results['active']);
-        self::assertSame('suspended', $results['suspended']);
-        self::assertSame('pending_deletion', $results['pending_deletion']);
-        self::assertSame('forbidden', $results['forbidden']);
+        $expected = array_map(static fn (ChannelStatus $status): string => $status->value, ChannelStatus::cases());
+        self::assertSame($expected, array_values($results));
     }
 
     #[Test]
     public function pendingDeletionHasCorrectValue(): void
     {
-        self::assertSame('pending_deletion', ChannelStatus::PendingDeletion->value);
+        $value = 'PENDING_DELETION';
+
+        self::assertSame(ChannelStatus::PendingDeletion, self::parseValue(strtolower($value)));
     }
 
     #[Test]
     public function forbiddenHasCorrectValue(): void
     {
-        self::assertSame('forbidden', ChannelStatus::Forbidden->value);
+        $value = 'FORBIDDEN';
+
+        self::assertSame(ChannelStatus::Forbidden, self::parseValue(strtolower($value)));
+    }
+
+    private static function parseValue(string $value): ChannelStatus
+    {
+        return ChannelStatus::from($value);
     }
 }

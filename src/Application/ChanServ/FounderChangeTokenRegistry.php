@@ -48,6 +48,9 @@ final class FounderChangeTokenRegistry
         return $newFounderNickId;
     }
 
+    /**
+     * @param array{newFounderNickId: int, token: string, expiresAt: DateTimeImmutable} $entry
+     */
     private function validateAndConsumeToken(array $entry, string $token, int $channelId): ?int
     {
         if (!hash_equals($entry['token'], $token)) {

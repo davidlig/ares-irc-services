@@ -278,7 +278,7 @@ final class DropCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
     private function createChannelWithId(string $name, int $id): RegisteredChannel
@@ -291,6 +291,10 @@ final class DropCommandTest extends TestCase
         return $channel;
     }
 
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,

@@ -244,7 +244,7 @@ final class ClearaccessCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'fwAAAQ==', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'fwAAAQ==', false, true, 'SID1', 'h', 'o');
     }
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
@@ -270,6 +270,10 @@ final class ClearaccessCommandTest extends TestCase
         return $channel;
     }
 
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
     private function createContext(
         array $args,
         array &$messages,
@@ -304,6 +308,7 @@ final class ClearaccessCommandTest extends TestCase
         );
     }
 
+    /** @param array<string> $args */
     private function createContextWithNullSender(array $args): ChanServContext
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
