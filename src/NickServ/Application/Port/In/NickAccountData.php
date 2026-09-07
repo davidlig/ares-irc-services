@@ -11,5 +11,6 @@ final readonly class NickAccountData
         public string $nickname,
         public string $language,
         public string $timezone = 'UTC',
+        public bool $registered = true,
     ) {}
 }

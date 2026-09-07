@@ -51,6 +51,7 @@ final class NickAccountResolverTest extends TestCase
         $account->method('getNickname')->willReturn('Alice');
         $account->method('getLanguage')->willReturn('fr');
         $account->method('getTimezone')->willReturn('Europe/Paris');
+        $account->method('isRegistered')->willReturn(true);
         $repo->method('findByNick')->willReturnCallback(static fn (string $nick): ?RegisteredNick => 'alice' === $nick ? $account : null);
 
         $resolver = new NickAccountResolver($repo, 'en');
@@ -61,6 +62,7 @@ final class NickAccountResolverTest extends TestCase
         self::assertSame('Alice', $data->nickname);
         self::assertSame('fr', $data->language);
         self::assertSame('Europe/Paris', $data->timezone);
+        self::assertTrue($data->registered);
 
         self::assertNull($resolver->findAccountByNick('bob'));
     }
@@ -74,6 +76,7 @@ final class NickAccountResolverTest extends TestCase
         $account->method('getNickname')->willReturn('Alice');
         $account->method('getLanguage')->willReturn('es');
         $account->method('getTimezone')->willReturn(null);
+        $account->method('isRegistered')->willReturn(false);
         $repo->method('findByNick')->willReturn($account);
 
         $resolver = new NickAccountResolver($repo, 'en');
@@ -81,6 +84,7 @@ final class NickAccountResolverTest extends TestCase
         $data = $resolver->findAccountByNick('alice');
         self::assertNotNull($data);
         self::assertSame('UTC', $data->timezone);
+        self::assertFalse($data->registered);
     }
 
     #[Test]

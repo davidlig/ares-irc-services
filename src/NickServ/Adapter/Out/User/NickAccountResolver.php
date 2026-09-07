@@ -37,6 +37,7 @@ final readonly class NickAccountResolver implements NickAccountQuery
             nickname: $account->getNickname(),
             language: $account->getLanguage(),
             timezone: $account->getTimezone() ?? 'UTC',
+            registered: $account->isRegistered(),
         );
     }
 

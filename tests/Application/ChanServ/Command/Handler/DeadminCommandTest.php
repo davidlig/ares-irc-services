@@ -369,7 +369,7 @@ final class DeadminCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $senderAccess = $this->createStub(ChannelAccess::class);
-        $senderAccess->method('getLevel')->willReturn(500);
+        $senderAccess->method('getLevel')->willReturn(499);
         $accessRepo->method('findByChannelAndNick')->willReturn($senderAccess);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn(null);

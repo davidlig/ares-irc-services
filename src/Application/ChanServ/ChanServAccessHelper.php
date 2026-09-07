@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ;
 
-use App\Application\Port\ChannelModeSupportInterface;
-use App\Domain\ChanServ\Entity\ChannelAccess;
+use App\ChanServ\Domain\Policy\ChannelAccessPolicy;
+use App\ChanServ\Domain\ValueObject\AccessLevel;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
-
-use function in_array;
 
 /**
  * Resolves effective access level and level values for ChanServ commands.
@@ -20,12 +18,10 @@ use function in_array;
  */
 final readonly class ChanServAccessHelper
 {
-    /** Highest to lowest prefix for auto-rank (founder gets highest supported). */
-    private const array PREFIX_ORDER = ['q', 'a', 'o', 'h', 'v'];
-
     public function __construct(
         private ChannelAccessRepositoryInterface $accessRepository,
         private ChannelLevelRepositoryInterface $levelRepository,
+        private ChannelAccessPolicy $accessPolicy = new ChannelAccessPolicy(),
     ) {}
 
     public function getLevelValue(int $channelId, string $key): int
@@ -38,14 +34,19 @@ final readonly class ChanServAccessHelper
     public function effectiveAccessLevel(RegisteredChannel $channel, int $nickId, bool $isIdentified = false): int
     {
         if (!$isIdentified) {
-            return ChannelAccess::LEVEL_UNREGISTERED;
+            return $this->accessPolicy->effectiveLevel(false, false, null)->value;
         }
-        if ($channel->isFounder($nickId)) {
-            return ChannelAccess::FOUNDER_LEVEL;
+        $founder = $channel->isFounder($nickId);
+        if ($founder) {
+            return $this->accessPolicy->effectiveLevel(true, true, null)->value;
         }
         $access = $this->accessRepository->findByChannelAndNick($channel->getId(), $nickId);
 
-        return null !== $access ? $access->getLevel() : 0;
+        return $this->accessPolicy->effectiveLevel(
+            identified: true,
+            founder: false,
+            storedAccess: $access?->getLevel(),
+        )->value;
     }
 
     /**
@@ -67,46 +68,9 @@ final readonly class ChanServAccessHelper
     {
         $managerLevel = $this->effectiveAccessLevel($channel, $managerNickId, true);
 
-        return $managerLevel > $targetLevel;
-    }
-
-    /**
-     * Returns the prefix letter (q/a/o/h/v) the user should have on the channel based on
-     * founder status and AUTO* levels, or '' if none. Only returns modes supported by the IRCd.
-     */
-    public function getDesiredPrefixLetter(RegisteredChannel $channel, int $nickId, ChannelModeSupportInterface $modeSupport): string
-    {
-        $supported = $modeSupport->getSupportedPrefixModes();
-        if ($channel->isFounder($nickId)) {
-            return array_find(self::PREFIX_ORDER, static fn ($letter) => in_array($letter, $supported, true)) ?? '';
-        }
-
-        $level = $this->effectiveAccessLevel($channel, $nickId, true);
-        $channelId = $channel->getId();
-
-        $prefix = $this->resolveAutoPrefix($level, $channelId, $supported);
-
-        return $prefix;
-    }
-
-    /**
-     * @param list<string> $supported
-     */
-    private function resolveAutoPrefix(int $level, int $channelId, array $supported): string
-    {
-        $candidates = [
-            ['letter' => 'a', 'key' => ChannelLevel::KEY_AUTOADMIN],
-            ['letter' => 'o', 'key' => ChannelLevel::KEY_AUTOOP],
-            ['letter' => 'h', 'key' => ChannelLevel::KEY_AUTOHALFOP],
-            ['letter' => 'v', 'key' => ChannelLevel::KEY_AUTOVOICE],
-        ];
-
-        foreach ($candidates as $candidate) {
-            if ($level >= $this->getLevelValue($channelId, $candidate['key']) && in_array($candidate['letter'], $supported, true)) {
-                return $candidate['letter'];
-            }
-        }
-
-        return '';
+        return $this->accessPolicy->canManageLevel(
+            AccessLevel::fromEffective($managerLevel),
+            $targetLevel,
+        );
     }
 }

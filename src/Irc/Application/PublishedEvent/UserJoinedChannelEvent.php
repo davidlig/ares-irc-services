@@ -9,5 +9,6 @@ final readonly class UserJoinedChannelEvent
     public function __construct(
         public string $uid,
         public string $channelName,
+        public ?string $initialRole = null,
     ) {}
 }

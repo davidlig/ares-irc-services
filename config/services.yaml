@@ -244,6 +244,34 @@ services:
     App\NickServ\Application\Port\Out\NickAssociatedChannelsPort:
         alias: App\NickServ\Adapter\Out\ChanServ\ChanServNickAssociatedChannelsAdapter
 
+    App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository:
+        alias: App\ChanServ\Adapter\Out\Persistence\LegacyChannelRankPolicyRepository
+
+    App\ChanServ\Application\Port\Out\ChannelMlockPolicyRepository:
+        alias: App\ChanServ\Adapter\Out\Persistence\LegacyChannelMlockPolicyRepository
+
+    App\ChanServ\Application\Port\Out\ChannelRankNetworkQuery:
+        alias: App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery
+
+    App\ChanServ\Application\Port\Out\ChannelMlockNetworkQuery:
+        alias: App\ChanServ\Adapter\Out\Network\IrcChannelMlockNetworkQuery
+
+    App\ChanServ\Application\Port\Out\ChannelRankActions:
+        alias: App\ChanServ\Adapter\Out\Network\IrcChannelRankActions
+
+    App\ChanServ\Application\Port\Out\ChannelModeActions:
+        alias: App\ChanServ\Adapter\Out\Network\IrcChannelModeActions
+
+    App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandler
+
+    App\ChanServ\Application\UseCase\EnforceMlock\EnforceChannelMlockHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\EnforceMlock\EnforceChannelMlockHandler
+
+    App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery:
+        arguments:
+            $chanservNick: '%chanserv.nick%'
+
     App\Application\ChanServ\Port\In\NickChannelAssociationQuery:
         alias: App\Application\ChanServ\NickChannelAssociationQueryService
 
@@ -692,11 +720,6 @@ services:
 
     App\Infrastructure\ChanServ\Subscriber\ChanServRejoinSubscriber:
         arguments:
-            $logger: '@monolog.logger.irc'
-
-    App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber:
-        arguments:
-            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:

@@ -5,15 +5,24 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
+use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
+use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
+use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
+use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent as PublishedUserJoinedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
 use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
+use App\Irc\Domain\Event\ChannelModesChangedEvent;
+use App\Irc\Domain\Event\ChannelSyncedEvent;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
+use App\Irc\Domain\Event\UserLeftChannelEvent;
 use App\Irc\Domain\Event\UserModeChangedEvent;
 use App\Irc\Domain\Event\UserNickChangedEvent;
 use App\Irc\Domain\Event\UserQuitNetworkEvent;
@@ -28,16 +37,25 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
+            MessageReceivedEvent::class => ['publishMessageHandlingStarted', 256],
             UserNickChangedEvent::class => ['publishNicknameChanged', -10],
             UserModeChangedEvent::class => ['publishModesChanged', -10],
             UserQuitNetworkEvent::class => ['publishUserLeft', -10],
             UserJoinedChannelEvent::class => ['publishUserJoinedChannel', -10],
+            UserLeftChannelEvent::class => ['publishUserDepartedChannel', 10],
+            ChannelSyncedEvent::class => ['publishChannelSynchronized', -4],
+            ChannelModesChangedEvent::class => ['publishChannelSettingsChanged', -1],
             NetworkBurstCompleteEvent::class => [
                 ['publishServiceIntroductionRequested', 100],
-                ['publishNetworkSynchronizationCompleted', -256],
             ],
+            NetworkSyncCompleteEvent::class => ['publishNetworkSynchronizationCompleted', -256],
             IrcMessageProcessedEvent::class => ['publishMessageHandled', -200],
         ];
+    }
+
+    public function publishMessageHandlingStarted(): void
+    {
+        $this->eventDispatcher->dispatch(new IrcMessageHandlingStartedEvent());
     }
 
     public function publishNicknameChanged(UserNickChangedEvent $event): void
@@ -72,7 +90,26 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
         $this->eventDispatcher->dispatch(new PublishedUserJoinedChannelEvent(
             $event->uid->value,
             $event->channel->value,
+            '' === $event->role->value ? null : $event->role->value,
         ));
+    }
+
+    public function publishUserDepartedChannel(UserLeftChannelEvent $event): void
+    {
+        $this->eventDispatcher->dispatch(new UserDepartedChannelEvent(
+            $event->uid->value,
+            $event->channel->value,
+        ));
+    }
+
+    public function publishChannelSynchronized(ChannelSyncedEvent $event): void
+    {
+        $this->eventDispatcher->dispatch(new ChannelSynchronizedEvent($event->channel->name->value));
+    }
+
+    public function publishChannelSettingsChanged(ChannelModesChangedEvent $event): void
+    {
+        $this->eventDispatcher->dispatch(new ChannelSettingsChangedEvent($event->channel->name->value));
     }
 
     public function publishServiceIntroductionRequested(NetworkBurstCompleteEvent $event): void
@@ -80,7 +117,7 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
         $this->eventDispatcher->dispatch(new ServiceIntroductionRequestedEvent($event->serverSid));
     }
 
-    public function publishNetworkSynchronizationCompleted(NetworkBurstCompleteEvent $event): void
+    public function publishNetworkSynchronizationCompleted(NetworkSyncCompleteEvent $event): void
     {
         $this->eventDispatcher->dispatch(new NetworkSynchronizationCompletedEvent($event->serverSid));
     }

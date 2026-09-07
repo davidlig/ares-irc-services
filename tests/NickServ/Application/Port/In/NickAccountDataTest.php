@@ -21,6 +21,7 @@ final class NickAccountDataTest extends TestCase
         self::assertSame('Alice', $data->nickname);
         self::assertSame('es', $data->language);
         self::assertSame('Europe/Madrid', $data->timezone);
+        self::assertTrue($data->registered);
     }
 
     #[Test]
@@ -29,5 +30,6 @@ final class NickAccountDataTest extends TestCase
         $data = new NickAccountData(2, 'Bob', 'en');
 
         self::assertSame('UTC', $data->timezone);
+        self::assertTrue($data->registered);
     }
 }

@@ -251,7 +251,7 @@ Application must not know:
 - translation keys;
 - NOTICE vs PRIVMSG.
 
-Read `.agents/services.md`.
+Read `.agents/services.md`. For ChanServ policy work also read `.agents/chanserv.md`.
 
 ## 7. Protocol Isolation
 

@@ -5,8 +5,6 @@ deptrac:
     App\Infrastructure\IRC\Subscriber\DebugChannelJoinSubscriber:
       - App\Domain\ChanServ\Entity\RegisteredChannel
       - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-    App\Application\ChanServ\ChanServAccessHelper:
-      - App\Application\Port\ChannelModeSupportInterface
     App\Application\ChanServ\ChanServService:
       - App\Application\Command\CommandOutcome
       - App\Application\Event\CommandExecutedEvent
@@ -249,16 +247,6 @@ deptrac:
     App\Infrastructure\ChanServ\Subscriber\ChanServAkickEnforceSubscriber:
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
       - App\Irc\Domain\Event\UserJoinedChannelEvent
-    App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber:
-      - App\Irc\Domain\Event\ChannelSyncedEvent
-      - App\Irc\Adapter\Event\IrcMessageProcessedEvent
-      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
-      - App\Irc\Domain\Event\UserJoinedChannelEvent
-      - App\Irc\Domain\Event\UserLeftChannelEvent
-      - App\Irc\Domain\Network\ChannelMemberRole
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-      - App\Irc\Adapter\Event\MessageReceivedEvent
-      - App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServCommandListener:
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
     App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:
@@ -270,10 +258,6 @@ deptrac:
       - App\Irc\Domain\Event\UserJoinedChannelEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServHistorySubscriber:
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-    App\Infrastructure\ChanServ\Subscriber\ChanServMlockEnforceSubscriber:
-      - App\Irc\Domain\Event\ChannelModesChangedEvent
-      - App\Irc\Domain\Event\ChannelSyncedEvent
-      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber:
     App\Infrastructure\ChanServ\Subscriber\ChanServNojoinEnforceSubscriber:
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
