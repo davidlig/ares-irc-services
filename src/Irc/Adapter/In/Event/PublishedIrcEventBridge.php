@@ -8,8 +8,10 @@ use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
+use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent as PublishedChannelTopicReceivedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
@@ -44,6 +46,7 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
             UserJoinedChannelEvent::class => ['publishUserJoinedChannel', -10],
             UserLeftChannelEvent::class => ['publishUserDepartedChannel', 10],
             ChannelSyncedEvent::class => ['publishChannelSynchronized', -4],
+            ChannelTopicReceivedEvent::class => ['publishChannelTopicReceived', 0],
             ChannelModesChangedEvent::class => ['publishChannelSettingsChanged', -1],
             NetworkBurstCompleteEvent::class => [
                 ['publishServiceIntroductionRequested', 100],
@@ -104,7 +107,20 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
 
     public function publishChannelSynchronized(ChannelSyncedEvent $event): void
     {
-        $this->eventDispatcher->dispatch(new ChannelSynchronizedEvent($event->channel->name->value));
+        $this->eventDispatcher->dispatch(new ChannelSynchronizedEvent(
+            $event->channel->name->value,
+            $event->channelSetupApplicable,
+        ));
+    }
+
+    public function publishChannelTopicReceived(ChannelTopicReceivedEvent $event): void
+    {
+        $this->eventDispatcher->dispatch(new PublishedChannelTopicReceivedEvent(
+            $event->channelName->value,
+            $event->topic,
+            $event->setterNick,
+            $event->sourceUid,
+        ));
     }
 
     public function publishChannelSettingsChanged(ChannelModesChangedEvent $event): void

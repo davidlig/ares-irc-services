@@ -68,6 +68,35 @@ final class NickAccountResolverTest extends TestCase
     }
 
     #[Test]
+    public function findAccountByIdReturnsDataWhenFound(): void
+    {
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $account->method('getNickname')->willReturn('Alice');
+        $account->method('getLanguage')->willReturn('fr');
+        $account->method('getTimezone')->willReturn('Europe/Paris');
+        $account->method('isRegistered')->willReturn(true);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('getEmail')->willReturn('alice@example.com');
+        $repo->method('findById')->willReturnCallback(static fn (int $id): ?RegisteredNick => 10 === $id ? $account : null);
+
+        $resolver = new NickAccountResolver($repo, 'en');
+
+        $data = $resolver->findAccountById(10);
+        self::assertNotNull($data);
+        self::assertSame(10, $data->id);
+        self::assertSame('Alice', $data->nickname);
+        self::assertSame('fr', $data->language);
+        self::assertSame('Europe/Paris', $data->timezone);
+        self::assertTrue($data->registered);
+        self::assertFalse($data->suspended);
+        self::assertSame('alice@example.com', $data->email);
+
+        self::assertNull($resolver->findAccountById(99));
+    }
+
+    #[Test]
     public function findAccountByNickUsesDefaultTimezoneWhenAccountTimezoneIsNull(): void
     {
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);

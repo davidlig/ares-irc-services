@@ -1,0 +1,423 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
+
+use App\Application\Port\TranslationInterface;
+use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
+use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Adapter\In\Irc\Command\InviteCommand;
+use App\ChanServ\Application\Model\ChanAccountView;
+use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Service\ChanServAccessHelper;
+use App\ChanServ\Domain\Entity\ChannelAccess;
+use App\ChanServ\Domain\Entity\ChannelLevel;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
+use App\ChanServ\Domain\Exception\InsufficientAccessException;
+use App\Irc\Adapter\Protocol\NullChannelModeSupport;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
+use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\ServiceNicknameRegistry;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(InviteCommand::class)]
+final class InviteCommandTest extends TestCase
+{
+    /** @param array<string> $args */
+    private function createContext(
+        ?SenderView $sender,
+        ?ChanAccountView $senderAccount,
+        array $args,
+        ChanServNotifierInterface $notifier,
+        TranslationInterface $translator,
+    ): ChanServContext {
+        return new ChanServContext(
+            $sender,
+            $senderAccount,
+            'INVITE',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    #[Test]
+    public function replyInvalidChannelWhenFirstArgNotChannel(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), new ChanAccountView(1, 'User', 'en'), ['x'], $notifier, $translator));
+
+        self::assertSame(['error.invalid_channel'], $messages);
+    }
+
+    #[Test]
+    public function replyNotIdentifiedWhenSenderAccountNull(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['#test'], $notifier, $translator));
+
+        self::assertSame(['error.not_identified'], $messages);
+    }
+
+    #[Test]
+    public function throwsWhenChannelNotRegistered(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn(null);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $account = new ChanAccountView(2, 'User', 'en');
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $this->expectException(ChannelNotRegisteredException::class);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function successInvitesAndRepliesAndSendsNotice(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $account = new ChanAccountView(2, 'User', 'en');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturn(null);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(200);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $messages = [];
+        $noticesToChannel = [];
+        $invites = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$noticesToChannel): void {
+            $noticesToChannel[] = [$ch, $m];
+        });
+        $notifier->method('inviteToChannel')->willReturnCallback(static function (string $ch, string $uid) use (&$invites): void {
+            $invites[] = [$ch, $uid];
+        });
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
+
+        self::assertSame(['invite.done'], $messages);
+        self::assertCount(1, $invites);
+        self::assertSame('#test', $invites[0][0]);
+        self::assertSame('UID1', $invites[0][1]);
+        self::assertCount(1, $noticesToChannel);
+    }
+
+    #[Test]
+    public function whenSenderNullCompletesWithoutSendingInvite(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $account = new ChanAccountView(2, 'User', 'en');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturn(null);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(200);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $invites = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (): void {});
+        $notifier->method('inviteToChannel')->willReturnCallback(static function (string $ch, string $uid) use (&$invites): void {
+            $invites[] = [$ch, $uid];
+        });
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd->execute($this->createContext(null, $account, ['#test'], $notifier, $translator));
+
+        self::assertCount(0, $invites);
+    }
+
+    #[Test]
+    public function throwsInsufficientAccessWhenAccessLevelTooLow(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $account = new ChanAccountView(2, 'User', 'en');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $level = $this->createStub(ChannelLevel::class);
+        $level->method('getValue')->willReturn(15);
+        $levelRepo->method('findByChannelAndKey')->willReturn($level);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(5);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $this->expectException(InsufficientAccessException::class);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function getNameReturnsInvite(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertSame('INVITE', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsOne(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertSame(1, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsInviteSyntax(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertSame('invite.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsInviteHelp(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertSame('invite.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsTen(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertSame(10, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsInviteShort(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertSame('invite.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsIdentified(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
+
+    #[Test]
+    public function allowsSuspendedChannelReturnsFalse(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertFalse($cmd->allowsSuspendedChannel());
+    }
+
+    #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
+    }
+}

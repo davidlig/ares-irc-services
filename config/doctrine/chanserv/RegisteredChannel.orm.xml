@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\ChanServ\Domain\Entity\RegisteredChannel" table="registered_channels">
+        <indexes>
+            <index name="idx_name_lower" columns="name_lower"/>
+            <index name="idx_registered_channels_successor_nick_id" columns="successor_nick_id"/>
+            <index name="idx_registered_channels_pending_deletion" columns="status,pending_deletion_at"/>
+        </indexes>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="name" type="string" length="64" column="name"/>
+        <field name="nameLower" type="string" length="64" unique="true" column="name_lower"/>
+        <field name="founderNickId" type="integer" column="founder_nick_id"/>
+        <field name="successorNickId" type="integer" nullable="true" column="successor_nick_id"/>
+        <field name="description" type="string" length="255" column="description"/>
+        <field name="url" type="string" length="255" nullable="true" column="url"/>
+        <field name="email" type="string" length="255" nullable="true" column="email"/>
+        <field name="entrymsg" type="string" length="255" column="entrymsg"/>
+        <field name="topicLock" type="boolean" column="topic_lock"/>
+        <field name="mlockActive" type="boolean" column="mlock_active"/>
+        <field name="mlock" type="string" length="64" column="mlock"/>
+        <field name="mlockParams" type="json" column="mlock_params"/>
+        <field name="secure" type="boolean" column="secure"/>
+        <field name="topic" type="text" nullable="true" column="topic"/>
+        <field name="lastTopicSetAt" type="datetime_immutable" nullable="true" column="last_topic_set_at"/>
+        <field name="lastTopicSetByNick" type="string" length="64" nullable="true" column="last_topic_set_by_nick"/>
+        <field name="lastUsedAt" type="datetime_immutable" nullable="true" column="last_used_at"/>
+        <field name="createdAt" type="datetime_immutable" column="created_at"/>
+        <field name="status" column="status" type="string" length="20" enum-type="App\ChanServ\Domain\ValueObject\ChannelStatus">
+            <options>
+                <option name="default">active</option>
+            </options>
+        </field>
+        <field name="suspendedReason" type="string" length="255" nullable="true" column="suspended_reason"/>
+        <field name="suspendedUntil" type="datetime_immutable" nullable="true" column="suspended_until"/>
+        <field name="forbiddenReason" type="string" length="255" nullable="true" column="forbidden_reason"/>
+        <field name="noExpire" type="boolean" column="no_expire"/>
+        <field name="pendingDeletionAt" type="datetime_immutable" nullable="true" column="pending_deletion_at"/>
+    </entity>
+</doctrine-mapping>

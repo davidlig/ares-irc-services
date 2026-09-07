@@ -12,5 +12,7 @@ interface NickAccountQuery
 
     public function findAccountByNick(string $nickname): ?NickAccountData;
 
+    public function findAccountById(int $id): ?NickAccountData;
+
     public function getLanguage(int $id): string;
 }

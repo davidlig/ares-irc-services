@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\MemoServ\Adapter\In\Event;
 
-use App\Application\ChanServ\PublishedEvent\ChannelDropCleanupEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\Infrastructure\Persistence\DoctrineTransactionManager;
 use App\MemoServ\Adapter\In\Event\MemoServChannelDropCleanupSubscriber;
 use App\MemoServ\Adapter\In\Event\MemoServNickDropCleanupSubscriber;

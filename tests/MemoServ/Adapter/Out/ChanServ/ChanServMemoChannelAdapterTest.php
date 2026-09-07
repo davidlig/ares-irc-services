@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\MemoServ\Adapter\Out\ChanServ;
 
-use App\Application\ChanServ\Port\In\MemoChannel;
-use App\Application\ChanServ\Port\In\MemoChannelQuery;
+use App\ChanServ\Application\Port\In\MemoChannel;
+use App\ChanServ\Application\Port\In\MemoChannelQuery;
 use App\MemoServ\Adapter\Out\ChanServ\ChanServMemoChannelAdapter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

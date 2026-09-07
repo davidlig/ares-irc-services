@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\Out\ChanServ;
 
-use App\Application\ChanServ\Port\In\MemoChannelQuery;
+use App\ChanServ\Application\Port\In\MemoChannelQuery;
 use App\MemoServ\Application\Model\MemoChannelView;
 use App\MemoServ\Application\Port\Out\MemoChannelPort;
 

@@ -3,18 +3,8 @@
 deptrac:
   skip_violations:
     App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbChannelSyncSubscriber:
-      - App\Application\ChanServ\Event\ChannelMlockUpdatedEvent
-      - App\Application\ChanServ\Event\ChannelTopiclockUpdatedEvent
-      - App\Domain\ChanServ\Entity\RegisteredChannel
-      - App\Domain\ChanServ\Event\ChannelAccessChangedEvent
-      - App\Domain\ChanServ\Event\ChannelDropEvent
-      - App\Domain\ChanServ\Event\ChannelForbiddenEvent
-      - App\Domain\ChanServ\Event\ChannelFounderChangedEvent
-      - App\Domain\ChanServ\Event\ChannelRegisteredEvent
-      - App\Domain\ChanServ\Event\ChannelSuspendedEvent
-      - App\Domain\ChanServ\Event\ChannelUnforbiddenEvent
-      - App\Domain\ChanServ\Event\ChannelUnsuspendedEvent
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
+      - App\ChanServ\Domain\Entity\RegisteredChannel
+      - App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface
     App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbGlineSyncSubscriber:
       - App\Domain\OperServ\Event\GlineRemovedEvent
     App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber:
@@ -26,10 +16,10 @@ deptrac:
     App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbPasswordRepairSubscriber:
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
     App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter:
-      - App\Domain\ChanServ\Entity\ChannelAccess
-      - App\Domain\ChanServ\Entity\RegisteredChannel
-      - App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
+      - App\ChanServ\Domain\Entity\ChannelAccess
+      - App\ChanServ\Domain\Entity\RegisteredChannel
+      - App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface
+      - App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface
       - App\NickServ\Domain\Entity\RegisteredNick
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
       - App\Domain\OperServ\Entity\Gline

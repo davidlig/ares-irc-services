@@ -1,0 +1,324 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\ChanServ\Adapter\In\Irc;
+
+use App\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Application\Port\EventBusInterface;
+use App\Application\Port\TranslationInterface;
+use App\ChanServ\Application\Model\ChanAccountView;
+use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
+use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
+use App\ChanServ\Domain\Exception\InsufficientAccessException;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
+use App\Irc\Application\PublishedEvent\IrcopCommandExecutedEvent;
+use App\Shared\Application\ServiceNicknameRegistry;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Throwable;
+
+use function array_slice;
+use function base64_decode;
+use function count;
+use function implode;
+use function in_array;
+use function inet_ntop;
+use function is_string;
+use function preg_split;
+use function sprintf;
+use function strtoupper;
+use function trim;
+
+use const PREG_SPLIT_NO_EMPTY;
+
+/**
+ * Routes a raw command string (from a PRIVMSG to ChanServ) to the correct
+ * command handler. Builds ChanServContext with ports and mode support.
+ */
+final readonly class ChanServService
+{
+    public function __construct(
+        private ChanServCommandRegistry $commandRegistry,
+        private RegisteredChannelRepositoryInterface $channelRepository,
+        private ChanUserAccountPort $accountPort,
+        private ChanServUserPresentationPreferences $preferences,
+        private ChanServNotifierInterface $notifier,
+        private TranslationInterface $translator,
+        private ChannelLookupPort $channelLookup,
+        private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        private NetworkUserLookupPort $userLookup,
+        private ServiceNicknameRegistry $serviceNicks,
+        private ChanAuthorizationContextInterface $authorizationContext,
+        private ChanAuthorizationCheckerInterface $authorizationChecker,
+        private EventBusInterface $eventDispatcher,
+        private string $defaultLanguage = 'en',
+        private string $defaultTimezone = 'UTC',
+        private LoggerInterface $logger = new NullLogger(),
+    ) {}
+
+    /**
+     * @param string     $rawText Full text of the PRIVMSG (e.g. "REGISTER #channel desc")
+     * @param SenderView $sender  The user who sent the message (from NetworkUserLookupPort)
+     */
+    public function dispatch(string $rawText, SenderView $sender): void
+    {
+        $parts = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $cmdPart = array_shift($parts);
+        $cmdName = strtoupper(is_string($cmdPart) ? $cmdPart : '');
+        /** @var list<string> $args */
+        $args = $parts;
+
+        if ('' === $cmdName) {
+            return;
+        }
+
+        $handler = $this->commandRegistry->find($cmdName);
+
+        if (null === $handler) {
+            $messageType = $this->preferences->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
+            $this->notifier->sendMessage(
+                $sender->uid,
+                $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'chanserv', $this->defaultLanguage),
+                $messageType
+            );
+
+            return;
+        }
+
+        $this->executeHandler($handler, $sender, $cmdName, $args);
+    }
+
+    /**
+     * @param list<string> $args
+     */
+    private function executeHandler(ChanServCommandInterface $handler, SenderView $sender, string $cmdName, array $args): void
+    {
+        $account = $this->accountPort->findAccountByNick($sender->nick);
+        $language = $this->preferences->languageFor($sender->uid, $sender->nick, $account?->language);
+        $timezone = $account->timezone ?? $this->defaultTimezone;
+        $messageType = $this->preferences->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
+        $modeSupport = $this->modeSupportProvider->getSupport();
+
+        $context = new ChanServContext(
+            sender: $sender,
+            senderAccount: $account,
+            command: $cmdName,
+            args: $args,
+            notifier: $this->notifier,
+            translator: $this->translator,
+            language: $language,
+            timezone: $timezone,
+            messageType: $messageType,
+            registry: $this->commandRegistry,
+            channelLookup: $this->channelLookup,
+            channelModeSupport: $modeSupport,
+            userLookup: $this->userLookup,
+            serviceNicks: $this->serviceNicks,
+        );
+
+        $this->authorizationContext->setCurrentUser($sender->uid, $sender->isIdentified, $sender->isOper);
+
+        try {
+            $requiredPermission = $handler->getRequiredPermission();
+            if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
+                $context->reply('IDENTIFIED' === $requiredPermission ? 'error.not_identified' : 'error.permission_denied');
+
+                return;
+            }
+
+            $isLevelFounder = $this->authorizationChecker->isGranted(ChanServPermission::LEVEL_FOUNDER, $context);
+
+            $context = new ChanServContext(
+                sender: $sender,
+                senderAccount: $account,
+                command: $cmdName,
+                args: $args,
+                notifier: $this->notifier,
+                translator: $this->translator,
+                language: $language,
+                timezone: $timezone,
+                messageType: $messageType,
+                registry: $this->commandRegistry,
+                channelLookup: $this->channelLookup,
+                channelModeSupport: $modeSupport,
+                userLookup: $this->userLookup,
+                serviceNicks: $this->serviceNicks,
+                isLevelFounder: $isLevelFounder,
+            );
+
+            $validationKey = $this->validateDispatchContext($context, $handler, $isLevelFounder);
+            if (null !== $validationKey) {
+                return;
+            }
+
+            $this->logger->debug(sprintf(
+                'ChanServ: %s executed %s [args: %d]',
+                $sender->nick,
+                $cmdName,
+                count($args),
+            ));
+
+            $result = $handler->execute($context);
+
+            $this->eventDispatcher->dispatch(new CommandExecutedEvent(
+                command: $handler,
+                serviceName: $this->notifier->getServiceKey(),
+                operatorNick: $sender->nick,
+                commandName: $cmdName,
+                permission: $requiredPermission,
+                outcome: $result instanceof CommandOutcome ? $result : null,
+            ));
+
+            $this->dispatchFounderAuditEvent($handler, $context, $sender, $cmdName, $args, $isLevelFounder, $account);
+        } catch (ChannelAlreadyRegisteredException|ChannelNotRegisteredException|InsufficientAccessException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            $this->logger->error('ChanServ dispatch error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'sender' => $sender->uid,
+            ]);
+            throw $e;
+        } finally {
+            $this->authorizationContext->clear();
+        }
+    }
+
+    private function validateDispatchContext(ChanServContext $context, ChanServCommandInterface $handler, bool $isLevelFounder): ?string
+    {
+        if (count($context->args) < $handler->getMinArgs()) {
+            $context->reply('error.syntax', [
+                'syntax' => $context->trans($handler->getSyntaxKey()),
+            ]);
+
+            return 'syntax';
+        }
+
+        if ($this->isForbiddenChannelViolation($context, $handler)) {
+            return 'forbidden';
+        }
+
+        return $this->validateSuspendedAndPending($context, $handler, $isLevelFounder);
+    }
+
+    private function validateSuspendedAndPending(ChanServContext $context, ChanServCommandInterface $handler, bool $isLevelFounder): ?string
+    {
+        if ($this->isSuspendedChannelViolation($context, $handler, $isLevelFounder)) {
+            return 'suspended';
+        }
+
+        return $this->isPendingDeletionViolation($context, $handler);
+    }
+
+    private function isForbiddenChannelViolation(ChanServContext $context, ChanServCommandInterface $handler): bool
+    {
+        if ($handler->allowsForbiddenChannel()) {
+            return false;
+        }
+
+        $channelName = $context->getChannelNameArg(0);
+        if (null !== $channelName) {
+            $channel = $this->channelRepository->findByChannelName($channelName);
+            if (null !== $channel && $channel->isForbidden()) {
+                $context->reply('forbid.channel_forbidden', ['%channel%' => $channelName]);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isSuspendedChannelViolation(ChanServContext $context, ChanServCommandInterface $handler, bool $isLevelFounder): bool
+    {
+        if ($handler->allowsSuspendedChannel() || $isLevelFounder) {
+            return false;
+        }
+
+        $channelName = $context->getChannelNameArg(0);
+        if (null !== $channelName) {
+            $channel = $this->channelRepository->findByChannelName($channelName);
+            if (null !== $channel && $channel->isCurrentlySuspended()) {
+                $context->reply('suspend.channel_suspended', ['%channel%' => $channelName]);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isPendingDeletionViolation(ChanServContext $context, ChanServCommandInterface $handler): ?string
+    {
+        $channelName = $context->getChannelNameArg(0);
+        if (null === $channelName || in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
+            return null;
+        }
+
+        $channel = $this->channelRepository->findByChannelName($channelName);
+        if (null !== $channel && $channel->isPendingDeletion()) {
+            $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
+
+            return 'pending_deletion';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<string> $args
+     */
+    private function dispatchFounderAuditEvent(ChanServCommandInterface $handler, ChanServContext $context, SenderView $sender, string $cmdName, array $args, bool $isLevelFounder, ?ChanAccountView $account): void
+    {
+        if ($isLevelFounder && null !== $account && $handler->usesLevelFounder()) {
+            $auditChannelName = $context->getChannelNameArg(0);
+            if (null !== $auditChannelName) {
+                $auditChannel = $this->channelRepository->findByChannelName($auditChannelName);
+                if (null !== $auditChannel && !$auditChannel->isFounder($account->id)) {
+                    $auditExtra = ['founder_action' => true];
+                    if (count($args) >= 2) {
+                        $auditExtra['option'] = strtoupper($args[1]);
+                    }
+                    if (count($args) >= 3) {
+                        $auditExtra['value'] = implode(' ', array_slice($args, 2));
+                    }
+
+                    $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                        serviceName: $this->notifier->getServiceKey(),
+                        operatorNick: $sender->nick,
+                        commandName: $cmdName,
+                        permission: ChanServPermission::LEVEL_FOUNDER,
+                        target: $auditChannelName,
+                        targetHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
+                        targetIp: $this->decodeIp($sender->ipBase64),
+                        extra: $auditExtra,
+                    ));
+                }
+            }
+        }
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
+    }
+}

@@ -27,6 +27,8 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
 
         self::assertArrayHasKey(IrcopCommandExecutedEvent::class, $events);
         self::assertSame('onIrcopCommand', $events[IrcopCommandExecutedEvent::class]);
+        self::assertArrayHasKey(\App\Irc\Application\PublishedEvent\IrcopCommandExecutedEvent::class, $events);
+        self::assertSame('onIrcopCommand', $events[\App\Irc\Application\PublishedEvent\IrcopCommandExecutedEvent::class]);
     }
 
     #[Test]
@@ -212,6 +214,43 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
             commandName: 'KILL',
             permission: 'operserv.kill',
             target: 'BadUser',
+        );
+
+        $subscriber->onIrcopCommand($event);
+    }
+
+    #[Test]
+    public function onPublishedIrcopCommandLogs(): void
+    {
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->method('getServiceName')->willReturn('chanserv');
+        $notifier->method('isConfigured')->willReturn(true);
+        $notifier->expects(self::once())->method('ensureChannelJoined');
+        $notifier->expects(self::once())
+            ->method('log')
+            ->with(
+                operator: 'Admin',
+                command: 'DROP',
+                target: '#channel',
+                targetHost: 'user@host.com',
+                targetIp: '10.0.0.1',
+                reason: null,
+                extra: ['founder_action' => true],
+            );
+
+        $registry = new ServiceDebugNotifierRegistry([$notifier]);
+        $detector = new IrcopPermissionDetector();
+        $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
+
+        $event = new \App\Irc\Application\PublishedEvent\IrcopCommandExecutedEvent(
+            serviceName: 'chanserv',
+            operatorNick: 'Admin',
+            commandName: 'DROP',
+            permission: 'chanserv.drop',
+            target: '#channel',
+            targetHost: 'user@host.com',
+            targetIp: '10.0.0.1',
+            extra: ['founder_action' => true],
         );
 
         $subscriber->onIrcopCommand($event);

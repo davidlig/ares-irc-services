@@ -24,6 +24,12 @@ doctrine:
                 prefix: 'App\MemoServ\Domain\Entity'
                 alias: MemoServ
                 type: xml
+            ChanServ:
+                is_bundle: false
+                dir: '%kernel.project_dir%/config/doctrine/chanserv'
+                prefix: 'App\ChanServ\Domain\Entity'
+                alias: ChanServ
+                type: xml
 
 
 doctrine_migrations:

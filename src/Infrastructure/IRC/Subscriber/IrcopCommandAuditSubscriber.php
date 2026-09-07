@@ -7,6 +7,7 @@ namespace App\Infrastructure\IRC\Subscriber;
 use App\Application\Event\IrcopCommandExecutedEvent;
 use App\Application\Port\ServiceDebugNotifierRegistry;
 use App\Application\Security\IrcopPermissionDetector;
+use App\Irc\Application\PublishedEvent\IrcopCommandExecutedEvent as PublishedIrcopCommandExecutedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class IrcopCommandAuditSubscriber implements EventSubscriberInterface
@@ -20,10 +21,11 @@ final class IrcopCommandAuditSubscriber implements EventSubscriberInterface
     {
         return [
             IrcopCommandExecutedEvent::class => 'onIrcopCommand',
+            PublishedIrcopCommandExecutedEvent::class => 'onIrcopCommand',
         ];
     }
 
-    public function onIrcopCommand(IrcopCommandExecutedEvent $event): void
+    public function onIrcopCommand(IrcopCommandExecutedEvent|PublishedIrcopCommandExecutedEvent $event): void
     {
         if (!$this->detector->isIrcopPermission($event->permission)) {
             return;

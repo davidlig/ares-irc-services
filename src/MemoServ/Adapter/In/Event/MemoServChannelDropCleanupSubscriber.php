@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Event;
 
-use App\Application\ChanServ\PublishedEvent\ChannelDropCleanupEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\MemoServ\Application\UseCase\CleanupChannel\CleanupChannelMemoData;
 use App\MemoServ\Application\UseCase\CleanupChannel\CleanupChannelMemoDataHandler;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

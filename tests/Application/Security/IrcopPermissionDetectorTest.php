@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Security;
 
-use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Security\IrcopPermissionDetector;
+use App\ChanServ\Application\Security\ChanServPermission;
 use App\NickServ\Application\Security\NickServPermission;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

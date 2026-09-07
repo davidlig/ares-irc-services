@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
-use App\Application\ChanServ\Event\ChannelMlockUpdatedEvent;
 use App\ChanServ\Adapter\In\Event\ChanServMlockEnforceSubscriber;
 use App\ChanServ\Application\Port\Out\ChannelMlockPolicyRepository;
+use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
 use App\ChanServ\Application\UseCase\EnforceMlock\EnforceChannelMlock;
 use App\ChanServ\Application\UseCase\EnforceMlock\EnforceChannelMlockHandlerInterface;
 use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementOutcome;

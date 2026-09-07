@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\Out\Persistence;
 
 use App\ChanServ\Adapter\Out\Persistence\LegacyChannelMlockPolicyRepository;
-use App\Domain\ChanServ\Entity\RegisteredChannel;
-use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

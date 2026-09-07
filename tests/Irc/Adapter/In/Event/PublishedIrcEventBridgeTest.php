@@ -9,9 +9,11 @@ use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\In\Event\PublishedIrcEventBridge;
+use App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
+use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent as PublishedChannelTopicReceivedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
@@ -41,6 +43,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 #[CoversClass(PublishedIrcEventBridge::class)]
 #[CoversClass(ChannelSettingsChangedEvent::class)]
 #[CoversClass(ChannelSynchronizedEvent::class)]
+#[CoversClass(PublishedChannelTopicReceivedEvent::class)]
 #[CoversClass(IrcMessageHandledEvent::class)]
 #[CoversClass(IrcMessageHandlingStartedEvent::class)]
 #[CoversClass(NetworkSynchronizationCompletedEvent::class)]
@@ -63,6 +66,7 @@ final class PublishedIrcEventBridgeTest extends TestCase
             UserJoinedChannelEvent::class => ['publishUserJoinedChannel', -10],
             UserLeftChannelEvent::class => ['publishUserDepartedChannel', 10],
             ChannelSyncedEvent::class => ['publishChannelSynchronized', -4],
+            ChannelTopicReceivedEvent::class => ['publishChannelTopicReceived', 0],
             ChannelModesChangedEvent::class => ['publishChannelSettingsChanged', -1],
             NetworkBurstCompleteEvent::class => [
                 ['publishServiceIntroductionRequested', 100],
@@ -192,6 +196,23 @@ final class PublishedIrcEventBridgeTest extends TestCase
         $bridge->publishNetworkSynchronizationCompleted(new NetworkSyncCompleteEvent(
             $this->createStub(ConnectionInterface::class),
             '001',
+        ));
+    }
+
+    #[Test]
+    public function publishesChannelTopicReceivedAsScalars(): void
+    {
+        $bridge = $this->bridgeExpecting(static fn (object $event): bool => $event instanceof PublishedChannelTopicReceivedEvent
+            && '#test' === $event->channelName
+            && 'Welcome to #test' === $event->topic
+            && 'Alice' === $event->setterNick
+            && '001ABC' === $event->sourceUid);
+
+        $bridge->publishChannelTopicReceived(new ChannelTopicReceivedEvent(
+            new ChannelName('#test'),
+            'Welcome to #test',
+            'Alice',
+            '001ABC',
         ));
     }
 

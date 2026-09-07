@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\Out\Persistence;
 
 use App\ChanServ\Application\Model\ChannelRankPolicy;
+use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
-use App\Domain\ChanServ\Entity\RegisteredChannel;
-use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
-use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
-use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
 final readonly class LegacyChannelRankPolicyRepository implements ChannelRankPolicyRepository
 {

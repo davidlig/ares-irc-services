@@ -38,6 +38,26 @@ final readonly class NickAccountResolver implements NickAccountQuery
             language: $account->getLanguage(),
             timezone: $account->getTimezone() ?? 'UTC',
             registered: $account->isRegistered(),
+            suspended: $account->isSuspended(),
+            email: $account->getEmail(),
+        );
+    }
+
+    public function findAccountById(int $id): ?NickAccountData
+    {
+        $account = $this->nickRepository->findById($id);
+        if (null === $account) {
+            return null;
+        }
+
+        return new NickAccountData(
+            id: $account->getId(),
+            nickname: $account->getNickname(),
+            language: $account->getLanguage(),
+            timezone: $account->getTimezone() ?? 'UTC',
+            registered: $account->isRegistered(),
+            suspended: $account->isSuspended(),
+            email: $account->getEmail(),
         );
     }
 

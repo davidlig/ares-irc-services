@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
-use App\Application\ChanServ\Event\ChannelSecureEnabledEvent;
 use App\ChanServ\Adapter\In\Event\ChanServChannelRankSubscriber;
 use App\ChanServ\Adapter\In\Event\PendingChannelRankSynchronizations;
 use App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository;
+use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanks;
 use App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandlerInterface;
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementOutcome;
@@ -15,7 +16,6 @@ use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementResult;
 use App\ChanServ\Application\UseCase\EnforceRanks\RankEnforcementTrigger;
 use App\ChanServ\Application\UseCase\EnforceRanks\SynchronizeAllChannelRanksHandler;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
-use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Irc\Application\PublishedEvent\ChannelMemberRankGrantedEvent;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;

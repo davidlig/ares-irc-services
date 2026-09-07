@@ -6,11 +6,11 @@ namespace App\ChanServ\Adapter\Out\Persistence;
 
 use App\ChanServ\Application\Model\ChannelMlockPolicy;
 use App\ChanServ\Application\Port\Out\ChannelMlockPolicyRepository;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeName;
-use App\Domain\ChanServ\Entity\RegisteredChannel;
-use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
 final readonly class LegacyChannelMlockPolicyRepository implements ChannelMlockPolicyRepository
 {

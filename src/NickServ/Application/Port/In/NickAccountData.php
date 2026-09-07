@@ -12,5 +12,7 @@ final readonly class NickAccountData
         public string $language,
         public string $timezone = 'UTC',
         public bool $registered = true,
+        public bool $suspended = false,
+        public ?string $email = null,
     ) {}
 }

@@ -272,8 +272,8 @@ services:
         arguments:
             $chanservNick: '%chanserv.nick%'
 
-    App\Application\ChanServ\Port\In\NickChannelAssociationQuery:
-        alias: App\Application\ChanServ\NickChannelAssociationQueryService
+    App\ChanServ\Application\Port\In\NickChannelAssociationQuery:
+        alias: App\ChanServ\Application\Service\NickChannelAssociationQueryService
 
     App\NickServ\Application\UseCase\Identify\IdentifyNickHandlerInterface:
         alias: App\NickServ\Application\UseCase\Identify\IdentifyNickHandler
@@ -707,7 +707,7 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServCommandListener:
+    App\ChanServ\Adapter\In\Irc\Subscriber\ChanServCommandListener:
         arguments:
             $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
@@ -718,19 +718,19 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServRejoinSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServRejoinSubscriber:
         arguments:
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServEntryMsgSubscriber:
         arguments:
             $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServTopicApplySubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServTopicApplySubscriber:
         arguments:
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServTopicSyncSubscriber:
         arguments:
             $chanservNick: '%chanserv.nick%'
             $nickservNick: '%nickserv.nick%'
@@ -835,19 +835,6 @@ services:
     App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface:
         class: App\NickServ\Adapter\Out\Persistence\Doctrine\NickHistoryDoctrineRepository
 
-    # --- ChanServ Domain --------------------------------------------------------
-
-    App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface:
-        class: App\Infrastructure\ChanServ\Doctrine\RegisteredChannelDoctrineRepository
-
-    App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface:
-        class: App\Infrastructure\ChanServ\Doctrine\ChannelAccessDoctrineRepository
-
-    App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface:
-        class: App\Infrastructure\ChanServ\Doctrine\ChannelLevelDoctrineRepository
-
-    App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface:
-        class: App\Infrastructure\ChanServ\Doctrine\ChannelHistoryDoctrineRepository
 
     # --- MemoServ Domain / Persistence -----------------------------------------
 
@@ -968,7 +955,7 @@ services:
 
     # --- ChanServ Bot pseudo-client ---------------------------------------------
 
-    App\Infrastructure\ChanServ\Bot\ChanServBot:
+    App\ChanServ\Adapter\In\Irc\Bot\ChanServBot:
         arguments:
             $uidGenerator: '@App\Irc\Application\Port\In\ServiceUidGeneratorInterface'
             $servicesVhost:   '%services.vhost%'
@@ -978,11 +965,14 @@ services:
             $logger:            '@monolog.logger.irc'
         tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
 
-    App\Application\ChanServ\Command\ChanServNotifierInterface:
-        alias: App\Infrastructure\ChanServ\Bot\ChanServBot
+    App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface:
+        alias: App\ChanServ\Adapter\In\Irc\Bot\ChanServBot
 
     App\Application\Port\ChannelServiceActionsPort:
-        alias: App\Infrastructure\ChanServ\Bot\ChanServBot
+        alias: App\ChanServ\Adapter\In\Irc\Bot\ChanServBot
+
+    App\Application\Port\ChanServBotPort:
+        alias: App\ChanServ\Adapter\In\Irc\Bot\ChanServBot
 
     # --- MemoServ Bot pseudo-client ---------------------------------------------
 
@@ -1001,269 +991,299 @@ services:
 
     # --- ChanServ Service -------------------------------------------------------
 
-    App\Application\Port\ChanServDispatchPort:
-        alias: App\Application\ChanServ\ChanServService
-
-    App\Application\ChanServ\ChanServService:
+    App\ChanServ\Adapter\In\Irc\ChanServService:
         arguments:
             $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
-            $languageResolver: '@App\Application\ChanServ\Port\Out\ServiceUserPreferences'
-            $authorizationContext: '@App\NickServ\Application\Port\Out\AuthorizationContextInterface'
-            $authorizationChecker: '@App\NickServ\Application\Port\Out\AuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
             $logger: '@monolog.logger.irc'
-            $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
 
-    App\Application\ChanServ\Command\ChanServCommandRegistry:
+    App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry:
         arguments:
             $commands: !tagged_iterator chanserv.command
 
-    App\Application\ChanServ\ChannelRegisterThrottleRegistry: ~
 
-    App\Application\ChanServ\Command\Handler\RegisterCommand:
+    App\ChanServ\Adapter\Out\InMemory\ChannelRegisterThrottleRegistry: ~
+    App\ChanServ\Application\Port\Out\ChannelRegisterThrottlePort:
+        alias: App\ChanServ\Adapter\Out\InMemory\ChannelRegisterThrottleRegistry
+
+    App\ChanServ\Adapter\Out\InMemory\FounderChangeTokenRegistry: ~
+    App\ChanServ\Application\Port\Out\FounderChangeTokenPort:
+        alias: App\ChanServ\Adapter\Out\InMemory\FounderChangeTokenRegistry
+
+    App\ChanServ\Adapter\Out\NickServ\NickServChanUserAccountAdapter: ~
+    App\ChanServ\Application\Port\Out\ChanUserAccountPort:
+        alias: App\ChanServ\Adapter\Out\NickServ\NickServChanUserAccountAdapter
+
+    App\ChanServ\Application\Port\Out\ChanServActivitySink:
+        alias: App\ChanServ\Adapter\Out\Service\PsrChanServActivitySink
+
+    App\ChanServ\Adapter\Out\Service\PsrChanServActivitySink:
         arguments:
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $maxChannelsPerNick: '%chanserv.max_channels_per_nick%'
-            $registerMinIntervalSeconds: '%chanserv.register_min_interval%'
-        tags: ['chanserv.command']
+            $logger: '@monolog.logger.irc'
 
-    App\Application\ChanServ\Command\Handler\InfoCommand:
+    App\ChanServ\Application\Port\Out\ChannelSuspensionNotifier:
+        alias: App\ChanServ\Adapter\Out\Service\ChanServSuspensionNoticeAdapter
+
+    App\ChanServ\Adapter\Out\Service\ChanServSuspensionNoticeAdapter:
         arguments:
-            $dropGraceDays: '%chanserv.drop_grace_days%'
-        tags: ['chanserv.command']
+            $defaultLanguage: '%services.default_language%'
 
-    App\Application\ChanServ\Command\Handler\HelpCommand:
+    # Repositories
+    App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAccessDoctrineRepository: ~
+    App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface:
+        alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAccessDoctrineRepository
+
+    App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAkickDoctrineRepository: ~
+    App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface:
+        alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelAkickDoctrineRepository
+
+    App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelHistoryDoctrineRepository: ~
+    App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface:
+        alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelHistoryDoctrineRepository
+
+    App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelLevelDoctrineRepository: ~
+    App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface:
+        alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\ChannelLevelDoctrineRepository
+
+    App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository: ~
+    App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface:
+        alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository
+
+    App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier:
         arguments:
-            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $permissionRegistry: '@App\Application\Security\PermissionRegistry'
-            $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
+            $defaultLanguage: '%services.default_language%'
+            $debugChannel: '%ircops.debug_channel%'
+            $logger: '@monolog.logger.ircops'
+        tags: ['app.debug_notifier']
+
+    App\ChanServ\Application\Port\Out\ChanAuditSink:
+        alias: App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier
+
+    App\ChanServ\Adapter\Out\Persistence\Doctrine\ChanDoctrineTransactionBoundary: ~
+    App\ChanServ\Application\Port\Out\ChanTransactionBoundary:
+        alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\ChanDoctrineTransactionBoundary
+
+    App\ChanServ\Adapter\Out\Event\SymfonyChanServEventPublisher: ~
+    App\ChanServ\Application\Port\Out\ChanServEventPublisher:
+        alias: App\ChanServ\Adapter\Out\Event\SymfonyChanServEventPublisher
+
+    App\ChanServ\Adapter\Out\Network\IrcChanNetworkActions: ~
+    App\ChanServ\Application\Port\Out\ChanNetworkActions:
+        alias: App\ChanServ\Adapter\Out\Network\IrcChanNetworkActions
+
+    App\ChanServ\Adapter\Out\Security\OperChanServOperatorAccess: ~
+    App\ChanServ\Application\Port\Out\ChanServOperatorAccess:
+        alias: App\ChanServ\Adapter\Out\Security\OperChanServOperatorAccess
+
+    App\ChanServ\Adapter\Out\Random\SecureFounderChangeTokenGenerator: ~
+    App\ChanServ\Application\Port\Out\FounderChangeTokenGenerator:
+        alias: App\ChanServ\Adapter\Out\Random\SecureFounderChangeTokenGenerator
+
+    App\ChanServ\Adapter\Out\Mail\MessengerFounderChangeMailSender: ~
+    App\ChanServ\Application\Port\Out\FounderChangeMailSender:
+        alias: App\ChanServ\Adapter\Out\Mail\MessengerFounderChangeMailSender
+
+    App\ChanServ\Adapter\Out\Security\SymfonyChanAuthorizationCheckerAdapter: ~
+    App\ChanServ\Adapter\In\Irc\ChanAuthorizationCheckerInterface:
+        alias: App\ChanServ\Adapter\Out\Security\SymfonyChanAuthorizationCheckerAdapter
+
+    App\ChanServ\Adapter\Out\Security\NickServChanAuthorizationContextAdapter: ~
+    App\ChanServ\Adapter\In\Irc\ChanAuthorizationContextInterface:
+        alias: App\ChanServ\Adapter\Out\Security\NickServChanAuthorizationContextAdapter
+
+    # ChanServ Services
+    App\ChanServ\Application\Service\ChanDropService:
+        arguments:
+            $debug: '@App\ChanServ\Application\Port\Out\ChanAuditSink'
+            $logger: '@App\ChanServ\Application\Port\Out\ChanServActivitySink'
+
+    App\ChanServ\Application\Service\ChannelSuspensionService:
+        arguments:
+            $logger: '@App\ChanServ\Application\Port\Out\ChanServActivitySink'
+
+    App\ChanServ\Application\Service\ChannelHistoryService: ~
+
+    App\ChanServ\Application\Service\ChannelForbiddenService:
+        arguments:
+            $logger: '@App\ChanServ\Application\Port\Out\ChanServActivitySink'
+
+    # SET Command & Handlers
+    App\ChanServ\Adapter\In\Irc\Command\SetCommand:
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\OpCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\DeopCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\FounderChangeTokenRegistry: ~
-
-    App\Application\ChanServ\Command\Handler\SetFounderHandler:
+    App\ChanServ\Adapter\In\Irc\Command\SetFounderHandler:
         arguments:
             $founderTokenTtlSeconds: '%chanserv.founder_token_ttl_seconds%'
             $founderMinIntervalSeconds: '%chanserv.founder_min_interval_seconds%'
             $maxChannelsPerNick: '%chanserv.max_channels_per_nick%'
             $logger: '@monolog.logger.irc'
 
-    App\Application\ChanServ\Command\Handler\SetCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\AccessCommand:
+    # Commands
+    App\ChanServ\Adapter\In\Irc\Command\RegisterCommand:
         arguments:
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+            $maxChannelsPerNick: '%chanserv.max_channels_per_nick%'
+            $registerMinIntervalSeconds: '%chanserv.register_min_interval%'
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\DelaccessCommand:
+    App\ChanServ\Adapter\In\Irc\Command\InfoCommand:
         arguments:
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+            $dropGraceDays: '%chanserv.drop_grace_days%'
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\LevelsCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\VoiceCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\DevoiceCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\InviteCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\AdminCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\DeadminCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\HalfopCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\DehalfopCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\AkickCommand:
+    App\ChanServ\Adapter\In\Irc\Command\HelpCommand:
         arguments:
-            $accessRepository: '@App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+            $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\DropCommand:
-        arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $dropService: '@App\Application\ChanServ\Service\ChanDropService'
+    App\ChanServ\Adapter\In\Irc\Command\OpCommand:
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\SuspendCommand:
-        arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $suspensionService: '@App\Application\ChanServ\Service\ChannelSuspensionService'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+    App\ChanServ\Adapter\In\Irc\Command\DeopCommand:
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\UnsuspendCommand:
-        arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+    App\ChanServ\Adapter\In\Irc\Command\VoiceCommand:
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\HistoryCommand:
+    App\ChanServ\Adapter\In\Irc\Command\DevoiceCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\HalfopCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\DehalfopCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\AdminCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\DeadminCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\AccessCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\DelaccessCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\ClearaccessCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\ClearusersCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\LevelsCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\InviteCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\AkickCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\DropCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\RestoreCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\SuspendCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\UnsuspendCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\HistoryCommand:
         arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
-            $historyService: '@App\Application\ChanServ\Service\ChannelHistoryService'
-            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $historyViewLimit: '%chanserv.history_view_limit%'
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\ForbidCommand:
-        arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $forbiddenService: '@App\Application\ChanServ\Service\ChannelForbiddenService'
+    App\ChanServ\Adapter\In\Irc\Command\ForbidCommand:
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\UnforbidCommand:
-        arguments:
-            $forbiddenService: '@App\Application\ChanServ\Service\ChannelForbiddenService'
+    App\ChanServ\Adapter\In\Irc\Command\UnforbidCommand:
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\NoexpireCommand:
-        arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+    App\ChanServ\Adapter\In\Irc\Command\NoexpireCommand:
         tags: ['chanserv.command']
 
-    App\Application\ChanServ\Command\Handler\ClearaccessCommand:
+    # Maintenance Tasks
+    App\ChanServ\Adapter\In\Maintenance\PurgeExpiredAkickTask:
         arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $accessRepository: '@App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface'
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Command\Handler\ClearusersCommand:
-        arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $notifier: '@App\Application\ChanServ\Command\ChanServNotifierInterface'
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Service\ChanDropService:
-        arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
-            $debug: '@App\Infrastructure\ChanServ\Service\ChanServDebugNotifier'
-            $logger: '@monolog.logger.irc'
-            $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
-
-    App\Application\ChanServ\Command\Handler\RestoreCommand:
-        tags: ['chanserv.command']
-
-    App\Application\ChanServ\Service\ChannelSuspensionService:
-        arguments:
-            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
-            $notifier: '@App\Application\ChanServ\Command\ChanServNotifierInterface'
-            $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
-            $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
-            $translator: '@App\Application\Port\TranslationInterface'
-            $defaultLanguage: '%services.default_language%'
-            $logger: '@monolog.logger.irc'
-
-    App\Application\ChanServ\Service\ChannelHistoryService:
-        arguments:
-            $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
-
-    App\Application\ChanServ\Maintenance\PurgeExpiredAkickTask:
-        arguments:
-            $akickRepository: '@App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface'
-            $debugNotifier: '@App\Infrastructure\ChanServ\Service\ChanServDebugNotifier'
+            $debugNotifier: '@App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier'
             $serverName: '%irc.server_name%'
-            $logger: '@monolog.logger.irc'
+            $logger: '@monolog.logger.maintenance'
             $intervalSeconds: '%maintenance.purge_expired_akick_interval%'
         tags: ['maintenance.task']
 
-    App\Application\ChanServ\Maintenance\UnsuspendExpiredChannelsTask:
+    App\ChanServ\Adapter\In\Maintenance\UnsuspendExpiredChannelsTask:
         arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $serverName: '%irc.server_name%'
             $intervalSeconds: '%maintenance.interval%'
-            $logger: '@monolog.logger.irc'
+            $logger: '@monolog.logger.maintenance'
         tags: ['maintenance.task']
 
-    App\Application\ChanServ\Service\ChannelForbiddenService:
+    App\ChanServ\Adapter\In\Maintenance\PurgeInactiveChannelsTask:
         arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $dropService: '@App\Application\ChanServ\Service\ChanDropService'
-            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
-            $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
-            $logger: '@monolog.logger.irc'
+            $intervalSeconds: '%maintenance.interval%'
+            $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
+            $logger: '@monolog.logger.maintenance'
+        tags: ['maintenance.task']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServChannelForbiddenSubscriber:
+    App\ChanServ\Adapter\In\Maintenance\PurgePendingDeletionChannelsTask:
         arguments:
-            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
-            $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
+            $intervalSeconds: '%maintenance.interval%'
+            $dropGraceDays: '%chanserv.drop_grace_days%'
+            $logger: '@monolog.logger.maintenance'
+        tags: ['maintenance.task']
+
+    App\ChanServ\Adapter\In\Maintenance\CleanupChannelHistoryTask:
+        arguments:
+            $intervalSeconds: '%maintenance.interval%'
+            $retentionDays: '%chanserv.history_retention_days%'
+            $logger: '@monolog.logger.maintenance'
+        tags: ['maintenance.task']
+
+    # Event Subscribers
+    App\ChanServ\Adapter\In\Event\ChanServChannelForbiddenSubscriber:
+        arguments:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServChannelUnforbiddenSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServChannelUnforbiddenSubscriber:
         arguments:
-            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
-            $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelBurstSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServForbiddenChannelBurstSubscriber:
         arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
-            $forbiddenService: '@App\Application\ChanServ\Service\ChannelForbiddenService'
             $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelJoinSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServForbiddenChannelJoinSubscriber:
         arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
-            $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
-            $forbiddenService: '@App\Application\ChanServ\Service\ChannelForbiddenService'
             $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Doctrine\ChannelAkickDoctrineRepository: ~
-
-    App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface:
-        '@App\Infrastructure\ChanServ\Doctrine\ChannelAkickDoctrineRepository'
-
-    App\Infrastructure\ChanServ\Subscriber\ChanServAkickEnforceSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServAkickEnforceSubscriber:
         arguments:
             $chanservNick: '%chanserv.nick%'
             $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServUnsuspendSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServUnsuspendSubscriber:
         arguments:
-            $suspensionService: '@App\Application\ChanServ\Service\ChannelSuspensionService'
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
-            $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
-            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
-            $debugNotifier: '@App\Infrastructure\ChanServ\Service\ChanServDebugNotifier'
-            $translator: '@translator'
+            $debugNotifier: '@App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier'
             $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServNojoinEnforceSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServNojoinEnforceSubscriber:
         arguments:
             $chanservNick: '%chanserv.nick%'
             $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
 
     # --- MemoServ Service -------------------------------------------------------
 
@@ -1302,8 +1322,8 @@ services:
     App\MemoServ\Application\Port\Out\MemoChannelPort:
         alias: App\MemoServ\Adapter\Out\ChanServ\ChanServMemoChannelAdapter
 
-    App\Application\ChanServ\Port\In\MemoChannelQuery:
-        alias: App\Application\ChanServ\MemoChannelQueryService
+    App\ChanServ\Application\Port\In\MemoChannelQuery:
+        alias: App\ChanServ\Application\Service\MemoChannelQueryService
 
     # MemoServ Use Cases
     App\MemoServ\Application\UseCase\Send\SendMemoHandler:
@@ -1386,23 +1406,16 @@ services:
     App\MemoServ\Adapter\In\Event\MemoServChannelDropCleanupSubscriber:
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber:
+    App\ChanServ\Adapter\In\Event\ChanServNickDropCleanupSubscriber:
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServHistorySubscriber:
-        arguments:
-            $historyService: '@App\Application\ChanServ\Service\ChannelHistoryService'
-            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+    App\ChanServ\Adapter\In\Event\ChanServHistorySubscriber:
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServHistoryChannelDropSubscriber:
-        arguments:
-            $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
+    App\ChanServ\Adapter\In\Event\ChanServHistoryChannelDropSubscriber:
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\ChanServ\Subscriber\ChanServAccessChannelDropSubscriber:
-        arguments:
-            $accessRepository: '@App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface'
+    App\ChanServ\Adapter\In\Event\ChanServAccessChannelDropSubscriber:
         tags: ['kernel.event_subscriber']
 
     App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber:
@@ -1646,18 +1659,14 @@ services:
         arguments:
             $operatorAccess: '@App\NickServ\Application\Port\Out\NickServOperatorAccess'
 
-    App\Infrastructure\ChanServ\Security\Voter\ChanServLevelFounderVoter:
-        arguments:
-            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+    App\ChanServ\Adapter\Out\Security\Voter\ChanServLevelFounderVoter: ~
 
     Symfony\Component\Security\Core\Authorization\AccessDecisionManager:
         arguments:
             $voters:
                 - '@App\NickServ\Adapter\Out\Security\Voter\NickServIdentifiedOwnerVoter'
                 - '@App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter'
-                - '@App\Infrastructure\ChanServ\Security\Voter\ChanServLevelFounderVoter'
+                - '@App\ChanServ\Adapter\Out\Security\Voter\ChanServLevelFounderVoter'
                 - '@App\Infrastructure\Security\Voter\IdentifiedVoter'
                 - '@App\Infrastructure\Security\Voter\IrcopPermissionVoter'
 
@@ -1665,6 +1674,9 @@ services:
         arguments:
             $tokenStorage: '@Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage'
             $accessDecisionManager: '@Symfony\Component\Security\Core\Authorization\AccessDecisionManager'
+
+    Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface:
+        alias: Symfony\Component\Security\Core\Authorization\AuthorizationChecker
 
     App\NickServ\Application\Port\Out\AuthorizationContextInterface:
         class: App\NickServ\Adapter\Out\Security\SymfonyAuthorizationContext
@@ -1688,7 +1700,7 @@ services:
     App\Bootstrap\Security\NickServPermissionProvider:
         tags: ['permission.provider']
 
-    App\Application\ChanServ\Security\ChanServIrcopPermission:
+    App\Bootstrap\Security\ChanServPermissionProvider:
         tags: ['permission.provider']
 
     App\Bootstrap\Security\MemoServPermissionProvider:
@@ -1794,31 +1806,6 @@ services:
             $retentionDays: '%nickserv.history_retention_days%'
         tags: ['maintenance.task']
 
-    App\Application\ChanServ\Maintenance\PurgeInactiveChannelsTask:
-        arguments:
-            $channelRepository:    '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $dropService:          '@App\Application\ChanServ\Service\ChanDropService'
-            $logger:               '@monolog.logger.maintenance'
-            $intervalSeconds:      '%maintenance.interval%'
-            $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
-        tags: ['maintenance.task']
-
-    App\Application\ChanServ\Maintenance\PurgePendingDeletionChannelsTask:
-        arguments:
-            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $dropService: '@App\Application\ChanServ\Service\ChanDropService'
-            $logger: '@monolog.logger.maintenance'
-            $intervalSeconds: '%maintenance.interval%'
-            $dropGraceDays: '%chanserv.drop_grace_days%'
-        tags: ['maintenance.task']
-
-    App\Application\ChanServ\Maintenance\CleanupChannelHistoryTask:
-        arguments:
-            $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
-            $logger: '@monolog.logger.maintenance'
-            $intervalSeconds: '%maintenance.interval%'
-            $retentionDays: '%chanserv.history_retention_days%'
-        tags: ['maintenance.task']
 
     # --- In-memory pruners (tagged for PruneMemoryRegistriesTask) -----------------
     App\NickServ\Adapter\In\Maintenance\Pruner\IdentifyFailedAttemptPruner:
@@ -1879,8 +1866,8 @@ services:
     App\Irc\Application\Port\Out\ServiceUserPreferences:
         alias: App\Irc\Adapter\Out\User\NickServUserPreferencesAdapter
 
-    App\Application\ChanServ\Port\Out\ServiceUserPreferences:
-        alias: App\Infrastructure\ChanServ\User\NickServUserPreferencesAdapter
+    App\ChanServ\Adapter\In\Irc\ChanServUserPresentationPreferences:
+        alias: App\ChanServ\Adapter\Out\User\NickServUserPreferencesAdapter
 
     App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences:
         alias: App\MemoServ\Adapter\Out\NickServ\NickServUserPreferencesAdapter
@@ -2051,14 +2038,6 @@ services:
             $logger: '@monolog.logger.ircops'
         tags: ['app.debug_notifier']
 
-    App\Infrastructure\ChanServ\Service\ChanServDebugNotifier:
-        arguments:
-            $notifier: '@App\Application\ChanServ\Command\ChanServNotifierInterface'
-            $translator: '@translator'
-            $defaultLanguage: '%services.default_language%'
-            $debugChannel: '%ircops.debug_channel%'
-            $logger: '@monolog.logger.ircops'
-        tags: ['app.debug_notifier']
 
     App\Application\OperServ\Command\Handler\KillCommand:
         arguments:
@@ -2160,7 +2139,7 @@ services:
         arguments:
             $debugNotifiers: !tagged_iterator app.debug_notifier
             $debugChannel: '%ircops.debug_channel%'
-            $registeredChannelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $registeredChannelRepository: '@App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface'
             $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
             $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
             $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'

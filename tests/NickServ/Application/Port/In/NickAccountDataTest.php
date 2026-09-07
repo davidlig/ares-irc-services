@@ -15,13 +15,15 @@ final class NickAccountDataTest extends TestCase
     #[Test]
     public function createsInstanceWithProperties(): void
     {
-        $data = new NickAccountData(1, 'Alice', 'es', 'Europe/Madrid');
+        $data = new NickAccountData(1, 'Alice', 'es', 'Europe/Madrid', true, false, 'alice@example.com');
 
         self::assertSame(1, $data->id);
         self::assertSame('Alice', $data->nickname);
         self::assertSame('es', $data->language);
         self::assertSame('Europe/Madrid', $data->timezone);
         self::assertTrue($data->registered);
+        self::assertFalse($data->suspended);
+        self::assertSame('alice@example.com', $data->email);
     }
 
     #[Test]

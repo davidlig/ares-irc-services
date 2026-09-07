@@ -1,0 +1,162 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\ChanServ\Adapter\In\Event;
+
+use App\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Application\Port\ChannelServiceActionsPort;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
+use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+use function str_contains;
+use function strtolower;
+
+/**
+ * Manages +r (registered) and +P (permanent) channel modes for registered channels.
+ * - +r: Set on registered channels, remove from unregistered channels
+ * - +P: Set on registered channels, remove from unregistered channels
+ * Both modes are applied conditionally based on IRCd support.
+ */
+final readonly class ChanServRejoinSubscriber implements EventSubscriberInterface
+{
+    public function __construct(
+        private RegisteredChannelRepositoryInterface $channelRepository,
+        private ChannelLookupPort $channelLookup,
+        private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        private ChannelServiceActionsPort $channelServiceActions,
+        private LoggerInterface $logger = new NullLogger(),
+    ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            NetworkSynchronizationCompletedEvent::class => [
+                ['onSyncCompleteReconcileRegisteredMode', 10],
+                ['onSyncCompleteReconcilePermanentMode', 9],
+            ],
+            ChannelSynchronizedEvent::class => ['onChannelSyncedSetRegistered', 10],
+        ];
+    }
+
+    /**
+     * Set +r (or +P on UnrealIRCd) on a registered channel when it syncs.
+     * Always runs for registered channels regardless of channelSetupApplicable —
+     * modes must be re-applied on every sync (e.g. after netsplit or user rejoin).
+     * Skips if channel already has the registered mode.
+     */
+    public function onChannelSyncedSetRegistered(ChannelSynchronizedEvent $event): void
+    {
+        $channelName = $event->channelName;
+        $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
+        if (null === $registered || $registered->isBlocked()) {
+            return;
+        }
+        $modeSupport = $this->modeSupportProvider->getSupport();
+        $registeredLetter = $modeSupport->getChannelRegisteredModeLetter();
+        if (null === $registeredLetter) {
+            return;
+        }
+
+        $this->setRegisteredMode($channelName, $registeredLetter);
+    }
+
+    private function setRegisteredMode(string $channelName, string $registeredLetter): void
+    {
+        $view = $this->channelLookup->findByChannelName($channelName);
+        if (null === $view || str_contains($view->modes, $registeredLetter)) {
+            return;
+        }
+        $this->channelServiceActions->setChannelModes($channelName, '+' . $registeredLetter, []);
+        $this->logger->debug('ChanServ set +' . $registeredLetter . ' (channel registered) on sync', ['channel' => $channelName]);
+    }
+
+    /**
+     * Reconcile registered mode: registered channels get it, unregistered lose it.
+     * Runs on NetworkSyncCompleteEvent (priority 10).
+     */
+    public function onSyncCompleteReconcileRegisteredMode(NetworkSynchronizationCompletedEvent $event): void
+    {
+        $modeSupport = $this->modeSupportProvider->getSupport();
+        $registeredLetter = $modeSupport->getChannelRegisteredModeLetter();
+        if (null === $registeredLetter) {
+            return;
+        }
+
+        $registeredChannels = $this->channelRepository->listAll();
+        $registeredNames = [];
+        foreach ($registeredChannels as $channel) {
+            $registeredNames[strtolower($channel->getName())] = true;
+        }
+
+        foreach ($registeredChannels as $channel) {
+            if ($channel->isBlocked()) {
+                continue;
+            }
+            $view = $this->channelLookup->findByChannelName($channel->getName());
+            if (null === $view) {
+                continue;
+            }
+            if (!str_contains($view->modes, $registeredLetter)) {
+                $this->channelServiceActions->setChannelModes($view->name, '+' . $registeredLetter, []);
+                $this->logger->debug('ChanServ set +' . $registeredLetter . ' (registered) missing on registered channel', ['channel' => $view->name]);
+            }
+        }
+
+        $allViews = $this->channelLookup->listAll();
+        foreach ($allViews as $view) {
+            $nameLower = strtolower($view->name);
+            if (!isset($registeredNames[$nameLower]) && str_contains($view->modes, $registeredLetter)) {
+                $this->channelServiceActions->setChannelModes($view->name, '-' . $registeredLetter, []);
+                $this->logger->debug('ChanServ removed -' . $registeredLetter . ' (registered) from unregistered channel', ['channel' => $view->name]);
+            }
+        }
+    }
+
+    /**
+     * Reconcile permanent mode: registered channels get it, unregistered lose it.
+     * Runs after onSyncCompleteReconcileRegisteredMode (priority 9 vs 10).
+     */
+    public function onSyncCompleteReconcilePermanentMode(NetworkSynchronizationCompletedEvent $event): void
+    {
+        $modeSupport = $this->modeSupportProvider->getSupport();
+        $permanentLetter = $modeSupport->getPermanentChannelModeLetter();
+        if (null === $permanentLetter) {
+            return;
+        }
+
+        $registeredChannels = $this->channelRepository->listAll();
+        $registeredNames = [];
+        foreach ($registeredChannels as $channel) {
+            $registeredNames[strtolower($channel->getName())] = true;
+        }
+
+        foreach ($registeredChannels as $channel) {
+            if ($channel->isBlocked()) {
+                continue;
+            }
+            $view = $this->channelLookup->findByChannelName($channel->getName());
+            if (null === $view) {
+                continue;
+            }
+            if (!str_contains($view->modes, $permanentLetter)) {
+                $this->channelServiceActions->setChannelModes($view->name, '+' . $permanentLetter, []);
+                $this->logger->debug('ChanServ set +' . $permanentLetter . ' (permanent) missing on registered channel', ['channel' => $view->name]);
+            }
+        }
+
+        $allViews = $this->channelLookup->listAll();
+        foreach ($allViews as $view) {
+            $nameLower = strtolower($view->name);
+            if (!isset($registeredNames[$nameLower]) && str_contains($view->modes, $permanentLetter)) {
+                $this->channelServiceActions->setChannelModes($view->name, '-' . $permanentLetter, []);
+                $this->logger->debug('ChanServ removed -' . $permanentLetter . ' (permanent) from unregistered channel', ['channel' => $view->name]);
+            }
+        }
+    }
+}

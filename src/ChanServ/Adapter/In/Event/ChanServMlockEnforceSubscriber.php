@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Event;
 
-use App\Application\ChanServ\Event\ChannelMlockUpdatedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
 use App\ChanServ\Application\UseCase\EnforceMlock\EnforceChannelMlock;
 use App\ChanServ\Application\UseCase\EnforceMlock\EnforceChannelMlockHandlerInterface;
 use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementTrigger;

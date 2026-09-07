@@ -6,5 +6,8 @@ namespace App\Irc\Application\PublishedEvent;
 
 final readonly class ChannelSynchronizedEvent
 {
-    public function __construct(public string $channelName) {}
+    public function __construct(
+        public string $channelName,
+        public bool $channelSetupApplicable = true,
+    ) {}
 }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Domain\ChanServ\Entity\RegisteredChannel;
-use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
-use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;

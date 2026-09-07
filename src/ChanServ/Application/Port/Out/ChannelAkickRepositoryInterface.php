@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\ChanServ\Application\Port\Out;
+
+use App\ChanServ\Domain\Entity\ChannelAkick;
+
+interface ChannelAkickRepositoryInterface
+{
+    public function save(ChannelAkick $akick): void;
+
+    public function remove(ChannelAkick $akick): void;
+
+    public function findById(int $id): ?ChannelAkick;
+
+    /**
+     * @return ChannelAkick[] All AKICK entries for a channel, ordered by creation date
+     */
+    public function listByChannel(int $channelId): array;
+
+    public function findByChannelAndMask(int $channelId, string $mask): ?ChannelAkick;
+
+    public function countByChannel(int $channelId): int;
+
+    /**
+     * @return ChannelAkick[] All AKICK entries that have expired
+     */
+    public function findExpired(): array;
+
+    /**
+     * @param list<int> $channelIds
+     *
+     * @return ChannelAkick[] All AKICK entries for channels belonging to a nick (for cleanup on nick drop)
+     */
+    public function findByChannelIds(array $channelIds): array;
+
+    /**
+     * Clear creator reference on all AKICK entries created by a nick (SET creator_nick_id = NULL).
+     * Used when a nick is dropped to preserve AKICK entries but remove orphaned references.
+     */
+    public function clearCreatorNickId(int $nickId): void;
+}

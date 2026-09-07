@@ -6,11 +6,11 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Domain\ChanServ\Entity\ChannelAccess;
-use App\Domain\ChanServ\Entity\RegisteredChannel;
-use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
-use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\ChanServ\ValueObject\ChannelStatus;
+use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Domain\Entity\ChannelAccess;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;

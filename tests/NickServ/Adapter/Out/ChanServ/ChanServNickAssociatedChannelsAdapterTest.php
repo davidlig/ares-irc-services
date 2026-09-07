@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\ChanServ;
 
-use App\Application\ChanServ\Port\In\NickChannelAssociation;
-use App\Application\ChanServ\Port\In\NickChannelAssociationQuery;
+use App\ChanServ\Application\Port\In\NickChannelAssociation;
+use App\ChanServ\Application\Port\In\NickChannelAssociationQuery;
 use App\NickServ\Adapter\Out\ChanServ\ChanServNickAssociatedChannelsAdapter;
 use App\NickServ\Application\Port\Out\AssociatedChannel;
 use PHPUnit\Framework\Attributes\CoversClass;

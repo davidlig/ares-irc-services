@@ -1,0 +1,206 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\ChanServ\Adapter\In\Irc\Command;
+
+use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
+use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Domain\Entity\ChannelAccess;
+use App\ChanServ\Domain\Entity\ChannelLevel;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
+use App\ChanServ\Domain\Exception\InsufficientAccessException;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
+
+/**
+ * DEOP <#channel> <nickname>. ChanServ removes +o.
+ */
+final readonly class DeopCommand implements ChanServCommandInterface
+{
+    public function __construct(
+        private RegisteredChannelRepositoryInterface $channelRepository,
+        private ChannelAccessRepositoryInterface $accessRepository,
+        private ChannelLevelRepositoryInterface $levelRepository,
+        private ChanUserAccountPort $accountPort,
+        private NetworkUserLookupPort $userLookup,
+    ) {}
+
+    public function getName(): string
+    {
+        return 'DEOP';
+    }
+
+    public function getAliases(): array
+    {
+        return [];
+    }
+
+    public function getMinArgs(): int
+    {
+        return 2;
+    }
+
+    public function getSyntaxKey(): string
+    {
+        return 'deop.syntax';
+    }
+
+    public function getHelpKey(): string
+    {
+        return 'deop.help';
+    }
+
+    public function getOrder(): int
+    {
+        return 21;
+    }
+
+    public function getShortDescKey(): string
+    {
+        return 'deop.short';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
+    public function isOperOnly(): bool
+    {
+        return false;
+    }
+
+    public function getRequiredPermission(): string
+    {
+        return 'IDENTIFIED';
+    }
+
+    public function allowsSuspendedChannel(): bool
+    {
+        return false;
+    }
+
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
+    public function usesLevelFounder(): bool
+    {
+        return true;
+    }
+
+    public function execute(ChanServContext $context): void
+    {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
+        $validation = $this->validateDeopExecute($context);
+        if (null === $validation) {
+            return;
+        }
+
+        [$channelName, $targetNick, $channel, $targetSender] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'o', false, $channel->getCreatedAt()->getTimestamp());
+        $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans('op.notice_grant', ['%from%' => $sender->nick, '%to%' => $targetNick, '%mode%' => '-o']));
+        $context->reply('deop.done', ['%nickname%' => $targetNick]);
+    }
+
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
+    private function validateDeopExecute(ChanServContext $context): ?array
+    {
+        $channelName = $context->getChannelNameArg(0);
+        if (null === $channelName) {
+            $context->reply('error.invalid_channel');
+
+            return null;
+        }
+        $targetNick = $context->args[1] ?? '';
+        if ('' === $targetNick) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+            return null;
+        }
+        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+        if (null === $channel) {
+            throw ChannelNotRegisteredException::forChannel($channelName);
+        }
+
+        return $this->validateDeopSender($context, $channel, $channelName, $targetNick);
+    }
+
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
+    private function validateDeopSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    {
+        $senderAccount = $context->senderAccount;
+        if (null === $senderAccount) {
+            $context->reply('error.not_identified');
+
+            return null;
+        }
+        $senderLevel = ChannelAccess::FOUNDER_LEVEL;
+        if (!$context->isLevelFounder) {
+            $requiredLevel = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_OPDEOP);
+            $senderLevel = $this->effectiveAccessLevel($channel, $senderAccount->id, true);
+            if ($senderLevel < $requiredLevel) {
+                throw InsufficientAccessException::forOperation($channelName, 'DEOP');
+            }
+        }
+
+        return $this->validateDeopTarget($context, $channel, $channelName, $targetNick, $senderLevel);
+    }
+
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
+    private function validateDeopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, int $senderLevel): ?array
+    {
+        $targetSender = $this->userLookup->findByNick($targetNick);
+        if (null === $targetSender) {
+            $context->reply('op.user_not_on_channel', ['%nickname%' => $targetNick]);
+
+            return null;
+        }
+        $targetAccount = $this->accountPort->findAccountByNick($targetNick);
+        if (null === $targetAccount) {
+            $targetLevel = ChannelAccess::LEVEL_UNREGISTERED;
+        } else {
+            $targetLevel = $this->effectiveAccessLevel($channel, $targetAccount->id, $targetSender->isIdentified);
+        }
+        $isSelfTarget = null !== $targetAccount && null !== $context->senderAccount && $targetAccount->id === $context->senderAccount->id;
+        if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
+            $context->reply('error.insufficient_access', ['%operation%' => 'DEOP', '%channel%' => $channelName]);
+
+            return null;
+        }
+
+        return [$channelName, $targetNick, $channel, $targetSender];
+    }
+
+    private function getLevelValue(int $channelId, string $key): int
+    {
+        $level = $this->levelRepository->findByChannelAndKey($channelId, $key);
+
+        return null !== $level ? $level->getValue() : ChannelLevel::getDefault($key);
+    }
+
+    private function effectiveAccessLevel(RegisteredChannel $channel, int $nickId, bool $isIdentified = false): int
+    {
+        if (!$isIdentified) {
+            return ChannelAccess::LEVEL_UNREGISTERED;
+        }
+        if ($channel->isFounder($nickId)) {
+            return ChannelAccess::FOUNDER_LEVEL;
+        }
+        $access = $this->accessRepository->findByChannelAndNick($channel->getId(), $nickId);
+
+        return null !== $access ? $access->getLevel() : 0;
+    }
+}
