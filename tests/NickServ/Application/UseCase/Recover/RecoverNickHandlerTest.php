@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Recover;
 
+use App\NickServ\Application\Event\NickRecoveredEvent;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RecoverEventPublisher;
@@ -18,7 +19,6 @@ use App\NickServ\Application\UseCase\Recover\RecoverNickHandler;
 use App\NickServ\Application\UseCase\Recover\RecoverNickOutcome;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickPasswordChangedEvent;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -201,7 +201,7 @@ final class RecoverNickHandlerTest extends TestCase
         $tokenStore->expects(self::once())->method('getLastRecoverAt')->willReturn(null);
         $tokenStore->expects(self::once())->method('store')
             ->with('ValidUser', 'token-abc', $this->now->modify('+3600 seconds'));
-        $tokenStore->expects(self::once())->method('recordRecover')->with('ValidUser');
+        $tokenStore->expects(self::once())->method('recordRecover')->with('ValidUser', $this->now);
 
         $tokenGenerator = $this->createMock(VerificationTokenGenerator::class);
         $tokenGenerator->expects(self::once())->method('generate')->willReturn('token-abc');
@@ -234,7 +234,7 @@ final class RecoverNickHandlerTest extends TestCase
         $repository->expects(self::once())->method('findByNick')->with('ConsumeUser')->willReturn($account);
 
         $tokenStore = $this->createMock(RecoveryTokenStore::class);
-        $tokenStore->expects(self::once())->method('consume')->with('ConsumeUser', 'wrong-token')->willReturn(false);
+        $tokenStore->expects(self::once())->method('consume')->with('ConsumeUser', 'wrong-token', $this->now)->willReturn(false);
 
         $handler = $this->createHandler(repository: $repository, tokenStore: $tokenStore);
         $result = $handler->handle(new RecoverNick(nickname: 'ConsumeUser', token: 'wrong-token'));
@@ -259,7 +259,7 @@ final class RecoverNickHandlerTest extends TestCase
         $repository->expects(self::once())->method('save')->with($account);
 
         $tokenStore = $this->createMock(RecoveryTokenStore::class);
-        $tokenStore->expects(self::once())->method('consume')->with('ConsumeUser', 'valid-token')->willReturn(true);
+        $tokenStore->expects(self::once())->method('consume')->with('ConsumeUser', 'valid-token', $this->now)->willReturn(true);
 
         $passwordGenerator = $this->createMock(RecoveryPasswordGenerator::class);
         $passwordGenerator->expects(self::once())->method('generate')->willReturn('temp-secret12');
@@ -267,9 +267,14 @@ final class RecoverNickHandlerTest extends TestCase
         $passwordHasher = $this->createMock(PasswordHasher::class);
         $passwordHasher->expects(self::once())->method('hash')->with('temp-secret12')->willReturn('hashed-pw');
 
+        $publishedEvents = [];
         $eventPublisher = $this->createMock(RecoverEventPublisher::class);
         $eventPublisher->expects(self::exactly(2))->method('publish')->with(self::callback(
-            static fn (object $event): bool => $event instanceof NickPasswordHashAvailable || $event instanceof NickPasswordChangedEvent,
+            static function (object $event) use (&$publishedEvents): bool {
+                $publishedEvents[] = $event;
+
+                return $event instanceof NickPasswordHashAvailable || $event instanceof NickRecoveredEvent;
+            },
         ));
 
         $handler = $this->createHandler(
@@ -292,6 +297,11 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertSame(RecoverNickOutcome::PasswordReset, $result->outcome);
         self::assertSame('ConsumeUser', $result->nickname);
         self::assertSame('temp-secret12', $result->temporaryPassword);
+        self::assertCount(2, $publishedEvents);
+        self::assertInstanceOf(NickPasswordHashAvailable::class, $publishedEvents[0]);
+        self::assertInstanceOf(NickRecoveredEvent::class, $publishedEvents[1]);
+        self::assertSame('email', $publishedEvents[1]->method);
+        self::assertSame($this->now, $publishedEvents[1]->occurredAt);
     }
 
     private function createHandler(

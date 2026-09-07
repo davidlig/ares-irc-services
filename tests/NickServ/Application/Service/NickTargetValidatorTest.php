@@ -4,17 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\Service;
 
-use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\ServiceUidProviderInterface;
-use App\Application\Shared\ServiceUidRegistry;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\NickServ\Application\Port\Out\NickProtectionExemption;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickProtectabilityStatus;
 use App\NickServ\Application\Service\NickTargetValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,8 +21,9 @@ final class NickTargetValidatorTest extends TestCase
     #[Test]
     public function validateWithRootNickReturnsIsRoot(): void
     {
-        $rootRegistry = new RootUserRegistry('RootAdmin');
-        $validator = $this->createValidator(rootRegistry: $rootRegistry);
+        $exemption = $this->createStub(NickProtectionExemption::class);
+        $exemption->method('isRootNickname')->willReturn(true);
+        $validator = $this->createValidator(protectionExemption: $exemption);
 
         $result = $validator->validate('RootAdmin');
 
@@ -40,26 +35,9 @@ final class NickTargetValidatorTest extends TestCase
     #[Test]
     public function validateWithServiceNickReturnsIsService(): void
     {
-        $provider = new class implements ServiceUidProviderInterface, ServiceNicknameProviderInterface {
-            public function getUid(): string
-            {
-                return '001AAAAAA';
-            }
-
-            public function getServiceKey(): string
-            {
-                return 'nickserv';
-            }
-
-            public function getNickname(): string
-            {
-                return 'NickServ';
-            }
-        };
-
-        $serviceUidRegistry = ServiceUidRegistry::fromIterable([$provider]);
-
-        $validator = $this->createValidator(serviceUidRegistry: $serviceUidRegistry);
+        $exemption = $this->createStub(NickProtectionExemption::class);
+        $exemption->method('isServiceNickname')->willReturn(true);
+        $validator = $this->createValidator(protectionExemption: $exemption);
 
         $result = $validator->validate('NickServ');
 
@@ -72,18 +50,15 @@ final class NickTargetValidatorTest extends TestCase
     {
         $nick = $this->createNickWithId('OperUser', 42);
 
-        $role = OperRole::create('Admin', 'desc');
-        $ircop = OperIrcop::create(42, $role);
-
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
 
-        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepository->method('findByNickId')->willReturn($ircop);
+        $exemption = $this->createStub(NickProtectionExemption::class);
+        $exemption->method('isIrcopNickId')->willReturn(true);
 
         $validator = $this->createValidator(
             nickRepository: $nickRepository,
-            ircopRepository: $ircopRepository,
+            protectionExemption: $exemption,
         );
 
         $result = $validator->validate('OperUser');
@@ -115,12 +90,8 @@ final class NickTargetValidatorTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
 
-        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepository->method('findByNickId')->willReturn(null);
-
         $validator = $this->createValidator(
             nickRepository: $nickRepository,
-            ircopRepository: $ircopRepository,
         );
 
         $result = $validator->validate('RegularUser');
@@ -133,8 +104,9 @@ final class NickTargetValidatorTest extends TestCase
     #[Test]
     public function validateIsCaseInsensitive(): void
     {
-        $rootRegistry = new RootUserRegistry('RootAdmin');
-        $validator = $this->createValidator(rootRegistry: $rootRegistry);
+        $exemption = $this->createMock(NickProtectionExemption::class);
+        $exemption->expects(self::once())->method('isRootNickname')->with('rootadmin')->willReturn(true);
+        $validator = $this->createValidator(protectionExemption: $exemption);
 
         $result = $validator->validate('rootadmin');
 
@@ -143,22 +115,18 @@ final class NickTargetValidatorTest extends TestCase
     }
 
     private function createValidator(
-        ?RootUserRegistry $rootRegistry = null,
-        ?OperIrcopRepositoryInterface $ircopRepository = null,
-        ?ServiceUidRegistry $serviceUidRegistry = null,
+        ?NickProtectionExemption $protectionExemption = null,
         ?RegisteredNickRepositoryInterface $nickRepository = null,
     ): NickTargetValidator {
         return new NickTargetValidator(
-            $rootRegistry ?? new RootUserRegistry(''),
-            $ircopRepository ?? $this->createStub(OperIrcopRepositoryInterface::class),
-            $serviceUidRegistry ?? new ServiceUidRegistry([]),
+            $protectionExemption ?? $this->createStub(NickProtectionExemption::class),
             $nickRepository ?? $this->createStub(RegisteredNickRepositoryInterface::class),
         );
     }
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
 
         $reflection = new ReflectionClass(RegisteredNick::class);

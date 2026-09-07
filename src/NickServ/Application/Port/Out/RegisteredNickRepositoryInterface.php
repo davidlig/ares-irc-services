@@ -38,7 +38,7 @@ interface RegisteredNickRepositoryInterface
      * Removes all PENDING entries whose expiresAt is in the past.
      * Returns the number of deleted records.
      */
-    public function deleteExpiredPending(): int;
+    public function deleteExpiredPending(DateTimeImmutable $now): int;
 
     /**
      * Returns SUSPENDED nicks whose suspendedUntil is in the past.
@@ -46,7 +46,7 @@ interface RegisteredNickRepositoryInterface
      *
      * @return RegisteredNick[]
      */
-    public function findExpiredSuspensions(): array;
+    public function findExpiredSuspensions(DateTimeImmutable $now): array;
 
     /**
      * Returns nicks manually dropped before the threshold and ready for hard deletion.

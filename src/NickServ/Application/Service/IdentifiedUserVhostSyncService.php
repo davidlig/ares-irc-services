@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Service;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\NickChangePreservesIdentificationInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Domain\OperServ\ValueObject\ForcedVhost;
-use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Application\Model\NetworkUser;
+use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
+use App\NickServ\Application\Port\Out\NickChangeIdentificationPolicy;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
+use App\NickServ\Application\Port\Out\NickServActivitySink;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 
 use function sprintf;
 
@@ -30,9 +27,9 @@ final readonly class IdentifiedUserVhostSyncService
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickNetworkActions $notifier,
         private VhostDisplayResolver $displayResolver,
-        private OperIrcopRepositoryInterface $ircopRepository,
-        private ActiveConnectionHolderInterface $connectionHolder,
-        private LoggerInterface $logger = new NullLogger(),
+        private ForcedVhostCheckerInterface $forcedVhostChecker,
+        private NickChangeIdentificationPolicy $nickChangePolicy,
+        private ?NickServActivitySink $logger = null,
     ) {}
 
     /**
@@ -42,7 +39,7 @@ final readonly class IdentifiedUserVhostSyncService
      * have the old vhost on the IRCd until we clear it).
      * Forced vhost from IRCop role takes priority over personal vhost.
      */
-    public function syncVhostForUser(SenderView $user): void
+    public function syncVhostForUser(NetworkUser $user): void
     {
         if (!$user->isIdentified) {
             if (!$this->protocolHandlesVhostServerSide()) {
@@ -63,33 +60,21 @@ final readonly class IdentifiedUserVhostSyncService
 
     private function protocolHandlesVhostServerSide(): bool
     {
-        $module = $this->connectionHolder->getProtocolModule();
-
-        return $module instanceof NickChangePreservesIdentificationInterface;
+        return $this->nickChangePolicy->preservesIdentification();
     }
 
-    private function applyVhostForUser(SenderView $user, RegisteredNick $account): void
+    private function applyVhostForUser(NetworkUser $user, RegisteredNick $account): void
     {
-        $ircop = $this->ircopRepository->findByNickId($account->getId());
+        $forcedVhost = $this->forcedVhostChecker->resolveForcedVhost($account->getId(), $user->nick);
+        if (null !== $forcedVhost) {
+            $this->notifier->setUserVhost($user->uid, $forcedVhost, $user->serverSid);
+            $this->logger?->info(sprintf(
+                'IdentifiedUserVhostSync: %s [%s] forced vhost applied',
+                $user->nick,
+                $user->uid,
+            ));
 
-        if (null !== $ircop) {
-            $role = $ircop->getRole();
-            $forcedPattern = $role->getForcedVhostPattern();
-
-            if (null !== $forcedPattern && '' !== $forcedPattern && ForcedVhost::isValidPattern($forcedPattern)) {
-                $forcedVhost = ForcedVhost::fromPattern($forcedPattern);
-                $vhost = $forcedVhost->generateVhost($user->nick);
-
-                $this->notifier->setUserVhost($user->uid, $vhost, $user->serverSid);
-                $this->logger->info(sprintf(
-                    'IdentifiedUserVhostSync: %s [%s] forced vhost applied (role: %s)',
-                    $user->nick,
-                    $user->uid,
-                    $role->getName(),
-                ));
-
-                return;
-            }
+            return;
         }
 
         $displayVhost = $this->displayResolver->getDisplayVhost($account->getVhost());
@@ -99,7 +84,7 @@ final readonly class IdentifiedUserVhostSyncService
         }
 
         $this->notifier->setUserVhost($user->uid, $displayVhost, $user->serverSid);
-        $this->logger->info(sprintf(
+        $this->logger?->info(sprintf(
             'IdentifiedUserVhostSync: %s [%s] vhost applied',
             $user->nick,
             $user->uid,

@@ -4,22 +4,23 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Service;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\EventBusInterface;
-use App\Application\Port\NickChangePreservesIdentificationInterface;
-use App\Application\Port\TranslationInterface;
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Application\Model\NetworkUser;
+use App\NickServ\Application\Model\UserMessagePreference;
+use App\NickServ\Application\Port\Out\GuestNicknameGenerator;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use App\NickServ\Application\Port\Out\NickChangeIdentificationPolicy;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
+use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
+use App\NickServ\Application\Port\Out\NickProtectionNotifier;
+use App\NickServ\Application\Port\Out\NickServActivitySink;
+use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\SessionLanguageTracker;
+use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
+use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickIdentifiedEvent;
-use App\NickServ\Domain\Event\UserDeidentifiedEvent;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
+use DateTimeImmutable;
 
 use function sprintf;
 use function str_starts_with;
@@ -34,22 +35,23 @@ final readonly class NickProtectionService
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
-        private NetworkUserLookupPort $userLookup,
+        private NickNetworkUserLookup $userLookup,
         private NickNetworkActions $notifier,
         private BurstState $burstState,
         private IdentifiedSessionTracker $identifiedRegistry,
         private SessionLanguageTracker $sessionLanguageRegistry,
         private PendingNickRestoreRegistryInterface $pendingRegistry,
-        private TranslationInterface $translator,
-        private EventBusInterface $eventDispatcher,
+        private NickProtectionNotifier $protectionNotifier,
+        private NickServEventPublisher $eventPublisher,
         private ForbiddenNickService $forbiddenService,
-        private ActiveConnectionHolderInterface $connectionHolder,
+        private NickChangeIdentificationPolicy $nickChangePolicy,
+        private GuestNicknameGenerator $guestNicknameGenerator,
         private string $guestPrefix = 'Guest-',
         private string $defaultLanguage = 'en',
-        private LoggerInterface $logger = new NullLogger(),
+        private ?NickServActivitySink $logger = null,
     ) {}
 
-    public function onUserJoined(SenderView $user): void
+    public function onUserJoined(NetworkUser $user, DateTimeImmutable $occurredAt): void
     {
         if (!$this->burstState->isComplete()) {
             $this->burstState->addPending($user);
@@ -57,15 +59,15 @@ final readonly class NickProtectionService
             return;
         }
 
-        $this->enforceProtection($user);
+        $this->enforceProtection($user, $occurredAt);
     }
 
     /**
      * Called when a user changes nickname. Receives only primitives; no Core event types.
      */
-    public function onNickChanged(string $uid, string $oldNick, string $newNick): void
+    public function onNickChanged(string $uid, string $oldNick, string $newNick, DateTimeImmutable $occurredAt): void
     {
-        $this->logger->debug(sprintf(
+        $this->logger?->debug(sprintf(
             'NickProtection onNickChanged: old=%s new=%s uid=%s burstComplete=%s',
             $oldNick,
             $newNick,
@@ -83,10 +85,10 @@ final readonly class NickProtectionService
             return;
         }
 
-        $this->enforceProtection($user);
+        $this->enforceProtection($user, $occurredAt);
     }
 
-    private function resolveProtectionTarget(string $uid, string $oldNick, string $newNick): ?SenderView
+    private function resolveProtectionTarget(string $uid, string $oldNick, string $newNick): ?NetworkUser
     {
         $user = $this->prepareProtectionCheck($uid, $oldNick, $newNick);
 
@@ -100,7 +102,7 @@ final readonly class NickProtectionService
 
         if ($user->isIdentified) {
             $identifiedNick = $this->identifiedRegistry->findNick($uid);
-            $this->logger->info(sprintf(
+            $this->logger?->info(sprintf(
                 'Nick change: %s [%s] → %s — identified (%s), enforcing protection',
                 $oldNick,
                 $uid,
@@ -108,7 +110,7 @@ final readonly class NickProtectionService
                 $identifiedNick ?? 'none',
             ));
         } else {
-            $this->logger->info(sprintf(
+            $this->logger?->info(sprintf(
                 'Nick change: %s [%s] → %s — not identified, enforcing protection',
                 $oldNick,
                 $uid,
@@ -119,7 +121,7 @@ final readonly class NickProtectionService
         return $user;
     }
 
-    private function prepareProtectionCheck(string $uid, string $oldNick, string $newNick): ?SenderView
+    private function prepareProtectionCheck(string $uid, string $oldNick, string $newNick): ?NetworkUser
     {
         if ($this->shouldSkipGuestEcho($uid, $oldNick, $newNick)) {
             return null;
@@ -134,17 +136,15 @@ final readonly class NickProtectionService
 
     private function shouldPreserveIdentificationOnNickChange(): bool
     {
-        $module = $this->connectionHolder->getProtocolModule();
-
-        return $module instanceof NickChangePreservesIdentificationInterface;
+        return $this->nickChangePolicy->preservesIdentification();
     }
 
-    private function findUserIfNickProtected(string $uid, string $newNick): ?SenderView
+    private function findUserIfNickProtected(string $uid, string $newNick): ?NetworkUser
     {
         $account = $this->nickRepository->findByNick($newNick);
 
         if (null === $account || !$account->isRegistered()) {
-            $this->logger->debug(sprintf(
+            $this->logger?->debug(sprintf(
                 'NickProtection onNickChanged: skip (account null or not registered for %s)',
                 $newNick,
             ));
@@ -155,7 +155,7 @@ final readonly class NickProtectionService
         $user = $this->userLookup->findByUid($uid);
 
         if (null === $user) {
-            $this->logger->debug(sprintf(
+            $this->logger?->debug(sprintf(
                 'NickProtection onNickChanged: skip (user null for uid %s)',
                 $uid,
             ));
@@ -169,7 +169,7 @@ final readonly class NickProtectionService
     private function shouldSkipGuestEcho(string $uid, string $oldNick, string $newNick): bool
     {
         if (str_starts_with($newNick, $this->guestPrefix) && $this->pendingRegistry->consume($uid)) {
-            $this->logger->info(sprintf(
+            $this->logger?->info(sprintf(
                 'Nick change: %s [%s] → %s — SVSNICK to Guest echo, skipping protection',
                 $oldNick,
                 $uid,
@@ -191,7 +191,7 @@ final readonly class NickProtectionService
             $account = $this->nickRepository->findByNick($registeredNick);
 
             if (null !== $account) {
-                $this->eventDispatcher->dispatch(new UserDeidentifiedEvent(
+                $this->eventPublisher->publish(new UserDeidentifiedEvent(
                     $uid,
                     $account->getId(),
                     $registeredNick,
@@ -212,7 +212,7 @@ final readonly class NickProtectionService
     private function isAlreadyIdentifiedInRegistry(string $uid, string $oldNick, string $newNick): bool
     {
         if (str_starts_with($oldNick, $this->guestPrefix) && $this->pendingRegistry->consume($uid)) {
-            $this->logger->info(sprintf(
+            $this->logger?->info(sprintf(
                 'Nick change: %s [%s] → %s — SVSNICK restore echo, skipping protection',
                 $oldNick,
                 $uid,
@@ -225,7 +225,7 @@ final readonly class NickProtectionService
         $registeredNick = $this->identifiedRegistry->findNick($uid);
 
         if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $newNick)) {
-            $this->logger->info(sprintf(
+            $this->logger?->info(sprintf(
                 'Nick change: %s [%s] → %s — identified in registry, skipping protection',
                 $oldNick,
                 $uid,
@@ -249,6 +249,7 @@ final readonly class NickProtectionService
         string $displayHost,
         string $hostname,
         string $ipBase64,
+        DateTimeImmutable $occurredAt,
     ): void {
         $account = $this->nickRepository->findByNick($nick);
         $registeredNick = null;
@@ -268,7 +269,7 @@ final readonly class NickProtectionService
             return;
         }
 
-        $account->markSeen();
+        $account->markSeen($occurredAt);
 
         $origin = '' !== $ident ? $ident . '@' . $displayHost : $displayHost;
         $stored = '' !== $reason
@@ -285,7 +286,7 @@ final readonly class NickProtectionService
         $this->nickRepository->save($account);
     }
 
-    public function enforceProtection(SenderView $user): void
+    public function enforceProtection(NetworkUser $user, DateTimeImmutable $occurredAt): void
     {
         $nick = $user->nick;
         $account = $this->nickRepository->findByNick($nick);
@@ -312,13 +313,13 @@ final readonly class NickProtectionService
         }
 
         if ($user->isIdentified) {
-            $this->handleIdentifiedEnforcement($account, $user, $nick);
+            $this->handleIdentifiedEnforcement($account, $user, $nick, $occurredAt);
         } else {
             $this->enforceGuestRename($account, $user, $nick);
         }
     }
 
-    private function handleIdentifiedEnforcement(RegisteredNick $account, SenderView $user, string $nick): void
+    private function handleIdentifiedEnforcement(RegisteredNick $account, NetworkUser $user, string $nick, DateTimeImmutable $occurredAt): void
     {
         $identifiedNick = $this->identifiedRegistry->findNick($user->uid);
 
@@ -331,12 +332,12 @@ final readonly class NickProtectionService
         }
 
         if (null !== $identifiedNick && 0 === strcasecmp($identifiedNick, $account->getNickname())) {
-            $this->markIdentifiedAndDispatch($account, $user);
+            $this->markIdentifiedAndDispatch($account, $user, $occurredAt);
 
             return;
         }
 
-        $this->logger->info(sprintf(
+        $this->logger?->info(sprintf(
             'Nick protection: %s [%s] has +r but identified to %s, enforcing protection',
             $nick,
             $user->uid,
@@ -346,22 +347,22 @@ final readonly class NickProtectionService
         $this->enforceGuestRename($account, $user, $nick);
     }
 
-    private function markIdentifiedAndDispatch(RegisteredNick $account, SenderView $user): void
+    private function markIdentifiedAndDispatch(RegisteredNick $account, NetworkUser $user, DateTimeImmutable $occurredAt): void
     {
-        $account->markSeen();
+        $account->markSeen($occurredAt);
         $this->nickRepository->save($account);
 
         // Register the session so IrcopModeApplier can find it
         $this->identifiedRegistry->register($user->uid, $account->getNickname());
 
-        $this->logger->info(sprintf(
+        $this->logger?->info(sprintf(
             'Nick protection: %s [%s] auto-identified (has +r)',
             $user->nick,
             $user->uid,
         ));
 
         // Dispatch event so subscribers (like OperRoleModesSubscriber) can react
-        $this->eventDispatcher->dispatch(new NickIdentifiedEvent(
+        $this->eventPublisher->publish(new NickIdentifiedEvent(
             $account->getId(),
             $account->getNickname(),
             $user->uid,
@@ -369,34 +370,22 @@ final readonly class NickProtectionService
         ));
     }
 
-    private function enforceGuestRename(RegisteredNick $account, SenderView $user, string $nick): void
+    private function enforceGuestRename(RegisteredNick $account, NetworkUser $user, string $nick): void
     {
         $language = $account->getLanguage();
-        $botName = $this->notifier->getNick();
-
-        $warning = $this->translator->trans(
-            'protection.nick_in_use',
-            ['%nickname%' => $nick, '%bot%' => $botName],
-            'nickserv',
+        $guestNick = $this->guestNicknameGenerator->generate($this->guestPrefix);
+        $this->protectionNotifier->notifyRename(
+            $user->uid,
+            $nick,
+            $guestNick,
             $language,
+            $account->prefersPrivateMessages()
+                ? UserMessagePreference::PrivateMessage
+                : UserMessagePreference::Notice,
         );
-
-        $messageType = $account->getMessageType();
-        $this->notifier->sendMessage($user->uid, $warning, $messageType);
-
-        $guestNick = $this->guestPrefix . strtoupper(substr(uniqid(), -7));
-
-        $renameMsg = $this->translator->trans(
-            'protection.renamed_to',
-            ['%guest_nick%' => $guestNick, '%nickname%' => $nick, '%bot%' => $botName],
-            'nickserv',
-            $language,
-        );
-
-        $this->notifier->sendMessage($user->uid, $renameMsg, $messageType);
         $this->notifier->forceNick($user->uid, $guestNick);
 
-        $this->logger->info(sprintf(
+        $this->logger?->info(sprintf(
             'Nick protection: %s [%s] → %s',
             $nick,
             $user->uid,

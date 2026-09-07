@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Maintenance;
 
 use App\NickServ\Adapter\In\Maintenance\PurgePendingDeletionNicknamesTask;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
@@ -23,6 +24,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
         $task = new PurgePendingDeletionNicknamesTask(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickDropService::class),
+            $this->clock(),
             3600,
             7,
         );
@@ -40,18 +42,32 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::once())
             ->method('findPendingDeletionBefore')
-            ->with(self::callback(static function (DateTimeImmutable $threshold): bool {
-                $expected = new DateTimeImmutable()->modify('-7 days');
-
-                return $expected->format('Y-m-d') === $threshold->format('Y-m-d');
-            }))
+            ->with($this->now()->modify('-7 days'))
             ->willReturn([$nick, new stdClass()]);
 
         $dropService = $this->createMock(NickDropService::class);
-        $dropService->expects(self::once())->method('hardDropNick')->with($nick, 'manual-grace-expired', null);
+        $dropService->expects(self::once())->method('hardDropNick')->with(
+            $nick,
+            $this->now(),
+            'manual-grace-expired',
+            null,
+        );
 
-        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, 3600, 7);
+        $task = new PurgePendingDeletionNicknamesTask($repo, $dropService, $this->clock(), 3600, 7);
 
         $task->run();
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn($this->now());
+
+        return $clock;
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

@@ -13,12 +13,14 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Drop\DropNick;
 use App\NickServ\Application\UseCase\Drop\DropNickHandlerInterface;
 use App\NickServ\Application\UseCase\Drop\DropNickResult;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +29,8 @@ use Psr\Log\LoggerInterface;
 use Stringable;
 
 use function is_scalar;
+
+use const DATE_ATOM;
 
 #[CoversClass(DropCommand::class)]
 final class DropCommandTest extends TestCase
@@ -37,6 +41,7 @@ final class DropCommandTest extends TestCase
         $command = new DropCommand(
             $this->createStub(DropNickHandlerInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
 
         self::assertSame('DROP', $command->getName());
@@ -58,7 +63,7 @@ final class DropCommandTest extends TestCase
         $handler = $this->createMock(DropNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class));
+        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class), $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext(null, $messages, ['Target']));
 
@@ -79,6 +84,7 @@ final class DropCommandTest extends TestCase
         $handler->expects(self::once())->method('handle')->with(self::callback(
             static fn (DropNick $dto): bool => 'TargetNick' === $dto->targetNick
                 && 'OperNick' === $dto->operatorNick
+                && '2026-09-06T12:00:00+00:00' === $dto->occurredAt->format(DATE_ATOM)
                 && $dto->force
                 && $dto->forceAllowed,
         ))->willReturn(DropNickResult::hardDropSuccess('TargetNick'));
@@ -86,7 +92,7 @@ final class DropCommandTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');
 
-        $command = new DropCommand($handler, $logger, $authChecker);
+        $command = new DropCommand($handler, $logger, $this->clock(), $authChecker);
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick', 'force']));
 
@@ -111,7 +117,7 @@ final class DropCommandTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');
 
-        $command = new DropCommand($handler, $logger);
+        $command = new DropCommand($handler, $logger, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
@@ -131,7 +137,7 @@ final class DropCommandTest extends TestCase
         $handler = $this->createMock(DropNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->willReturn($result);
 
-        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class));
+        $command = new DropCommand($handler, $this->createStub(LoggerInterface::class), $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
@@ -242,5 +248,13 @@ final class DropCommandTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
     }
 }

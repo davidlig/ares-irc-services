@@ -14,17 +14,15 @@ use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\OperServService;
+use App\Application\OperServ\Port\Out\ServiceUserPreferences;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
-use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\SenderView;
-use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
-use App\NickServ\Adapter\Out\User\UserLanguageResolver;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
@@ -174,7 +172,7 @@ final class OperServServiceTest extends TestCase
             new OperServCommandRegistry([]),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $notifier,
-            $this->createStub(UserMessageTypeResolverInterface::class),
+            $this->createStub(ServiceUserPreferences::class),
             $this->createStub(TranslationInterface::class),
             $this->createAccessHelper(),
             $this->createServiceNicks(),
@@ -192,14 +190,14 @@ final class OperServServiceTest extends TestCase
         $registry = new OperServCommandRegistry([]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createMock(OperServNotifierInterface::class);
-        $messageTypeResolver = $this->createMock(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver = $this->createMock(ServiceUserPreferences::class);
         $translator = $this->createMock(TranslationInterface::class);
 
         $notifier->method('getNick')->willReturn('OperServ');
         $messageTypeResolver->expects(self::once())
-            ->method('resolve')
-            ->with($sender)
-            ->willReturn('NOTICE');
+            ->method('prefersPrivateMessages')
+            ->with('Nick')
+            ->willReturn(false);
         $translator->expects(self::once())
             ->method('trans')
             ->with('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'OperServ'], 'operserv', 'en')
@@ -242,8 +240,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($account);
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(
             static fn (string $id): string => match ($id) {
@@ -306,8 +304,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn(null);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createStub(LoggerInterface::class);
@@ -350,8 +348,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($account);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelperForRoot('TestUser');
         $logger = $this->createStub(LoggerInterface::class);
@@ -399,8 +397,8 @@ final class OperServServiceTest extends TestCase
             ->willReturn($account);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper(isRoot: false, ircop: $ircop);
         $logger = $this->createStub(LoggerInterface::class);
@@ -443,8 +441,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($account);
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(
             static fn (string $id): string => match ($id) {
@@ -504,8 +502,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($account);
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(
             static fn (string $id): string => match ($id) {
@@ -565,8 +563,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($account);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
 
         $rootUserRegistry = new RootUserRegistry('');
@@ -625,8 +623,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($account);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelperForRoot('RootNick');
         $logger = $this->createStub(LoggerInterface::class);
@@ -674,8 +672,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn(null);
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
@@ -730,8 +728,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn(null);
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(
             static function (string $id, array $params = []): string {
@@ -786,8 +784,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($account);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createStub(LoggerInterface::class);
@@ -830,8 +828,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn(null);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createStub(LoggerInterface::class);
@@ -874,8 +872,8 @@ final class OperServServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn(null);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createMock(LoggerInterface::class);
@@ -1006,7 +1004,7 @@ final class OperServServiceTest extends TestCase
             $registry,
             $nickRepository,
             $notifier,
-            $this->createStub(UserMessageTypeResolverInterface::class),
+            $this->createStub(ServiceUserPreferences::class),
             $this->createStub(TranslationInterface::class),
             $this->createAccessHelper(),
             $this->createServiceNicks(),
@@ -1110,7 +1108,7 @@ final class OperServServiceTest extends TestCase
             $registry,
             $nickRepository,
             $this->createStub(OperServNotifierInterface::class),
-            $this->createStub(UserMessageTypeResolverInterface::class),
+            $this->createStub(ServiceUserPreferences::class),
             $this->createStub(TranslationInterface::class),
             $this->createAccessHelper(),
             $this->createServiceNicks(),
@@ -1210,11 +1208,21 @@ final class OperServServiceTest extends TestCase
     /**
      * Creates an OperServService with the required authorization dependencies.
      */
+    private function createLanguageResolver(string $defaultLanguage): ServiceUserPreferences
+    {
+        $resolver = $this->createStub(ServiceUserPreferences::class);
+        $resolver->method('languageFor')->willReturnCallback(
+            static fn (string $uid, string $nickname, ?string $accountLanguage): string => $accountLanguage ?? $defaultLanguage,
+        );
+
+        return $resolver;
+    }
+
     private function createOperServService(
         OperServCommandRegistry $registry,
         RegisteredNickRepositoryInterface $nickRepository,
         OperServNotifierInterface $notifier,
-        UserMessageTypeResolverInterface $messageTypeResolver,
+        ServiceUserPreferences $messageTypeResolver,
         TranslationInterface $translator,
         IrcopAccessHelper $accessHelper,
         ServiceNicknameRegistry $serviceNicks,
@@ -1228,7 +1236,7 @@ final class OperServServiceTest extends TestCase
         return new OperServService(
             $registry,
             $nickRepository,
-            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), $defaultLanguage),
+            $this->createLanguageResolver($defaultLanguage),
             $notifier,
             $messageTypeResolver,
             $translator,

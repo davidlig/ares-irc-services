@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Identify;
 
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\IdentifyEventPublisher;
 use App\NickServ\Application\Port\Out\IdentifyLockoutTracker;
+use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\Service\VhostDisplayResolver;
-use App\NickServ\Domain\Event\NickIdentifiedEvent;
 
 use function strcasecmp;
 
@@ -24,6 +26,8 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
         private IdentifyEventPublisher $eventPublisher,
         private VhostDisplayResolver $vhostDisplayResolver,
         private ForcedVhostCheckerInterface $forcedVhostChecker,
+        private PasswordHasher $passwordHasher,
+        private Clock $clock,
         private int $identifyMaxFailedAttempts,
         private int $identifyFailedWindowSeconds,
         private int $identifyLockoutSeconds,
@@ -42,11 +46,13 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
             return IdentifyNickResult::alreadyIdentified($command->nickname);
         }
 
+        $now = $this->clock->now();
         $remaining = $this->lockoutTracker->getRemainingLockoutSeconds(
             $command->clientKey,
             $this->identifyMaxFailedAttempts,
             $this->identifyFailedWindowSeconds,
             $this->identifyLockoutSeconds,
+            $now,
         );
 
         if ($remaining > 0) {
@@ -74,14 +80,15 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
             return IdentifyNickResult::pendingDeletion($command->nickname);
         }
 
-        if (!$account->verifyPassword($command->password)) {
-            $this->lockoutTracker->recordFailedAttempt($command->clientKey, $this->identifyFailedWindowSeconds);
+        $passwordHash = $account->getPasswordHash();
+        if (null === $passwordHash || !$this->passwordHasher->verify($command->password, $passwordHash)) {
+            $this->lockoutTracker->recordFailedAttempt($command->clientKey, $this->identifyFailedWindowSeconds, $now);
 
             return IdentifyNickResult::invalidCredentials();
         }
 
         $this->lockoutTracker->clearFailedAttempts($command->clientKey);
-        $account->markSeen();
+        $account->markSeen($now);
         $this->nickRepository->save($account);
         $this->identifiedRegistry->register($command->senderUid, $account->getNickname());
 

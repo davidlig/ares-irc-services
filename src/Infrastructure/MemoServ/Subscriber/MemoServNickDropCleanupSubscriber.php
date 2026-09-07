@@ -7,7 +7,7 @@ namespace App\Infrastructure\MemoServ\Subscriber;
 use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
-use App\NickServ\Domain\Event\NickDropCleanupEvent;
+use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

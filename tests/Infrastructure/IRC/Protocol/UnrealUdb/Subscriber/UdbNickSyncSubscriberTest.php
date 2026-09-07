@@ -20,12 +20,12 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickDropEvent;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
+use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
+use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickDropEvent;
-use App\NickServ\Domain\Event\NickSuspendedEvent;
-use App\NickServ\Domain\Event\NickUnsuspendedEvent;
-use App\NickServ\Domain\Event\NickVhostChangedEvent;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -72,7 +72,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
 
     private function createNick(string $nickname, ?string $vhost = null): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'argon2id:$argon2id$hash', $nickname . '@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, 'argon2id:$argon2id$hash', $nickname . '@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
         new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($nick, 7);
         if (null !== $vhost) {
@@ -105,7 +105,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('N', 'nick');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onNickDrop(new NickDropEvent(1, 'nick', 'nick', 'manual'));
+        $sub->onNickDrop(new NickDropEvent(1, 'nick', 'nick', 'manual', new DateTimeImmutable()));
     }
 
     #[Test]
@@ -227,7 +227,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::suspended', 'bad conduct');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onNickSuspended(new NickSuspendedEvent(7, 'nick', 'bad conduct', '30d', null, 'root', null, '127.0.0.1', 'host'));
+        $sub->onNickSuspended(new NickSuspendedEvent(7, 'nick', 'bad conduct', '30d', null, 'root', null, '127.0.0.1', 'host', new DateTimeImmutable()));
     }
 
     #[Test]
@@ -237,7 +237,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('N', 'nick::suspended');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onNickUnsuspended(new NickUnsuspendedEvent(7, 'nick', 'root', null, '127.0.0.1', 'host'));
+        $sub->onNickUnsuspended(new NickUnsuspendedEvent(7, 'nick', 'root', null, '127.0.0.1', 'host', new DateTimeImmutable()));
     }
 
     #[Test]

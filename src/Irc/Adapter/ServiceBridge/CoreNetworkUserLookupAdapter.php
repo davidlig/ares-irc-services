@@ -10,15 +10,14 @@ use App\Irc\Domain\Network\NetworkUser;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use App\NickServ\Adapter\In\Event\NickProtectionSubscriber;
 use InvalidArgumentException;
 
 /**
  * Core implements NetworkUserLookupPort: resolves a connected user by UID or nick
  * and returns a SenderView DTO for Services. No Domain\IRC entities leak to Services.
  *
- * fromNetworkUser() is used by Infrastructure (e.g. NickProtectionSubscriber) to
- * convert event payloads to SenderView when calling Application services.
+ * fromNetworkUser() is used by inbound adapters to convert event payloads to
+ * SenderView when calling Application services.
  */
 final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPort
 {

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Maintenance;
 
-use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
 
 use function sprintf;
 
@@ -23,6 +23,7 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickDropService $dropService,
+        private Clock $clock,
         private int $intervalSeconds,
         private int $inactivityExpiryDays,
     ) {}
@@ -48,7 +49,8 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
             return;
         }
 
-        $threshold = new DateTimeImmutable()->modify(sprintf('-%d days', $this->inactivityExpiryDays));
+        $now = $this->clock->now();
+        $threshold = $now->modify(sprintf('-%d days', $this->inactivityExpiryDays));
         $inactive = $this->nickRepository->findRegisteredInactiveSince($threshold);
 
         foreach ($inactive as $nick) {
@@ -57,7 +59,7 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
                 continue;
             }
 
-            $this->dropService->dropNick($nick, 'inactivity', null);
+            $this->dropService->dropNick($nick, $now, 'inactivity', null);
         }
     }
 }

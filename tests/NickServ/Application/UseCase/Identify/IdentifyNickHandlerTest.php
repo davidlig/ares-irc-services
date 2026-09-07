@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Identify;
 
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\IdentifyEventPublisher;
 use App\NickServ\Application\Port\Out\IdentifyLockoutTracker;
+use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\UseCase\Identify\IdentifyNick;
@@ -15,6 +17,7 @@ use App\NickServ\Application\UseCase\Identify\IdentifyNickHandler;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickOutcome;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -82,7 +85,7 @@ final class IdentifyNickHandlerTest extends TestCase
         $lockoutTracker = $this->createMock(IdentifyLockoutTracker::class);
         $lockoutTracker->expects(self::once())
             ->method('getRemainingLockoutSeconds')
-            ->with('ip:127.0.0.1', 5, 900, 1800)
+            ->with('ip:127.0.0.1', 5, 900, 1800, $this->now())
             ->willReturn(120);
 
         $handler = $this->createHandler(sessionTracker: $sessionTracker, lockoutTracker: $lockoutTracker);
@@ -196,15 +199,18 @@ final class IdentifyNickHandlerTest extends TestCase
         $account->method('isSuspended')->willReturn(false);
         $account->method('isForbidden')->willReturn(false);
         $account->method('isPendingDeletion')->willReturn(false);
-        $account->method('verifyPassword')->willReturn(false);
+        $account->method('getPasswordHash')->willReturn('hash');
+
+        $passwordHasher = $this->createMock(PasswordHasher::class);
+        $passwordHasher->expects(self::once())->method('verify')->with('wrongpass', 'hash')->willReturn(false);
 
         $lockoutTracker = $this->createMock(IdentifyLockoutTracker::class);
         $lockoutTracker->method('getRemainingLockoutSeconds')->willReturn(0);
         $lockoutTracker->expects(self::once())
             ->method('recordFailedAttempt')
-            ->with('ip:127.0.0.1', 900);
+            ->with('ip:127.0.0.1', 900, $this->now());
 
-        $handler = $this->createHandlerForAccount($account, lockoutTracker: $lockoutTracker);
+        $handler = $this->createHandlerForAccount($account, lockoutTracker: $lockoutTracker, passwordHasher: $passwordHasher);
         $result = $handler->handle($this->createCommand('alice', 'wrongpass'));
 
         self::assertSame(IdentifyNickOutcome::InvalidCredentials, $result->outcome);
@@ -218,7 +224,6 @@ final class IdentifyNickHandlerTest extends TestCase
         $account->method('isSuspended')->willReturn(false);
         $account->method('isForbidden')->willReturn(false);
         $account->method('isPendingDeletion')->willReturn(false);
-        $account->method('verifyPassword')->willReturn(true);
         $account->method('getId')->willReturn(10);
         $account->method('getNickname')->willReturn('Alice');
         $account->method('getVhost')->willReturn('custom.host');
@@ -250,6 +255,8 @@ final class IdentifyNickHandlerTest extends TestCase
             $eventPublisher,
             new VhostDisplayResolver('net'),
             $forcedVhostChecker,
+            $this->passwordHasherThatVerifies('$2y$hash'),
+            $this->fixedClock(),
             5,
             900,
             1800,
@@ -271,7 +278,6 @@ final class IdentifyNickHandlerTest extends TestCase
         $account->method('isSuspended')->willReturn(false);
         $account->method('isForbidden')->willReturn(false);
         $account->method('isPendingDeletion')->willReturn(false);
-        $account->method('verifyPassword')->willReturn(true);
         $account->method('getId')->willReturn(10);
         $account->method('getNickname')->willReturn('Alice');
         $account->method('getPasswordHash')->willReturn('$2y$hash');
@@ -298,6 +304,8 @@ final class IdentifyNickHandlerTest extends TestCase
             $eventPublisher,
             new VhostDisplayResolver(),
             $forcedVhostChecker,
+            $this->passwordHasherThatVerifies('$2y$hash'),
+            $this->fixedClock(),
             5,
             900,
             1800,
@@ -326,6 +334,7 @@ final class IdentifyNickHandlerTest extends TestCase
     private function createHandlerForAccount(
         RegisteredNick $account,
         ?IdentifyLockoutTracker $lockoutTracker = null,
+        ?PasswordHasher $passwordHasher = null,
     ): IdentifyNickHandler {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
@@ -340,6 +349,7 @@ final class IdentifyNickHandlerTest extends TestCase
             nickRepo: $nickRepo,
             sessionTracker: $sessionTracker,
             lockoutTracker: $lockoutTracker ?? $defaultLockout,
+            passwordHasher: $passwordHasher,
         );
     }
 
@@ -349,6 +359,7 @@ final class IdentifyNickHandlerTest extends TestCase
         ?IdentifyLockoutTracker $lockoutTracker = null,
         ?IdentifyEventPublisher $eventPublisher = null,
         ?ForcedVhostCheckerInterface $forcedVhostChecker = null,
+        ?PasswordHasher $passwordHasher = null,
     ): IdentifyNickHandler {
         return new IdentifyNickHandler(
             $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -357,9 +368,32 @@ final class IdentifyNickHandlerTest extends TestCase
             $eventPublisher ?? $this->createStub(IdentifyEventPublisher::class),
             new VhostDisplayResolver(),
             $forcedVhostChecker ?? $this->createStub(ForcedVhostCheckerInterface::class),
+            $passwordHasher ?? $this->createStub(PasswordHasher::class),
+            $this->fixedClock(),
             5,
             900,
             1800,
         );
+    }
+
+    private function passwordHasherThatVerifies(string $hash): PasswordHasher
+    {
+        $passwordHasher = $this->createMock(PasswordHasher::class);
+        $passwordHasher->expects(self::once())->method('verify')->with('goodpass', $hash)->willReturn(true);
+
+        return $passwordHasher;
+    }
+
+    private function fixedClock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn($this->now());
+
+        return $clock;
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

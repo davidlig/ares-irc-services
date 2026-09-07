@@ -4,21 +4,22 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\Service;
 
-use App\Application\Port\EventBusInterface;
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
+use App\NickServ\Application\Model\NetworkUser;
+use App\NickServ\Application\Port\Out\GuestNicknameGenerator;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
+use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
+use App\NickServ\Application\Port\Out\NickServActivitySink;
+use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use App\NickServ\Application\Service\NickForceService;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\UserDeidentifiedEvent;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use ReflectionClass;
 
 use function str_starts_with;
@@ -33,7 +34,7 @@ final class NickForceServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createMock(NickNetworkActions::class);
         $pendingRegistry = $this->createMock(PendingNickRestoreRegistryInterface::class);
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
 
         $user = $this->createOnlineUser();
 
@@ -49,8 +50,9 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(NickServActivitySink::class),
+            $this->guestNicknameGenerator(),
             'Guest-',
         );
 
@@ -63,7 +65,7 @@ final class NickForceServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createMock(NickNetworkActions::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
 
         $user = $this->createOnlineUser();
 
@@ -76,8 +78,9 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(NickServActivitySink::class),
+            $this->guestNicknameGenerator(),
             'Guest-',
         );
 
@@ -90,8 +93,8 @@ final class NickForceServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createMock(NickNetworkActions::class);
         $pendingRegistry = $this->createMock(PendingNickRestoreRegistryInterface::class);
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $logger = $this->createMock(LoggerInterface::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
+        $logger = $this->createMock(NickServActivitySink::class);
 
         $userLookup->expects(self::once())->method('findByUid')->with('UID123')->willReturn(null);
         $notifier->expects(self::never())->method('setUserAccount');
@@ -105,8 +108,9 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
+            $this->createStub(NickServEventPublisher::class),
             $logger,
+            $this->guestNicknameGenerator(),
             'Guest-',
         );
 
@@ -119,9 +123,9 @@ final class NickForceServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createStub(NickNetworkActions::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher = $this->createMock(NickServEventPublisher::class);
 
         $user = $this->createOnlineUser();
         $account = $this->createNickWithId('TestNick', 42);
@@ -130,7 +134,7 @@ final class NickForceServiceTest extends TestCase
 
         $userLookup->expects(self::once())->method('findByUid')->with('UID123')->willReturn($user);
         $nickRepository->expects(self::once())->method('findByNick')->with('TestNick')->willReturn($account);
-        $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(
+        $eventDispatcher->expects(self::once())->method('publish')->with(self::callback(
             static fn (UserDeidentifiedEvent $event): bool => 'UID123' === $event->uid && 42 === $event->nickId && 'TestNick' === $event->nickname,
         ));
 
@@ -141,7 +145,8 @@ final class NickForceServiceTest extends TestCase
             $userLookup,
             $nickRepository,
             $eventDispatcher,
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(NickServActivitySink::class),
+            $this->guestNicknameGenerator(),
             'Guest-',
         );
 
@@ -156,7 +161,7 @@ final class NickForceServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createStub(NickNetworkActions::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
 
         $user = $this->createOnlineUser();
 
@@ -169,8 +174,9 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(NickServActivitySink::class),
+            $this->guestNicknameGenerator(),
             'Guest-',
         );
 
@@ -185,7 +191,7 @@ final class NickForceServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createMock(NickNetworkActions::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
 
         $user = $this->createOnlineUser();
 
@@ -199,8 +205,9 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(NickServActivitySink::class),
+            $this->guestNicknameGenerator(),
             'Guest-',
         );
 
@@ -213,7 +220,7 @@ final class NickForceServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createMock(NickNetworkActions::class);
         $pendingRegistry = $this->createMock(PendingNickRestoreRegistryInterface::class);
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
 
         $user = $this->createOnlineUser();
 
@@ -227,8 +234,9 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(NickServActivitySink::class),
+            $this->guestNicknameGenerator(),
             'Guest-',
         );
 
@@ -241,8 +249,8 @@ final class NickForceServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createStub(NickNetworkActions::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $logger = $this->createMock(LoggerInterface::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
+        $logger = $this->createMock(NickServActivitySink::class);
 
         $user = $this->createOnlineUser();
 
@@ -255,8 +263,9 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
+            $this->createStub(NickServEventPublisher::class),
             $logger,
+            $this->guestNicknameGenerator(),
             'Guest-',
         );
 
@@ -269,7 +278,7 @@ final class NickForceServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createMock(NickNetworkActions::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
 
         $user = $this->createOnlineUser();
 
@@ -284,17 +293,18 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
-            $this->createStub(LoggerInterface::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(NickServActivitySink::class),
+            $this->guestNicknameGenerator(),
             'Renamed-',
         );
 
         $service->forceGuestNick('UID123');
     }
 
-    private function createOnlineUser(): SenderView
+    private function createOnlineUser(): NetworkUser
     {
-        return new SenderView(
+        return new NetworkUser(
             uid: 'UID123',
             nick: 'TestUser',
             ident: 'testuser',
@@ -311,7 +321,7 @@ final class NickForceServiceTest extends TestCase
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
 
         $reflection = new ReflectionClass(RegisteredNick::class);
@@ -319,5 +329,15 @@ final class NickForceServiceTest extends TestCase
         $idProp->setValue($nick, $id);
 
         return $nick;
+    }
+
+    private function guestNicknameGenerator(): GuestNicknameGenerator
+    {
+        $generator = $this->createStub(GuestNicknameGenerator::class);
+        $generator->method('generate')->willReturnCallback(
+            static fn (string $prefix): string => $prefix . 'ABC1234',
+        );
+
+        return $generator;
     }
 }

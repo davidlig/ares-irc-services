@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Command\CommandOutcome;
-use App\Application\Command\IrcopAuditableCommandInterface;
-use App\Application\Command\IrcopAuditData;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Drop\DropNick;
 use App\NickServ\Application\UseCase\Drop\DropNickHandlerInterface;
@@ -25,6 +26,7 @@ final readonly class DropCommand implements NickServCommandInterface, IrcopAudit
     public function __construct(
         private DropNickHandlerInterface $handler,
         private LoggerInterface $logger,
+        private Clock $clock,
         private ?AuthorizationCheckerInterface $authorizationChecker = null,
     ) {}
 
@@ -97,6 +99,7 @@ final readonly class DropCommand implements NickServCommandInterface, IrcopAudit
         $result = $this->handler->handle(new DropNick(
             targetNick: $targetNick,
             operatorNick: $sender->nick,
+            occurredAt: $this->clock->now(),
             force: $force,
             forceAllowed: $forceAllowed,
         ));

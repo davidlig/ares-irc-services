@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Irc\Application\Port\In\Command;
+
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(IrcopAuditData::class)]
+final class IrcopAuditDataTest extends TestCase
+{
+    #[Test]
+    public function exposesAuditMetadata(): void
+    {
+        $data = new IrcopAuditData(
+            target: 'BadUser',
+            targetHost: 'user@host.com',
+            targetIp: '10.0.0.1',
+            reason: 'Flooding',
+            extra: ['duration' => '1h'],
+        );
+
+        self::assertSame('BadUser', $data->target);
+        self::assertSame('user@host.com', $data->targetHost);
+        self::assertSame('10.0.0.1', $data->targetIp);
+        self::assertSame('Flooding', $data->reason);
+        self::assertSame(['duration' => '1h'], $data->extra);
+    }
+}

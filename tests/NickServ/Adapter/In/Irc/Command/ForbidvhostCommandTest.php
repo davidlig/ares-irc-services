@@ -12,6 +12,7 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\ForbiddenPatternValidator;
@@ -20,11 +21,14 @@ use App\NickServ\Domain\Entity\ForbiddenVhost;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
+
+use const DATE_ATOM;
 
 #[CoversClass(ForbidvhostCommand::class)]
 final class ForbidvhostCommandTest extends TestCase
@@ -127,10 +131,12 @@ final class ForbidvhostCommandTest extends TestCase
     {
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findByPattern')->with('pirated.com')->willReturn(null);
-        $repo->expects(self::once())->method('save');
+        $repo->expects(self::once())->method('save')->with(self::callback(
+            static fn (ForbiddenVhost $forbidden): bool => '2026-09-06T12:00:00+00:00' === $forbidden->getCreatedAt()->format(DATE_ATOM),
+        ));
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['ADD', 'pirated.com'], $messages);
@@ -147,7 +153,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::never())->method('save');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['ADD', 'invalid pattern!'], $messages);
@@ -160,14 +166,14 @@ final class ForbidvhostCommandTest extends TestCase
     #[Test]
     public function addRejectsDuplicatePattern(): void
     {
-        $existing = ForbiddenVhost::create('pirated.com', 1);
+        $existing = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findByPattern')->with('pirated.com')->willReturn($existing);
         $repo->expects(self::never())->method('save');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['ADD', 'pirated.com'], $messages);
@@ -193,14 +199,14 @@ final class ForbidvhostCommandTest extends TestCase
     #[Test]
     public function delRemovesPattern(): void
     {
-        $existing = ForbiddenVhost::create('pirated.com', 1);
+        $existing = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findByPattern')->with('pirated.com')->willReturn($existing);
         $repo->expects(self::once())->method('remove')->with($existing);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['DEL', 'pirated.com'], $messages);
@@ -218,7 +224,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::never())->method('remove');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['DEL', 'pirated.com'], $messages);
@@ -244,14 +250,14 @@ final class ForbidvhostCommandTest extends TestCase
     #[Test]
     public function listShowsAllPatterns(): void
     {
-        $forbidden1 = ForbiddenVhost::create('pirated.com', 10);
-        $forbidden2 = ForbiddenVhost::create('badhost.com', 20);
+        $forbidden1 = ForbiddenVhost::create('pirated.com', 10, new DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('badhost.com', 20, new DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden1, $forbidden2]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['LIST'], $messages);
@@ -268,7 +274,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('findAll')->willReturn([]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['LIST'], $messages);
@@ -299,7 +305,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::never())->method('save');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContextWithNullSender(['ADD', 'test.com'], $messages);
@@ -338,13 +344,13 @@ final class ForbidvhostCommandTest extends TestCase
     #[Test]
     public function listShowsUnknownCreatorWhenNoCreatorId(): void
     {
-        $forbidden = ForbiddenVhost::create('pirated.com', null);
+        $forbidden = ForbiddenVhost::create('pirated.com', null, new DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['LIST'], $messages);
@@ -357,13 +363,13 @@ final class ForbidvhostCommandTest extends TestCase
     #[Test]
     public function listShowsUnknownCreatorWhenCreatorNotSender(): void
     {
-        $forbidden = ForbiddenVhost::create('pirated.com', 999);
+        $forbidden = ForbiddenVhost::create('pirated.com', 999, new DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['LIST'], $messages);
@@ -377,7 +383,7 @@ final class ForbidvhostCommandTest extends TestCase
     public function listShowsCreatorNameWhenCreatorIsSender(): void
     {
         $ref = new ReflectionClass(ForbiddenVhost::class);
-        $forbidden = ForbiddenVhost::create('pirated.com', 1);
+        $forbidden = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable());
         $idProp = $ref->getProperty('id');
         $idProp->setValue($forbidden, 10);
 
@@ -385,7 +391,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContextWithSenderAccount(['LIST'], $messages, 1);
@@ -404,7 +410,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('save');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['ADD', 'pirated.com'], $messages);
@@ -419,14 +425,14 @@ final class ForbidvhostCommandTest extends TestCase
     #[Test]
     public function getAuditDataReturnsDataAfterSuccessfulDel(): void
     {
-        $existing = ForbiddenVhost::create('pirated.com', 1);
+        $existing = ForbiddenVhost::create('pirated.com', 1, new DateTimeImmutable());
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $repo->expects(self::once())->method('findByPattern')->with('pirated.com')->willReturn($existing);
         $repo->expects(self::once())->method('remove')->with($existing);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
 
         $messages = [];
         $context = $this->createContext(['DEL', 'pirated.com'], $messages);
@@ -447,7 +453,8 @@ final class ForbidvhostCommandTest extends TestCase
             $repo,
             $service,
             new ForbiddenPatternValidator(),
-            $this->createStub(LoggerInterface::class)
+            $this->createStub(LoggerInterface::class),
+            $this->clock()
         );
     }
 
@@ -569,5 +576,13 @@ final class ForbidvhostCommandTest extends TestCase
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
         );
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
     }
 }

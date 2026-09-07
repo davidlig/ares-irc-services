@@ -6,9 +6,6 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\SetVhostHandler;
@@ -18,12 +15,13 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
+use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickVhostChangedEvent;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -132,10 +130,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'OFF'), $account, 'OFF');
 
         self::assertSame(['set.vhost.cleared'], $messages);
@@ -168,10 +166,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'OFF'), $account, 'OFF', true);
 
         self::assertSame(['set.vhost.cleared'], $messages);
@@ -206,10 +204,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'test'), $account, 'test', true);
 
         self::assertSame(['set.vhost.success'], $messages);
@@ -241,10 +239,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'OFF'), $account, 'OFF', true);
 
         self::assertSame(['set.vhost.cleared'], $messages);
@@ -278,10 +276,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'test'), $account, 'test', true);
 
         self::assertSame(['set.vhost.success'], $messages);
@@ -304,10 +302,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'bad!'), $account, 'bad!');
 
         self::assertSame(['set.vhost.invalid'], $messages);
@@ -334,10 +332,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'myvhost'), $account, 'myvhost');
 
         self::assertSame(['set.vhost.success'], $messages);
@@ -364,10 +362,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'myvhost'), $account, 'myvhost');
 
         self::assertSame(['set.vhost.taken'], $messages);
@@ -391,10 +389,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, ''), $account, '');
 
         self::assertSame(['set.vhost.cleared'], $messages);
@@ -420,10 +418,10 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'myvhost'), $account, 'myvhost');
 
         self::assertSame(['set.vhost.success'], $messages);
@@ -439,14 +437,8 @@ final class SetVhostHandlerTest extends TestCase
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::never())->method('save');
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getForcedVhostPattern')->willReturn('admin.test');
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepo->expects(self::once())->method('findByNickId')->with(1)->willReturn($ircop);
+        $forcedVhostChecker = $this->createMock(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->expects(self::once())->method('hasForcedVhost')->with(1)->willReturn(true);
 
         $validator = new VhostValidator();
         $displayResolver = new VhostDisplayResolver('');
@@ -459,7 +451,7 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'myvhost'), $account, 'myvhost');
 
         self::assertSame(['set.vhost.forced'], $messages);
@@ -476,14 +468,8 @@ final class SetVhostHandlerTest extends TestCase
         $nickRepo->method('findByVhost')->willReturn(null);
         $nickRepo->expects(self::once())->method('save')->with($account);
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getForcedVhostPattern')->willReturn(null);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepo->expects(self::once())->method('findByNickId')->with(1)->willReturn($ircop);
+        $forcedVhostChecker = $this->createMock(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->expects(self::once())->method('hasForcedVhost')->with(1)->willReturn(false);
 
         $validator = new VhostValidator();
         $displayResolver = new VhostDisplayResolver('.suffix');
@@ -497,7 +483,7 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'myvhost'), $account, 'myvhost');
 
         self::assertSame(['set.vhost.success'], $messages);
@@ -513,14 +499,8 @@ final class SetVhostHandlerTest extends TestCase
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::never())->method('save');
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getForcedVhostPattern')->willReturn('admin.test');
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepo->expects(self::once())->method('findByNickId')->with(1)->willReturn($ircop);
+        $forcedVhostChecker = $this->createMock(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->expects(self::once())->method('hasForcedVhost')->with(1)->willReturn(true);
 
         $validator = new VhostValidator();
         $displayResolver = new VhostDisplayResolver('');
@@ -533,7 +513,7 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $forcedVhostChecker, $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'test'), $account, 'test', true);
 
         self::assertSame(['set.vhost.forced'], $messages);
@@ -558,8 +538,8 @@ final class SetVhostHandlerTest extends TestCase
         $validator = new VhostValidator();
         $displayResolver = new VhostDisplayResolver('');
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -569,7 +549,7 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $forbiddenRepo, $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $forcedVhostChecker, $forbiddenRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'pirated.host.com'), $account, 'pirated.host.com');
 
         self::assertSame(['set.vhost.invalid'], $messages);
@@ -595,8 +575,8 @@ final class SetVhostHandlerTest extends TestCase
         $validator = new VhostValidator();
         $displayResolver = new VhostDisplayResolver('');
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -606,7 +586,7 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $forbiddenRepo, $this->createStub(EventBusInterface::class));
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $forcedVhostChecker, $forbiddenRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'clean.host.com'), $account, 'clean.host.com');
 
         self::assertSame(['set.vhost.success'], $messages);
@@ -635,8 +615,8 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (object $event): bool => $event instanceof NickVhostChangedEvent
@@ -649,7 +629,7 @@ final class SetVhostHandlerTest extends TestCase
             $validator,
             $displayResolver,
             $this->createStub(NetworkUserLookupPort::class),
-            $ircopRepo,
+            $forcedVhostChecker,
             $this->createStub(ForbiddenVhostRepositoryInterface::class),
             $eventDispatcher,
         );
@@ -680,8 +660,8 @@ final class SetVhostHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $forcedVhostChecker = $this->createStub(ForcedVhostCheckerInterface::class);
+        $forcedVhostChecker->method('hasForcedVhost')->willReturn(false);
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (object $event): bool => $event instanceof NickVhostChangedEvent
@@ -694,7 +674,7 @@ final class SetVhostHandlerTest extends TestCase
             $validator,
             $displayResolver,
             $this->createStub(NetworkUserLookupPort::class),
-            $ircopRepo,
+            $forcedVhostChecker,
             $this->createStub(ForbiddenVhostRepositoryInterface::class),
             $eventDispatcher,
         );

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Command\CommandOutcome;
-use App\Application\Command\IrcopAuditableCommandInterface;
-use App\Application\Command\IrcopAuditData;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\ForbiddenPatternValidator;
@@ -28,6 +29,7 @@ final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditab
         private readonly ForbiddenVhostService $forbiddenVhostService,
         private readonly ForbiddenPatternValidator $patternValidator,
         private readonly LoggerInterface $logger,
+        private readonly Clock $clock,
     ) {}
 
     public function getName(): string
@@ -148,7 +150,7 @@ final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditab
     {
         assert(null !== $context->sender);
         $creatorNickId = $context->senderAccount?->getId();
-        $this->forbiddenVhostService->forbid($pattern, $creatorNickId);
+        $this->forbiddenVhostService->forbid($pattern, $creatorNickId, $this->clock->now());
 
         $this->logger->info('Vhost pattern forbidden via FORBIDVHOST ADD', [
             'operator' => $context->sender->nick,

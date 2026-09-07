@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc;
 
-use App\Application\Command\CommandOutcome;
-use App\Application\Command\IrcopAuditableCommandInterface;
-use App\Application\Command\IrcopAuditData;
-use App\Application\Event\CommandExecutedEvent;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
@@ -672,7 +672,7 @@ final class NickServServiceTest extends TestCase
         };
 
         $authorizationContext = $this->createMock(AuthorizationContextInterface::class);
-        $authorizationContext->expects(self::once())->method('setCurrentUser')->with($sender);
+        $authorizationContext->expects(self::once())->method('setCurrentUser')->with('UID1', true, false);
         $authorizationContext->expects(self::once())->method('clear');
 
         $service = new NickServService(

@@ -4,13 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\OperServ\IrcopAccessHelper;
-use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\TranslationInterface;
-use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\HelpCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
@@ -20,6 +15,7 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -31,18 +27,10 @@ final class HelpCommandTest extends TestCase
 {
     private function createHelpCommand(int $inactivityExpiryDays = 0): HelpCommand
     {
-        $rootRegistry = new RootUserRegistry('');
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
-        $permissionRegistry = new PermissionRegistry([]);
-
         return new HelpCommand(
             new UnifiedHelpFormatter(),
             new TimezoneHelpProvider(),
-            $accessHelper,
-            $rootRegistry,
-            $permissionRegistry,
+            $this->createStub(NickServOperatorAccess::class),
             $inactivityExpiryDays,
         );
     }

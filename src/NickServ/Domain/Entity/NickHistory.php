@@ -63,8 +63,8 @@ final class NickHistory
         string $performedBy,
         ?int $performedByNickId,
         string $message,
+        DateTimeImmutable $performedAt,
         array $extraData = [],
-        ?DateTimeImmutable $performedAt = null,
     ): self {
         return new self(
             id: 0,
@@ -72,7 +72,7 @@ final class NickHistory
             action: $action,
             performedBy: $performedBy,
             performedByNickId: $performedByNickId,
-            performedAt: $performedAt ?? new DateTimeImmutable(),
+            performedAt: $performedAt,
             message: $message,
             extraData: $extraData,
         );

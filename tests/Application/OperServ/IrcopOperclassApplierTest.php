@@ -142,7 +142,14 @@ final class IrcopOperclassApplierTest extends TestCase
         $role->changeOperclass('services:admin');
         new ReflectionClass($role)->getProperty('id')->setValue($role, 5);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $missingNickIrcop = $this->createStub(OperIrcop::class);
@@ -175,7 +182,14 @@ final class IrcopOperclassApplierTest extends TestCase
         $role = OperRole::create('ADMIN');
         new ReflectionClass($role)->getProperty('id')->setValue($role, 5);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $ircop = $this->createStub(OperIrcop::class);

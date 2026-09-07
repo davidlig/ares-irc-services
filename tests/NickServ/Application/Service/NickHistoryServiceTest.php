@@ -73,6 +73,7 @@ final class NickHistoryServiceTest extends TestCase
             performedByIp: '10.0.0.1',
             performedByHost: 'user@host',
             message: 'history.message.password_changed',
+            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
             extraData: [],
         );
 
@@ -95,6 +96,7 @@ final class NickHistoryServiceTest extends TestCase
             performedByIp: '2001:db8::1',
             performedByHost: 'user@ipv6.example',
             message: 'history.message.email_changed',
+            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
             extraData: ['old_email' => 'old@example.com', 'new_email' => 'new@example.com'],
         );
 
@@ -105,12 +107,12 @@ final class NickHistoryServiceTest extends TestCase
     }
 
     #[Test]
-    public function recordActionUsesCurrentTimeWhenNullProvided(): void
+    public function recordActionUsesProvidedTime(): void
     {
         $repo = $this->createStub(NickHistoryRepositoryInterface::class);
         $service = new NickHistoryService($repo);
 
-        $before = new DateTimeImmutable();
+        $performedAt = new DateTimeImmutable('2024-01-15 10:30:00');
         $history = $service->recordAction(
             nickId: 1,
             action: 'TEST',
@@ -120,11 +122,9 @@ final class NickHistoryServiceTest extends TestCase
             performedByHost: 'user@localhost',
             message: 'Test message',
             extraData: [],
-            performedAt: null,
+            performedAt: $performedAt,
         );
-        $after = new DateTimeImmutable();
 
-        self::assertGreaterThanOrEqual($before, $history->getPerformedAt());
-        self::assertLessThanOrEqual($after, $history->getPerformedAt());
+        self::assertSame($performedAt, $history->getPerformedAt());
     }
 }

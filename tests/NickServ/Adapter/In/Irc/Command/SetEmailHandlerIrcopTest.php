@@ -15,7 +15,9 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingEmailChangeRegistry;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
@@ -47,6 +49,8 @@ final class SetEmailHandlerIrcopTest extends TestCase
             $nickRepo,
             new PendingEmailChangeRegistry(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             $eventDispatcher,
@@ -77,6 +81,8 @@ final class SetEmailHandlerIrcopTest extends TestCase
             $nickRepo,
             new PendingEmailChangeRegistry(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             $this->createStub(EventBusInterface::class),

@@ -14,8 +14,6 @@ use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Infrastructure\Security\Voter\IrcopPermissionVoter;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\Out\Security\IrcServiceUser;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,24 +33,6 @@ final class IrcopPermissionVoterTest extends TestCase
         self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($this->createTokenWithOperUser(false), $context, ['operserv.kill']));
         self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($this->createTokenWithOperUser(false), $context, ['nickserv.drop']));
         self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($this->createTokenWithOperUser(false), $context, ['chanserv.mode.lock']));
-    }
-
-    #[Test]
-    public function getNickRepositoryReturnsConfiguredRepository(): void
-    {
-        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $rootRegistry = new RootUserRegistry('');
-        $accessHelper = new IrcopAccessHelper(
-            $rootRegistry,
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(OperRoleRepositoryInterface::class),
-        );
-        $voter = new IrcopPermissionVoter(
-            $accessHelper,
-            $repository,
-        );
-
-        self::assertSame($repository, $voter->getNickRepository());
     }
 
     #[Test]
@@ -105,10 +85,7 @@ final class IrcopPermissionVoterTest extends TestCase
             $this->createStub(OperRoleRepositoryInterface::class)
         );
 
-        $voter = new IrcopPermissionVoter(
-            $accessHelper,
-            $this->createStub(RegisteredNickRepositoryInterface::class)
-        );
+        $voter = new IrcopPermissionVoter($accessHelper);
 
         $context = $this->createStub(IrcopContextInterface::class);
         $token = $this->createTokenWithIdentifiedUser(true, 'testnick');
@@ -126,10 +103,7 @@ final class IrcopPermissionVoterTest extends TestCase
             $this->createStub(OperRoleRepositoryInterface::class)
         );
 
-        $voter = new IrcopPermissionVoter(
-            $accessHelper,
-            $this->createStub(RegisteredNickRepositoryInterface::class)
-        );
+        $voter = new IrcopPermissionVoter($accessHelper);
 
         $context = $this->createStub(IrcopContextInterface::class);
         // Root user identified but WITHOUT +o mode - should still be granted
@@ -148,10 +122,7 @@ final class IrcopPermissionVoterTest extends TestCase
             $this->createStub(OperRoleRepositoryInterface::class)
         );
 
-        $voter = new IrcopPermissionVoter(
-            $accessHelper,
-            $this->createStub(RegisteredNickRepositoryInterface::class)
-        );
+        $voter = new IrcopPermissionVoter($accessHelper);
 
         $context = $this->createStub(IrcopContextInterface::class);
         // Root user NOT identified, WITHOUT +o mode - should be denied
@@ -180,16 +151,10 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $accessHelper = new IrcopAccessHelper($rootRegistry, $operIrcopRepo, $roleRepo);
 
-        $voter = new IrcopPermissionVoter(
-            $accessHelper,
-            $this->createStub(RegisteredNickRepositoryInterface::class)
-        );
-
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getId')->willReturn(1);
+        $voter = new IrcopPermissionVoter($accessHelper);
 
         $context = $this->createStub(IrcopContextInterface::class);
-        $context->method('getSenderAccount')->willReturn($account);
+        $context->method('getSenderAccountId')->willReturn(1);
 
         $token = $this->createTokenWithIdentifiedUser(true, 'testnick');
 
@@ -216,16 +181,10 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $accessHelper = new IrcopAccessHelper($rootRegistry, $operIrcopRepo, $roleRepo);
 
-        $voter = new IrcopPermissionVoter(
-            $accessHelper,
-            $this->createStub(RegisteredNickRepositoryInterface::class)
-        );
-
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getId')->willReturn(1);
+        $voter = new IrcopPermissionVoter($accessHelper);
 
         $context = $this->createStub(IrcopContextInterface::class);
-        $context->method('getSenderAccount')->willReturn($account);
+        $context->method('getSenderAccountId')->willReturn(1);
 
         $token = $this->createTokenWithOperUser(true, 'testnick');
 
@@ -242,13 +201,10 @@ final class IrcopPermissionVoterTest extends TestCase
             $this->createStub(OperRoleRepositoryInterface::class)
         );
 
-        $voter = new IrcopPermissionVoter(
-            $accessHelper,
-            $this->createStub(RegisteredNickRepositoryInterface::class)
-        );
+        $voter = new IrcopPermissionVoter($accessHelper);
 
         $context = $this->createStub(IrcopContextInterface::class);
-        $context->method('getSenderAccount')->willReturn(null);
+        $context->method('getSenderAccountId')->willReturn(null);
 
         $token = $this->createTokenWithOperUser(true, 'testnick');
 
@@ -264,10 +220,7 @@ final class IrcopPermissionVoterTest extends TestCase
             $this->createStub(OperRoleRepositoryInterface::class)
         );
 
-        return new IrcopPermissionVoter(
-            $accessHelper,
-            $this->createStub(RegisteredNickRepositoryInterface::class)
-        );
+        return new IrcopPermissionVoter($accessHelper);
     }
 
     private function createTokenWithOperUser(bool $isOper, string $nick = 'testnick'): TokenInterface

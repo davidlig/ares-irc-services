@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
-use App\NickServ\Adapter\Out\User\UserLanguageResolver;
+use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class CtcpVersionResponder
@@ -56,11 +56,11 @@ final readonly class CtcpVersionResponder
 
     public function __construct(
         private TranslatorInterface $translator,
-        private UserLanguageResolver $languageResolver,
+        private ServiceUserPreferences $languageResolver,
         private string $servicesVersion,
     ) {}
 
-    public function getLanguageResolver(): UserLanguageResolver
+    public function getLanguageResolver(): ServiceUserPreferences
     {
         return $this->languageResolver;
     }

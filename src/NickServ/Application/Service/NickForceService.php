@@ -4,20 +4,17 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Service;
 
-use App\Application\Port\EventBusInterface;
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\NickServ\Application\Port\Out\GuestNicknameGenerator;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
+use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
+use App\NickServ\Application\Port\Out\NickServActivitySink;
+use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Event\UserDeidentifiedEvent;
-use Psr\Log\LoggerInterface;
+use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 
 use function sprintf;
-use function str_starts_with;
-use function strtoupper;
-use function substr;
-use function uniqid;
 
 /**
  * Centralized service for forcing a user to change to a Guest- nickname.
@@ -38,10 +35,11 @@ readonly class NickForceService
         private IdentifiedSessionTracker $identifiedRegistry,
         private NickNetworkActions $notifier,
         private PendingNickRestoreRegistryInterface $pendingRegistry,
-        private NetworkUserLookupPort $userLookup,
+        private NickNetworkUserLookup $userLookup,
         private RegisteredNickRepositoryInterface $nickRepository,
-        private EventBusInterface $eventDispatcher,
-        private LoggerInterface $logger,
+        private NickServEventPublisher $eventPublisher,
+        private NickServActivitySink $logger,
+        private GuestNicknameGenerator $guestNicknameGenerator,
         private string $guestPrefix = 'Guest-',
     ) {}
 
@@ -55,11 +53,7 @@ readonly class NickForceService
     public function forceGuestNick(string $uid, ?string $guestNick = null, string $reason = 'enforcement'): void
     {
         if (null === $guestNick) {
-            if (str_starts_with($this->guestPrefix, 'Guest-')) {
-                $guestNick = $this->guestPrefix . strtoupper(substr(uniqid(), -7));
-            } else {
-                $guestNick = $this->guestPrefix . strtoupper(substr(uniqid(), -7));
-            }
+            $guestNick = $this->guestNicknameGenerator->generate($this->guestPrefix);
         }
 
         $user = $this->userLookup->findByUid($uid);
@@ -78,7 +72,7 @@ readonly class NickForceService
         if (null !== $identifiedNick) {
             $account = $this->nickRepository->findByNick($identifiedNick);
             if (null !== $account) {
-                $this->eventDispatcher->dispatch(new UserDeidentifiedEvent(
+                $this->eventPublisher->publish(new UserDeidentifiedEvent(
                     $uid,
                     $account->getId(),
                     $identifiedNick,

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Command\CommandOutcome;
-use App\Application\Command\IrcopAuditableCommandInterface;
-use App\Application\Command\IrcopAuditData;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\History\HistoryNick;
 use App\NickServ\Application\UseCase\History\HistoryNickAction;
@@ -30,7 +31,10 @@ use function trim;
 
 final readonly class HistoryCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    public function __construct(private HistoryNickHandlerInterface $handler) {}
+    public function __construct(
+        private HistoryNickHandlerInterface $handler,
+        private Clock $clock,
+    ) {}
 
     public function getName(): string
     {
@@ -169,6 +173,7 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
         $result = $this->handler->handle(new HistoryNick(
             nickname: $targetNick,
             action: $action,
+            occurredAt: $this->clock->now(),
             message: $message,
             entryId: $entryId,
             page: $page,

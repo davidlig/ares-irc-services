@@ -168,7 +168,8 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'pending@example.com',
             'en',
-            new DateTimeImmutable('+24 hours')
+            new DateTimeImmutable('+24 hours'),
+            new DateTimeImmutable()
         );
 
         $this->repository->save($registered);
@@ -217,7 +218,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $this->entityManager->clear();
 
         $active = $this->createRegisteredNick('Active', 'active@example.com');
-        $active->markSeen();
+        $active->markSeen(new DateTimeImmutable());
         $this->repository->save($active);
         $this->flushAndClear();
 
@@ -231,7 +232,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function findRegisteredInactiveSinceReturnsEmptyWhenNoneInactive(): void
     {
         $nick = $this->createRegisteredNick('Active', 'active@example.com');
-        $nick->markSeen();
+        $nick->markSeen(new DateTimeImmutable());
         $this->repository->save($nick);
         $this->flushAndClear();
 
@@ -248,20 +249,22 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'e1@example.com',
             'en',
-            new DateTimeImmutable('-1 hour')
+            new DateTimeImmutable('-1 hour'),
+            new DateTimeImmutable()
         );
         $expired2 = RegisteredNick::createPending(
             'Expired2',
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'e2@example.com',
             'en',
-            new DateTimeImmutable('-2 hours')
+            new DateTimeImmutable('-2 hours'),
+            new DateTimeImmutable()
         );
         $this->repository->save($expired1);
         $this->repository->save($expired2);
         $this->flushAndClear();
 
-        $deleted = $this->repository->deleteExpiredPending();
+        $deleted = $this->repository->deleteExpiredPending(new DateTimeImmutable());
 
         $this->flushAndClear();
         self::assertSame(2, $deleted);
@@ -277,12 +280,13 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             'pending@example.com',
             'en',
-            new DateTimeImmutable('+24 hours')
+            new DateTimeImmutable('+24 hours'),
+            new DateTimeImmutable()
         );
         $this->repository->save($pending);
         $this->flushAndClear();
 
-        $deleted = $this->repository->deleteExpiredPending();
+        $deleted = $this->repository->deleteExpiredPending(new DateTimeImmutable());
 
         $this->flushAndClear();
         self::assertSame(0, $deleted);
@@ -309,7 +313,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         $this->flushAndClear();
 
-        $result = $this->repository->findExpiredSuspensions();
+        $result = $this->repository->findExpiredSuspensions(new DateTimeImmutable());
 
         self::assertCount(1, $result);
         self::assertSame('ExpiredSus', $result[0]->getNickname());
@@ -324,7 +328,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         $this->flushAndClear();
 
-        $result = $this->repository->findExpiredSuspensions();
+        $result = $this->repository->findExpiredSuspensions(new DateTimeImmutable());
 
         self::assertEmpty($result);
     }
@@ -342,7 +346,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         $this->flushAndClear();
 
-        $result = $this->repository->findExpiredSuspensions();
+        $result = $this->repository->findExpiredSuspensions(new DateTimeImmutable());
 
         self::assertCount(2, $result);
         $nicknames = array_map(static fn ($n) => $n->getNickname(), $result);
@@ -378,7 +382,8 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             '$argon2id$v=19$m=65536,t=4,p=1$test$test',
             $email,
             'en',
-            new DateTimeImmutable('+24 hours')
+            new DateTimeImmutable('+24 hours'),
+            new DateTimeImmutable()
         );
 
         $nick->activate();

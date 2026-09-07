@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Service;
 
-use App\Application\OperServ\RootUserRegistry;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Adapter\Out\Service\NickServDebugNotifier;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -26,8 +24,7 @@ final class NickServDebugNotifierTest extends TestCase
         ?string $debugChannel = '#opers',
         ?NickServNotifierInterface $notifier = null,
         ?RegisteredNickRepositoryInterface $nickRepo = null,
-        ?OperIrcopRepositoryInterface $ircopRepo = null,
-        ?RootUserRegistry $rootRegistry = null,
+        ?NickServOperatorAccess $operatorAccess = null,
         ?TranslatorInterface $translator = null,
         ?LoggerInterface $logger = null,
         ?NetworkUserLookupPort $userLookup = null,
@@ -37,8 +34,7 @@ final class NickServDebugNotifierTest extends TestCase
             $notifier ?? $this->createStub(NickServNotifierInterface::class),
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             $identifiedRegistry ?? new IdentifiedSessionRegistry(),
-            $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
-            $rootRegistry ?? new RootUserRegistry(''),
+            $operatorAccess ?? $this->createStub(NickServOperatorAccess::class),
             $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
             $translator ?? $this->createStub(TranslatorInterface::class),
             'en',
@@ -341,8 +337,9 @@ final class NickServDebugNotifierTest extends TestCase
     #[Test]
     public function isIrcopOrRootReturnsTrueForRoot(): void
     {
-        $rootRegistry = new RootUserRegistry('AdminRoot');
-        $debug = $this->createNotifier(rootRegistry: $rootRegistry);
+        $operatorAccess = $this->createStub(NickServOperatorAccess::class);
+        $operatorAccess->method('isRoot')->willReturn(true);
+        $debug = $this->createNotifier(operatorAccess: $operatorAccess);
 
         self::assertTrue($debug->isIrcopOrRoot('AdminRoot', false));
     }
@@ -371,21 +368,17 @@ final class NickServDebugNotifierTest extends TestCase
     {
         $registeredNick = $this->createStub(RegisteredNick::class);
         $registeredNick->method('getId')->willReturn(123);
-        $ircop = $this->createStub(OperIrcop::class);
-
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())
             ->method('findByNick')
             ->with('OperUser')
             ->willReturn($registeredNick);
 
-        $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepo->expects(self::once())
-            ->method('findByNickId')
-            ->with(123)
-            ->willReturn($ircop);
+        $operatorAccess = $this->createMock(NickServOperatorAccess::class);
+        $operatorAccess->expects(self::once())->method('isRoot')->with('OperUser')->willReturn(false);
+        $operatorAccess->expects(self::once())->method('isIrcop')->with(123, 'OperUser')->willReturn(true);
 
-        $debug = $this->createNotifier(nickRepo: $nickRepo, ircopRepo: $ircopRepo);
+        $debug = $this->createNotifier(nickRepo: $nickRepo, operatorAccess: $operatorAccess);
 
         self::assertTrue($debug->isIrcopOrRoot('OperUser', true));
     }

@@ -12,6 +12,7 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\History\HistoryNick;
 use App\NickServ\Application\UseCase\History\HistoryNickAction;
@@ -30,13 +31,15 @@ use function base64_encode;
 use function inet_pton;
 use function is_scalar;
 
+use const DATE_ATOM;
+
 #[CoversClass(HistoryCommand::class)]
 final class HistoryCommandTest extends TestCase
 {
     #[Test]
     public function exposesHistoryMetadata(): void
     {
-        $command = new HistoryCommand($this->createStub(HistoryNickHandlerInterface::class));
+        $command = new HistoryCommand($this->createStub(HistoryNickHandlerInterface::class), $this->clock());
 
         self::assertSame('HISTORY', $command->getName());
         self::assertSame([], $command->getAliases());
@@ -57,7 +60,7 @@ final class HistoryCommandTest extends TestCase
         $handler = $this->createMock(HistoryNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext(null, $messages, ['Target', 'VIEW']));
 
@@ -72,7 +75,7 @@ final class HistoryCommandTest extends TestCase
         $handler = $this->createMock(HistoryNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'UNKNOWN']));
 
@@ -87,7 +90,7 @@ final class HistoryCommandTest extends TestCase
         $handler = $this->createMock(HistoryNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
 
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'ADD']));
@@ -110,11 +113,12 @@ final class HistoryCommandTest extends TestCase
                 && HistoryNickAction::Add === $dto->action
                 && 'A note message' === $dto->message
                 && 'Oper' === $dto->operatorNick
+                && '2026-09-06T12:00:00+00:00' === $dto->occurredAt->format(DATE_ATOM)
                 && '127.0.0.1' === $dto->operatorIp
                 && 'ident@box.net' === $dto->operatorHost,
         ))->willReturn(HistoryNickResult::addSuccess('Target', 'A note message'));
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'add', 'A', 'note', 'message']));
 
@@ -131,7 +135,7 @@ final class HistoryCommandTest extends TestCase
         $handler = $this->createMock(HistoryNickHandlerInterface::class);
         $handler->expects(self::exactly(2))->method('handle')->willReturn(HistoryNickResult::addSuccess('Target', 'Note'));
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
 
         $sender1 = new SenderView('UID1', 'Oper', 'ident', 'box.net', 'cloak', '');
         $messages1 = [];
@@ -152,7 +156,7 @@ final class HistoryCommandTest extends TestCase
         $handler = $this->createMock(HistoryNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
 
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'DEL']));
@@ -176,7 +180,7 @@ final class HistoryCommandTest extends TestCase
                 && 42 === $dto->entryId,
         ))->willReturn(HistoryNickResult::delSuccess('Target', 42));
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'del', '42']));
 
@@ -197,7 +201,7 @@ final class HistoryCommandTest extends TestCase
                 && HistoryNickAction::Clear === $dto->action,
         ))->willReturn(HistoryNickResult::clearSuccess('Target', 5));
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'clear']));
 
@@ -259,7 +263,7 @@ final class HistoryCommandTest extends TestCase
             showAll: false,
         ));
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'view', '2']));
 
@@ -288,7 +292,7 @@ final class HistoryCommandTest extends TestCase
             showAll: true,
         ));
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'view', 'all']));
 
@@ -305,7 +309,7 @@ final class HistoryCommandTest extends TestCase
             static fn (HistoryNick $dto): bool => 1 === $dto->page,
         ))->willReturn(HistoryNickResult::viewNoEntries('Target'));
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'view', '-5']));
 
@@ -324,7 +328,7 @@ final class HistoryCommandTest extends TestCase
             HistoryNickResult::delInvalidId('abc'),
         );
 
-        $command = new HistoryCommand($handler);
+        $command = new HistoryCommand($handler, $this->clock());
 
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Target', 'view']));
@@ -397,5 +401,13 @@ final class HistoryCommandTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
     }
 }

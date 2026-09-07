@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Command\IrcopAuditData;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\SuspendCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -14,13 +14,14 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\NickProtectabilityResult;
 use App\NickServ\Application\Service\NickSuspensionService;
 use App\NickServ\Application\Service\NickTargetValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickSuspendedEvent;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+
+use const DATE_ATOM;
 
 #[CoversClass(SuspendCommand::class)]
 final class SuspendCommandTest extends TestCase
@@ -157,6 +160,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $suspensionService,
             $eventDispatcher,
+            $this->clock(),
         );
 
         $outcome = $cmd->execute($context);
@@ -165,6 +169,8 @@ final class SuspendCommandTest extends TestCase
         self::assertCount(1, $dispatchedEvents);
         self::assertInstanceOf(NickSuspendedEvent::class, $dispatchedEvents[0]);
         self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+        self::assertSame('2026-09-06T12:00:00+00:00', $dispatchedEvents[0]->occurredAt->format(DATE_ATOM));
+        self::assertSame('2026-09-13T12:00:00+00:00', $dispatchedEvents[0]->expiresAt?->format(DATE_ATOM));
     }
 
     #[Test]
@@ -202,6 +208,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $suspensionService,
             $eventDispatcher,
+            $this->clock(),
         );
 
         $outcome = $cmd->execute($context);
@@ -237,6 +244,7 @@ final class SuspendCommandTest extends TestCase
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -260,6 +268,7 @@ final class SuspendCommandTest extends TestCase
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -284,6 +293,7 @@ final class SuspendCommandTest extends TestCase
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -309,6 +319,7 @@ final class SuspendCommandTest extends TestCase
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -336,6 +347,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -363,6 +375,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -390,6 +403,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -417,6 +431,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -448,6 +463,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $suspensionService,
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $outcome = $cmd->execute($context);
@@ -485,6 +501,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $suspensionService,
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -517,6 +534,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $suspensionService,
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -549,6 +567,7 @@ final class SuspendCommandTest extends TestCase
             $validator,
             $suspensionService,
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -564,6 +583,7 @@ final class SuspendCommandTest extends TestCase
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
     }
 
@@ -574,7 +594,7 @@ final class SuspendCommandTest extends TestCase
 
     private function createActivatedNick(string $nickname): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
 
         return $nick;
@@ -582,7 +602,7 @@ final class SuspendCommandTest extends TestCase
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
 
         $reflection = new ReflectionClass(RegisteredNick::class);
@@ -634,5 +654,13 @@ final class SuspendCommandTest extends TestCase
         $provider->method('getNickname')->willReturn('NickServ');
 
         return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
     }
 }

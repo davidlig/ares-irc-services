@@ -17,8 +17,8 @@ final readonly class PendingRegistrationVerificationStore implements Registratio
         $this->registry->store($nickname, $token, $expiresAt);
     }
 
-    public function consume(string $nickname, string $token): bool
+    public function consume(string $nickname, string $token, DateTimeImmutable $now): bool
     {
-        return $this->registry->consume($nickname, $token);
+        return $this->registry->consume($nickname, $token, $now);
     }
 }

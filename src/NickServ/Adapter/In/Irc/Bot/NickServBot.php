@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Bot;
 
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceUidProviderInterface;
-use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
-use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
-use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\LocalUserModeSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
-use App\Irc\Domain\ValueObject\Uid;
+use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
@@ -30,7 +28,7 @@ final class NickServBot implements NickServNotifierInterface, NickNetworkActions
     private string $uid = '';
 
     public function __construct(
-        private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly NetworkUserLookupPort $userLookup,
         private readonly SendNoticePort $sendNoticePort,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
@@ -46,17 +44,17 @@ final class NickServBot implements NickServNotifierInterface, NickNetworkActions
     public static function getSubscribedEvents(): array
     {
         return [
-            NetworkBurstCompleteEvent::class => ['onBurstComplete', 100],
+            ServiceIntroductionRequestedEvent::class => ['onBurstComplete', 100],
         ];
     }
 
-    public function onBurstComplete(NetworkBurstCompleteEvent $event): void
+    public function onBurstComplete(ServiceIntroductionRequestedEvent $event): void
     {
         $this->uid = $this->uidGenerator->generateUid('nickserv');
-        $this->introduce($event->connection, $event->serverSid);
+        $this->introduce($event->serverSid);
     }
 
-    private function introduce(ConnectionInterface $connection, string $serverSid): void
+    private function introduce(string $serverSid): void
     {
         $module = $this->connectionHolder->getProtocolModule();
         if (null === $module) {
@@ -99,7 +97,7 @@ final class NickServBot implements NickServNotifierInterface, NickNetworkActions
         $module->getServiceActions()->setUserAccount($this->getServerSid(), $targetUid, $accountName);
 
         $delta = ('0' === $accountName) ? '-r' : '+r';
-        $this->localUserModeSync->apply(new Uid($targetUid), $delta);
+        $this->localUserModeSync->apply($targetUid, $delta);
     }
 
     public function setUserMode(string $targetUid, string $modes): void

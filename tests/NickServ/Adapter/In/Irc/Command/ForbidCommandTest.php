@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Command\IrcopAuditData;
 use App\Application\Port\TranslationInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\ForbidCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -13,6 +13,7 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\ForbiddenNickService;
@@ -132,6 +133,7 @@ final class ForbidCommandTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
 
         $messages = [];
@@ -156,6 +158,7 @@ final class ForbidCommandTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -180,6 +183,7 @@ final class ForbidCommandTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -204,6 +208,7 @@ final class ForbidCommandTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -228,6 +233,7 @@ final class ForbidCommandTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -259,6 +265,7 @@ final class ForbidCommandTest extends TestCase
             $forbiddenService,
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -289,6 +296,7 @@ final class ForbidCommandTest extends TestCase
             $forbiddenService,
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
 
         $outcome = $cmd->execute($context);
@@ -315,7 +323,12 @@ final class ForbidCommandTest extends TestCase
         $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('BadUser', $nick));
 
         $dropService = $this->createMock(NickDropService::class);
-        $dropService->expects(self::once())->method('dropNick')->with($nick, 'forbid', 'OperUser');
+        $dropService->expects(self::once())->method('dropNick')->with(
+            $nick,
+            new DateTimeImmutable('2026-09-06 12:00:00 UTC'),
+            'forbid',
+            'OperUser',
+        );
 
         $forbiddenService = $this->createMock(ForbiddenNickService::class);
         $forbiddenService->expects(self::once())->method('forbid')->with('BadUser', 'Test reason', 'OperUser');
@@ -328,6 +341,7 @@ final class ForbidCommandTest extends TestCase
             $forbiddenService,
             $dropService,
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
 
         $cmd->execute($context);
@@ -343,6 +357,7 @@ final class ForbidCommandTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
         );
     }
 
@@ -353,7 +368,7 @@ final class ForbidCommandTest extends TestCase
 
     private function createActivatedNick(string $nickname): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
 
         $reflection = new ReflectionClass(RegisteredNick::class);
@@ -405,5 +420,13 @@ final class ForbidCommandTest extends TestCase
         $provider->method('getNickname')->willReturn('NickServ');
 
         return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
     }
 }

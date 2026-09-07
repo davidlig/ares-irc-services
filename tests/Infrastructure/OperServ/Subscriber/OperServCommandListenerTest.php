@@ -10,11 +10,11 @@ use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\OperServService;
+use App\Application\OperServ\Port\Out\ServiceUserPreferences;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\TranslationInterface;
-use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Infrastructure\OperServ\Bot\OperServBot;
@@ -25,9 +25,6 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
-use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
-use App\NickServ\Adapter\Out\User\UserLanguageResolver;
-use App\NickServ\Adapter\Out\User\UserMessageTypeResolver;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
@@ -218,8 +215,8 @@ final class OperServCommandListenerTest extends TestCase
 
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
-        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
@@ -227,7 +224,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
             $nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $messageTypeResolver,
             $operServNotifier,
             $messageTypeResolver,
             $translator,
@@ -242,7 +239,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $userLookup = self::createStub(NetworkUserLookupPort::class);
         $sendNotice = self::createStub(SendNoticePort::class);
-        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $userMessageTypeResolver = $messageTypeResolver;
         $logger = self::createStub(LoggerInterface::class);
 
         $listener = new OperServCommandListener(
@@ -280,8 +277,8 @@ final class OperServCommandListenerTest extends TestCase
 
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
-        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
@@ -289,7 +286,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
             $nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $messageTypeResolver,
             $operServNotifier,
             $messageTypeResolver,
             $translator,
@@ -304,7 +301,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $userLookup = self::createStub(NetworkUserLookupPort::class);
         $sendNotice = self::createStub(SendNoticePort::class);
-        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $userMessageTypeResolver = $messageTypeResolver;
         $logger = self::createStub(LoggerInterface::class);
 
         $listener = new OperServCommandListener(
@@ -342,8 +339,8 @@ final class OperServCommandListenerTest extends TestCase
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
         $operServNotifier->expects(self::never())->method('sendMessage');
 
-        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
@@ -351,7 +348,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
             $nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $messageTypeResolver,
             $operServNotifier,
             $messageTypeResolver,
             $translator,
@@ -370,7 +367,7 @@ final class OperServCommandListenerTest extends TestCase
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::never())->method('sendMessage');
 
-        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $userMessageTypeResolver = $messageTypeResolver;
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('warning');
         $logger->expects(self::never())->method('error');
@@ -408,8 +405,8 @@ final class OperServCommandListenerTest extends TestCase
 
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
-        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
@@ -417,7 +414,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
             $nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $messageTypeResolver,
             $operServNotifier,
             $messageTypeResolver,
             $translator,
@@ -434,7 +431,7 @@ final class OperServCommandListenerTest extends TestCase
         $userLookup->expects(self::once())->method('findByUid')->with(self::SENDER_UID)->willReturn(null);
 
         $sendNotice = self::createStub(SendNoticePort::class);
-        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $userMessageTypeResolver = $messageTypeResolver;
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('warning')->with('OperServ: could not resolve sender UID: ' . self::SENDER_UID);
 
@@ -475,8 +472,8 @@ final class OperServCommandListenerTest extends TestCase
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
         $operServNotifier->expects(self::once())->method('sendMessage')->with(self::SENDER_UID, self::anything(), 'NOTICE');
 
-        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
@@ -484,7 +481,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
             $nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $messageTypeResolver,
             $operServNotifier,
             $messageTypeResolver,
             $translator,
@@ -501,7 +498,7 @@ final class OperServCommandListenerTest extends TestCase
         $userLookup->expects(self::once())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
         $sendNotice = self::createStub(SendNoticePort::class);
-        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $userMessageTypeResolver = $messageTypeResolver;
         $logger = self::createStub(LoggerInterface::class);
 
         $listener = new OperServCommandListener(
@@ -541,8 +538,8 @@ final class OperServCommandListenerTest extends TestCase
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
         $operServNotifier->expects(self::once())->method('sendMessage');
 
-        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
@@ -550,7 +547,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
             $nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $messageTypeResolver,
             $operServNotifier,
             $messageTypeResolver,
             $translator,
@@ -567,7 +564,7 @@ final class OperServCommandListenerTest extends TestCase
         $userLookup->expects(self::once())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
         $sendNotice = self::createStub(SendNoticePort::class);
-        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $userMessageTypeResolver = $messageTypeResolver;
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('debug')->with(
             'OperServ: command from {nick} [{uid}]: {text}',
@@ -610,8 +607,8 @@ final class OperServCommandListenerTest extends TestCase
         $throwCommand = self::createThrowCommand('TEST', new RuntimeException('Test error.'));
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
-        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
         $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = self::createAccessHelper();
@@ -619,7 +616,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServService = new OperServService(
             new OperServCommandRegistry([$throwCommand]),
             $nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $messageTypeResolver,
             $operServNotifier,
             $messageTypeResolver,
             $translator,
@@ -636,7 +633,7 @@ final class OperServCommandListenerTest extends TestCase
         $userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
         $sendNotice = self::createStub(SendNoticePort::class);
-        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $userMessageTypeResolver = $messageTypeResolver;
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
             self::stringContains('OperServ dispatch error:'),

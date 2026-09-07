@@ -85,7 +85,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
     }
 
-    public function deleteExpiredPending(): int
+    public function deleteExpiredPending(DateTimeImmutable $now): int
     {
         $result = $this->em
             ->createQuery(
@@ -95,7 +95,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
                  AND n.expiresAt < :now'
             )
             ->setParameter('status', NickStatus::Pending)
-            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'))
+            ->setParameter('now', $now->format('Y-m-d H:i:s'))
             ->execute();
 
         return is_numeric($result) ? (int) $result : 0;
@@ -108,7 +108,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->findBy(['status' => $status]);
     }
 
-    public function findExpiredSuspensions(): array
+    public function findExpiredSuspensions(DateTimeImmutable $now): array
     {
         $qb = $this->em->createQueryBuilder();
         $qb->select('n')
@@ -117,7 +117,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->andWhere('n.suspendedUntil IS NOT NULL')
             ->andWhere('n.suspendedUntil < :now')
             ->setParameter('status', NickStatus::Suspended)
-            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'));
+            ->setParameter('now', $now->format('Y-m-d H:i:s'));
 
         /** @var array<mixed> $result */
         $result = $qb->getQuery()->getResult();

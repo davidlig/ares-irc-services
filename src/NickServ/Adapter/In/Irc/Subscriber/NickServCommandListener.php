@@ -6,11 +6,10 @@ namespace App\NickServ\Adapter\In\Irc\Subscriber;
 
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceCommandListenerInterface;
-use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\In\Irc\Bot\NickServBot;
 use App\NickServ\Adapter\In\Irc\NickServService;
-use App\NickServ\Adapter\Out\User\UserMessageTypeResolver;
+use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
 use App\NickServ\Domain\Exception\InvalidCredentialsException;
 use App\NickServ\Domain\Exception\NickAlreadyRegisteredException;
 use Psr\Log\LoggerInterface;
@@ -30,7 +29,7 @@ final readonly class NickServCommandListener implements ServiceCommandListenerIn
         private NickServService $nickServService,
         private NetworkUserLookupPort $userLookup,
         private SendNoticePort $sendNotice,
-        private UserMessageTypeResolver $messageTypeResolver,
+        private UserMessagePreferenceQuery $messageTypeResolver,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -61,22 +60,22 @@ final readonly class NickServCommandListener implements ServiceCommandListenerIn
         $this->logger->debug('NickServ: command from {nick} [{uid}]: {text}', [
             'nick' => $sender->nick,
             'uid' => $sender->uid,
-            'text' => SensitiveDataRedactor::redactNickServCommand($text),
+            'text' => NickServCommandRedactor::redactNickServCommand($text),
         ]);
 
         try {
             $this->nickServService->dispatch($text, $sender);
         } catch (NickAlreadyRegisteredException $e) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->sendNotice->sendMessage($this->nickServBot->getUid(), $sender->uid, $e->getMessage(), $messageType);
         } catch (InvalidCredentialsException $e) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->sendNotice->sendMessage($this->nickServBot->getUid(), $sender->uid, $e->getMessage(), $messageType);
         } catch (Throwable $e) {
             $this->logger->error('NickServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'sender' => $sender->uid,
-                'text' => SensitiveDataRedactor::redactNickServCommand($text),
+                'text' => NickServCommandRedactor::redactNickServCommand($text),
             ]);
         }
     }

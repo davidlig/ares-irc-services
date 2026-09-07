@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Command\IrcopAuditData;
 use App\Application\Port\TranslationInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\UnforbidCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;

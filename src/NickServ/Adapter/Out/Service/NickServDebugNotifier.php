@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Service;
 
-use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ServiceDebugNotifierInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
+use App\NickServ\Application\Port\Out\NickAuditSink;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterface
+final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebugNotifierInterface
 {
     private const string COLOR_BLUE = "\x0302";
 
@@ -28,8 +28,7 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
         private NickServNotifierInterface $notifier,
         private NetworkUserLookupPort $userLookup,
         private IdentifiedSessionRegistry $identifiedRegistry,
-        private OperIrcopRepositoryInterface $ircopRepo,
-        private RootUserRegistry $rootRegistry,
+        private NickServOperatorAccess $operatorAccess,
         private RegisteredNickRepositoryInterface $nickRepo,
         private TranslatorInterface $translator,
         private string $defaultLanguage,
@@ -194,7 +193,7 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
 
     public function isIrcopOrRoot(string $nick, bool $isIdentified): bool
     {
-        if ($this->rootRegistry->isRoot($nick)) {
+        if ($this->operatorAccess->isRoot($nick)) {
             return true;
         }
 
@@ -205,7 +204,7 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
         $registeredNick = $this->nickRepo->findByNick($nick);
 
         return null !== $registeredNick
-            && null !== $this->ircopRepo->findByNickId($registeredNick->getId());
+            && $this->operatorAccess->isIrcop($registeredNick->getId(), $nick);
     }
 
     public function getDebugChannel(): ?string

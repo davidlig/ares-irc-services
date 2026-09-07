@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Maintenance;
 
-use App\Application\Maintenance\MaintenanceTaskInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
@@ -17,6 +18,7 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
         private RegisteredNickRepositoryInterface $nickRepository,
         private ServiceDebugNotifierInterface $debugNotifier,
         private LoggerInterface $logger,
+        private Clock $clock,
         private string $serverName,
         private int $intervalSeconds,
     ) {}
@@ -38,7 +40,7 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
 
     public function run(): void
     {
-        $expired = $this->nickRepository->findExpiredSuspensions();
+        $expired = $this->nickRepository->findExpiredSuspensions($this->clock->now());
 
         foreach ($expired as $nick) {
             $nickname = $nick->getNickname();

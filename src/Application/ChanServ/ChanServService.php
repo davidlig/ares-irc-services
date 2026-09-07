@@ -8,6 +8,7 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\ChanServ\Port\Out\ServiceUserPreferences;
 use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Command\CommandOutcome;
 use App\Application\Event\CommandExecutedEvent;
@@ -16,8 +17,6 @@ use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChanServDispatchPort;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
-use App\Application\Port\UserLanguageResolverInterface;
-use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
@@ -54,9 +53,9 @@ final readonly class ChanServService implements ChanServDispatchPort
         private ChanServCommandRegistry $commandRegistry,
         private RegisteredChannelRepositoryInterface $channelRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
-        private UserLanguageResolverInterface $languageResolver,
+        private ServiceUserPreferences $languageResolver,
         private ChanServNotifierInterface $notifier,
-        private UserMessageTypeResolverInterface $messageTypeResolver,
+        private ServiceUserPreferences $messageTypeResolver,
         private TranslationInterface $translator,
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
@@ -89,7 +88,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         $handler = $this->commandRegistry->find($cmdName);
 
         if (null === $handler) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->notifier->sendMessage(
                 $sender->uid,
                 $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'chanserv', $this->defaultLanguage),
@@ -108,9 +107,9 @@ final readonly class ChanServService implements ChanServDispatchPort
     private function executeHandler(ChanServCommandInterface $handler, SenderView $sender, string $cmdName, array $args): void
     {
         $account = $this->nickRepository->findByNick($sender->nick);
-        $language = $this->languageResolver->resolveFromAccount($sender, $account);
+        $language = $this->languageResolver->languageFor($sender->uid, $sender->nick, $account?->getLanguage());
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
-        $messageType = $this->messageTypeResolver->resolve($sender);
+        $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
         $modeSupport = $this->modeSupportProvider->getSupport();
 
         $context = new ChanServContext(
@@ -130,7 +129,7 @@ final readonly class ChanServService implements ChanServDispatchPort
             serviceNicks: $this->serviceNicks,
         );
 
-        $this->authorizationContext->setCurrentUser($sender);
+        $this->authorizationContext->setCurrentUser($sender->uid, $sender->isIdentified, $sender->isOper);
 
         try {
             $requiredPermission = $handler->getRequiredPermission();

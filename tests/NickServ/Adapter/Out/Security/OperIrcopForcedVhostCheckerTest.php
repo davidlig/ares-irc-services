@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Security;
 
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Application\OperServ\Port\In\ProtectedNickQuery;
 use App\NickServ\Adapter\Out\Security\OperIrcopForcedVhostChecker;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -16,61 +14,14 @@ use PHPUnit\Framework\TestCase;
 final class OperIrcopForcedVhostCheckerTest extends TestCase
 {
     #[Test]
-    public function returnsFalseWhenNoIrcopFound(): void
+    public function delegatesForcedVhostChecksToThePublicOperServQuery(): void
     {
-        $repo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $repo->method('findByNickId')->willReturn(null);
-
-        $checker = new OperIrcopForcedVhostChecker($repo);
-
-        self::assertFalse($checker->hasForcedVhost(123));
-    }
-
-    #[Test]
-    public function returnsFalseWhenRolePatternIsNull(): void
-    {
-        $role = $this->createStub(OperRole::class);
-        $role->method('getForcedVhostPattern')->willReturn(null);
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $repo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $repo->method('findByNickId')->willReturn($ircop);
-
-        $checker = new OperIrcopForcedVhostChecker($repo);
-
-        self::assertFalse($checker->hasForcedVhost(123));
-    }
-
-    #[Test]
-    public function returnsFalseWhenRolePatternIsEmpty(): void
-    {
-        $role = $this->createStub(OperRole::class);
-        $role->method('getForcedVhostPattern')->willReturn('');
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $repo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $repo->method('findByNickId')->willReturn($ircop);
-
-        $checker = new OperIrcopForcedVhostChecker($repo);
-
-        self::assertFalse($checker->hasForcedVhost(123));
-    }
-
-    #[Test]
-    public function returnsTrueWhenRoleHasValidPattern(): void
-    {
-        $role = $this->createStub(OperRole::class);
-        $role->method('getForcedVhostPattern')->willReturn('staff.example.com');
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $repo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $repo->method('findByNickId')->willReturn($ircop);
-
-        $checker = new OperIrcopForcedVhostChecker($repo);
+        $query = $this->createMock(ProtectedNickQuery::class);
+        $query->expects(self::once())->method('hasForcedVhost')->with(123)->willReturn(true);
+        $query->expects(self::once())->method('resolveForcedVhost')->with(123, 'Alice')->willReturn('Alice.staff.example.com');
+        $checker = new OperIrcopForcedVhostChecker($query);
 
         self::assertTrue($checker->hasForcedVhost(123));
+        self::assertSame('Alice.staff.example.com', $checker->resolveForcedVhost(123, 'Alice'));
     }
 }

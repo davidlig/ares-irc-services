@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\User;
 
-use App\Application\Port\UserLanguageResolverInterface;
-use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
+use App\NickServ\Application\Port\In\UserLanguageQuery;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
 
 /**
  * Resolves the preferred language for any IRC user.
@@ -21,7 +19,7 @@ use App\NickServ\Domain\Entity\RegisteredNick;
  * This service is shared across all IRC services (NickServ, ChanServ, etc.)
  * so they all use the same language preference transparently.
  */
-readonly class UserLanguageResolver implements UserLanguageResolverInterface
+readonly class UserLanguageResolver implements UserLanguageQuery
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
@@ -29,27 +27,23 @@ readonly class UserLanguageResolver implements UserLanguageResolverInterface
         private string $defaultLanguage = 'en',
     ) {}
 
-    public function resolve(SenderView $user): string
+    public function resolve(string $uid, string $nickname): string
     {
-        $account = $this->nickRepository->findByNick($user->nick);
+        $account = $this->nickRepository->findByNick($nickname);
         if (null !== $account) {
             return $account->getLanguage();
         }
 
-        return $this->sessionLanguageRegistry->find($user->uid) ?? $this->defaultLanguage;
+        return $this->sessionLanguageRegistry->find($uid) ?? $this->defaultLanguage;
     }
 
-    /**
-     * Resolves language when the caller already has the RegisteredNick entity,
-     * avoiding a second findByNick call.
-     */
-    public function resolveFromAccount(SenderView $user, ?RegisteredNick $account): string
+    public function resolveFromAccount(string $uid, ?string $accountLanguage): string
     {
-        if (null !== $account) {
-            return $account->getLanguage();
+        if (null !== $accountLanguage) {
+            return $accountLanguage;
         }
 
-        return $this->sessionLanguageRegistry->find($user->uid) ?? $this->defaultLanguage;
+        return $this->sessionLanguageRegistry->find($uid) ?? $this->defaultLanguage;
     }
 
     public function resolveByNick(string $nick): string

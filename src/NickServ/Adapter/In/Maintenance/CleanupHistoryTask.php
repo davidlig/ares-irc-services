@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Maintenance;
 
-use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
-use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;
@@ -21,6 +21,7 @@ final readonly class CleanupHistoryTask implements MaintenanceTaskInterface
     public function __construct(
         private NickHistoryRepositoryInterface $historyRepository,
         private LoggerInterface $logger,
+        private Clock $clock,
         private int $intervalSeconds,
         private int $retentionDays,
     ) {}
@@ -46,7 +47,7 @@ final readonly class CleanupHistoryTask implements MaintenanceTaskInterface
             return;
         }
 
-        $threshold = new DateTimeImmutable()->modify(sprintf('-%d days', $this->retentionDays));
+        $threshold = $this->clock->now()->modify(sprintf('-%d days', $this->retentionDays));
         $deleted = $this->historyRepository->deleteOlderThan($threshold);
 
         if ($deleted > 0) {

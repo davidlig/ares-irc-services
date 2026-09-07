@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\OperServ\IrcopAccessHelper;
-use App\Application\OperServ\RootUserRegistry;
-use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
@@ -14,6 +11,7 @@ use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 
 use function strlen;
 
@@ -35,9 +33,7 @@ final readonly class HelpCommand implements NickServCommandInterface
     public function __construct(
         private UnifiedHelpFormatter $formatter,
         private TimezoneHelpProvider $timezoneHelpProvider,
-        private IrcopAccessHelper $accessHelper,
-        private RootUserRegistry $rootRegistry,
-        private PermissionRegistry $permissionRegistry,
+        private NickServOperatorAccess $operatorAccess,
         private int $inactivityExpiryDays = 0,
     ) {}
 
@@ -165,9 +161,7 @@ final readonly class HelpCommand implements NickServCommandInterface
     {
         return new HelpFormatterContextAdapter(
             $context,
-            $this->accessHelper,
-            $this->rootRegistry,
-            $this->permissionRegistry,
+            $this->operatorAccess,
         );
     }
 

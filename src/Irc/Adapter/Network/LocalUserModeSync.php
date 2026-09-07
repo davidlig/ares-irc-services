@@ -20,8 +20,8 @@ final readonly class LocalUserModeSync implements LocalUserModeSyncPort
         private EventDispatcherInterface $eventDispatcher,
     ) {}
 
-    public function apply(Uid $uid, string $modeDelta): void
+    public function apply(string $uid, string $modeDelta): void
     {
-        $this->eventDispatcher->dispatch(new UserModeChangedEvent($uid, $modeDelta));
+        $this->eventDispatcher->dispatch(new UserModeChangedEvent(new Uid($uid), $modeDelta));
     }
 }

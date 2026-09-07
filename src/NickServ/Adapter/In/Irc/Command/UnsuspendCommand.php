@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Command\CommandOutcome;
-use App\Application\Command\IrcopAuditableCommandInterface;
-use App\Application\Command\IrcopAuditData;
 use App\Application\Port\EventBusInterface;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use App\NickServ\Application\Security\NickServPermission;
-use App\NickServ\Domain\Event\NickUnsuspendedEvent;
 
 use function sprintf;
 
@@ -21,6 +22,7 @@ final class UnsuspendCommand implements NickServCommandInterface, IrcopAuditable
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly EventBusInterface $eventDispatcher,
+        private readonly Clock $clock,
     ) {}
 
     public function getName(): string
@@ -115,6 +117,7 @@ final class UnsuspendCommand implements NickServCommandInterface, IrcopAuditable
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
+            occurredAt: $this->clock->now(),
         ));
 
         $context->reply('unsuspend.success', ['%nickname%' => $targetNick]);

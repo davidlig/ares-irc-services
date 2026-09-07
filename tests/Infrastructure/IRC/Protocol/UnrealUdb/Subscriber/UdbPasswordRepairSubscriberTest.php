@@ -217,7 +217,7 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
 
     private function createNick(string $nickname, string $passwordHash = self::BCRYPT_HASH): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, $passwordHash, 'owner@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, $passwordHash, 'owner@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
         new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($nick, 7);
 

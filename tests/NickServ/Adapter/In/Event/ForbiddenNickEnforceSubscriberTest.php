@@ -6,9 +6,7 @@ namespace App\Tests\NickServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Irc\Domain\Event\UserNickChangedEvent;
-use App\Irc\Domain\ValueObject\Nick;
-use App\Irc\Domain\ValueObject\Uid;
+use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
 use App\NickServ\Adapter\In\Event\ForbiddenNickEnforceSubscriber;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
@@ -28,8 +26,8 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
     {
         $events = ForbiddenNickEnforceSubscriber::getSubscribedEvents();
 
-        self::assertArrayHasKey(UserNickChangedEvent::class, $events);
-        self::assertSame(['onNickChanged', 10], $events[UserNickChangedEvent::class]);
+        self::assertArrayHasKey(UserNicknameChangedEvent::class, $events);
+        self::assertSame(['onNickChanged', 10], $events[UserNicknameChangedEvent::class]);
     }
 
     #[Test]
@@ -40,11 +38,7 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
 
         $subscriber = $this->createSubscriber(burstState: $burstState);
 
-        $event = new UserNickChangedEvent(
-            new Uid('UID123'),
-            new Nick('OldNick'),
-            new Nick('BadNick'),
-        );
+        $event = new UserNicknameChangedEvent('UID123', 'OldNick', 'BadNick');
 
         $subscriber->onNickChanged($event);
     }
@@ -60,11 +54,7 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
 
         $subscriber = $this->createSubscriber(burstState: $burstState, pendingRegistry: $pendingRegistry);
 
-        $event = new UserNickChangedEvent(
-            new Uid('UID123'),
-            new Nick('OldNick'),
-            new Nick('BadNick'),
-        );
+        $event = new UserNicknameChangedEvent('UID123', 'OldNick', 'BadNick');
 
         $subscriber->onNickChanged($event);
     }
@@ -99,11 +89,7 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
             forbiddenService: $forbiddenService,
         );
 
-        $event = new UserNickChangedEvent(
-            new Uid('UID123'),
-            new Nick('OldNick'),
-            new Nick('BadNick'),
-        );
+        $event = new UserNicknameChangedEvent('UID123', 'OldNick', 'BadNick');
 
         $subscriber->onNickChanged($event);
     }
@@ -130,11 +116,7 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
             forbiddenService: $forbiddenService,
         );
 
-        $event = new UserNickChangedEvent(
-            new Uid('UID123'),
-            new Nick('OldNick'),
-            new Nick('GoodNick'),
-        );
+        $event = new UserNicknameChangedEvent('UID123', 'OldNick', 'GoodNick');
 
         $subscriber->onNickChanged($event);
     }
@@ -167,11 +149,7 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
             forbiddenService: $forbiddenService,
         );
 
-        $event = new UserNickChangedEvent(
-            new Uid('UID123'),
-            new Nick('OldNick'),
-            new Nick('BadNick'),
-        );
+        $event = new UserNicknameChangedEvent('UID123', 'OldNick', 'BadNick');
 
         $subscriber->onNickChanged($event);
     }

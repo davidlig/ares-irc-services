@@ -12,7 +12,8 @@ use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber;
-use App\NickServ\Domain\Event\NickDropCleanupEvent;
+use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -51,6 +52,7 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'TestUser',
             nicknameLower: 'testuser',
             reason: 'manual',
+            occurredAt: new DateTimeImmutable(),
         );
 
         $channelAccessRepository
@@ -98,6 +100,7 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'Founder',
             nicknameLower: 'founder',
             reason: 'inactivity',
+            occurredAt: new DateTimeImmutable(),
         );
 
         $channel = $this->createMock(RegisteredChannel::class);
@@ -161,6 +164,7 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'FounderNoSucc',
             nicknameLower: 'foundernosucc',
             reason: 'manual',
+            occurredAt: new DateTimeImmutable(),
         );
 
         $channel = $this->createMock(RegisteredChannel::class);
@@ -245,6 +249,7 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'MultiFounder',
             nicknameLower: 'multifounder',
             reason: 'manual',
+            occurredAt: new DateTimeImmutable(),
         );
 
         $channelWithSuccessor = $this->createMock(RegisteredChannel::class);
@@ -336,6 +341,7 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'CleanupTest',
             nicknameLower: 'cleanuptest',
             reason: 'inactivity',
+            occurredAt: new DateTimeImmutable(),
         );
 
         $channelAccessRepository

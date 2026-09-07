@@ -13,16 +13,20 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Event\NickPasswordChangedEvent;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickPasswordChangedEvent;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+
+use const DATE_ATOM;
 
 #[CoversClass(SetPasswordHandler::class)]
 final class SetPasswordHandlerTest extends TestCase
@@ -64,7 +68,7 @@ final class SetPasswordHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class));
+        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class), $this->clock());
         $handler->handle($this->createContext($notifier, $translator), $account, '');
 
         self::assertSame(['error.syntax'], $messages);
@@ -88,7 +92,7 @@ final class SetPasswordHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class));
+        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class), $this->clock());
         $handler->handle($this->createContext($notifier, $translator), $account, 'newpass');
 
         self::assertSame(['set.password.success'], $messages);
@@ -104,7 +108,7 @@ final class SetPasswordHandlerTest extends TestCase
         $eventBus = $this->createMock(EventBusInterface::class);
         $eventBus->expects(self::never())->method('dispatch');
 
-        $handler = new SetPasswordHandler($nickRepository, $this->createStub(PasswordHasher::class), $eventBus);
+        $handler = new SetPasswordHandler($nickRepository, $this->createStub(PasswordHasher::class), $eventBus, $this->clock());
         $handler->handle(
             $this->createContext($this->createStub(NickServNotifierInterface::class), $this->createStub(TranslationInterface::class), true),
             $account,
@@ -194,6 +198,7 @@ final class SetPasswordHandlerTest extends TestCase
             $nickRepo,
             $this->createStub(PasswordHasher::class),
             $eventDispatcher,
+            $this->clock(),
         );
 
         $messages = [];
@@ -226,6 +231,7 @@ final class SetPasswordHandlerTest extends TestCase
         self::assertInstanceOf(NickPasswordHashAvailable::class, $dispatchedEvents[0]);
         self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[1]);
         self::assertSame('*', $dispatchedEvents[1]->performedByIp);
+        self::assertSame('2026-09-06T12:00:00+00:00', $dispatchedEvents[1]->occurredAt->format(DATE_ATOM));
     }
 
     #[Test]
@@ -252,6 +258,7 @@ final class SetPasswordHandlerTest extends TestCase
             $nickRepo,
             $this->createStub(PasswordHasher::class),
             $eventDispatcher,
+            $this->clock(),
         );
 
         $messages = [];
@@ -284,5 +291,13 @@ final class SetPasswordHandlerTest extends TestCase
         self::assertInstanceOf(NickPasswordHashAvailable::class, $dispatchedEvents[0]);
         self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[1]);
         self::assertSame('invalid!base64', $dispatchedEvents[1]->performedByIp);
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
     }
 }

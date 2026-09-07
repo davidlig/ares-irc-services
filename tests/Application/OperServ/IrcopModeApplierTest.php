@@ -548,7 +548,14 @@ final class IrcopModeApplierTest extends TestCase
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -633,7 +640,14 @@ final class IrcopModeApplierTest extends TestCase
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -697,7 +711,14 @@ final class IrcopModeApplierTest extends TestCase
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -743,7 +764,14 @@ final class IrcopModeApplierTest extends TestCase
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);

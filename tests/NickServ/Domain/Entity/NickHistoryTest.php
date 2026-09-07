@@ -47,15 +47,16 @@ final class NickHistoryTest extends TestCase
             performedBy: 'UnregisteredOper',
             performedByNickId: null,
             message: 'Password changed via RECOVER',
+            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
         );
 
         self::assertNull($history->getPerformedByNickId());
     }
 
     #[Test]
-    public function recordWithDefaultPerformedAt(): void
+    public function recordUsesProvidedPerformedAt(): void
     {
-        $before = new DateTimeImmutable();
+        $performedAt = new DateTimeImmutable('2024-01-15 10:30:00');
 
         $history = NickHistory::record(
             nickId: 1,
@@ -63,12 +64,10 @@ final class NickHistoryTest extends TestCase
             performedBy: 'Admin',
             performedByNickId: 5,
             message: 'Manual note',
+            performedAt: $performedAt,
         );
 
-        $after = new DateTimeImmutable();
-
-        self::assertGreaterThanOrEqual($before, $history->getPerformedAt());
-        self::assertLessThanOrEqual($after, $history->getPerformedAt());
+        self::assertSame($performedAt, $history->getPerformedAt());
     }
 
     #[Test]
@@ -80,6 +79,7 @@ final class NickHistoryTest extends TestCase
             performedBy: 'Admin',
             performedByNickId: 5,
             message: 'Suspension lifted',
+            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
             extraData: [],
         );
 

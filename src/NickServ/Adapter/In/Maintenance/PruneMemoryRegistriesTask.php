@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Maintenance;
 
-use App\Application\Maintenance\InMemoryPrunableInterface;
-use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\Maintenance\InMemoryPrunableInterface;
+use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

@@ -34,6 +34,7 @@ final class DoctrineRegisterNickRepositoryTest extends DoctrineIntegrationTestCa
             'User@Example.com',
             'en',
             new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable(),
         );
 
         $this->repository->save($nick);

@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Service;
 
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
+use App\NickServ\Application\Port\Out\NickServActivitySink;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 
 use function sprintf;
 
 readonly class NickSuspensionService
 {
     public function __construct(
-        private NetworkUserLookupPort $userLookup,
+        private NickNetworkUserLookup $userLookup,
         private NickForceService $forceService,
         private string $guestPrefix = 'Guest-',
-        private LoggerInterface $logger = new NullLogger(),
+        private ?NickServActivitySink $logger = null,
     ) {}
 
     /**
@@ -31,7 +30,7 @@ readonly class NickSuspensionService
         $onlineUser = $this->userLookup->findByNick($nickname);
 
         if (null === $onlineUser) {
-            $this->logger->debug(sprintf(
+            $this->logger?->debug(sprintf(
                 'NickSuspension: %s is not connected, no action needed',
                 $nickname,
             ));
@@ -39,7 +38,7 @@ readonly class NickSuspensionService
             return;
         }
 
-        $this->logger->info(sprintf(
+        $this->logger?->info(sprintf(
             'NickSuspension: %s [%s] is connected, forcing rename',
             $nickname,
             $onlineUser->uid,

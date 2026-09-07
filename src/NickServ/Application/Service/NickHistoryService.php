@@ -37,8 +37,8 @@ final readonly class NickHistoryService
         string $performedByIp,
         string $performedByHost,
         string $message,
+        DateTimeImmutable $performedAt,
         array $extraData = [],
-        ?DateTimeImmutable $performedAt = null,
     ): NickHistory {
         $extra = array_merge([
             'ip' => $performedByIp,
@@ -51,8 +51,8 @@ final readonly class NickHistoryService
             performedBy: $performedBy,
             performedByNickId: $performedByNickId,
             message: $message,
-            extraData: $extra,
             performedAt: $performedAt,
+            extraData: $extra,
         );
 
         $this->historyRepository->save($history);

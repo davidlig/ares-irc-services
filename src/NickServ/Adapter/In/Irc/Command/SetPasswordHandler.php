@@ -6,11 +6,12 @@ namespace App\NickServ\Adapter\In\Irc\Command;
 
 use App\Application\Port\EventBusInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Event\NickPasswordChangedEvent;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickPasswordChangedEvent;
 
 use function sprintf;
 
@@ -20,6 +21,7 @@ final readonly class SetPasswordHandler implements SetOptionHandlerInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private PasswordHasher $passwordHasher,
         private EventBusInterface $eventDispatcher,
+        private Clock $clock,
     ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
@@ -56,6 +58,7 @@ final readonly class SetPasswordHandler implements SetOptionHandlerInterface
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
+            occurredAt: $this->clock->now(),
         ));
 
         $context->reply('set.password.success');

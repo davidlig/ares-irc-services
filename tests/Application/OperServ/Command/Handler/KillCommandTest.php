@@ -259,7 +259,14 @@ final class KillCommandTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn($target);
 
-        $nick = RegisteredNick::createPending('OperUser', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'OperUser',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');

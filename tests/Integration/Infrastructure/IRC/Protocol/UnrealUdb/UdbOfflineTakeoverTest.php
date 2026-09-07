@@ -271,6 +271,7 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
             'alice@example.test',
             'en',
             new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable(),
         );
         new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 1);
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -283,7 +284,14 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     #[Test]
     public function rejectsInvalidRecordsProducedByTheSqlExporter(): void
     {
-        $nick = RegisteredNick::createPending("invalid\0nick", '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe', 'alice@example.test', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            "invalid\0nick",
+            '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe',
+            'alice@example.test',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 1);
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repository->method('all')->willReturn([$nick]);

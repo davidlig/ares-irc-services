@@ -6,10 +6,10 @@ namespace App\Tests\NickServ\Adapter\Out\Event;
 
 use App\Application\Port\EventBusInterface;
 use App\NickServ\Adapter\Out\Event\SymfonyRecoverEventPublisher;
+use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 #[CoversClass(SymfonyRecoverEventPublisher::class)]
 final class SymfonyRecoverEventPublisherTest extends TestCase
@@ -17,7 +17,7 @@ final class SymfonyRecoverEventPublisherTest extends TestCase
     #[Test]
     public function forwardsEventsToTheEventBus(): void
     {
-        $event = new stdClass();
+        $event = new NickPasswordHashAvailable(42, 'Tester', 'hash');
         $eventBus = $this->createMock(EventBusInterface::class);
         $eventBus->expects(self::once())->method('dispatch')->with($event);
 

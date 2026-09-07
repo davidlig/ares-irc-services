@@ -19,7 +19,7 @@ final class ForbiddenVhostTest extends TestCase
     public function createForbiddenVhost(): void
     {
         $before = new DateTimeImmutable();
-        $forbidden = ForbiddenVhost::create('*.pirated.com', 123);
+        $forbidden = ForbiddenVhost::create('*.pirated.com', 123, new DateTimeImmutable());
         $after = new DateTimeImmutable();
 
         self::assertSame('*.pirated.com', $forbidden->getPattern());
@@ -31,7 +31,7 @@ final class ForbiddenVhostTest extends TestCase
     #[Test]
     public function createWithoutCreator(): void
     {
-        $forbidden = ForbiddenVhost::create('badhost.*');
+        $forbidden = ForbiddenVhost::create('badhost.*', null, new DateTimeImmutable());
 
         self::assertSame('badhost.*', $forbidden->getPattern());
         self::assertNull($forbidden->getCreatedByNickId());
@@ -40,7 +40,7 @@ final class ForbiddenVhostTest extends TestCase
     #[Test]
     public function matchesExactPattern(): void
     {
-        $forbidden = ForbiddenVhost::create('pirated.com');
+        $forbidden = ForbiddenVhost::create('pirated.com', null, new DateTimeImmutable());
 
         self::assertTrue($forbidden->matches('pirated.com'));
         self::assertFalse($forbidden->matches('other.com'));
@@ -49,7 +49,7 @@ final class ForbiddenVhostTest extends TestCase
     #[Test]
     public function matchesWildcardPattern(): void
     {
-        $forbidden = ForbiddenVhost::create('*.pirated.com');
+        $forbidden = ForbiddenVhost::create('*.pirated.com', null, new DateTimeImmutable());
 
         self::assertTrue($forbidden->matches('sub.pirated.com'));
         self::assertTrue($forbidden->matches('deep.sub.pirated.com'));
@@ -60,7 +60,7 @@ final class ForbiddenVhostTest extends TestCase
     #[Test]
     public function matchesQuestionMarkWildcard(): void
     {
-        $forbidden = ForbiddenVhost::create('bad?.com');
+        $forbidden = ForbiddenVhost::create('bad?.com', null, new DateTimeImmutable());
 
         self::assertTrue($forbidden->matches('bad1.com'));
         self::assertTrue($forbidden->matches('badX.com'));
@@ -70,7 +70,7 @@ final class ForbiddenVhostTest extends TestCase
     #[Test]
     public function matchesIsCaseInsensitive(): void
     {
-        $forbidden = ForbiddenVhost::create('*.Pirated.COM');
+        $forbidden = ForbiddenVhost::create('*.Pirated.COM', null, new DateTimeImmutable());
 
         self::assertTrue($forbidden->matches('sub.pirated.com'));
         self::assertTrue($forbidden->matches('SUB.PIRATED.COM'));
@@ -80,7 +80,7 @@ final class ForbiddenVhostTest extends TestCase
     #[Test]
     public function matchesMultipleWildcards(): void
     {
-        $forbidden = ForbiddenVhost::create('*.bad.*.com');
+        $forbidden = ForbiddenVhost::create('*.bad.*.com', null, new DateTimeImmutable());
 
         self::assertTrue($forbidden->matches('sub.bad.host.com'));
         self::assertFalse($forbidden->matches('bad.com'));
@@ -92,7 +92,7 @@ final class ForbiddenVhostTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Pattern cannot be empty.');
 
-        ForbiddenVhost::create('');
+        ForbiddenVhost::create('', null, new DateTimeImmutable());
     }
 
     #[Test]
@@ -101,7 +101,7 @@ final class ForbiddenVhostTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Pattern cannot be empty.');
 
-        ForbiddenVhost::create('   ');
+        ForbiddenVhost::create('   ', null, new DateTimeImmutable());
     }
 
     #[Test]
@@ -111,13 +111,13 @@ final class ForbiddenVhostTest extends TestCase
         $this->expectExceptionMessage('Pattern cannot exceed');
 
         $longPattern = str_repeat('a', ForbiddenVhost::MAX_PATTERN_LENGTH + 1);
-        ForbiddenVhost::create($longPattern);
+        ForbiddenVhost::create($longPattern, null, new DateTimeImmutable());
     }
 
     #[Test]
     public function patternIsTrimmed(): void
     {
-        $forbidden = ForbiddenVhost::create('  badhost.com  ');
+        $forbidden = ForbiddenVhost::create('  badhost.com  ', null, new DateTimeImmutable());
 
         self::assertSame('badhost.com', $forbidden->getPattern());
     }
@@ -125,7 +125,7 @@ final class ForbiddenVhostTest extends TestCase
     #[Test]
     public function getIdReturnsValueAfterPersistence(): void
     {
-        $forbidden = ForbiddenVhost::create('*.test.com', 1);
+        $forbidden = ForbiddenVhost::create('*.test.com', 1, new DateTimeImmutable());
 
         $reflection = new ReflectionClass($forbidden);
         $idProp = $reflection->getProperty('id');

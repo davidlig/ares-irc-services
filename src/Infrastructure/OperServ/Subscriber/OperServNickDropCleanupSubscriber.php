@@ -7,7 +7,7 @@ namespace App\Infrastructure\OperServ\Subscriber;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\NickServ\Domain\Event\NickDropCleanupEvent;
+use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

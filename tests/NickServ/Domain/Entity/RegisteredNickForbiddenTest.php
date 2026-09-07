@@ -27,7 +27,14 @@ final class RegisteredNickForbiddenTest extends TestCase
     #[Test]
     public function updateForbiddenReasonThrowsExceptionOnNonForbiddenNick(): void
     {
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $this->expectException(LogicException::class);
@@ -39,7 +46,14 @@ final class RegisteredNickForbiddenTest extends TestCase
     #[Test]
     public function updateForbiddenReasonThrowsExceptionOnSuspendedNick(): void
     {
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nick->suspend('Bad behavior', null);
 
@@ -60,7 +74,14 @@ final class RegisteredNickForbiddenTest extends TestCase
     #[Test]
     public function isForbiddenReturnsFalseForRegisteredNick(): void
     {
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         self::assertFalse($nick->isForbidden());
@@ -69,7 +90,14 @@ final class RegisteredNickForbiddenTest extends TestCase
     #[Test]
     public function isForbiddenReturnsFalseForSuspendedNick(): void
     {
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nick->suspend('Bad behavior', null);
 

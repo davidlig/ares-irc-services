@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Maintenance;
 
-use App\Application\Maintenance\InMemoryPrunableInterface;
+use App\Irc\Application\Port\In\Maintenance\InMemoryPrunableInterface;
 use App\NickServ\Adapter\In\Maintenance\PruneMemoryRegistriesTask;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

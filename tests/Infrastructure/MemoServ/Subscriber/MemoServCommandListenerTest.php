@@ -9,6 +9,7 @@ use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\MemoServ\MemoServService;
+use App\Application\MemoServ\Port\Out\ServiceUserPreferences;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\TranslationInterface;
@@ -22,9 +23,6 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
-use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
-use App\NickServ\Adapter\Out\User\UserLanguageResolver;
-use App\NickServ\Adapter\Out\User\UserMessageTypeResolver;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
@@ -56,7 +54,7 @@ final class MemoServCommandListenerTest extends TestCase
 
     private MemoServNotifierInterface&MockObject $memoServNotifier;
 
-    private UserMessageTypeResolver $messageTypeResolver;
+    private ServiceUserPreferences $messageTypeResolver;
 
     private MockObject&SymfonyTranslatorInterface $translator;
 
@@ -98,7 +96,11 @@ final class MemoServCommandListenerTest extends TestCase
         $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->memoServNotifier = $this->createMock(MemoServNotifierInterface::class);
         $this->nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $this->messageTypeResolver = new UserMessageTypeResolver($this->nickRepository);
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturnCallback(
+            fn (string $nickname): bool => $this->nickRepository->findByNick($nickname)?->prefersPrivateMessages() ?? false,
+        );
+        $this->messageTypeResolver = $messageTypeResolver;
         $this->translator = $this->createMock(SymfonyTranslatorInterface::class);
         $applicationTranslator = $this->createApplicationTranslator();
         $this->logger = $this->createMock(LoggerInterface::class);
@@ -106,7 +108,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([]),
             $this->nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $this->createLanguageResolver(),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $applicationTranslator,
@@ -198,7 +200,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$captureHandler]),
             $this->nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $this->createLanguageResolver(),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->createApplicationTranslator(),
@@ -248,7 +250,7 @@ final class MemoServCommandListenerTest extends TestCase
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('es');
-        $account->method('getMessageType')->willReturn('NOTICE');
+        $account->method('prefersPrivateMessages')->willReturn(false);
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
 
         $this->translator
@@ -267,7 +269,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$throwHandler]),
             $this->nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $this->createLanguageResolver(),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->createApplicationTranslator(),
@@ -317,7 +319,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$throwHandler]),
             $this->nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $this->createLanguageResolver(),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->createApplicationTranslator(),
@@ -352,7 +354,7 @@ final class MemoServCommandListenerTest extends TestCase
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('fr');
-        $account->method('getMessageType')->willReturn('PRIVMSG');
+        $account->method('prefersPrivateMessages')->willReturn(true);
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
 
         $this->translator
@@ -376,7 +378,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$throwHandler]),
             $this->nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $this->createLanguageResolver(),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->createApplicationTranslator(),
@@ -414,7 +416,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$throwHandler]),
             $this->nickRepository,
-            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
+            $this->createLanguageResolver(),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->createApplicationTranslator(),
@@ -654,5 +656,13 @@ final class MemoServCommandListenerTest extends TestCase
                 return $this->translator->trans($id, $parameters, $domain, $locale);
             }
         };
+    }
+
+    private function createLanguageResolver(): ServiceUserPreferences
+    {
+        $resolver = $this->createStub(ServiceUserPreferences::class);
+        $resolver->method('languageFor')->willReturn('en');
+
+        return $resolver;
     }
 }

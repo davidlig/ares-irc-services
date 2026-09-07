@@ -46,6 +46,7 @@ final readonly class HistoryNickHandler implements HistoryNickHandlerInterface
             performedByIp: $command->operatorIp ?? '*',
             performedByHost: $command->operatorHost ?? '',
             message: $command->message ?? '',
+            performedAt: $command->occurredAt,
         );
 
         return HistoryNickResult::addSuccess($command->nickname, $command->message ?? '');

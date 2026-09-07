@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
-use App\Application\OperServ\IrcopAccessHelper;
-use App\Application\OperServ\RootUserRegistry;
-use App\Application\Security\IrcopPermissionDetector;
-use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
+use App\NickServ\Application\Security\NickServPermission;
 
+use function str_starts_with;
 use function strtolower;
 
 /**
@@ -20,9 +19,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 {
     public function __construct(
         private NickServContext $context,
-        private IrcopAccessHelper $accessHelper,
-        private RootUserRegistry $rootRegistry,
-        private PermissionRegistry $permissionRegistry,
+        private NickServOperatorAccess $operatorAccess,
     ) {}
 
     /**
@@ -58,7 +55,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     {
         // Commands with IRCop permissions are not shown in general help
         $permission = $command instanceof NickServCommandInterface ? $command->getRequiredPermission() : null;
-        if (null !== $permission && IrcopPermissionDetector::isIrcopPermission($permission)) {
+        if (null !== $permission && self::isNickServIrcopPermission($permission)) {
             return false;
         }
 
@@ -84,7 +81,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         $nickLower = strtolower($sender->nick);
 
-        if ($this->rootRegistry->isRoot($nickLower)) {
+        if ($this->operatorAccess->isRoot($nickLower)) {
             return $this->filterIrcopCommands($this->context->getRegistry()->all());
         }
 
@@ -106,14 +103,13 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         $nickLower = strtolower($sender->nick);
 
-        if ($this->rootRegistry->isRoot($nickLower)) {
+        if ($this->operatorAccess->isRoot($nickLower)) {
             return true;
         }
 
         $result = false;
         if ($sender->isOper) {
-            $servicePermissions = $this->permissionRegistry->getPermissionsByService()['NickServ'] ?? [];
-            $result = array_any($servicePermissions, fn (string $permission): bool => $this->accessHelper->hasPermission((int) $account->getId(), $nickLower, $permission));
+            $result = $this->operatorAccess->hasAnyPermission((int) $account->getId(), $nickLower, NickServPermission::allIrcop());
         }
 
         return $result;
@@ -128,7 +124,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     {
         foreach ($commands as $command) {
             $permission = $command->getRequiredPermission();
-            if (null !== $permission && IrcopPermissionDetector::isIrcopPermission($permission)) {
+            if (null !== $permission && self::isNickServIrcopPermission($permission)) {
                 yield $command;
             }
         }
@@ -144,10 +140,15 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         foreach ($commands as $command) {
             $permission = $command->getRequiredPermission();
             if (null !== $permission
-                && IrcopPermissionDetector::isIrcopPermission($permission)
-                && $this->accessHelper->hasPermission($nickId, $nickLower, $permission)) {
+                && self::isNickServIrcopPermission($permission)
+                && $this->operatorAccess->hasPermission($nickId, $nickLower, $permission)) {
                 yield $command;
             }
         }
+    }
+
+    private static function isNickServIrcopPermission(string $permission): bool
+    {
+        return str_starts_with($permission, 'nickserv.');
     }
 }

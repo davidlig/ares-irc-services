@@ -13,7 +13,7 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
-use App\NickServ\Domain\Event\UserDeidentifiedEvent;
+use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

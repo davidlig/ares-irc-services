@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Maintenance;
 
 use App\NickServ\Adapter\In\Maintenance\PurgeInactiveNicknamesTask;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Domain\Entity\RegisteredNick;
@@ -23,6 +24,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $task = new PurgeInactiveNicknamesTask(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickDropService::class),
+            $this->clock(),
             3600,
             90,
         );
@@ -36,6 +38,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $task = new PurgeInactiveNicknamesTask(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickDropService::class),
+            $this->clock(),
             7200,
             60,
         );
@@ -56,6 +59,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $task = new PurgeInactiveNicknamesTask(
             $repo,
             $dropService,
+            $this->clock(),
             3600,
             0,
         );
@@ -70,21 +74,18 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::once())
             ->method('findRegisteredInactiveSince')
-            ->with(self::callback(static function (DateTimeImmutable $t): bool {
-                $expected = new DateTimeImmutable()->modify('-90 days');
-
-                return $t->format('Y-m-d') === $expected->format('Y-m-d');
-            }))
+            ->with($this->now()->modify('-90 days'))
             ->willReturn([$nick]);
 
         $dropService = $this->createMock(NickDropService::class);
         $dropService->expects(self::once())
             ->method('dropNick')
-            ->with($nick, 'inactivity', null);
+            ->with($nick, $this->now(), 'inactivity', null);
 
         $task = new PurgeInactiveNicknamesTask(
             $repo,
             $dropService,
+            $this->clock(),
             3600,
             90,
         );
@@ -103,9 +104,23 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
         $task = new PurgeInactiveNicknamesTask(
             $repo,
             $dropService,
+            $this->clock(),
             3600,
             90,
         );
         $task->run();
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn($this->now());
+
+        return $clock;
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

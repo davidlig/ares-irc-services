@@ -11,7 +11,7 @@ use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\NickServ\Domain\Event\NickDropCleanupEvent;
+use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
-use App\Application\Command\CommandOutcome;
-use App\Application\Event\CommandExecutedEvent;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
-use App\Application\Port\UserLanguageResolverInterface;
-use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\In\UserLanguageQuery;
+use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
@@ -40,9 +40,9 @@ final readonly class NickServService
         private AuthorizationCheckerInterface $authorizationChecker,
         private NickServCommandRegistry $commandRegistry,
         private RegisteredNickRepositoryInterface $nickRepository,
-        private UserLanguageResolverInterface $languageResolver,
+        private UserLanguageQuery $languageResolver,
         private NickServNotifierInterface $notifier,
-        private UserMessageTypeResolverInterface $messageTypeResolver,
+        private UserMessagePreferenceQuery $messageTypeResolver,
         private TranslationInterface $translator,
         private PendingVerificationRegistry $pendingVerificationRegistry,
         private RecoveryTokenRegistry $recoveryTokenRegistry,
@@ -80,9 +80,9 @@ final readonly class NickServService
         }
 
         $account = $this->nickRepository->findByNick($sender->nick);
-        $language = $this->languageResolver->resolveFromAccount($sender, $account);
+        $language = $this->languageResolver->resolveFromAccount($sender->uid, $account?->getLanguage());
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
-        $messageType = $this->messageTypeResolver->resolve($sender);
+        $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
 
         $context = new NickServContext(
             sender: $sender,
@@ -100,7 +100,7 @@ final readonly class NickServService
             serviceNicks: $this->serviceNicks,
         );
 
-        $this->authorizationContext->setCurrentUser($sender);
+        $this->authorizationContext->setCurrentUser($sender->uid, $sender->isIdentified, $sender->isOper);
 
         try {
             $error = $this->checkCommandPermissions($context, $handler);
@@ -116,7 +116,7 @@ final readonly class NickServService
 
     private function replyUnknownCommand(SenderView $sender, string $cmdName): void
     {
-        $messageType = $this->messageTypeResolver->resolve($sender);
+        $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
         $this->notifier->sendMessage(
             $sender->uid,
             $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'nickserv', $this->defaultLanguage),

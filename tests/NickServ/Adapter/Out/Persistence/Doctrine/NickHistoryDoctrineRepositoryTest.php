@@ -66,6 +66,7 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
             performedBy: 'OPER',
             performedByNickId: 10,
             message: 'Suspended',
+            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
             extraData: ['reason' => 'Spam', 'duration' => '7d']
         );
 
@@ -341,7 +342,7 @@ final class NickHistoryDoctrineRepositoryTest extends DoctrineIntegrationTestCas
             performedBy: $performedBy,
             performedByNickId: $performedByNickId,
             message: $message,
-            performedAt: $performedAt
+            performedAt: $performedAt ?? new DateTimeImmutable('2024-01-15 10:30:00')
         );
     }
 }

@@ -182,7 +182,14 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::never())->method('kickFromChannel');
 
-        $nick = RegisteredNick::createPending('OperUser', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'OperUser',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -255,7 +262,14 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions->expects(self::once())->method('kickFromChannel')
             ->with('#ircops', 'UID1', 'No estás autorizado para entrar en este canal.');
 
-        $nick = RegisteredNick::createPending('NormalUser', 'hash', 'test@test.com', 'es', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'NormalUser',
+            'hash',
+            'test@test.com',
+            'es',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i');
@@ -321,7 +335,14 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::once())->method('kickFromChannel');
 
-        $nick = RegisteredNick::createPending('OperUser', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'OperUser',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -600,7 +621,14 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::never())->method('kickFromChannel');
 
-        $nick = RegisteredNick::createPending('OperUser', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'OperUser',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -654,7 +682,14 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
             ->method('kickFromChannel')
             ->with('#ircops', 'UID1', 'No estás autorizado para entrar en este canal.');
 
-        $nick = RegisteredNick::createPending('NormalUser', 'hash', 'test@test.com', 'es', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'NormalUser',
+            'hash',
+            'test@test.com',
+            'es',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $channelView = new ChannelView(

@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Helper\SecureToken;
-use App\Application\Mail\Message\SendEmail;
 use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\Out\InMemory\PendingEmailChangeRegistry;
+use App\NickServ\Adapter\Out\Mail\RegistrationVerificationEmail;
+use App\NickServ\Application\Event\NickEmailChangedEvent;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickEmailChangedEvent;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -27,6 +28,8 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private PendingEmailChangeRegistry $pendingEmailChangeRegistry,
         private AsyncMessageDispatcherInterface $messageBus,
+        private VerificationTokenGenerator $tokenGenerator,
+        private Clock $clock,
         private TranslationInterface $translator,
         private LoggerInterface $logger,
         private EventBusInterface $eventDispatcher,
@@ -91,19 +94,19 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             return;
         }
 
-        $token = SecureToken::hex(32);
-        $this->pendingEmailChangeRegistry->store($nick, $newEmail, $token);
+        $token = $this->tokenGenerator->generate();
+        $this->pendingEmailChangeRegistry->store($nick, $newEmail, $token, $this->clock->now());
 
         try {
             $locale = $context->getLanguage();
             $subject = $this->translator->trans('email_change_token_subject', ['%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
             $body = $this->translator->trans('email_change_token_body', ['%new_email%' => $newEmail, '%token%' => $token, '%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
-            $this->messageBus->dispatch(new SendEmail($currentEmail, $subject, $body));
-        } catch (Throwable $e) {
+            $this->messageBus->dispatch(new RegistrationVerificationEmail($currentEmail, $subject, $body));
+        } catch (Throwable $exception) {
             $this->logger->error('NickServ SET EMAIL: failed to dispatch token email', [
                 'nick' => $nick,
                 'recipient' => $currentEmail,
-                'exception' => $e,
+                'exception_class' => $exception::class,
             ]);
             $context->reply('error.mail_failed');
 
@@ -119,7 +122,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
     private function confirmEmailChange(NickServContext $context, RegisteredNick $account, string $newEmail, string $token): void
     {
         $nick = $account->getNickname();
-        if (!$this->pendingEmailChangeRegistry->consume($nick, $newEmail, $token)) {
+        if (!$this->pendingEmailChangeRegistry->consume($nick, $newEmail, $token, $this->clock->now())) {
             $context->reply('set.email.invalid_token');
 
             return;
@@ -155,6 +158,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
+            occurredAt: $this->clock->now(),
         ));
 
         $context->reply('set.email.success', ['email' => $newEmail]);
@@ -192,6 +196,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
+            occurredAt: $this->clock->now(),
         ));
 
         $context->reply('set.email.success', ['email' => $newEmail]);

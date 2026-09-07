@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Verify;
 
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\VerificationTokenConsumer;
@@ -14,6 +15,7 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private VerificationTokenConsumer $tokenConsumer,
         private IdentifiedSessionTracker $identifiedRegistry,
+        private Clock $clock,
     ) {}
 
     public function handle(VerifyNick $command): VerifyNickResult
@@ -24,7 +26,7 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
             return VerifyNickResult::noPending();
         }
 
-        if (!$this->tokenConsumer->consume($command->nickname, $command->token)) {
+        if (!$this->tokenConsumer->consume($command->nickname, $command->token, $this->clock->now())) {
             return VerifyNickResult::invalidToken();
         }
 

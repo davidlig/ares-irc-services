@@ -251,7 +251,14 @@ final class OperServDebugNotifierTest extends TestCase
     #[Test]
     public function isIrcopOrRootReturnsTrueForIdentifiedIrcop(): void
     {
-        $nick = RegisteredNick::createPending('OperUser', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'OperUser',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -297,7 +304,14 @@ final class OperServDebugNotifierTest extends TestCase
     #[Test]
     public function isIrcopOrRootReturnsFalseForIdentifiedNonIrcop(): void
     {
-        $nick = RegisteredNick::createPending('NormalUser', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'NormalUser',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');

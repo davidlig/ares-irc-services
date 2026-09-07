@@ -29,12 +29,12 @@ final class PendingEmailChangeRegistry
         $this->entries = [];
     }
 
-    public function store(string $nickname, string $newEmail, string $token): void
+    public function store(string $nickname, string $newEmail, string $token, DateTimeImmutable $now): void
     {
         $this->entries[strtolower($nickname)] = [
             'newEmail' => $newEmail,
             'token' => $token,
-            'expiresAt' => new DateTimeImmutable(sprintf('+%d seconds', self::TTL_SECONDS)),
+            'expiresAt' => $now->modify(sprintf('+%d seconds', self::TTL_SECONDS)),
         ];
     }
 
@@ -42,7 +42,7 @@ final class PendingEmailChangeRegistry
      * Validates and consumes the token for this nick and new email.
      * Returns true if valid and not expired; removes the entry. False otherwise.
      */
-    public function consume(string $nickname, string $newEmail, string $token): bool
+    public function consume(string $nickname, string $newEmail, string $token, DateTimeImmutable $now): bool
     {
         $key = strtolower($nickname);
         $entry = $this->entries[$key] ?? null;
@@ -51,7 +51,7 @@ final class PendingEmailChangeRegistry
             return false;
         }
 
-        if ($entry['expiresAt'] < new DateTimeImmutable()) {
+        if ($entry['expiresAt'] < $now) {
             unset($this->entries[$key]);
 
             return false;
@@ -80,9 +80,8 @@ final class PendingEmailChangeRegistry
      * Removes entries whose token has expired. Returns the number of entries removed.
      * Used by maintenance to free memory.
      */
-    public function pruneExpired(): int
+    public function pruneExpired(DateTimeImmutable $now): int
     {
-        $now = new DateTimeImmutable();
         $removed = 0;
 
         foreach ($this->entries as $key => $entry) {

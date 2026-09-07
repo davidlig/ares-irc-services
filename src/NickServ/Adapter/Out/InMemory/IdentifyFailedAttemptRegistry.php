@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Application\Port\Out\IdentifyLockoutTracker;
+use DateTimeImmutable;
 
 use function count;
 
@@ -19,13 +20,13 @@ final class IdentifyFailedAttemptRegistry implements IdentifyLockoutTracker
     /** @var array<string, list<int>> client key -> list of failure timestamps (Unix) */
     private array $failuresByKey = [];
 
-    public function recordFailedAttempt(string $clientKey, int $windowSeconds): void
+    public function recordFailedAttempt(string $clientKey, int $windowSeconds, DateTimeImmutable $now): void
     {
-        $now = time();
-        $cutoff = $now - $windowSeconds;
+        $timestamp = $now->getTimestamp();
+        $cutoff = $timestamp - $windowSeconds;
 
         $timestamps = $this->failuresByKey[$clientKey] ?? [];
-        $timestamps[] = $now;
+        $timestamps[] = $timestamp;
         $timestamps = array_values(array_filter($timestamps, static fn (int $t) => $t >= $cutoff));
 
         if ([] === $timestamps) {
@@ -46,13 +47,14 @@ final class IdentifyFailedAttemptRegistry implements IdentifyLockoutTracker
         int $maxAttempts,
         int $windowSeconds,
         int $lockoutSeconds,
+        DateTimeImmutable $now,
     ): int {
         if ($maxAttempts <= 0 || $lockoutSeconds <= 0) {
             return 0;
         }
 
-        $now = time();
-        $cutoff = $now - $windowSeconds;
+        $timestamp = $now->getTimestamp();
+        $cutoff = $timestamp - $windowSeconds;
 
         $timestamps = $this->failuresByKey[$clientKey] ?? [];
         $recent = array_values(array_filter($timestamps, static fn (int $t) => $t >= $cutoff));
@@ -63,7 +65,7 @@ final class IdentifyFailedAttemptRegistry implements IdentifyLockoutTracker
 
         $lockoutUntil = max($recent) + $lockoutSeconds;
 
-        return $now < $lockoutUntil ? $lockoutUntil - $now : 0;
+        return $timestamp < $lockoutUntil ? $lockoutUntil - $timestamp : 0;
     }
 
     public function clearFailedAttempts(string $clientKey): void
@@ -75,10 +77,9 @@ final class IdentifyFailedAttemptRegistry implements IdentifyLockoutTracker
      * Removes client keys whose failure timestamps are all outside the window.
      * Returns the number of keys removed. Used by maintenance to free memory.
      */
-    public function pruneStale(int $windowSeconds): int
+    public function pruneStale(int $windowSeconds, DateTimeImmutable $now): int
     {
-        $now = time();
-        $cutoff = $now - $windowSeconds;
+        $cutoff = $now->getTimestamp() - $windowSeconds;
         $removed = 0;
 
         foreach ($this->failuresByKey as $clientKey => $timestamps) {

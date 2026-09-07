@@ -9,7 +9,7 @@ use App\Application\Port\SendNoticePort;
 use App\Application\Shared\ServiceUidRegistry;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\NickServ\Adapter\Out\User\UserLanguageResolver;
+use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -25,7 +25,7 @@ final readonly class CtcpHandler implements EventSubscriberInterface
         private SendNoticePort $sendNotice,
         private CtcpVersionResponder $versionResponder,
         private NetworkUserLookupPort $userLookup,
-        private UserLanguageResolver $languageResolver,
+        private ServiceUserPreferences $languageResolver,
         private ServiceUidRegistry $uidRegistry,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
@@ -74,8 +74,8 @@ final readonly class CtcpHandler implements EventSubscriberInterface
     {
         $sender = $this->userLookup->findByUid($senderUid);
         $language = null !== $sender
-            ? $this->languageResolver->resolve($sender)
-            : $this->languageResolver->getDefault();
+            ? $this->languageResolver->languageFor($sender->uid, $sender->nick)
+            : $this->languageResolver->defaultLanguage();
 
         $targetLower = strtolower($target);
         $serviceUid = $this->uidRegistry->getUid($targetLower) ?? $this->uidRegistry->getUidByNickname($target) ?? $this->uidRegistry->getUidByUid($target);

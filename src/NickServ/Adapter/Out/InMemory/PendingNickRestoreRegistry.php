@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\InMemory;
 
-use App\Irc\Adapter\Network\SkipIdentifiedModeStripRegistryInterface;
+use App\Irc\Application\Port\In\SkipIdentifiedModeStripRegistry;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Service\NickProtectionService;
 
@@ -16,10 +16,10 @@ use App\NickServ\Application\Service\NickProtectionService;
  * Used by NickProtectionService to suppress false protection triggers when
  * the NICK echo arrives before the UMODE2 +r.
  *
- * Also implements SkipIdentifiedModeStripRegistryInterface so the protocol
+ * Also implements SkipIdentifiedModeStripRegistry so the protocol
  * layer can peek (without consuming) to skip stripping +r on the NICK echo.
  */
-final class PendingNickRestoreRegistry implements PendingNickRestoreRegistryInterface, SkipIdentifiedModeStripRegistryInterface
+final class PendingNickRestoreRegistry implements PendingNickRestoreRegistryInterface, SkipIdentifiedModeStripRegistry
 {
     /** @var array<string, int> */
     private array $pending = [];

@@ -9,10 +9,9 @@ use App\Application\Event\CommandExecutedEvent;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
+use App\Application\OperServ\Port\Out\ServiceUserPreferences;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
-use App\Application\Port\UserLanguageResolverInterface;
-use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
@@ -32,9 +31,9 @@ final readonly class OperServService
     public function __construct(
         private OperServCommandRegistry $commandRegistry,
         private RegisteredNickRepositoryInterface $nickRepository,
-        private UserLanguageResolverInterface $languageResolver,
+        private ServiceUserPreferences $languageResolver,
         private OperServNotifierInterface $notifier,
-        private UserMessageTypeResolverInterface $messageTypeResolver,
+        private ServiceUserPreferences $messageTypeResolver,
         private TranslationInterface $translator,
         private IrcopAccessHelper $accessHelper,
         private ServiceNicknameRegistry $serviceNicks,
@@ -61,7 +60,7 @@ final readonly class OperServService
         $handler = $this->commandRegistry->find($cmdName);
 
         if (null === $handler) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->notifier->sendMessage(
                 $sender->uid,
                 $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'operserv', $this->defaultLanguage),
@@ -72,9 +71,9 @@ final readonly class OperServService
         }
 
         $account = $this->nickRepository->findByNick($sender->nick);
-        $language = $this->languageResolver->resolveFromAccount($sender, $account);
+        $language = $this->languageResolver->languageFor($sender->uid, $sender->nick, $account?->getLanguage());
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
-        $messageType = $this->messageTypeResolver->resolve($sender);
+        $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
 
         $context = new OperServContext(
             sender: $sender,
@@ -91,7 +90,7 @@ final readonly class OperServService
             serviceNicks: $this->serviceNicks,
         );
 
-        $this->authorizationContext->setCurrentUser($sender);
+        $this->authorizationContext->setCurrentUser($sender->uid, $sender->isIdentified, $sender->isOper);
         $this->dispatchToHandler($context, $handler, $sender, $cmdName);
     }
 

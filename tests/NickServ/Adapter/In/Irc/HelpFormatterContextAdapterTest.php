@@ -4,12 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc;
 
-use App\Application\OperServ\IrcopAccessHelper;
-use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\TranslationInterface;
-use App\Application\Security\PermissionRegistry;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
@@ -18,6 +13,7 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -29,17 +25,9 @@ final class HelpFormatterContextAdapterTest extends TestCase
 {
     private function createAdapter(NickServContext $context): HelpFormatterContextAdapter
     {
-        $rootRegistry = new RootUserRegistry('');
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
-        $permissionRegistry = new PermissionRegistry([]);
-
         return new HelpFormatterContextAdapter(
             $context,
-            $accessHelper,
-            $rootRegistry,
-            $permissionRegistry,
+            $this->createStub(NickServOperatorAccess::class),
         );
     }
 

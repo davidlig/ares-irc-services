@@ -36,7 +36,7 @@ final readonly class DropNickHandler implements DropNickHandlerInterface
                     return DropNickResult::forcePermissionDenied();
                 }
 
-                $this->dropService->hardDropNick($account, 'manual-force', $command->operatorNick);
+                $this->dropService->hardDropNick($account, $command->occurredAt, 'manual-force', $command->operatorNick);
 
                 return DropNickResult::hardDropSuccess($command->targetNick);
             }
@@ -67,12 +67,12 @@ final readonly class DropNickHandler implements DropNickHandlerInterface
                 return DropNickResult::forcePermissionDenied();
             }
 
-            $this->dropService->hardDropNick($account, 'manual-force', $command->operatorNick);
+            $this->dropService->hardDropNick($account, $command->occurredAt, 'manual-force', $command->operatorNick);
 
             return DropNickResult::hardDropSuccess($command->targetNick);
         }
 
-        $this->dropService->softDropNick($account, $command->operatorNick);
+        $this->dropService->softDropNick($account, $command->occurredAt, $command->operatorNick);
 
         return DropNickResult::softDropSuccess($command->targetNick);
     }

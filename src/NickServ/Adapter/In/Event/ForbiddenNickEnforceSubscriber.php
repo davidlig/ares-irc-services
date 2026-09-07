@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Domain\Event\UserNickChangedEvent;
+use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\BurstState;
@@ -29,26 +29,26 @@ final readonly class ForbiddenNickEnforceSubscriber implements EventSubscriberIn
     public static function getSubscribedEvents(): array
     {
         return [
-            UserNickChangedEvent::class => ['onNickChanged', 10],
+            UserNicknameChangedEvent::class => ['onNickChanged', 10],
         ];
     }
 
-    public function onNickChanged(UserNickChangedEvent $event): void
+    public function onNickChanged(UserNicknameChangedEvent $event): void
     {
         if (!$this->burstState->isComplete()) {
             return;
         }
 
-        if ($this->pendingRegistry->peek($event->uid->value)) {
+        if ($this->pendingRegistry->peek($event->uid)) {
             $this->logger->debug(sprintf(
                 'ForbiddenNickEnforce: skipping nick change for %s (pending restore)',
-                $event->uid->value,
+                $event->uid,
             ));
 
             return;
         }
 
-        $this->enforceForbidden($event->newNick->value, $event->uid->value);
+        $this->enforceForbidden($event->newNickname, $event->uid);
     }
 
     private function enforceForbidden(string $nick, string $uid): void

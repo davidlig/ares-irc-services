@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\Service;
 
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Application\Model\NetworkUser;
+use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
+use App\NickServ\Application\Port\Out\NickServActivitySink;
 use App\NickServ\Application\Service\NickForceService;
 use App\NickServ\Application\Service\NickSuspensionService;
 use App\NickServ\Domain\Entity\RegisteredNick;
@@ -13,7 +14,6 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 #[CoversClass(NickSuspensionService::class)]
 final class NickSuspensionServiceTest extends TestCase
@@ -21,10 +21,17 @@ final class NickSuspensionServiceTest extends TestCase
     #[Test]
     public function enforceSuspensionWhenUserNotOnlineDoesNothing(): void
     {
-        $account = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $account->activate();
 
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
         $userLookup->expects(self::once())
             ->method('findByNick')
             ->with('TestNick')
@@ -33,7 +40,7 @@ final class NickSuspensionServiceTest extends TestCase
         $forceService = $this->createMock(NickForceService::class);
         $forceService->expects(self::never())->method('forceGuestNick');
 
-        $logger = $this->createMock(LoggerInterface::class);
+        $logger = $this->createMock(NickServActivitySink::class);
         $logger->expects(self::once())
             ->method('debug')
             ->with(self::stringContains('TestNick is not connected'));
@@ -51,12 +58,19 @@ final class NickSuspensionServiceTest extends TestCase
     #[Test]
     public function enforceSuspensionWhenUserOnlineCallsForceService(): void
     {
-        $account = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $account->activate();
 
-        $onlineUser = new SenderView('UID123', 'TestNick', 'user', 'host', 'server', 'ip', false, true, 'SID1', 'host', 'o');
+        $onlineUser = new NetworkUser('UID123', 'TestNick', 'user', 'host', 'server', 'ip', false, true, 'SID1', 'host', 'o');
 
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createMock(NickNetworkUserLookup::class);
         $userLookup->expects(self::once())
             ->method('findByNick')
             ->with('TestNick')
@@ -67,7 +81,7 @@ final class NickSuspensionServiceTest extends TestCase
             ->method('forceGuestNick')
             ->with('UID123', null, 'suspension');
 
-        $logger = $this->createMock(LoggerInterface::class);
+        $logger = $this->createMock(NickServActivitySink::class);
         $logger->expects(self::once())
             ->method('info')
             ->with(self::stringContains('TestNick [UID123] is connected'));
@@ -86,7 +100,7 @@ final class NickSuspensionServiceTest extends TestCase
     public function exposesGuestPrefix(): void
     {
         $service = new NickSuspensionService(
-            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickNetworkUserLookup::class),
             $this->createStub(NickForceService::class),
             'Guest-',
         );

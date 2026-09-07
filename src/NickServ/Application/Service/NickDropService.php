@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Service;
 
-use App\Application\Port\EventBusInterface;
-use App\Application\Port\ServiceDebugNotifierInterface;
-use App\Application\Port\TransactionManagerInterface;
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use App\NickServ\Application\Port\Out\NickAuditSink;
+use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
+use App\NickServ\Application\Port\Out\NickServActivitySink;
+use App\NickServ\Application\Port\Out\NickServEventPublisher;
+use App\NickServ\Application\Port\Out\NickTransactionBoundary;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
+use App\NickServ\Application\PublishedEvent\NickDropEvent;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickDropCleanupEvent;
-use App\NickServ\Domain\Event\NickDropEvent;
-use Psr\Log\LoggerInterface;
+use DateTimeImmutable;
 
 use function sprintf;
 
@@ -32,13 +33,13 @@ readonly class NickDropService
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
-        private NetworkUserLookupPort $userLookup,
+        private NickNetworkUserLookup $userLookup,
         private NickForceService $forceService,
-        private EventBusInterface $eventDispatcher,
-        private ServiceDebugNotifierInterface $debug,
-        private LoggerInterface $logger,
+        private NickServEventPublisher $eventPublisher,
+        private NickAuditSink $debug,
+        private NickServActivitySink $logger,
         private IdentifiedSessionTracker $sessionRegistry,
-        private TransactionManagerInterface $transactionManager,
+        private NickTransactionBoundary $transactionBoundary,
         private string $guestPrefix = 'Guest-',
     ) {}
 
@@ -47,6 +48,7 @@ readonly class NickDropService
      */
     public function softDropNick(
         RegisteredNick $account,
+        DateTimeImmutable $occurredAt,
         ?string $operatorNick = null,
     ): void {
         $nickname = $account->getNickname();
@@ -62,7 +64,7 @@ readonly class NickDropService
             }
         }
 
-        $account->markPendingDeletion();
+        $account->markPendingDeletion($occurredAt);
         $this->nickRepository->save($account);
 
         $this->debug->log(
@@ -111,6 +113,7 @@ readonly class NickDropService
      */
     public function hardDropNick(
         RegisteredNick $account,
+        DateTimeImmutable $occurredAt,
         string $reason = 'manual',
         ?string $operatorNick = null,
     ): void {
@@ -123,10 +126,11 @@ readonly class NickDropService
             $nickname,
             $nicknameLower,
             $reason,
+            $occurredAt,
         );
 
-        $this->transactionManager->transactional(function () use ($cleanupEvent, $account): void {
-            $this->eventDispatcher->dispatch($cleanupEvent);
+        $this->transactionBoundary->transactional(function () use ($cleanupEvent, $account): void {
+            $this->eventPublisher->publish($cleanupEvent);
             $this->nickRepository->delete($account);
         });
 
@@ -135,7 +139,7 @@ readonly class NickDropService
             $this->forceService->forceGuestNick($onlineUser->uid, null, 'nick-drop');
         }
 
-        $this->eventDispatcher->dispatch(new NickDropEvent(
+        $this->eventPublisher->publish(new NickDropEvent(
             $nickId,
             $nickname,
             $nicknameLower,
@@ -163,10 +167,11 @@ readonly class NickDropService
 
     public function dropNick(
         RegisteredNick $account,
+        DateTimeImmutable $occurredAt,
         string $reason = 'manual',
         ?string $operatorNick = null,
     ): void {
-        $this->hardDropNick($account, $reason, $operatorNick);
+        $this->hardDropNick($account, $occurredAt, $reason, $operatorNick);
     }
 
     public function getGuestPrefix(): string

@@ -7,7 +7,7 @@ namespace App\Infrastructure\MemoServ\Subscriber;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Event\NickIdentifiedEvent;
+use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 

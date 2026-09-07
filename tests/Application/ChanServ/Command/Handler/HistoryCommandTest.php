@@ -992,7 +992,7 @@ final class HistoryCommandTest extends TestCase
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
 
         $reflection = new ReflectionClass(RegisteredNick::class);

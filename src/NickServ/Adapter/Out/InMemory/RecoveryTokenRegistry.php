@@ -45,7 +45,7 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
      * Returns true if the token matches and has not expired, then removes the entry.
      * Returns false if the token is missing, mismatched, or expired.
      */
-    public function consume(string $nickname, string $token): bool
+    public function consume(string $nickname, string $token, DateTimeImmutable $now): bool
     {
         $key = strtolower($nickname);
         $entry = $this->entries[$key] ?? null;
@@ -54,7 +54,7 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
             return false;
         }
 
-        if ($entry['expiresAt'] < new DateTimeImmutable()) {
+        if ($entry['expiresAt'] < $now) {
             unset($this->entries[$key]);
 
             return false;
@@ -80,18 +80,17 @@ final class RecoveryTokenRegistry implements RecoveryTokenStore
     /**
      * Records that a recovery email was just sent for this nick (for throttling).
      */
-    public function recordRecover(string $nickname): void
+    public function recordRecover(string $nickname, DateTimeImmutable $now): void
     {
-        $this->lastRecoverAt[strtolower($nickname)] = new DateTimeImmutable();
+        $this->lastRecoverAt[strtolower($nickname)] = $now;
     }
 
     /**
      * Removes expired recovery entries and lastRecoverAt entries older than maxAgeSecondsForRecover.
      * Returns the total number of entries removed.
      */
-    public function pruneExpired(int $maxAgeSecondsForRecover = 86400): int
+    public function pruneExpired(DateTimeImmutable $now, int $maxAgeSecondsForRecover = 86400): int
     {
-        $now = new DateTimeImmutable();
         $recoverCutoff = $now->modify(sprintf('-%d seconds', $maxAgeSecondsForRecover));
         $removed = 0;
 

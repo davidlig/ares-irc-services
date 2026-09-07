@@ -51,7 +51,7 @@ final class PendingVerificationRegistry
      * Returns true if the token matches and has not expired, then removes the entry.
      * Returns false if the token is missing, mismatched, or expired.
      */
-    public function consume(string $nickname, string $token): bool
+    public function consume(string $nickname, string $token, DateTimeImmutable $now): bool
     {
         $key = strtolower($nickname);
         $entry = $this->entries[$key] ?? null;
@@ -60,7 +60,7 @@ final class PendingVerificationRegistry
             return false;
         }
 
-        if ($entry['expiresAt'] < new DateTimeImmutable()) {
+        if ($entry['expiresAt'] < $now) {
             unset($this->entries[$key]);
 
             return false;
@@ -96,18 +96,17 @@ final class PendingVerificationRegistry
     /**
      * Records that a RESEND was just sent for this nick (for throttling).
      */
-    public function recordResend(string $nickname, ?DateTimeImmutable $now = null): void
+    public function recordResend(string $nickname, DateTimeImmutable $now): void
     {
-        $this->lastResendAt[strtolower($nickname)] = $now ?? new DateTimeImmutable();
+        $this->lastResendAt[strtolower($nickname)] = $now;
     }
 
     /**
      * Removes expired verification entries and lastResendAt entries older than maxAgeSecondsForResend.
      * Returns the total number of entries removed. Used by maintenance to free memory.
      */
-    public function pruneExpired(int $maxAgeSecondsForResend = 86400): int
+    public function pruneExpired(DateTimeImmutable $now, int $maxAgeSecondsForResend = 86400): int
     {
-        $now = new DateTimeImmutable();
         $resendCutoff = $now->modify(sprintf('-%d seconds', $maxAgeSecondsForResend));
         $removed = 0;
 

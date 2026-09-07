@@ -17,9 +17,18 @@ final readonly class SymfonyAuthorizationContext implements AuthorizationContext
         private TokenStorageInterface $tokenStorage,
     ) {}
 
-    public function setCurrentUser(SenderView $user): void
+    public function setCurrentUser(string $uid, bool $isIdentified, bool $isOper): void
     {
-        $this->tokenStorage->setToken(new IrcServiceToken(new IrcServiceUser($user)));
+        $this->tokenStorage->setToken(new IrcServiceToken(new IrcServiceUser(new SenderView(
+            uid: $uid,
+            nick: '',
+            ident: '',
+            hostname: '',
+            cloakedHost: '',
+            ipBase64: '',
+            isIdentified: $isIdentified,
+            isOper: $isOper,
+        ))));
     }
 
     public function clear(): void

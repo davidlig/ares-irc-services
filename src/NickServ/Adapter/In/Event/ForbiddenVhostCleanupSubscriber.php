@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Event;
 
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
-use App\NickServ\Domain\Event\NickDropCleanupEvent;
+use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

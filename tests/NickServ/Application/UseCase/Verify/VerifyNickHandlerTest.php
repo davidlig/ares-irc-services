@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Verify;
 
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\VerificationTokenConsumer;
@@ -12,6 +13,7 @@ use App\NickServ\Application\UseCase\Verify\VerifyNickHandler;
 use App\NickServ\Application\UseCase\Verify\VerifyNickOutcome;
 use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +33,7 @@ final class VerifyNickHandlerTest extends TestCase
             $nickRepo,
             $this->createStub(VerificationTokenConsumer::class),
             $this->createStub(IdentifiedSessionTracker::class),
+            $this->fixedClock(),
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'token123', senderUid: 'UID1'));
@@ -52,6 +55,7 @@ final class VerifyNickHandlerTest extends TestCase
             $nickRepo,
             $this->createStub(VerificationTokenConsumer::class),
             $this->createStub(IdentifiedSessionTracker::class),
+            $this->fixedClock(),
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'token123', senderUid: 'UID1'));
@@ -69,12 +73,13 @@ final class VerifyNickHandlerTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($account);
 
         $tokenConsumer = $this->createMock(VerificationTokenConsumer::class);
-        $tokenConsumer->expects(self::once())->method('consume')->with('alice', 'bad-token')->willReturn(false);
+        $tokenConsumer->expects(self::once())->method('consume')->with('alice', 'bad-token', $this->now())->willReturn(false);
 
         $handler = new VerifyNickHandler(
             $nickRepo,
             $tokenConsumer,
             $this->createStub(IdentifiedSessionTracker::class),
+            $this->fixedClock(),
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'bad-token', senderUid: 'UID1'));
@@ -95,7 +100,7 @@ final class VerifyNickHandlerTest extends TestCase
         $nickRepo->expects(self::once())->method('save')->with($account);
 
         $tokenConsumer = $this->createMock(VerificationTokenConsumer::class);
-        $tokenConsumer->expects(self::once())->method('consume')->with('Alice', 'good-token')->willReturn(true);
+        $tokenConsumer->expects(self::once())->method('consume')->with('Alice', 'good-token', $this->now())->willReturn(true);
 
         $sessionTracker = $this->createMock(IdentifiedSessionTracker::class);
         $sessionTracker->expects(self::once())->method('register')->with('UID1', 'Alice');
@@ -104,11 +109,25 @@ final class VerifyNickHandlerTest extends TestCase
             $nickRepo,
             $tokenConsumer,
             $sessionTracker,
+            $this->fixedClock(),
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'Alice', token: 'good-token', senderUid: 'UID1'));
 
         self::assertSame(VerifyNickOutcome::Success, $result->outcome);
         self::assertSame('Alice', $result->nickname);
+    }
+
+    private function fixedClock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn($this->now());
+
+        return $clock;
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

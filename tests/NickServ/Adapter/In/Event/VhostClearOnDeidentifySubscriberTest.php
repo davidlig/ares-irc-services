@@ -6,8 +6,7 @@ namespace App\Tests\NickServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Irc\Domain\Event\UserModeChangedEvent;
-use App\Irc\Domain\ValueObject\Uid;
+use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\NickServ\Adapter\In\Event\VhostClearOnDeidentifySubscriber;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -42,7 +41,7 @@ final class VhostClearOnDeidentifySubscriberTest extends TestCase
         $this->notifier->expects(self::never())->method('sendMessage');
 
         self::assertSame(
-            [UserModeChangedEvent::class => ['onUserModeChanged', 0]],
+            [UserModesChangedEvent::class => ['onUserModeChanged', 0]],
             VhostClearOnDeidentifySubscriber::getSubscribedEvents(),
         );
     }
@@ -50,8 +49,8 @@ final class VhostClearOnDeidentifySubscriberTest extends TestCase
     #[Test]
     public function clearsVhostWhenUserLosesIdentifiedMode(): void
     {
-        $event = new UserModeChangedEvent(
-            uid: new Uid('001ABCD'),
+        $event = new UserModesChangedEvent(
+            uid: '001ABCD',
             modeDelta: '-r',
         );
 
@@ -83,8 +82,8 @@ final class VhostClearOnDeidentifySubscriberTest extends TestCase
     #[Test]
     public function doesNothingWhenModeIsNotMinusR(): void
     {
-        $event = new UserModeChangedEvent(
-            uid: new Uid('001ABCD'),
+        $event = new UserModesChangedEvent(
+            uid: '001ABCD',
             modeDelta: '+r',
         );
 
@@ -102,8 +101,8 @@ final class VhostClearOnDeidentifySubscriberTest extends TestCase
     #[Test]
     public function doesNothingWhenUserNotFound(): void
     {
-        $event = new UserModeChangedEvent(
-            uid: new Uid('001ABCD'),
+        $event = new UserModesChangedEvent(
+            uid: '001ABCD',
             modeDelta: '-r',
         );
 
@@ -123,8 +122,8 @@ final class VhostClearOnDeidentifySubscriberTest extends TestCase
     #[Test]
     public function ignoresOtherModeChanges(): void
     {
-        $event = new UserModeChangedEvent(
-            uid: new Uid('001ABCD'),
+        $event = new UserModesChangedEvent(
+            uid: '001ABCD',
             modeDelta: '+i',
         );
 

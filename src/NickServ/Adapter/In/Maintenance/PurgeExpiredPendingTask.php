@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Maintenance;
 
-use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
@@ -21,6 +22,7 @@ final readonly class PurgeExpiredPendingTask implements MaintenanceTaskInterface
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
         private LoggerInterface $logger,
+        private Clock $clock,
         private int $intervalSeconds,
     ) {}
 
@@ -41,7 +43,7 @@ final readonly class PurgeExpiredPendingTask implements MaintenanceTaskInterface
 
     public function run(): void
     {
-        $deleted = $this->nickRepository->deleteExpiredPending();
+        $deleted = $this->nickRepository->deleteExpiredPending($this->clock->now());
 
         if ($deleted > 0) {
             $this->logger->info(

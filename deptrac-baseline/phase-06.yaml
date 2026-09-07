@@ -20,8 +20,6 @@ deptrac:
       - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
-      - App\Application\Port\UserLanguageResolverInterface
-      - App\Application\Port\UserMessageTypeResolverInterface
       - App\NickServ\Domain\Entity\RegisteredNick
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
       - Psr\Log\LoggerInterface
@@ -264,7 +262,6 @@ deptrac:
       - App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServCommandListener:
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-      - App\NickServ\Adapter\Out\User\UserMessageTypeResolver
     App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:
       - App\Irc\Domain\Event\UserJoinedChannelEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelBurstSubscriber:
@@ -279,7 +276,6 @@ deptrac:
       - App\Irc\Domain\Event\ChannelSyncedEvent
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber:
-      - App\NickServ\Domain\Event\NickDropCleanupEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServNojoinEnforceSubscriber:
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
       - App\Irc\Domain\Event\UserJoinedChannelEvent

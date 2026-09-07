@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Port\Out;
 
+use DateTimeImmutable;
+
 /**
  * Tracks UIDs with pending nick protection checks.
  *
@@ -14,7 +16,7 @@ namespace App\NickServ\Application\Port\Out;
  */
 interface PendingNickProtectionRegistryInterface
 {
-    public function schedule(string $uid, float $delaySeconds = 0.5): void;
+    public function schedule(string $uid, DateTimeImmutable $now, float $delaySeconds = 0.5): void;
 
     public function cancel(string $uid): void;
 
@@ -25,7 +27,7 @@ interface PendingNickProtectionRegistryInterface
      *
      * @return string[]
      */
-    public function flushExpired(): array;
+    public function flushExpired(DateTimeImmutable $now): array;
 
     public function clear(): void;
 }

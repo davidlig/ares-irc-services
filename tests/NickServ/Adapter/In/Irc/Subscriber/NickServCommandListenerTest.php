@@ -7,13 +7,12 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Subscriber;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\TranslationInterface;
-use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
-use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\LocalUserModeSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\NickServ\Adapter\In\Irc\Bot\NickServBot;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -95,10 +94,7 @@ final class NickServCommandListenerTest extends TestCase
             'NickServ',
         );
 
-        $this->nickServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            $this->createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $this->nickServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $this->nickServNotifier = $this->createMock(NickServNotifierInterface::class);

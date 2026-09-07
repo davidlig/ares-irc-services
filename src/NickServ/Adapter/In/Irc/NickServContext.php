@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc;
 
 use App\Application\Port\TranslationInterface;
-use App\Application\Security\IrcopContextInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Application\Security\IrcopAuthorizationSubject;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -24,7 +24,7 @@ use DateTimeZone;
  * The timezone set here (user preference or default) applies to all date/time
  * display: use formatDate() whenever showing a date or time to the user.
  */
-readonly class NickServContext implements IrcopContextInterface
+readonly class NickServContext implements IrcopAuthorizationSubject
 {
     public function __construct(
         public ?SenderView $sender,
@@ -53,6 +53,11 @@ readonly class NickServContext implements IrcopContextInterface
     public function getSenderAccount(): ?RegisteredNick
     {
         return $this->senderAccount;
+    }
+
+    public function getSenderAccountId(): ?int
+    {
+        return $this->senderAccount?->getId();
     }
 
     /**

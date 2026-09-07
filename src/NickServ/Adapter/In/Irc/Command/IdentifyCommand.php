@@ -7,6 +7,7 @@ namespace App\NickServ\Adapter\In\Irc\Command;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Adapter\Out\User\IrcNetworkUserMapper;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Identify\IdentifyNick;
@@ -91,7 +92,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
         $targetNick = $context->args[0];
         $password = $context->args[1];
-        $clientKey = $this->clientKeyResolver->getClientKey($sender);
+        $clientKey = $this->clientKeyResolver->getClientKey(IrcNetworkUserMapper::map($sender));
 
         $result = $this->handler->handle(new IdentifyNick(
             nickname: $targetNick,

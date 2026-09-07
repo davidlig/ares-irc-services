@@ -8,7 +8,6 @@ use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceCommandListenerInterface;
-use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Application\Services\Antiflood\AntifloodRegistry;
 use App\Application\Services\Antiflood\ClientKeyResolver;
 use App\Infrastructure\IRC\ServiceBridge\AntifloodSubscriber;
@@ -18,6 +17,7 @@ use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\MessageDirection;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +37,7 @@ final class AntifloodSubscriberTest extends TestCase
 
     private SendNoticePort $sendNotice;
 
-    private UserMessageTypeResolverInterface $messageTypeResolver;
+    private ServiceUserPreferences $messageTypeResolver;
 
     private OperServNotifierInterface $notifier;
 
@@ -53,7 +53,7 @@ final class AntifloodSubscriberTest extends TestCase
         $this->clientKeyResolver = new ClientKeyResolver();
         $this->userLookup = $this->createStub(NetworkUserLookupPort::class);
         $this->sendNotice = $this->createStub(SendNoticePort::class);
-        $this->messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
+        $this->messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
         $this->notifier = $this->createStub(OperServNotifierInterface::class);
         $this->rootRegistry = new RootUserRegistry('');
         $this->translator = $this->createStub(TranslatorInterface::class);
@@ -213,8 +213,8 @@ final class AntifloodSubscriberTest extends TestCase
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::exactly(3))->method('findByUid')->willReturn($this->createSender());
 
-        $messageTypeResolver = $this->createMock(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->expects(self::once())->method('resolveByNick')->with('TestUser')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createMock(ServiceUserPreferences::class);
+        $messageTypeResolver->expects(self::once())->method('prefersPrivateMessages')->with('TestUser')->willReturn(false);
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(
@@ -264,8 +264,8 @@ final class AntifloodSubscriberTest extends TestCase
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::exactly(3))->method('findByUid')->willReturn($this->createSender());
 
-        $messageTypeResolver = $this->createMock(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->expects(self::once())->method('resolveByNick')->with('TestUser')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createMock(ServiceUserPreferences::class);
+        $messageTypeResolver->expects(self::once())->method('prefersPrivateMessages')->with('TestUser')->willReturn(false);
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(
@@ -386,8 +386,8 @@ final class AntifloodSubscriberTest extends TestCase
         $userLookup->expects(self::exactly(4))->method('findByUid')
             ->willReturnOnConsecutiveCalls($regularUser, $regularUser, $ircopUser, $ircopUser);
 
-        $messageTypeResolver = $this->createMock(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->expects(self::once())->method('resolveByNick')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createMock(ServiceUserPreferences::class);
+        $messageTypeResolver->expects(self::once())->method('prefersPrivateMessages')->willReturn(false);
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(
@@ -441,8 +441,8 @@ final class AntifloodSubscriberTest extends TestCase
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender());
 
-        $messageTypeResolver = $this->createMock(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->expects(self::once())->method('resolveByNick')->willReturn('NOTICE');
+        $messageTypeResolver = $this->createMock(ServiceUserPreferences::class);
+        $messageTypeResolver->expects(self::once())->method('prefersPrivateMessages')->willReturn(false);
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())->method('trans')->willReturn('Slow down!');

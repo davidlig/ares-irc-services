@@ -645,5 +645,6 @@ final class ChanServContextTest extends TestCase
 
         self::assertNull($context->getSender());
         self::assertNull($context->getSenderAccount());
+        self::assertNull($context->getSenderAccountId());
     }
 }

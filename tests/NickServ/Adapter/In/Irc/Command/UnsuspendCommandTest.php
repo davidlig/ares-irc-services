@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Command\IrcopAuditData;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\UnsuspendCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -14,10 +14,11 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickUnsuspendedEvent;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
@@ -25,6 +26,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+
+use const DATE_ATOM;
 
 #[CoversClass(UnsuspendCommand::class)]
 final class UnsuspendCommandTest extends TestCase
@@ -114,7 +117,7 @@ final class UnsuspendCommandTest extends TestCase
     {
         $messages = [];
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $outcome = new UnsuspendCommand($repository, $this->createStub(EventBusInterface::class))
+        $outcome = new UnsuspendCommand($repository, $this->createStub(EventBusInterface::class), $this->clock())
             ->execute($this->createContext(null, [], $messages, nickRepository: $repository));
 
         self::assertFalse($outcome->success);
@@ -132,7 +135,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['UnknownNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $this->createStub(EventBusInterface::class));
+        $cmd = new UnsuspendCommand($nickRepository, $this->createStub(EventBusInterface::class), $this->clock());
 
         $cmd->execute($context);
 
@@ -143,7 +146,14 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithNonSuspendedNickRepliesNotSuspended(): void
     {
         $sender = $this->createSender();
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable());
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@example.com',
+            'en',
+            new DateTimeImmutable(),
+            new DateTimeImmutable()
+        );
         $nick->activate();
 
         $messages = [];
@@ -152,7 +162,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $this->createStub(EventBusInterface::class));
+        $cmd = new UnsuspendCommand($nickRepository, $this->createStub(EventBusInterface::class), $this->clock());
 
         $cmd->execute($context);
 
@@ -178,7 +188,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
 
         $cmd->execute($context);
 
@@ -207,7 +217,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
 
         $cmd->execute($context);
 
@@ -233,7 +243,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
 
         $outcome = $cmd->execute($context);
 
@@ -269,7 +279,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
 
         $cmd->execute($context);
 
@@ -277,6 +287,7 @@ final class UnsuspendCommandTest extends TestCase
         self::assertCount(1, $dispatchedEvents);
         self::assertInstanceOf(NickUnsuspendedEvent::class, $dispatchedEvents[0]);
         self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+        self::assertSame('2026-09-06T12:00:00+00:00', $dispatchedEvents[0]->occurredAt->format(DATE_ATOM));
     }
 
     #[Test]
@@ -304,7 +315,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
 
         $cmd->execute($context);
 
@@ -324,7 +335,7 @@ final class UnsuspendCommandTest extends TestCase
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
 
         $reflection = new ReflectionClass(RegisteredNick::class);
@@ -339,6 +350,7 @@ final class UnsuspendCommandTest extends TestCase
         return new UnsuspendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
+            $this->clock(),
         );
     }
 
@@ -389,5 +401,13 @@ final class UnsuspendCommandTest extends TestCase
         $provider->method('getNickname')->willReturn('NickServ');
 
         return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
     }
 }

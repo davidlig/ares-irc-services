@@ -15,11 +15,14 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingEmailChangeRegistry;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Event\NickEmailChangedEvent;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickEmailChangedEvent;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -70,7 +73,16 @@ final class SetEmailHandlerTest extends TestCase
         });
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, ''), $account, '');
 
         self::assertSame(['error.syntax'], $messages);
@@ -93,7 +105,16 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, 'not-an-email'), $account, 'not-an-email');
 
         self::assertSame(['register.invalid_email'], $messages);
@@ -118,7 +139,16 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com wrong-token'), $account, 'new@example.com wrong-token');
 
         self::assertSame(['set.email.invalid_token'], $messages);
@@ -157,7 +187,16 @@ final class SetEmailHandlerTest extends TestCase
         });
         $notifier->method('getNick')->willReturn('NickServ');
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['set.email.pending_sent'], $messages);
@@ -184,7 +223,7 @@ final class SetEmailHandlerTest extends TestCase
         $nickRepo->expects(self::once())->method('save')->with($account);
         $pending = new PendingEmailChangeRegistry();
         $token = 'validtoken123';
-        $pending->store('User', 'new@example.com', $token);
+        $pending->store('User', 'new@example.com', $token, $this->now());
         $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -196,7 +235,16 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com ' . $token), $account, 'new@example.com ' . $token);
 
         self::assertSame(['set.email.success'], $messages);
@@ -215,7 +263,7 @@ final class SetEmailHandlerTest extends TestCase
         $nickRepo->method('findByEmail')->willReturn($existingAccount);
         $pending = new PendingEmailChangeRegistry();
         $token = 'validtoken123';
-        $pending->store('User', 'new@example.com', $token);
+        $pending->store('User', 'new@example.com', $token, $this->now());
         $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -227,7 +275,16 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com ' . $token), $account, 'new@example.com ' . $token);
 
         self::assertSame(['register.email_already_used'], $messages);
@@ -252,7 +309,16 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['error.not_identified'], $messages);
@@ -282,7 +348,16 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, 'other@example.com'), $account, 'other@example.com');
 
         self::assertSame(['register.email_already_used'], $messages);
@@ -315,7 +390,16 @@ final class SetEmailHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['error.mail_failed'], $messages);
@@ -343,7 +427,16 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventBusInterface::class));
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            $pending,
+            $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
+            $translator,
+            $logger,
+            $this->createStub(EventBusInterface::class)
+        );
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['error.not_identified'], $messages);
@@ -357,7 +450,7 @@ final class SetEmailHandlerTest extends TestCase
         $account->method('getEmail')->willReturn('old@example.com');
         $account->expects(self::never())->method('changeEmail');
         $pending = new PendingEmailChangeRegistry();
-        $pending->store('TestNick', 'new@example.com', 'token');
+        $pending->store('TestNick', 'new@example.com', 'token', $this->now());
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByEmail')->willReturn(null);
 
@@ -365,6 +458,8 @@ final class SetEmailHandlerTest extends TestCase
             $nickRepository,
             $pending,
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             $this->createStub(EventBusInterface::class),
@@ -390,6 +485,8 @@ final class SetEmailHandlerTest extends TestCase
             $nickRepository,
             new PendingEmailChangeRegistry(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             $this->createStub(EventBusInterface::class),
@@ -486,6 +583,8 @@ final class SetEmailHandlerTest extends TestCase
             $nickRepo,
             new PendingEmailChangeRegistry(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             $eventDispatcher,
@@ -547,6 +646,8 @@ final class SetEmailHandlerTest extends TestCase
             $nickRepo,
             new PendingEmailChangeRegistry(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->clock(),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             $eventDispatcher,
@@ -581,5 +682,18 @@ final class SetEmailHandlerTest extends TestCase
         self::assertCount(1, $dispatchedEvents);
         self::assertInstanceOf(NickEmailChangedEvent::class, $dispatchedEvents[0]);
         self::assertSame('invalid!base64', $dispatchedEvents[0]->performedByIp);
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn($this->now());
+
+        return $clock;
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

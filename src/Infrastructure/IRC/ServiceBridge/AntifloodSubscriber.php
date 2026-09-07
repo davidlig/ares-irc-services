@@ -7,12 +7,12 @@ namespace App\Infrastructure\IRC\ServiceBridge;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SendNoticePort;
-use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Application\Services\Antiflood\AntifloodRegistry;
 use App\Application\Services\Antiflood\ClientKeyResolver;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -47,7 +47,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         private ServiceCommandGateway $gateway,
         private NetworkUserLookupPort $userLookup,
         private SendNoticePort $sendNotice,
-        private UserMessageTypeResolverInterface $messageTypeResolver,
+        private ServiceUserPreferences $messageTypeResolver,
         private OperServNotifierInterface $notifier,
         private RootUserRegistry $rootRegistry,
         private TranslatorInterface $translator,
@@ -114,7 +114,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         if ($remaining > 0) {
             if (!$this->registry->isNotified($clientKey)) {
                 $serviceUid = $listener->getServiceUid() ?? $listener->getServiceName();
-                $messageType = $this->messageTypeResolver->resolveByNick($sender->nick);
+                $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
                 $notice = $this->translator->trans('antiflood.blocked', ['%seconds%' => (string) $remaining], 'common');
                 $this->sendNotice->sendMessage($serviceUid, $sender->uid, $notice, $messageType);
                 $this->registry->markNotified($clientKey);

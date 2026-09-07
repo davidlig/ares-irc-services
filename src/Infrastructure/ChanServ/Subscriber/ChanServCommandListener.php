@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\ChanServ\Port\Out\ServiceUserPreferences;
 use App\Application\Port\ChanServDispatchPort;
 use App\Application\Port\ServiceCommandListenerInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
@@ -12,7 +13,6 @@ use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Infrastructure\ChanServ\Bot\ChanServBot;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\NickServ\Adapter\Out\User\UserMessageTypeResolver;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -30,7 +30,7 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
         private ChanServDispatchPort $chanServService,
         private NetworkUserLookupPort $userLookup,
         private ChanServNotifierInterface $chanServNotifier,
-        private UserMessageTypeResolver $messageTypeResolver,
+        private ServiceUserPreferences $messageTypeResolver,
         private TranslatorInterface $translator,
         private RegisteredNickRepositoryInterface $nickRepository,
         private string $defaultLanguage,
@@ -64,15 +64,15 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
         try {
             $this->chanServService->dispatch($text, $sender);
         } catch (ChannelAlreadyRegisteredException $e) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->chanServNotifier->sendMessage($sender->uid, $e->getMessage(), $messageType);
         } catch (ChannelNotRegisteredException $e) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $language = $this->nickRepository->findByNick($sender->nick)?->getLanguage() ?? $this->defaultLanguage;
             $message = $this->translator->trans('error.channel_not_registered', ['%channel%' => $e->getChannelName(), '%bot%' => $this->chanServBot->getNick()], 'chanserv', $language);
             $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (InsufficientAccessException $e) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $language = $this->nickRepository->findByNick($sender->nick)?->getLanguage() ?? $this->defaultLanguage;
             $message = $this->translator->trans('error.insufficient_access', [
                 '%operation%' => $e->getOperation(),

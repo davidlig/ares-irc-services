@@ -511,6 +511,7 @@ final class ChanServHistorySubscriberTest extends TestCase
             email: 'test@example.com',
             language: 'en',
             expiresAt: new DateTimeImmutable('+1 day'),
+            registeredAt: new DateTimeImmutable(),
         );
         $nick->activate();
 

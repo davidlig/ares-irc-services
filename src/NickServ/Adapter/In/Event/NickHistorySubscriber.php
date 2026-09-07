@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Event;
 
+use App\NickServ\Application\Event\NickEmailChangedEvent;
+use App\NickServ\Application\Event\NickPasswordChangedEvent;
+use App\NickServ\Application\Event\NickRecoveredEvent;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
+use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use App\NickServ\Application\Service\NickHistoryService;
-use App\NickServ\Domain\Event\NickEmailChangedEvent;
-use App\NickServ\Domain\Event\NickPasswordChangedEvent;
-use App\NickServ\Domain\Event\NickRecoveredEvent;
-use App\NickServ\Domain\Event\NickSuspendedEvent;
-use App\NickServ\Domain\Event\NickUnsuspendedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

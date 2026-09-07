@@ -56,8 +56,6 @@ deptrac:
       - App\Application\Port\EventBusInterface
       - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
-      - App\Application\Port\UserLanguageResolverInterface
-      - App\Application\Port\UserMessageTypeResolverInterface
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
       - Psr\Log\LoggerInterface
       - Psr\Log\NullLogger
@@ -73,11 +71,8 @@ deptrac:
       - App\Domain\ChanServ\Exception\ChannelNotRegisteredException
       - App\Domain\ChanServ\Exception\InsufficientAccessException
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-      - App\NickServ\Adapter\Out\User\UserMessageTypeResolver
     App\Infrastructure\MemoServ\Subscriber\MemoServNickDropCleanupSubscriber:
-      - App\NickServ\Domain\Event\NickDropCleanupEvent
     App\Infrastructure\MemoServ\Subscriber\MemoServNickIdentifiedNoticeSubscriber:
-      - App\NickServ\Domain\Event\NickIdentifiedEvent
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
     App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber:
       - App\Application\ChanServ\ChanServAccessHelper

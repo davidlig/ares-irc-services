@@ -6,13 +6,15 @@ namespace App\NickServ\Adapter\In\Event;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NickChangePreservesIdentificationInterface;
-use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
-use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
+use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
-use App\Irc\Domain\Event\UserModeChangedEvent;
-use App\Irc\Domain\Event\UserNickChangedEvent;
-use App\Irc\Domain\Event\UserQuitNetworkEvent;
+use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
+use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
+use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
+use App\NickServ\Adapter\Out\User\IrcNetworkUserMapper;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
@@ -35,6 +37,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private BurstState $burstState,
         private NetworkUserLookupPort $networkUserLookup,
         private ActiveConnectionHolderInterface $connectionHolder,
+        private Clock $clock,
         private ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
     ) {}
 
@@ -47,128 +50,137 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     {
         return [
             UserJoinedNetworkAppEvent::class => ['onUserJoined', 0],
-            UserQuitNetworkEvent::class => ['onUserQuit', 0],
-            UserNickChangedEvent::class => ['onNickChanged', 0],
-            UserModeChangedEvent::class => ['onUserModeChanged', 0],
-            NetworkBurstCompleteEvent::class => ['onBurstComplete', -256],
-            IrcMessageProcessedEvent::class => ['onIrcMessageProcessed', -200],
+            UserLeftNetworkEvent::class => ['onUserQuit', 0],
+            UserNicknameChangedEvent::class => ['onNickChanged', 0],
+            UserModesChangedEvent::class => ['onUserModeChanged', 0],
+            NetworkSynchronizationCompletedEvent::class => ['onBurstComplete', -256],
+            IrcMessageHandledEvent::class => ['onIrcMessageProcessed', -200],
         ];
     }
 
     public function onUserJoined(UserJoinedNetworkAppEvent $event): void
     {
+        $occurredAt = $this->clock->now();
         $senderView = $this->networkUserLookup->findByUid($event->user->uid);
         if (null === $senderView) {
             return;
         }
 
+        $user = IrcNetworkUserMapper::map($senderView);
+
         if (!$this->burstState->isComplete()) {
-            $this->burstState->addPending($senderView);
+            $this->burstState->addPending($user);
 
             return;
         }
 
         if ($senderView->isIdentified) {
-            $this->identifiedUserVhostSync->syncVhostForUser($senderView);
-            $this->nickProtectionService->onUserJoined($senderView);
+            $this->identifiedUserVhostSync->syncVhostForUser($user);
+            $this->nickProtectionService->onUserJoined($user, $occurredAt);
 
             return;
         }
 
         if ($this->shouldDeferProtectionCheck() && null !== $this->pendingProtectionRegistry) {
-            $this->pendingProtectionRegistry->schedule($event->user->uid);
+            $this->pendingProtectionRegistry->schedule($event->user->uid, $occurredAt);
 
             return;
         }
 
-        $this->identifiedUserVhostSync->syncVhostForUser($senderView);
-        $this->nickProtectionService->onUserJoined($senderView);
+        $this->identifiedUserVhostSync->syncVhostForUser($user);
+        $this->nickProtectionService->onUserJoined($user, $occurredAt);
     }
 
-    public function onBurstComplete(NetworkBurstCompleteEvent $event): void
+    public function onBurstComplete(NetworkSynchronizationCompletedEvent $event): void
     {
+        $occurredAt = $this->clock->now();
         $this->burstState->markComplete();
         $pending = $this->burstState->takePending();
 
         foreach ($pending as $user) {
             $this->identifiedUserVhostSync->syncVhostForUser($user);
-            $this->nickProtectionService->enforceProtection($user);
+            $this->nickProtectionService->enforceProtection($user, $occurredAt);
         }
     }
 
-    public function onNickChanged(UserNickChangedEvent $event): void
+    public function onNickChanged(UserNicknameChangedEvent $event): void
     {
-        $senderView = $this->networkUserLookup->findByUid($event->uid->value);
+        $occurredAt = $this->clock->now();
+        $senderView = $this->networkUserLookup->findByUid($event->uid);
 
         if (null !== $senderView && $senderView->isIdentified) {
             $this->nickProtectionService->onNickChanged(
-                $event->uid->value,
-                $event->oldNick->value,
-                $event->newNick->value,
+                $event->uid,
+                $event->oldNickname,
+                $event->newNickname,
+                $occurredAt,
             );
             if (!$this->shouldDeferProtectionCheck()) {
-                $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+                $this->identifiedUserVhostSync->syncVhostForUser(IrcNetworkUserMapper::map($senderView));
             }
 
             return;
         }
 
         if ($this->shouldDeferProtectionCheck() && null !== $this->pendingProtectionRegistry) {
-            $this->pendingProtectionRegistry->schedule($event->uid->value);
+            $this->pendingProtectionRegistry->schedule($event->uid, $occurredAt);
 
             return;
         }
 
         $this->nickProtectionService->onNickChanged(
-            $event->uid->value,
-            $event->oldNick->value,
-            $event->newNick->value,
+            $event->uid,
+            $event->oldNickname,
+            $event->newNickname,
+            $occurredAt,
         );
 
         if (null !== $senderView) {
-            $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+            $this->identifiedUserVhostSync->syncVhostForUser(IrcNetworkUserMapper::map($senderView));
         }
     }
 
-    public function onUserModeChanged(UserModeChangedEvent $event): void
+    public function onUserModeChanged(UserModesChangedEvent $event): void
     {
         if (!str_contains($event->modeDelta, 'r') || str_contains($event->modeDelta, '-r')) {
             return;
         }
 
-        $this->pendingProtectionRegistry?->cancel($event->uid->value);
+        $this->pendingProtectionRegistry?->cancel($event->uid);
 
-        $senderView = $this->networkUserLookup->findByUid($event->uid->value);
+        $senderView = $this->networkUserLookup->findByUid($event->uid);
         if (null === $senderView || !$senderView->isIdentified) {
             return;
         }
 
-        $this->identifiedUserVhostSync->syncVhostForUser($senderView);
-        $this->nickProtectionService->enforceProtection($senderView);
+        $user = IrcNetworkUserMapper::map($senderView);
+        $this->identifiedUserVhostSync->syncVhostForUser($user);
+        $this->nickProtectionService->enforceProtection($user, $this->clock->now());
     }
 
-    public function onUserQuit(UserQuitNetworkEvent $event): void
+    public function onUserQuit(UserLeftNetworkEvent $event): void
     {
-        $this->pendingProtectionRegistry?->cancel($event->uid->value);
+        $this->pendingProtectionRegistry?->cancel($event->uid);
 
         $this->nickProtectionService->onUserQuit(
-            $event->uid->value,
-            $event->nick->value,
+            $event->uid,
+            $event->nickname,
             $event->reason,
             $event->ident,
             $event->displayHost,
             $event->hostname,
             $event->ipBase64,
+            $this->clock->now(),
         );
     }
 
-    public function onIrcMessageProcessed(IrcMessageProcessedEvent $event): void
+    public function onIrcMessageProcessed(IrcMessageHandledEvent $event): void
     {
         if (null === $this->pendingProtectionRegistry) {
             return;
         }
 
-        $expiredUids = $this->pendingProtectionRegistry->flushExpired();
+        $expiredUids = $this->pendingProtectionRegistry->flushExpired($this->clock->now());
         foreach ($expiredUids as $uid) {
             $senderView = $this->networkUserLookup->findByUid($uid);
             if (null === $senderView) {
@@ -176,10 +188,10 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             }
 
             if ($senderView->isIdentified) {
-                $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+                $this->identifiedUserVhostSync->syncVhostForUser(IrcNetworkUserMapper::map($senderView));
             }
 
-            $this->nickProtectionService->enforceProtection($senderView);
+            $this->nickProtectionService->enforceProtection(IrcNetworkUserMapper::map($senderView), $this->clock->now());
         }
     }
 

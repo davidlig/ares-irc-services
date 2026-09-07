@@ -134,7 +134,14 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelRegisteredExportsFounderTopicModesAndOptions(): void
     {
-        $founder = RegisteredNick::createPending('founder', 'argon2id:$h', 'f@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $founder = RegisteredNick::createPending(
+            'founder',
+            'argon2id:$h',
+            'f@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $founder->activate();
         new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($founder, 7);
 
@@ -236,7 +243,14 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelFounderChangedWritesFounderFromTheUpdatedEntity(): void
     {
-        $founder = RegisteredNick::createPending('newfounder', 'argon2id:$h', 'f@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $founder = RegisteredNick::createPending(
+            'newfounder',
+            'argon2id:$h',
+            'f@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable()
+        );
         $founder->activate();
         new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($founder, 9);
 

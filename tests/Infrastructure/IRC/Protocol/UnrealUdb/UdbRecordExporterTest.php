@@ -394,7 +394,7 @@ final class UdbRecordExporterTest extends TestCase
 
     private function createNick(string $nickname, ?string $vhost = null, ?string $passwordHash = null): RegisteredNick
     {
-        $nick = RegisteredNick::createPending($nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $nickname . '@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick = RegisteredNick::createPending($nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $nickname . '@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         $nick->activate();
 
         $reflection = new ReflectionClass(RegisteredNick::class);

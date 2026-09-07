@@ -8,7 +8,8 @@ use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber;
-use App\NickServ\Domain\Event\NickDropCleanupEvent;
+use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +34,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'TestUser',
             nicknameLower: 'testuser',
             reason: 'manual',
+            occurredAt: new DateTimeImmutable(),
         );
 
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -66,6 +68,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'OldUser',
             nicknameLower: 'olduser',
             reason: 'inactivity',
+            occurredAt: new DateTimeImmutable(),
         );
 
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -99,6 +102,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'GlineCreator',
             nicknameLower: 'glinecreator',
             reason: 'manual',
+            occurredAt: new DateTimeImmutable(),
         );
 
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);

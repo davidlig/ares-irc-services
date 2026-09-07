@@ -37,7 +37,7 @@ final class UserLanguageResolverTest extends TestCase
             isIdentified: true,
         );
 
-        self::assertSame('es', $resolver->resolve($sender));
+        self::assertSame('es', $resolver->resolve($sender->uid, $sender->nick));
     }
 
     #[Test]
@@ -57,7 +57,7 @@ final class UserLanguageResolverTest extends TestCase
             ipBase64: '',
         );
 
-        self::assertSame('en', $resolver->resolve($sender));
+        self::assertSame('en', $resolver->resolve($sender->uid, $sender->nick));
     }
 
     #[Test]
@@ -79,7 +79,7 @@ final class UserLanguageResolverTest extends TestCase
             ipBase64: '',
         );
 
-        self::assertSame('fr', $resolver->resolve($sender));
+        self::assertSame('fr', $resolver->resolve($sender->uid, $sender->nick));
     }
 
     #[Test]
@@ -147,7 +147,7 @@ final class UserLanguageResolverTest extends TestCase
             ipBase64: '',
         );
 
-        self::assertSame('es', $resolver->resolve($sender));
+        self::assertSame('es', $resolver->resolve($sender->uid, $sender->nick));
     }
 
     #[Test]
@@ -172,7 +172,7 @@ final class UserLanguageResolverTest extends TestCase
             ipBase64: '',
         );
 
-        self::assertSame('pt', $resolver->resolve($sender));
+        self::assertSame('pt', $resolver->resolve($sender->uid, $sender->nick));
     }
 
     #[Test]
@@ -192,7 +192,7 @@ final class UserLanguageResolverTest extends TestCase
             ipBase64: '',
         );
 
-        self::assertSame('pl', $resolver->resolveFromAccount($sender, $nick));
+        self::assertSame('pl', $resolver->resolveFromAccount($sender->uid, $nick->getLanguage()));
     }
 
     #[Test]
@@ -211,7 +211,7 @@ final class UserLanguageResolverTest extends TestCase
             ipBase64: '',
         );
 
-        self::assertSame('el', $resolver->resolveFromAccount($sender, null));
+        self::assertSame('el', $resolver->resolveFromAccount($sender->uid, null));
     }
 
     #[Test]
@@ -228,6 +228,6 @@ final class UserLanguageResolverTest extends TestCase
             ipBase64: '',
         );
 
-        self::assertSame('en', $resolver->resolveFromAccount($sender, null));
+        self::assertSame('en', $resolver->resolveFromAccount($sender->uid, null));
     }
 }

@@ -15,26 +15,28 @@ use PHPUnit\Framework\TestCase;
 final class PendingRegistrationVerificationStoreTest extends TestCase
 {
     #[Test]
-    public function storesTheChallengeInTheLegacyRegistryDuringMigration(): void
+    public function storesTheChallengeInRegistry(): void
     {
+        $now = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
         $registry = new PendingVerificationRegistry();
         $adapter = new PendingRegistrationVerificationStore($registry);
 
-        $adapter->store('MixedNick', 'token', new DateTimeImmutable('+1 hour'));
+        $adapter->store('MixedNick', 'token', $now->modify('+1 hour'));
 
         self::assertTrue($registry->has('mixednick'));
-        self::assertTrue($registry->consume('MIXEDNICK', 'token'));
+        self::assertTrue($registry->consume('MIXEDNICK', 'token', $now));
     }
 
     #[Test]
     public function consumesTheChallengeViaAdapter(): void
     {
+        $now = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
         $registry = new PendingVerificationRegistry();
         $adapter = new PendingRegistrationVerificationStore($registry);
 
-        $adapter->store('MixedNick', 'token', new DateTimeImmutable('+1 hour'));
+        $adapter->store('MixedNick', 'token', $now->modify('+1 hour'));
 
-        self::assertTrue($adapter->consume('MIXEDNICK', 'token'));
-        self::assertFalse($adapter->consume('MIXEDNICK', 'token'));
+        self::assertTrue($adapter->consume('MIXEDNICK', 'token', $now));
+        self::assertFalse($adapter->consume('MIXEDNICK', 'token', $now));
     }
 }

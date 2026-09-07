@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\ChanServ\Port\Out\ServiceUserPreferences;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChanServDispatchPort;
 use App\Application\Port\SendNoticePort;
@@ -21,7 +22,6 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
-use App\NickServ\Adapter\Out\User\UserMessageTypeResolver;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -47,7 +47,7 @@ final class ChanServCommandListenerTest extends TestCase
 
     private ChanServNotifierInterface&MockObject $chanServNotifier;
 
-    private UserMessageTypeResolver $messageTypeResolver;
+    private ServiceUserPreferences $messageTypeResolver;
 
     private MockObject&TranslatorInterface $translator;
 
@@ -80,7 +80,11 @@ final class ChanServCommandListenerTest extends TestCase
         $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->chanServNotifier = $this->createMock(ChanServNotifierInterface::class);
         $this->nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $this->messageTypeResolver = new UserMessageTypeResolver($this->nickRepository);
+        $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $messageTypeResolver->method('prefersPrivateMessages')->willReturnCallback(
+            fn (string $nickname): bool => $this->nickRepository->findByNick($nickname)?->prefersPrivateMessages() ?? false,
+        );
+        $this->messageTypeResolver = $messageTypeResolver;
         $this->translator = $this->createMock(TranslatorInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
@@ -264,7 +268,7 @@ final class ChanServCommandListenerTest extends TestCase
         $sender = self::createSenderView();
         $registeredNick = $this->createStub(RegisteredNick::class);
         $registeredNick->method('getLanguage')->willReturn('es');
-        $registeredNick->method('getMessageType')->willReturn('NOTICE');
+        $registeredNick->method('prefersPrivateMessages')->willReturn(false);
 
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($registeredNick);

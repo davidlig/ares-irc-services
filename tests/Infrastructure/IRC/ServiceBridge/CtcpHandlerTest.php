@@ -14,9 +14,7 @@ use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
-use App\NickServ\Adapter\Out\User\UserLanguageResolver;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -49,13 +47,13 @@ final class CtcpHandlerTest extends TestCase
         };
     }
 
-    private function createLanguageResolver(string $language = 'en'): UserLanguageResolver
+    private function createLanguageResolver(string $language = 'en'): ServiceUserPreferences
     {
-        return new UserLanguageResolver(
-            $this->createStub(RegisteredNickRepositoryInterface::class),
-            new SessionLanguageRegistry(),
-            $language,
-        );
+        $preferences = $this->createStub(ServiceUserPreferences::class);
+        $preferences->method('languageFor')->willReturn($language);
+        $preferences->method('defaultLanguage')->willReturn($language);
+
+        return $preferences;
     }
 
     private function createSenderView(string $uid): SenderView

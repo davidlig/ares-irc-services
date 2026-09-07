@@ -7,6 +7,7 @@ namespace App\Tests\NickServ\Application\Service;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Service\ForbiddenVhostService;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -34,7 +35,7 @@ final class ForbiddenVhostServiceTest extends TestCase
             ->with(self::callback(static fn (ForbiddenVhost $vhost) => '*.pirated.com' === $vhost->getPattern()
                     && 123 === $vhost->getCreatedByNickId()));
 
-        $result = $this->service->forbid('*.pirated.com', 123);
+        $result = $this->service->forbid('*.pirated.com', 123, new DateTimeImmutable());
 
         self::assertSame('*.pirated.com', $result->getPattern());
         self::assertSame(123, $result->getCreatedByNickId());
@@ -43,7 +44,7 @@ final class ForbiddenVhostServiceTest extends TestCase
     #[Test]
     public function unforbidRemovesExistingPattern(): void
     {
-        $forbidden = ForbiddenVhost::create('*.pirated.com', 123);
+        $forbidden = ForbiddenVhost::create('*.pirated.com', 123, new DateTimeImmutable());
 
         $this->repository
             ->expects(self::once())
@@ -82,8 +83,8 @@ final class ForbiddenVhostServiceTest extends TestCase
     #[Test]
     public function matchesForbiddenPatternReturnsTrueWhenMatch(): void
     {
-        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1);
-        $forbidden2 = ForbiddenVhost::create('badhost.*', 2);
+        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('badhost.*', 2, new DateTimeImmutable());
 
         $this->repository
             ->expects(self::once())
@@ -98,8 +99,8 @@ final class ForbiddenVhostServiceTest extends TestCase
     #[Test]
     public function matchesForbiddenPatternReturnsFalseWhenNoMatch(): void
     {
-        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1);
-        $forbidden2 = ForbiddenVhost::create('badhost.*', 2);
+        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('badhost.*', 2, new DateTimeImmutable());
 
         $this->repository
             ->expects(self::once())
@@ -127,8 +128,8 @@ final class ForbiddenVhostServiceTest extends TestCase
     #[Test]
     public function getAllReturnsAllForbiddenPatterns(): void
     {
-        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1);
-        $forbidden2 = ForbiddenVhost::create('badhost.*', 2);
+        $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1, new DateTimeImmutable());
+        $forbidden2 = ForbiddenVhost::create('badhost.*', 2, new DateTimeImmutable());
 
         $this->repository
             ->expects(self::once())

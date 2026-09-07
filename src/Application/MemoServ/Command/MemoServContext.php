@@ -43,6 +43,11 @@ final readonly class MemoServContext implements IrcopContextInterface
         return $this->senderAccount;
     }
 
+    public function getSenderAccountId(): ?int
+    {
+        return $this->senderAccount?->getId();
+    }
+
     /**
      * @param array<string, mixed> $params
      */

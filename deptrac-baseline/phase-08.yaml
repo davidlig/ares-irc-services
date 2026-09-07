@@ -19,10 +19,6 @@ deptrac:
       - App\Domain\OperServ\Event\GlineRemovedEvent
     App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber:
       - App\NickServ\Domain\Entity\RegisteredNick
-      - App\NickServ\Domain\Event\NickDropEvent
-      - App\NickServ\Domain\Event\NickSuspendedEvent
-      - App\NickServ\Domain\Event\NickUnsuspendedEvent
-      - App\NickServ\Domain\Event\NickVhostChangedEvent
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
       - App\Domain\OperServ\Event\OperIrcopChangedEvent
       - App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent

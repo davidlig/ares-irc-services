@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Command\CommandOutcome;
-use App\Application\Command\IrcopAuditableCommandInterface;
-use App\Application\Command\IrcopAuditData;
 use App\Application\Port\EventBusInterface;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\NickProtectabilityResult;
 use App\NickServ\Application\Service\NickProtectabilityStatus;
 use App\NickServ\Application\Service\NickSuspensionService;
 use App\NickServ\Application\Service\NickTargetValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickSuspendedEvent;
 use App\Shared\Application\Time\RelativeExpiryParser;
 use DateTimeImmutable;
 
@@ -33,6 +34,7 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
         private readonly NickTargetValidator $targetValidator,
         private readonly NickSuspensionService $suspensionService,
         private readonly EventBusInterface $eventDispatcher,
+        private readonly Clock $clock,
     ) {}
 
     public function getName(): string
@@ -151,7 +153,8 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
             return CommandOutcome::rejected();
         }
 
-        $expiresAt = RelativeExpiryParser::parse($durationStr);
+        $now = $this->clock->now();
+        $expiresAt = RelativeExpiryParser::parse($durationStr, $now);
 
         if (null === $expiresAt && !RelativeExpiryParser::isPermanent($durationStr)) {
             $context->reply('suspend.invalid_duration');
@@ -159,7 +162,7 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
             return CommandOutcome::rejected();
         }
 
-        return $this->finalizeSuspend($context, $account, $targetNick, $durationStr, $reason, $expiresAt);
+        return $this->finalizeSuspend($context, $account, $targetNick, $durationStr, $reason, $expiresAt, $now);
     }
 
     private function finalizeSuspend(
@@ -169,6 +172,7 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
         string $durationStr,
         string $reason,
         ?DateTimeImmutable $expiresAt,
+        DateTimeImmutable $occurredAt,
     ): CommandOutcome {
         $account->suspend($reason, $expiresAt);
         $this->nickRepository->save($account);
@@ -192,6 +196,7 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
+            occurredAt: $occurredAt,
         ));
 
         $durationDisplay = null === $expiresAt

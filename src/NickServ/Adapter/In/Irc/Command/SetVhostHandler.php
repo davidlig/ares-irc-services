@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc\Command;
 
 use App\Application\Port\EventBusInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Domain\OperServ\ValueObject\ForcedVhost;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
+use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickVhostChangedEvent;
 
 use function in_array;
 use function strtoupper;
@@ -27,14 +26,14 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         private VhostValidator $vhostValidator,
         private VhostDisplayResolver $displayResolver,
         private NetworkUserLookupPort $userLookup,
-        private OperIrcopRepositoryInterface $ircopRepository,
+        private ForcedVhostCheckerInterface $forcedVhostChecker,
         private ForbiddenVhostRepositoryInterface $forbiddenVhostRepository,
         private EventBusInterface $eventDispatcher,
     ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {
-        if ($this->hasForcedVhost($account->getId())) {
+        if ($this->forcedVhostChecker->hasForcedVhost($account->getId())) {
             $context->reply('set.vhost.forced');
 
             return;
@@ -121,18 +120,6 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         $this->eventDispatcher->dispatch(new NickVhostChangedEvent($account->getId(), $account->getNickname(), $normalized));
 
         $context->reply('set.vhost.success', ['vhost' => $displayVhost]);
-    }
-
-    private function hasForcedVhost(int $nickId): bool
-    {
-        $ircop = $this->ircopRepository->findByNickId($nickId);
-        if (null === $ircop) {
-            return false;
-        }
-
-        $pattern = $ircop->getRole()->getForcedVhostPattern();
-
-        return null !== $pattern && '' !== $pattern && ForcedVhost::isValidPattern($pattern);
     }
 
     private function isForbidden(string $vhost): bool

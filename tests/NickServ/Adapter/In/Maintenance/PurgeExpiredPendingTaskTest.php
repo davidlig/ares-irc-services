@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Maintenance;
 
 use App\NickServ\Adapter\In\Maintenance\PurgeExpiredPendingTask;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +22,7 @@ final class PurgeExpiredPendingTaskTest extends TestCase
         $task = new PurgeExpiredPendingTask(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
             3600,
         );
 
@@ -32,6 +35,7 @@ final class PurgeExpiredPendingTaskTest extends TestCase
         $task = new PurgeExpiredPendingTask(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->clock(),
             7200,
         );
 
@@ -43,7 +47,7 @@ final class PurgeExpiredPendingTaskTest extends TestCase
     public function runCallsDeleteExpiredPendingAndLogsWhenDeletedGreaterThanZero(): void
     {
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->expects(self::once())->method('deleteExpiredPending')->willReturn(3);
+        $repo->expects(self::once())->method('deleteExpiredPending')->with($this->now())->willReturn(3);
 
         $logMessages = [];
         $logger = $this->createStub(LoggerInterface::class);
@@ -51,7 +55,7 @@ final class PurgeExpiredPendingTaskTest extends TestCase
             $logMessages[] = $msg;
         });
 
-        $task = new PurgeExpiredPendingTask($repo, $logger, 3600);
+        $task = new PurgeExpiredPendingTask($repo, $logger, $this->clock(), 3600);
         $task->run();
 
         self::assertCount(1, $logMessages);
@@ -62,12 +66,25 @@ final class PurgeExpiredPendingTaskTest extends TestCase
     public function runDoesNotLogWhenDeletedIsZero(): void
     {
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->expects(self::atLeastOnce())->method('deleteExpiredPending')->willReturn(0);
+        $repo->expects(self::once())->method('deleteExpiredPending')->with($this->now())->willReturn(0);
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('info');
 
-        $task = new PurgeExpiredPendingTask($repo, $logger, 3600);
+        $task = new PurgeExpiredPendingTask($repo, $logger, $this->clock(), 3600);
         $task->run();
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn($this->now());
+
+        return $clock;
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

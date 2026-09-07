@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
 use App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder;
-use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
-use App\NickServ\Adapter\Out\User\UserLanguageResolver;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +14,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(CtcpVersionResponder::class)]
 final class CtcpVersionResponderTest extends TestCase
 {
-    private UserLanguageResolver $languageResolver;
+    private ServiceUserPreferences $languageResolver;
 
     private CtcpVersionResponder $responder;
 
@@ -40,13 +38,13 @@ final class CtcpVersionResponderTest extends TestCase
         };
     }
 
-    private function createLanguageResolver(string $defaultLanguage = 'en'): UserLanguageResolver
+    private function createLanguageResolver(string $defaultLanguage = 'en'): ServiceUserPreferences
     {
-        return new UserLanguageResolver(
-            $this->createStub(RegisteredNickRepositoryInterface::class),
-            new SessionLanguageRegistry(),
-            $defaultLanguage,
-        );
+        $preferences = $this->createStub(ServiceUserPreferences::class);
+        $preferences->method('languageFor')->willReturn($defaultLanguage);
+        $preferences->method('defaultLanguage')->willReturn($defaultLanguage);
+
+        return $preferences;
     }
 
     protected function setUp(): void

@@ -6,12 +6,12 @@ namespace App\Infrastructure\MemoServ\Subscriber;
 
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\MemoServ\MemoServService;
+use App\Application\MemoServ\Port\Out\ServiceUserPreferences;
 use App\Application\Port\ServiceCommandListenerInterface;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Infrastructure\MemoServ\Bot\MemoServBot;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\NickServ\Adapter\Out\User\UserMessageTypeResolver;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -29,7 +29,7 @@ final readonly class MemoServCommandListener implements ServiceCommandListenerIn
         private MemoServService $memoServService,
         private NetworkUserLookupPort $userLookup,
         private MemoServNotifierInterface $memoServNotifier,
-        private UserMessageTypeResolver $messageTypeResolver,
+        private ServiceUserPreferences $messageTypeResolver,
         private TranslatorInterface $translator,
         private RegisteredNickRepositoryInterface $nickRepository,
         private string $defaultLanguage,
@@ -63,12 +63,12 @@ final readonly class MemoServCommandListener implements ServiceCommandListenerIn
         try {
             $this->memoServService->dispatch($text, $sender);
         } catch (ChannelNotRegisteredException $e) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $language = $this->nickRepository->findByNick($sender->nick)?->getLanguage() ?? $this->defaultLanguage;
             $message = $this->translator->trans('error.channel_not_registered', ['%channel%' => $e->getChannelName(), '%bot%' => $this->memoServBot->getNick()], 'memoserv', $language);
             $this->memoServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (InsufficientAccessException $e) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $language = $this->nickRepository->findByNick($sender->nick)?->getLanguage() ?? $this->defaultLanguage;
             $message = $this->translator->trans('error.insufficient_access', [
                 '%operation%' => $e->getOperation(),

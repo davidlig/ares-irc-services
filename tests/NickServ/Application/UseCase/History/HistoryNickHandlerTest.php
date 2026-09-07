@@ -38,7 +38,7 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createHistoryService(),
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'Unknown', action: HistoryNickAction::View));
+        $result = $handler->handle(new HistoryNick(nickname: 'Unknown', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable()));
 
         self::assertSame(HistoryNickOutcome::NotRegistered, $result->outcome);
         self::assertSame('Unknown', $result->targetNick);
@@ -71,6 +71,7 @@ final class HistoryNickHandlerTest extends TestCase
         $result = $handler->handle(new HistoryNick(
             nickname: 'TargetNick',
             action: HistoryNickAction::Add,
+            occurredAt: new DateTimeImmutable(),
             message: 'Manual note added',
             operatorNick: 'Oper',
             operatorNickId: 1,
@@ -101,6 +102,7 @@ final class HistoryNickHandlerTest extends TestCase
         $result = $handler->handle(new HistoryNick(
             nickname: 'TargetNick',
             action: HistoryNickAction::Del,
+            occurredAt: new DateTimeImmutable(),
             entryId: 0,
         ));
 
@@ -129,11 +131,11 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createHistoryService($historyRepo),
         );
 
-        $resultMissing = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, entryId: 100));
+        $resultMissing = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new DateTimeImmutable(), entryId: 100));
         self::assertSame(HistoryNickOutcome::DelNotFound, $resultMissing->outcome);
         self::assertSame(100, $resultMissing->entryId);
 
-        $resultOther = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, entryId: 101));
+        $resultOther = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new DateTimeImmutable(), entryId: 101));
         self::assertSame(HistoryNickOutcome::DelNotFound, $resultOther->outcome);
         self::assertSame(101, $resultOther->entryId);
     }
@@ -158,7 +160,7 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createHistoryService($historyRepo),
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, entryId: 55));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new DateTimeImmutable(), entryId: 55));
 
         self::assertSame(HistoryNickOutcome::DelSuccess, $result->outcome);
         self::assertSame('TargetNick', $result->targetNick);
@@ -183,7 +185,7 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createHistoryService($historyRepo),
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable()));
 
         self::assertSame(HistoryNickOutcome::ClearSuccess, $result->outcome);
         self::assertSame('TargetNick', $result->targetNick);
@@ -208,7 +210,7 @@ final class HistoryNickHandlerTest extends TestCase
             $this->createHistoryService($historyRepo),
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable()));
 
         self::assertSame(HistoryNickOutcome::ViewNoEntries, $result->outcome);
         self::assertSame('TargetNick', $result->targetNick);
@@ -243,7 +245,7 @@ final class HistoryNickHandlerTest extends TestCase
             historyViewLimit: 10,
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, page: 2));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable(), page: 2));
 
         self::assertSame(HistoryNickOutcome::ViewSuccess, $result->outcome);
         self::assertSame('TargetNick', $result->targetNick);
@@ -283,7 +285,7 @@ final class HistoryNickHandlerTest extends TestCase
             historyViewLimit: 2,
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, showAll: true));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable(), showAll: true));
 
         self::assertSame(HistoryNickOutcome::ViewSuccess, $result->outcome);
         self::assertTrue($result->showAll);

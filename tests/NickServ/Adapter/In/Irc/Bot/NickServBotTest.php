@@ -14,7 +14,7 @@ use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
-use App\Irc\Domain\ValueObject\Uid;
+use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\NickServ\Adapter\In\Irc\Bot\NickServBot;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -59,7 +59,7 @@ final class NickServBotTest extends TestCase
     public function getSubscribedEventsReturnsBurstCompleteWithPriority(): void
     {
         self::assertSame(
-            [NetworkBurstCompleteEvent::class => ['onBurstComplete', 100]],
+            [ServiceIntroductionRequestedEvent::class => ['onBurstComplete', 100]],
             NickServBot::getSubscribedEvents(),
         );
     }
@@ -69,7 +69,6 @@ final class NickServBotTest extends TestCase
     {
         $sendNoticePort = $this->createMock(SendNoticePort::class);
         $sendNoticePort->expects(self::never())->method('sendNotice');
-        $connection = $this->createStub(ConnectionInterface::class);
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())->method('introduceService')->with(
             '001',
@@ -97,7 +96,7 @@ final class NickServBotTest extends TestCase
             $uidGenerator,
             self::HOSTNAME,
         );
-        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $event = new ServiceIntroductionRequestedEvent('001');
         $bot->onBurstComplete($event);
     }
 
@@ -106,9 +105,6 @@ final class NickServBotTest extends TestCase
     {
         $sendNoticePort = $this->createMock(SendNoticePort::class);
         $sendNoticePort->expects(self::never())->method('sendNotice');
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::never())->method('writeLine');
-
         $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
 
@@ -121,7 +117,7 @@ final class NickServBotTest extends TestCase
             $uidGenerator,
             self::HOSTNAME,
         );
-        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $event = new ServiceIntroductionRequestedEvent('001');
         $bot->onBurstComplete($event);
     }
 
@@ -143,10 +139,7 @@ final class NickServBotTest extends TestCase
             $uidGenerator,
             self::HOSTNAME,
         );
-        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
-            $this->createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
         $bot->sendNotice('001USER', 'Hello');
     }
 
@@ -169,10 +162,7 @@ final class NickServBotTest extends TestCase
             $uidGenerator,
             self::HOSTNAME,
         );
-        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
-            $this->createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
         $bot->sendMessage('001USER', 'Message', 'NOTICE');
     }
 
@@ -190,7 +180,7 @@ final class NickServBotTest extends TestCase
 
         $localUserModeSync = $this->createMock(LocalUserModeSyncPort::class);
         $localUserModeSync->expects(self::once())->method('apply')
-            ->with(self::callback(static fn (Uid $uid): bool => '001USER' === $uid->value), '+r');
+            ->with('001USER', '+r');
 
         $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
@@ -222,7 +212,7 @@ final class NickServBotTest extends TestCase
 
         $localUserModeSync = $this->createMock(LocalUserModeSyncPort::class);
         $localUserModeSync->expects(self::once())->method('apply')
-            ->with(self::callback(static fn (Uid $uid): bool => '001USER' === $uid->value), '-r');
+            ->with('001USER', '-r');
 
         $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
@@ -563,10 +553,7 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function getUidReturnsConfiguredUid(): void
     {
-        $this->bot->onBurstComplete(new NetworkBurstCompleteEvent(
-            $this->createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $this->bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
         self::assertSame(self::NICKSERV_UID, $this->bot->getUid());
     }
 

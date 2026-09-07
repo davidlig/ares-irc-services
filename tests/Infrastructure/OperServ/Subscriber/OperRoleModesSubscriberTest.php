@@ -18,7 +18,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Event\NickIdentifiedEvent;
+use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

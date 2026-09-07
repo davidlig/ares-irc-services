@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Domain\Event\UserModeChangedEvent;
+use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -26,21 +26,21 @@ final readonly class VhostClearOnDeidentifySubscriber implements EventSubscriber
     public static function getSubscribedEvents(): array
     {
         return [
-            UserModeChangedEvent::class => ['onUserModeChanged', 0],
+            UserModesChangedEvent::class => ['onUserModeChanged', 0],
         ];
     }
 
-    public function onUserModeChanged(UserModeChangedEvent $event): void
+    public function onUserModeChanged(UserModesChangedEvent $event): void
     {
         if ('-r' !== $event->modeDelta) {
             return;
         }
 
-        $sender = $this->userLookup->findByUid($event->uid->value);
+        $sender = $this->userLookup->findByUid($event->uid);
         if (null === $sender) {
             return;
         }
 
-        $this->notifier->setUserVhost($event->uid->value, '', $sender->serverSid);
+        $this->notifier->setUserVhost($event->uid, '', $sender->serverSid);
     }
 }

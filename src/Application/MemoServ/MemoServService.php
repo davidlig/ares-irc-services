@@ -9,10 +9,9 @@ use App\Application\Event\CommandExecutedEvent;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
+use App\Application\MemoServ\Port\Out\ServiceUserPreferences;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
-use App\Application\Port\UserLanguageResolverInterface;
-use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
@@ -37,9 +36,9 @@ final readonly class MemoServService
     public function __construct(
         private MemoServCommandRegistry $commandRegistry,
         private RegisteredNickRepositoryInterface $nickRepository,
-        private UserLanguageResolverInterface $languageResolver,
+        private ServiceUserPreferences $languageResolver,
         private MemoServNotifierInterface $notifier,
-        private UserMessageTypeResolverInterface $messageTypeResolver,
+        private ServiceUserPreferences $messageTypeResolver,
         private TranslationInterface $translator,
         private ServiceNicknameRegistry $serviceNicks,
         private AuthorizationContextInterface $authorizationContext,
@@ -69,7 +68,7 @@ final readonly class MemoServService
         $handler = $this->commandRegistry->find($cmdName);
 
         if (null === $handler) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
+            $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->notifier->sendMessage(
                 $sender->uid,
                 $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'memoserv', $this->defaultLanguage),
@@ -80,9 +79,9 @@ final readonly class MemoServService
         }
 
         $account = $this->nickRepository->findByNick($sender->nick);
-        $language = $this->languageResolver->resolveFromAccount($sender, $account);
+        $language = $this->languageResolver->languageFor($sender->uid, $sender->nick, $account?->getLanguage());
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
-        $messageType = $this->messageTypeResolver->resolve($sender);
+        $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
 
         $context = new MemoServContext(
             sender: $sender,
@@ -98,7 +97,7 @@ final readonly class MemoServService
             serviceNicks: $this->serviceNicks,
         );
 
-        $this->authorizationContext->setCurrentUser($sender);
+        $this->authorizationContext->setCurrentUser($sender->uid, $sender->isIdentified, $sender->isOper);
         $this->dispatchToHandler($context, $handler, $sender, $cmdName);
     }
 

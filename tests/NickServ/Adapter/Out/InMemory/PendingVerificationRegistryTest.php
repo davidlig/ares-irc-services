@@ -17,7 +17,7 @@ final class PendingVerificationRegistryTest extends TestCase
     public function storeAndHasAndRemove(): void
     {
         $registry = new PendingVerificationRegistry();
-        $expiresAt = new DateTimeImmutable('+1 hour');
+        $expiresAt = $this->now()->modify('+1 hour');
 
         self::assertFalse($registry->has('Nick'));
 
@@ -35,10 +35,10 @@ final class PendingVerificationRegistryTest extends TestCase
     public function consumeValidTokenReturnsTrueAndRemovesEntry(): void
     {
         $registry = new PendingVerificationRegistry();
-        $expiresAt = new DateTimeImmutable('+1 hour');
+        $expiresAt = $this->now()->modify('+1 hour');
         $registry->store('Nick', 'secret', $expiresAt);
 
-        self::assertTrue($registry->consume('Nick', 'secret'));
+        self::assertTrue($registry->consume('Nick', 'secret', $this->now()));
         self::assertFalse($registry->has('Nick'));
     }
 
@@ -46,9 +46,9 @@ final class PendingVerificationRegistryTest extends TestCase
     public function consumeWrongTokenReturnsFalse(): void
     {
         $registry = new PendingVerificationRegistry();
-        $registry->store('Nick', 'secret', new DateTimeImmutable('+1 hour'));
+        $registry->store('Nick', 'secret', $this->now()->modify('+1 hour'));
 
-        self::assertFalse($registry->consume('Nick', 'wrong'));
+        self::assertFalse($registry->consume('Nick', 'wrong', $this->now()));
         self::assertTrue($registry->has('Nick'));
     }
 
@@ -56,9 +56,9 @@ final class PendingVerificationRegistryTest extends TestCase
     public function consumeExpiredTokenReturnsFalseAndRemovesEntry(): void
     {
         $registry = new PendingVerificationRegistry();
-        $registry->store('Nick', 'secret', new DateTimeImmutable('-1 hour'));
+        $registry->store('Nick', 'secret', $this->now()->modify('-1 hour'));
 
-        self::assertFalse($registry->consume('Nick', 'secret'));
+        self::assertFalse($registry->consume('Nick', 'secret', $this->now()));
         self::assertFalse($registry->has('Nick'));
     }
 
@@ -67,7 +67,7 @@ final class PendingVerificationRegistryTest extends TestCase
     {
         $registry = new PendingVerificationRegistry();
 
-        self::assertFalse($registry->consume('Nobody', 'token'));
+        self::assertFalse($registry->consume('Nobody', 'token', $this->now()));
     }
 
     #[Test]
@@ -77,7 +77,7 @@ final class PendingVerificationRegistryTest extends TestCase
 
         self::assertNull($registry->getLastResendAt('Nick'));
 
-        $registry->recordResend('Nick');
+        $registry->recordResend('Nick', $this->now());
 
         self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastResendAt('Nick'));
     }
@@ -86,11 +86,11 @@ final class PendingVerificationRegistryTest extends TestCase
     public function pruneExpiredRemovesExpiredEntries(): void
     {
         $registry = new PendingVerificationRegistry();
-        $registry->store('Expired', 't', new DateTimeImmutable('-1 hour'));
-        $registry->store('Valid', 't', new DateTimeImmutable('+1 hour'));
-        $registry->recordResend('OldResend');
+        $registry->store('Expired', 't', $this->now()->modify('-1 hour'));
+        $registry->store('Valid', 't', $this->now()->modify('+1 hour'));
+        $registry->recordResend('OldResend', $this->now()->modify('-2 seconds'));
 
-        $removed = $registry->pruneExpired(1);
+        $removed = $registry->pruneExpired($this->now(), 1);
 
         self::assertGreaterThanOrEqual(1, $removed);
         self::assertFalse($registry->has('Expired'));
@@ -100,28 +100,22 @@ final class PendingVerificationRegistryTest extends TestCase
     public function pruneExpiredRemovesOldLastResendAtEntries(): void
     {
         $registry = new PendingVerificationRegistry();
-        $registry->store('Active', 'token', new DateTimeImmutable('+1 hour'));
-        $registry->recordResend('OldNick');
+        $registry->store('Active', 'token', $this->now()->modify('+1 hour'));
+        $registry->recordResend('OldNick', $this->now()->modify('-2 seconds'));
 
-        // With maxAgeSeconds=0, cutoff is "now". Entries created "now" are exactly at the boundary,
-        // so they may or may not be removed depending on exact timing (< vs <= comparison).
-        // The expired token 'Active' is NOT expired (expires +1 hour), so it won't be removed.
-        // The lastResendAt might be removed if timing allows, but we only verify it's prunable.
-        $removed = $registry->pruneExpired(0);
+        $removed = $registry->pruneExpired($this->now(), 1);
 
-        // At minimum 0 (nothing removed) - timing dependent
-        self::assertGreaterThanOrEqual(0, $removed);
-        // The lastResendAt entry may or may not be removed (boundary condition)
-        // We don't assert on getLastResendAt since it depends on exact timing
+        self::assertSame(1, $removed);
+        self::assertNull($registry->getLastResendAt('OldNick'));
     }
 
     #[Test]
     public function pruneExpiredKeepsFreshLastResendAtEntries(): void
     {
         $registry = new PendingVerificationRegistry();
-        $registry->recordResend('FreshNick');
+        $registry->recordResend('FreshNick', $this->now());
 
-        $removed = $registry->pruneExpired(86400);
+        $removed = $registry->pruneExpired($this->now(), 86400);
 
         self::assertSame(0, $removed);
         self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastResendAt('FreshNick'));
@@ -131,15 +125,18 @@ final class PendingVerificationRegistryTest extends TestCase
     public function pruneExpiredReturnsTotalRemovedFromBothCollections(): void
     {
         $registry = new PendingVerificationRegistry();
-        $registry->store('Expired1', 't', new DateTimeImmutable('-1 hour'));
-        $registry->store('Expired2', 't', new DateTimeImmutable('-1 hour'));
-        $registry->recordResend('OldNick1');
-        $registry->recordResend('OldNick2');
+        $registry->store('Expired1', 't', $this->now()->modify('-1 hour'));
+        $registry->store('Expired2', 't', $this->now()->modify('-1 hour'));
+        $registry->recordResend('OldNick1', $this->now()->modify('-2 seconds'));
+        $registry->recordResend('OldNick2', $this->now()->modify('-2 seconds'));
 
-        $removed = $registry->pruneExpired(0);
+        $removed = $registry->pruneExpired($this->now(), 1);
 
-        // At minimum the 2 expired tokens are removed; lastResendAt entries may or may not
-        // be removed depending on timing (with cutoff=0, entries created "now" may be at the boundary)
-        self::assertGreaterThanOrEqual(2, $removed);
+        self::assertSame(4, $removed);
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
     }
 }

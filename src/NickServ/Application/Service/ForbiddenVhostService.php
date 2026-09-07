@@ -6,6 +6,7 @@ namespace App\NickServ\Application\Service;
 
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
+use DateTimeImmutable;
 
 readonly class ForbiddenVhostService
 {
@@ -13,9 +14,9 @@ readonly class ForbiddenVhostService
         private ForbiddenVhostRepositoryInterface $repository,
     ) {}
 
-    public function forbid(string $pattern, ?int $creatorNickId = null): ForbiddenVhost
+    public function forbid(string $pattern, ?int $creatorNickId, DateTimeImmutable $createdAt): ForbiddenVhost
     {
-        $forbidden = ForbiddenVhost::create($pattern, $creatorNickId);
+        $forbidden = ForbiddenVhost::create($pattern, $creatorNickId, $createdAt);
         $this->repository->save($forbidden);
 
         return $forbidden;

@@ -27,7 +27,7 @@ final class InMemoryResendThrottleTest extends TestCase
     public function returnsZeroWhenIntervalIsZeroOrNegative(): void
     {
         $registry = new PendingVerificationRegistry();
-        $registry->recordResend('Nick');
+        $registry->recordResend('Nick', new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
         $throttle = new InMemoryResendThrottle($registry);
 
         self::assertSame(0, $throttle->remainingCooldownSeconds('Nick', 0, new DateTimeImmutable()));

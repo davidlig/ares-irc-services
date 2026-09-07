@@ -12,12 +12,12 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickDropEvent;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
+use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
+use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickDropEvent;
-use App\NickServ\Domain\Event\NickSuspendedEvent;
-use App\NickServ\Domain\Event\NickUnsuspendedEvent;
-use App\NickServ\Domain\Event\NickVhostChangedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function sprintf;

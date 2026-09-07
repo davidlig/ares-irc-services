@@ -82,7 +82,7 @@ class RegisteredNick
     /** PHP timezone identifier for date display (e.g. Europe/Madrid). Null = use services default. */
     private ?string $timezone = null;
 
-    /** When true, services send messages as PRIVMSG; when false, as NOTICE. */
+    /** Whether service replies prefer private messages over service notices. */
     private bool $msgPrivmsg = false;
 
     /** When true, the nickname will never expire due to inactivity. */
@@ -100,7 +100,7 @@ class RegisteredNick
         string $email,
         string $language,
         DateTimeImmutable $expiresAt,
-        ?DateTimeImmutable $registeredAt = null,
+        DateTimeImmutable $registeredAt,
     ): self {
         $nick = new self();
         $nick->nickname = $nickname;
@@ -110,7 +110,7 @@ class RegisteredNick
         self::assertValidEmail($email);
         $nick->email = $email;
         $nick->language = self::normalizeLanguage($language);
-        $nick->registeredAt = $registeredAt ?? new DateTimeImmutable();
+        $nick->registeredAt = $registeredAt;
         $nick->expiresAt = $expiresAt;
 
         return $nick;
@@ -184,14 +184,14 @@ class RegisteredNick
         return NickStatus::PendingDeletion === $this->status;
     }
 
-    public function markPendingDeletion(?DateTimeImmutable $at = null): void
+    public function markPendingDeletion(DateTimeImmutable $at): void
     {
         if (!$this->isRegistered()) {
             throw new LogicException('Only registered accounts can be marked for deletion.');
         }
 
         $this->status = NickStatus::PendingDeletion;
-        $this->pendingDeletionAt = $at ?? new DateTimeImmutable();
+        $this->pendingDeletionAt = $at;
     }
 
     public function restoreFromPendingDeletion(): void
@@ -214,7 +214,7 @@ class RegisteredNick
      * A permanent suspension (suspendedUntil = null) returns true.
      * A temporary suspension returns true only if suspendedUntil > now.
      */
-    public function isCurrentlySuspended(): bool
+    public function isCurrentlySuspended(DateTimeImmutable $now): bool
     {
         if (!$this->isSuspended()) {
             return false;
@@ -224,7 +224,7 @@ class RegisteredNick
             return true;
         }
 
-        return new DateTimeImmutable() < $this->suspendedUntil;
+        return $now < $this->suspendedUntil;
     }
 
     public function isForbidden(): bool
@@ -244,11 +244,11 @@ class RegisteredNick
         $this->reason = $reason;
     }
 
-    public function isExpired(): bool
+    public function isExpired(DateTimeImmutable $now): bool
     {
         return NickStatus::Pending === $this->status
             && null !== $this->expiresAt
-            && $this->expiresAt < new DateTimeImmutable();
+            && $this->expiresAt < $now;
     }
 
     public function getId(): int
@@ -376,9 +376,9 @@ class RegisteredNick
         $this->language = self::normalizeLanguage($language);
     }
 
-    public function markSeen(): void
+    public function markSeen(DateTimeImmutable $at): void
     {
-        $this->lastSeenAt = new DateTimeImmutable();
+        $this->lastSeenAt = $at;
     }
 
     public function updateQuitMessage(?string $message): void
@@ -401,14 +401,9 @@ class RegisteredNick
         $this->private = $private;
     }
 
-    /**
-     * Whether services send messages to this account as PRIVMSG (true) or NOTICE (false).
-     *
-     * @return 'PRIVMSG'|'NOTICE'
-     */
-    public function getMessageType(): string
+    public function prefersPrivateMessages(): bool
     {
-        return $this->msgPrivmsg ? 'PRIVMSG' : 'NOTICE';
+        return $this->msgPrivmsg;
     }
 
     public function switchMsg(bool $usePrivmsg): void
@@ -456,15 +451,6 @@ class RegisteredNick
         }
 
         $this->timezone = $tz;
-    }
-
-    public function verifyPassword(string $plainPassword): bool
-    {
-        if (null === $this->passwordHash) {
-            return false;
-        }
-
-        return password_verify($plainPassword, $this->passwordHash);
     }
 
     private static function assertValidEmail(?string $email): void

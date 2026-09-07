@@ -30,15 +30,16 @@ class ForbiddenVhost
     private function __construct(
         string $pattern,
         ?int $createdByNickId,
+        DateTimeImmutable $createdAt,
     ) {
         $this->setPattern($pattern);
         $this->createdByNickId = $createdByNickId;
-        $this->createdAt = new DateTimeImmutable();
+        $this->createdAt = $createdAt;
     }
 
-    public static function create(string $pattern, ?int $createdByNickId = null): self
+    public static function create(string $pattern, ?int $createdByNickId, DateTimeImmutable $createdAt): self
     {
-        return new self($pattern, $createdByNickId);
+        return new self($pattern, $createdByNickId, $createdAt);
     }
 
     public function getId(): int

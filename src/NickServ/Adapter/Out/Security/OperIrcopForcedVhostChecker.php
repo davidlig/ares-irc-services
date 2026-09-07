@@ -4,23 +4,20 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Security;
 
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Domain\OperServ\ValueObject\ForcedVhost;
+use App\Application\OperServ\Port\In\ProtectedNickQuery;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 
 final readonly class OperIrcopForcedVhostChecker implements ForcedVhostCheckerInterface
 {
-    public function __construct(private OperIrcopRepositoryInterface $ircopRepository) {}
+    public function __construct(private ProtectedNickQuery $protectedNickQuery) {}
 
     public function hasForcedVhost(int $nickId): bool
     {
-        $ircop = $this->ircopRepository->findByNickId($nickId);
-        if (null === $ircop) {
-            return false;
-        }
+        return $this->protectedNickQuery->hasForcedVhost($nickId);
+    }
 
-        $pattern = $ircop->getRole()->getForcedVhostPattern();
-
-        return null !== $pattern && '' !== $pattern && ForcedVhost::isValidPattern($pattern);
+    public function resolveForcedVhost(int $nickId, string $nickname): ?string
+    {
+        return $this->protectedNickQuery->resolveForcedVhost($nickId, $nickname);
     }
 }

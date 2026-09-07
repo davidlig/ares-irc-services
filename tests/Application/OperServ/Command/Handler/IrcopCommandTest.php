@@ -466,7 +466,14 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -520,7 +527,14 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
         $nickIdProp->setValue($nick, 42);
@@ -552,7 +566,14 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -586,7 +607,14 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -629,7 +657,14 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -690,7 +725,14 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -793,7 +835,14 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
@@ -828,7 +877,14 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
+        $nick = RegisteredNick::createPending(
+            'TestNick',
+            'hash',
+            'test@test.com',
+            'en',
+            new DateTimeImmutable('+1 day'),
+            new DateTimeImmutable()
+        );
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');

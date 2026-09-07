@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Recover;
 
+use App\NickServ\Application\Event\NickRecoveredEvent;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RecoverEventPublisher;
@@ -14,7 +15,6 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\NickServ\Domain\Event\NickPasswordChangedEvent;
 use Throwable;
 
 use function assert;
@@ -93,7 +93,7 @@ final readonly class RecoverNickHandler implements RecoverNickHandlerInterface
             return RecoverNickResult::mailDeliveryFailed();
         }
 
-        $this->tokenStore->recordRecover($command->nickname);
+        $this->tokenStore->recordRecover($command->nickname, $now);
 
         return RecoverNickResult::tokenSent($email);
     }
@@ -101,8 +101,9 @@ final readonly class RecoverNickHandler implements RecoverNickHandlerInterface
     private function consumeToken(RecoverNick $command, RegisteredNick $account): RecoverNickResult
     {
         assert(null !== $command->token);
+        $occurredAt = $this->clock->now();
 
-        if (!$this->tokenStore->consume($command->nickname, $command->token)) {
+        if (!$this->tokenStore->consume($command->nickname, $command->token, $occurredAt)) {
             return RecoverNickResult::invalidToken($command->nickname);
         }
 
@@ -116,14 +117,15 @@ final readonly class RecoverNickHandler implements RecoverNickHandlerInterface
             passwordHash: $account->getPasswordHash(),
         ));
 
-        $this->eventPublisher->publish(new NickPasswordChangedEvent(
+        $this->eventPublisher->publish(new NickRecoveredEvent(
             nickId: $account->getId(),
             nickname: $command->nickname,
-            changedByOwner: true,
+            method: 'email',
             performedBy: $command->senderNick ?? '',
             performedByNickId: $command->senderAccountId,
             performedByIp: $command->senderIp ?? '*',
             performedByHost: $command->senderHost ?? '',
+            occurredAt: $occurredAt,
         ));
 
         return RecoverNickResult::passwordReset($command->nickname, $newPassword);

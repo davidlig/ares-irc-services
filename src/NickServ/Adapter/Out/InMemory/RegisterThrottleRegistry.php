@@ -24,16 +24,16 @@ final class RegisterThrottleRegistry
         return $this->lastAttemptAt[$clientKey] ?? null;
     }
 
-    public function recordAttempt(string $clientKey, ?DateTimeImmutable $now = null): void
+    public function recordAttempt(string $clientKey, DateTimeImmutable $now): void
     {
-        $this->lastAttemptAt[$clientKey] = $now ?? new DateTimeImmutable();
+        $this->lastAttemptAt[$clientKey] = $now;
     }
 
     /**
      * Returns the number of seconds the client must wait before REGISTER is allowed again,
      * or 0 if allowed.
      */
-    public function getRemainingCooldownSeconds(string $clientKey, int $minIntervalSeconds, ?DateTimeImmutable $now = null): int
+    public function getRemainingCooldownSeconds(string $clientKey, int $minIntervalSeconds, DateTimeImmutable $now): int
     {
         if ($minIntervalSeconds <= 0) {
             return 0;
@@ -46,7 +46,6 @@ final class RegisterThrottleRegistry
         }
 
         $nextAllowedAt = $last->modify(sprintf('+%d seconds', $minIntervalSeconds));
-        $now ??= new DateTimeImmutable();
 
         return $now >= $nextAllowedAt ? 0 : $nextAllowedAt->getTimestamp() - $now->getTimestamp();
     }
@@ -55,13 +54,12 @@ final class RegisterThrottleRegistry
      * Removes entries whose cooldown has already expired (no longer affect REGISTER).
      * Returns the number of keys removed. Used by maintenance to free memory.
      */
-    public function pruneExpiredCooldowns(int $minIntervalSeconds): int
+    public function pruneExpiredCooldowns(int $minIntervalSeconds, DateTimeImmutable $now): int
     {
         if ($minIntervalSeconds <= 0) {
             return 0;
         }
 
-        $now = new DateTimeImmutable();
         $removed = 0;
 
         foreach ($this->lastAttemptAt as $clientKey => $lastAttempt) {

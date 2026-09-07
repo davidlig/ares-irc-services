@@ -4,16 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Security\Voter;
 
-use App\Application\OperServ\IrcopAccessHelper;
-use App\Application\OperServ\RootUserRegistry;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\Out\Security\IrcServiceUser;
 use App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -29,28 +24,13 @@ final class NickServSasetVoterTest extends TestCase
 {
     private NickServSasetVoter $voter;
 
-    private IrcopAccessHelper $accessHelper;
-
-    private RootUserRegistry $rootRegistry;
-
-    private OperIrcopRepositoryInterface $ircopRepository;
+    private NickServOperatorAccess $operatorAccess;
 
     protected function setUp(): void
     {
-        $this->rootRegistry = new RootUserRegistry('RootAdmin');
-        $this->ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $this->accessHelper = new IrcopAccessHelper(
-            $this->rootRegistry,
-            $this->ircopRepository,
-            $this->createStub(OperRoleRepositoryInterface::class)
-        );
-        $this->voter = new NickServSasetVoter($this->accessHelper, $this->rootRegistry, $this->ircopRepository);
-    }
-
-    #[Test]
-    public function getIrcopRepositoryReturnsConfiguredRepository(): void
-    {
-        self::assertSame($this->ircopRepository, $this->voter->getIrcopRepository());
+        $this->operatorAccess = $this->createStub(NickServOperatorAccess::class);
+        $this->operatorAccess->method('isRoot')->willReturnCallback(static fn (string $nick): bool => 'rootadmin' === $nick);
+        $this->voter = new NickServSasetVoter($this->operatorAccess);
     }
 
     #[Test]
@@ -208,25 +188,10 @@ final class NickServSasetVoterTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getId')->willReturn(1);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $roleRepository = $this->createMock(OperRoleRepositoryInterface::class);
-        $roleRepository->expects(self::once())->method('hasPermission')->with(1, NickServPermission::SASET)->willReturn(true);
-
-        $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepository->expects(self::once())->method('findByNickId')->with(1)->willReturn($ircop);
-
-        $accessHelper = new IrcopAccessHelper(
-            $this->rootRegistry,
-            $ircopRepository,
-            $roleRepository
-        );
-
-        $voter = new NickServSasetVoter($accessHelper, $this->rootRegistry, $ircopRepository);
+        $operatorAccess = $this->createMock(NickServOperatorAccess::class);
+        $operatorAccess->expects(self::once())->method('isRoot')->with('operuser')->willReturn(false);
+        $operatorAccess->expects(self::once())->method('hasPermission')->with(1, 'operuser', NickServPermission::SASET)->willReturn(true);
+        $voter = new NickServSasetVoter($operatorAccess);
 
         $context = $this->createNickServContext($sender, $account);
         $user = new IrcServiceUser($sender);
@@ -255,25 +220,10 @@ final class NickServSasetVoterTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getId')->willReturn(1);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $roleRepository = $this->createMock(OperRoleRepositoryInterface::class);
-        $roleRepository->expects(self::once())->method('hasPermission')->with(1, NickServPermission::SASET)->willReturn(false);
-
-        $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepository->expects(self::once())->method('findByNickId')->with(1)->willReturn($ircop);
-
-        $accessHelper = new IrcopAccessHelper(
-            $this->rootRegistry,
-            $ircopRepository,
-            $roleRepository
-        );
-
-        $voter = new NickServSasetVoter($accessHelper, $this->rootRegistry, $ircopRepository);
+        $operatorAccess = $this->createMock(NickServOperatorAccess::class);
+        $operatorAccess->expects(self::once())->method('isRoot')->with('operuser')->willReturn(false);
+        $operatorAccess->expects(self::once())->method('hasPermission')->with(1, 'operuser', NickServPermission::SASET)->willReturn(false);
+        $voter = new NickServSasetVoter($operatorAccess);
 
         $context = $this->createNickServContext($sender, $account);
         $user = new IrcServiceUser($sender);
@@ -302,18 +252,10 @@ final class NickServSasetVoterTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
-        $roleRepository = $this->createStub(OperRoleRepositoryInterface::class);
-
-        $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepository->expects(self::once())->method('findByNickId')->with(1)->willReturn(null);
-
-        $accessHelper = new IrcopAccessHelper(
-            $this->rootRegistry,
-            $ircopRepository,
-            $roleRepository
-        );
-
-        $voter = new NickServSasetVoter($accessHelper, $this->rootRegistry, $ircopRepository);
+        $operatorAccess = $this->createMock(NickServOperatorAccess::class);
+        $operatorAccess->expects(self::once())->method('isRoot')->with('operuser')->willReturn(false);
+        $operatorAccess->expects(self::once())->method('hasPermission')->with(1, 'operuser', NickServPermission::SASET)->willReturn(false);
+        $voter = new NickServSasetVoter($operatorAccess);
 
         $context = $this->createNickServContext($sender, $account);
         $user = new IrcServiceUser($sender);

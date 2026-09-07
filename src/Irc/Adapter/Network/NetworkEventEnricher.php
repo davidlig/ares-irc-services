@@ -18,6 +18,7 @@ use App\Irc\Adapter\Network\Event\UserMetadataReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Application\Port\In\SkipIdentifiedModeStripRegistry;
 use App\Irc\Domain\Event\ChannelModesChangedEvent;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
 use App\Irc\Domain\Event\ChannelTopicChangedEvent;
@@ -55,7 +56,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         private ChannelRepositoryInterface $channelRepository,
         private NetworkUserRepositoryInterface $userRepository,
         private EventDispatcherInterface $eventDispatcher,
-        private SkipIdentifiedModeStripRegistryInterface $skipIdentifiedModeStripRegistry,
+        private SkipIdentifiedModeStripRegistry $skipIdentifiedModeStripRegistry,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private ActiveConnectionHolderInterface $connectionHolder,
         private LoggerInterface $logger = new NullLogger(),

@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Service;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\TranslationInterface;
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\NickServ\Application\Port\Out\NickNetworkActions;
+use App\NickServ\Application\Port\Out\NicknameReservation;
+use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
+use App\NickServ\Application\Port\Out\NickProtectionNotifier;
+use App\NickServ\Application\Port\Out\NickServActivitySink;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use Psr\Log\LoggerInterface;
 
 use function sprintf;
 
@@ -19,11 +18,10 @@ readonly class ForbiddenNickService
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickForceService $forceService,
-        private NetworkUserLookupPort $userLookup,
-        private NickNetworkActions $notifier,
-        private TranslationInterface $translator,
-        private ActiveConnectionHolderInterface $connectionHolder,
-        private LoggerInterface $logger,
+        private NickNetworkUserLookup $userLookup,
+        private NickProtectionNotifier $notifier,
+        private NicknameReservation $nicknameReservation,
+        private NickServActivitySink $logger,
         private string $defaultLanguage = 'en',
     ) {}
 
@@ -103,14 +101,7 @@ readonly class ForbiddenNickService
             $nickname = $user->nick ?? 'Unknown';
         }
 
-        $message = $this->translator->trans(
-            'protection.nick_forbidden',
-            ['%nickname%' => $nickname, '%reason%' => $reason],
-            'nickserv',
-            $this->defaultLanguage,
-        );
-
-        $this->notifier->sendMessage($uid, $message, 'NOTICE');
+        $this->notifier->notifyForbidden($uid, $nickname, $reason, $this->defaultLanguage);
         $this->forceService->forceGuestNick($uid, null, 'forbidden-nick');
 
         $this->applyNickReservation($nickname, $reason);
@@ -118,39 +109,11 @@ readonly class ForbiddenNickService
 
     private function applyNickReservation(string $nickname, string $reason): void
     {
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            $this->logger->debug('ForbiddenNick: no protocol module, skip nick reservation');
-
-            return;
-        }
-
-        $reservation = $module->getNickReservation();
-        if (null === $reservation) {
-            $this->logger->debug('ForbiddenNick: protocol does not support nick reservation');
-
-            return;
-        }
-
-        $reservation->reserveNick($nickname, $reason);
+        $this->nicknameReservation->reserve($nickname, $reason);
     }
 
     private function removeNickReservation(string $nickname): void
     {
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            $this->logger->debug('ForbiddenNick: no protocol module, skip nick release');
-
-            return;
-        }
-
-        $reservation = $module->getNickReservation();
-        if (null === $reservation) {
-            $this->logger->debug('ForbiddenNick: protocol does not support nick reservation');
-
-            return;
-        }
-
-        $reservation->releaseNick($nickname);
+        $this->nicknameReservation->release($nickname);
     }
 }

@@ -8,7 +8,8 @@ use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Infrastructure\MemoServ\Subscriber\MemoServNickDropCleanupSubscriber;
-use App\NickServ\Domain\Event\NickDropCleanupEvent;
+use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -58,6 +59,7 @@ final class MemoServNickDropCleanupSubscriberTest extends TestCase
             nickname: 'TestUser',
             nicknameLower: 'testuser',
             reason: 'manual',
+            occurredAt: new DateTimeImmutable(),
         );
 
         $this->memoRepository

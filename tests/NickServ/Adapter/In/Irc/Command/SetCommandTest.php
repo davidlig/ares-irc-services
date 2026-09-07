@@ -7,7 +7,6 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\SetCommand;
@@ -25,15 +24,19 @@ use App\NickServ\Adapter\Out\InMemory\PendingEmailChangeRegistry;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
+use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -134,13 +137,22 @@ final class SetCommandTest extends TestCase
     public function doesNothingWhenSenderNull(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
         $translator = $this->createStub(TranslationInterface::class);
@@ -153,13 +165,22 @@ final class SetCommandTest extends TestCase
     public function replyNotIdentifiedWhenSenderAccountNull(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -180,13 +201,22 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -207,13 +237,22 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -237,13 +276,22 @@ final class SetCommandTest extends TestCase
         $account->method('getLanguage')->willReturn('es');
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -268,13 +316,22 @@ final class SetCommandTest extends TestCase
         $nickRepo->expects(self::once())->method('save')->with($account);
         $passwordHasher = $this->createStub(PasswordHasher::class);
         $passwordHasher->method('hash')->willReturn('newhash');
-        $setPassword = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -303,11 +360,13 @@ final class SetCommandTest extends TestCase
         $logger = $this->createStub(LoggerInterface::class);
         $translatorForHandler = $this->createStub(TranslationInterface::class);
         $translatorForHandler->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
         $setEmail = new SetEmailHandler(
             $nickRepo,
             new PendingEmailChangeRegistry(),
             $messageBus,
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
             $translatorForHandler,
             $logger,
             $this->createStub(EventBusInterface::class),
@@ -316,7 +375,7 @@ final class SetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -339,13 +398,22 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('switchPrivate')->with(true);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -368,13 +436,22 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('switchMsg')->with(true);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -397,13 +474,22 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('changeTimezone')->with('America/New_York');
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -426,13 +512,22 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('changeVhost')->with('vhost.example.com');
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -456,13 +551,22 @@ final class SetCommandTest extends TestCase
         $account->method('getLanguage')->willReturn('es');
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -483,13 +587,22 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -510,13 +623,22 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -538,13 +660,22 @@ final class SetCommandTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getEmail')->willReturn('old@example.com');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -570,13 +701,22 @@ final class SetCommandTest extends TestCase
         $existingAccount->method('getNickname')->willReturn('OtherUser');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByEmail')->willReturn($existingAccount);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -597,13 +737,22 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -626,13 +775,22 @@ final class SetCommandTest extends TestCase
         $account->method('getLanguage')->willReturn('en');
         $account->method('changeLanguage')->willThrowException(new InvalidArgumentException('Unsupported language'));
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -653,13 +811,22 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -680,13 +847,22 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -707,13 +883,22 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -736,13 +921,22 @@ final class SetCommandTest extends TestCase
         $account->method('getTimezone')->willReturn('UTC');
         $account->method('changeTimezone')->willThrowException(new InvalidArgumentException('Invalid timezone'));
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -763,13 +957,22 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -794,13 +997,22 @@ final class SetCommandTest extends TestCase
         $existingAccount->method('getId')->willReturn(2);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByVhost')->willReturn($existingAccount);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -823,13 +1035,22 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('switchPrivate')->with(false);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -852,13 +1073,22 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('switchMsg')->with(false);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -881,13 +1111,22 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('changeTimezone')->with(null);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -910,13 +1149,22 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('changeVhost')->with(null);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -936,13 +1184,22 @@ final class SetCommandTest extends TestCase
     public function getNameReturnsSet(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertSame('SET', $cmd->getName());
@@ -952,13 +1209,22 @@ final class SetCommandTest extends TestCase
     public function getAliasesReturnsEmptyArray(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertSame([], $cmd->getAliases());
@@ -968,13 +1234,22 @@ final class SetCommandTest extends TestCase
     public function getMinArgsReturnsTwo(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertSame(2, $cmd->getMinArgs());
@@ -984,13 +1259,22 @@ final class SetCommandTest extends TestCase
     public function getSyntaxKeyReturnsSetSyntax(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertSame('set.syntax', $cmd->getSyntaxKey());
@@ -1000,13 +1284,22 @@ final class SetCommandTest extends TestCase
     public function getHelpKeyReturnsSetHelp(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertSame('set.help', $cmd->getHelpKey());
@@ -1016,13 +1309,22 @@ final class SetCommandTest extends TestCase
     public function getOrderReturnsFour(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertSame(4, $cmd->getOrder());
@@ -1032,13 +1334,22 @@ final class SetCommandTest extends TestCase
     public function getShortDescKeyReturnsSetShort(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertSame('set.short', $cmd->getShortDescKey());
@@ -1048,13 +1359,22 @@ final class SetCommandTest extends TestCase
     public function getSubCommandHelpReturnsExpectedOptions(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         $subCommands = $cmd->getSubCommandHelp();
@@ -1073,13 +1393,22 @@ final class SetCommandTest extends TestCase
     public function isOperOnlyReturnsFalse(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertFalse($cmd->isOperOnly());
@@ -1089,13 +1418,22 @@ final class SetCommandTest extends TestCase
     public function getRequiredPermissionReturnsIdentifiedOwner(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertSame(NickServPermission::IDENTIFIED_OWNER, $cmd->getRequiredPermission());
@@ -1105,13 +1443,22 @@ final class SetCommandTest extends TestCase
     public function getHelpParamsReturnsEmptyArray(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
         self::assertSame([], $cmd->getHelpParams());
@@ -1122,13 +1469,22 @@ final class SetCommandTest extends TestCase
     {
         $sessionRegistry = new SessionLanguageRegistry();
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -1149,13 +1505,22 @@ final class SetCommandTest extends TestCase
     public function languageForUnregisteredyptaxErrorWhenEmptyValue(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -1175,13 +1540,22 @@ final class SetCommandTest extends TestCase
     public function languageForUnregisteredRepliesInvalidWhenUnsupportedLanguage(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
+        $setEmail = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(VerificationTokenGenerator::class),
+            $this->createStub(Clock::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class)
+        );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -1195,5 +1569,13 @@ final class SetCommandTest extends TestCase
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['LANGUAGE', 'xx'], $notifier, $translator));
 
         self::assertSame(['set.language.invalid'], $messages);
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
     }
 }

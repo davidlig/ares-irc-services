@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Service;
 
-use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Application\Model\NetworkUser;
 
 /**
  * Holds burst state: whether the initial network burst is complete and users
@@ -15,7 +15,7 @@ class BurstState
 {
     private bool $complete = false;
 
-    /** @var SenderView[] Users received during the burst, processed after EOS. */
+    /** @var NetworkUser[] Users received during the burst, processed after EOS. */
     private array $pendingUsers = [];
 
     public function isComplete(): bool
@@ -28,7 +28,7 @@ class BurstState
         $this->complete = true;
     }
 
-    public function addPending(SenderView $user): void
+    public function addPending(NetworkUser $user): void
     {
         $this->pendingUsers[] = $user;
     }
@@ -36,7 +36,7 @@ class BurstState
     /**
      * Returns and clears the pending users list.
      *
-     * @return SenderView[]
+     * @return NetworkUser[]
      */
     public function takePending(): array
     {

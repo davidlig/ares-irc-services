@@ -53,6 +53,7 @@ final class UdbStoreInitializerTest extends TestCase
             'david@example.com',
             'en',
             new DateTimeImmutable('+1 hour'),
+            registeredAt: new DateTimeImmutable(),
         );
         $nick->activate();
         new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($nick, 7);
