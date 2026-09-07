@@ -2,13 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\MemoServ\Application\Port\Out;
+namespace App\MemoServ\Adapter\In\Irc;
 
-interface ServiceUserPreferences
+interface MemoServUserPresentationPreferences
 {
     public function languageFor(string $uid, string $nickname, ?string $accountLanguage = null): string;
-
-    public function defaultLanguage(): string;
 
     public function prefersPrivateMessages(string $nickname): bool;
 }

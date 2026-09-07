@@ -8,5 +8,6 @@ enum DelMemoOutcome
 {
     case Deleted;
     case ChannelNotRegistered;
+    case AccessDenied;
     case NotFound;
 }

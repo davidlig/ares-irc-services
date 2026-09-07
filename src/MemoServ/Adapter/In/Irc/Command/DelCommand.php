@@ -113,6 +113,13 @@ final readonly class DelCommand implements MemoServCommandInterface
             case DelMemoOutcome::ChannelNotRegistered:
                 $context->reply('del.channel_not_registered', ['channel' => $targetChannel ?? '']);
                 break;
+
+            case DelMemoOutcome::AccessDenied:
+                $context->reply('error.insufficient_access', [
+                    'operation' => 'DEL',
+                    'channel' => $result->channelName ?? $targetChannel ?? '',
+                ]);
+                break;
         }
     }
 }

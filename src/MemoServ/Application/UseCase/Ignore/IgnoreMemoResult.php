@@ -89,9 +89,12 @@ final readonly class IgnoreMemoResult
         );
     }
 
-    public static function cannotIgnoreSelf(): self
+    public static function accessDenied(string $channelName): self
     {
-        return new self(outcome: IgnoreMemoOutcome::CannotIgnoreSelf);
+        return new self(
+            outcome: IgnoreMemoOutcome::AccessDenied,
+            channelName: $channelName,
+        );
     }
 
     public static function alreadyIgnored(string $targetNick): self

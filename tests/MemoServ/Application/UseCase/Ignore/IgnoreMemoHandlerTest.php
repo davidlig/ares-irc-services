@@ -72,7 +72,11 @@ final class IgnoreMemoHandlerTest extends TestCase
         $memoIgnore = $this->createMock(MemoIgnoreRepositoryInterface::class);
         $memoIgnore->method('findByTargetNickAndIgnored')->willReturn(null);
         $memoIgnore->method('countByTargetNick')->willReturn(0);
-        $memoIgnore->expects(self::once())->method('save')->with(self::isInstanceOf(MemoIgnore::class));
+        $memoIgnore->expects(self::once())->method('save')->with(self::callback(
+            static fn (MemoIgnore $ignore): bool => 1 === $ignore->getTargetNickId()
+                && null === $ignore->getTargetChannelId()
+                && 2 === $ignore->getIgnoredNickId(),
+        ));
         $this->memoIgnoreRepository = $memoIgnore;
 
         $handler = $this->createHandler();
@@ -96,16 +100,27 @@ final class IgnoreMemoHandlerTest extends TestCase
     }
 
     #[Test]
-    public function addNickReturnsCannotIgnoreSelf(): void
+    public function addNickAllowsIgnoringSelf(): void
     {
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
         $userAccountPort->method('findAccountByNick')->willReturn(new MemoAccountView(1, 'Alice', 'en'));
         $this->userAccountPort = $userAccountPort;
 
+        $memoIgnore = $this->createMock(MemoIgnoreRepositoryInterface::class);
+        $memoIgnore->expects(self::once())->method('findByTargetNickAndIgnored')->with(1, 1)->willReturn(null);
+        $memoIgnore->expects(self::once())->method('countByTargetNick')->with(1)->willReturn(0);
+        $memoIgnore->expects(self::once())->method('save')->with(self::callback(
+            static fn (MemoIgnore $ignore): bool => 1 === $ignore->getTargetNickId()
+                && null === $ignore->getTargetChannelId()
+                && 1 === $ignore->getIgnoredNickId(),
+        ));
+        $this->memoIgnoreRepository = $memoIgnore;
+
         $handler = $this->createHandler();
         $result = $handler->handle(new IgnoreMemo(1, IgnoreMemoAction::Add, null, 'Alice'));
 
-        self::assertSame(IgnoreMemoOutcome::CannotIgnoreSelf, $result->outcome);
+        self::assertSame(IgnoreMemoOutcome::AddedNick, $result->outcome);
+        self::assertSame('Alice', $result->targetNick);
     }
 
     #[Test]
@@ -148,7 +163,7 @@ final class IgnoreMemoHandlerTest extends TestCase
     {
         $channelPort = $this->createMock(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(10, '#Ares'));
-        $channelPort->expects(self::once())->method('requireManageAccess')->with(10, 1, '#ares', 'IGNORE');
+        $channelPort->expects(self::once())->method('canManageChannelMemos')->with(10, 1)->willReturn(true);
         $this->channelPort = $channelPort;
 
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
@@ -158,7 +173,11 @@ final class IgnoreMemoHandlerTest extends TestCase
         $memoIgnore = $this->createMock(MemoIgnoreRepositoryInterface::class);
         $memoIgnore->method('findByTargetChannelAndIgnored')->willReturn(null);
         $memoIgnore->method('countByTargetChannel')->willReturn(0);
-        $memoIgnore->expects(self::once())->method('save')->with(self::isInstanceOf(MemoIgnore::class));
+        $memoIgnore->expects(self::once())->method('save')->with(self::callback(
+            static fn (MemoIgnore $ignore): bool => null === $ignore->getTargetNickId()
+                && 10 === $ignore->getTargetChannelId()
+                && 2 === $ignore->getIgnoredNickId(),
+        ));
         $this->memoIgnoreRepository = $memoIgnore;
 
         $handler = $this->createHandler();
@@ -174,6 +193,7 @@ final class IgnoreMemoHandlerTest extends TestCase
     {
         $channelPort = $this->createStub(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(10, '#Ares'));
+        $channelPort->method('canManageChannelMemos')->willReturn(true);
         $this->channelPort = $channelPort;
 
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
@@ -195,6 +215,7 @@ final class IgnoreMemoHandlerTest extends TestCase
     {
         $channelPort = $this->createStub(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(10, '#Ares'));
+        $channelPort->method('canManageChannelMemos')->willReturn(true);
         $this->channelPort = $channelPort;
 
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
@@ -267,7 +288,7 @@ final class IgnoreMemoHandlerTest extends TestCase
     {
         $channelPort = $this->createMock(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(10, '#Ares'));
-        $channelPort->expects(self::once())->method('requireManageAccess')->with(10, 1, '#ares', 'IGNORE');
+        $channelPort->expects(self::once())->method('canManageChannelMemos')->with(10, 1)->willReturn(true);
         $this->channelPort = $channelPort;
 
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
@@ -293,6 +314,7 @@ final class IgnoreMemoHandlerTest extends TestCase
     {
         $channelPort = $this->createStub(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(10, '#Ares'));
+        $channelPort->method('canManageChannelMemos')->willReturn(true);
         $this->channelPort = $channelPort;
 
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
@@ -332,8 +354,9 @@ final class IgnoreMemoHandlerTest extends TestCase
     #[Test]
     public function listChannelIgnoresSuccessfully(): void
     {
-        $channelPort = $this->createStub(MemoChannelPort::class);
+        $channelPort = $this->createMock(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(10, '#Ares'));
+        $channelPort->expects(self::never())->method('canManageChannelMemos');
         $this->channelPort = $channelPort;
 
         $ignore1 = new MemoIgnore(null, 10, 2);
@@ -351,5 +374,27 @@ final class IgnoreMemoHandlerTest extends TestCase
         self::assertSame(IgnoreMemoOutcome::ListChannel, $result->outcome);
         self::assertSame('#Ares', $result->channelName);
         self::assertSame(['Bob'], $result->ignoredNicks);
+    }
+
+    #[Test]
+    public function addChannelReturnsAccessDeniedWithoutResolvingTargetOrPersisting(): void
+    {
+        $channelPort = $this->createStub(MemoChannelPort::class);
+        $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(10, '#Ares'));
+        $channelPort->method('canManageChannelMemos')->willReturn(false);
+        $this->channelPort = $channelPort;
+
+        $userAccountPort = $this->createMock(MemoUserAccountPort::class);
+        $userAccountPort->expects(self::never())->method('findAccountByNick');
+        $this->userAccountPort = $userAccountPort;
+
+        $memoIgnore = $this->createMock(MemoIgnoreRepositoryInterface::class);
+        $memoIgnore->expects(self::never())->method('save');
+        $this->memoIgnoreRepository = $memoIgnore;
+
+        $result = $this->createHandler()->handle(new IgnoreMemo(1, IgnoreMemoAction::Add, '#ares', 'Bob'));
+
+        self::assertSame(IgnoreMemoOutcome::AccessDenied, $result->outcome);
+        self::assertSame('#Ares', $result->channelName);
     }
 }

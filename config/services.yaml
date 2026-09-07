@@ -687,7 +687,6 @@ services:
 
     App\MemoServ\Adapter\In\Irc\Subscriber\MemoServCommandListener:
         arguments:
-            $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
 
@@ -1248,8 +1247,8 @@ services:
     App\MemoServ\Adapter\In\Irc\MemoServService:
         arguments:
             $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
-            $languageResolver: '@App\MemoServ\Application\Port\Out\ServiceUserPreferences'
-            $messageTypeResolver: '@App\MemoServ\Application\Port\Out\ServiceUserPreferences'
+            $languageResolver: '@App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences'
+            $messageTypeResolver: '@App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences'
             $authorizationContext: '@App\MemoServ\Adapter\In\Irc\MemoAuthorizationContextInterface'
             $authorizationChecker: '@App\MemoServ\Adapter\In\Irc\MemoAuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
@@ -1279,6 +1278,9 @@ services:
 
     App\MemoServ\Application\Port\Out\MemoChannelPort:
         alias: App\MemoServ\Adapter\Out\ChanServ\ChanServMemoChannelAdapter
+
+    App\Application\ChanServ\Port\In\MemoChannelQuery:
+        alias: App\Application\ChanServ\MemoChannelQueryService
 
     # MemoServ Use Cases
     App\MemoServ\Application\UseCase\Send\SendMemoHandler:
@@ -1646,6 +1648,9 @@ services:
         arguments:
             $tokenStorage: '@Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage'
 
+    App\NickServ\Application\Port\In\IrcAuthorizationContext:
+        alias: App\NickServ\Application\Port\Out\AuthorizationContextInterface
+
     App\NickServ\Application\Port\Out\AuthorizationCheckerInterface:
         class: App\NickServ\Adapter\Out\Security\SymfonyAuthorizationCheckerAdapter
         arguments:
@@ -1769,7 +1774,7 @@ services:
     App\Application\ChanServ\Maintenance\PurgeInactiveChannelsTask:
         arguments:
             $channelRepository:    '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $eventDispatcher:     '@App\Application\Port\EventBusInterface'
+            $dropService:          '@App\Application\ChanServ\Service\ChanDropService'
             $logger:               '@monolog.logger.maintenance'
             $intervalSeconds:      '%maintenance.interval%'
             $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
@@ -1854,7 +1859,7 @@ services:
     App\Application\ChanServ\Port\Out\ServiceUserPreferences:
         alias: App\Infrastructure\ChanServ\User\NickServUserPreferencesAdapter
 
-    App\MemoServ\Application\Port\Out\ServiceUserPreferences:
+    App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences:
         alias: App\MemoServ\Adapter\Out\NickServ\NickServUserPreferencesAdapter
 
     App\Application\OperServ\Port\Out\ServiceUserPreferences:

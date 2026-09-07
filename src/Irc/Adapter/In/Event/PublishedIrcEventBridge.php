@@ -9,9 +9,11 @@ use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
+use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent as PublishedUserJoinedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
 use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
+use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\Irc\Domain\Event\UserModeChangedEvent;
 use App\Irc\Domain\Event\UserNickChangedEvent;
 use App\Irc\Domain\Event\UserQuitNetworkEvent;
@@ -29,6 +31,7 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
             UserNickChangedEvent::class => ['publishNicknameChanged', -10],
             UserModeChangedEvent::class => ['publishModesChanged', -10],
             UserQuitNetworkEvent::class => ['publishUserLeft', -10],
+            UserJoinedChannelEvent::class => ['publishUserJoinedChannel', -10],
             NetworkBurstCompleteEvent::class => [
                 ['publishServiceIntroductionRequested', 100],
                 ['publishNetworkSynchronizationCompleted', -256],
@@ -61,6 +64,14 @@ final readonly class PublishedIrcEventBridge implements EventSubscriberInterface
             $event->displayHost,
             $event->hostname,
             $event->ipBase64,
+        ));
+    }
+
+    public function publishUserJoinedChannel(UserJoinedChannelEvent $event): void
+    {
+        $this->eventDispatcher->dispatch(new PublishedUserJoinedChannelEvent(
+            $event->uid->value,
+            $event->channel->value,
         ));
     }
 

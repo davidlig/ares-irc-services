@@ -157,10 +157,14 @@ final class MemoIgnoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $ignore1 = new MemoIgnore(targetNickId: 1, targetChannelId: null, ignoredNickId: 100);
         $ignore2 = new MemoIgnore(targetNickId: 2, targetChannelId: null, ignoredNickId: 1);
         $ignore3 = new MemoIgnore(targetNickId: 3, targetChannelId: null, ignoredNickId: 100);
+        $ignore4 = new MemoIgnore(targetNickId: null, targetChannelId: 10, ignoredNickId: 1);
+        $ignore5 = new MemoIgnore(targetNickId: null, targetChannelId: 20, ignoredNickId: 100);
 
         $this->repository->save($ignore1);
         $this->repository->save($ignore2);
         $this->repository->save($ignore3);
+        $this->repository->save($ignore4);
+        $this->repository->save($ignore5);
         $this->flushAndClear();
 
         $this->repository->deleteAllForNick(1);
@@ -169,6 +173,8 @@ final class MemoIgnoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertNull($this->repository->findByTargetNickAndIgnored(1, 100));
         self::assertNull($this->repository->findByTargetNickAndIgnored(2, 1));
         self::assertCount(1, $this->repository->listByTargetNick(3));
+        self::assertSame([], $this->repository->listByTargetChannel(10));
+        self::assertCount(1, $this->repository->listByTargetChannel(20));
     }
 
     #[Test]

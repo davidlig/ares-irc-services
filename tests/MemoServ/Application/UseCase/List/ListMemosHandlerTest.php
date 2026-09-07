@@ -65,16 +65,16 @@ final class ListMemosHandlerTest extends TestCase
         self::assertCount(2, $result->items);
         self::assertSame(1, $result->items[0]->index);
         self::assertSame('Bob', $result->items[0]->senderDisplay);
-        self::assertSame('First memo', $result->items[0]->preview);
+        self::assertSame('First memo', $result->items[0]->message);
         self::assertSame(2, $result->items[1]->index);
         self::assertSame('Charlie', $result->items[1]->senderDisplay);
-        self::assertStringEndsWith('…', $result->items[1]->preview);
+        self::assertSame(str_repeat('a', 60), $result->items[1]->message);
     }
 
     #[Test]
     public function listsNickMemosUsesIdFallbackWhenNicknameNotFound(): void
     {
-        $memo = new Memo(1, null, 99, 'Test');
+        $memo = new Memo(1, null, 99, 'Test', new DateTimeImmutable());
         $memoRepo = $this->createStub(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetNick')->willReturn([$memo]);
         $this->memoRepository = $memoRepo;
@@ -109,10 +109,10 @@ final class ListMemosHandlerTest extends TestCase
     {
         $channelPort = $this->createMock(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(5, '#Ares'));
-        $channelPort->expects(self::once())->method('requireReadAccess')->with(5, 1, '#ares', 'LIST');
+        $channelPort->expects(self::once())->method('canReadChannelMemos')->with(5, 1)->willReturn(true);
         $this->channelPort = $channelPort;
 
-        $memo = new Memo(null, 5, 2, 'Channel message');
+        $memo = new Memo(null, 5, 2, 'Channel message', new DateTimeImmutable());
         $memoRepo = $this->createStub(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetChannel')->willReturn([$memo]);
         $this->memoRepository = $memoRepo;
@@ -141,5 +141,23 @@ final class ListMemosHandlerTest extends TestCase
 
         self::assertSame(ListMemosOutcome::ChannelNotRegistered, $result->outcome);
         self::assertSame('#unknown', $result->channelName);
+    }
+
+    #[Test]
+    public function returnsAccessDeniedWithoutLoadingChannelMemos(): void
+    {
+        $channelPort = $this->createStub(MemoChannelPort::class);
+        $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(5, '#Ares'));
+        $channelPort->method('canReadChannelMemos')->willReturn(false);
+        $this->channelPort = $channelPort;
+
+        $memoRepository = $this->createMock(MemoRepositoryInterface::class);
+        $memoRepository->expects(self::never())->method('findByTargetChannel');
+        $this->memoRepository = $memoRepository;
+
+        $result = $this->createHandler()->handle(new ListMemos(1, 'Alice', '#ares'));
+
+        self::assertSame(ListMemosOutcome::AccessDenied, $result->outcome);
+        self::assertSame('#Ares', $result->channelName);
     }
 }

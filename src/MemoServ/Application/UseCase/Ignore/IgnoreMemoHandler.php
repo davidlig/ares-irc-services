@@ -32,7 +32,9 @@ final readonly class IgnoreMemoHandler implements IgnoreMemoHandlerInterface
             }
 
             if (IgnoreMemoAction::List !== $command->action) {
-                $this->channelPort->requireManageAccess($channel->id, $command->senderNickId, $command->channelName, 'IGNORE');
+                if (!$this->channelPort->canManageChannelMemos($channel->id, $command->senderNickId)) {
+                    return IgnoreMemoResult::accessDenied($channel->name);
+                }
             }
         }
 
@@ -62,10 +64,6 @@ final readonly class IgnoreMemoHandler implements IgnoreMemoHandlerInterface
             $this->memoIgnoreRepository->save(new MemoIgnore(null, $channel->id, $target->id));
 
             return IgnoreMemoResult::addedChannel($channel->name, $target->nickname);
-        }
-
-        if ($target->id === $command->senderNickId) {
-            return IgnoreMemoResult::cannotIgnoreSelf();
         }
 
         if (null !== $this->memoIgnoreRepository->findByTargetNickAndIgnored($command->senderNickId, $target->id)) {

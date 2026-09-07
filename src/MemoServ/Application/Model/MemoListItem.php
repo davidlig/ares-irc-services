@@ -12,7 +12,7 @@ final readonly class MemoListItem
         public int $index,
         public string $senderDisplay,
         public DateTimeImmutable $createdAt,
-        public string $preview,
+        public string $message,
         public bool $isRead,
     ) {}
 }

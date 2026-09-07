@@ -167,8 +167,8 @@ final class ListCommandTest extends TestCase
         $longMessage = str_repeat('x', 60);
 
         $items = [
-            new MemoListItem(index: 1, senderDisplay: 'SenderOne', createdAt: $date, preview: 'Short message', isRead: false),
-            new MemoListItem(index: 2, senderDisplay: 'SenderTwo', createdAt: $date, preview: $longMessage . '…', isRead: true),
+            new MemoListItem(index: 1, senderDisplay: 'SenderOne', createdAt: $date, message: "Short\nmessage", isRead: false),
+            new MemoListItem(index: 2, senderDisplay: 'SenderTwo', createdAt: $date, message: $longMessage, isRead: true),
         ];
 
         $handler = $this->createMock(ListMemosHandlerInterface::class);
@@ -189,7 +189,27 @@ final class ListCommandTest extends TestCase
         self::assertStringContainsString('Short message', $replies[1]);
         self::assertStringNotContainsString('*', $replies[2]);
         self::assertStringContainsString('SenderTwo', $replies[2]);
-        self::assertStringContainsString('…', $replies[2]);
+        self::assertStringContainsString(str_repeat('x', 50) . '…', $replies[2]);
+        self::assertStringNotContainsString(str_repeat('x', 51), $replies[2]);
         self::assertSame('list.footer', $replies[3]);
+    }
+
+    #[Test]
+    public function presentsAccessDeniedWithIrcOperationAndChannel(): void
+    {
+        $handler = $this->createStub(ListMemosHandlerInterface::class);
+        $handler->method('handle')->willReturn(ListMemosResult::accessDenied('#Ares'));
+
+        $command = new ListCommand($handler);
+        $replies = [];
+        $context = $this->createContext(
+            new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip'),
+            new MemoAccountView(1, 'TestUser', 'en'),
+            ['#ares'],
+            $replies,
+        );
+        $command->execute($context);
+
+        self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: LIST]'], $replies);
     }
 }

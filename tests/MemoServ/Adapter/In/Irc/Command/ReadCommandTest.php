@@ -160,11 +160,15 @@ final class ReadCommandTest extends TestCase
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $account = new MemoAccountView(1, 'TestUser', 'en');
         $date = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        $before = new DateTimeImmutable();
 
         $handler = $this->createMock(ReadMemoHandlerInterface::class);
         $handler->expects(self::once())
             ->method('handle')
-            ->with(self::callback(static fn (ReadMemo $dto): bool => 1 === $dto->senderNickId && null === $dto->channelName && 3 === $dto->index))
+            ->with(self::callback(static fn (ReadMemo $dto): bool => 1 === $dto->senderNickId
+                && null === $dto->channelName
+                && 3 === $dto->index
+                && $dto->occurredAt->getTimestamp() >= $before->getTimestamp()))
             ->willReturn(ReadMemoResult::success(3, 'SenderNick', 'Test content', $date));
 
         $command = new ReadCommand($handler);
@@ -184,11 +188,15 @@ final class ReadCommandTest extends TestCase
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $account = new MemoAccountView(1, 'TestUser', 'en');
         $date = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+        $before = new DateTimeImmutable();
 
         $handler = $this->createMock(ReadMemoHandlerInterface::class);
         $handler->expects(self::once())
             ->method('handle')
-            ->with(self::callback(static fn (ReadMemo $dto): bool => 1 === $dto->senderNickId && '#chan' === $dto->channelName && 1 === $dto->index))
+            ->with(self::callback(static fn (ReadMemo $dto): bool => 1 === $dto->senderNickId
+                && '#chan' === $dto->channelName
+                && 1 === $dto->index
+                && $dto->occurredAt->getTimestamp() >= $before->getTimestamp()))
             ->willReturn(ReadMemoResult::success(1, 'SenderNick', 'Channel memo', $date));
 
         $command = new ReadCommand($handler);
@@ -226,5 +234,24 @@ final class ReadCommandTest extends TestCase
         $context = $this->createContext($sender, $account, ['#unregistered', '1'], $replies);
         $command->execute($context);
         self::assertSame(['read.channel_not_registered [%channel%: #unregistered]'], $replies);
+    }
+
+    #[Test]
+    public function presentsAccessDeniedWithIrcOperationAndChannel(): void
+    {
+        $handler = $this->createStub(ReadMemoHandlerInterface::class);
+        $handler->method('handle')->willReturn(ReadMemoResult::accessDenied('#Ares'));
+
+        $command = new ReadCommand($handler);
+        $replies = [];
+        $context = $this->createContext(
+            new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip'),
+            new MemoAccountView(1, 'TestUser', 'en'),
+            ['#ares', '1'],
+            $replies,
+        );
+        $command->execute($context);
+
+        self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: READ]'], $replies);
     }
 }

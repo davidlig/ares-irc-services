@@ -26,7 +26,9 @@ final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
                 return ReadMemoResult::channelNotRegistered($command->channelName);
             }
 
-            $this->channelPort->requireReadAccess($channel->id, $command->senderNickId, $command->channelName, 'READ');
+            if (!$this->channelPort->canReadChannelMemos($channel->id, $command->senderNickId)) {
+                return ReadMemoResult::accessDenied($channel->name);
+            }
             $memo = $this->memoRepository->findByTargetChannelAndIndex($channel->id, $command->index);
         } else {
             $memo = $this->memoRepository->findByTargetNickAndIndex($command->senderNickId, $command->index);
@@ -36,7 +38,7 @@ final readonly class ReadMemoHandler implements ReadMemoHandlerInterface
             return ReadMemoResult::notFound($command->index);
         }
 
-        $memo->markAsRead();
+        $memo->markAsRead($command->occurredAt);
         $this->memoRepository->save($memo);
 
         $from = $this->userAccountPort->findNicknameById($memo->getSenderNickId()) ?? (string) $memo->getSenderNickId();

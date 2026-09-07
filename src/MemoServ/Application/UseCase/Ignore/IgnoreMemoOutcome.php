@@ -14,7 +14,7 @@ enum IgnoreMemoOutcome
     case ListChannel;
     case ChannelNotRegistered;
     case NickNotRegistered;
-    case CannotIgnoreSelf;
+    case AccessDenied;
     case AlreadyIgnored;
     case NotIgnored;
     case LimitReached;

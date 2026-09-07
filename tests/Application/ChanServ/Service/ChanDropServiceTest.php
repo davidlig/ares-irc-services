@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\ChanServ\Service;
 
+use App\Application\ChanServ\PublishedEvent\ChannelDropCleanupEvent as PublishedChannelDropCleanupEvent;
 use App\Application\ChanServ\Service\ChanDropService;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\EventBusInterface;
@@ -20,6 +21,7 @@ use Psr\Log\LoggerInterface;
 use ReflectionProperty;
 
 #[CoversClass(ChanDropService::class)]
+#[CoversClass(PublishedChannelDropCleanupEvent::class)]
 final class ChanDropServiceTest extends TestCase
 {
     #[Test]
@@ -32,16 +34,19 @@ final class ChanDropServiceTest extends TestCase
 
         $calls = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
-            static function (ChannelDropCleanupEvent|ChannelDropEvent $event) use (&$calls): void {
+        $eventDispatcher->expects(self::exactly(3))->method('dispatch')->willReturnCallback(
+            static function (ChannelDropCleanupEvent|ChannelDropEvent|PublishedChannelDropCleanupEvent $event) use (&$calls): void {
                 $calls[] = match ($event::class) {
                     ChannelDropCleanupEvent::class => 'cleanup',
+                    PublishedChannelDropCleanupEvent::class => 'published-cleanup',
                     ChannelDropEvent::class => 'post-commit',
                 };
 
                 self::assertSame(42, $event->channelId);
-                self::assertSame('#test', $event->channelName);
-                self::assertSame('manual', $event->reason);
+                if (!$event instanceof PublishedChannelDropCleanupEvent) {
+                    self::assertSame('#test', $event->channelName);
+                    self::assertSame('manual', $event->reason);
+                }
             },
         );
 
@@ -84,7 +89,7 @@ final class ChanDropServiceTest extends TestCase
 
         $service->dropChannel($channel, 'manual', 'OperUser');
 
-        self::assertSame(['transaction-start', 'cleanup', 'delete', 'commit', 'post-commit'], $calls);
+        self::assertSame(['transaction-start', 'cleanup', 'published-cleanup', 'delete', 'commit', 'post-commit'], $calls);
     }
 
     #[Test]
@@ -96,8 +101,10 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('delete');
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->with(self::callback(static fn (object $event): bool => ($event instanceof ChannelDropCleanupEvent || $event instanceof ChannelDropEvent)
-            && 'inactivity' === $event->reason));
+        $eventDispatcher->expects(self::exactly(3))->method('dispatch')->with(self::callback(static fn (object $event): bool => $event instanceof PublishedChannelDropCleanupEvent
+            ? 100 === $event->channelId
+            : ($event instanceof ChannelDropCleanupEvent || $event instanceof ChannelDropEvent)
+                && 'inactivity' === $event->reason));
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(
@@ -133,7 +140,7 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('delete');
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::exactly(2))->method('dispatch');
+        $eventDispatcher->expects(self::exactly(3))->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(

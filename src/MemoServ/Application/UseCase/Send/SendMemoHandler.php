@@ -65,7 +65,7 @@ final readonly class SendMemoHandler implements SendMemoHandlerInterface
             return SendMemoResult::limitReached($command->target);
         }
 
-        $memo = new Memo(null, $channel->id, $command->senderNickId, $command->message);
+        $memo = new Memo(null, $channel->id, $command->senderNickId, $command->message, $command->occurredAt);
         $this->memoRepository->save($memo);
         $this->throttle->recordSend($command->senderUid);
 
@@ -97,7 +97,7 @@ final readonly class SendMemoHandler implements SendMemoHandlerInterface
             return SendMemoResult::limitReached($command->target);
         }
 
-        $memo = new Memo($recipient->id, null, $command->senderNickId, $command->message);
+        $memo = new Memo($recipient->id, null, $command->senderNickId, $command->message, $command->occurredAt);
         $this->memoRepository->save($memo);
         $this->throttle->recordSend($command->senderUid);
 

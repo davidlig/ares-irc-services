@@ -1,21 +1,4 @@
 # Phase 05: MemoServ.
 # Exact source -> target exceptions owned by that phase; do not broaden.
 deptrac:
-  skip_violations:
-    App\MemoServ\Adapter\In\Event\MemoServChannelDropCleanupSubscriber:
-      - App\Domain\ChanServ\Event\ChannelDropCleanupEvent
-    App\MemoServ\Adapter\In\Event\MemoServPendingChannelNoticeSubscriber:
-      - App\Application\ChanServ\ChanServAccessHelper
-      - App\Domain\ChanServ\Entity\ChannelLevel
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-      - App\Irc\Domain\Event\UserJoinedChannelEvent
-    App\MemoServ\Adapter\In\Irc\Subscriber\MemoServCommandListener:
-      - App\Domain\ChanServ\Exception\ChannelNotRegisteredException
-      - App\Domain\ChanServ\Exception\InsufficientAccessException
-    App\MemoServ\Adapter\Out\ChanServ\ChanServMemoChannelAdapter:
-      - App\Application\ChanServ\ChanServAccessHelper
-      - App\Domain\ChanServ\Entity\ChannelLevel
-      - App\Domain\ChanServ\Entity\RegisteredChannel
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-    App\MemoServ\Adapter\Out\Security\NickServMemoAuthorizationContextAdapter:
-      - App\NickServ\Application\Port\Out\AuthorizationContextInterface
+  skip_violations: {}

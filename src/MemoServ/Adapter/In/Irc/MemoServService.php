@@ -10,7 +10,6 @@ use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
-use App\MemoServ\Application\Port\Out\ServiceUserPreferences;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
 use App\Shared\Application\ServiceNicknameRegistry;
 use Psr\Log\LoggerInterface;
@@ -33,9 +32,9 @@ final readonly class MemoServService
     public function __construct(
         private MemoServCommandRegistry $commandRegistry,
         private MemoUserAccountPort $userAccountPort,
-        private ServiceUserPreferences $languageResolver,
+        private MemoServUserPresentationPreferences $languageResolver,
         private MemoServNotifierInterface $notifier,
-        private ServiceUserPreferences $messageTypeResolver,
+        private MemoServUserPresentationPreferences $messageTypeResolver,
         private TranslationInterface $translator,
         private ServiceNicknameRegistry $serviceNicks,
         private MemoAuthorizationContextInterface $authorizationContext,

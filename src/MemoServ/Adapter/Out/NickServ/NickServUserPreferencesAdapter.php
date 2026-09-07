@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\Out\NickServ;
 
-use App\MemoServ\Application\Port\Out\ServiceUserPreferences;
+use App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences;
 use App\NickServ\Application\Port\In\UserLanguageQuery;
 use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
 
-final readonly class NickServUserPreferencesAdapter implements ServiceUserPreferences
+final readonly class NickServUserPreferencesAdapter implements MemoServUserPresentationPreferences
 {
     public function __construct(
         private UserLanguageQuery $languageQuery,
@@ -20,11 +20,6 @@ final readonly class NickServUserPreferencesAdapter implements ServiceUserPrefer
         return null !== $accountLanguage
             ? $this->languageQuery->resolveFromAccount($uid, $accountLanguage)
             : $this->languageQuery->resolve($uid, $nickname);
-    }
-
-    public function defaultLanguage(): string
-    {
-        return $this->languageQuery->getDefault();
     }
 
     public function prefersPrivateMessages(string $nickname): bool

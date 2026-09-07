@@ -28,6 +28,14 @@ final readonly class DelMemoResult
         );
     }
 
+    public static function accessDenied(string $channelName): self
+    {
+        return new self(
+            outcome: DelMemoOutcome::AccessDenied,
+            channelName: $channelName,
+        );
+    }
+
     public static function notFound(int $index): self
     {
         return new self(

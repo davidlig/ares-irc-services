@@ -45,20 +45,6 @@ final class NickServUserPreferencesAdapterTest extends TestCase
     }
 
     #[Test]
-    public function defaultLanguageDelegatesToNickServQuery(): void
-    {
-        $languageQuery = $this->createMock(UserLanguageQuery::class);
-        $languageQuery->expects(self::once())->method('getDefault')->willReturn('en');
-
-        $adapter = new NickServUserPreferencesAdapter(
-            $languageQuery,
-            $this->createStub(UserMessagePreferenceQuery::class),
-        );
-
-        self::assertSame('en', $adapter->defaultLanguage());
-    }
-
-    #[Test]
     public function privateMessagePreferenceDelegatesToNickServQuery(): void
     {
         $messagePreferenceQuery = $this->createMock(UserMessagePreferenceQuery::class);

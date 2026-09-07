@@ -11,12 +11,16 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
+use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent as PublishedUserJoinedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserLeftNetworkEvent;
 use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\Irc\Application\PublishedEvent\UserNicknameChangedEvent;
+use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\Irc\Domain\Event\UserModeChangedEvent;
 use App\Irc\Domain\Event\UserNickChangedEvent;
 use App\Irc\Domain\Event\UserQuitNetworkEvent;
+use App\Irc\Domain\Network\ChannelMemberRole;
+use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -28,6 +32,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 #[CoversClass(IrcMessageHandledEvent::class)]
 #[CoversClass(NetworkSynchronizationCompletedEvent::class)]
 #[CoversClass(ServiceIntroductionRequestedEvent::class)]
+#[CoversClass(PublishedUserJoinedChannelEvent::class)]
 #[CoversClass(UserLeftNetworkEvent::class)]
 #[CoversClass(UserModesChangedEvent::class)]
 #[CoversClass(UserNicknameChangedEvent::class)]
@@ -40,6 +45,7 @@ final class PublishedIrcEventBridgeTest extends TestCase
             UserNickChangedEvent::class => ['publishNicknameChanged', -10],
             UserModeChangedEvent::class => ['publishModesChanged', -10],
             UserQuitNetworkEvent::class => ['publishUserLeft', -10],
+            UserJoinedChannelEvent::class => ['publishUserJoinedChannel', -10],
             NetworkBurstCompleteEvent::class => [
                 ['publishServiceIntroductionRequested', 100],
                 ['publishNetworkSynchronizationCompleted', -256],
@@ -91,6 +97,20 @@ final class PublishedIrcEventBridgeTest extends TestCase
             'display',
             'host',
             'ip',
+        ));
+    }
+
+    #[Test]
+    public function publishesChannelJoinAsScalars(): void
+    {
+        $bridge = $this->bridgeExpecting(static fn (object $event): bool => $event instanceof PublishedUserJoinedChannelEvent
+            && '001ABC' === $event->uid
+            && '#test' === $event->channelName);
+
+        $bridge->publishUserJoinedChannel(new UserJoinedChannelEvent(
+            new Uid('001ABC'),
+            new ChannelName('#test'),
+            ChannelMemberRole::Op,
         ));
     }
 

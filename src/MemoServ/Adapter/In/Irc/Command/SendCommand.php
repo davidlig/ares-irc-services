@@ -12,6 +12,7 @@ use App\MemoServ\Application\UseCase\Send\SendMemo;
 use App\MemoServ\Application\UseCase\Send\SendMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Send\SendMemoOutcome;
 use App\MemoServ\Domain\Entity\Memo;
+use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
@@ -107,6 +108,7 @@ final readonly class SendCommand implements MemoServCommandInterface
             senderUid: $context->sender->uid,
             target: $targetArg,
             message: $message,
+            occurredAt: new DateTimeImmutable(),
         ));
 
         switch ($result->outcome) {

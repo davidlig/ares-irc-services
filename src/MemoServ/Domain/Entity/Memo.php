@@ -37,7 +37,7 @@ class Memo
         ?int $targetChannelId,
         int $senderNickId,
         string $message,
-        ?DateTimeImmutable $createdAt = null,
+        DateTimeImmutable $createdAt,
     ) {
         $nickSet = null !== $targetNickId;
         $channelSet = null !== $targetChannelId;
@@ -49,7 +49,7 @@ class Memo
         $this->senderNickId = $senderNickId;
         self::assertValidMessage($message);
         $this->message = $message;
-        $this->createdAt = $createdAt ?? new DateTimeImmutable();
+        $this->createdAt = $createdAt;
     }
 
     public function getId(): int
@@ -92,9 +92,9 @@ class Memo
         return null !== $this->readAt;
     }
 
-    public function markAsRead(?DateTimeImmutable $at = null): void
+    public function markAsRead(DateTimeImmutable $at): void
     {
-        $this->readAt = $at ?? new DateTimeImmutable();
+        $this->readAt = $at;
     }
 
     private static function assertValidMessage(string $message): void

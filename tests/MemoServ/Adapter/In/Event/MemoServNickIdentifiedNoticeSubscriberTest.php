@@ -8,6 +8,7 @@ use App\MemoServ\Adapter\In\Event\MemoServNickIdentifiedNoticeSubscriber;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use App\MemoServ\Application\UseCase\GetPendingNickNotice\GetPendingNickNoticeHandler;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,82 +21,43 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
     #[Test]
     public function subscribesToNickIdentifiedEvent(): void
     {
-        $subscriber = new MemoServNickIdentifiedNoticeSubscriber(
-            $this->createStub(MemoRepositoryInterface::class),
-            $this->createStub(MemoUserAccountPort::class),
-            $this->createStub(MemoServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
-        );
-
         self::assertSame(
             [NickIdentifiedEvent::class => ['onNickIdentified', 0]],
-            $subscriber::getSubscribedEvents(),
+            MemoServNickIdentifiedNoticeSubscriber::getSubscribedEvents(),
         );
     }
 
     #[Test]
-    public function doesNothingWhenNoUnreadMemos(): void
+    public function doesNotPresentWhenTheUseCaseReturnsNoNotice(): void
     {
-        $event = new NickIdentifiedEvent(
-            nickId: 10,
-            nickname: 'TestUser',
-            uid: '001ABC',
-        );
-
-        $memoRepo = $this->createMock(MemoRepositoryInterface::class);
-        $memoRepo->expects(self::once())
-            ->method('countUnreadByTargetNick')
-            ->with(10)
-            ->willReturn(0);
-
+        $memoRepository = $this->createStub(MemoRepositoryInterface::class);
+        $memoRepository->method('countUnreadByTargetNick')->willReturn(0);
         $userAccountPort = $this->createMock(MemoUserAccountPort::class);
         $userAccountPort->expects(self::never())->method('getLanguage');
-
         $notifier = $this->createMock(MemoServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendNotice');
-
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::never())->method('trans');
 
         $subscriber = new MemoServNickIdentifiedNoticeSubscriber(
-            $memoRepo,
-            $userAccountPort,
+            new GetPendingNickNoticeHandler($memoRepository, $userAccountPort),
             $notifier,
             $translator,
         );
 
-        $subscriber->onNickIdentified($event);
+        $subscriber->onNickIdentified(new NickIdentifiedEvent(10, 'TestUser', '001ABC'));
     }
 
     #[Test]
-    public function sendsNoticeWhenHasUnreadMemos(): void
+    public function presentsTheSemanticPendingMemoResult(): void
     {
-        $event = new NickIdentifiedEvent(
-            nickId: 10,
-            nickname: 'TestUser',
-            uid: '001ABC',
-        );
-
-        $memoRepo = $this->createMock(MemoRepositoryInterface::class);
-        $memoRepo->expects(self::once())
-            ->method('countUnreadByTargetNick')
-            ->with(10)
-            ->willReturn(3);
-
+        $memoRepository = $this->createMock(MemoRepositoryInterface::class);
+        $memoRepository->expects(self::once())->method('countUnreadByTargetNick')->with(10)->willReturn(3);
         $userAccountPort = $this->createMock(MemoUserAccountPort::class);
-        $userAccountPort->expects(self::once())
-            ->method('getLanguage')
-            ->with(10)
-            ->willReturn('es');
-
+        $userAccountPort->expects(self::once())->method('getLanguage')->with(10)->willReturn('es');
         $notifier = $this->createMock(MemoServNotifierInterface::class);
-        $notifier->expects(self::once())
-            ->method('getNick')
-            ->willReturn('MemoServ');
-        $notifier->expects(self::once())
-            ->method('sendNotice')
-            ->with('001ABC', 'Tienes 3 memos pendientes');
-
+        $notifier->expects(self::once())->method('getNick')->willReturn('MemoServ');
+        $notifier->expects(self::once())->method('sendNotice')->with('001ABC', 'Tienes 3 memos pendientes');
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())
             ->method('trans')
@@ -103,12 +65,11 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
             ->willReturn('Tienes 3 memos pendientes');
 
         $subscriber = new MemoServNickIdentifiedNoticeSubscriber(
-            $memoRepo,
-            $userAccountPort,
+            new GetPendingNickNoticeHandler($memoRepository, $userAccountPort),
             $notifier,
             $translator,
         );
 
-        $subscriber->onNickIdentified($event);
+        $subscriber->onNickIdentified(new NickIdentifiedEvent(10, 'TestUser', '001ABC'));
     }
 }

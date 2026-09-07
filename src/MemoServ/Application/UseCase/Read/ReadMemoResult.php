@@ -36,6 +36,14 @@ final readonly class ReadMemoResult
         );
     }
 
+    public static function accessDenied(string $channelName): self
+    {
+        return new self(
+            outcome: ReadMemoOutcome::AccessDenied,
+            channelName: $channelName,
+        );
+    }
+
     public static function notFound(int $index): self
     {
         return new self(

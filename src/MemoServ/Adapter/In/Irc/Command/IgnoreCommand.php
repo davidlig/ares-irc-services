@@ -169,8 +169,11 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
                 $context->reply('ignore.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
-            case IgnoreMemoOutcome::CannotIgnoreSelf:
-                $context->reply('send.cannot_send_to_self');
+            case IgnoreMemoOutcome::AccessDenied:
+                $context->reply('error.insufficient_access', [
+                    'operation' => 'IGNORE',
+                    'channel' => $result->channelName ?? $targetChannel ?? '',
+                ]);
                 break;
 
             case IgnoreMemoOutcome::LimitReached:

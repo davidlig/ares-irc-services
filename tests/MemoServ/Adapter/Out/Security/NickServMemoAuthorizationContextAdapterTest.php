@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\MemoServ\Adapter\Out\Security;
 
 use App\MemoServ\Adapter\Out\Security\NickServMemoAuthorizationContextAdapter;
-use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
+use App\NickServ\Application\Port\In\IrcAuthorizationContext;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +16,7 @@ final class NickServMemoAuthorizationContextAdapterTest extends TestCase
     #[Test]
     public function setCurrentUserDelegatesToNickServContext(): void
     {
-        $context = $this->createMock(AuthorizationContextInterface::class);
+        $context = $this->createMock(IrcAuthorizationContext::class);
         $context->expects(self::once())
             ->method('setCurrentUser')
             ->with('001AAAAAA', true, false);
@@ -28,7 +28,7 @@ final class NickServMemoAuthorizationContextAdapterTest extends TestCase
     #[Test]
     public function clearDelegatesToNickServContext(): void
     {
-        $context = $this->createMock(AuthorizationContextInterface::class);
+        $context = $this->createMock(IrcAuthorizationContext::class);
         $context->expects(self::once())
             ->method('clear');
 

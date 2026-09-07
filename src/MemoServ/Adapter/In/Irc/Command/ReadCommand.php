@@ -9,6 +9,7 @@ use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Application\UseCase\Read\ReadMemo;
 use App\MemoServ\Application\UseCase\Read\ReadMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Read\ReadMemoOutcome;
+use DateTimeImmutable;
 
 use function ctype_digit;
 use function str_starts_with;
@@ -99,6 +100,7 @@ final readonly class ReadCommand implements MemoServCommandInterface
             senderNickId: $senderAccount->id,
             channelName: $targetChannel,
             index: $index,
+            occurredAt: new DateTimeImmutable(),
         ));
 
         switch ($result->outcome) {
@@ -114,6 +116,13 @@ final readonly class ReadCommand implements MemoServCommandInterface
 
             case ReadMemoOutcome::ChannelNotRegistered:
                 $context->reply('read.channel_not_registered', ['channel' => $targetChannel ?? '']);
+                break;
+
+            case ReadMemoOutcome::AccessDenied:
+                $context->reply('error.insufficient_access', [
+                    'operation' => 'READ',
+                    'channel' => $result->channelName ?? $targetChannel ?? '',
+                ]);
                 break;
         }
     }

@@ -34,8 +34,6 @@ interface MemoRepositoryInterface
 
     public function countByTargetChannel(int $channelId): int;
 
-    public function findById(int $id): ?Memo;
-
     /**
      * Nth memo (1-based index) for the nick's inbox. Null if index out of range.
      */

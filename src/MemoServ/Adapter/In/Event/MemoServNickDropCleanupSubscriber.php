@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Event;
 
-use App\MemoServ\Application\Port\Out\MemoIgnoreRepositoryInterface;
-use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
-use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
+use App\MemoServ\Application\UseCase\CleanupNick\CleanupNickMemoData;
+use App\MemoServ\Application\UseCase\CleanupNick\CleanupNickMemoDataHandler;
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -16,9 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final readonly class MemoServNickDropCleanupSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private MemoRepositoryInterface $memoRepository,
-        private MemoIgnoreRepositoryInterface $memoIgnoreRepository,
-        private MemoSettingsRepositoryInterface $memoSettingsRepository,
+        private CleanupNickMemoDataHandler $cleanupNickMemoData,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -30,8 +27,6 @@ final readonly class MemoServNickDropCleanupSubscriber implements EventSubscribe
 
     public function onNickDrop(NickDropCleanupEvent $event): void
     {
-        $this->memoRepository->deleteAllForNick($event->nickId);
-        $this->memoIgnoreRepository->deleteAllForNick($event->nickId);
-        $this->memoSettingsRepository->deleteAllForNick($event->nickId);
+        $this->cleanupNickMemoData->handle(new CleanupNickMemoData($event->nickId));
     }
 }

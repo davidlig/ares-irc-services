@@ -4,6 +4,10 @@
                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
     <entity name="App\MemoServ\Domain\Entity\MemoSettings" table="memo_settings">
+        <unique-constraints>
+            <unique-constraint name="uniq_memo_settings_nick" columns="target_nick_id"/>
+            <unique-constraint name="uniq_memo_settings_channel" columns="target_channel_id"/>
+        </unique-constraints>
         <id name="id" type="integer" column="id">
             <generator strategy="IDENTITY"/>
         </id>

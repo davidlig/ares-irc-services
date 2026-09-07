@@ -16,8 +16,8 @@ use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServService;
+use App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
-use App\MemoServ\Application\Port\Out\ServiceUserPreferences;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
@@ -177,6 +177,11 @@ final class MemoServServiceTest extends TestCase
         };
 
         $registry = new MemoServCommandRegistry([$handler]);
+        $authorizationContext = $this->createMock(MemoAuthorizationContextInterface::class);
+        $authorizationContext->expects(self::once())
+            ->method('setCurrentUser')
+            ->with('UID1', true, false);
+        $authorizationContext->expects(self::once())->method('clear');
         $service = $this->createMemoServService(
             $registry,
             $userAccountPort,
@@ -187,6 +192,7 @@ final class MemoServServiceTest extends TestCase
             'en',
             'UTC',
             $logger,
+            $authorizationContext,
         );
 
         $service->dispatch('FOO arg1', $sender);
@@ -321,6 +327,13 @@ final class MemoServServiceTest extends TestCase
         );
         $notifier = $this->createMock(MemoServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Permission denied', 'NOTICE');
+        $authorizationContext = $this->createMock(MemoAuthorizationContextInterface::class);
+        $authorizationContext->expects(self::once())
+            ->method('setCurrentUser')
+            ->with('UID1', true, false);
+        $authorizationContext->expects(self::once())->method('clear');
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
 
         $service = $this->createMemoServService(
             new MemoServCommandRegistry([$permissionHandler]),
@@ -332,8 +345,9 @@ final class MemoServServiceTest extends TestCase
             'en',
             'UTC',
             null,
-            $this->createStub(MemoAuthorizationContextInterface::class),
+            $authorizationContext,
             $authorizationChecker,
+            $eventDispatcher,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -515,6 +529,13 @@ final class MemoServServiceTest extends TestCase
         );
         $notifier = $this->createMock(MemoServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, self::stringContains('Syntax:'), 'NOTICE');
+        $authorizationContext = $this->createMock(MemoAuthorizationContextInterface::class);
+        $authorizationContext->expects(self::once())
+            ->method('setCurrentUser')
+            ->with('UID1', true, false);
+        $authorizationContext->expects(self::once())->method('clear');
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
 
         $service = $this->createMemoServService(
             new MemoServCommandRegistry([$minArgsHandler]),
@@ -523,6 +544,12 @@ final class MemoServServiceTest extends TestCase
             $this->createMessageTypeResolver(),
             $translator,
             $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $authorizationContext,
+            null,
+            $eventDispatcher,
         );
 
         $service->dispatch('TWOARGS onlyone', $sender);
@@ -675,6 +702,11 @@ final class MemoServServiceTest extends TestCase
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(self::stringContains('MemoServ dispatch error'));
+        $authorizationContext = $this->createMock(MemoAuthorizationContextInterface::class);
+        $authorizationContext->expects(self::once())
+            ->method('setCurrentUser')
+            ->with('UID1', true, false);
+        $authorizationContext->expects(self::once())->method('clear');
 
         $service = $this->createMemoServService(
             new MemoServCommandRegistry([$throwingHandler]),
@@ -686,6 +718,7 @@ final class MemoServServiceTest extends TestCase
             'en',
             'UTC',
             $logger,
+            $authorizationContext,
         );
 
         $this->expectException(RuntimeException::class);
@@ -759,7 +792,14 @@ final class MemoServServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::isInstanceOf(CommandExecutedEvent::class));
+            ->with(self::callback(static fn (object $event): bool => $event instanceof CommandExecutedEvent
+                && $event->command === $command
+                && 'memoserv' === $event->serviceName
+                && 'Nick' === $event->operatorNick
+                && 'TESTCMD' === $event->commandName
+                && null === $event->permission
+                && true === $event->outcome?->success
+                && null === $event->outcome->auditData));
 
         $notifier = $this->createStub(MemoServNotifierInterface::class);
         $notifier->method('getServiceKey')->willReturn('memoserv');
@@ -786,7 +826,7 @@ final class MemoServServiceTest extends TestCase
         MemoServCommandRegistry $registry,
         MemoUserAccountPort $userAccountPort,
         MemoServNotifierInterface $notifier,
-        ServiceUserPreferences $messageTypeResolver,
+        MemoServUserPresentationPreferences $messageTypeResolver,
         TranslationInterface $translator,
         ServiceNicknameRegistry $serviceNicks,
         string $defaultLanguage = 'en',
@@ -796,7 +836,7 @@ final class MemoServServiceTest extends TestCase
         ?MemoAuthorizationCheckerInterface $authChecker = null,
         ?EventBusInterface $eventDispatcher = null,
     ): MemoServService {
-        $languageResolver = $this->createStub(ServiceUserPreferences::class);
+        $languageResolver = $this->createStub(MemoServUserPresentationPreferences::class);
         $languageResolver->method('languageFor')->willReturn('en');
 
         if (null === $authChecker) {
@@ -822,9 +862,9 @@ final class MemoServServiceTest extends TestCase
         );
     }
 
-    private function createMessageTypeResolver(): ServiceUserPreferences
+    private function createMessageTypeResolver(): MemoServUserPresentationPreferences
     {
-        $resolver = $this->createStub(ServiceUserPreferences::class);
+        $resolver = $this->createStub(MemoServUserPresentationPreferences::class);
         $resolver->method('prefersPrivateMessages')->willReturn(false);
 
         return $resolver;

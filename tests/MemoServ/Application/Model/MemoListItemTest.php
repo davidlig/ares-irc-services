@@ -22,7 +22,7 @@ final class MemoListItemTest extends TestCase
         self::assertSame(1, $item->index);
         self::assertSame('Bob', $item->senderDisplay);
         self::assertSame($date, $item->createdAt);
-        self::assertSame('Hello', $item->preview);
+        self::assertSame('Hello', $item->message);
         self::assertFalse($item->isRead);
     }
 }

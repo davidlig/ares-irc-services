@@ -19,6 +19,7 @@ use App\MemoServ\Application\UseCase\Send\SendMemoResult;
 use App\MemoServ\Domain\Entity\Memo;
 use App\MemoServ\Domain\Entity\MemoIgnore;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -73,7 +74,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->throttle = $throttle;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello'));
+        $result = $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello', new DateTimeImmutable()));
 
         self::assertSame(SendMemoOutcome::Throttled, $result->outcome);
         self::assertSame(15, $result->cooldownRemainingSeconds);
@@ -82,6 +83,7 @@ final class SendMemoHandlerTest extends TestCase
     #[Test]
     public function sendsToNickSuccessfully(): void
     {
+        $occurredAt = new DateTimeImmutable('2026-09-07 10:00:00 UTC');
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
         $userAccountPort->method('findAccountByNick')->willReturn(new MemoAccountView(2, 'Bob', 'es'));
         $this->userAccountPort = $userAccountPort;
@@ -93,7 +95,13 @@ final class SendMemoHandlerTest extends TestCase
         $memoRepo = $this->createMock(MemoRepositoryInterface::class);
         $memoRepo->method('countByTargetNick')->willReturn(2);
         $memoRepo->method('countUnreadByTargetNick')->willReturn(1);
-        $memoRepo->expects(self::once())->method('save')->with(self::isInstanceOf(Memo::class));
+        $memoRepo->expects(self::once())->method('save')->with(self::callback(
+            static fn (Memo $memo): bool => 2 === $memo->getTargetNickId()
+                && null === $memo->getTargetChannelId()
+                && 1 === $memo->getSenderNickId()
+                && 'Hello Bob' === $memo->getMessage()
+                && $occurredAt === $memo->getCreatedAt(),
+        ));
         $this->memoRepository = $memoRepo;
 
         $throttle = $this->createMock(MemoThrottlePort::class);
@@ -102,7 +110,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->throttle = $throttle;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello Bob'));
+        $result = $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello Bob', $occurredAt));
 
         self::assertSame(SendMemoOutcome::SentToNick, $result->outcome);
         self::assertSame('Bob', $result->targetName);
@@ -117,7 +125,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->userAccountPort = $this->createStub(MemoUserAccountPort::class);
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, 'UnknownNick', 'Hello'));
+        $result = $handler->handle(new SendMemo('UID1', 1, 'UnknownNick', 'Hello', new DateTimeImmutable()));
 
         self::assertSame(SendMemoOutcome::NickNotRegistered, $result->outcome);
         self::assertSame('UnknownNick', $result->targetName);
@@ -131,7 +139,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->userAccountPort = $userAccountPort;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, 'Alice', 'Hello'));
+        $result = $handler->handle(new SendMemo('UID1', 1, 'Alice', 'Hello', new DateTimeImmutable()));
 
         self::assertSame(SendMemoOutcome::CannotSendToSelf, $result->outcome);
     }
@@ -150,7 +158,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->expectException(MemoDisabledException::class);
 
         $handler = $this->createHandler();
-        $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello'));
+        $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello', new DateTimeImmutable()));
     }
 
     #[Test]
@@ -169,7 +177,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->memoIgnoreRepository = $memoIgnore;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello'));
+        $result = $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello', new DateTimeImmutable()));
 
         self::assertSame(SendMemoOutcome::Ignored, $result->outcome);
     }
@@ -190,7 +198,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->memoRepository = $memoRepo;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello'));
+        $result = $handler->handle(new SendMemo('UID1', 1, 'Bob', 'Hello', new DateTimeImmutable()));
 
         self::assertSame(SendMemoOutcome::LimitReached, $result->outcome);
         self::assertSame('Bob', $result->targetName);
@@ -199,6 +207,7 @@ final class SendMemoHandlerTest extends TestCase
     #[Test]
     public function sendsToChannelSuccessfully(): void
     {
+        $occurredAt = new DateTimeImmutable('2026-09-07 10:00:00 UTC');
         $channelPort = $this->createStub(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(5, '#Ares'));
         $this->channelPort = $channelPort;
@@ -209,7 +218,13 @@ final class SendMemoHandlerTest extends TestCase
 
         $memoRepo = $this->createMock(MemoRepositoryInterface::class);
         $memoRepo->method('countByTargetChannel')->willReturn(2);
-        $memoRepo->expects(self::once())->method('save')->with(self::isInstanceOf(Memo::class));
+        $memoRepo->expects(self::once())->method('save')->with(self::callback(
+            static fn (Memo $memo): bool => null === $memo->getTargetNickId()
+                && 5 === $memo->getTargetChannelId()
+                && 1 === $memo->getSenderNickId()
+                && 'Hello channel' === $memo->getMessage()
+                && $occurredAt === $memo->getCreatedAt(),
+        ));
         $this->memoRepository = $memoRepo;
 
         $throttle = $this->createMock(MemoThrottlePort::class);
@@ -218,7 +233,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->throttle = $throttle;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, '#Ares', 'Hello channel'));
+        $result = $handler->handle(new SendMemo('UID1', 1, '#Ares', 'Hello channel', $occurredAt));
 
         self::assertSame(SendMemoOutcome::SentToChannel, $result->outcome);
         self::assertSame('#Ares', $result->targetName);
@@ -230,7 +245,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->channelPort = $this->createStub(MemoChannelPort::class);
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, '#unknown', 'Hello'));
+        $result = $handler->handle(new SendMemo('UID1', 1, '#unknown', 'Hello', new DateTimeImmutable()));
 
         self::assertSame(SendMemoOutcome::ChannelNotRegistered, $result->outcome);
         self::assertSame('#unknown', $result->targetName);
@@ -250,7 +265,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->expectException(MemoDisabledException::class);
 
         $handler = $this->createHandler();
-        $handler->handle(new SendMemo('UID1', 1, '#Ares', 'Hello'));
+        $handler->handle(new SendMemo('UID1', 1, '#Ares', 'Hello', new DateTimeImmutable()));
     }
 
     #[Test]
@@ -269,7 +284,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->memoIgnoreRepository = $memoIgnore;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, '#Ares', 'Hello'));
+        $result = $handler->handle(new SendMemo('UID1', 1, '#Ares', 'Hello', new DateTimeImmutable()));
 
         self::assertSame(SendMemoOutcome::Ignored, $result->outcome);
     }
@@ -290,7 +305,7 @@ final class SendMemoHandlerTest extends TestCase
         $this->memoRepository = $memoRepo;
 
         $handler = $this->createHandler();
-        $result = $handler->handle(new SendMemo('UID1', 1, '#Ares', 'Hello'));
+        $result = $handler->handle(new SendMemo('UID1', 1, '#Ares', 'Hello', new DateTimeImmutable()));
 
         self::assertSame(SendMemoOutcome::LimitReached, $result->outcome);
         self::assertSame('#Ares', $result->targetName);

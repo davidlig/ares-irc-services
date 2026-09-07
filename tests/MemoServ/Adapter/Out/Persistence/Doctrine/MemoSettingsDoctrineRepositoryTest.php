@@ -107,19 +107,6 @@ final class MemoSettingsDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     }
 
     #[Test]
-    public function deleteRemovesSettings(): void
-    {
-        $settings = new MemoSettings(targetNickId: 1, targetChannelId: null, enabled: false);
-        $this->repository->save($settings);
-        $this->entityManager->flush();
-
-        $this->repository->delete($settings);
-        $this->flushAndClear();
-
-        self::assertNull($this->repository->findByTargetNick(1));
-    }
-
-    #[Test]
     public function deleteAllForNickRemovesAllSettings(): void
     {
         $settings1 = new MemoSettings(targetNickId: 1, targetChannelId: null, enabled: false);

@@ -24,7 +24,9 @@ final readonly class DelMemoHandler implements DelMemoHandlerInterface
                 return DelMemoResult::channelNotRegistered($command->channelName);
             }
 
-            $this->channelPort->requireManageAccess($channel->id, $command->senderNickId, $command->channelName, 'DEL');
+            if (!$this->channelPort->canManageChannelMemos($channel->id, $command->senderNickId)) {
+                return DelMemoResult::accessDenied($channel->name);
+            }
             $memo = $this->memoRepository->findByTargetChannelAndIndex($channel->id, $command->index);
         } else {
             $memo = $this->memoRepository->findByTargetNickAndIndex($command->senderNickId, $command->index);

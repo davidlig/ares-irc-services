@@ -45,4 +45,12 @@ final readonly class ListMemosResult
             channelName: $channelName,
         );
     }
+
+    public static function accessDenied(string $channelName): self
+    {
+        return new self(
+            outcome: ListMemosOutcome::AccessDenied,
+            channelName: $channelName,
+        );
+    }
 }

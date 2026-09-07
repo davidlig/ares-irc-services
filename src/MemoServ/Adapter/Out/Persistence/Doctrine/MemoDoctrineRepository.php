@@ -92,13 +92,6 @@ final readonly class MemoDoctrineRepository implements MemoRepositoryInterface
             ->getSingleScalarResult();
     }
 
-    public function findById(int $id): ?Memo
-    {
-        $memo = $this->em->find(Memo::class, $id);
-
-        return $memo instanceof Memo ? $memo : null;
-    }
-
     public function findByTargetNickAndIndex(int $nickId, int $index): ?Memo
     {
         $list = $this->findByTargetNick($nickId);

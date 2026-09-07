@@ -28,7 +28,7 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function savePersistsMemoToNick(): void
     {
-        $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Hello!');
+        $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Hello!', createdAt: new DateTimeImmutable());
 
         $this->repository->save($memo);
         $this->flushAndClear();
@@ -43,7 +43,7 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function savePersistsMemoToChannel(): void
     {
-        $memo = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Channel memo');
+        $memo = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Channel memo', createdAt: new DateTimeImmutable());
 
         $this->repository->save($memo);
         $this->flushAndClear();
@@ -97,10 +97,10 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function countUnreadByTargetNickReturnsCorrectCount(): void
     {
-        $memo1 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Unread 1');
-        $memo2 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Unread 2');
-        $memo3 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Read');
-        $memo3->markAsRead();
+        $memo1 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Unread 1', createdAt: new DateTimeImmutable());
+        $memo2 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Unread 2', createdAt: new DateTimeImmutable());
+        $memo3 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Read', createdAt: new DateTimeImmutable());
+        $memo3->markAsRead(new DateTimeImmutable());
 
         $this->repository->save($memo1);
         $this->repository->save($memo2);
@@ -113,9 +113,9 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function countUnreadByTargetChannelReturnsCorrectCount(): void
     {
-        $memo1 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Unread');
-        $memo2 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Read');
-        $memo2->markAsRead();
+        $memo1 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Unread', createdAt: new DateTimeImmutable());
+        $memo2 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Read', createdAt: new DateTimeImmutable());
+        $memo2->markAsRead(new DateTimeImmutable());
 
         $this->repository->save($memo1);
         $this->repository->save($memo2);
@@ -127,8 +127,8 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function countByTargetNickReturnsTotalCount(): void
     {
-        $memo1 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'One');
-        $memo2 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Two');
+        $memo1 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'One', createdAt: new DateTimeImmutable());
+        $memo2 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Two', createdAt: new DateTimeImmutable());
 
         $this->repository->save($memo1);
         $this->repository->save($memo2);
@@ -141,8 +141,8 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function countByTargetChannelReturnsTotalCount(): void
     {
-        $memo1 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'One');
-        $memo2 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Two');
+        $memo1 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'One', createdAt: new DateTimeImmutable());
+        $memo2 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Two', createdAt: new DateTimeImmutable());
 
         $this->repository->save($memo1);
         $this->repository->save($memo2);
@@ -153,30 +153,11 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
-    public function findByIdReturnsMemo(): void
-    {
-        $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Test');
-        $this->repository->save($memo);
-        $this->flushAndClear();
-
-        $found = $this->repository->findById($memo->getId());
-
-        self::assertNotNull($found);
-        self::assertSame('Test', $found->getMessage());
-    }
-
-    #[Test]
-    public function findByIdReturnsNullWhenNotFound(): void
-    {
-        self::assertNull($this->repository->findById(999999));
-    }
-
-    #[Test]
     public function findByTargetNickAndIndexReturnsCorrectMemo(): void
     {
-        $memo1 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'First');
-        $memo2 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Second');
-        $memo3 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Third');
+        $memo1 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'First', createdAt: new DateTimeImmutable());
+        $memo2 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Second', createdAt: new DateTimeImmutable());
+        $memo3 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Third', createdAt: new DateTimeImmutable());
 
         $this->repository->save($memo1);
         $this->repository->save($memo2);
@@ -191,7 +172,7 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function findByTargetNickAndIndexReturnsNullForInvalidIndex(): void
     {
-        $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Only one');
+        $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'Only one', createdAt: new DateTimeImmutable());
         $this->repository->save($memo);
         $this->flushAndClear();
 
@@ -202,8 +183,8 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function findByTargetChannelAndIndexReturnsCorrectMemo(): void
     {
-        $memo1 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'First');
-        $memo2 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Second');
+        $memo1 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'First', createdAt: new DateTimeImmutable());
+        $memo2 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Second', createdAt: new DateTimeImmutable());
 
         $this->repository->save($memo1);
         $this->repository->save($memo2);
@@ -216,7 +197,7 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function findByTargetChannelAndIndexReturnsNullWhenIndexOutOfRange(): void
     {
-        $memo = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Only one');
+        $memo = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Only one', createdAt: new DateTimeImmutable());
         $this->repository->save($memo);
         $this->flushAndClear();
 
@@ -228,7 +209,7 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function deleteRemovesMemo(): void
     {
-        $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'To delete');
+        $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'To delete', createdAt: new DateTimeImmutable());
         $this->repository->save($memo);
         $this->entityManager->flush();
 
@@ -241,13 +222,17 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function deleteAllForNickRemovesAllMemos(): void
     {
-        $memo1 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'To nick');
-        $memo2 = new Memo(targetNickId: 2, targetChannelId: null, senderNickId: 1, message: 'From nick');
-        $memo3 = new Memo(targetNickId: 3, targetChannelId: null, senderNickId: 4, message: 'Other');
+        $memo1 = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'To nick', createdAt: new DateTimeImmutable());
+        $memo2 = new Memo(targetNickId: 2, targetChannelId: null, senderNickId: 1, message: 'From nick', createdAt: new DateTimeImmutable());
+        $memo3 = new Memo(targetNickId: 3, targetChannelId: null, senderNickId: 4, message: 'Other', createdAt: new DateTimeImmutable());
+        $memo4 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'From nick to channel', createdAt: new DateTimeImmutable());
+        $memo5 = new Memo(targetNickId: null, targetChannelId: 20, senderNickId: 4, message: 'Other channel memo', createdAt: new DateTimeImmutable());
 
         $this->repository->save($memo1);
         $this->repository->save($memo2);
         $this->repository->save($memo3);
+        $this->repository->save($memo4);
+        $this->repository->save($memo5);
         $this->flushAndClear();
 
         $this->repository->deleteAllForNick(1);
@@ -256,14 +241,16 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertSame([], $this->repository->findByTargetNick(1));
         self::assertSame([], $this->repository->findByTargetNick(2));
         self::assertCount(1, $this->repository->findByTargetNick(3));
+        self::assertSame([], $this->repository->findByTargetChannel(10));
+        self::assertCount(1, $this->repository->findByTargetChannel(20));
     }
 
     #[Test]
     public function deleteAllForChannelRemovesAllMemos(): void
     {
-        $memo1 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'One');
-        $memo2 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 2, message: 'Two');
-        $memo3 = new Memo(targetNickId: null, targetChannelId: 20, senderNickId: 1, message: 'Other');
+        $memo1 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'One', createdAt: new DateTimeImmutable());
+        $memo2 = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 2, message: 'Two', createdAt: new DateTimeImmutable());
+        $memo3 = new Memo(targetNickId: null, targetChannelId: 20, senderNickId: 1, message: 'Other', createdAt: new DateTimeImmutable());
 
         $this->repository->save($memo1);
         $this->repository->save($memo2);

@@ -216,4 +216,23 @@ final class DelCommandTest extends TestCase
         $command->execute($context);
         self::assertSame(['del.channel_not_registered [%channel%: #unregistered]'], $replies);
     }
+
+    #[Test]
+    public function presentsAccessDeniedWithIrcOperationAndChannel(): void
+    {
+        $handler = $this->createStub(DelMemoHandlerInterface::class);
+        $handler->method('handle')->willReturn(DelMemoResult::accessDenied('#Ares'));
+
+        $command = new DelCommand($handler);
+        $replies = [];
+        $context = $this->createContext(
+            new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip'),
+            new MemoAccountView(1, 'TestUser', 'en'),
+            ['#ares', '1'],
+            $replies,
+        );
+        $command->execute($context);
+
+        self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: DEL]'], $replies);
+    }
 }

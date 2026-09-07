@@ -18,6 +18,7 @@ use App\MemoServ\Application\UseCase\Send\SendMemoResult;
 use App\MemoServ\Domain\Entity\Memo;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -188,11 +189,16 @@ final class SendCommandTest extends TestCase
     {
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $account = new MemoAccountView(1, 'TestUser', 'en');
+        $before = new DateTimeImmutable();
 
         $handler = $this->createMock(SendMemoHandlerInterface::class);
         $handler->expects(self::once())
             ->method('handle')
-            ->with(self::callback(static fn (SendMemo $dto): bool => 1 === $dto->senderNickId && '001ABC' === $dto->senderUid && 'Recipient' === $dto->target && 'Hello world' === $dto->message))
+            ->with(self::callback(static fn (SendMemo $dto): bool => 1 === $dto->senderNickId
+                && '001ABC' === $dto->senderUid
+                && 'Recipient' === $dto->target
+                && 'Hello world' === $dto->message
+                && $dto->occurredAt->getTimestamp() >= $before->getTimestamp()))
             ->willReturn(SendMemoResult::sentToNick(
                 targetNickId: 2,
                 targetNick: 'Recipient',

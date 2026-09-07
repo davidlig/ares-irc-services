@@ -262,7 +262,6 @@ final class IgnoreCommandTest extends TestCase
             [IgnoreMemoResult::notIgnored('UserA'), 'ignore.not_ignored'],
             [IgnoreMemoResult::nickNotRegistered('UserA'), 'ignore.nick_not_registered'],
             [IgnoreMemoResult::channelNotRegistered('#chan'), 'ignore.channel_not_registered'],
-            [IgnoreMemoResult::cannotIgnoreSelf(), 'send.cannot_send_to_self'],
             [IgnoreMemoResult::limitReached(), 'ignore.limit_reached_nick'],
         ];
 
@@ -287,5 +286,24 @@ final class IgnoreCommandTest extends TestCase
         $context = $this->createContext($sender, $account, ['ADD', '#chan', 'UserA'], $replies);
         $command->execute($context);
         self::assertStringContainsString('ignore.limit_reached_channel', $replies[0]);
+    }
+
+    #[Test]
+    public function presentsAccessDeniedWithIrcOperationAndChannel(): void
+    {
+        $handler = $this->createStub(IgnoreMemoHandlerInterface::class);
+        $handler->method('handle')->willReturn(IgnoreMemoResult::accessDenied('#Ares'));
+
+        $command = new IgnoreCommand($handler, 10, 20);
+        $replies = [];
+        $context = $this->createContext(
+            new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip'),
+            new MemoAccountView(1, 'TestUser', 'en'),
+            ['ADD', '#ares', 'Bob'],
+            $replies,
+        );
+        $command->execute($context);
+
+        self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: IGNORE]'], $replies);
     }
 }

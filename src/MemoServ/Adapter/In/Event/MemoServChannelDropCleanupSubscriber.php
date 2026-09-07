@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Event;
 
-use App\Domain\ChanServ\Event\ChannelDropCleanupEvent;
-use App\MemoServ\Application\Port\Out\MemoIgnoreRepositoryInterface;
-use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
-use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
+use App\Application\ChanServ\PublishedEvent\ChannelDropCleanupEvent;
+use App\MemoServ\Application\UseCase\CleanupChannel\CleanupChannelMemoData;
+use App\MemoServ\Application\UseCase\CleanupChannel\CleanupChannelMemoDataHandler;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -16,9 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final readonly class MemoServChannelDropCleanupSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private MemoRepositoryInterface $memoRepository,
-        private MemoIgnoreRepositoryInterface $memoIgnoreRepository,
-        private MemoSettingsRepositoryInterface $memoSettingsRepository,
+        private CleanupChannelMemoDataHandler $cleanupChannelMemoData,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -30,8 +27,6 @@ final readonly class MemoServChannelDropCleanupSubscriber implements EventSubscr
 
     public function onChannelDrop(ChannelDropCleanupEvent $event): void
     {
-        $this->memoRepository->deleteAllForChannel($event->channelId);
-        $this->memoIgnoreRepository->deleteAllForChannel($event->channelId);
-        $this->memoSettingsRepository->deleteAllForChannel($event->channelId);
+        $this->cleanupChannelMemoData->handle(new CleanupChannelMemoData($event->channelId));
     }
 }

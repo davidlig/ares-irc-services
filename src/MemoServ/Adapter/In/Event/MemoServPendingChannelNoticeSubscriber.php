@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Event;
 
-use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\Shared\ServiceUidRegistry;
-use App\Domain\ChanServ\Entity\ChannelLevel;
-use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Domain\Event\UserJoinedChannelEvent;
+use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
-use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
-use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
-use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNotice;
+use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeHandler;
+use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeOutcome;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-
-use function strtolower;
 
 /**
  * When a user with MEMOREAD joins a channel, send a NOTICE about pending channel memos
@@ -26,11 +21,7 @@ use function strtolower;
 final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private MemoUserAccountPort $userAccountPort,
-        private MemoRepositoryInterface $memoRepository,
-        private MemoSettingsRepositoryInterface $memoSettingsRepository,
-        private ChanServAccessHelper $accessHelper,
+        private GetPendingChannelNoticeHandler $getPendingChannelNotice,
         private MemoServNotifierInterface $notifier,
         private NetworkUserLookupPort $userLookup,
         private TranslatorInterface $translator,
@@ -47,33 +38,31 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
 
     public function onUserJoinedChannel(UserJoinedChannelEvent $event): void
     {
-        if ($event->uid->value === $this->uidRegistry->getUid('memoserv')) {
+        if ($event->uid === $this->uidRegistry->getUid('memoserv')) {
             return;
         }
 
-        $channel = $this->channelRepository->findByChannelName(strtolower($event->channel->value));
-
-        if (null === $channel || !$this->memoSettingsRepository->isEnabledForChannel($channel->getId())) {
+        $sender = $this->userLookup->findByUid($event->uid);
+        if (null === $sender) {
             return;
         }
 
-        $unread = $this->memoRepository->countUnreadByTargetChannel($channel->getId());
-
-        $sender = 0 !== $unread ? $this->userLookup->findByUid($event->uid->value) : null;
-        $account = null !== $sender ? $this->userAccountPort->findAccountByNick($sender->nick) : null;
-        $hasAccess = null !== $account && $sender->isIdentified
-            && $this->accessHelper->effectiveAccessLevel($channel, $account->id, true) >= $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_MEMOREAD);
-
-        if (0 === $unread || !$hasAccess) {
+        $result = $this->getPendingChannelNotice->handle(new GetPendingChannelNotice(
+            uid: $event->uid,
+            nickname: $sender->nick,
+            isIdentified: $sender->isIdentified,
+            channelName: $event->channelName,
+        ));
+        if (GetPendingChannelNoticeOutcome::PendingMemos !== $result->outcome) {
             return;
         }
 
-        $language = '' !== $account->language ? $account->language : $this->defaultLanguage;
+        $language = '' !== $result->language ? $result->language : $this->defaultLanguage;
         $message = $this->translator->trans('notify.channel_pending', [
-            '%channel%' => $event->channel->value,
-            '%count%' => $unread,
+            '%channel%' => $result->channelName,
+            '%count%' => $result->unreadCount,
             '%bot%' => $this->notifier->getNick(),
         ], 'memoserv', $language);
-        $this->notifier->sendNotice($event->uid->value, $message);
+        $this->notifier->sendNotice($result->uid, $message);
     }
 }

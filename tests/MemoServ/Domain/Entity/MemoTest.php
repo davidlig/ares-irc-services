@@ -20,12 +20,14 @@ final class MemoTest extends TestCase
     #[Test]
     public function constructorWithTargetNick(): void
     {
-        $memo = new Memo(10, null, 5, 'Hello');
+        $createdAt = new DateTimeImmutable('2026-09-07 10:00:00 UTC');
+        $memo = new Memo(10, null, 5, 'Hello', $createdAt);
 
         self::assertSame(10, $memo->getTargetNickId());
         self::assertNull($memo->getTargetChannelId());
         self::assertSame(5, $memo->getSenderNickId());
         self::assertSame('Hello', $memo->getMessage());
+        self::assertSame($createdAt, $memo->getCreatedAt());
         self::assertFalse($memo->isRead());
         self::assertNull($memo->getReadAt());
     }
@@ -33,7 +35,7 @@ final class MemoTest extends TestCase
     #[Test]
     public function constructorWithTargetChannel(): void
     {
-        $memo = new Memo(null, 20, 5, 'Hi channel');
+        $memo = new Memo(null, 20, 5, 'Hi channel', new DateTimeImmutable());
 
         self::assertNull($memo->getTargetNickId());
         self::assertSame(20, $memo->getTargetChannelId());
@@ -47,7 +49,7 @@ final class MemoTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Exactly one of targetNickId or targetChannelId must be set');
 
-        new Memo(10, 20, 5, 'msg');
+        new Memo(10, 20, 5, 'msg', new DateTimeImmutable());
     }
 
     #[Test]
@@ -56,7 +58,7 @@ final class MemoTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Exactly one of targetNickId or targetChannelId must be set');
 
-        new Memo(null, null, 5, 'msg');
+        new Memo(null, null, 5, 'msg', new DateTimeImmutable());
     }
 
     #[Test]
@@ -71,7 +73,7 @@ final class MemoTest extends TestCase
     #[Test]
     public function markAsReadSetsReadAt(): void
     {
-        $memo = new Memo(1, null, 2, 'msg');
+        $memo = new Memo(1, null, 2, 'msg', new DateTimeImmutable());
         self::assertFalse($memo->isRead());
 
         $at = new DateTimeImmutable();
@@ -82,34 +84,20 @@ final class MemoTest extends TestCase
     }
 
     #[Test]
-    public function markAsReadDefaultsToNow(): void
-    {
-        $memo = new Memo(1, null, 2, 'msg');
-        $before = new DateTimeImmutable();
-        $memo->markAsRead();
-        $after = new DateTimeImmutable();
-
-        self::assertTrue($memo->isRead());
-        self::assertNotNull($memo->getReadAt());
-        self::assertGreaterThanOrEqual($before->getTimestamp(), $memo->getReadAt()->getTimestamp());
-        self::assertLessThanOrEqual($after->getTimestamp(), $memo->getReadAt()->getTimestamp());
-    }
-
-    #[Test]
     public function constructorThrowsWhenMessageTooLong(): void
     {
         $long = str_repeat('a', Memo::MESSAGE_MAX_LENGTH + 1);
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Message cannot exceed');
 
-        new Memo(1, null, 2, $long);
+        new Memo(1, null, 2, $long, new DateTimeImmutable());
     }
 
     #[Test]
     public function constructorAcceptsMaxLenMessage(): void
     {
         $msg = str_repeat('x', Memo::MESSAGE_MAX_LENGTH);
-        $memo = new Memo(1, null, 2, $msg);
+        $memo = new Memo(1, null, 2, $msg, new DateTimeImmutable());
 
         self::assertSame(strlen($msg), strlen($memo->getMessage()));
     }
@@ -117,7 +105,7 @@ final class MemoTest extends TestCase
     #[Test]
     public function getIdReturnsReflectedId(): void
     {
-        $memo = new Memo(1, null, 2, 'msg');
+        $memo = new Memo(1, null, 2, 'msg', new DateTimeImmutable());
         $prop = new ReflectionProperty(Memo::class, 'id');
         $prop->setValue($memo, 42);
 

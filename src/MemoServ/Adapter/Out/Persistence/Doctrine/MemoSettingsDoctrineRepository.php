@@ -18,12 +18,6 @@ final readonly class MemoSettingsDoctrineRepository implements MemoSettingsRepos
         $this->em->flush();
     }
 
-    public function delete(MemoSettings $settings): void
-    {
-        $this->em->remove($settings);
-        $this->em->flush();
-    }
-
     public function findByTargetNick(int $nickId): ?MemoSettings
     {
         return $this->em

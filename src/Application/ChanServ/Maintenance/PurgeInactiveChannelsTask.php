@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Maintenance;
 
+use App\Application\ChanServ\Service\ChanDropService;
 use App\Application\Maintenance\MaintenanceTaskInterface;
-use App\Application\Port\EventBusInterface;
-use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -15,7 +14,7 @@ use function sprintf;
 
 /**
  * Removes registered channels that have been inactive for more than the configured days.
- * Dispatches ChannelDropEvent before each deletion so other services (MemoServ) can clean up.
+ * Delegates hard deletion so all dependent data is cleaned up atomically.
  *
  * Order 300: ChanServ channel expiry range.
  */
@@ -23,7 +22,7 @@ final readonly class PurgeInactiveChannelsTask implements MaintenanceTaskInterfa
 {
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
-        private EventBusInterface $eventDispatcher,
+        private ChanDropService $dropService,
         private LoggerInterface $logger,
         private int $intervalSeconds,
         private int $inactivityExpiryDays,
@@ -56,18 +55,10 @@ final readonly class PurgeInactiveChannelsTask implements MaintenanceTaskInterfa
         foreach ($inactive as $channel) {
             $channelId = $channel->getId();
             $channelName = $channel->getName();
-            $channelNameLower = $channel->getNameLower();
             $lastActivity = $channel->getLastUsedAt() ?? $channel->getCreatedAt();
             $lastActivityStr = $lastActivity->format('Y-m-d H:i:s');
 
-            $this->eventDispatcher->dispatch(new ChannelDropEvent(
-                $channelId,
-                $channelName,
-                $channelNameLower,
-                'inactivity',
-            ));
-
-            $this->channelRepository->delete($channel);
+            $this->dropService->hardDropChannel($channel, 'inactivity');
 
             $this->logger->info(
                 sprintf(

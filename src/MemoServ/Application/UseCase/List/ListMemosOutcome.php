@@ -9,4 +9,5 @@ enum ListMemosOutcome
     case Success;
     case Empty;
     case ChannelNotRegistered;
+    case AccessDenied;
 }

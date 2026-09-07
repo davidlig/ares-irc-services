@@ -8,5 +8,6 @@ enum ReadMemoOutcome
 {
     case Success;
     case ChannelNotRegistered;
+    case AccessDenied;
     case NotFound;
 }

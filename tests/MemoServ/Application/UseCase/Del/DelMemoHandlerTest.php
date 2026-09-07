@@ -12,6 +12,7 @@ use App\MemoServ\Application\UseCase\Del\DelMemoHandler;
 use App\MemoServ\Application\UseCase\Del\DelMemoOutcome;
 use App\MemoServ\Application\UseCase\Del\DelMemoResult;
 use App\MemoServ\Domain\Entity\Memo;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -39,7 +40,7 @@ final class DelMemoHandlerTest extends TestCase
     #[Test]
     public function deletesNickMemoSuccessfully(): void
     {
-        $memo = new Memo(1, null, 2, 'To delete');
+        $memo = new Memo(1, null, 2, 'To delete', new DateTimeImmutable());
         $memoRepo = $this->createMock(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetNickAndIndex')->willReturn($memo);
         $memoRepo->expects(self::once())->method('delete')->with($memo);
@@ -71,10 +72,10 @@ final class DelMemoHandlerTest extends TestCase
     {
         $channelPort = $this->createMock(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(5, '#Ares'));
-        $channelPort->expects(self::once())->method('requireManageAccess')->with(5, 1, '#ares', 'DEL');
+        $channelPort->expects(self::once())->method('canManageChannelMemos')->with(5, 1)->willReturn(true);
         $this->channelPort = $channelPort;
 
-        $memo = new Memo(null, 5, 2, 'Channel memo');
+        $memo = new Memo(null, 5, 2, 'Channel memo', new DateTimeImmutable());
         $memoRepo = $this->createMock(MemoRepositoryInterface::class);
         $memoRepo->method('findByTargetChannelAndIndex')->willReturn($memo);
         $memoRepo->expects(self::once())->method('delete')->with($memo);
@@ -106,6 +107,7 @@ final class DelMemoHandlerTest extends TestCase
     {
         $channelPort = $this->createStub(MemoChannelPort::class);
         $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(5, '#Ares'));
+        $channelPort->method('canManageChannelMemos')->willReturn(true);
         $this->channelPort = $channelPort;
 
         $memoRepo = $this->createStub(MemoRepositoryInterface::class);
@@ -117,5 +119,24 @@ final class DelMemoHandlerTest extends TestCase
 
         self::assertSame(DelMemoOutcome::NotFound, $result->outcome);
         self::assertSame(99, $result->index);
+    }
+
+    #[Test]
+    public function returnsAccessDeniedWithoutLoadingOrDeletingMemo(): void
+    {
+        $channelPort = $this->createStub(MemoChannelPort::class);
+        $channelPort->method('findChannelByName')->willReturn(new MemoChannelView(5, '#Ares'));
+        $channelPort->method('canManageChannelMemos')->willReturn(false);
+        $this->channelPort = $channelPort;
+
+        $memoRepository = $this->createMock(MemoRepositoryInterface::class);
+        $memoRepository->expects(self::never())->method('findByTargetChannelAndIndex');
+        $memoRepository->expects(self::never())->method('delete');
+        $this->memoRepository = $memoRepository;
+
+        $result = $this->createHandler()->handle(new DelMemo(1, '#ares', 1));
+
+        self::assertSame(DelMemoOutcome::AccessDenied, $result->outcome);
+        self::assertSame('#Ares', $result->channelName);
     }
 }

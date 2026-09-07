@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\MemoServ\Adapter\In\Event;
 
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
-use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
-use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use App\MemoServ\Application\UseCase\GetPendingNickNotice\GetPendingNickNotice;
+use App\MemoServ\Application\UseCase\GetPendingNickNotice\GetPendingNickNoticeHandler;
+use App\MemoServ\Application\UseCase\GetPendingNickNotice\GetPendingNickNoticeOutcome;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -17,8 +18,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final readonly class MemoServNickIdentifiedNoticeSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private MemoRepositoryInterface $memoRepository,
-        private MemoUserAccountPort $userAccountPort,
+        private GetPendingNickNoticeHandler $getPendingNickNotice,
         private MemoServNotifierInterface $notifier,
         private TranslatorInterface $translator,
     ) {}
@@ -32,13 +32,12 @@ final readonly class MemoServNickIdentifiedNoticeSubscriber implements EventSubs
 
     public function onNickIdentified(NickIdentifiedEvent $event): void
     {
-        $unread = $this->memoRepository->countUnreadByTargetNick($event->nickId);
-        if (0 === $unread) {
+        $result = $this->getPendingNickNotice->handle(new GetPendingNickNotice($event->nickId, $event->uid));
+        if (GetPendingNickNoticeOutcome::PendingMemos !== $result->outcome) {
             return;
         }
 
-        $language = $this->userAccountPort->getLanguage($event->nickId);
-        $message = $this->translator->trans('notify.nick_pending', ['%count%' => $unread, '%bot%' => $this->notifier->getNick()], 'memoserv', $language);
-        $this->notifier->sendNotice($event->uid, $message);
+        $message = $this->translator->trans('notify.nick_pending', ['%count%' => $result->unreadCount, '%bot%' => $this->notifier->getNick()], 'memoserv', $result->language);
+        $this->notifier->sendNotice($result->uid, $message);
     }
 }

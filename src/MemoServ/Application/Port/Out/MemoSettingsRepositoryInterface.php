@@ -10,8 +10,6 @@ interface MemoSettingsRepositoryInterface
 {
     public function save(MemoSettings $settings): void;
 
-    public function delete(MemoSettings $settings): void;
-
     public function findByTargetNick(int $nickId): ?MemoSettings;
 
     public function findByTargetChannel(int $channelId): ?MemoSettings;

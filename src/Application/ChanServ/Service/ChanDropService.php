@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Service;
 
+use App\Application\ChanServ\PublishedEvent\ChannelDropCleanupEvent as PublishedChannelDropCleanupEvent;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
@@ -120,6 +121,7 @@ readonly class ChanDropService
 
         $this->transactionManager->transactional(function () use ($cleanupEvent, $channel): void {
             $this->eventDispatcher->dispatch($cleanupEvent);
+            $this->eventDispatcher->dispatch(new PublishedChannelDropCleanupEvent($cleanupEvent->channelId));
             $this->channelRepository->delete($channel);
         });
 

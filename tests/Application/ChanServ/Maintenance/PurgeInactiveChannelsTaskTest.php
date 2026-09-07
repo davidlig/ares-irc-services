@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Application\ChanServ\Maintenance;
 
 use App\Application\ChanServ\Maintenance\PurgeInactiveChannelsTask;
-use App\Application\Port\EventBusInterface;
+use App\Application\ChanServ\Service\ChanDropService;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
-use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -23,7 +22,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     {
         $task = new PurgeInactiveChannelsTask(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
+            $this->createStub(ChanDropService::class),
             $this->createStub(LoggerInterface::class),
             3600,
             90,
@@ -37,7 +36,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     {
         $task = new PurgeInactiveChannelsTask(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
+            $this->createStub(ChanDropService::class),
             $this->createStub(LoggerInterface::class),
             7200,
             60,
@@ -51,7 +50,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     {
         $task = new PurgeInactiveChannelsTask(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
+            $this->createStub(ChanDropService::class),
             $this->createStub(LoggerInterface::class),
             3600,
             90,
@@ -66,12 +65,12 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::never())->method('findRegisteredInactiveSince');
         $channelRepo->expects(self::never())->method('delete');
-        $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::never())->method('dispatch');
+        $dropService = $this->createMock(ChanDropService::class);
+        $dropService->expects(self::never())->method('hardDropChannel');
 
         $task = new PurgeInactiveChannelsTask(
             $channelRepo,
-            $eventDispatcher,
+            $dropService,
             $this->createStub(LoggerInterface::class),
             3600,
             0,
@@ -80,12 +79,11 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     }
 
     #[Test]
-    public function runDispatchesChannelDropEventAndDeletesAndLogsForEachInactiveChannel(): void
+    public function runHardDropsAndLogsEachInactiveChannel(): void
     {
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(1);
         $channel->method('getName')->willReturn('#test');
-        $channel->method('getNameLower')->willReturn('#test');
         $lastUsed = new DateTimeImmutable('2024-01-01 12:00:00');
         $channel->method('getLastUsedAt')->willReturn($lastUsed);
         $channel->method('getCreatedAt')->willReturn(new DateTimeImmutable('2023-01-01'));
@@ -99,25 +97,10 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
                 return $t->format('Y-m-d') === $expected->format('Y-m-d');
             }))
             ->willReturn([$channel]);
-        $channelRepo->expects(self::once())->method('delete')->with($channel);
+        $channelRepo->expects(self::never())->method('delete');
 
-        $dispatched = [];
-        $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())
-            ->method('dispatch')
-            ->with(self::callback(static function (object $event) use (&$dispatched): bool {
-                if ($event instanceof ChannelDropEvent) {
-                    $dispatched[] = $event;
-
-                    return 1 === $event->channelId
-                        && '#test' === $event->channelName
-                        && '#test' === $event->channelNameLower
-                        && 'inactivity' === $event->reason;
-                }
-
-                return false;
-            }))
-            ->willReturnArgument(0);
+        $dropService = $this->createMock(ChanDropService::class);
+        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, 'inactivity');
 
         $logMessages = [];
         $logger = $this->createStub(LoggerInterface::class);
@@ -127,14 +110,13 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
 
         $task = new PurgeInactiveChannelsTask(
             $channelRepo,
-            $eventDispatcher,
+            $dropService,
             $logger,
             3600,
             90,
         );
         $task->run();
 
-        self::assertCount(1, $dispatched);
         self::assertCount(1, $logMessages);
         self::assertStringContainsString('deleted channel #test', $logMessages[0]);
         self::assertStringContainsString('inactivity', $logMessages[0]);

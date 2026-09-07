@@ -204,7 +204,6 @@ deptrac:
       - Psr\Log\LoggerInterface
     App\Application\ChanServ\Maintenance\PurgeInactiveChannelsTask:
       - App\Application\Maintenance\MaintenanceTaskInterface
-      - App\Application\Port\EventBusInterface
       - Psr\Log\LoggerInterface
     App\Application\ChanServ\Maintenance\PurgePendingDeletionChannelsTask:
       - App\Application\Maintenance\MaintenanceTaskInterface

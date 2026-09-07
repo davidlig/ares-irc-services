@@ -10,7 +10,10 @@ use App\MemoServ\Application\UseCase\List\ListMemos;
 use App\MemoServ\Application\UseCase\List\ListMemosHandlerInterface;
 use App\MemoServ\Application\UseCase\List\ListMemosOutcome;
 
+use function mb_strlen;
+use function mb_substr;
 use function sprintf;
+use function str_replace;
 use function str_starts_with;
 
 /**
@@ -20,6 +23,8 @@ use function str_starts_with;
  */
 final readonly class ListCommand implements MemoServCommandInterface
 {
+    private const int PREVIEW_MAX_LENGTH = 50;
+
     /** IRC red */
     private const string RED = "\x0304";
 
@@ -106,6 +111,13 @@ final readonly class ListCommand implements MemoServCommandInterface
                 $context->reply('list.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
+            case ListMemosOutcome::AccessDenied:
+                $context->reply('error.insufficient_access', [
+                    'operation' => 'LIST',
+                    'channel' => $result->channelName ?? $targetChannel ?? '',
+                ]);
+                break;
+
             case ListMemosOutcome::Empty:
                 $context->reply('list.empty', ['target' => $result->targetLabel]);
                 break;
@@ -115,10 +127,20 @@ final readonly class ListCommand implements MemoServCommandInterface
                 foreach ($result->items as $item) {
                     $unreadMark = $item->isRead ? '' : self::RED . '*' . self::RESET . ' ';
                     $dateStr = $context->formatDate($item->createdAt);
-                    $context->replyRaw(sprintf('  %s#%d ' . self::BLUE . '%s' . self::RESET . ' (%s): %s', $unreadMark, $item->index, $item->senderDisplay, $dateStr, $item->preview));
+                    $context->replyRaw(sprintf('  %s#%d ' . self::BLUE . '%s' . self::RESET . ' (%s): %s', $unreadMark, $item->index, $item->senderDisplay, $dateStr, self::preview($item->message)));
                 }
                 $context->reply('list.footer');
                 break;
         }
+    }
+
+    private static function preview(string $message): string
+    {
+        $message = str_replace(["\r", "\n"], ' ', $message);
+        if (mb_strlen($message) <= self::PREVIEW_MAX_LENGTH) {
+            return $message;
+        }
+
+        return mb_substr($message, 0, self::PREVIEW_MAX_LENGTH) . '…';
     }
 }
