@@ -685,7 +685,7 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
 
-    App\Infrastructure\MemoServ\Subscriber\MemoServCommandListener:
+    App\MemoServ\Adapter\In\Irc\Subscriber\MemoServCommandListener:
         arguments:
             $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
@@ -827,16 +827,16 @@ services:
     App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface:
         class: App\Infrastructure\ChanServ\Doctrine\ChannelHistoryDoctrineRepository
 
-    # --- MemoServ Domain --------------------------------------------------------
+    # --- MemoServ Domain / Persistence -----------------------------------------
 
-    App\Domain\MemoServ\Repository\MemoRepositoryInterface:
-        class: App\Infrastructure\MemoServ\Doctrine\MemoDoctrineRepository
+    App\MemoServ\Application\Port\Out\MemoRepositoryInterface:
+        class: App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoDoctrineRepository
 
-    App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface:
-        class: App\Infrastructure\MemoServ\Doctrine\MemoIgnoreDoctrineRepository
+    App\MemoServ\Application\Port\Out\MemoIgnoreRepositoryInterface:
+        class: App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoIgnoreDoctrineRepository
 
-    App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface:
-        class: App\Infrastructure\MemoServ\Doctrine\MemoSettingsDoctrineRepository
+    App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface:
+        class: App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoSettingsDoctrineRepository
 
     # --- UnrealUdb authoritative store (all six blocks) --------------------------
 
@@ -964,7 +964,7 @@ services:
 
     # --- MemoServ Bot pseudo-client ---------------------------------------------
 
-    App\Infrastructure\MemoServ\Bot\MemoServBot:
+    App\MemoServ\Adapter\In\Irc\Bot\MemoServBot:
         arguments:
             $uidGenerator: '@App\Irc\Application\Port\In\ServiceUidGeneratorInterface'
             $servicesVhost: '%services.vhost%'
@@ -974,8 +974,8 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
 
-    App\Application\MemoServ\Command\MemoServNotifierInterface:
-        alias: App\Infrastructure\MemoServ\Bot\MemoServBot
+    App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface:
+        alias: App\MemoServ\Adapter\In\Irc\Bot\MemoServBot
 
     # --- ChanServ Service -------------------------------------------------------
 
@@ -1245,67 +1245,120 @@ services:
 
     # --- MemoServ Service -------------------------------------------------------
 
-    App\Application\MemoServ\MemoServService:
+    App\MemoServ\Adapter\In\Irc\MemoServService:
         arguments:
             $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
-            $languageResolver: '@App\Application\MemoServ\Port\Out\ServiceUserPreferences'
-            $authorizationContext: '@App\NickServ\Application\Port\Out\AuthorizationContextInterface'
-            $authorizationChecker: '@App\NickServ\Application\Port\Out\AuthorizationCheckerInterface'
+            $languageResolver: '@App\MemoServ\Application\Port\Out\ServiceUserPreferences'
+            $messageTypeResolver: '@App\MemoServ\Application\Port\Out\ServiceUserPreferences'
+            $authorizationContext: '@App\MemoServ\Adapter\In\Irc\MemoAuthorizationContextInterface'
+            $authorizationChecker: '@App\MemoServ\Adapter\In\Irc\MemoAuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
             $logger: '@monolog.logger.irc'
 
-    App\Application\MemoServ\Command\MemoServCommandRegistry:
+    App\MemoServ\Adapter\In\Irc\MemoAuthorizationContextInterface:
+        alias: App\MemoServ\Adapter\Out\Security\NickServMemoAuthorizationContextAdapter
+
+    App\MemoServ\Adapter\In\Irc\MemoAuthorizationCheckerInterface:
+        alias: App\MemoServ\Adapter\Out\Security\SymfonyMemoAuthorizationCheckerAdapter
+
+    App\MemoServ\Adapter\Out\Security\SymfonyMemoAuthorizationCheckerAdapter:
+        arguments:
+            $authorizationChecker: '@Symfony\Component\Security\Core\Authorization\AuthorizationChecker'
+
+    App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry:
         arguments:
             $commands: !tagged_iterator memoserv.command
 
-    App\Application\MemoServ\MemoServSendThrottleRegistry: ~
+    App\MemoServ\Adapter\Out\InMemory\MemoSendThrottleRegistry: ~
+    App\MemoServ\Application\Port\Out\MemoThrottlePort:
+        alias: App\MemoServ\Adapter\Out\InMemory\MemoSendThrottleRegistry
 
-    App\Application\MemoServ\Command\Handler\SendCommand:
+    App\MemoServ\Application\Port\Out\MemoUserAccountPort:
+        alias: App\MemoServ\Adapter\Out\NickServ\NickServMemoUserAccountAdapter
+
+    App\MemoServ\Application\Port\Out\MemoChannelPort:
+        alias: App\MemoServ\Adapter\Out\ChanServ\ChanServMemoChannelAdapter
+
+    # MemoServ Use Cases
+    App\MemoServ\Application\UseCase\Send\SendMemoHandler:
         arguments:
-            $defaultLanguage: '%services.default_language%'
             $maxMemosPerNick: '%memoserv.max_memos_per_nick%'
             $maxMemosPerChannel: '%memoserv.max_memos_per_channel%'
             $sendMinIntervalSeconds: '%memoserv.send_min_interval_seconds%'
+
+    App\MemoServ\Application\UseCase\Send\SendMemoHandlerInterface:
+        alias: App\MemoServ\Application\UseCase\Send\SendMemoHandler
+
+    App\MemoServ\Application\UseCase\Read\ReadMemoHandler: ~
+    App\MemoServ\Application\UseCase\Read\ReadMemoHandlerInterface:
+        alias: App\MemoServ\Application\UseCase\Read\ReadMemoHandler
+
+    App\MemoServ\Application\UseCase\List\ListMemosHandler: ~
+    App\MemoServ\Application\UseCase\List\ListMemosHandlerInterface:
+        alias: App\MemoServ\Application\UseCase\List\ListMemosHandler
+
+    App\MemoServ\Application\UseCase\Del\DelMemoHandler: ~
+    App\MemoServ\Application\UseCase\Del\DelMemoHandlerInterface:
+        alias: App\MemoServ\Application\UseCase\Del\DelMemoHandler
+
+    App\MemoServ\Application\UseCase\Ignore\IgnoreMemoHandler:
+        arguments:
+            $ignoreListLimitNick: '%memoserv.ignore_list_limit_nick%'
+            $ignoreListLimitChannel: '%memoserv.ignore_list_limit_channel%'
+    App\MemoServ\Application\UseCase\Ignore\IgnoreMemoHandlerInterface:
+        alias: App\MemoServ\Application\UseCase\Ignore\IgnoreMemoHandler
+
+    App\MemoServ\Application\UseCase\Enable\EnableMemosHandler: ~
+    App\MemoServ\Application\UseCase\Enable\EnableMemosHandlerInterface:
+        alias: App\MemoServ\Application\UseCase\Enable\EnableMemosHandler
+
+    App\MemoServ\Application\UseCase\Disable\DisableMemosHandler: ~
+    App\MemoServ\Application\UseCase\Disable\DisableMemosHandlerInterface:
+        alias: App\MemoServ\Application\UseCase\Disable\DisableMemosHandler
+
+    # MemoServ IRC Commands
+    App\MemoServ\Adapter\In\Irc\Command\SendCommand:
         tags: ['memoserv.command']
 
-    App\Application\MemoServ\Command\Handler\ReadCommand:
+    App\MemoServ\Adapter\In\Irc\Command\ReadCommand:
         tags: ['memoserv.command']
 
-    App\Application\MemoServ\Command\Handler\ListCommand:
+    App\MemoServ\Adapter\In\Irc\Command\ListCommand:
         tags: ['memoserv.command']
 
-    App\Application\MemoServ\Command\Handler\DelCommand:
+    App\MemoServ\Adapter\In\Irc\Command\DelCommand:
         tags: ['memoserv.command']
 
-    App\Application\MemoServ\Command\Handler\IgnoreCommand:
+    App\MemoServ\Adapter\In\Irc\Command\IgnoreCommand:
         arguments:
             $ignoreListLimitNick: '%memoserv.ignore_list_limit_nick%'
             $ignoreListLimitChannel: '%memoserv.ignore_list_limit_channel%'
         tags: ['memoserv.command']
 
-    App\Application\MemoServ\Command\Handler\EnableCommand:
+    App\MemoServ\Adapter\In\Irc\Command\EnableCommand:
         tags: ['memoserv.command']
 
-    App\Application\MemoServ\Command\Handler\DisableCommand:
+    App\MemoServ\Adapter\In\Irc\Command\DisableCommand:
         tags: ['memoserv.command']
 
-    App\Application\MemoServ\Command\Handler\HelpCommand:
+    App\MemoServ\Adapter\In\Irc\Command\HelpCommand:
         tags: ['memoserv.command']
 
-    App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber:
+    # MemoServ Event Subscribers
+    App\MemoServ\Adapter\In\Event\MemoServPendingChannelNoticeSubscriber:
         arguments:
             $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $defaultLanguage: '%services.default_language%'
-
-    App\Infrastructure\MemoServ\Subscriber\MemoServNickIdentifiedNoticeSubscriber:
-        arguments:
-            $defaultLanguage: '%services.default_language%'
-
-    App\Infrastructure\MemoServ\Subscriber\MemoServNickDropCleanupSubscriber:
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\MemoServ\Subscriber\MemoServChannelDropCleanupSubscriber:
+    App\MemoServ\Adapter\In\Event\MemoServNickIdentifiedNoticeSubscriber:
+        tags: ['kernel.event_subscriber']
+
+    App\MemoServ\Adapter\In\Event\MemoServNickDropCleanupSubscriber:
+        tags: ['kernel.event_subscriber']
+
+    App\MemoServ\Adapter\In\Event\MemoServChannelDropCleanupSubscriber:
         tags: ['kernel.event_subscriber']
 
     App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber:
@@ -1610,7 +1663,7 @@ services:
     App\Application\ChanServ\Security\ChanServIrcopPermission:
         tags: ['permission.provider']
 
-    App\Application\MemoServ\Security\MemoServIrcopPermission:
+    App\Bootstrap\Security\MemoServPermissionProvider:
         tags: ['permission.provider']
 
     App\Application\OperServ\Security\OperServIrcopPermission:
@@ -1785,6 +1838,11 @@ services:
     App\NickServ\Application\Port\In\UserLanguageQuery:
         alias: App\NickServ\Adapter\Out\User\UserLanguageResolver
 
+    App\NickServ\Adapter\Out\User\NickAccountResolver: ~
+
+    App\NickServ\Application\Port\In\NickAccountQuery:
+        alias: App\NickServ\Adapter\Out\User\NickAccountResolver
+
     # --- UserMessageTypeResolver — NOTICE vs PRIVMSG preference -----------------
 
     App\NickServ\Application\Port\In\UserMessagePreferenceQuery:
@@ -1796,8 +1854,8 @@ services:
     App\Application\ChanServ\Port\Out\ServiceUserPreferences:
         alias: App\Infrastructure\ChanServ\User\NickServUserPreferencesAdapter
 
-    App\Application\MemoServ\Port\Out\ServiceUserPreferences:
-        alias: App\Infrastructure\MemoServ\User\NickServUserPreferencesAdapter
+    App\MemoServ\Application\Port\Out\ServiceUserPreferences:
+        alias: App\MemoServ\Adapter\Out\NickServ\NickServUserPreferencesAdapter
 
     App\Application\OperServ\Port\Out\ServiceUserPreferences:
         alias: App\Infrastructure\OperServ\User\NickServUserPreferencesAdapter

@@ -2,81 +2,20 @@
 # Exact source -> target exceptions owned by that phase; do not broaden.
 deptrac:
   skip_violations:
-    App\Application\MemoServ\Command\Handler\DelCommand:
-      - App\Application\ChanServ\ChanServAccessHelper
-      - App\Application\Command\CommandOutcome
-      - App\Domain\ChanServ\Entity\ChannelLevel
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-    App\Application\MemoServ\Command\Handler\DisableCommand:
-      - App\Application\Command\CommandOutcome
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-    App\Application\MemoServ\Command\Handler\EnableCommand:
-      - App\Application\Command\CommandOutcome
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-    App\Application\MemoServ\Command\Handler\HelpCommand:
-      - App\Application\Command\CommandOutcome
-    App\Application\MemoServ\Command\Handler\IgnoreCommand:
-      - App\Application\ChanServ\ChanServAccessHelper
-      - App\Application\Command\CommandOutcome
-      - App\Domain\ChanServ\Entity\ChannelLevel
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-    App\Application\MemoServ\Command\Handler\ListCommand:
-      - App\Application\ChanServ\ChanServAccessHelper
-      - App\Application\Command\CommandOutcome
-      - App\Domain\ChanServ\Entity\ChannelLevel
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-    App\Application\MemoServ\Command\Handler\ReadCommand:
-      - App\Application\ChanServ\ChanServAccessHelper
-      - App\Application\Command\CommandOutcome
-      - App\Domain\ChanServ\Entity\ChannelLevel
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-    App\Application\MemoServ\Command\Handler\SendCommand:
-      - App\Application\ChanServ\ChanServAccessHelper
-      - App\Application\Command\CommandOutcome
-      - App\Irc\Application\Port\In\NetworkUserLookupPort
-      - App\Application\Port\TranslationInterface
-      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-      - App\NickServ\Domain\Entity\RegisteredNick
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-    App\Application\MemoServ\Command\MemoServCommandInterface:
-      - App\Application\Command\CommandOutcome
-    App\Application\MemoServ\Command\MemoServContext:
-      - App\Irc\Application\Port\In\SenderView
-      - App\Application\Port\TranslationInterface
-      - App\Application\Security\IrcopContextInterface
-      - App\NickServ\Domain\Entity\RegisteredNick
-    App\Application\MemoServ\MemoServService:
-      - App\Application\Command\CommandOutcome
-      - App\Application\Event\CommandExecutedEvent
-      - App\NickServ\Application\Port\Out\AuthorizationCheckerInterface
-      - App\NickServ\Application\Port\Out\AuthorizationContextInterface
-      - App\Application\Port\EventBusInterface
-      - App\Irc\Application\Port\In\SenderView
-      - App\Application\Port\TranslationInterface
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-      - Psr\Log\LoggerInterface
-      - Psr\Log\NullLogger
-    App\Application\MemoServ\Security\MemoServIrcopPermission:
-      - App\Application\Security\PermissionProviderInterface
-    App\Infrastructure\MemoServ\Bot\MemoServBot:
-      - App\Irc\Adapter\Out\Connection\ConnectionInterface
-      - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
-      - App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
-    App\Infrastructure\MemoServ\Subscriber\MemoServChannelDropCleanupSubscriber:
+    App\MemoServ\Adapter\In\Event\MemoServChannelDropCleanupSubscriber:
       - App\Domain\ChanServ\Event\ChannelDropCleanupEvent
-    App\Infrastructure\MemoServ\Subscriber\MemoServCommandListener:
-      - App\Domain\ChanServ\Exception\ChannelNotRegisteredException
-      - App\Domain\ChanServ\Exception\InsufficientAccessException
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-    App\Infrastructure\MemoServ\Subscriber\MemoServNickDropCleanupSubscriber:
-    App\Infrastructure\MemoServ\Subscriber\MemoServNickIdentifiedNoticeSubscriber:
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-    App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber:
+    App\MemoServ\Adapter\In\Event\MemoServPendingChannelNoticeSubscriber:
       - App\Application\ChanServ\ChanServAccessHelper
       - App\Domain\ChanServ\Entity\ChannelLevel
       - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
       - App\Irc\Domain\Event\UserJoinedChannelEvent
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
+    App\MemoServ\Adapter\In\Irc\Subscriber\MemoServCommandListener:
+      - App\Domain\ChanServ\Exception\ChannelNotRegisteredException
+      - App\Domain\ChanServ\Exception\InsufficientAccessException
+    App\MemoServ\Adapter\Out\ChanServ\ChanServMemoChannelAdapter:
+      - App\Application\ChanServ\ChanServAccessHelper
+      - App\Domain\ChanServ\Entity\ChannelLevel
+      - App\Domain\ChanServ\Entity\RegisteredChannel
+      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
+    App\MemoServ\Adapter\Out\Security\NickServMemoAuthorizationContextAdapter:
+      - App\NickServ\Application\Port\Out\AuthorizationContextInterface

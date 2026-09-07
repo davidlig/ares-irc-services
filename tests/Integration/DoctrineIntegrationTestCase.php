@@ -40,6 +40,7 @@ abstract class DoctrineIntegrationTestCase extends TestCase
         $config->setMetadataDriverImpl(new SimplifiedXmlDriver([
             __DIR__ . '/../../config/doctrine/domain' => 'App\Domain',
             __DIR__ . '/../../config/doctrine/nickserv' => 'App\NickServ\Domain\Entity',
+            __DIR__ . '/../../config/doctrine/memoserv' => 'App\MemoServ\Domain\Entity',
         ]));
 
         $config->setProxyDir(__DIR__ . '/../../var/cache/test/Proxies');

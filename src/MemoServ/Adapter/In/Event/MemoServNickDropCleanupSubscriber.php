@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\MemoServ\Adapter\In\Event;
+
+use App\MemoServ\Application\Port\Out\MemoIgnoreRepositoryInterface;
+use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
+use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+/**
+ * When a nick is dropped, remove all MemoServ data for that nick (memos, ignores, settings).
+ */
+final readonly class MemoServNickDropCleanupSubscriber implements EventSubscriberInterface
+{
+    public function __construct(
+        private MemoRepositoryInterface $memoRepository,
+        private MemoIgnoreRepositoryInterface $memoIgnoreRepository,
+        private MemoSettingsRepositoryInterface $memoSettingsRepository,
+    ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            NickDropCleanupEvent::class => ['onNickDrop', 0],
+        ];
+    }
+
+    public function onNickDrop(NickDropCleanupEvent $event): void
+    {
+        $this->memoRepository->deleteAllForNick($event->nickId);
+        $this->memoIgnoreRepository->deleteAllForNick($event->nickId);
+        $this->memoSettingsRepository->deleteAllForNick($event->nickId);
+    }
+}

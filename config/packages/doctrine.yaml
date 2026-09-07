@@ -18,6 +18,13 @@ doctrine:
                 prefix: 'App\NickServ\Domain\Entity'
                 alias: NickServ
                 type: xml
+            MemoServ:
+                is_bundle: false
+                dir: '%kernel.project_dir%/config/doctrine/memoserv'
+                prefix: 'App\MemoServ\Domain\Entity'
+                alias: MemoServ
+                type: xml
+
 
 doctrine_migrations:
     migrations_paths:
