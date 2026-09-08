@@ -2007,6 +2007,17 @@ services:
         arguments:
             $commands: !tagged_iterator operserv.command
 
+    App\OperServ\Adapter\In\Irc\OperServCommandRegistry:
+        arguments:
+            $commands: !tagged_iterator operserv.command.new
+
+    App\OperServ\Adapter\In\Irc\OperServService:
+        arguments:
+            $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
+            $defaultLanguage: '%services.default_language%'
+            $defaultTimezone: '%services.default_timezone%'
+
+
     App\Application\OperServ\OperServService:
         arguments:
             $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
@@ -2039,6 +2050,105 @@ services:
     App\Application\OperServ\Command\Handler\HelpCommand:
         tags: ['operserv.command']
 
+    App\OperServ\Adapter\In\Irc\Command\HelpCommand:
+        tags: ['operserv.command.new']
+
+    App\OperServ\Application\Port\Out\RawLineTransport:
+        alias: App\OperServ\Adapter\Out\Irc\LegacyRawLineTransport
+
+    App\OperServ\Application\Port\Out\RawDatabaseMutationHandler:
+        alias: App\OperServ\Adapter\Out\Irc\LegacyRawDatabaseMutationHandler
+
+    App\OperServ\Adapter\In\Irc\Command\RawCommand:
+        tags: ['operserv.command.new']
+
+    App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface:
+        alias: App\OperServ\Application\UseCase\ManageGline\ManageGlineHandler
+
+    App\OperServ\Application\UseCase\ManageGline\ManageGlineHandler:
+        arguments:
+            $maxGlines: '%operserv.max_glines%'
+
+    App\OperServ\Application\Port\Out\GlineRepository:
+        alias: App\OperServ\Adapter\Out\Persistence\Legacy\LegacyGlineRepository
+
+    App\OperServ\Application\Port\Out\GlineNetworkActions:
+        alias: App\OperServ\Adapter\Out\Irc\LegacyGlineNetworkActions
+
+    App\OperServ\Application\Port\Out\GlineUserLookup:
+        alias: App\OperServ\Adapter\Out\Irc\NetworkGlineUserLookup
+
+    App\OperServ\Application\Port\Out\ProtectedGlineSubjects:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyProtectedGlineSubjects
+
+    App\OperServ\Adapter\In\Irc\Command\GlineCommand:
+        arguments:
+            $handler: '@App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface'
+        tags: ['operserv.command.new']
+
+    App\OperServ\Application\UseCase\ManageMotd\ManageMotdHandlerInterface:
+        alias: App\OperServ\Application\UseCase\ManageMotd\ManageMotdHandler
+
+    App\OperServ\Application\Port\Out\MotdRepository:
+        alias: App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineMotdRepository
+
+    App\OperServ\Adapter\In\Irc\Command\MotdCommand:
+        tags: ['operserv.command.new']
+
+    App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopHandlerInterface:
+        alias: App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopHandler
+
+    App\OperServ\Application\Port\Out\OperatorAssignmentStore:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorAssignmentStore
+
+    App\OperServ\Application\Port\Out\OperatorAssignmentNetworkProjection:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorAssignmentNetworkProjection
+
+    App\OperServ\Application\Port\Out\OperatorRoleStore:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleStore
+
+    App\OperServ\Adapter\In\Irc\Command\IrcopCommand:
+        tags: ['operserv.command.new']
+
+    App\OperServ\Application\UseCase\ManageRole\ManageRoleHandlerInterface:
+        alias: App\OperServ\Application\UseCase\ManageRole\ManageRoleHandler
+
+    App\OperServ\Application\Port\Out\OperatorPermissionCatalog:
+        alias: App\OperServ\Adapter\Out\Irc\IrcOperatorPermissionCatalog
+
+    App\Irc\Application\Port\In\NetworkPermissionCatalog:
+        alias: App\Irc\Adapter\Out\Security\RegisteredNetworkPermissionCatalog
+
+    App\OperServ\Application\Port\Out\OperatorRoleNetworkProjection:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleNetworkProjection
+
+    App\OperServ\Application\Port\Out\OperatorModeCatalog:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorModeCatalog
+
+    App\OperServ\Application\Port\Out\ForcedVhostPolicy:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyForcedVhostPolicy
+
+    App\OperServ\Adapter\In\Irc\Command\RoleCommand:
+        tags: ['operserv.command.new']
+
+    App\OperServ\Application\Port\Out\NetworkUserLookup:
+        alias: App\OperServ\Adapter\Out\Irc\IrcNetworkUserLookup
+
+    App\OperServ\Application\Port\Out\OperatorAccountLookup:
+        alias: App\OperServ\Adapter\Out\NickServ\NickServOperatorAccountLookup
+
+    App\OperServ\Application\Port\Out\KillNetworkUser:
+        alias: App\OperServ\Adapter\Out\Irc\ActiveConnectionKillNetworkUser
+
+    App\OperServ\Application\Port\Out\GlobalMessageTransport:
+        alias: App\OperServ\Adapter\Out\Irc\ActiveConnectionGlobalMessageTransport
+
+    App\OperServ\Adapter\In\Irc\Command\KillCommand:
+        tags: ['operserv.command.new']
+
+    App\OperServ\Adapter\In\Irc\Command\GlobalCommand:
+        tags: ['operserv.command.new']
+
     App\Application\OperServ\Command\Handler\MotdCommand:
         arguments:
             $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
@@ -2064,8 +2174,12 @@ services:
     App\Application\OperServ\Command\OperServNotifierInterface:
         alias: App\Infrastructure\OperServ\Bot\OperServBot
 
+    App\OperServ\Adapter\In\Irc\OperServNotifierInterface:
+        alias: App\Infrastructure\OperServ\Bot\OperServBot
+
     App\Infrastructure\OperServ\Subscriber\OperServCommandListener:
         arguments:
+            $operServService: '@App\OperServ\Adapter\In\Irc\OperServService'
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
 

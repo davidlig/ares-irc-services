@@ -12,12 +12,13 @@ use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\OperServ\Adapter\In\Irc\OperServNotifierInterface as NewOperServNotifierInterface;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class OperServBot implements OperServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
+final class OperServBot implements OperServNotifierInterface, NewOperServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
 {
     private string $uid = '';
 

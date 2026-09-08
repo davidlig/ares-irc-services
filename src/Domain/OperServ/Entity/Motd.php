@@ -47,6 +47,7 @@ class Motd
         string $messageType,
         ?int $creatorNickId = null,
         ?DateTimeImmutable $expiresAt = null,
+        ?DateTimeImmutable $createdAt = null,
     ): self {
         $motd = new self();
         $motd->id = self::$nextId++;
@@ -55,7 +56,7 @@ class Motd
         $motd->botNickname = $botNickname;
         $motd->messageType = $messageType;
         $motd->creatorNickId = $creatorNickId;
-        $motd->createdAt = new DateTimeImmutable();
+        $motd->createdAt = $createdAt ?? new DateTimeImmutable();
         $motd->expiresAt = $expiresAt;
         $motd->shownCount = 0;
 
