@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap\Protocol;
 
-use App\Application\Port\UdbOfflineTakeoverInterface;
 use App\Bootstrap\Protocol\ProtocolComposition;
-use App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface;
-use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbConnectionPreflight;
 use App\Irc\Adapter\Protocol\NetworkStateAdapterInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbOfflineTakeoverInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;

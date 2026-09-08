@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Bootstrap\Protocol;
 
-use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbConnectionPreflight;
-use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbModule;
 use App\Irc\Adapter\Protocol\NetworkStateAdapterInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight;
+use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbModule;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Application\Connect\ConnectionPreflightResult;
 use App\Irc\Application\Connect\ProtocolConnectionPreflightInterface;

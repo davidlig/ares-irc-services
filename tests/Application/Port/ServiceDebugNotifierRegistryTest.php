@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Application\Port;
+namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb\Wire;
 
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Application\Port\ServiceDebugNotifierRegistry;

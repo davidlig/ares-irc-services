@@ -42,6 +42,7 @@ abstract class DoctrineIntegrationTestCase extends TestCase
             __DIR__ . '/../../config/doctrine/nickserv' => 'App\NickServ\Domain\Entity',
             __DIR__ . '/../../config/doctrine/memoserv' => 'App\MemoServ\Domain\Entity',
             __DIR__ . '/../../config/doctrine/chanserv' => 'App\ChanServ\Domain\Entity',
+            __DIR__ . '/../../config/doctrine/unreal_udb' => 'App\Irc\Adapter\Protocol\UnrealUdb\Model',
         ]));
 
         $config->setProxyDir(__DIR__ . '/../../var/cache/test/Proxies');

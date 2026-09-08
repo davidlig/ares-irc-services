@@ -30,6 +30,12 @@ doctrine:
                 prefix: 'App\ChanServ\Domain\Entity'
                 alias: ChanServ
                 type: xml
+            UnrealUdb:
+                is_bundle: false
+                dir: '%kernel.project_dir%/config/doctrine/unreal_udb'
+                prefix: 'App\Irc\Adapter\Protocol\UnrealUdb\Model'
+                alias: UnrealUdb
+                type: xml
 
 
 doctrine_migrations:

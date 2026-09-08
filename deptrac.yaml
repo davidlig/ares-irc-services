@@ -184,12 +184,6 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Irc\\Adapter\\Protocol\\UnrealUdb(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\IRC\\Protocol\\UnrealUdb(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Domain\\Udb(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\Udb(?:\\|$)#'
 
     - name: Bootstrap
       collectors:

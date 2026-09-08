@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\UI\CLI;
+namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb\Takeover;
 
 use App\Application\Port\ConsumerProcessManagerInterface;
 use App\Irc\Application\Connect\ConnectionPreflightResult;

@@ -517,7 +517,7 @@ services:
             $defaultUseTls:      '%irc.use_tls%'
             $defaultTlsVerifyPeer: '%irc.tls_verify_peer%'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbConnectionPreflight:
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight:
         arguments:
             $directory: '%env(string:default::IRC_UDB_DIRECTORY)%'
             $bootstrapFromPeer: '%env(bool:IRC_UDB_BOOTSTRAP_FROM_PEER)%'
@@ -530,7 +530,7 @@ services:
             $protocolName: '%irc.protocol%'
             $modules: !tagged_iterator irc.protocol_module
             $networkStateAdapters: !tagged_iterator irc.network_state_adapter
-            $unrealUdbPreflight: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbConnectionPreflight'
+            $unrealUdbPreflight: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight'
 
     # --- Protocol modules (one per IRCd type: Unreal, InspIRCd, etc.) ---
 
@@ -540,15 +540,15 @@ services:
             $logger:          '@monolog.logger.irc'
             $eventDispatcher: '@event_dispatcher'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler:
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler:
         arguments:
             $sid:             '%irc.server_sid%'
-            $coordinator:     '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator'
-            $lock:            '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionLock'
+            $coordinator:     '@App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator'
+            $lock:            '@App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock'
             $logger:          '@monolog.logger.irc'
             $eventDispatcher: '@event_dispatcher'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionLock:
+    App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock:
         arguments:
             $directory: '%env(string:default::IRC_UDB_DIRECTORY)%'
             $logger:    '@monolog.logger.irc'
@@ -565,76 +565,82 @@ services:
 
     App\Irc\Adapter\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter: ~
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter: ~
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter: ~
 
     App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceActions:
         arguments:
             $introductionFormatter: '@App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter:
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter:
         arguments:
             $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
-            $sessionState:     '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface'
-            $records:          '@App\Domain\Udb\Repository\UdbRecordRepositoryInterface'
+            $sessionState:     '@App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface'
+            $records:          '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface'
             $sid:              '%irc.server_sid%'
             $logger:           '@monolog.logger.irc'
 
-    App\Application\Port\UdbRecordWriterInterface:
-        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter
+    App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface:
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator:
+    App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator:
         arguments:
             $sid:              '%irc.server_sid%'
-            $blockStates:      '@App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface'
-            $snapshots:        '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface'
+            $blockStates:      '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface'
+            $snapshots:        '@App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterface'
             $logger:           '@monolog.logger.irc'
-            $oclgView:         '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOclgView'
-            $wireTakeover:     '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbWireTakeover'
-            $authority:        '@App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface'
+            $oclgView:         '@App\Irc\Adapter\Protocol\UnrealUdb\Projection\Oclg\UdbOclgView'
+            $wireTakeover:     '@App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeover'
+            $authority:        '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOclgView:
+    App\Irc\Adapter\Protocol\UnrealUdb\Projection\Oclg\UdbOclgView:
         arguments:
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbWireTakeover:
+    App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeover:
         arguments:
-            $records:     '@App\Domain\Udb\Repository\UdbRecordRepositoryInterface'
-            $blockStates: '@App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface'
+            $records:     '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface'
+            $blockStates: '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface'
             $em:          '@doctrine.orm.default_entity_manager'
-            $exporter:    '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter'
+            $exporter:    '@App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter'
             $logger:      '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface:
-        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator
+    App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface:
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProvider:
+    App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionController:
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator
+
+    App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbStoreInitializationListener:
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator
+
+    App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProvider:
         arguments:
-            $records: '@App\Domain\Udb\Repository\UdbRecordRepositoryInterface'
+            $records: '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface:
-        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProvider
+    App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterface:
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProvider
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbStoreInitializer: ~
+    App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbStoreInitializer: ~
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRawCommandHandler:
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawCommandHandler:
         arguments:
-            $recordWriter: '@App\Application\Port\UdbRecordWriterInterface'
+            $recordWriter: '@App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface'
             $logger:       '@monolog.logger.ircops'
 
-    App\Application\Port\UdbRawCommandHandlerInterface:
-        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRawCommandHandler
+    App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerInterface:
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawCommandHandler
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions:
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions:
         arguments:
-            $recordWriter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter'
-            $sessionState: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface'
-            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
+            $recordWriter: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter'
+            $sessionState: '@App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface'
+            $introductionFormatter: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber:
+    App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbNickSyncSubscriber:
         arguments:
-            $sessionState: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface'
+            $sessionState: '@App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface'
 
     App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolServiceActions:
         arguments:
@@ -646,9 +652,9 @@ services:
             $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation:
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNickReservation:
         arguments:
-            $recordWriter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter'
+            $recordWriter: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter'
             $nickservNick: '%nickserv.nick%'
             $nickservIdent: '%nickserv.ident%'
             $chanservNick: '%chanserv.nick%'
@@ -674,24 +680,24 @@ services:
             $nickReservation: '@App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneNickReservation'
         tags: ['irc.protocol_module']
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport: ~
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbChannelModeSupport: ~
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbUserModeSupport: ~
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbUserModeSupport: ~
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbMigrationState: ~
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbMigrationState: ~
 
     App\Application\Port\PasswordMigrationStateInterface:
-        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbMigrationState
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbMigrationState
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbModule:
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbModule:
         arguments:
-            $handler: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler'
-            $serviceActions: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions'
-            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
-            $channelModeSupport: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport'
-            $userModeSupport: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbUserModeSupport'
-            $nickReservation: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation'
-            $rawCommandHandler: '@App\Application\Port\UdbRawCommandHandlerInterface'
+            $handler: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler'
+            $serviceActions: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions'
+            $introductionFormatter: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
+            $channelModeSupport: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbChannelModeSupport'
+            $userModeSupport: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbUserModeSupport'
+            $nickReservation: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNickReservation'
+            $rawCommandHandler: '@App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerInterface'
         tags: ['irc.protocol_module']
 
     App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory: ~
@@ -933,17 +939,17 @@ services:
 
     # --- UnrealUdb authoritative store (all six blocks) --------------------------
 
-    App\Domain\Udb\Repository\UdbRecordRepositoryInterface:
-        class: App\Infrastructure\Udb\Doctrine\UdbRecordDoctrineRepository
+    App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface:
+        class: App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbRecordDoctrineRepository
 
-    App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface:
-        class: App\Infrastructure\Udb\Doctrine\UdbBlockStateDoctrineRepository
+    App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface:
+        class: App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbBlockStateDoctrineRepository
 
-    App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface:
-        class: App\Infrastructure\Udb\Doctrine\UdbAuthorityStateDoctrineRepository
+    App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface:
+        class: App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbAuthorityStateDoctrineRepository
 
-    App\Application\Port\UdbOfflineTakeoverInterface:
-        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeover
+    App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbOfflineTakeoverInterface:
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbOfflineTakeover
 
 
     # --- NickServ Bot pseudo-client ---------------------------------------------
@@ -2029,7 +2035,7 @@ services:
         alias: App\OperServ\Adapter\Out\Irc\LegacyRawLineTransport
 
     App\OperServ\Application\Port\Out\RawDatabaseMutationHandler:
-        alias: App\OperServ\Adapter\Out\Irc\LegacyRawDatabaseMutationHandler
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawDatabaseMutationAdapter
 
     App\OperServ\Adapter\In\Irc\Command\RawCommand:
         tags: ['operserv.command.new']
@@ -2206,8 +2212,8 @@ services:
         arguments:
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
 
-    App\Application\Port\UdbRawCommandHandlerProviderInterface:
-        alias: App\Infrastructure\IRC\Connection\ActiveUdbRawCommandHandlerProvider
+    App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerProviderInterface:
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\ActiveUdbRawCommandHandlerProvider
 
     App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
         arguments:

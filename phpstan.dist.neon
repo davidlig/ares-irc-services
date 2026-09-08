@@ -13,5 +13,5 @@ parameters:
 
     ignoreErrors:
         -
-            message: '#Property (?:App\\Domain\\[^:]+|App\\[^:]+\\Domain)\\Entity\\[^:]+::\$id is (never written, only read|unused)\.#'
+            message: '#Property (?:(?:App\\Domain\\[^:]+|App\\[^:]+\\Domain)\\Entity|App\\Irc\\Adapter\\Protocol\\UnrealUdb\\Model)\\[^:]+::\$id is (never written, only read|unused)\.#'
             reportUnmatched: false

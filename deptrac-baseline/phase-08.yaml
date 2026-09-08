@@ -2,20 +2,20 @@
 # Exact source -> target exceptions owned by that phase; do not broaden.
 deptrac:
   skip_violations:
-    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbChannelSyncSubscriber:
+    App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSyncSubscriber:
       - App\ChanServ\Domain\Entity\RegisteredChannel
       - App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface
-    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbGlineSyncSubscriber:
+    App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbGlineSyncSubscriber:
       - App\Domain\OperServ\Event\GlineRemovedEvent
-    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber:
+    App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbNickSyncSubscriber:
       - App\NickServ\Domain\Entity\RegisteredNick
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
       - App\Domain\OperServ\Event\OperIrcopChangedEvent
       - App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
-    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbPasswordRepairSubscriber:
+    App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbPasswordRepairSubscriber:
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter:
+    App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter:
       - App\ChanServ\Domain\Entity\ChannelAccess
       - App\ChanServ\Domain\Entity\RegisteredChannel
       - App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface
@@ -26,3 +26,7 @@ deptrac:
       - App\Domain\OperServ\Repository\GlineRepositoryInterface
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Domain\OperServ\ValueObject\ForcedVhost
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawDatabaseMutationAdapter:
+      - App\OperServ\Application\Port\Out\RawDatabaseMutationFailure
+      - App\OperServ\Application\Port\Out\RawDatabaseMutationHandler
+      - App\OperServ\Application\Port\Out\RawDatabaseMutationResult

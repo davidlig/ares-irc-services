@@ -225,6 +225,9 @@ final class LayerDependencyTest extends TestCase
 
         self::assertOnlyContainsDirectories('Shared', ['Application', 'Domain']);
         self::assertFalse(is_dir(self::ROOT . '/src/Udb'), 'UDB is a protocol concern, not a bounded context');
+        self::assertDirectoryDoesNotExist(self::ROOT . '/src/Domain/Udb');
+        self::assertDirectoryDoesNotExist(self::ROOT . '/src/Infrastructure/Udb');
+        self::assertDirectoryDoesNotExist(self::ROOT . '/src/Infrastructure/IRC/Protocol/UnrealUdb');
 
         $protocolPath = self::ROOT . '/src/Irc/Adapter/Protocol';
         if (is_dir($protocolPath)) {
@@ -294,7 +297,6 @@ final class LayerDependencyTest extends TestCase
     {
         $actual = [];
         $paths = [
-            'src/Infrastructure/IRC/Protocol/UnrealUdb',
             'src/Irc/Adapter/Protocol/UnrealStandalone',
             'src/Irc/Adapter/Protocol/UnrealUdb',
         ];
