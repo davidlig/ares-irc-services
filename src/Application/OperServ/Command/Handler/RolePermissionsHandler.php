@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\OperServ\Entity\OperPermission;
@@ -28,12 +30,12 @@ final readonly class RolePermissionsHandler
         private PermissionRegistry $permissionRegistry,
     ) {}
 
-    public function handle(OperServContext $context): void
+    public function handle(OperServContext $context): CommandOutcome
     {
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.perms.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $roleName = strtoupper($context->args[1]);
@@ -43,16 +45,30 @@ final readonly class RolePermissionsHandler
         if (null === $role) {
             $context->reply('role.not_found', ['%role%' => $roleName]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        match ($action) {
-            'LIST' => $this->list($context, $role),
+        return match ($action) {
+            'LIST' => $this->listAndReject($context, $role),
             'ADD' => $this->add($context, $role),
             'DEL' => $this->remove($context, $role),
             'CLEAR' => $this->clear($context, $role),
-            default => $context->reply('role.perms.unknown_action', ['%action%' => $action]),
+            default => $this->rejectUnknownAction($context, $action),
         };
+    }
+
+    private function listAndReject(OperServContext $context, OperRole $role): CommandOutcome
+    {
+        $this->list($context, $role);
+
+        return CommandOutcome::rejected();
+    }
+
+    private function rejectUnknownAction(OperServContext $context, string $action): CommandOutcome
+    {
+        $context->reply('role.perms.unknown_action', ['%action%' => $action]);
+
+        return CommandOutcome::rejected();
     }
 
     private function list(OperServContext $context, OperRole $role): void
@@ -98,19 +114,17 @@ final readonly class RolePermissionsHandler
         }
     }
 
-    private function add(OperServContext $context, OperRole $role): void
+    private function add(OperServContext $context, OperRole $role): CommandOutcome
     {
         if (count($context->args) < 4) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.perms.add.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $permissionName = $context->args[3];
         if ('ALL' === strtoupper($permissionName)) {
-            $this->addAll($context, $role);
-
-            return;
+            return $this->addAll($context, $role);
         }
 
         $permission = $this->findOrCreate($permissionName);
@@ -123,16 +137,21 @@ final readonly class RolePermissionsHandler
                 ? ['%perm%' => $permissionName]
                 : ['%role%' => $role->getName(), '%perm%' => $permissionName]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $role->addPermission($permission);
         $this->roleRepository->save($role);
 
         $context->reply('role.perms.add.done', ['%role%' => $role->getName(), '%perm%' => $permissionName]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $role->getName(),
+            extra: ['action' => 'PERMISSION_ADD', 'permission' => $permissionName],
+        ));
     }
 
-    private function addAll(OperServContext $context, OperRole $role): void
+    private function addAll(OperServContext $context, OperRole $role): CommandOutcome
     {
         $added = 0;
         $skipped = 0;
@@ -160,16 +179,21 @@ final readonly class RolePermissionsHandler
         if (0 === $added && $skipped > 0) {
             $context->reply('role.perms.add.all_skipped', ['%role%' => $role->getName()]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         if (0 === $added) {
             $context->reply('role.perms.add.all_empty');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $context->reply('role.perms.add.all_done', ['%role%' => $role->getName(), '%count%' => (string) $added]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $role->getName(),
+            extra: ['action' => 'PERMISSION_ADD_ALL', 'count' => $added],
+        ));
     }
 
     private function findOrCreate(string $permissionName): ?OperPermission
@@ -189,13 +213,13 @@ final readonly class RolePermissionsHandler
         return $permission;
     }
 
-    private function clear(OperServContext $context, OperRole $role): void
+    private function clear(OperServContext $context, OperRole $role): CommandOutcome
     {
         $permissions = $role->getPermissions();
         if ([] === $permissions) {
             $context->reply('role.perms.clear.empty', ['%role%' => $role->getName()]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         foreach ($permissions as $permission) {
@@ -205,14 +229,19 @@ final readonly class RolePermissionsHandler
         $this->roleRepository->save($role);
 
         $context->reply('role.perms.clear.done', ['%role%' => $role->getName(), '%count%' => (string) count($permissions)]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $role->getName(),
+            extra: ['action' => 'PERMISSION_CLEAR', 'count' => count($permissions)],
+        ));
     }
 
-    private function remove(OperServContext $context, OperRole $role): void
+    private function remove(OperServContext $context, OperRole $role): CommandOutcome
     {
         if (count($context->args) < 4) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.perms.del.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $permissionName = $context->args[3];
@@ -220,7 +249,7 @@ final readonly class RolePermissionsHandler
         if (null === $permission) {
             $context->reply('role.perms.not_found', ['%perm%' => $permissionName]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $errorKey = !$role->hasPermission($permissionName)
@@ -229,13 +258,18 @@ final readonly class RolePermissionsHandler
         if (null !== $errorKey) {
             $context->reply($errorKey, ['%role%' => $role->getName(), '%perm%' => $permissionName]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $role->removePermission($permission);
         $this->roleRepository->save($role);
 
         $context->reply('role.perms.del.done', ['%role%' => $role->getName(), '%perm%' => $permissionName]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $role->getName(),
+            extra: ['action' => 'PERMISSION_DEL', 'permission' => $permissionName],
+        ));
     }
 
     private function resolveDescription(string $permission, OperServContext $context): string

@@ -87,6 +87,31 @@ final class MemoServContextTest extends TestCase
     }
 
     #[Test]
+    public function exposesIndependentSenderIdentityAndIrcOperatorFacts(): void
+    {
+        $sender = new SenderView('UID1', 'OperNick', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
+        $account = new MemoAccountView(42, 'OperNick', 'en');
+        $context = new MemoServContext(
+            $sender,
+            $account,
+            'HELP',
+            [],
+            $this->createStub(MemoServNotifierInterface::class),
+            $this->createStub(TranslationInterface::class),
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+        );
+
+        self::assertSame(42, $context->getSenderAccountId());
+        self::assertSame('OperNick', $context->getSenderNickname());
+        self::assertTrue($context->isSenderIdentified());
+        self::assertTrue($context->isSenderIrcOperator());
+    }
+
+    #[Test]
     public function replyTranslatesAndSendsWhenSenderIsSet(): void
     {
         $sent = [];

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
@@ -31,47 +33,47 @@ final readonly class RoleOperclassHandler
         return $this->getActions() instanceof OperclassServiceActionsInterface;
     }
 
-    public function handle(OperServContext $context): void
+    public function handle(OperServContext $context): CommandOutcome
     {
         if (count($context->args) < 2) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.operclass.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         if ('LIST' === strtoupper($context->args[1])) {
             $this->listOperclasses($context);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.operclass.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $role = $this->roleRepository->findByName(strtoupper($context->args[1]));
         if (null === $role) {
             $context->reply('role.not_found', ['%role%' => strtoupper($context->args[1])]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $action = strtoupper($context->args[2]);
         if ('VIEW' === $action || 'LIST' === $action) {
             $this->viewOperclass($context, $role);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         if ('SET' === $action) {
-            $this->setOperclass($context, $role);
-
-            return;
+            return $this->setOperclass($context, $role);
         }
 
         $context->reply('role.operclass.unknown_action', ['%action%' => $action]);
+
+        return CommandOutcome::rejected();
     }
 
     private function listOperclasses(OperServContext $context): void
@@ -110,7 +112,7 @@ final readonly class RoleOperclassHandler
         }
     }
 
-    private function setOperclass(OperServContext $context, OperRole $role): void
+    private function setOperclass(OperServContext $context, OperRole $role): CommandOutcome
     {
         $operclassArg = trim($context->args[3] ?? '');
         $operclass = '' === $operclassArg || 'OFF' === strtoupper($operclassArg) ? null : $operclassArg;
@@ -132,7 +134,7 @@ final readonly class RoleOperclassHandler
                         '%available%' => implode(', ', $available),
                     ]);
 
-                    return;
+                    return CommandOutcome::rejected();
                 }
 
                 $operclass = $matched;
@@ -144,6 +146,11 @@ final readonly class RoleOperclassHandler
         $this->operclassApplier->updateForRole($role->getId(), $operclass);
 
         $context->reply(null === $operclass ? 'role.operclass.set.cleared' : 'role.operclass.set.done', ['%role%' => $role->getName()]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $role->getName(),
+            extra: ['action' => null === $operclass ? 'OPERCLASS_CLEAR' : 'OPERCLASS_SET'],
+        ));
     }
 
     private function getActions(): ?OperclassServiceActionsInterface

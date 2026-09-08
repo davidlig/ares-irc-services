@@ -190,8 +190,12 @@ final class RoleVhostHandlerTest extends RoleHandlerTestCase
         });
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]), eventDispatcher: $eventDispatcher);
-        $cmd->execute($this->createContext($sender, ['VHOST', 'CUSTOM', 'SET', 'admin.ares'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['VHOST', 'CUSTOM', 'SET', 'admin.ares'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('CUSTOM', $outcome->auditData->target);
+        self::assertSame(['action' => 'VHOST_SET'], $outcome->auditData->extra);
         self::assertContains('role.vhost.set.done', $messages);
         self::assertCount(1, $savedRoles);
         self::assertSame('admin.ares', $savedRoles[0]->getForcedVhostPattern());
@@ -296,8 +300,12 @@ final class RoleVhostHandlerTest extends RoleHandlerTestCase
         });
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]), eventDispatcher: $eventDispatcher);
-        $cmd->execute($this->createContext($sender, ['VHOST', 'CUSTOM', 'SET', 'OFF'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['VHOST', 'CUSTOM', 'SET', 'OFF'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('CUSTOM', $outcome->auditData->target);
+        self::assertSame(['action' => 'VHOST_CLEAR'], $outcome->auditData->extra);
         self::assertContains('role.vhost.set.cleared', $messages);
         self::assertCount(1, $savedRoles);
         self::assertNull($savedRoles[0]->getForcedVhostPattern());

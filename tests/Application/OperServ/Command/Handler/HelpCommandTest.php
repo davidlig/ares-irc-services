@@ -16,6 +16,10 @@ use App\Application\Shared\Help\UnifiedHelpFormatter;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Application\Port\In\AuthorizationDecision;
+use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -43,10 +47,34 @@ final class HelpCommandTest extends TestCase
         TranslationInterface $translator,
         OperServCommandRegistry $registry,
         IrcopAccessHelper $accessHelper,
+        ?RegisteredNick $account = null,
+        ?OperatorAuthorizationQuery $authorization = null,
     ): OperServContext {
+        if (null !== $sender && $sender->isIdentified && ($sender->isOper || $accessHelper->isRoot($sender->nick))) {
+            $isRoot = $accessHelper->isRoot($sender->nick);
+            if (null === $account) {
+                $accountStub = $this->createStub(RegisteredNick::class);
+                $accountStub->method('getId')->willReturn(1);
+                $account = $accountStub;
+            }
+            if (null === $authorization) {
+                $authorizationStub = $this->createStub(OperatorAuthorizationQuery::class);
+                $authorizationStub->method('root')->willReturn($isRoot
+                    ? AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity)
+                    : AuthorizationDecision::denied());
+                $authorizationStub->method('ircOperator')->willReturn(AuthorizationDecision::grantedBy(
+                    $isRoot ? AuthorizationGrant::RootIdentity : AuthorizationGrant::IrcOperatorStatus,
+                ));
+                $authorizationStub->method('permission')->willReturn($isRoot
+                    ? AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity)
+                    : AuthorizationDecision::denied());
+                $authorization = $authorizationStub;
+            }
+        }
+
         return new OperServContext(
             $sender,
-            null,
+            $account,
             'HELP',
             $args,
             $notifier,
@@ -57,6 +85,7 @@ final class HelpCommandTest extends TestCase
             $registry,
             $accessHelper,
             $this->createServiceNicks(),
+            $authorization,
         );
     }
 
@@ -211,7 +240,7 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
-    public function operOnlyCommandHiddenFromNonRoot(): void
+    public function unidentifiedIrcOperatorCannotViewOperatorHelp(): void
     {
         $sender = new SenderView('UID1', 'NonRootUser', 'i', 'h', 'c', 'ip', false, true, '', '');
         $messages = [];
@@ -282,7 +311,7 @@ final class HelpCommandTest extends TestCase
         $cmd = new HelpCommand(new UnifiedHelpFormatter());
         $cmd->execute($this->createContext($sender, ['IRCOP'], $notifier, $translator, $registry, $accessHelper));
 
-        self::assertContains('help.unknown_command', $messages);
+        self::assertContains('error.oper_only', $messages);
     }
 
     #[Test]
@@ -366,17 +395,22 @@ final class HelpCommandTest extends TestCase
                 return true;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
-                return null;
+                return 'ROOT';
             }
 
             public function execute(OperServContext $c): void {}
         };
         $registry = new OperServCommandRegistry([$operOnlyHandler]);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('ircOperator')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
+        $authorization->method('root')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
 
         $cmd = new HelpCommand(new UnifiedHelpFormatter());
-        $cmd->execute($this->createContext($sender, ['IRCOP'], $notifier, $translator, $registry, $accessHelper));
+        $cmd->execute($this->createContext($sender, ['IRCOP'], $notifier, $translator, $registry, $accessHelper, $account, $authorization));
 
         self::assertNotEmpty($messages);
         self::assertContains('ircop.help', $messages);

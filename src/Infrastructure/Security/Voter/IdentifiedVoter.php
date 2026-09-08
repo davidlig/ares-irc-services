@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Security\Voter;
 
-use App\NickServ\Adapter\Out\Security\IrcServiceUser;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Application\Security\IrcopAuthorizationSubject;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
-
-use function in_array;
 
 /**
  * Grants access when the user is identified (+r) with NickServ.
@@ -19,19 +19,25 @@ use function in_array;
  */
 final class IdentifiedVoter extends Voter
 {
+    public function __construct(private readonly OperatorAuthorizationQuery $authorization) {}
+
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return 'IDENTIFIED' === $attribute && $subject instanceof IrcopAuthorizationSubject;
+        return OperatorAuthorizationAttribute::IDENTIFIED === $attribute && $subject instanceof IrcopAuthorizationSubject;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
-        $user = $token->getUser();
-
-        if (!$user instanceof IrcServiceUser) {
+        $nickname = $subject->getSenderNickname();
+        if (null === $nickname) {
             return false;
         }
 
-        return in_array(IrcServiceUser::ROLE_IDENTIFIED, $user->getRoles(), true);
+        return $this->authorization->identifiedAccount(new OperatorActor(
+            nickname: $nickname,
+            identifiedAccountId: $subject->getSenderAccountId(),
+            identified: $subject->isSenderIdentified(),
+            ircOperator: $subject->isSenderIrcOperator(),
+        ))->granted;
     }
 }

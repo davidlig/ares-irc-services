@@ -101,10 +101,11 @@ final class ChanServContextTest extends TestCase
         array $args = ['#test', 'INFO'],
         ?ChannelLookupPort $channelLookup = null,
         ?ChannelModeSupportInterface $modeSupport = null,
+        ?ChanAccountView $senderAccount = null,
     ): ChanServContext {
         return new ChanServContext(
             $sender,
-            null,
+            $senderAccount,
             'INFO',
             $args,
             $notifier,
@@ -118,6 +119,24 @@ final class ChanServContextTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
+    }
+
+    #[Test]
+    public function exposesIndependentSenderIdentityAndIrcOperatorFacts(): void
+    {
+        $sender = new SenderView('UID1', 'OperNick', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
+        $account = new ChanAccountView(42, 'OperNick', 'en');
+        $context = $this->createContext(
+            $sender,
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->createStub(TranslationInterface::class),
+            senderAccount: $account,
+        );
+
+        self::assertSame(42, $context->getSenderAccountId());
+        self::assertSame('OperNick', $context->getSenderNickname());
+        self::assertTrue($context->isSenderIdentified());
+        self::assertTrue($context->isSenderIrcOperator());
     }
 
     #[Test]

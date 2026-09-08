@@ -803,7 +803,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$dropCmd]);
 
-        $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $account = new ChanAccountView(1, 'User', 'en');
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -841,7 +841,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function getIrcopCommandsReturnsEmptyForNonOper(): void
     {
-        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'o');
+        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', true, false, 'SID1', 'h', 'o');
         $account = new ChanAccountView(1, 'User', 'en');
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -874,7 +874,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function hasIrcopAccessReturnsTrueForRoot(): void
     {
-        $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $account = new ChanAccountView(1, 'User', 'en');
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -910,7 +910,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function hasIrcopAccessReturnsFalseForOperWithoutIrcopRole(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $account = new ChanAccountView(1, 'User', 'en');
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -946,7 +946,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function hasIrcopAccessReturnsTrueForOperWithChanServPermission(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $account = new ChanAccountView(1, 'User', 'en');
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -1120,7 +1120,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$dropCmd, $infoCmd]);
 
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $account = new ChanAccountView(1, 'User', 'en');
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);

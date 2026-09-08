@@ -29,7 +29,7 @@ use function in_array;
  * they receive a single NOTICE informing them of the rate limit. Subsequent commands
  * during the same lockout are silently dropped.
  *
- * IRCops (isOper) and root admins are exempt from flood blocking — their commands always pass through.
+ * IRCops (isOper) and identified root admins are exempt from flood blocking.
  *
  * Priority 10 ensures this runs before ServiceCommandGateway (priority 0).
  */
@@ -98,7 +98,9 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         $sender = $this->userLookup->findByUid($message->prefix);
         $listener = $this->gateway->findListenerFor($target);
 
-        if (null === $sender || null === $listener || $sender->isOper || $this->rootRegistry->isRoot($sender->nick)) {
+        if (null === $sender || null === $listener || $sender->isOper
+            || ($sender->isIdentified && $this->rootRegistry->isRoot($sender->nick))
+        ) {
             return;
         }
 

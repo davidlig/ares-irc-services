@@ -9,6 +9,9 @@ use App\Application\Port\TranslationInterface;
 use App\Application\Security\IrcopContextInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -33,6 +36,7 @@ final readonly class OperServContext implements IrcopContextInterface
         private OperServCommandRegistry $registry,
         private IrcopAccessHelper $accessHelper,
         private ServiceNicknameRegistry $serviceNicks,
+        private ?OperatorAuthorizationQuery $authorization = null,
     ) {}
 
     public function getSender(): ?SenderView
@@ -48,6 +52,21 @@ final readonly class OperServContext implements IrcopContextInterface
     public function getSenderAccountId(): ?int
     {
         return $this->senderAccount?->getId();
+    }
+
+    public function getSenderNickname(): ?string
+    {
+        return $this->sender?->nick;
+    }
+
+    public function isSenderIdentified(): bool
+    {
+        return null !== $this->sender && $this->sender->isIdentified;
+    }
+
+    public function isSenderIrcOperator(): bool
+    {
+        return null !== $this->sender && $this->sender->isOper;
     }
 
     /**
@@ -118,15 +137,28 @@ final readonly class OperServContext implements IrcopContextInterface
 
     public function isRoot(): bool
     {
-        if (null === $this->sender) {
+        return $this->isAuthorized(OperatorAuthorizationAttribute::ROOT);
+    }
+
+    public function isAuthorized(?string $permission): bool
+    {
+        if (null === $this->sender || null === $this->senderAccount || null === $this->authorization) {
             return false;
         }
 
-        if (!$this->sender->isIdentified) {
-            return false;
-        }
+        $actor = new OperatorActor(
+            nickname: $this->sender->nick,
+            identifiedAccountId: $this->senderAccount->getId(),
+            identified: $this->sender->isIdentified,
+            ircOperator: $this->sender->isOper,
+        );
 
-        return $this->accessHelper->isRoot($this->sender->nick);
+        return match ($permission) {
+            null => $this->authorization->ircOperator($actor)->granted,
+            OperatorAuthorizationAttribute::IDENTIFIED => $this->authorization->identifiedAccount($actor)->granted,
+            OperatorAuthorizationAttribute::ROOT => $this->authorization->root($actor)->granted,
+            default => $this->authorization->permission($actor, $permission)->granted,
+        };
     }
 
     public function getBotName(): string

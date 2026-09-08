@@ -18,6 +18,9 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Application\Port\In\AuthorizationDecision;
+use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -48,10 +51,22 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper($isRoot);
         $registry ??= new OperServCommandRegistry([]);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('root')->willReturn($isRoot
+            ? AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity)
+            : AuthorizationDecision::denied());
+        $authorization->method('ircOperator')->willReturn($isRoot
+            ? AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity)
+            : AuthorizationDecision::denied());
+        $authorization->method('permission')->willReturn($isRoot
+            ? AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity)
+            : AuthorizationDecision::denied());
 
         return new OperServContext(
             $sender,
-            null,
+            $account,
             'TEST',
             [],
             $notifier,
@@ -62,6 +77,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
             $registry,
             $accessHelper,
             $this->createServiceNicks(),
+            $authorization,
         );
     }
 
@@ -368,12 +384,14 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
 
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $registry = new OperServCommandRegistry([]);
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('permission')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RolePermission));
 
         $context = new OperServContext(
             $sender,
@@ -388,6 +406,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
             $registry,
             $accessHelper,
             $this->createServiceNicks(),
+            $authorization,
         );
 
         $adapter = new OperServHelpFormatterContextAdapter($context);

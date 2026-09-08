@@ -15,11 +15,6 @@ deptrac:
       - App\Application\OperServ\RootUserRegistry
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
-    App\Infrastructure\Security\Voter\IdentifiedVoter:
-      - App\NickServ\Adapter\Out\Security\IrcServiceUser
-    App\Infrastructure\Security\Voter\IrcopPermissionVoter:
-      - App\Application\OperServ\IrcopAccessHelper
-      - App\NickServ\Adapter\Out\Security\IrcServiceUser
     App\Application\OperServ\Command\Handler\GlineCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
@@ -41,6 +36,8 @@ deptrac:
       - App\Application\Command\CommandOutcome
     App\Application\OperServ\Command\Handler\IrcopCommand:
       - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
       - App\Application\Port\EventBusInterface
       - App\NickServ\Domain\Entity\RegisteredNick
       - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
@@ -66,17 +63,26 @@ deptrac:
       - App\Application\Port\UdbRawCommandHandlerInterface
       - App\Application\Port\UdbRawCommandHandlerProviderInterface
       - App\Application\Port\UdbRawCommandResult
-      - Psr\Log\LoggerInterface
     App\Application\OperServ\Command\Handler\RoleCommand:
       - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
     App\Application\OperServ\Command\Handler\RoleModesHandler:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
       - App\Application\Port\ActiveConnectionHolderInterface
     App\Application\OperServ\Command\Handler\RoleOperclassHandler:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
       - App\Application\Port\ActiveConnectionHolderInterface
       - App\Application\Port\OperclassServiceActionsInterface
     App\Application\OperServ\Command\Handler\RolePermissionsHandler:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
       - App\Application\Security\PermissionRegistry
     App\Application\OperServ\Command\Handler\RoleVhostHandler:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
       - App\NickServ\Application\Service\VhostValidator
       - App\Application\Port\EventBusInterface
     App\Application\OperServ\Command\OperServCommandInterface:

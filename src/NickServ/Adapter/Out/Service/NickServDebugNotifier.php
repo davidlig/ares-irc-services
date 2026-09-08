@@ -11,7 +11,6 @@ use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Application\Port\Out\NickAuditSink;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebugNotifierInterface
@@ -33,7 +32,6 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
         private TranslatorInterface $translator,
         private string $defaultLanguage,
         private ?string $debugChannel,
-        private LoggerInterface $logger,
     ) {}
 
     public function getUserLookup(): NetworkUserLookupPort
@@ -79,48 +77,9 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
         ?string $reason = null,
         array $extra = [],
     ): void {
-        $this->logToFile($operator, $command, $target, $targetHost, $targetIp, $reason, $extra);
-
         if ($this->isConfigured()) {
             $this->logToChannel($operator, $command, $target, $targetHost, $targetIp, $reason, $extra);
         }
-    }
-
-    /**
-     * @param array<string, mixed> $extra
-     */
-    private function logToFile(
-        string $operator,
-        string $command,
-        string $target,
-        ?string $targetHost,
-        ?string $targetIp,
-        ?string $reason,
-        array $extra,
-    ): void {
-        $context = [
-            'operator' => $operator,
-            'command' => $command,
-            'target' => $target,
-        ];
-
-        if (null !== $targetHost) {
-            $context['target_host'] = $targetHost;
-        }
-
-        if (null !== $targetIp) {
-            $context['target_ip'] = $targetIp;
-        }
-
-        if (null !== $reason) {
-            $context['reason'] = $reason;
-        }
-
-        if ([] !== $extra) {
-            $context['extra'] = $extra;
-        }
-
-        $this->logger->info($command, $context);
     }
 
     /**
@@ -193,12 +152,12 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
 
     public function isIrcopOrRoot(string $nick, bool $isIdentified): bool
     {
-        if ($this->operatorAccess->isRoot($nick)) {
-            return true;
-        }
-
         if (!$isIdentified) {
             return false;
+        }
+
+        if ($this->operatorAccess->isRoot($nick)) {
+            return true;
         }
 
         $registeredNick = $this->nickRepo->findByNick($nick);

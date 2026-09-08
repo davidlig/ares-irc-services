@@ -13,6 +13,7 @@ use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\SenderView;
+use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -30,7 +31,7 @@ final class RoleCommandTest extends RoleHandlerTestCase
     }
 
     #[Test]
-    public function nonRootUserGetsRootOnlyError(): void
+    public function authorizationIsDelegatedOutsideTheCommand(): void
     {
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
@@ -47,9 +48,11 @@ final class RoleCommandTest extends RoleHandlerTestCase
         $registry = new OperServCommandRegistry([]);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
-        $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
-        self::assertContains('error.root_only', $messages);
+        self::assertFalse($outcome->success);
+        self::assertContains('role.list.empty', $messages);
+        self::assertNotContains('error.root_only', $messages);
     }
 
     #[Test]
@@ -288,14 +291,14 @@ final class RoleCommandTest extends RoleHandlerTestCase
     }
 
     #[Test]
-    public function getRequiredPermissionReturnsNull(): void
+    public function requiresRootPermission(): void
     {
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
-        self::assertNull($cmd->getRequiredPermission());
+        self::assertSame(OperatorAuthorizationAttribute::ROOT, $cmd->getRequiredPermission());
     }
 
     #[Test]
@@ -374,8 +377,12 @@ final class RoleCommandTest extends RoleHandlerTestCase
         $registry = new OperServCommandRegistry([]);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
-        $cmd->execute($this->createContext($sender, ['ADD', 'TESTROLE'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['ADD', 'TESTROLE'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('TESTROLE', $outcome->auditData->target);
+        self::assertSame(['action' => 'ADD'], $outcome->auditData->extra);
         self::assertContains('role.add.done', $messages);
         self::assertCount(1, $savedRoles);
         self::assertSame('TESTROLE', $savedRoles[0]->getName());
@@ -440,8 +447,12 @@ final class RoleCommandTest extends RoleHandlerTestCase
         $registry = new OperServCommandRegistry([]);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
-        $cmd->execute($this->createContext($sender, ['DEL', 'CUSTOM'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['DEL', 'CUSTOM'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('CUSTOM', $outcome->auditData->target);
+        self::assertSame(['action' => 'DEL'], $outcome->auditData->extra);
         self::assertContains('role.del.done', $messages);
         self::assertCount(1, $removedRoles);
         self::assertSame('CUSTOM', $removedRoles[0]->getName());

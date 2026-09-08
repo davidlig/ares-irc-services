@@ -25,6 +25,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
@@ -111,7 +112,7 @@ final class IrcopCommandTest extends TestCase
     }
 
     #[Test]
-    public function nonRootUserGetsRootOnlyError(): void
+    public function authorizationIsDelegatedOutsideTheCommand(): void
     {
         $sender = new SenderView('UID1', 'NonRootUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
@@ -129,9 +130,11 @@ final class IrcopCommandTest extends TestCase
         $registry = new OperServCommandRegistry([]);
 
         $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
-        $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
-        self::assertContains('error.root_only', $messages);
+        self::assertFalse($outcome->success);
+        self::assertContains('ircop.list.empty', $messages);
+        self::assertNotContains('error.root_only', $messages);
     }
 
     #[Test]
@@ -427,7 +430,7 @@ final class IrcopCommandTest extends TestCase
     }
 
     #[Test]
-    public function getRequiredPermissionReturnsNull(): void
+    public function requiresRootPermission(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -436,7 +439,7 @@ final class IrcopCommandTest extends TestCase
 
         $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
 
-        self::assertNull($cmd->getRequiredPermission());
+        self::assertSame(OperatorAuthorizationAttribute::ROOT, $cmd->getRequiredPermission());
     }
 
     #[Test]
@@ -504,8 +507,12 @@ final class IrcopCommandTest extends TestCase
         });
 
         $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $eventDispatcher);
-        $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('TestNick', $outcome->auditData->target);
+        self::assertSame(['action' => 'ADD', 'role' => 'ADMIN'], $outcome->auditData->extra);
         self::assertContains('ircop.add.done', $messages);
         self::assertCount(1, $dispatchedEvents);
         self::assertInstanceOf(OperIrcopChangedEvent::class, $dispatchedEvents[0]);
@@ -702,8 +709,12 @@ final class IrcopCommandTest extends TestCase
         });
 
         $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $eventDispatcher);
-        $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('TestNick', $outcome->auditData->target);
+        self::assertSame(['action' => 'ROLE_CHANGE', 'role' => 'ADMIN'], $outcome->auditData->extra);
         self::assertContains('ircop.role_changed', $messages);
         self::assertCount(1, $dispatchedEvents);
         self::assertInstanceOf(OperIrcopChangedEvent::class, $dispatchedEvents[0]);
@@ -760,8 +771,12 @@ final class IrcopCommandTest extends TestCase
         });
 
         $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $eventDispatcher);
-        $cmd->execute($this->createContext($sender, ['TestNick', 'DEL'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['TestNick', 'DEL'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('TestNick', $outcome->auditData->target);
+        self::assertSame(['action' => 'DEL'], $outcome->auditData->extra);
         self::assertContains('ircop.del.done', $messages);
         self::assertCount(1, $dispatchedEvents);
         self::assertInstanceOf(OperIrcopChangedEvent::class, $dispatchedEvents[0]);

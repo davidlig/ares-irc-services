@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace App\Irc\Application\Port\In\Command;
 
+use App\Shared\Application\Audit\SafeAuditMetadata;
+
 final readonly class IrcopAuditData
 {
+    /** @var array<string, bool|float|int|string|null> */
+    public array $extra;
+
     /**
      * @param array<string, mixed> $extra
      */
@@ -14,6 +19,8 @@ final readonly class IrcopAuditData
         public ?string $targetHost = null,
         public ?string $targetIp = null,
         public ?string $reason = null,
-        public array $extra = [],
-    ) {}
+        array $extra = [],
+    ) {
+        $this->extra = SafeAuditMetadata::validate($extra);
+    }
 }

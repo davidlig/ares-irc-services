@@ -28,6 +28,7 @@ use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -233,6 +234,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
             self::createStub(EventBusInterface::class),
+            self::createStub(OperatorAuthorizationQuery::class),
             'en',
             'UTC',
         );
@@ -295,6 +297,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
             self::createStub(EventBusInterface::class),
+            self::createStub(OperatorAuthorizationQuery::class),
             'en',
             'UTC',
         );
@@ -357,6 +360,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
             self::createStub(EventBusInterface::class),
+            self::createStub(OperatorAuthorizationQuery::class),
             'en',
             'UTC',
         );
@@ -423,6 +427,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
             self::createStub(EventBusInterface::class),
+            self::createStub(OperatorAuthorizationQuery::class),
             'en',
             'UTC',
         );
@@ -490,6 +495,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
             self::createStub(EventBusInterface::class),
+            self::createStub(OperatorAuthorizationQuery::class),
             'en',
             'UTC',
         );
@@ -556,6 +562,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
             self::createStub(EventBusInterface::class),
+            self::createStub(OperatorAuthorizationQuery::class),
             'en',
             'UTC',
         );
@@ -625,6 +632,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
             self::createStub(EventBusInterface::class),
+            self::createStub(OperatorAuthorizationQuery::class),
             'en',
             'UTC',
         );

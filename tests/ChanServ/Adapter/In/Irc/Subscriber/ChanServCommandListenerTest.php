@@ -32,6 +32,7 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
+use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Application\ServiceNicknameRegistry;
 use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -138,6 +139,7 @@ final class ChanServCommandListenerTest extends TestCase
             authorizationContext: $this->createStub(AuthorizationContextInterface::class),
             authorizationChecker: $this->createStub(AuthorizationCheckerInterface::class),
             eventDispatcher: $this->createStub(EventBusInterface::class),
+            commandAudit: $this->createStub(CommandAuditRecorder::class),
             serviceNicks: new ServiceNicknameRegistry([]),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',

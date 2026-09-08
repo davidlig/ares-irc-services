@@ -27,6 +27,9 @@ use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Application\Port\In\AuthorizationDecision;
+use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use Closure;
@@ -288,9 +291,9 @@ final class OperServServiceTest extends TestCase
     }
 
     #[Test]
-    public function operOnlyCommandAllowsOperViaIsOperFlag(): void
+    public function operOnlyCommandAllowsCentrallyAuthorizedIrcOperator(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'ident', 'host', 'cloak', '127.0.0.1', false, true, '001', 'cloak');
+        $sender = new SenderView('UID1', 'OperUser', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
         $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
@@ -300,8 +303,10 @@ final class OperServServiceTest extends TestCase
         });
 
         $registry = new OperServCommandRegistry([$handler]);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn(null);
+        $nickRepository->method('findByNick')->willReturn($account);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
         $messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
@@ -309,6 +314,8 @@ final class OperServServiceTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createStub(LoggerInterface::class);
+        $operatorAuthorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $operatorAuthorization->method('ircOperator')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IrcOperatorStatus));
 
         $service = $this->createOperServService(
             $registry,
@@ -321,6 +328,7 @@ final class OperServServiceTest extends TestCase
             'en',
             'UTC',
             $logger,
+            operatorAuthorization: $operatorAuthorization,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -329,9 +337,9 @@ final class OperServServiceTest extends TestCase
     }
 
     #[Test]
-    public function operOnlyCommandAllowsOperViaAccessHelperIsRoot(): void
+    public function operOnlyCommandAllowsCentrallyAuthorizedRoot(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
+        $sender = new SenderView('UID1', 'TestUser', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
         $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
@@ -353,6 +361,8 @@ final class OperServServiceTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelperForRoot('TestUser');
         $logger = $this->createStub(LoggerInterface::class);
+        $operatorAuthorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $operatorAuthorization->method('ircOperator')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
 
         $service = $this->createOperServService(
             $registry,
@@ -365,6 +375,7 @@ final class OperServServiceTest extends TestCase
             'en',
             'UTC',
             $logger,
+            operatorAuthorization: $operatorAuthorization,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -373,9 +384,9 @@ final class OperServServiceTest extends TestCase
     }
 
     #[Test]
-    public function operOnlyCommandAllowsOperViaIrcopLookup(): void
+    public function operOnlyCommandUsesCentralAuthorizationInsteadOfLegacyLookup(): void
     {
-        $sender = new SenderView('UID1', 'IrcopNick', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
+        $sender = new SenderView('UID1', 'IrcopNick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
         $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
@@ -402,6 +413,8 @@ final class OperServServiceTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper(isRoot: false, ircop: $ircop);
         $logger = $this->createStub(LoggerInterface::class);
+        $operatorAuthorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $operatorAuthorization->method('ircOperator')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IrcOperatorStatus));
 
         $service = $this->createOperServService(
             $registry,
@@ -414,6 +427,7 @@ final class OperServServiceTest extends TestCase
             'en',
             'UTC',
             $logger,
+            operatorAuthorization: $operatorAuthorization,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -457,6 +471,8 @@ final class OperServServiceTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
         $logger = $this->createStub(LoggerInterface::class);
+        $operatorAuthorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $operatorAuthorization->method('ircOperator')->willReturn(AuthorizationDecision::denied());
 
         $notifier->expects(self::once())
             ->method('sendMessage')
@@ -473,6 +489,7 @@ final class OperServServiceTest extends TestCase
             'en',
             'UTC',
             $logger,
+            operatorAuthorization: $operatorAuthorization,
         );
 
         $service->dispatch('ROLE', $sender);
@@ -481,13 +498,13 @@ final class OperServServiceTest extends TestCase
     }
 
     #[Test]
-    public function permissionCheckDeniesWhenUserLacksRequiredPermission(): void
+    public function rootPermissionDenialUsesDedicatedPresentation(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
         $contextHolder = new OperServTestContextHolder();
         $contextHolder->context = null;
 
-        $handler = $this->createMockCommandHandler('PERMCMD', false, 'operserv.admin', 0);
+        $handler = $this->createMockCommandHandler('PERMCMD', false, 'ROOT', 0);
         $handler->setExecuteCallback(static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
         });
@@ -508,7 +525,7 @@ final class OperServServiceTest extends TestCase
         $translator->method('trans')->willReturnCallback(
             static fn (string $id): string => match ($id) {
                 'error.oper_only' => 'Oper only.',
-                'error.permission_denied' => 'Permission denied.',
+                'error.root_only' => 'Root only.',
                 default => $id,
             }
         );
@@ -517,7 +534,7 @@ final class OperServServiceTest extends TestCase
 
         $notifier->expects(self::once())
             ->method('sendMessage')
-            ->with($sender->uid, 'Permission denied.', 'NOTICE');
+            ->with($sender->uid, 'Root only.', 'NOTICE');
 
         $service = $this->createOperServService(
             $registry,
@@ -1232,7 +1249,17 @@ final class OperServServiceTest extends TestCase
         ?AuthorizationContextInterface $authorizationContext = null,
         ?AuthorizationCheckerInterface $authorizationChecker = null,
         ?EventBusInterface $eventDispatcher = null,
+        ?OperatorAuthorizationQuery $operatorAuthorization = null,
     ): OperServService {
+        if (null === $operatorAuthorization) {
+            $authorizationStub = $this->createStub(OperatorAuthorizationQuery::class);
+            $authorizationStub->method('identifiedAccount')->willReturn(AuthorizationDecision::denied());
+            $authorizationStub->method('ircOperator')->willReturn(AuthorizationDecision::denied());
+            $authorizationStub->method('root')->willReturn(AuthorizationDecision::denied());
+            $authorizationStub->method('permission')->willReturn(AuthorizationDecision::denied());
+            $operatorAuthorization = $authorizationStub;
+        }
+
         return new OperServService(
             $registry,
             $nickRepository,
@@ -1245,6 +1272,7 @@ final class OperServServiceTest extends TestCase
             $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
             $eventDispatcher ?? $this->createStub(EventBusInterface::class),
+            $operatorAuthorization,
             $defaultLanguage,
             $defaultTimezone,
             $logger ?? $this->createStub(LoggerInterface::class),

@@ -24,7 +24,6 @@ use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 
 #[CoversClass(RawCommand::class)]
 final class RawCommandTest extends TestCase
@@ -100,7 +99,6 @@ final class RawCommandTest extends TestCase
 
         return new RawCommand(
             $connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class),
-            new NullLogger(),
             $provider,
         );
     }
@@ -248,7 +246,8 @@ final class RawCommandTest extends TestCase
 
         $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
-        self::assertSame(':0A0BBBBBB MODE #opers +q 994AAAAAA', $auditData->target);
+        self::assertSame('MODE', $auditData->target);
+        self::assertSame(['transport' => 'irc'], $auditData->extra);
         self::assertSame('Executed by TestUser', $auditData->reason);
     }
 
@@ -413,7 +412,8 @@ final class RawCommandTest extends TestCase
 
         $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
-        self::assertSame('DB * INS N::nick::pass <redacted>', $auditData->target);
+        self::assertSame('DB INS', $auditData->target);
+        self::assertSame(['transport' => 'udb'], $auditData->extra);
         self::assertSame('Executed by TestUser', $auditData->reason);
     }
 

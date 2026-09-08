@@ -19,11 +19,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
-
-use function is_array;
 
 #[CoversClass(OperServDebugNotifier::class)]
 final class OperServDebugNotifierTest extends TestCase
@@ -114,31 +111,8 @@ final class OperServDebugNotifierTest extends TestCase
     }
 
     #[Test]
-    public function logWritesToFileWhenNotConfigured(): void
+    public function logSendsToChannelWhenConfigured(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info')->with('KILL', self::callback(static fn (array $context) => 'Admin' === $context['operator']
-                && 'KILL' === $context['command']
-                && 'BadUser' === $context['target']));
-
-        $notifier = $this->createMock(OperServNotifierInterface::class);
-        $notifier->expects(self::never())->method('sendMessage');
-
-        $debug = $this->createDebugNotifier(
-            logger: $logger,
-            notifier: $notifier,
-            debugChannel: null,
-        );
-
-        $debug->log('Admin', 'KILL', 'BadUser');
-    }
-
-    #[Test]
-    public function logWritesToFileAndChannelWhenConfigured(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info');
-
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage');
 
@@ -149,7 +123,6 @@ final class OperServDebugNotifierTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id) => $id);
 
         $debug = $this->createDebugNotifier(
-            logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
             translator: $translator,
@@ -162,9 +135,6 @@ final class OperServDebugNotifierTest extends TestCase
     #[Test]
     public function logSendsMessageWithoutReasonWhenReasonIsNull(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info');
-
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage');
 
@@ -176,7 +146,6 @@ final class OperServDebugNotifierTest extends TestCase
             ->willReturnCallback(static fn (string $id, array $params) => $id);
 
         $debug = $this->createDebugNotifier(
-            logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
             translator: $translator,
@@ -189,16 +158,10 @@ final class OperServDebugNotifierTest extends TestCase
     #[Test]
     public function logIncludesExtraInContext(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info')->with('KILL', self::callback(static fn (array $context) => isset($context['extra'])
-                && is_array($context['extra'])
-                && 'value' === ($context['extra']['key'] ?? null)));
-
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
 
         $debug = $this->createDebugNotifier(
-            logger: $logger,
             notifier: $notifier,
             debugChannel: null,
         );
@@ -209,9 +172,6 @@ final class OperServDebugNotifierTest extends TestCase
     #[Test]
     public function logForGlobalCommandUsesSpecialFormat(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info');
-
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage');
 
@@ -226,7 +186,6 @@ final class OperServDebugNotifierTest extends TestCase
                 && 'test message' === $params['%message%']));
 
         $debug = $this->createDebugNotifier(
-            logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
             translator: $translator,
@@ -245,7 +204,7 @@ final class OperServDebugNotifierTest extends TestCase
             rootRegistry: $rootRegistry,
         );
 
-        self::assertTrue($debug->isIrcopOrRoot('RootUser', false));
+        self::assertTrue($debug->isIrcopOrRoot('RootUser', true));
     }
 
     #[Test]
@@ -363,9 +322,6 @@ final class OperServDebugNotifierTest extends TestCase
     #[Test]
     public function logWithDurationInMessage(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info');
-
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage');
 
@@ -386,7 +342,6 @@ final class OperServDebugNotifierTest extends TestCase
             });
 
         $debug = $this->createDebugNotifier(
-            logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
             translator: $translator,
@@ -399,9 +354,6 @@ final class OperServDebugNotifierTest extends TestCase
     #[Test]
     public function logWithEmptyReasonDoesNotFormat(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info');
-
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage');
 
@@ -416,7 +368,6 @@ final class OperServDebugNotifierTest extends TestCase
             });
 
         $debug = $this->createDebugNotifier(
-            logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
             translator: $translator,
@@ -462,7 +413,6 @@ final class OperServDebugNotifierTest extends TestCase
         ?RootUserRegistry $rootRegistry = null,
         ?RegisteredNickRepositoryInterface $nickRepo = null,
         ?TranslatorInterface $translator = null,
-        ?LoggerInterface $logger = null,
         ?string $debugChannel = '#ircops',
     ): OperServDebugNotifier {
         return new OperServDebugNotifier(
@@ -476,7 +426,6 @@ final class OperServDebugNotifierTest extends TestCase
             translator: $translator ?? $this->createStub(TranslatorInterface::class),
             defaultLanguage: 'en',
             debugChannel: $debugChannel,
-            logger: $logger ?? $this->createStub(LoggerInterface::class),
         );
     }
 }

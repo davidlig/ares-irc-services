@@ -50,6 +50,21 @@ final readonly class MemoServContext implements IrcopAuthorizationSubject
         return $this->senderAccount?->id;
     }
 
+    public function getSenderNickname(): ?string
+    {
+        return $this->sender?->nick;
+    }
+
+    public function isSenderIdentified(): bool
+    {
+        return null !== $this->sender && $this->sender->isIdentified;
+    }
+
+    public function isSenderIrcOperator(): bool
+    {
+        return null !== $this->sender && $this->sender->isOper;
+    }
+
     /**
      * @param array<string, mixed> $params
      */

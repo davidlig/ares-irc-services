@@ -6,8 +6,10 @@ namespace App\Tests\Infrastructure\Security\Voter;
 
 use App\Application\Security\IrcopContextInterface;
 use App\Infrastructure\Security\Voter\IdentifiedVoter;
-use App\Irc\Application\Port\In\SenderView;
-use App\NickServ\Adapter\Out\Security\IrcServiceUser;
+use App\OperServ\Application\Port\In\AuthorizationDecision;
+use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,81 +21,66 @@ use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 final class IdentifiedVoterTest extends TestCase
 {
     #[Test]
-    public function supportsIdentifiedAttribute(): void
+    public function delegatesIdentifiedAccountDecisionUsingSubjectFacts(): void
     {
-        $voter = new IdentifiedVoter();
-        $context = $this->createStub(IrcopContextInterface::class);
-        $token = $this->createTokenWithIdentifiedUser(false);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('identifiedAccount')
+            ->with(new OperatorActor('Alice', 42, true, false))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IdentifiedAccount));
 
-        self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($token, $context, ['IDENTIFIED']));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, new IdentifiedVoter($authorization)->vote(
+            $this->createStub(TokenInterface::class),
+            $this->authorizationSubject('Alice', 42, true, false),
+            ['IDENTIFIED'],
+        ));
     }
 
     #[Test]
-    public function abstainsForNonIdentifiedAttribute(): void
+    public function returnsDeniedDecisionFromAuthorizationBoundary(): void
     {
-        $voter = new IdentifiedVoter();
-        $context = $this->createStub(IrcopContextInterface::class);
-        $token = $this->createTokenWithIdentifiedUser(false);
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('identifiedAccount')->willReturn(AuthorizationDecision::denied());
 
-        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, $context, ['SOME_OTHER_PERMISSION']));
+        self::assertSame(VoterInterface::ACCESS_DENIED, new IdentifiedVoter($authorization)->vote(
+            $this->createStub(TokenInterface::class),
+            $this->authorizationSubject('Alice', null, false, false),
+            ['IDENTIFIED'],
+        ));
     }
 
     #[Test]
-    public function abstainsForNonContextSubject(): void
+    public function deniesWhenSubjectHasNoNickname(): void
     {
-        $voter = new IdentifiedVoter();
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::never())->method('identifiedAccount');
 
-        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($this->createTokenWithIdentifiedUser(false), new stdClass(), ['IDENTIFIED']));
+        self::assertSame(VoterInterface::ACCESS_DENIED, new IdentifiedVoter($authorization)->vote(
+            $this->createStub(TokenInterface::class),
+            $this->authorizationSubject(null, null, false, false),
+            ['IDENTIFIED'],
+        ));
     }
 
     #[Test]
-    public function grantsAccessForIdentifiedUser(): void
+    public function abstainsForUnsupportedAttributeOrSubject(): void
     {
-        $voter = new IdentifiedVoter();
-        $context = $this->createStub(IrcopContextInterface::class);
-        $token = $this->createTokenWithIdentifiedUser(true);
-
-        self::assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, $context, ['IDENTIFIED']));
-    }
-
-    #[Test]
-    public function deniesAccessForNonIdentifiedUser(): void
-    {
-        $voter = new IdentifiedVoter();
-        $context = $this->createStub(IrcopContextInterface::class);
-        $token = $this->createTokenWithIdentifiedUser(false);
-
-        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['IDENTIFIED']));
-    }
-
-    #[Test]
-    public function deniesAccessForNonIrcServiceUser(): void
-    {
-        $voter = new IdentifiedVoter();
-        $context = $this->createStub(IrcopContextInterface::class);
+        $voter = new IdentifiedVoter($this->createStub(OperatorAuthorizationQuery::class));
         $token = $this->createStub(TokenInterface::class);
-        $token->method('getUser')->willReturn(null);
+        $context = $this->authorizationSubject('Alice', 42, true, false);
 
-        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['IDENTIFIED']));
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, $context, ['OTHER']));
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new stdClass(), ['IDENTIFIED']));
     }
 
-    private function createTokenWithIdentifiedUser(bool $isIdentified): TokenInterface
+    private function authorizationSubject(?string $nickname, ?int $accountId, bool $identified, bool $ircOperator): IrcopContextInterface
     {
-        $senderView = new SenderView(
-            uid: 'UID123',
-            nick: 'TestNick',
-            ident: 'test',
-            hostname: 'test.host',
-            cloakedHost: 'test.cloak',
-            ipBase64: 'dGVzdA==',
-            isIdentified: $isIdentified,
-        );
+        $subject = $this->createStub(IrcopContextInterface::class);
+        $subject->method('getSenderNickname')->willReturn($nickname);
+        $subject->method('getSenderAccountId')->willReturn($accountId);
+        $subject->method('isSenderIdentified')->willReturn($identified);
+        $subject->method('isSenderIrcOperator')->willReturn($ircOperator);
 
-        $user = new IrcServiceUser($senderView);
-
-        $token = $this->createStub(TokenInterface::class);
-        $token->method('getUser')->willReturn($user);
-
-        return $token;
+        return $subject;
     }
 }

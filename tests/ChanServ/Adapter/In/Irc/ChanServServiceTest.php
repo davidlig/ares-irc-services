@@ -30,7 +30,9 @@ use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
-use App\Irc\Application\PublishedEvent\IrcopCommandExecutedEvent;
+use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
+use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
+use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -44,6 +46,17 @@ use function is_string;
 final class ChanServTestContextHolder
 {
     public ?ChanServContext $context = null;
+}
+
+final class ChanServTestAuditRecorder implements CommandAuditRecorder
+{
+    /** @var list<CommandAuditRecord> */
+    public array $records = [];
+
+    public function record(CommandAuditRecord $record): void
+    {
+        $this->records[] = $record;
+    }
 }
 
 #[CoversClass(ChanServService::class)]
@@ -1584,6 +1597,7 @@ final class ChanServServiceTest extends TestCase
         ?AuthorizationContextInterface $authorizationContext = null,
         ?AuthorizationCheckerInterface $authorizationChecker = null,
         ?EventBusInterface $eventDispatcher = null,
+        ?CommandAuditRecorder $commandAudit = null,
     ): ChanServService {
         return new ChanServService(
             $registry,
@@ -1599,6 +1613,7 @@ final class ChanServServiceTest extends TestCase
             $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
             $eventDispatcher ?? $this->createStub(EventBusInterface::class),
+            $commandAudit ?? $this->createStub(CommandAuditRecorder::class),
             $defaultLanguage,
             $defaultTimezone,
             $logger ?? $this->createStub(LoggerInterface::class),
@@ -2402,7 +2417,7 @@ final class ChanServServiceTest extends TestCase
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
-        $authorizationChecker->expects(self::exactly(2))
+        $authorizationChecker->expects(self::exactly(4))
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
 
@@ -2413,6 +2428,8 @@ final class ChanServServiceTest extends TestCase
             ->willReturnCallback(static function (object $event) use (&$events): void {
                 $events[] = $event;
             });
+
+        $commandAudit = new ChanServTestAuditRecorder();
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
@@ -2436,22 +2453,29 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker,
             $eventDispatcher,
+            commandAudit: $commandAudit,
         );
 
         $service->dispatch('SET #test DESC desc', $sender);
+        $service->dispatch('SET #test PASSWORD never-audit-this', $sender);
 
         self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
         self::assertTrue($contextHolder->context->isLevelFounder);
         self::assertInstanceOf(CommandExecutedEvent::class, $events[0]);
-        self::assertInstanceOf(IrcopCommandExecutedEvent::class, $events[1]);
-        self::assertSame('chanserv', $events[1]->serviceName);
-        self::assertSame('OperNick', $events[1]->operatorNick);
-        self::assertSame('SET', $events[1]->commandName);
-        self::assertSame('chanserv.level_founder', $events[1]->permission);
-        self::assertSame('#test', $events[1]->target);
-        self::assertSame('ident@host', $events[1]->targetHost);
-        self::assertSame('127.0.0.1', $events[1]->targetIp);
-        self::assertSame(['founder_action' => true, 'option' => 'DESC', 'value' => 'desc'], $events[1]->extra);
+        $record = $commandAudit->records[0];
+        self::assertSame(CommandAuditCategory::ResourceOverride, $record->category);
+        self::assertSame('chanserv', $record->service);
+        self::assertSame('OperNick', $record->actor);
+        self::assertSame('SET', $record->operation);
+        self::assertSame('chanserv.level_founder', $record->permission);
+        self::assertSame('#test', $record->target);
+        self::assertSame('ident@host', $record->targetHost);
+        self::assertSame('127.0.0.1', $record->targetIp);
+        self::assertSame(['founder_action' => true, 'option' => 'DESC', 'value' => 'desc'], $record->metadata);
+        self::assertSame(
+            ['founder_action' => true, 'option' => 'PASSWORD', 'value' => null],
+            $commandAudit->records[1]->metadata,
+        );
     }
 
     #[Test]
@@ -3088,11 +3112,13 @@ final class ChanServServiceTest extends TestCase
 
         $events = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::exactly(2))
+        $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$events): void {
                 $events[] = $event;
             });
+
+        $commandAudit = new ChanServTestAuditRecorder();
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
@@ -3116,6 +3142,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker,
             $eventDispatcher,
+            commandAudit: $commandAudit,
         );
 
         $service->dispatch('SET #test DESC desc', $sender);
@@ -3123,14 +3150,15 @@ final class ChanServServiceTest extends TestCase
         self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
         self::assertTrue($contextHolder->context->isLevelFounder);
         self::assertInstanceOf(CommandExecutedEvent::class, $events[0]);
-        self::assertInstanceOf(IrcopCommandExecutedEvent::class, $events[1]);
-        self::assertSame('chanserv', $events[1]->serviceName);
-        self::assertSame('OperNick', $events[1]->operatorNick);
-        self::assertSame('SET', $events[1]->commandName);
-        self::assertSame('chanserv.level_founder', $events[1]->permission);
-        self::assertSame('#test', $events[1]->target);
-        self::assertSame('ident@host', $events[1]->targetHost);
-        self::assertSame('*', $events[1]->targetIp);
+        $record = $commandAudit->records[0];
+        self::assertSame(CommandAuditCategory::ResourceOverride, $record->category);
+        self::assertSame('chanserv', $record->service);
+        self::assertSame('OperNick', $record->actor);
+        self::assertSame('SET', $record->operation);
+        self::assertSame('chanserv.level_founder', $record->permission);
+        self::assertSame('#test', $record->target);
+        self::assertSame('ident@host', $record->targetHost);
+        self::assertSame('*', $record->targetIp);
     }
 
     #[Test]
@@ -3237,11 +3265,13 @@ final class ChanServServiceTest extends TestCase
 
         $events = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::exactly(2))
+        $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$events): void {
                 $events[] = $event;
             });
+
+        $commandAudit = new ChanServTestAuditRecorder();
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
@@ -3265,6 +3295,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker,
             $eventDispatcher,
+            commandAudit: $commandAudit,
         );
 
         $service->dispatch('SET #test DESC desc', $sender);
@@ -3272,13 +3303,14 @@ final class ChanServServiceTest extends TestCase
         self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
         self::assertTrue($contextHolder->context->isLevelFounder);
         self::assertInstanceOf(CommandExecutedEvent::class, $events[0]);
-        self::assertInstanceOf(IrcopCommandExecutedEvent::class, $events[1]);
-        self::assertSame('chanserv', $events[1]->serviceName);
-        self::assertSame('OperNick', $events[1]->operatorNick);
-        self::assertSame('SET', $events[1]->commandName);
-        self::assertSame('chanserv.level_founder', $events[1]->permission);
-        self::assertSame('#test', $events[1]->target);
-        self::assertSame('ident@host', $events[1]->targetHost);
-        self::assertSame('!!invalid-base64!!', $events[1]->targetIp);
+        $record = $commandAudit->records[0];
+        self::assertSame(CommandAuditCategory::ResourceOverride, $record->category);
+        self::assertSame('chanserv', $record->service);
+        self::assertSame('OperNick', $record->actor);
+        self::assertSame('SET', $record->operation);
+        self::assertSame('chanserv.level_founder', $record->permission);
+        self::assertSame('#test', $record->target);
+        self::assertSame('ident@host', $record->targetHost);
+        self::assertSame('!!invalid-base64!!', $record->targetIp);
     }
 }

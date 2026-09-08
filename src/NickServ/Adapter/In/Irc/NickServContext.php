@@ -60,6 +60,21 @@ readonly class NickServContext implements IrcopAuthorizationSubject
         return $this->senderAccount?->getId();
     }
 
+    public function getSenderNickname(): ?string
+    {
+        return $this->sender?->nick;
+    }
+
+    public function isSenderIdentified(): bool
+    {
+        return null !== $this->sender && $this->sender->isIdentified;
+    }
+
+    public function isSenderIrcOperator(): bool
+    {
+        return null !== $this->sender && $this->sender->isOper;
+    }
+
     /**
      * Translate a message key and send it to the command sender (NOTICE or PRIVMSG per user preference).
      *

@@ -69,7 +69,7 @@ final readonly class HelpCommand implements OperServCommandInterface
     {
         (function () use ($context): void {
             $sender = $context->getSender();
-            if (null !== $sender && !$sender->isOper && !$context->isRoot()) {
+            if (null !== $sender && !$context->isAuthorized(null)) {
                 $context->reply('error.oper_only');
 
                 return;
@@ -84,7 +84,7 @@ final readonly class HelpCommand implements OperServCommandInterface
             $targetCmd = strtoupper($context->args[0]);
             $handler = $context->getRegistry()->find($targetCmd);
 
-            if (null === $handler || ($handler->isOperOnly() && !$context->isRoot())) {
+            if (null === $handler || !$this->canView($context, $handler)) {
                 $context->reply('help.unknown_command', ['%command%' => $targetCmd]);
 
                 return;
@@ -104,6 +104,15 @@ final readonly class HelpCommand implements OperServCommandInterface
 
             $this->formatter->showCommandHelp($adapter, $handler);
         })();
+    }
+
+    private function canView(OperServContext $context, OperServCommandInterface $handler): bool
+    {
+        $requiredPermission = $handler->getRequiredPermission();
+
+        return null !== $requiredPermission
+            ? $context->isAuthorized($requiredPermission)
+            : (!$handler->isOperOnly() || $context->isAuthorized(null));
     }
 
     private function showGeneralHelp(OperServContext $context): void

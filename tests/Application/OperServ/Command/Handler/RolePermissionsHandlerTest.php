@@ -514,8 +514,12 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
         $registry = new OperServCommandRegistry([]);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
-        $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'ADD', 'operserv.admin.add'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'ADD', 'operserv.admin.add'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('CUSTOM', $outcome->auditData->target);
+        self::assertSame(['action' => 'PERMISSION_ADD', 'permission' => 'operserv.admin.add'], $outcome->auditData->extra);
         self::assertContains('role.perms.add.done', $messages);
         self::assertCount(1, $savedRoles);
         self::assertTrue($savedRoles[0]->hasPermission('operserv.admin.add'));
@@ -637,8 +641,12 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
         $registry = new OperServCommandRegistry([]);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
-        $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'DEL', 'operserv.admin.add'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'DEL', 'operserv.admin.add'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('CUSTOM', $outcome->auditData->target);
+        self::assertSame(['action' => 'PERMISSION_DEL', 'permission' => 'operserv.admin.add'], $outcome->auditData->extra);
         self::assertContains('role.perms.del.done', $messages);
         self::assertCount(1, $savedRoles);
         self::assertFalse($savedRoles[0]->hasPermission('operserv.admin.add'));
@@ -813,8 +821,12 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
         ]);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
-        $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'ADD', 'ALL'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'ADD', 'ALL'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('CUSTOM', $outcome->auditData->target);
+        self::assertSame(['action' => 'PERMISSION_ADD_ALL', 'count' => 2], $outcome->auditData->extra);
         self::assertContains('role.perms.add.all_done', $messages);
         self::assertCount(1, $savedRoles);
         self::assertTrue($savedRoles[0]->hasPermission('PERM_ONE'));
@@ -974,8 +986,12 @@ final class RolePermissionsHandlerTest extends RoleHandlerTestCase
         $registry = new OperServCommandRegistry([]);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
-        $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'CLEAR'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'CLEAR'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('CUSTOM', $outcome->auditData->target);
+        self::assertSame(['action' => 'PERMISSION_CLEAR', 'count' => 2], $outcome->auditData->extra);
         self::assertContains('role.perms.clear.done', $messages);
         self::assertCount(1, $savedRoles);
         self::assertSame([], $savedRoles[0]->getPermissions());

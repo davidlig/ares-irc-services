@@ -14,6 +14,11 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Application\Port\In\AuthorizationDecision;
+use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
@@ -239,7 +244,7 @@ final class OperServContextTest extends TestCase
     }
 
     #[Test]
-    public function isRootDelegatesToAccessHelper(): void
+    public function isRootDelegatesToCentralAuthorizationWithExplicitActorFacts(): void
     {
         $sender = $this->createSender(nick: 'AdminNick');
         $rootRegistry = new RootUserRegistry('AdminNick');
@@ -249,13 +254,21 @@ final class OperServContextTest extends TestCase
             $this->createStub(OperRoleRepositoryInterface::class)
         );
 
-        $context = $this->createContext(sender: $sender, accessHelper: $accessHelper);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('root')
+            ->with(new OperatorActor('AdminNick', 42, true, false))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
+
+        $context = $this->createContext(sender: $sender, senderAccount: $account, accessHelper: $accessHelper, authorization: $authorization);
 
         self::assertTrue($context->isRoot());
     }
 
     #[Test]
-    public function isRootReturnsFalseWhenAccessHelperReturnsFalse(): void
+    public function isRootReturnsCentralAuthorizationDenial(): void
     {
         $sender = $this->createSender(nick: 'RegularUser');
         $rootRegistry = new RootUserRegistry('');
@@ -265,7 +278,10 @@ final class OperServContextTest extends TestCase
             $this->createStub(OperRoleRepositoryInterface::class)
         );
 
-        $context = $this->createContext(sender: $sender, accessHelper: $accessHelper);
+        $account = $this->createStub(RegisteredNick::class);
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('root')->willReturn(AuthorizationDecision::denied());
+        $context = $this->createContext(sender: $sender, senderAccount: $account, accessHelper: $accessHelper, authorization: $authorization);
 
         self::assertFalse($context->isRoot());
     }
@@ -277,6 +293,49 @@ final class OperServContextTest extends TestCase
         $context = $this->createContext(sender: $sender);
 
         self::assertFalse($context->isRoot());
+    }
+
+    #[Test]
+    public function authorizationDelegatesEachGrantToTheCentralQuery(): void
+    {
+        $sender = new SenderView('UID123', 'TestNick', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $actor = new OperatorActor('TestNick', 42, true, true);
+
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('identifiedAccount')
+            ->with($actor)
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IdentifiedAccount));
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with($actor)
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IrcOperatorStatus));
+        $authorization->expects(self::once())
+            ->method('permission')
+            ->with($actor, 'operserv.test')
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RolePermission));
+
+        $context = $this->createContext(sender: $sender, senderAccount: $account, authorization: $authorization);
+
+        self::assertTrue($context->isAuthorized(OperatorAuthorizationAttribute::IDENTIFIED));
+        self::assertTrue($context->isAuthorized(null));
+        self::assertTrue($context->isAuthorized('operserv.test'));
+    }
+
+    #[Test]
+    public function exposesIndependentSenderIdentityAndIrcOperatorFacts(): void
+    {
+        $sender = new SenderView('UID123', 'TestNick', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $context = $this->createContext(sender: $sender, senderAccount: $account);
+
+        self::assertSame('TestNick', $context->getSenderNickname());
+        self::assertSame(42, $context->getSenderAccountId());
+        self::assertTrue($context->isSenderIdentified());
+        self::assertTrue($context->isSenderIrcOperator());
     }
 
     #[Test]
@@ -391,6 +450,7 @@ final class OperServContextTest extends TestCase
         string $messageType = 'NOTICE',
         ?OperServCommandRegistry $registry = null,
         ?IrcopAccessHelper $accessHelper = null,
+        ?OperatorAuthorizationQuery $authorization = null,
     ): OperServContext {
         return new OperServContext(
             sender: $sender,
@@ -405,6 +465,7 @@ final class OperServContextTest extends TestCase
             registry: $registry ?? new OperServCommandRegistry([]),
             accessHelper: $accessHelper ?? $this->createAccessHelper(),
             serviceNicks: $this->createServiceNicks(),
+            authorization: $authorization,
         );
     }
 

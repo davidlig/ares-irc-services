@@ -19,8 +19,11 @@ use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
-use App\Irc\Application\PublishedEvent\IrcopCommandExecutedEvent;
+use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
+use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
+use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Application\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -59,6 +62,7 @@ final readonly class ChanServService
         private ChanAuthorizationContextInterface $authorizationContext,
         private ChanAuthorizationCheckerInterface $authorizationChecker,
         private EventBusInterface $eventDispatcher,
+        private CommandAuditRecorder $commandAudit,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -287,18 +291,22 @@ final readonly class ChanServService
                         $auditExtra['option'] = strtoupper($args[1]);
                     }
                     if (count($args) >= 3) {
-                        $auditExtra['value'] = implode(' ', array_slice($args, 2));
+                        $auditExtra['value'] = 'PASSWORD' === $auditExtra['option']
+                            ? null
+                            : implode(' ', array_slice($args, 2));
                     }
 
-                    $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
-                        serviceName: $this->notifier->getServiceKey(),
-                        operatorNick: $sender->nick,
-                        commandName: $cmdName,
+                    $this->commandAudit->record(new CommandAuditRecord(
+                        category: CommandAuditCategory::ResourceOverride,
+                        service: $this->notifier->getServiceKey(),
+                        actor: $sender->nick,
+                        operation: $cmdName,
+                        occurredAt: new DateTimeImmutable(),
                         permission: ChanServPermission::LEVEL_FOUNDER,
                         target: $auditChannelName,
                         targetHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
                         targetIp: $this->decodeIp($sender->ipBase64),
-                        extra: $auditExtra,
+                        metadata: $auditExtra,
                     ));
                 }
             }

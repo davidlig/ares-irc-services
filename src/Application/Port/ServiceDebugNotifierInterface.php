@@ -15,7 +15,7 @@ interface ServiceDebugNotifierInterface
     public function notify(string $message): void;
 
     /**
-     * Log an IRCop command execution for audit purposes.
+     * Present an already-sanitized command audit record to the IRC debug channel.
      *
      * @param array<string, mixed> $extra Additional data (option, value, duration, etc.)
      */

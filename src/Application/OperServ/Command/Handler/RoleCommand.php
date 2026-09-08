@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
+use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
+use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 
 use function count;
 use function sprintf;
 use function strtoupper;
 
-final readonly class RoleCommand implements OperServCommandInterface
+final readonly class RoleCommand implements OperServCommandInterface, IrcopAuditableCommandInterface
 {
     public function __construct(
         private OperRoleRepositoryInterface $roleRepository,
@@ -83,59 +87,51 @@ final readonly class RoleCommand implements OperServCommandInterface
         return true;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
-        return null;
+        return OperatorAuthorizationAttribute::ROOT;
     }
 
-    public function execute(OperServContext $context): void
+    public function execute(OperServContext $context): CommandOutcome
     {
-        if (!$context->isRoot()) {
-            $context->reply('error.root_only');
-
-            return;
-        }
-
         $sub = strtoupper($context->args[0] ?? '');
 
         switch ($sub) {
             case 'ADD':
-                $this->doAdd($context);
-                break;
+                return $this->doAdd($context);
             case 'DEL':
-                $this->doDel($context);
-                break;
+                return $this->doDel($context);
             case 'LIST':
                 $this->doList($context);
-                break;
+
+                return CommandOutcome::rejected();
             case 'PERMS':
-                $this->permissions->handle($context);
-                break;
+                return $this->permissions->handle($context);
             case 'MODES':
-                $this->modes->handle($context);
-                break;
+                return $this->modes->handle($context);
             case 'VHOST':
-                $this->vhost->handle($context);
-                break;
+                return $this->vhost->handle($context);
             case 'OPERCLASS':
                 if (!$this->operclass->isSupported()) {
                     $context->reply('role.unknown_sub', ['%sub%' => $sub]);
 
-                    break;
+                    return CommandOutcome::rejected();
                 }
-                $this->operclass->handle($context);
-                break;
+
+                return $this->operclass->handle($context);
             default:
                 $context->reply($this->operclass->isSupported() ? 'role.unknown_sub_operclass' : 'role.unknown_sub', ['%sub%' => $sub]);
+
+                return CommandOutcome::rejected();
         }
     }
 
-    private function doAdd(OperServContext $context): void
+    private function doAdd(OperServContext $context): CommandOutcome
     {
         if (count($context->args) < 2) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.add.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $name = strtoupper($context->args[1]);
@@ -149,21 +145,26 @@ final readonly class RoleCommand implements OperServCommandInterface
         if (null !== $existing) {
             $context->reply('role.already_exists', ['%role%' => $name]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $role = OperRole::create($name, $description, false);
         $this->roleRepository->save($role);
 
         $context->reply('role.add.done', ['%role%' => $name]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $name,
+            extra: ['action' => 'ADD'],
+        ));
     }
 
-    private function doDel(OperServContext $context): void
+    private function doDel(OperServContext $context): CommandOutcome
     {
         if (count($context->args) < 2) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.del.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $name = strtoupper($context->args[1]);
@@ -172,17 +173,22 @@ final readonly class RoleCommand implements OperServCommandInterface
         if (null === $role) {
             $context->reply('role.not_found', ['%role%' => $name]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         if ($role->isProtected()) {
             $context->reply('role.protected', ['%role%' => $name]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $this->roleRepository->remove($role);
         $context->reply('role.del.done', ['%role%' => $name]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $name,
+            extra: ['action' => 'DEL'],
+        ));
     }
 
     private function doList(OperServContext $context): void

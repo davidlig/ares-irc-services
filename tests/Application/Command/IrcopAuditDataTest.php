@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Command;
 
 use App\Application\Command\IrcopAuditData;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -55,5 +56,13 @@ final class IrcopAuditDataTest extends TestCase
         self::assertNull($data->targetIp);
         self::assertSame('Spamming channels', $data->reason);
         self::assertSame([], $data->extra);
+    }
+
+    #[Test]
+    public function rejectsSensitiveOrRawMetadata(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new IrcopAuditData(target: 'target', extra: ['raw_args' => 'PASS hunter2']);
     }
 }

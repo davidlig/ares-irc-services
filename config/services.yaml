@@ -1144,7 +1144,6 @@ services:
         arguments:
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'
-            $logger: '@monolog.logger.ircops'
         tags: ['app.debug_notifier']
 
     App\ChanServ\Application\Port\Out\ChanAuditSink:
@@ -1724,13 +1723,11 @@ services:
 
     App\Infrastructure\Security\Voter\IdentifiedVoter: ~
 
-    App\Infrastructure\Security\Voter\IrcopPermissionVoter:
-        arguments:
-            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
+    App\Infrastructure\Security\Voter\IrcopPermissionVoter: ~
 
-    App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter:
-        arguments:
-            $operatorAccess: '@App\NickServ\Application\Port\Out\NickServOperatorAccess'
+    App\Infrastructure\Security\Voter\RootVoter: ~
+
+    App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter: ~
 
     App\ChanServ\Adapter\Out\Security\Voter\ChanServLevelFounderVoter: ~
 
@@ -1742,6 +1739,7 @@ services:
                 - '@App\ChanServ\Adapter\Out\Security\Voter\ChanServLevelFounderVoter'
                 - '@App\Infrastructure\Security\Voter\IdentifiedVoter'
                 - '@App\Infrastructure\Security\Voter\IrcopPermissionVoter'
+                - '@App\Infrastructure\Security\Voter\RootVoter'
 
     Symfony\Component\Security\Core\Authorization\AuthorizationChecker:
         arguments:
@@ -1985,6 +1983,24 @@ services:
         arguments:
             $rootUsers: '%operserv.root_users%'
 
+    App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry:
+        arguments:
+            $rootUsers: '%operserv.root_users%'
+
+    App\OperServ\Application\Port\Out\RootIdentityRegistry:
+        alias: App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry
+
+    App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleAccess:
+        arguments:
+            $operators: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $roles: '@App\Domain\OperServ\Repository\OperRoleRepositoryInterface'
+
+    App\OperServ\Application\Port\Out\OperatorRoleAccess:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleAccess
+
+    App\OperServ\Application\Port\In\OperatorAuthorizationQuery:
+        alias: App\OperServ\Application\Security\OperatorAuthorizationService
+
     App\Application\OperServ\IrcopAccessHelper: ~
 
     App\Application\OperServ\Command\OperServCommandRegistry:
@@ -2093,7 +2109,6 @@ services:
             $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'
-            $logger: '@monolog.logger.ircops'
         tags: ['app.debug_notifier']
 
     App\Infrastructure\OperServ\Service\OperServDebugNotifier:
@@ -2108,7 +2123,6 @@ services:
             $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'
-            $logger: '@monolog.logger.ircops'
         tags: ['app.debug_notifier']
 
 
@@ -2154,7 +2168,6 @@ services:
     App\Application\OperServ\Command\Handler\RawCommand:
         arguments:
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
-            $logger: '@monolog.logger.ircops'
             $udbCommands: '@App\Application\Port\UdbRawCommandHandlerProviderInterface'
         tags: ['operserv.command']
 
@@ -2215,12 +2228,22 @@ services:
             $registeredChannelSetup: '@App\ChanServ\Application\Port\In\RegisteredChannelSetup'
         tags: ['kernel.event_subscriber']
 
-    # --- IRCop Command Audit ----------------------------------------------------
+    # --- Semantic command audit -------------------------------------------------
 
-    App\Infrastructure\IRC\Subscriber\IrcopCommandAuditSubscriber:
+    App\OperServ\Application\Port\In\CommandAuditRecorder:
+        alias: App\OperServ\Application\UseCase\RecordCommandAudit
+
+    App\OperServ\Application\UseCase\RecordCommandAudit:
         arguments:
-            $registry: '@App\Application\Port\ServiceDebugNotifierRegistry'
-            $detector: '@App\Application\Security\IrcopPermissionDetector'
-        tags: ['kernel.event_subscriber']
+            $sinks: !tagged_iterator app.command_audit_sink
 
-    App\Application\Security\IrcopPermissionDetector: ~
+    App\OperServ\Adapter\Out\Logging\PsrCommandAuditSink:
+        arguments:
+            $logger: '@monolog.logger.ircops'
+        tags: ['app.command_audit_sink']
+
+    App\OperServ\Application\Port\Out\CommandAuditIrcPresenter:
+        alias: App\OperServ\Adapter\Out\Irc\LegacyDebugChannelCommandAuditPresenter
+
+    App\OperServ\Adapter\Out\Irc\DebugChannelCommandAuditSink:
+        tags: ['app.command_audit_sink']

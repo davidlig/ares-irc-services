@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
+use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopAccessHelper;
@@ -17,13 +20,14 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 
 use function count;
 use function in_array;
 use function sprintf;
 use function strtoupper;
 
-final readonly class IrcopCommand implements OperServCommandInterface
+final readonly class IrcopCommand implements OperServCommandInterface, IrcopAuditableCommandInterface
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
@@ -89,25 +93,19 @@ final readonly class IrcopCommand implements OperServCommandInterface
         return true;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
-        return null;
+        return OperatorAuthorizationAttribute::ROOT;
     }
 
-    public function execute(OperServContext $context): void
+    public function execute(OperServContext $context): CommandOutcome
     {
-        if (!$context->isRoot()) {
-            $context->reply('error.root_only');
-
-            return;
-        }
-
         $firstArg = strtoupper($context->args[0] ?? '');
 
         if ('LIST' === $firstArg) {
             $this->doList($context);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $sub = $firstArg;
@@ -121,7 +119,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
             } elseif (count($context->args) < 2) {
                 $context->reply('error.syntax', ['%syntax%' => $context->trans('ircop.syntax')]);
 
-                return;
+                return CommandOutcome::rejected();
             } else {
                 $sub = $legacySub;
             }
@@ -130,28 +128,28 @@ final readonly class IrcopCommand implements OperServCommandInterface
         if ('' === $nickname) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('ircop.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         switch ($sub) {
             case 'ADD':
-                $this->doAdd($context, $nickname);
-                break;
+                return $this->doAdd($context, $nickname);
             case 'DEL':
-                $this->doDel($context, $nickname);
-                break;
+                return $this->doDel($context, $nickname);
             default:
                 $context->reply('ircop.unknown_sub', ['%sub%' => $sub]);
+
+                return CommandOutcome::rejected();
         }
     }
 
-    private function doAdd(OperServContext $context, string $nickname): void
+    private function doAdd(OperServContext $context, string $nickname): CommandOutcome
     {
         $roleName = strtoupper($context->args[2] ?? '');
 
         $validation = $this->validateIrcopAdd($context, $nickname, $roleName);
         if (null === $validation) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         [$targetAccount, $role] = $validation;
@@ -163,7 +161,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
             if ($oldRole->getName() === $roleName) {
                 $context->reply('ircop.already_admin', ['%nickname%' => $nickname, '%role%' => $roleName]);
 
-                return;
+                return CommandOutcome::rejected();
             }
 
             $oldRoleName = $oldRole->getName();
@@ -178,7 +176,10 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
             $context->reply('ircop.role_changed', ['%nickname%' => $nickname, '%old%' => $oldRoleName, '%new%' => $roleName]);
 
-            return;
+            return CommandOutcome::success(new IrcopAuditData(
+                target: $nickname,
+                extra: ['action' => 'ROLE_CHANGE', 'role' => $roleName],
+            ));
         }
 
         $ircop = OperIrcop::create(
@@ -195,6 +196,11 @@ final readonly class IrcopCommand implements OperServCommandInterface
         $this->eventDispatcher->dispatch(new OperIrcopChangedEvent($targetAccount->getId(), $nickname));
 
         $context->reply('ircop.add.done', ['%nickname%' => $nickname, '%role%' => $roleName]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $nickname,
+            extra: ['action' => 'ADD', 'role' => $roleName],
+        ));
     }
 
     /** @return array{0: RegisteredNick, 1: OperRole}|null */
@@ -234,20 +240,20 @@ final readonly class IrcopCommand implements OperServCommandInterface
         })();
     }
 
-    private function doDel(OperServContext $context, string $nickname): void
+    private function doDel(OperServContext $context, string $nickname): CommandOutcome
     {
         $targetAccount = $this->nickRepository->findByNick($nickname);
         if (null === $targetAccount) {
             $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $ircop = $this->ircopRepository->findByNickId($targetAccount->getId());
         if (null === $ircop) {
             $context->reply('ircop.not_admin', ['%nickname%' => $nickname]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $role = $ircop->getRole();
@@ -257,6 +263,11 @@ final readonly class IrcopCommand implements OperServCommandInterface
         $this->ircopRepository->remove($ircop);
         $this->eventDispatcher->dispatch(new OperIrcopChangedEvent($targetAccount->getId(), $nickname));
         $context->reply('ircop.del.done', ['%nickname%' => $nickname]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $nickname,
+            extra: ['action' => 'DEL'],
+        ));
     }
 
     private function doList(OperServContext $context): void

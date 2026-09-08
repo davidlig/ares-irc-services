@@ -7,6 +7,7 @@ namespace App\Tests\NickServ\Adapter\Out\Security\Voter;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\Out\Security\Voter\NickServIdentifiedOwnerVoter;
+use App\NickServ\Application\Security\IdentifiedAccountOwnerPolicy;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -24,7 +25,7 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->voter = new NickServIdentifiedOwnerVoter();
+        $this->voter = new NickServIdentifiedOwnerVoter(new IdentifiedAccountOwnerPolicy());
     }
 
     #[Test]
@@ -108,7 +109,7 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
     }
 
     #[Test]
-    public function voteDeniesAccessWhenDifferentNickname(): void
+    public function voteUsesAccountIdentityInsteadOfCurrentNickname(): void
     {
         $sender = new SenderView(
             uid: '001ABCD',
@@ -128,7 +129,7 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
 
         $result = $this->voter->vote($token, $context, [NickServPermission::IDENTIFIED_OWNER]);
 
-        self::assertSame(VoterInterface::ACCESS_DENIED, $result);
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $result);
     }
 
     #[Test]

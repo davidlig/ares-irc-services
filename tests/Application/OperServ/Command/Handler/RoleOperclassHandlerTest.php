@@ -42,9 +42,13 @@ final class RoleOperclassHandlerTest extends RoleHandlerTestCase
         $roleRepo->method('findByName')->willReturn($role);
         $roleRepo->expects(self::once())->method('save')->with($role);
 
-        $this->createCmd($roleRepo, $this->createStub(OperPermissionRepositoryInterface::class), $accessHelper, new PermissionRegistry([]), supportsOperclass: true)
+        $outcome = $this->createCmd($roleRepo, $this->createStub(OperPermissionRepositoryInterface::class), $accessHelper, new PermissionRegistry([]), supportsOperclass: true)
             ->execute($this->createContext($sender, ['OPERCLASS', 'NETADMIN', 'SET', 'services:netadmin'], $notifier, $translator, new OperServCommandRegistry([]), $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('NETADMIN', $outcome->auditData->target);
+        self::assertSame(['action' => 'OPERCLASS_SET'], $outcome->auditData->extra);
         self::assertSame('services:netadmin', $role->getOperclass());
         self::assertContains('role.operclass.set.done', $messages);
     }
@@ -383,9 +387,13 @@ final class RoleOperclassHandlerTest extends RoleHandlerTestCase
         $roleRepo->method('findByName')->willReturn($role);
         $roleRepo->expects(self::once())->method('save')->with($role);
 
-        $this->createCmd($roleRepo, $this->createStub(OperPermissionRepositoryInterface::class), $accessHelper, new PermissionRegistry([]), supportsOperclass: true)
+        $outcome = $this->createCmd($roleRepo, $this->createStub(OperPermissionRepositoryInterface::class), $accessHelper, new PermissionRegistry([]), supportsOperclass: true)
             ->execute($this->createContext($sender, ['OPERCLASS', 'NETADMIN', 'SET', 'OFF'], $notifier, $translator, new OperServCommandRegistry([]), $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('NETADMIN', $outcome->auditData->target);
+        self::assertSame(['action' => 'OPERCLASS_CLEAR'], $outcome->auditData->extra);
         self::assertNull($role->getOperclass());
         self::assertContains('role.operclass.set.cleared', $messages);
     }

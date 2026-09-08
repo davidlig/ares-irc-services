@@ -14,7 +14,6 @@ use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\UdbRawCommandHandlerInterface;
 use App\Application\Port\UdbRawCommandHandlerProviderInterface;
 use App\Application\Port\UdbRawCommandResult;
-use Psr\Log\LoggerInterface;
 
 use function array_slice;
 use function count;
@@ -32,7 +31,6 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
 {
     public function __construct(
         private readonly ActiveConnectionHolderInterface $connectionHolder,
-        private readonly LoggerInterface $logger,
         private readonly UdbRawCommandHandlerProviderInterface $udbCommands,
     ) {}
 
@@ -107,19 +105,25 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
 
         $this->connectionHolder->writeLine($rawLine);
 
-        $this->logger->warning('RAW command executed', [
-            'operator' => $sender->nick,
-            'line' => $rawLine,
-        ]);
+        $commandName = $this->commandName($context->args);
 
         $auditData = new IrcopAuditData(
-            target: $rawLine,
+            target: $commandName,
             reason: sprintf('Executed by %s', $sender->nick),
+            extra: ['transport' => 'irc'],
         );
 
         $context->reply('raw.done');
 
         return CommandOutcome::success($auditData);
+    }
+
+    /** @param array<string> $args */
+    private function commandName(array $args): string
+    {
+        $first = $args[0] ?? '';
+
+        return strtoupper(str_starts_with($first, ':') ? ($args[1] ?? 'UNKNOWN') : ($first ?: 'UNKNOWN'));
     }
 
     /**
@@ -177,7 +181,7 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
 
         $value = $this->decodeValue(implode(' ', array_slice($args, 4)));
 
-        return $this->applyUdbResult($context, $handler->ins($args[3], $value));
+        return $this->applyUdbResult($context, $handler->ins($args[3], $value), 'INS');
     }
 
     /**
@@ -191,10 +195,10 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
             return CommandOutcome::rejected();
         }
 
-        return $this->applyUdbResult($context, $handler->del($args[3]));
+        return $this->applyUdbResult($context, $handler->del($args[3]), 'DEL');
     }
 
-    private function applyUdbResult(OperServContext $context, UdbRawCommandResult $result): CommandOutcome
+    private function applyUdbResult(OperServContext $context, UdbRawCommandResult $result, string $subcommand): CommandOutcome
     {
         if (!$result->success) {
             $context->reply($result->errorKey ?? 'raw.udb.error', $result->errorParams);
@@ -203,16 +207,11 @@ final class RawCommand implements OperServCommandInterface, IrcopAuditableComman
         }
 
         $sender = $context->getSender();
-        $auditLine = $result->auditLine ?? '';
-
-        $this->logger->warning('RAW UDB mutation applied', [
-            'operator' => $sender?->nick,
-            'line' => $auditLine,
-        ]);
 
         $auditData = new IrcopAuditData(
-            target: $auditLine,
+            target: 'DB ' . $subcommand,
             reason: sprintf('Executed by %s', $sender->nick ?? 'unknown'),
+            extra: ['transport' => 'udb'],
         );
 
         $context->reply('raw.udb.done');

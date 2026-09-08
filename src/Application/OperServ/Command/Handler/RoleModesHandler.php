@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
@@ -23,12 +25,12 @@ final readonly class RoleModesHandler
         private IrcopModeApplier $modeApplier,
     ) {}
 
-    public function handle(OperServContext $context): void
+    public function handle(OperServContext $context): CommandOutcome
     {
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.modes.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $roleName = strtoupper($context->args[1]);
@@ -38,18 +40,20 @@ final readonly class RoleModesHandler
         if (null === $role) {
             $context->reply('role.not_found', ['%role%' => $roleName]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         switch ($action) {
             case 'VIEW':
                 $this->viewModes($context, $role);
-                break;
+
+                return CommandOutcome::rejected();
             case 'SET':
-                $this->setModes($context, $role);
-                break;
+                return $this->setModes($context, $role);
             default:
                 $context->reply('role.modes.unknown_action', ['%action%' => $action]);
+
+                return CommandOutcome::rejected();
         }
     }
 
@@ -67,7 +71,7 @@ final readonly class RoleModesHandler
         $context->reply('role.modes.view.line', ['%modes%' => '+' . implode('', $modes)]);
     }
 
-    private function setModes(OperServContext $context, OperRole $role): void
+    private function setModes(OperServContext $context, OperRole $role): CommandOutcome
     {
         $modesArg = $context->args[3] ?? '';
 
@@ -75,14 +79,14 @@ final readonly class RoleModesHandler
         if (null === $protocolModule) {
             $context->reply('role.modes.set.no_irc_user_modes');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $validModes = $protocolModule->getUserModeSupport()->getIrcOpUserModes();
         if (empty($validModes)) {
             $context->reply('role.modes.set.not_supported');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $oldModes = $role->getUserModes();
@@ -93,7 +97,10 @@ final readonly class RoleModesHandler
             $this->modeApplier->updateModesForRole($role->getId(), $oldModes, []);
             $context->reply('role.modes.set.cleared', ['%role%' => $role->getName()]);
 
-            return;
+            return CommandOutcome::success(new IrcopAuditData(
+                target: $role->getName(),
+                extra: ['action' => 'MODES_CLEAR'],
+            ));
         }
 
         $modes = array_values(array_unique(str_split(ltrim($modesArg, '+'))));
@@ -104,7 +111,7 @@ final readonly class RoleModesHandler
                 '%valid%' => '+' . implode('', $validModes),
             ]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $role->changeUserModes($modes);
@@ -114,5 +121,10 @@ final readonly class RoleModesHandler
             '%modes%' => '+' . implode('', $modes),
             '%role%' => $role->getName(),
         ]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $role->getName(),
+            extra: ['action' => 'MODES_SET'],
+        ));
     }
 }

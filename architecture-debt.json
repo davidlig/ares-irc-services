@@ -30,7 +30,6 @@
       "src/Application/Command/IrcopAuditData.php",
       "src/Application/Command/IrcopAuditableCommandInterface.php",
       "src/Application/Event/CommandExecutedEvent.php",
-      "src/Application/Event/IrcopCommandExecutedEvent.php",
       "src/Application/Maintenance/InMemoryPrunableInterface.php",
       "src/Application/Maintenance/MaintenanceScheduler.php",
       "src/Application/Maintenance/MaintenanceTaskInterface.php",
@@ -82,7 +81,6 @@
       "src/Application/Port/ServiceUidProviderInterface.php",
       "src/Application/Port/TranslationInterface.php",
       "src/Application/Security/IrcopContextInterface.php",
-      "src/Application/Security/IrcopPermissionDetector.php",
       "src/Application/Security/PermissionProviderInterface.php",
       "src/Application/Security/PermissionRegistry.php",
       "src/Application/Services/Antiflood/AntifloodPruner.php",
@@ -117,7 +115,6 @@
       "src/Infrastructure/IRC/ServiceBridge/CtcpVersionResponder.php",
       "src/Infrastructure/IRC/ServiceBridge/ServiceCommandGateway.php",
       "src/Infrastructure/IRC/Subscriber/CommandExecutedAuditSubscriber.php",
-      "src/Infrastructure/IRC/Subscriber/IrcopCommandAuditSubscriber.php",
       "src/Infrastructure/IRC/Subscriber/IrcopsDebugChannelProtectionSubscriber.php",
       "src/Infrastructure/Messenger/SymfonyAsyncMessageDispatcher.php",
       "src/Infrastructure/OperServ/Bot/OperServBot.php",
@@ -137,6 +134,7 @@
       "src/Infrastructure/OperServ/Subscriber/OperServNickDropCleanupSubscriber.php",
       "src/Infrastructure/Security/Voter/IdentifiedVoter.php",
       "src/Infrastructure/Security/Voter/IrcopPermissionVoter.php",
+      "src/Infrastructure/Security/Voter/RootVoter.php",
       "src/Infrastructure/Translation/SymfonyTranslationAdapter.php"
     ],
     "08-unreal-udb": [

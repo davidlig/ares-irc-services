@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\Port\EventBusInterface;
@@ -27,12 +29,12 @@ final readonly class RoleVhostHandler
         private EventBusInterface $eventDispatcher,
     ) {}
 
-    public function handle(OperServContext $context): void
+    public function handle(OperServContext $context): CommandOutcome
     {
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.vhost.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $roleName = strtoupper($context->args[1]);
@@ -42,18 +44,20 @@ final readonly class RoleVhostHandler
         if (null === $role) {
             $context->reply('role.not_found', ['%role%' => $roleName]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         switch ($action) {
             case 'VIEW':
                 $this->viewVhost($context, $role);
-                break;
+
+                return CommandOutcome::rejected();
             case 'SET':
-                $this->setVhost($context, $role);
-                break;
+                return $this->setVhost($context, $role);
             default:
                 $context->reply('role.vhost.unknown_action', ['%action%' => $action]);
+
+                return CommandOutcome::rejected();
         }
     }
 
@@ -72,24 +76,32 @@ final readonly class RoleVhostHandler
         $context->reply('role.vhost.view.example', ['%pattern%' => $pattern]);
     }
 
-    private function setVhost(OperServContext $context, OperRole $role): void
+    private function setVhost(OperServContext $context, OperRole $role): CommandOutcome
     {
         $normalized = trim($context->args[3] ?? '');
         if ('' === $normalized || in_array(strtoupper($normalized), ['OFF', ''], true)) {
             $this->changeVhost($role, null);
             $context->reply('role.vhost.set.cleared', ['%role%' => $role->getName()]);
 
-            return;
+            return CommandOutcome::success(new IrcopAuditData(
+                target: $role->getName(),
+                extra: ['action' => 'VHOST_CLEAR'],
+            ));
         }
 
         if (!$this->vhostValidator->isValid($normalized) || !ForcedVhost::isValidPattern($normalized)) {
             $context->reply('role.vhost.set.invalid');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $this->changeVhost($role, $normalized);
         $context->reply('role.vhost.set.done', ['%role%' => $role->getName()]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $role->getName(),
+            extra: ['action' => 'VHOST_SET'],
+        ));
     }
 
     private function changeVhost(OperRole $role, ?string $pattern): void

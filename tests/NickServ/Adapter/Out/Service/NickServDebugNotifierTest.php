@@ -14,7 +14,6 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NickServDebugNotifier::class)]
@@ -26,7 +25,6 @@ final class NickServDebugNotifierTest extends TestCase
         ?RegisteredNickRepositoryInterface $nickRepo = null,
         ?NickServOperatorAccess $operatorAccess = null,
         ?TranslatorInterface $translator = null,
-        ?LoggerInterface $logger = null,
         ?NetworkUserLookupPort $userLookup = null,
         ?IdentifiedSessionRegistry $identifiedRegistry = null,
     ): NickServDebugNotifier {
@@ -39,7 +37,6 @@ final class NickServDebugNotifierTest extends TestCase
             $translator ?? $this->createStub(TranslatorInterface::class),
             'en',
             $debugChannel,
-            $logger ?? $this->createStub(LoggerInterface::class),
         );
     }
 
@@ -341,7 +338,7 @@ final class NickServDebugNotifierTest extends TestCase
         $operatorAccess->method('isRoot')->willReturn(true);
         $debug = $this->createNotifier(operatorAccess: $operatorAccess);
 
-        self::assertTrue($debug->isIrcopOrRoot('AdminRoot', false));
+        self::assertTrue($debug->isIrcopOrRoot('AdminRoot', true));
     }
 
     #[Test]
@@ -391,36 +388,5 @@ final class NickServDebugNotifierTest extends TestCase
         $debug->ensureChannelJoined();
 
         self::assertNull($debug->getDebugChannel());
-    }
-
-    #[Test]
-    public function logIncludesAllContextInFileLog(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())
-            ->method('info')
-            ->with('SASET', self::callback(static function (array $context): bool {
-                self::assertSame('Admin', $context['operator']);
-                self::assertSame('SASET', $context['command']);
-                self::assertSame('TargetUser', $context['target']);
-                self::assertSame('user@host.com', $context['target_host']);
-                self::assertSame('10.0.0.1', $context['target_ip']);
-                self::assertSame('Test reason', $context['reason']);
-                self::assertSame(['option' => 'EMAIL'], $context['extra']);
-
-                return true;
-            }));
-
-        $debug = $this->createNotifier(null, logger: $logger);
-
-        $debug->log(
-            operator: 'Admin',
-            command: 'SASET',
-            target: 'TargetUser',
-            targetHost: 'user@host.com',
-            targetIp: '10.0.0.1',
-            reason: 'Test reason',
-            extra: ['option' => 'EMAIL'],
-        );
     }
 }

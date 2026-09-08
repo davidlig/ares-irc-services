@@ -34,12 +34,13 @@ final class NickServContextTest extends TestCase
         ?NickServCommandRegistry $registry = null,
         ?PendingVerificationRegistry $pendingVerification = null,
         ?RecoveryTokenRegistry $recoveryToken = null,
+        ?RegisteredNick $senderAccount = null,
     ): NickServContext {
         $serviceNicks = $this->createServiceNicks('NickServ');
 
         return new NickServContext(
             $sender,
-            null,
+            $senderAccount,
             'INFO',
             $args,
             $notifier,
@@ -52,6 +53,25 @@ final class NickServContextTest extends TestCase
             $recoveryToken ?? new RecoveryTokenRegistry(),
             $serviceNicks,
         );
+    }
+
+    #[Test]
+    public function exposesIndependentSenderIdentityAndIrcOperatorFacts(): void
+    {
+        $sender = new SenderView('UID1', 'OperNick', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $context = $this->createContext(
+            $sender,
+            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(TranslationInterface::class),
+            senderAccount: $account,
+        );
+
+        self::assertSame(42, $context->getSenderAccountId());
+        self::assertSame('OperNick', $context->getSenderNickname());
+        self::assertTrue($context->isSenderIdentified());
+        self::assertTrue($context->isSenderIrcOperator());
     }
 
     private function createServiceNicks(string $botName): ServiceNicknameRegistry

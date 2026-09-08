@@ -90,7 +90,7 @@ final class AntifloodSubscriberTest extends TestCase
         );
     }
 
-    private function createSender(bool $isOper = false, string $ipBase64 = 'AQID', string $nick = 'TestUser'): SenderView
+    private function createSender(bool $isOper = false, string $ipBase64 = 'AQID', string $nick = 'TestUser', bool $isIdentified = false): SenderView
     {
         return new SenderView(
             uid: '002AAAAAB',
@@ -99,6 +99,7 @@ final class AntifloodSubscriberTest extends TestCase
             hostname: 'host.example.com',
             cloakedHost: 'cloak.example.com',
             ipBase64: $ipBase64,
+            isIdentified: $isIdentified,
             isOper: $isOper,
         );
     }
@@ -347,7 +348,11 @@ final class AntifloodSubscriberTest extends TestCase
     {
         $rootRegistry = new RootUserRegistry('TestUser');
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender(isOper: false, nick: 'TestUser'));
+        $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender(
+            isOper: false,
+            nick: 'TestUser',
+            isIdentified: true,
+        ));
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,

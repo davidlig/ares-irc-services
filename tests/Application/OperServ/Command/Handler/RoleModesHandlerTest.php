@@ -197,8 +197,12 @@ final class RoleModesHandlerTest extends RoleHandlerTestCase
         $registry = new OperServCommandRegistry([]);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
-        $cmd->execute($this->createContext($sender, ['MODES', 'CUSTOM', 'SET'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['MODES', 'CUSTOM', 'SET'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('CUSTOM', $outcome->auditData->target);
+        self::assertSame(['action' => 'MODES_CLEAR'], $outcome->auditData->extra);
         self::assertContains('role.modes.set.cleared', $messages);
         self::assertCount(1, $savedRoles);
         self::assertSame([], $savedRoles[0]->getUserModes());
@@ -234,8 +238,12 @@ final class RoleModesHandlerTest extends RoleHandlerTestCase
         $registry = new OperServCommandRegistry([]);
 
         $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
-        $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'SET', '+oaN'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'SET', '+oaN'], $notifier, $translator, $registry, $accessHelper));
 
+        self::assertTrue($outcome->success);
+        self::assertNotNull($outcome->auditData);
+        self::assertSame('ADMIN', $outcome->auditData->target);
+        self::assertSame(['action' => 'MODES_SET'], $outcome->auditData->extra);
         self::assertContains('role.modes.set.done', $messages);
         self::assertCount(1, $savedRoles);
         self::assertSame(['o', 'a', 'N'], $savedRoles[0]->getUserModes());

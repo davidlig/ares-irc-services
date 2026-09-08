@@ -7,8 +7,6 @@ namespace App\Application\OperServ\Command;
 use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
 
-use function strtolower;
-
 final readonly class OperServHelpFormatterContextAdapter implements HelpFormatterContextInterface
 {
     public function __construct(
@@ -46,23 +44,12 @@ final readonly class OperServHelpFormatterContextAdapter implements HelpFormatte
 
     public function shouldShowCommandInGeneralHelp(HelpableCommandInterface $command): bool
     {
-        if ($command->isOperOnly()) {
-            return $this->context->isRoot();
-        }
-
         $requiredPermission = $command instanceof OperServCommandInterface ? $command->getRequiredPermission() : null;
-        if (null === $requiredPermission) {
-            return true;
+        if (null !== $requiredPermission) {
+            return $this->context->isAuthorized($requiredPermission);
         }
 
-        $sender = $this->context->getSender();
-        $account = null !== $sender ? $this->context->getSenderAccount() : null;
-
-        return null === $sender
-            ? false
-            : (null !== $account
-                ? $this->context->getAccessHelper()->hasPermission((int) $account->getId(), strtolower($sender->nick), $requiredPermission)
-                : $this->context->isRoot());
+        return !$command->isOperOnly() || $this->context->isAuthorized(null);
     }
 
     /**

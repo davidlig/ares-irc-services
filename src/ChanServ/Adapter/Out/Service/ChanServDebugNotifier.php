@@ -7,7 +7,6 @@ namespace App\ChanServ\Adapter\Out\Service;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Application\Port\Out\ChanAuditSink;
-use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebugNotifierInterface
@@ -25,7 +24,6 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
         private TranslatorInterface $translator,
         private string $defaultLanguage,
         private ?string $debugChannel,
-        private LoggerInterface $logger,
     ) {}
 
     public function getServiceName(): string
@@ -61,48 +59,9 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
         ?string $reason = null,
         array $extra = [],
     ): void {
-        $this->logToFile($operator, $command, $target, $targetHost, $targetIp, $reason, $extra);
-
         if ($this->isConfigured()) {
             $this->logToChannel($operator, $command, $target, $targetHost, $targetIp, $reason, $extra);
         }
-    }
-
-    /**
-     * @param array<string, mixed> $extra
-     */
-    private function logToFile(
-        string $operator,
-        string $command,
-        string $target,
-        ?string $targetHost,
-        ?string $targetIp,
-        ?string $reason,
-        array $extra,
-    ): void {
-        $context = [
-            'operator' => $operator,
-            'command' => $command,
-            'target' => $target,
-        ];
-
-        if (null !== $targetHost) {
-            $context['target_host'] = $targetHost;
-        }
-
-        if (null !== $targetIp) {
-            $context['target_ip'] = $targetIp;
-        }
-
-        if (null !== $reason) {
-            $context['reason'] = $reason;
-        }
-
-        if ([] !== $extra) {
-            $context['extra'] = $extra;
-        }
-
-        $this->logger->info($command, $context);
     }
 
     /**

@@ -9,11 +9,9 @@ use App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-use function array_key_exists;
 use function is_string;
 
 #[CoversClass(ChanServDebugNotifier::class)]
@@ -52,27 +50,6 @@ final class ChanServDebugNotifierTest extends TestCase
     }
 
     #[Test]
-    public function logWritesToFileAndDoesNotSendToChannelWhenNotConfigured(): void
-    {
-        $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
-        $chanNotifier->expects(self::never())->method('sendMessage');
-
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info')->with('DROP', self::callback(static fn (array $context): bool => 'OperUser' === $context['operator']
-            && 'DROP' === $context['command']
-            && '#test' === $context['target']
-            && 'manual' === $context['reason']));
-
-        $notifier = $this->createNotifier(
-            chanNotifier: $chanNotifier,
-            logger: $logger,
-            debugChannel: null,
-        );
-
-        $notifier->log('OperUser', 'DROP', '#test', null, null, 'manual');
-    }
-
-    #[Test]
     public function notifySendsRawMessageWhenConfigured(): void
     {
         $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
@@ -102,7 +79,7 @@ final class ChanServDebugNotifierTest extends TestCase
     }
 
     #[Test]
-    public function logWritesToFileAndSendsToChannelWhenConfigured(): void
+    public function logSendsToChannelWhenConfigured(): void
     {
         $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
         $chanNotifier->expects(self::once())->method('sendMessage')->with('#ircops', 'formatted message', 'NOTICE');
@@ -110,72 +87,13 @@ final class ChanServDebugNotifierTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => 'formatted message');
 
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info');
-
         $notifier = $this->createNotifier(
             chanNotifier: $chanNotifier,
             translator: $translator,
-            logger: $logger,
             debugChannel: '#ircops',
         );
 
         $notifier->log('OperUser', 'DROP', '#test', null, null, 'manual');
-    }
-
-    #[Test]
-    public function logWithoutReasonDoesNotIncludeReasonInFileContext(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info')->with('DROP', self::callback(static fn (array $context): bool => !array_key_exists('reason', $context)));
-
-        $notifier = $this->createNotifier(logger: $logger, debugChannel: null);
-
-        $notifier->log('OperUser', 'DROP', '#test');
-    }
-
-    #[Test]
-    public function logWithReasonIncludesReasonInFileContext(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info')->with('DROP', self::callback(static fn (array $context): bool => 'manual' === $context['reason']));
-
-        $notifier = $this->createNotifier(logger: $logger, debugChannel: null);
-
-        $notifier->log('OperUser', 'DROP', '#test', null, null, 'manual');
-    }
-
-    #[Test]
-    public function logWithExtraIncludesExtraInFileContext(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info')->with('DROP', self::callback(static fn (array $context): bool => ['was_online' => true] === $context['extra']));
-
-        $notifier = $this->createNotifier(logger: $logger, debugChannel: null);
-
-        $notifier->log('OperUser', 'DROP', '#test', null, null, null, ['was_online' => true]);
-    }
-
-    #[Test]
-    public function logWithTargetHostIncludesTargetHostInFileContext(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info')->with('DROP', self::callback(static fn (array $context): bool => 'user@host' === $context['target_host']));
-
-        $notifier = $this->createNotifier(logger: $logger, debugChannel: null);
-
-        $notifier->log('OperUser', 'DROP', '#test', 'user@host', null, 'manual');
-    }
-
-    #[Test]
-    public function logWithTargetIpIncludesTargetIpInFileContext(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('info')->with('DROP', self::callback(static fn (array $context): bool => '10.0.0.1' === $context['target_ip']));
-
-        $notifier = $this->createNotifier(logger: $logger, debugChannel: null);
-
-        $notifier->log('OperUser', 'DROP', '#test', null, '10.0.0.1', 'manual');
     }
 
     #[Test]
@@ -192,12 +110,9 @@ final class ChanServDebugNotifierTest extends TestCase
             default => $id,
         });
 
-        $logger = $this->createStub(LoggerInterface::class);
-
         $notifier = $this->createNotifier(
             chanNotifier: $chanNotifier,
             translator: $translator,
-            logger: $logger,
             debugChannel: '#ircops',
         );
 
@@ -217,12 +132,9 @@ final class ChanServDebugNotifierTest extends TestCase
             default => $id,
         });
 
-        $logger = $this->createStub(LoggerInterface::class);
-
         $notifier = $this->createNotifier(
             chanNotifier: $chanNotifier,
             translator: $translator,
-            logger: $logger,
             debugChannel: '#ircops',
         );
 
@@ -242,12 +154,9 @@ final class ChanServDebugNotifierTest extends TestCase
             default => $id,
         });
 
-        $logger = $this->createStub(LoggerInterface::class);
-
         $notifier = $this->createNotifier(
             chanNotifier: $chanNotifier,
             translator: $translator,
-            logger: $logger,
             debugChannel: '#ircops',
         );
 
@@ -270,12 +179,9 @@ final class ChanServDebugNotifierTest extends TestCase
             default => $id,
         });
 
-        $logger = $this->createStub(LoggerInterface::class);
-
         $notifier = $this->createNotifier(
             chanNotifier: $chanNotifier,
             translator: $translator,
-            logger: $logger,
             debugChannel: '#ircops',
         );
 
@@ -298,12 +204,9 @@ final class ChanServDebugNotifierTest extends TestCase
             default => $id,
         });
 
-        $logger = $this->createStub(LoggerInterface::class);
-
         $notifier = $this->createNotifier(
             chanNotifier: $chanNotifier,
             translator: $translator,
-            logger: $logger,
             debugChannel: '#ircops',
         );
 
@@ -335,14 +238,12 @@ final class ChanServDebugNotifierTest extends TestCase
         ?ChanServNotifierInterface $chanNotifier = null,
         ?TranslatorInterface $translator = null,
         ?string $debugChannel = null,
-        ?LoggerInterface $logger = null,
     ): ChanServDebugNotifier {
         return new ChanServDebugNotifier(
             $chanNotifier ?? $this->createStub(ChanServNotifierInterface::class),
             $translator ?? $this->createStub(TranslatorInterface::class),
             'en',
             $debugChannel,
-            $logger ?? $this->createStub(LoggerInterface::class),
         );
     }
 }

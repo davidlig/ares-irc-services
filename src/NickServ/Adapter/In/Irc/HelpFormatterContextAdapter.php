@@ -75,7 +75,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         $sender = $this->context->sender;
         $account = $this->context->senderAccount;
 
-        if (null === $sender || null === $account) {
+        if (null === $sender || null === $account || !$sender->isIdentified) {
             return [];
         }
 
@@ -97,7 +97,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         $sender = $this->context->sender;
         $account = $this->context->senderAccount;
 
-        if (null === $sender || null === $account) {
+        if (null === $sender || null === $account || !$sender->isIdentified) {
             return false;
         }
 

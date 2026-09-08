@@ -16,6 +16,8 @@ use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Application\ServiceNicknameRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -40,6 +42,7 @@ final readonly class OperServService
         private AuthorizationContextInterface $authorizationContext,
         private AuthorizationCheckerInterface $authorizationChecker,
         private EventBusInterface $eventDispatcher,
+        private OperatorAuthorizationQuery $operatorAuthorization,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -88,6 +91,7 @@ final readonly class OperServService
             registry: $this->commandRegistry,
             accessHelper: $this->accessHelper,
             serviceNicks: $this->serviceNicks,
+            authorization: $this->operatorAuthorization,
         );
 
         $this->authorizationContext->setCurrentUser($sender->uid, $sender->isIdentified, $sender->isOper);
@@ -108,13 +112,18 @@ final readonly class OperServService
                     'isGranted' => $isGranted,
                 ]);
                 if (!$isGranted) {
-                    $context->reply('IDENTIFIED' === $requiredPermission ? 'error.not_identified' : 'error.permission_denied');
+                    $errorKey = match ($requiredPermission) {
+                        OperatorAuthorizationAttribute::IDENTIFIED => 'error.not_identified',
+                        OperatorAuthorizationAttribute::ROOT => 'error.root_only',
+                        default => 'error.permission_denied',
+                    };
+                    $context->reply($errorKey);
 
                     return;
                 }
             }
 
-            if ($handler->isOperOnly() && !$sender->isOper && !$this->accessHelper->isIrcop($context->senderAccount?->getId() ?? 0, strtolower($sender->nick))) {
+            if (null === $requiredPermission && $handler->isOperOnly() && !$context->isAuthorized(null)) {
                 $context->reply('error.oper_only');
 
                 return;
