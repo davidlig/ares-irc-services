@@ -4,32 +4,15 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Subscriber;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
-use App\Application\Shared\ServiceUidRegistry;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Application\Port\In\RegisteredChannelSetup;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
-use App\Irc\Application\Port\In\ChannelLookupPort;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
-use function in_array;
-use function strtolower;
 
 /**
  * Joins the debug channel when services connect (if configured) and applies
- * registered channel policies (modes, topic, ranks) after sync completes.
- *
- * When the IRCOPS_DEBUG_CHANNEL is a registered ChanServ channel but was NOT
- * received in the IRCd burst (e.g. empty channel, only ChanServ inside),
- * the internal ChannelRepository never learns about it, so the standard
- * ChanServ reconciliation subscribers skip it. This subscriber fills that gap
- * by directly applying +r/+P, MLOCK, topic, and member rank sync after EOS.
+ * registered channel policies after sync completes.
  */
 final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterface
 {
@@ -39,12 +22,7 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
     public function __construct(
         private iterable $debugNotifiers,
         private ?string $debugChannel,
-        private RegisteredChannelRepositoryInterface $registeredChannelRepository,
-        private ChannelLookupPort $channelLookup,
-        private ChannelServiceActionsPort $channelServiceActions,
-        private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
-        private ServiceUidRegistry $uidRegistry,
-        private LoggerInterface $logger = new NullLogger(),
+        private RegisteredChannelSetup $registeredChannelSetup,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -62,155 +40,12 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
         }
     }
 
-    /**
-     * After network sync, apply registered channel policies to the debug channel
-     * if it is registered but was not processed by the standard ChanServ
-     * reconciliation (because it wasn't in the IRCd burst so the internal
-     * ChannelRepository doesn't know about it).
-     */
     public function onSyncComplete(NetworkSyncCompleteEvent $event): void
     {
         if (null === $this->debugChannel || '' === $this->debugChannel) {
             return;
         }
 
-        $channelNameLower = strtolower($this->debugChannel);
-
-        $registered = $this->registeredChannelRepository->findByChannelName($channelNameLower);
-        if (null === $registered || $registered->isBlocked()) {
-            return;
-        }
-
-        if (null !== $this->channelLookup->findByChannelName($this->debugChannel)) {
-            $this->applyChanServRank($this->debugChannel);
-
-            return;
-        }
-
-        $this->applyRegisteredChannelSetup($this->debugChannel, $registered);
-    }
-
-    private function applyRegisteredChannelSetup(
-        string $channelName,
-        RegisteredChannel $registered,
-    ): void {
-        $modeSupport = $this->modeSupportProvider->getSupport();
-
-        $this->applyRegisteredAndPermanentModes($channelName, $modeSupport);
-        $this->applyMlock($channelName, $registered, $modeSupport);
-        $this->applyTopic($channelName, $registered);
-        $this->applyChanServRank($channelName);
-
-        $this->logger->info('Debug channel: applied registered channel setup', [
-            'channel' => $channelName,
-        ]);
-    }
-
-    private function applyRegisteredAndPermanentModes(
-        string $channelName,
-        ChannelModeSupportInterface $modeSupport,
-    ): void {
-        $modesToSet = [];
-
-        $registeredLetter = $modeSupport->getChannelRegisteredModeLetter();
-        if (null !== $registeredLetter) {
-            $modesToSet[] = $registeredLetter;
-        }
-
-        $permanentLetter = $modeSupport->getPermanentChannelModeLetter();
-        if (null !== $permanentLetter) {
-            $modesToSet[] = $permanentLetter;
-        }
-
-        if ([] === $modesToSet) {
-            return;
-        }
-
-        $modeStr = '+' . implode('', $modesToSet);
-        $this->channelServiceActions->setChannelModes($channelName, $modeStr, []);
-        $this->logger->debug('Debug channel: set registered/permanent modes', [
-            'channel' => $channelName,
-            'modes' => $modeStr,
-        ]);
-    }
-
-    private function applyMlock(
-        string $channelName,
-        RegisteredChannel $registered,
-        ChannelModeSupportInterface $modeSupport,
-    ): void {
-        if (!$registered->isMlockActive()) {
-            return;
-        }
-
-        $mlockStr = $registered->getMlock();
-        if ('' === $mlockStr) {
-            return;
-        }
-
-        $mlockLetters = [];
-        foreach (str_split($mlockStr) as $c) {
-            if ('+' === $c || '-' === $c) {
-                continue;
-            }
-            $mlockLetters[] = $c;
-        }
-
-        if ([] === $mlockLetters) {
-            return;
-        }
-
-        $modeStr = '+' . implode('', $mlockLetters);
-        $mlockParams = [];
-
-        $withParamOnSet = $modeSupport->getChannelSettingModesWithParamOnSet();
-        foreach ($mlockLetters as $letter) {
-            if (in_array($letter, $withParamOnSet, true)) {
-                $param = $registered->getMlockParam($letter);
-                if (null !== $param) {
-                    $mlockParams[] = $param;
-                }
-            }
-        }
-
-        $this->channelServiceActions->setChannelModes($channelName, $modeStr, $mlockParams);
-        $this->logger->debug('Debug channel: applied MLOCK', [
-            'channel' => $channelName,
-            'modes' => $modeStr,
-        ]);
-    }
-
-    private function applyTopic(
-        string $channelName,
-        RegisteredChannel $registered,
-    ): void {
-        $storedTopic = $registered->getTopic();
-        if (null === $storedTopic) {
-            return;
-        }
-
-        $this->channelServiceActions->setChannelTopic($channelName, $storedTopic);
-        $this->logger->debug('Debug channel: applied stored topic', [
-            'channel' => $channelName,
-        ]);
-    }
-
-    private function applyChanServRank(string $channelName): void
-    {
-        $chanServUid = $this->uidRegistry->getUid('chanserv');
-        if (null === $chanServUid) {
-            return;
-        }
-
-        $supported = $this->modeSupportProvider->getSupport()->getSupportedPrefixModes();
-        $prefixOrder = ['q', 'a', 'o', 'h', 'v'];
-        $maxPrefix = array_find($prefixOrder, static fn ($letter) => in_array($letter, $supported, true)) ?? 'o';
-
-        $this->channelServiceActions->setChannelMemberMode($channelName, $chanServUid, $maxPrefix, true);
-        $this->logger->debug('Debug channel: set ChanServ rank', [
-            'channel' => $channelName,
-            'uid' => $chanServUid,
-            'mode' => '+' . $maxPrefix,
-        ]);
+        $this->registeredChannelSetup->restore($this->debugChannel);
     }
 }

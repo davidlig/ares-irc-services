@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
 
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetMlockHandler;
 use App\ChanServ\Adapter\In\Irc\MlockStateFromChannelResolver;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
+use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlock;
+use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandlerInterface;
+use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockResult;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\ValueObject\ChannelModeLock;
+use App\ChanServ\Domain\ValueObject\ChannelSetting;
+use App\ChanServ\Domain\ValueObject\ModeName;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
@@ -57,8 +60,7 @@ final class SetMlockHandlerTest extends TestCase
     public function invalidValueRepliesSyntaxError(): void
     {
         $channel = $this->createStub(RegisteredChannel::class);
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $configureMlock = $this->createStub(ConfigureChannelMlockHandlerInterface::class);
         $resolver = new MlockStateFromChannelResolver();
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -68,7 +70,7 @@ final class SetMlockHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetMlockHandler($channelRepo, $eventDispatcher, $resolver);
+        $handler = new SetMlockHandler($configureMlock, $resolver);
         $handler->handle($this->createContext($notifier, $translator), $channel, 'maybe');
 
         self::assertSame(['error.syntax'], $messages);
@@ -77,28 +79,14 @@ final class SetMlockHandlerTest extends TestCase
     #[Test]
     public function onWithNoChannelViewConfiguresMlockActiveNoModesAndDispatches(): void
     {
-        $channel = $this->createMock(RegisteredChannel::class);
-        $channel->expects(self::once())->method('configureMlock')->with(true, '', []);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
-        $channel->method('getMlock')->willReturn('');
-        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->expects(self::once())->method('save')->with($channel);
         $lookup = $this->createMock(ChannelLookupPort::class);
         $lookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
-        $dispatched = null;
-        $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())
-            ->method('dispatch')
-            ->with(self::callback(static function (object $e) use (&$dispatched): bool {
-                if ($e instanceof ChannelMlockUpdatedEvent) {
-                    $dispatched = $e;
-
-                    return '#test' === $e->channelName;
-                }
-
-                return false;
-            }))
-            ->willReturnArgument(0);
+        $configureMlock = $this->createMock(ConfigureChannelMlockHandlerInterface::class);
+        $configureMlock->expects(self::once())->method('handle')->with(self::callback(
+            static fn (ConfigureChannelMlock $command): bool => $channel === $command->channel && $command->modeLock->active && [] === $command->modeLock->settings,
+        ))->willReturn(new ConfigureChannelMlockResult(ChannelModeLock::active()));
         $resolver = new MlockStateFromChannelResolver();
         $messages = [];
         $channelNotices = [];
@@ -112,10 +100,9 @@ final class SetMlockHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetMlockHandler($channelRepo, $eventDispatcher, $resolver);
+        $handler = new SetMlockHandler($configureMlock, $resolver);
         $handler->handle($this->createContext($notifier, $translator, $lookup), $channel, ' ON ');
 
-        self::assertInstanceOf(ChannelMlockUpdatedEvent::class, $dispatched);
         self::assertSame(['set.mlock.on'], $messages);
         self::assertCount(1, $channelNotices);
     }
@@ -123,12 +110,8 @@ final class SetMlockHandlerTest extends TestCase
     #[Test]
     public function onWithChannelViewResolvesModesAndConfiguresMlock(): void
     {
-        $channel = $this->createMock(RegisteredChannel::class);
-        $channel->expects(self::once())->method('configureMlock')->with(true, '+nt', []);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
-        $channel->method('getMlock')->willReturn('+nt');
-        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->expects(self::once())->method('save')->with($channel);
         $view = new ChannelView('#test', '+nt', null, 0);
         $lookup = $this->createMock(ChannelLookupPort::class);
         $lookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($view);
@@ -137,8 +120,12 @@ final class SetMlockHandlerTest extends TestCase
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
         $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
         $support->method('getPermanentChannelModeLetter')->willReturn('P');
-        $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnArgument(0);
+        $configureMlock = $this->createMock(ConfigureChannelMlockHandlerInterface::class);
+        $configureMlock->expects(self::once())->method('handle')->with(self::callback(static fn (ConfigureChannelMlock $command): bool => $channel === $command->channel
+                && ['n', 't'] === array_map(static fn ($setting): string => $setting->mode->value, $command->modeLock->settings)))->willReturn(new ConfigureChannelMlockResult(ChannelModeLock::active([
+                    new ChannelSetting(new ModeName('n')),
+                    new ChannelSetting(new ModeName('t')),
+                ])));
         $resolver = new MlockStateFromChannelResolver();
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -149,7 +136,7 @@ final class SetMlockHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetMlockHandler($channelRepo, $eventDispatcher, $resolver);
+        $handler = new SetMlockHandler($configureMlock, $resolver);
         $handler->handle($this->createContext($notifier, $translator, $lookup, $support), $channel, 'on');
 
         self::assertSame(['set.mlock.on'], $messages);
@@ -158,16 +145,12 @@ final class SetMlockHandlerTest extends TestCase
     #[Test]
     public function offDisablesMlockSavesAndReplies(): void
     {
-        $channel = $this->createMock(RegisteredChannel::class);
-        $channel->expects(self::once())->method('configureMlock')->with(false, '', []);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
-        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->expects(self::once())->method('save')->with($channel);
-        $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())
-            ->method('dispatch')
-            ->with(self::callback(static fn (object $e): bool => $e instanceof ChannelMlockUpdatedEvent && '#test' === $e->channelName))
-            ->willReturnArgument(0);
+        $configureMlock = $this->createMock(ConfigureChannelMlockHandlerInterface::class);
+        $configureMlock->expects(self::once())->method('handle')->with(self::callback(
+            static fn (ConfigureChannelMlock $command): bool => $channel === $command->channel && !$command->modeLock->active,
+        ))->willReturn(new ConfigureChannelMlockResult(ChannelModeLock::inactive()));
         $resolver = new MlockStateFromChannelResolver();
         $messages = [];
         $channelNotices = [];
@@ -181,7 +164,7 @@ final class SetMlockHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetMlockHandler($channelRepo, $eventDispatcher, $resolver);
+        $handler = new SetMlockHandler($configureMlock, $resolver);
         $handler->handle($this->createContext($notifier, $translator), $channel, 'OFF');
 
         self::assertSame(['set.mlock.off'], $messages);

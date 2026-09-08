@@ -47,10 +47,11 @@ readonly class ChanDropService
         $channel->markPendingDeletion();
         $this->channelRepository->save($channel);
 
-        $this->channelActions->setChannelModes($channelName, '-r', [], $channel->getCreatedAt()->getTimestamp());
-        if ($channel->isNoExpire()) {
-            $this->channelActions->setChannelModes($channelName, '-P', [], $channel->getCreatedAt()->getTimestamp());
-        }
+        $this->channelActions->removeRegistrationForPendingDeletion(
+            $channelName,
+            $channel->isNoExpire(),
+            $channel->getCreatedAt()->getTimestamp(),
+        );
 
         $this->debug->log(
             operator: $operatorNick ?? '*',
@@ -75,10 +76,11 @@ readonly class ChanDropService
         $channel->restoreFromPendingDeletion();
         $this->channelRepository->save($channel);
 
-        $this->channelActions->setChannelModes($channelName, '+r', [], $channel->getCreatedAt()->getTimestamp());
-        if ($channel->isNoExpire()) {
-            $this->channelActions->setChannelModes($channelName, '+P', [], $channel->getCreatedAt()->getTimestamp());
-        }
+        $this->channelActions->restoreRegistrationAfterPendingDeletion(
+            $channelName,
+            $channel->isNoExpire(),
+            $channel->getCreatedAt()->getTimestamp(),
+        );
 
         $this->debug->log(
             operator: $operatorNick ?? '*',

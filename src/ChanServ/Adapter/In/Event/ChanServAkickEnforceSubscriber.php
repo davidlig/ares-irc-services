@@ -4,46 +4,24 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Event;
 
-use App\Application\Port\ChannelServiceActionsPort;
-use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\Irc\Application\Port\In\ChannelView;
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Application\Port\In\SenderView;
+use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkick;
+use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandlerInterface;
+use App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicks;
+use App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicksHandlerInterface;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
+use DateTimeImmutable;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-use function array_find;
-use function strtolower;
-
 /**
- * Enforces AKICK on user join and after burst completion:
- * - On JOIN: matches user mask against channel's AKICK list, sets +b and kicks matching users.
- * - On NetworkSyncCompleteEvent: enforces AKICKs on all users currently in registered channels.
- *
- * Runs after ChannelSyncedEvent so channel state is available.
+ * Translates join and end-of-synchronization events to AKICK use cases.
  */
 final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChannelAkickRepositoryInterface $akickRepository,
-        private ChannelLookupPort $channelLookup,
-        private NetworkUserLookupPort $userLookup,
-        private ChannelServiceActionsPort $channelServiceActions,
-        private string $chanservNick,
-        private LoggerInterface $logger = new NullLogger(),
+        private EnforceChannelAkickHandlerInterface $enforceChannelAkick,
+        private SynchronizeAllChannelAkicksHandlerInterface $synchronizeAllChannelAkicks,
     ) {}
-
-    public function getChanservNick(): string
-    {
-        return $this->chanservNick;
-    }
 
     public static function getSubscribedEvents(): array
     {
@@ -55,101 +33,15 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
 
     public function onUserJoined(UserJoinedChannelEvent $event): void
     {
-        $channelName = $event->channelName;
-        $uid = $event->uid;
-
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel || $channel->isBlocked()) {
-            return;
-        }
-
-        $user = $this->userLookup->findByUid($uid);
-        if (null === $user || $user->isOper) {
-            return;
-        }
-
-        $this->checkAkickMatch($channel, $channelName, $uid, $user);
-    }
-
-    private function checkAkickMatch(RegisteredChannel $channel, string $channelName, string $uid, SenderView $user): void
-    {
-        $userMask = $user->toUserMask();
-
-        $akicks = $this->akickRepository->listByChannel($channel->getId());
-
-        $matching = array_find($akicks, static fn ($akick) => !$akick->isExpired() && $akick->matches($userMask));
-        if (null !== $matching) {
-            $this->enforceAkick($channelName, $matching->getMask(), $uid, $matching->getReason());
-        }
+        $this->enforceChannelAkick->handle(new EnforceChannelAkick(
+            $event->channelName,
+            $event->uid,
+            new DateTimeImmutable(),
+        ));
     }
 
     public function onSyncComplete(NetworkSynchronizationCompletedEvent $event): void
     {
-        $channels = $this->channelRepository->listAll();
-
-        foreach ($channels as $channel) {
-            if ($channel->isBlocked()) {
-                continue;
-            }
-
-            $channelName = $channel->getName();
-            $view = $this->channelLookup->findByChannelName($channelName);
-
-            if (null === $view) {
-                continue;
-            }
-
-            $this->enforceAkicksForChannel($channel->getId(), $channelName, $view);
-        }
-    }
-
-    private function enforceAkicksForChannel(int $channelId, string $channelName, ChannelView $view): void
-    {
-        $akicks = $this->akickRepository->listByChannel($channelId);
-
-        if ([] === $akicks) {
-            return;
-        }
-
-        $validAkicks = [];
-        foreach ($akicks as $akick) {
-            if (!$akick->isExpired()) {
-                $validAkicks[] = $akick;
-            }
-        }
-
-        if ([] === $validAkicks) {
-            return;
-        }
-
-        foreach ($view->members as $member) {
-            $uid = $member['uid'];
-            $user = $this->userLookup->findByUid($uid);
-
-            if (null === $user || $user->isOper) {
-                continue;
-            }
-
-            $userMask = $user->toUserMask();
-
-            $matching = array_find($validAkicks, static fn ($akick) => $akick->matches((string) $userMask));
-            if (null !== $matching) {
-                $this->enforceAkick($channelName, $matching->getMask(), $uid, $matching->getReason());
-            }
-        }
-    }
-
-    private function enforceAkick(string $channelName, string $mask, string $uid, ?string $reason): void
-    {
-        $kickReason = $reason ?? 'AKICK: ' . $mask;
-
-        $this->channelServiceActions->setChannelModes($channelName, '+b', [$mask]);
-        $this->channelServiceActions->kickFromChannel($channelName, $uid, $kickReason);
-
-        $this->logger->info('AKICK enforced', [
-            'channel' => $channelName,
-            'mask' => $mask,
-            'uid' => $uid,
-        ]);
+        $this->synchronizeAllChannelAkicks->handle(new SynchronizeAllChannelAkicks(new DateTimeImmutable()));
     }
 }

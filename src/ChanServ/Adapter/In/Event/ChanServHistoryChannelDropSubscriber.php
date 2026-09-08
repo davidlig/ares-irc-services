@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Event;
 
-use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
+use App\ChanServ\Application\UseCase\CleanupChannelHistory\CleanupChannelHistory;
+use App\ChanServ\Application\UseCase\CleanupChannelHistory\CleanupChannelHistoryHandler;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final readonly class ChanServHistoryChannelDropSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private ChannelHistoryRepositoryInterface $historyRepository,
+        private CleanupChannelHistoryHandler $cleanupChannelHistory,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -23,6 +24,6 @@ final readonly class ChanServHistoryChannelDropSubscriber implements EventSubscr
 
     public function onChannelDrop(ChannelDropCleanupEvent $event): void
     {
-        $this->historyRepository->deleteByChannelId($event->channelId);
+        $this->cleanupChannelHistory->handle(new CleanupChannelHistory($event->channelId));
     }
 }

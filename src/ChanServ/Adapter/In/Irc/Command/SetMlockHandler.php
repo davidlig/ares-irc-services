@@ -4,21 +4,22 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\EventBusInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\MlockStateFromChannelResolver;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
+use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlock;
+use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandlerInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 
+use function array_map;
+use function implode;
 use function strtoupper;
 use function trim;
 
 final readonly class SetMlockHandler implements SetOptionHandlerInterface
 {
     public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private EventBusInterface $eventDispatcher,
+        private ConfigureChannelMlockHandlerInterface $configureMlock,
         private MlockStateFromChannelResolver $mlockStateResolver,
     ) {}
 
@@ -31,16 +32,15 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
             return;
         }
         $on = 'ON' === $normalized;
-        if ($on) {
-            $this->setMlockFromCurrentChannelState($context, $channel);
-        } else {
-            $channel->configureMlock(false, '', []);
-        }
-        $this->channelRepository->save($channel);
-        $this->eventDispatcher->dispatch(new ChannelMlockUpdatedEvent($channel->getName()));
+        $modeLock = $on ? $this->modeLockFromCurrentChannelState($context, $channel) : ChannelModeLock::inactive();
+        $result = $this->configureMlock->handle(new ConfigureChannelMlock($channel, $modeLock));
         $modesDisplay = '';
         if ($on) {
-            $modesDisplay = $channel->getMlock();
+            $letters = array_map(
+                static fn ($setting): string => $setting->mode->value,
+                $result->modeLock->settings,
+            );
+            $modesDisplay = [] === $letters ? '' : '+' . implode('', $letters);
             if ('' === $modesDisplay) {
                 $modesDisplay = $context->trans('set.mlock.no_modes');
             }
@@ -65,17 +65,13 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
      * If the channel is not on the network or has no modes, MLOCK is stored as active with no modes:
      * on burst or first join the subscriber will strip all channel modes (except +r set by services).
      */
-    private function setMlockFromCurrentChannelState(ChanServContext $context, RegisteredChannel $channel): void
+    private function modeLockFromCurrentChannelState(ChanServContext $context, RegisteredChannel $channel): ChannelModeLock
     {
         $view = $context->getChannelLookup()->findByChannelName($channel->getName());
         if (null === $view || '' === $view->modes) {
-            $channel->configureMlock(true, '', []);
-
-            return;
+            return ChannelModeLock::active();
         }
 
-        $support = $context->getChannelModeSupport();
-        [$modeString, $params] = $this->mlockStateResolver->resolve($view, $support);
-        $channel->configureMlock(true, $modeString, $params);
+        return $this->mlockStateResolver->resolve($view, $context->getChannelModeSupport());
     }
 }

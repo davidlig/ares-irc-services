@@ -5,8 +5,16 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
 use App\Application\Port\ChannelServiceActionsPort;
+use App\Application\Port\ChannelSyncCompletedRegistryInterface;
+use App\Application\Port\UidResolverInterface;
 use App\ChanServ\Adapter\In\Event\ChanServTopicApplySubscriber;
+use App\ChanServ\Adapter\Out\Network\IrcChannelTopicActions;
+use App\ChanServ\Adapter\Out\Network\IrcChannelTopicNetworkQuery;
+use App\ChanServ\Application\Model\ChannelTopicNetworkState;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopic;
+use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopicHandler;
+use App\ChanServ\Application\UseCase\ApplyStoredTopic\StoredTopicApplicationTrigger;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
@@ -16,9 +24,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 #[CoversClass(ChanServTopicApplySubscriber::class)]
+#[CoversClass(IrcChannelTopicActions::class)]
+#[CoversClass(IrcChannelTopicNetworkQuery::class)]
+#[CoversClass(ChannelTopicNetworkState::class)]
+#[CoversClass(ApplyStoredChannelTopic::class)]
+#[CoversClass(ApplyStoredChannelTopicHandler::class)]
+#[CoversClass(StoredTopicApplicationTrigger::class)]
 final class ChanServTopicApplySubscriberTest extends TestCase
 {
     private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
@@ -27,8 +40,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
     private ChannelServiceActionsPort&MockObject $channelServiceActions;
 
-    private LoggerInterface&MockObject $logger;
-
     private ChanServTopicApplySubscriber $subscriber;
 
     protected function setUp(): void
@@ -36,13 +47,16 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelLookup = $this->createMock(ChannelLookupPort::class);
         $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-
         $this->subscriber = new ChanServTopicApplySubscriber(
-            $this->channelRepository,
-            $this->channelLookup,
-            $this->channelServiceActions,
-            $this->logger,
+            new ApplyStoredChannelTopicHandler(
+                $this->channelRepository,
+                new IrcChannelTopicNetworkQuery(
+                    $this->channelLookup,
+                    $this->createStub(ChannelSyncCompletedRegistryInterface::class),
+                    $this->createStub(UidResolverInterface::class),
+                ),
+                new IrcChannelTopicActions($this->channelServiceActions),
+            ),
         );
     }
 
@@ -52,7 +66,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelRepository->expects(self::never())->method('findByChannelName');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
 
         self::assertSame(
             [
@@ -80,7 +93,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->method('setChannelTopic')
             ->with('#test', 'Stored topic from DB');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -99,7 +111,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelTopic');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -121,7 +132,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelTopic');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -144,7 +154,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->method('setChannelTopic')
             ->with('#test', 'Same topic');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -174,7 +183,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('debug');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: false);
         $this->subscriber->onChannelSynced($event);
@@ -206,10 +214,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->method('setChannelTopic')
             ->with('#test', 'Stored topic');
 
-        $this->logger
-            ->expects(self::once())
-            ->method('debug');
-
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: false);
         $this->subscriber->onChannelSynced($event);
     }
@@ -238,10 +242,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::once())
             ->method('setChannelTopic')
             ->with('#test', 'Stored topic');
-
-        $this->logger
-            ->expects(self::once())
-            ->method('debug');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: false);
         $this->subscriber->onChannelSynced($event);
@@ -277,7 +277,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::exactly(2))
             ->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new NetworkSynchronizationCompletedEvent('001');
         $this->subscriber->onSyncComplete($event);
@@ -304,7 +303,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new NetworkSynchronizationCompletedEvent('001');
         $this->subscriber->onSyncComplete($event);
@@ -329,7 +327,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new NetworkSynchronizationCompletedEvent('001');
         $this->subscriber->onSyncComplete($event);
@@ -358,7 +355,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new NetworkSynchronizationCompletedEvent('001');
         $this->subscriber->onSyncComplete($event);
@@ -379,7 +375,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new NetworkSynchronizationCompletedEvent('001');
         $this->subscriber->onSyncComplete($event);
@@ -402,7 +397,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->method('setChannelTopic')
             ->with('#test', 'Stored topic from DB');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -425,7 +419,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->method('setChannelTopic')
             ->with('#test', 'Stored topic');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -447,7 +440,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelTopic');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSynchronizedEvent('#test', channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -470,7 +462,6 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelTopic');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new NetworkSynchronizationCompletedEvent('001');
         $this->subscriber->onSyncComplete($event);

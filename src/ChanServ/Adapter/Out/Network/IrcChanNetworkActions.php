@@ -21,21 +21,53 @@ final readonly class IrcChanNetworkActions implements ChanNetworkActions
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
     ) {}
 
-    /**
-     * @param list<string> $modeParams
-     */
-    public function setChannelModes(
+    public function removeRegistrationForPendingDeletion(
         string $channelName,
-        string $modeString,
-        array $modeParams = [],
-        ?int $channelCreationTime = null,
+        bool $removePermanentStatus,
+        int $channelCreationTime,
     ): void {
-        $this->channelServiceActions->setChannelModes($channelName, $modeString, $modeParams, $channelCreationTime);
+        $support = $this->modeSupportProvider->getSupport();
+        $registeredLetter = $support->getChannelRegisteredModeLetter();
+        if (null !== $registeredLetter) {
+            $this->channelServiceActions->setChannelModes($channelName, '-' . $registeredLetter, [], $channelCreationTime);
+        }
+
+        $permanentLetter = $support->getPermanentChannelModeLetter();
+        if ($removePermanentStatus && null !== $permanentLetter) {
+            $this->channelServiceActions->setChannelModes($channelName, '-' . $permanentLetter, [], $channelCreationTime);
+        }
+    }
+
+    public function restoreRegistrationAfterPendingDeletion(
+        string $channelName,
+        bool $restorePermanentStatus,
+        int $channelCreationTime,
+    ): void {
+        $support = $this->modeSupportProvider->getSupport();
+        $registeredLetter = $support->getChannelRegisteredModeLetter();
+        if (null !== $registeredLetter) {
+            $this->channelServiceActions->setChannelModes($channelName, '+' . $registeredLetter, [], $channelCreationTime);
+        }
+
+        $permanentLetter = $support->getPermanentChannelModeLetter();
+        if ($restorePermanentStatus && null !== $permanentLetter) {
+            $this->channelServiceActions->setChannelModes($channelName, '+' . $permanentLetter, [], $channelCreationTime);
+        }
+    }
+
+    public function enforceForbiddenModes(string $channelName, ?int $channelCreationTime = null): void
+    {
+        $this->channelServiceActions->setChannelModes($channelName, '+ntims', [], $channelCreationTime);
     }
 
     public function joinChannelAsService(string $channelName, ?int $channelCreationTime = null): void
     {
         $this->channelServiceActions->joinChannelAsService($channelName, $channelCreationTime);
+    }
+
+    public function partChannelAsService(string $channelName): void
+    {
+        $this->channelServiceActions->partChannelAsService($channelName);
     }
 
     public function kickFromChannel(string $channelName, string $targetUid, string $reason): void

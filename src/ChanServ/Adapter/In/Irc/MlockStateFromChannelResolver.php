@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc;
 
 use App\Application\Port\ChannelModeSupportInterface;
+use App\ChanServ\Domain\ValueObject\ChannelModeLock;
+use App\ChanServ\Domain\ValueObject\ChannelSetting;
+use App\ChanServ\Domain\ValueObject\ModeName;
 use App\Irc\Application\Port\In\ChannelView;
 
 use function array_flip;
 use function array_merge;
-use function array_unique;
-use function implode;
 use function in_array;
 use function str_split;
 
@@ -27,13 +28,11 @@ final readonly class MlockStateFromChannelResolver
      * Returns [modeString, params] for MLOCK from the channel's current modes.
      * Excludes +r (channel registered) and +P (permanent channel), both are service-controlled.
      * Only includes channel-setting modes allowed by support. Case is preserved (e.g. +M, +R).
-     *
-     * @return array{0: string, 1: array<string, string>}
      */
-    public function resolve(ChannelView $view, ChannelModeSupportInterface $support): array
+    public function resolve(ChannelView $view, ChannelModeSupportInterface $support): ChannelModeLock
     {
         if ('' === $view->modes) {
-            return ['', []];
+            return ChannelModeLock::active();
         }
 
         $unsetWithout = $support->getChannelSettingModesUnsetWithoutParam();
@@ -42,8 +41,7 @@ final readonly class MlockStateFromChannelResolver
         $allowedLetters = array_flip(array_merge($unsetWithout, $unsetWith, $withParamOnSet));
         $permanentLetter = $support->getPermanentChannelModeLetter();
 
-        $letters = [];
-        $params = [];
+        $settings = [];
         foreach (str_split($view->modes) as $c) {
             if ('+' === $c || '-' === $c) {
                 continue;
@@ -55,17 +53,13 @@ final readonly class MlockStateFromChannelResolver
             if (!isset($allowedLetters[$c])) {
                 continue;
             }
-            $letters[] = $c;
-            if (in_array($c, $withParamOnSet, true)) {
-                $param = $view->getModeParam($c);
-                if (null !== $param && '' !== $param) {
-                    $params[$c] = $param;
-                }
-            }
+            $parameter = in_array($c, $withParamOnSet, true) ? $view->getModeParam($c) : null;
+            $settings[] = new ChannelSetting(
+                new ModeName($c),
+                null !== $parameter && '' !== $parameter ? $parameter : null,
+            );
         }
 
-        $modeString = [] === $letters ? '' : '+' . implode('', array_unique($letters));
-
-        return [$modeString, $params];
+        return ChannelModeLock::active($settings);
     }
 }

@@ -22,4 +22,14 @@ final class ChanDoctrineTransactionBoundaryTest extends TestCase
 
         self::assertSame('result', new ChanDoctrineTransactionBoundary($transactionManager)->transactional($operation));
     }
+
+    #[Test]
+    public function delegatesAfterCommitCallback(): void
+    {
+        $operation = static function (): void {};
+        $transactionManager = $this->createMock(TransactionManagerInterface::class);
+        $transactionManager->expects(self::once())->method('afterCommit')->with($operation);
+
+        new ChanDoctrineTransactionBoundary($transactionManager)->afterCommit($operation);
+    }
 }

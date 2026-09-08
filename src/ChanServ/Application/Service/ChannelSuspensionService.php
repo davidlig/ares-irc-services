@@ -14,8 +14,8 @@ use function sprintf;
 /**
  * Handles IRC-level enforcement when a channel is suspended or unsuspended.
  *
- * Suspension: removes +rP modes and sends a notice to the channel.
- * Unsuspension: restores +rP modes (MLOCK and rank enforcement are handled
+ * Suspension: removes registration status modes and sends a notice to the channel.
+ * Unsuspension: restores registration status modes (MLOCK and rank enforcement are handled
  * by existing subscribers on the next mode sync).
  */
 readonly class ChannelSuspensionService

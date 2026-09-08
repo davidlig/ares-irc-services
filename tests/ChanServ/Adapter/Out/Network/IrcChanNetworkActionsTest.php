@@ -18,18 +18,68 @@ use PHPUnit\Framework\TestCase;
 final class IrcChanNetworkActionsTest extends TestCase
 {
     #[Test]
-    public function delegatesSetChannelModes(): void
+    public function removesRegistrationForPendingDeletionInProtocolOrder(): void
+    {
+        $actions = $this->createMock(ChannelServiceActionsPort::class);
+        $matcher = self::exactly(2);
+        $actions->expects($matcher)
+            ->method('setChannelModes')
+            ->willReturnCallback(static function (string $channel, string $modes, array $params, ?int $timestamp) use ($matcher): void {
+                self::assertSame('#test', $channel);
+                self::assertSame([], $params);
+                self::assertSame(12345, $timestamp);
+                self::assertSame(1 === $matcher->numberOfInvocations() ? '-r' : '-P', $modes);
+            });
+
+        $lookup = $this->createStub(ChannelLookupPort::class);
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
+        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $provider->method('getSupport')->willReturn($support);
+
+        $adapter = new IrcChanNetworkActions($actions, $lookup, $provider);
+        $adapter->removeRegistrationForPendingDeletion('#test', true, 12345);
+    }
+
+    #[Test]
+    public function restoresRegistrationAfterPendingDeletionInProtocolOrder(): void
+    {
+        $actions = $this->createMock(ChannelServiceActionsPort::class);
+        $matcher = self::exactly(2);
+        $actions->expects($matcher)
+            ->method('setChannelModes')
+            ->willReturnCallback(static function (string $channel, string $modes, array $params, ?int $timestamp) use ($matcher): void {
+                self::assertSame('#test', $channel);
+                self::assertSame([], $params);
+                self::assertSame(12345, $timestamp);
+                self::assertSame(1 === $matcher->numberOfInvocations() ? '+r' : '+P', $modes);
+            });
+
+        $lookup = $this->createStub(ChannelLookupPort::class);
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
+        $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $provider->method('getSupport')->willReturn($support);
+
+        $adapter = new IrcChanNetworkActions($actions, $lookup, $provider);
+        $adapter->restoreRegistrationAfterPendingDeletion('#test', true, 12345);
+    }
+
+    #[Test]
+    public function enforcesForbiddenModesWithOriginalTimestamp(): void
     {
         $actions = $this->createMock(ChannelServiceActionsPort::class);
         $actions->expects(self::once())
             ->method('setChannelModes')
-            ->with('#test', '+nt', ['key'], 12345);
+            ->with('#test', '+ntims', [], 12345);
 
         $lookup = $this->createStub(ChannelLookupPort::class);
         $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
 
         $adapter = new IrcChanNetworkActions($actions, $lookup, $provider);
-        $adapter->setChannelModes('#test', '+nt', ['key'], 12345);
+        $adapter->enforceForbiddenModes('#test', 12345);
     }
 
     #[Test]
@@ -296,5 +346,19 @@ final class IrcChanNetworkActionsTest extends TestCase
 
         $adapter = new IrcChanNetworkActions($actions, $lookup, $provider);
         $adapter->restoreRegistrationModes('#test');
+    }
+
+    #[Test]
+    public function partsChannelAsService(): void
+    {
+        $actions = $this->createMock(ChannelServiceActionsPort::class);
+        $actions->expects(self::once())->method('partChannelAsService')->with('#test');
+
+        $adapter = new IrcChanNetworkActions(
+            $actions,
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+        $adapter->partChannelAsService('#test');
     }
 }

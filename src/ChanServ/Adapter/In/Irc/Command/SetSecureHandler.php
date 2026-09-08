@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\EventBusInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
+use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecure;
+use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandlerInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 
 use function strtoupper;
@@ -16,8 +15,7 @@ use function trim;
 final readonly class SetSecureHandler implements SetOptionHandlerInterface
 {
     public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private EventBusInterface $eventDispatcher,
+        private ConfigureChannelSecureHandlerInterface $configureSecure,
     ) {}
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
@@ -29,11 +27,7 @@ final readonly class SetSecureHandler implements SetOptionHandlerInterface
             return;
         }
         $on = 'ON' === $normalized;
-        $channel->configureSecure($on);
-        $this->channelRepository->save($channel);
-        if ($on) {
-            $this->eventDispatcher->dispatch(new ChannelSecureEnabledEvent($channel->getName()));
-        }
+        $this->configureSecure->handle(new ConfigureChannelSecure($channel, $on));
         $context->reply($on ? 'set.secure.on' : 'set.secure.off');
 
         $nick = $context->sender->nick ?? '';

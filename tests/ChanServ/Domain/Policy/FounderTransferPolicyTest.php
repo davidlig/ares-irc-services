@@ -42,4 +42,12 @@ final class FounderTransferPolicyTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $policy->decide(1, null, 3, true, false, 0, -1);
     }
+
+    #[Test]
+    public function channelLimitDecisionRejectsNegativeCounts(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new FounderTransferPolicy()->decideChannelLimit(-1, 3);
+    }
 }

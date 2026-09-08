@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetSecureHandler;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
+use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecure;
+use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandlerInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
@@ -53,8 +52,7 @@ final class SetSecureHandlerTest extends TestCase
     public function invalidValueRepliesSyntaxError(): void
     {
         $channel = $this->createStub(RegisteredChannel::class);
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $configureSecure = $this->createStub(ConfigureChannelSecureHandlerInterface::class);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -63,7 +61,7 @@ final class SetSecureHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSecureHandler($channelRepo, $eventDispatcher);
+        $handler = new SetSecureHandler($configureSecure);
         $handler->handle($this->createContext($notifier, $translator, 'yes'), $channel, 'yes');
 
         self::assertSame(['error.syntax'], $messages);
@@ -72,25 +70,12 @@ final class SetSecureHandlerTest extends TestCase
     #[Test]
     public function onEnablesSecureDispatchesEventAndRepliesAndSendsNotice(): void
     {
-        $channel = $this->createMock(RegisteredChannel::class);
-        $channel->expects(self::once())->method('configureSecure')->with(true);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
-        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->expects(self::once())->method('save')->with($channel);
-        $dispatched = null;
-        $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())
-            ->method('dispatch')
-            ->with(self::callback(static function (object $event) use (&$dispatched): bool {
-                if ($event instanceof ChannelSecureEnabledEvent) {
-                    $dispatched = $event;
-
-                    return '#test' === $event->channelName;
-                }
-
-                return false;
-            }))
-            ->willReturnArgument(0);
+        $configureSecure = $this->createMock(ConfigureChannelSecureHandlerInterface::class);
+        $configureSecure->expects(self::once())->method('handle')->with(self::callback(
+            static fn (ConfigureChannelSecure $command): bool => $channel === $command->channel && $command->enabled,
+        ));
         $messages = [];
         $channelNotices = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -103,10 +88,9 @@ final class SetSecureHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSecureHandler($channelRepo, $eventDispatcher);
+        $handler = new SetSecureHandler($configureSecure);
         $handler->handle($this->createContext($notifier, $translator, 'on'), $channel, ' ON ');
 
-        self::assertInstanceOf(ChannelSecureEnabledEvent::class, $dispatched);
         self::assertSame(['set.secure.on'], $messages);
         self::assertCount(1, $channelNotices);
     }
@@ -114,13 +98,12 @@ final class SetSecureHandlerTest extends TestCase
     #[Test]
     public function offDisablesSecureDoesNotDispatchAndReplies(): void
     {
-        $channel = $this->createMock(RegisteredChannel::class);
-        $channel->expects(self::once())->method('configureSecure')->with(false);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
-        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->expects(self::once())->method('save')->with($channel);
-        $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::never())->method('dispatch');
+        $configureSecure = $this->createMock(ConfigureChannelSecureHandlerInterface::class);
+        $configureSecure->expects(self::once())->method('handle')->with(self::callback(
+            static fn (ConfigureChannelSecure $command): bool => $channel === $command->channel && !$command->enabled,
+        ));
         $messages = [];
         $channelNotices = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -133,7 +116,7 @@ final class SetSecureHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSecureHandler($channelRepo, $eventDispatcher);
+        $handler = new SetSecureHandler($configureSecure);
         $handler->handle($this->createContext($notifier, $translator, 'off'), $channel, 'OFF');
 
         self::assertSame(['set.secure.off'], $messages);

@@ -171,6 +171,31 @@ final class EnforceChannelRanksHandlerTest extends TestCase
     }
 
     #[Test]
+    public function liveSecureGrantToUnidentifiedRegisteredFounderIsRevoked(): void
+    {
+        $member = $this->member(identified: false, nickId: 10, ranks: [ChannelRank::Owner]);
+        $actions = $this->createMock(ChannelRankActions::class);
+        $actions->expects(self::once())->method('apply')->with('#test', self::callback(static function (array $changes): bool {
+            $change = $changes[0] ?? null;
+
+            return 1 === count($changes)
+                && $change instanceof MemberRankChange
+                && ChannelRank::Owner === $change->change->rank
+                && RankChangeAction::Revoke === $change->change->action;
+        }));
+
+        $result = $this->handler(
+            $this->policyRepository($this->policy(secure: true, founder: 10)),
+            $this->network([$member]),
+            $actions,
+        )->handle(new EnforceChannelRanks('#test', RankEnforcementTrigger::LiveRankGranted, '001A', ChannelRank::Owner));
+
+        self::assertSame(RankEnforcementOutcome::Applied, $result->outcome);
+        self::assertSame(1, $result->changeCount);
+        self::assertFalse($result->activityTouched);
+    }
+
+    #[Test]
     public function fullSyncBatchesMemberChangesAndSkipsServiceMember(): void
     {
         $member = $this->member(identified: true, nickId: 20, ranks: [ChannelRank::Administrator, ChannelRank::Operator]);
@@ -193,6 +218,40 @@ final class EnforceChannelRanksHandlerTest extends TestCase
 
         self::assertSame(1, $result->changeCount);
         self::assertSame(RankEnforcementOutcome::Applied, $result->outcome);
+    }
+
+    #[Test]
+    public function fullSyncRevokesEverySupportedRankFromUnidentifiedAccessMember(): void
+    {
+        $member = $this->member(
+            identified: false,
+            nickId: 20,
+            ranks: [ChannelRank::Owner, ChannelRank::Administrator, ChannelRank::Operator],
+        );
+        $actions = $this->createMock(ChannelRankActions::class);
+        $actions->expects(self::once())->method('apply')->with('#test', self::callback(static function (array $changes): bool {
+            $actual = [];
+            foreach ($changes as $change) {
+                self::assertInstanceOf(MemberRankChange::class, $change);
+                $actual[] = [$change->change->rank, $change->change->action];
+            }
+
+            return [
+                [ChannelRank::Owner, RankChangeAction::Revoke],
+                [ChannelRank::Administrator, RankChangeAction::Revoke],
+                [ChannelRank::Operator, RankChangeAction::Revoke],
+            ] === $actual;
+        }));
+
+        $result = $this->handler(
+            $this->policyRepository($this->policy(access: [20 => 499])),
+            $this->network([$member]),
+            $actions,
+        )->handle($this->command());
+
+        self::assertSame(RankEnforcementOutcome::Applied, $result->outcome);
+        self::assertSame(3, $result->changeCount);
+        self::assertFalse($result->activityTouched);
     }
 
     #[Test]

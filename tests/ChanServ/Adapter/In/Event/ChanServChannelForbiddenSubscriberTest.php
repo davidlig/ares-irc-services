@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
-use App\Application\Port\ChannelServiceActionsPort;
 use App\ChanServ\Adapter\In\Event\ChanServChannelForbiddenSubscriber;
+use App\ChanServ\Application\Port\In\ForbiddenChannelEnforcement;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
-use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\Irc\Application\Port\In\ChannelView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 final class ChanServChannelForbiddenSubscriberTest extends TestCase
 {
     #[Test]
-    public function subscribesToCorrectEvents(): void
+    public function subscribesToCorrectEvent(): void
     {
         self::assertSame(
             [ChannelForbiddenEvent::class => ['onChannelForbidden', 0]],
@@ -26,58 +24,12 @@ final class ChanServChannelForbiddenSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onChannelForbiddenEnforcesWhenChannelExistsOnNetwork(): void
+    public function delegatesChannelNameToApplication(): void
     {
-        $channelView = new ChannelView(
-            name: '#forbidden',
-            modes: '+nt',
-            topic: null,
-            memberCount: 3,
-            members: [
-                ['uid' => 'AAA123', 'roleLetter' => 'o'],
-                ['uid' => 'BBB456', 'roleLetter' => 'v'],
-                ['uid' => 'CCC789', 'roleLetter' => ''],
-            ],
-            timestamp: 1000000,
-        );
+        $enforcement = $this->createMock(ForbiddenChannelEnforcement::class);
+        $enforcement->expects(self::once())->method('enforcePublishedForbiddenChannel')->with('#forbidden');
 
-        $channelLookup = $this->createMock(ChannelLookupPort::class);
-        $channelLookup->expects(self::once())->method('findByChannelName')->with('#forbidden')->willReturn($channelView);
-
-        $kickedUsers = [];
-        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
-        $channelServiceActions->expects(self::once())->method('joinChannelAsService')->with('#forbidden', 1000000);
-        $channelServiceActions->expects(self::exactly(3))->method('kickFromChannel')
-            ->willReturnCallback(static function (string $channel, string $uid, string $reason) use (&$kickedUsers): void {
-                $kickedUsers[] = $uid;
-            });
-        $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#forbidden', '+ntims', []);
-
-        $subscriber = new ChanServChannelForbiddenSubscriber($channelServiceActions, $channelLookup);
-        $subscriber->onChannelForbidden(new ChannelForbiddenEvent(
-            channelId: 1,
-            channelName: '#forbidden',
-            channelNameLower: '#forbidden',
-            reason: 'spam',
-            performedBy: 'Oper',
-        ));
-
-        self::assertSame(['AAA123', 'BBB456', 'CCC789'], $kickedUsers);
-    }
-
-    #[Test]
-    public function onChannelForbiddenDoesNothingWhenChannelNotOnNetwork(): void
-    {
-        $channelLookup = $this->createMock(ChannelLookupPort::class);
-        $channelLookup->expects(self::once())->method('findByChannelName')->with('#forbidden')->willReturn(null);
-
-        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
-        $channelServiceActions->expects(self::never())->method('joinChannelAsService');
-        $channelServiceActions->expects(self::never())->method('kickFromChannel');
-        $channelServiceActions->expects(self::never())->method('setChannelModes');
-
-        $subscriber = new ChanServChannelForbiddenSubscriber($channelServiceActions, $channelLookup);
-        $subscriber->onChannelForbidden(new ChannelForbiddenEvent(
+        new ChanServChannelForbiddenSubscriber($enforcement)->onChannelForbidden(new ChannelForbiddenEvent(
             channelId: 1,
             channelName: '#forbidden',
             channelNameLower: '#forbidden',

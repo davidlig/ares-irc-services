@@ -4,40 +4,15 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Event;
 
-use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\ChannelSyncCompletedRegistryInterface;
-use App\Application\Port\UidResolverInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Application\UseCase\SynchronizeTopic\SynchronizeReceivedChannelTopic;
+use App\ChanServ\Application\UseCase\SynchronizeTopic\SynchronizeReceivedChannelTopicHandlerInterface;
 use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-use function microtime;
-use function str_contains;
-use function strtolower;
-
-/**
- * When the channel topic changes on the wire (e.g. /topic):
- * - If TOPICLOCK is on and there is a stored topic: reapply the stored topic (lock) and do not persist the change.
- * - Otherwise: persist the new topic to RegisteredChannel only after the channel sync has completed
- *   (+r, SECURE strip, MLOCK, topic apply), to avoid a user with temporary op overwriting stored topic.
- */
+/** Translates received topic events to the topic synchronization use case. */
 final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInterface
 {
-    /** Grace period (seconds) after sync completed during which topic from wire is not persisted (avoids race). */
-    private const float TOPIC_PERSIST_GRACE_SECONDS = 2.0;
-
-    public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChannelServiceActionsPort $channelServiceActions,
-        private ChannelSyncCompletedRegistryInterface $syncCompletedRegistry,
-        private UidResolverInterface $uidResolver,
-        private string $chanservNick,
-        private string $nickservNick,
-        private LoggerInterface $logger = new NullLogger(),
-    ) {}
+    public function __construct(private SynchronizeReceivedChannelTopicHandlerInterface $handler) {}
 
     public static function getSubscribedEvents(): array
     {
@@ -48,69 +23,11 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
 
     public function onTopicReceived(ChannelTopicReceivedEvent $event): void
     {
-        $channelName = $event->channelName;
-        $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $registered || $registered->isBlocked()) {
-            return;
-        }
-
-        if ($registered->isTopicLock()) {
-            $storedTopic = $registered->getTopic();
-            $this->channelServiceActions->setChannelTopic($channelName, $storedTopic);
-            $this->logger->debug('ChanServ TOPICLOCK: reapplied stored topic', ['channel' => $channelName]);
-
-            return;
-        }
-
-        $this->persistTopicIfReady($channelName, $registered, $event);
-    }
-
-    private function persistTopicIfReady(string $channelName, RegisteredChannel $registered, ChannelTopicReceivedEvent $event): void
-    {
-        if (!$this->syncCompletedRegistry->isSyncCompleted($channelName)) {
-            $this->logger->debug('ChanServ topic from wire not persisted (channel sync not yet completed)', ['channel' => $channelName]);
-
-            return;
-        }
-
-        $syncCompletedAt = $this->syncCompletedRegistry->getSyncCompletedAt($channelName);
-        if (null !== $syncCompletedAt && (microtime(true) - $syncCompletedAt) < self::TOPIC_PERSIST_GRACE_SECONDS) {
-            $this->logger->debug('ChanServ topic from wire not persisted (within grace period after sync)', ['channel' => $channelName]);
-
-            return;
-        }
-
-        $topic = $event->topic;
-        $setterNick = $this->resolveSetterNick($event);
-
-        $registered->updateTopic($topic, $setterNick);
-        $this->channelRepository->save($registered);
-        $this->logger->debug('ChanServ synced topic to DB', ['channel' => $channelName]);
-    }
-
-    private function resolveSetterNick(ChannelTopicReceivedEvent $event): ?string
-    {
-        $setterNick = $event->setterNick;
-
-        if (null === $setterNick && null !== $event->sourceUid) {
-            $setterNick = $this->uidResolver->resolveUidToNick($event->sourceUid);
-        }
-
-        if (null !== $setterNick && $this->isServicesNick($setterNick)) {
-            return null;
-        }
-
-        return $setterNick;
-    }
-
-    private function isServicesNick(string $nick): bool
-    {
-        if (str_contains($nick, '.')) {
-            return true;
-        }
-
-        $nickLower = strtolower($nick);
-
-        return $nickLower === strtolower($this->chanservNick) || $nickLower === strtolower($this->nickservNick);
+        $this->handler->handle(new SynchronizeReceivedChannelTopic(
+            $event->channelName,
+            $event->topic,
+            $event->setterNick,
+            $event->sourceUid,
+        ));
     }
 }

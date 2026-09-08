@@ -197,8 +197,8 @@ final class ChannelForbiddenServiceTest extends TestCase
             ->with('#taken')
             ->willReturn([]);
         $channelActions->expects(self::once())
-            ->method('setChannelModes')
-            ->with('#taken', '+ntims', []);
+            ->method('enforceForbiddenModes')
+            ->with('#taken', 12345);
 
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
         $eventPublisher->expects(self::once())->method('publish');
@@ -297,8 +297,8 @@ final class ChannelForbiddenServiceTest extends TestCase
             ->with('#enforce')
             ->willReturn([]);
         $channelActions->expects(self::once())
-            ->method('setChannelModes')
-            ->with('#enforce', '+ntims', []);
+            ->method('enforceForbiddenModes')
+            ->with('#enforce', 12345);
 
         $this->createService(
             channelRepository: $channelRepository,
@@ -334,7 +334,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $channelActions = $this->createMock(ChanNetworkActions::class);
         $channelActions->expects(self::never())->method('joinChannelAsService');
         $channelActions->expects(self::never())->method('kickFromChannel');
-        $channelActions->expects(self::never())->method('setChannelModes');
+        $channelActions->expects(self::never())->method('enforceForbiddenModes');
 
         $this->createService(
             channelRepository: $channelRepository,
@@ -563,8 +563,8 @@ final class ChannelForbiddenServiceTest extends TestCase
                 self::assertContains($uid, ['UIDAAA', 'UIDAAB', 'UIDAAC']);
             });
         $channelActions->expects(self::once())
-            ->method('setChannelModes')
-            ->with('#bad', '+ntims', []);
+            ->method('enforceForbiddenModes')
+            ->with('#bad', 99999);
 
         $this->createService(
             channelActions: $channelActions,
@@ -581,7 +581,7 @@ final class ChannelForbiddenServiceTest extends TestCase
             ->willReturn(false);
         $channelActions->expects(self::never())->method('joinChannelAsService');
         $channelActions->expects(self::never())->method('kickFromChannel');
-        $channelActions->expects(self::never())->method('setChannelModes');
+        $channelActions->expects(self::never())->method('enforceForbiddenModes');
 
         $logger = $this->createMock(ChanServActivitySink::class);
         $logger->expects(self::once())
@@ -620,7 +620,7 @@ final class ChannelForbiddenServiceTest extends TestCase
             ->willReturnCallback(static function (string $channel, string $uid, string $reason) use (&$kickCalls): void {
                 $kickCalls[] = ['channel' => $channel, 'uid' => $uid, 'reason' => $reason];
             });
-        $channelActions->expects(self::once())->method('setChannelModes');
+        $channelActions->expects(self::once())->method('enforceForbiddenModes');
 
         $this->createService(
             channelActions: $channelActions,
@@ -657,8 +657,8 @@ final class ChannelForbiddenServiceTest extends TestCase
             ->with('#modes')
             ->willReturn([]);
         $channelActions->expects(self::once())
-            ->method('setChannelModes')
-            ->with('#modes', '+ntims', [])
+            ->method('enforceForbiddenModes')
+            ->with('#modes', 11111)
             ->willReturnCallback(static function () use (&$callOrder): void {
                 $callOrder[] = 'setModes';
             });
@@ -668,5 +668,187 @@ final class ChannelForbiddenServiceTest extends TestCase
         )->enforceForbiddenChannel('#modes');
 
         self::assertSame(['join', 'setModes'], $callOrder);
+    }
+
+    #[Test]
+    public function publishedForbiddenEnforcementPreservesUntimestampedModeApply(): void
+    {
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::once())->method('isChannelOnNetwork')->with('#bad')->willReturn(true);
+        $actions->expects(self::once())->method('getChannelTimestamp')->with('#bad')->willReturn(1234);
+        $actions->expects(self::once())->method('joinChannelAsService')->with('#bad', 1234);
+        $actions->expects(self::once())->method('getChannelMemberUids')->with('#bad')->willReturn(['AAA']);
+        $actions->expects(self::once())->method('kickFromChannel')->with('#bad', 'AAA', 'Forbidden channel');
+        $actions->expects(self::once())->method('enforceForbiddenModes')->with('#bad');
+
+        $this->createService(channelActions: $actions)->enforcePublishedForbiddenChannel('#bad');
+    }
+
+    #[Test]
+    public function publishedForbiddenEnforcementSkipsOfflineChannel(): void
+    {
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::once())->method('isChannelOnNetwork')->with('#offline')->willReturn(false);
+        $actions->expects(self::never())->method('joinChannelAsService');
+        $logger = $this->createMock(ChanServActivitySink::class);
+        $logger->expects(self::once())->method('debug')->with(self::stringContains('skipping enforcement'));
+
+        $this->createService(channelActions: $actions, logger: $logger)
+            ->enforcePublishedForbiddenChannel('#offline');
+    }
+
+    #[Test]
+    public function releasesUnforbiddenChannelWhenItIsOnline(): void
+    {
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::once())->method('isChannelOnNetwork')->with('#released')->willReturn(true);
+        $actions->expects(self::once())->method('partChannelAsService')->with('#released');
+        $logger = $this->createMock(ChanServActivitySink::class);
+        $logger->expects(self::once())->method('info')->with(self::stringContains('bot left'));
+
+        $this->createService(channelActions: $actions, logger: $logger)->releaseUnforbiddenChannel('#released');
+    }
+
+    #[Test]
+    public function releaseUnforbiddenChannelSkipsOfflineChannel(): void
+    {
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::once())->method('isChannelOnNetwork')->with('#offline')->willReturn(false);
+        $actions->expects(self::never())->method('partChannelAsService');
+        $logger = $this->createMock(ChanServActivitySink::class);
+        $logger->expects(self::once())->method('debug')->with(self::stringContains('no action needed'));
+
+        $this->createService(channelActions: $actions, logger: $logger)->releaseUnforbiddenChannel('#offline');
+    }
+
+    #[Test]
+    public function enforceAllForbiddenChannelsSkipsEmptyRepository(): void
+    {
+        $repository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $repository->expects(self::once())->method('findForbiddenChannels')->willReturn([]);
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::never())->method('isChannelOnNetwork');
+
+        $this->createService(channelRepository: $repository, channelActions: $actions)
+            ->enforceAllForbiddenChannels();
+    }
+
+    #[Test]
+    public function enforceAllForbiddenChannelsOnlyEnforcesOnlineEntries(): void
+    {
+        $online = RegisteredChannel::createForbidden('#online', 'bad');
+        $offline = RegisteredChannel::createForbidden('#offline', 'bad');
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('findForbiddenChannels')->willReturn([$online, $offline]);
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $checks = 0;
+        $actions->expects(self::exactly(3))->method('isChannelOnNetwork')
+            ->willReturnCallback(static function (string $channel) use (&$checks): bool {
+                ++$checks;
+
+                return '#online' === $channel;
+            });
+        $actions->expects(self::once())->method('getChannelTimestamp')->with('#online')->willReturn(42);
+        $actions->expects(self::once())->method('joinChannelAsService')->with('#online', 42);
+        $actions->expects(self::once())->method('getChannelMemberUids')->with('#online')->willReturn([]);
+        $actions->expects(self::once())->method('enforceForbiddenModes')->with('#online', 42);
+        $logger = $this->createMock(ChanServActivitySink::class);
+        $logger->expects(self::exactly(2))->method('info');
+        $logger->expects(self::once())->method('debug')->with(self::stringContains('#offline'));
+
+        $this->createService($repository, channelActions: $actions, logger: $logger)
+            ->enforceAllForbiddenChannels();
+    }
+
+    #[Test]
+    public function forbiddenUserJoinIsIgnoredForUnknownChannel(): void
+    {
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('findByChannelName')->willReturn(null);
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::never())->method('kickFromChannel');
+
+        $this->createService($repository, channelActions: $actions)
+            ->enforceForbiddenUserJoin('#unknown', 'AAA');
+    }
+
+    #[Test]
+    public function forbiddenUserJoinIsIgnoredForRegularChannel(): void
+    {
+        $regular = RegisteredChannel::register('#regular', 1, 'regular');
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('findByChannelName')->willReturn($regular);
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::never())->method('kickFromChannel');
+
+        $this->createService($repository, channelActions: $actions)
+            ->enforceForbiddenUserJoin('#regular', 'AAA');
+    }
+
+    #[Test]
+    public function forbiddenUserJoinKicksAndReenforcesOnlineChannel(): void
+    {
+        $forbidden = RegisteredChannel::createForbidden('#bad', 'bad');
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('findByChannelName')->willReturn($forbidden);
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::exactly(2))->method('isChannelOnNetwork')->with('#bad')->willReturn(true);
+        $actions->expects(self::exactly(2))->method('kickFromChannel')
+            ->willReturnCallback(static function (string $channel, string $uid, string $reason): void {
+                self::assertSame('#bad', $channel);
+                self::assertSame('Forbidden channel', $reason);
+                self::assertSame('AAA', $uid);
+            });
+        $actions->expects(self::once())->method('getChannelTimestamp')->willReturn(42);
+        $actions->expects(self::once())->method('joinChannelAsService')->with('#bad', 42);
+        $actions->expects(self::once())->method('getChannelMemberUids')->willReturn(['AAA']);
+        $actions->expects(self::once())->method('enforceForbiddenModes')->with('#bad', 42);
+
+        $this->createService($repository, channelActions: $actions)
+            ->enforceForbiddenUserJoin('#bad', 'AAA');
+    }
+
+    #[Test]
+    public function forbiddenUserJoinStillKicksWhenChannelSnapshotIsGone(): void
+    {
+        $forbidden = RegisteredChannel::createForbidden('#bad', 'bad');
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('findByChannelName')->willReturn($forbidden);
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::once())->method('kickFromChannel')->with('#bad', 'AAA', 'Forbidden channel');
+        $actions->expects(self::once())->method('isChannelOnNetwork')->with('#bad')->willReturn(false);
+        $actions->expects(self::never())->method('joinChannelAsService');
+
+        $this->createService($repository, channelActions: $actions)
+            ->enforceForbiddenUserJoin('#bad', 'AAA');
+    }
+
+    #[Test]
+    public function configuredForbiddenChannelIsIgnoredWhenNotForbidden(): void
+    {
+        $regular = RegisteredChannel::register('#regular', 1, 'regular');
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('findByChannelName')->willReturn($regular);
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::never())->method('isChannelOnNetwork');
+
+        $this->createService($repository, channelActions: $actions)
+            ->enforceConfiguredForbiddenChannel('#regular');
+    }
+
+    #[Test]
+    public function configuredForbiddenChannelIsEnforcedOnSynchronization(): void
+    {
+        $forbidden = RegisteredChannel::createForbidden('#bad', 'bad');
+        $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repository->method('findByChannelName')->willReturn($forbidden);
+        $actions = $this->createMock(ChanNetworkActions::class);
+        $actions->expects(self::once())->method('isChannelOnNetwork')->with('#bad')->willReturn(false);
+        $logger = $this->createMock(ChanServActivitySink::class);
+        $logger->expects(self::once())->method('debug');
+        $logger->expects(self::once())->method('info')->with(self::stringContains('on sync'));
+
+        $this->createService($repository, channelActions: $actions, logger: $logger)
+            ->enforceConfiguredForbiddenChannel('#bad');
     }
 }

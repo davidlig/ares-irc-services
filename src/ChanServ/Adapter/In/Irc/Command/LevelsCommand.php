@@ -7,10 +7,12 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevels;
+use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsAction;
+use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsHandlerInterface;
+use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsOutcome;
+use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsResult;
 use App\ChanServ\Domain\Entity\ChannelLevel;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
 
@@ -59,8 +61,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
     ];
 
     public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChannelLevelRepositoryInterface $levelRepository,
+        private ManageChannelLevelsHandlerInterface $manageLevels,
     ) {}
 
     public function getName(): string
@@ -142,38 +143,27 @@ final readonly class LevelsCommand implements ChanServCommandInterface
             return;
         }
 
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
-            throw ChannelNotRegisteredException::forChannel($channelName);
-        }
-
-        $senderAccount = $context->senderAccount;
-        if (null === $senderAccount) {
-            $context->reply('error.not_identified');
-
-            return;
-        }
-
-        if (!$context->isLevelFounder && !$channel->isFounder($senderAccount->id)) {
-            throw InsufficientAccessException::forOperation($channelName, 'LEVELS');
-        }
-
         $sub = strtoupper($context->args[1] ?? '');
         $modeSupport = $context->getChannelModeSupport();
-
-        switch ($sub) {
-            case 'LIST':
-                $this->doList($context, $channel, $modeSupport);
-                break;
-            case 'SET':
-                $this->doSet($context, $channel, $channelName, $modeSupport);
-                break;
-            case 'RESET':
-                $this->doReset($context, $channel);
-                break;
-            default:
-                $context->reply('levels.unknown_sub', ['%sub%' => $sub]);
-        }
+        $action = match ($sub) {
+            'LIST' => ManageChannelLevelsAction::List,
+            'SET' => ManageChannelLevelsAction::Set,
+            'RESET' => ManageChannelLevelsAction::Reset,
+            default => ManageChannelLevelsAction::Unknown,
+        };
+        $levelKey = strtoupper(trim($context->args[2] ?? ''));
+        $valueString = trim($context->args[3] ?? '');
+        $senderAccount = $context->senderAccount;
+        $result = $this->manageLevels->handle(new ManageChannelLevels(
+            $channelName,
+            null === $senderAccount ? null : $senderAccount->id,
+            $context->isLevelFounder,
+            $action,
+            $this->visibleLevelKeys($modeSupport),
+            '' === $levelKey ? null : $levelKey,
+            '' === $valueString ? null : (int) $valueString,
+        ));
+        $this->presentResult($context, $channelName, $sub, $result);
     }
 
     /** @return list<string> */
@@ -193,63 +183,43 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         return $keys;
     }
 
-    private function doList(ChanServContext $context, RegisteredChannel $channel, ChannelModeSupportInterface $modeSupport): void
+    private function presentResult(ChanServContext $context, string $channelName, string $subcommand, ManageChannelLevelsResult $result): void
     {
-        $visibleKeys = $this->visibleLevelKeys($modeSupport);
-        $byKey = [];
-        foreach ($this->levelRepository->listByChannel($channel->getId()) as $level) {
-            $byKey[$level->getLevelKey()] = $level->getValue();
+        switch ($result->outcome) {
+            case ManageChannelLevelsOutcome::ChannelNotRegistered:
+                throw ChannelNotRegisteredException::forChannel($channelName);
+            case ManageChannelLevelsOutcome::ActorNotAuthenticated:
+                $context->reply('error.not_identified');
+                break;
+            case ManageChannelLevelsOutcome::AccessDenied:
+                throw InsufficientAccessException::forOperation($channelName, 'LEVELS');
+            case ManageChannelLevelsOutcome::UnknownAction:
+                $context->reply('levels.unknown_sub', ['%sub%' => $subcommand]);
+                break;
+            case ManageChannelLevelsOutcome::InvalidRequest:
+                $context->reply('error.syntax', ['syntax' => $context->trans('levels.set.syntax')]);
+                break;
+            case ManageChannelLevelsOutcome::Listed:
+                $context->reply('levels.list.header');
+                foreach ($result->levels as $key => $value) {
+                    $context->replyRaw(sprintf('  %s %s', $key, $value));
+                }
+                break;
+            case ManageChannelLevelsOutcome::LevelSet:
+                $context->reply('levels.set.done', ['%key%' => $result->levelKey ?? '', '%value%' => (string) $result->value]);
+                break;
+            case ManageChannelLevelsOutcome::LevelsReset:
+                $context->reply('levels.reset.done');
+                break;
+            case ManageChannelLevelsOutcome::UnknownLevel:
+                $context->reply('levels.unknown_key', ['%key%' => $result->levelKey ?? '']);
+                break;
+            case ManageChannelLevelsOutcome::ValueOutOfRange:
+                $context->reply('levels.value_range', [
+                    '%min%' => (string) ChannelLevel::LEVEL_MIN,
+                    '%max%' => (string) ChannelLevel::LEVEL_MAX,
+                ]);
+                break;
         }
-
-        $context->reply('levels.list.header');
-        foreach ($visibleKeys as $key) {
-            $value = $byKey[$key] ?? ChannelLevel::getDefault($key);
-            $context->replyRaw(sprintf('  %s %s', $key, $value));
-        }
-    }
-
-    private function doSet(ChanServContext $context, RegisteredChannel $channel, string $channelName, ChannelModeSupportInterface $modeSupport): void
-    {
-        $levelKey = strtoupper(trim($context->args[2] ?? ''));
-        $valueStr = trim($context->args[3] ?? '');
-        if ('' === $levelKey || '' === $valueStr) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('levels.set.syntax')]);
-
-            return;
-        }
-
-        $visibleKeys = $this->visibleLevelKeys($modeSupport);
-        if (!in_array($levelKey, $visibleKeys, true)) {
-            $context->reply('levels.unknown_key', ['%key%' => $levelKey]);
-
-            return;
-        }
-
-        $value = (int) $valueStr;
-        if ($value < ChannelLevel::LEVEL_MIN || $value > ChannelLevel::LEVEL_MAX) {
-            $context->reply('levels.value_range', [
-                '%min%' => (string) ChannelLevel::LEVEL_MIN,
-                '%max%' => (string) ChannelLevel::LEVEL_MAX,
-            ]);
-
-            return;
-        }
-
-        $existing = $this->levelRepository->findByChannelAndKey($channel->getId(), $levelKey);
-        if (null !== $existing) {
-            $existing->updateLevelValue($value);
-            $this->levelRepository->save($existing);
-        } else {
-            $level = new ChannelLevel($channel->getId(), $levelKey, $value);
-            $this->levelRepository->save($level);
-        }
-
-        $context->reply('levels.set.done', ['%key%' => $levelKey, '%value%' => (string) $value]);
-    }
-
-    private function doReset(ChanServContext $context, RegisteredChannel $channel): void
-    {
-        $this->levelRepository->removeAllForChannel($channel->getId());
-        $context->reply('levels.reset.done');
     }
 }

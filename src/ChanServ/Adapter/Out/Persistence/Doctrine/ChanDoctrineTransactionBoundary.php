@@ -15,4 +15,9 @@ final readonly class ChanDoctrineTransactionBoundary implements ChanTransactionB
     {
         return $this->transactionManager->transactional($operation);
     }
+
+    public function afterCommit(callable $operation): void
+    {
+        $this->transactionManager->afterCommit($operation);
+    }
 }

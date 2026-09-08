@@ -8,8 +8,11 @@ use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\ChanServ\Adapter\In\Event\ChanServPermanentChannelSubscriber;
+use App\ChanServ\Adapter\Out\Network\IrcChannelRegistrationNetworkActions;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
+use App\ChanServ\Application\Service\ChannelRegistrationService;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -17,6 +20,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ChanServPermanentChannelSubscriber::class)]
+#[CoversClass(ChannelRegistrationService::class)]
+#[CoversClass(IrcChannelRegistrationNetworkActions::class)]
 final class ChanServPermanentChannelSubscriberTest extends TestCase
 {
     #[Test]
@@ -47,7 +52,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+rP', []);
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
@@ -67,7 +72,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+r', []);
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
@@ -87,7 +92,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+P', []);
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
@@ -107,7 +112,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
@@ -121,7 +126,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
@@ -141,7 +146,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+P', []);
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
@@ -161,7 +166,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
@@ -181,7 +186,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '-rP', []);
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'inactivity'));
     }
 
@@ -201,7 +206,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '-P', []);
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual'));
     }
 
@@ -221,7 +226,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual'));
     }
 
@@ -235,7 +240,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual'));
     }
 
@@ -255,7 +260,25 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber = $this->createSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
         $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual'));
+    }
+
+    private function createSubscriber(
+        ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        ChannelLookupPort $channelLookup,
+        ChannelServiceActionsPort $channelServiceActions,
+    ): ChanServPermanentChannelSubscriber {
+        $networkActions = new IrcChannelRegistrationNetworkActions(
+            $modeSupportProvider,
+            $channelLookup,
+            $channelServiceActions,
+        );
+        $registrationLifecycle = new ChannelRegistrationService(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $networkActions,
+        );
+
+        return new ChanServPermanentChannelSubscriber($registrationLifecycle);
     }
 }

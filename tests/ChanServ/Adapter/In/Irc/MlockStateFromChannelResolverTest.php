@@ -19,10 +19,13 @@ final class MlockStateFromChannelResolverTest extends TestCase
     {
         $resolver = new MlockStateFromChannelResolver();
 
-        self::assertSame(['', []], $resolver->resolve(
+        $lock = $resolver->resolve(
             new ChannelView('#test', '', null, 0),
             $this->support(),
-        ));
+        );
+
+        self::assertTrue($lock->active);
+        self::assertSame([], $lock->settings);
     }
 
     #[Test]
@@ -37,7 +40,10 @@ final class MlockStateFromChannelResolverTest extends TestCase
             modeParams: ['k' => 'secret'],
         );
 
-        self::assertSame(['+ntkM', ['k' => 'secret']], $resolver->resolve($view, $this->support()));
+        $lock = $resolver->resolve($view, $this->support());
+
+        self::assertSame(['n', 't', 'k', 'M'], array_map(static fn ($setting): string => $setting->mode->value, $lock->settings));
+        self::assertSame([null, null, 'secret', null], array_map(static fn ($setting): ?string => $setting->parameter, $lock->settings));
     }
 
     #[Test]
@@ -45,10 +51,13 @@ final class MlockStateFromChannelResolverTest extends TestCase
     {
         $resolver = new MlockStateFromChannelResolver();
 
-        self::assertSame(['+k', []], $resolver->resolve(
+        $lock = $resolver->resolve(
             new ChannelView('#test', '+k', null, 0, modeParams: ['k' => '']),
             $this->support(),
-        ));
+        );
+
+        self::assertSame('k', $lock->settings[0]->mode->value);
+        self::assertNull($lock->settings[0]->parameter);
     }
 
     private function support(): ChannelModeSupportInterface

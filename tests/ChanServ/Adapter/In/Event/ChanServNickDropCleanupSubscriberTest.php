@@ -4,22 +4,24 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
-use App\Application\Port\TransactionManagerInterface;
 use App\ChanServ\Adapter\In\Event\ChanServNickDropCleanupSubscriber;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
+use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
+use App\ChanServ\Application\Port\Out\NickDropCleanupActivitySink;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
-use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickData;
+use App\ChanServ\Application\UseCase\CleanupDroppedNick\CleanupDroppedNickDataHandler;
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(ChanServNickDropCleanupSubscriber::class)]
+#[CoversClass(CleanupDroppedNickData::class)]
+#[CoversClass(CleanupDroppedNickDataHandler::class)]
 final class ChanServNickDropCleanupSubscriberTest extends TestCase
 {
     #[Test]
@@ -32,351 +34,32 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function deletesAccessEntriesForDroppedNick(): void
+    public function mapsPublishedEventToTypedCleanupRequest(): void
     {
-        $channelAccessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
-        $channelAkickRepository = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $accessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $accessRepository->expects(self::once())->method('deleteByNickId')->with(12345);
+        $akickRepository = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akickRepository->expects(self::once())->method('clearCreatorNickId')->with(12345);
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $channelRepository->expects(self::once())->method('clearSuccessorNickId')->with(12345);
+        $channelRepository->expects(self::once())->method('findByFounderNickId')->with(12345)->willReturn([]);
 
-        $subscriber = new ChanServNickDropCleanupSubscriber(
-            $channelAccessRepository,
-            $channelAkickRepository,
+        $handler = new CleanupDroppedNickDataHandler(
+            $accessRepository,
+            $akickRepository,
             $channelRepository,
-            $eventDispatcher,
-            $this->immediateTransactionManager(),
+            $this->createStub(ChanServEventPublisher::class),
+            $this->createStub(ChanTransactionBoundary::class),
+            $this->createStub(NickDropCleanupActivitySink::class),
         );
+        $subscriber = new ChanServNickDropCleanupSubscriber($handler);
 
-        $event = new NickDropCleanupEvent(
-            nickId: 100,
+        $subscriber->onNickDrop(new NickDropCleanupEvent(
+            nickId: 12345,
             nickname: 'TestUser',
             nicknameLower: 'testuser',
             reason: 'manual',
             occurredAt: new DateTimeImmutable(),
-        );
-
-        $channelAccessRepository
-            ->expects(self::once())
-            ->method('deleteByNickId')
-            ->with(100);
-
-        $channelAkickRepository
-            ->expects(self::once())
-            ->method('clearCreatorNickId')
-            ->with(100);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('clearSuccessorNickId')
-            ->with(100);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('findByFounderNickId')
-            ->with(100)
-            ->willReturn([]);
-
-        $subscriber->onNickDrop($event);
-    }
-
-    #[Test]
-    public function transfersChannelToSuccessorWhenFounderDropped(): void
-    {
-        $channelAccessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
-        $channelAkickRepository = $this->createMock(ChannelAkickRepositoryInterface::class);
-        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
-
-        $subscriber = new ChanServNickDropCleanupSubscriber(
-            $channelAccessRepository,
-            $channelAkickRepository,
-            $channelRepository,
-            $eventDispatcher,
-            $this->immediateTransactionManager(),
-        );
-
-        $event = new NickDropCleanupEvent(
-            nickId: 200,
-            nickname: 'Founder',
-            nicknameLower: 'founder',
-            reason: 'inactivity',
-            occurredAt: new DateTimeImmutable(),
-        );
-
-        $channel = $this->createMock(RegisteredChannel::class);
-        $channel->method('getId')->willReturn(42);
-        $channel->method('getName')->willReturn('#test');
-        $channel->method('getNameLower')->willReturn('#test');
-        $channel->method('getSuccessorNickId')->willReturn(300);
-
-        $channelAccessRepository
-            ->expects(self::once())
-            ->method('deleteByNickId')
-            ->with(200);
-
-        $channelAkickRepository
-            ->expects(self::once())
-            ->method('clearCreatorNickId')
-            ->with(200);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('clearSuccessorNickId')
-            ->with(200);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('findByFounderNickId')
-            ->with(200)
-            ->willReturn([$channel]);
-
-        $channel
-            ->expects(self::once())
-            ->method('changeFounder')
-            ->with(300);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('save')
-            ->with($channel);
-
-        $subscriber->onNickDrop($event);
-    }
-
-    #[Test]
-    public function dropsChannelWhenFounderDroppedWithNoSuccessor(): void
-    {
-        $channelAccessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
-        $channelAkickRepository = $this->createMock(ChannelAkickRepositoryInterface::class);
-        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-
-        $subscriber = new ChanServNickDropCleanupSubscriber(
-            $channelAccessRepository,
-            $channelAkickRepository,
-            $channelRepository,
-            $eventDispatcher,
-            $this->immediateTransactionManager(),
-        );
-
-        $event = new NickDropCleanupEvent(
-            nickId: 400,
-            nickname: 'FounderNoSucc',
-            nicknameLower: 'foundernosucc',
-            reason: 'manual',
-            occurredAt: new DateTimeImmutable(),
-        );
-
-        $channel = $this->createMock(RegisteredChannel::class);
-        $channel->method('getId')->willReturn(99);
-        $channel->method('getName')->willReturn('#orphan');
-        $channel->method('getNameLower')->willReturn('#orphan');
-        $channel->method('getSuccessorNickId')->willReturn(null);
-
-        $channelAccessRepository
-            ->expects(self::once())
-            ->method('deleteByNickId')
-            ->with(400);
-
-        $channelAkickRepository
-            ->expects(self::once())
-            ->method('clearCreatorNickId')
-            ->with(400);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('clearSuccessorNickId')
-            ->with(400);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('findByFounderNickId')
-            ->with(400)
-            ->willReturn([$channel]);
-
-        $channel
-            ->expects(self::never())
-            ->method('changeFounder');
-
-        $channelRepository
-            ->expects(self::never())
-            ->method('save');
-
-        $matcher = self::exactly(2);
-        $eventDispatcher
-            ->expects($matcher)
-            ->method('dispatch')
-            ->willReturnCallback(static function (ChannelDropCleanupEvent|ChannelDropEvent $dropEvent) use ($matcher): object {
-                match ($matcher->numberOfInvocations()) {
-                    1 => self::assertInstanceOf(ChannelDropCleanupEvent::class, $dropEvent),
-                    2 => self::assertInstanceOf(ChannelDropEvent::class, $dropEvent),
-                    default => self::fail('Unexpected dispatch'),
-                };
-
-                self::assertSame(99, $dropEvent->channelId);
-                self::assertSame('#orphan', $dropEvent->channelName);
-                self::assertSame('founder_dropped', $dropEvent->reason);
-
-                return $dropEvent;
-            });
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('delete')
-            ->with($channel);
-
-        $subscriber->onNickDrop($event);
-    }
-
-    #[Test]
-    public function handlesMultipleChannelsForDroppedFounder(): void
-    {
-        $channelAccessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
-        $channelAkickRepository = $this->createMock(ChannelAkickRepositoryInterface::class);
-        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-
-        $subscriber = new ChanServNickDropCleanupSubscriber(
-            $channelAccessRepository,
-            $channelAkickRepository,
-            $channelRepository,
-            $eventDispatcher,
-            $this->immediateTransactionManager(),
-        );
-
-        $event = new NickDropCleanupEvent(
-            nickId: 500,
-            nickname: 'MultiFounder',
-            nicknameLower: 'multifounder',
-            reason: 'manual',
-            occurredAt: new DateTimeImmutable(),
-        );
-
-        $channelWithSuccessor = $this->createMock(RegisteredChannel::class);
-        $channelWithSuccessor->method('getId')->willReturn(10);
-        $channelWithSuccessor->method('getName')->willReturn('#withsuccessor');
-        $channelWithSuccessor->method('getNameLower')->willReturn('#withsuccessor');
-        $channelWithSuccessor->method('getSuccessorNickId')->willReturn(600);
-
-        $channelWithoutSuccessor = $this->createStub(RegisteredChannel::class);
-        $channelWithoutSuccessor->method('getId')->willReturn(11);
-        $channelWithoutSuccessor->method('getName')->willReturn('#nosuccessor');
-        $channelWithoutSuccessor->method('getNameLower')->willReturn('#nosuccessor');
-        $channelWithoutSuccessor->method('getSuccessorNickId')->willReturn(null);
-
-        $channelAccessRepository
-            ->expects(self::once())
-            ->method('deleteByNickId')
-            ->with(500);
-
-        $channelAkickRepository
-            ->expects(self::once())
-            ->method('clearCreatorNickId')
-            ->with(500);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('clearSuccessorNickId')
-            ->with(500);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('findByFounderNickId')
-            ->with(500)
-            ->willReturn([$channelWithSuccessor, $channelWithoutSuccessor]);
-
-        $channelWithSuccessor
-            ->expects(self::once())
-            ->method('changeFounder')
-            ->with(600);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('save')
-            ->with($channelWithSuccessor);
-
-        $matcher = self::exactly(2);
-        $eventDispatcher
-            ->expects($matcher)
-            ->method('dispatch')
-            ->willReturnCallback(static function (ChannelDropCleanupEvent|ChannelDropEvent $dropEvent) use ($matcher): object {
-                match ($matcher->numberOfInvocations()) {
-                    1 => self::assertInstanceOf(ChannelDropCleanupEvent::class, $dropEvent),
-                    2 => self::assertInstanceOf(ChannelDropEvent::class, $dropEvent),
-                    default => self::fail('Unexpected dispatch'),
-                };
-
-                self::assertSame(11, $dropEvent->channelId);
-                self::assertSame('founder_dropped', $dropEvent->reason);
-
-                return $dropEvent;
-            });
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('delete')
-            ->with($channelWithoutSuccessor);
-
-        $subscriber->onNickDrop($event);
-    }
-
-    #[Test]
-    public function cleansUpAllReferencesWhenNickDropped(): void
-    {
-        $channelAccessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
-        $channelAkickRepository = $this->createMock(ChannelAkickRepositoryInterface::class);
-        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
-
-        $subscriber = new ChanServNickDropCleanupSubscriber(
-            $channelAccessRepository,
-            $channelAkickRepository,
-            $channelRepository,
-            $eventDispatcher,
-            $this->immediateTransactionManager(),
-        );
-
-        $event = new NickDropCleanupEvent(
-            nickId: 777,
-            nickname: 'CleanupTest',
-            nicknameLower: 'cleanuptest',
-            reason: 'inactivity',
-            occurredAt: new DateTimeImmutable(),
-        );
-
-        $channelAccessRepository
-            ->expects(self::once())
-            ->method('deleteByNickId')
-            ->with(777);
-
-        $channelAkickRepository
-            ->expects(self::once())
-            ->method('clearCreatorNickId')
-            ->with(777);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('clearSuccessorNickId')
-            ->with(777);
-
-        $channelRepository
-            ->expects(self::once())
-            ->method('findByFounderNickId')
-            ->with(777)
-            ->willReturn([]);
-
-        $subscriber->onNickDrop($event);
-    }
-
-    private function immediateTransactionManager(): TransactionManagerInterface
-    {
-        $transactionManager = $this->createStub(TransactionManagerInterface::class);
-        $transactionManager->method('afterCommit')->willReturnCallback(
-            static function (callable $operation): void {
-                $operation();
-            },
-        );
-
-        return $transactionManager;
+        ));
     }
 }

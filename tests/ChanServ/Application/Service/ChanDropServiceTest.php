@@ -177,7 +177,9 @@ final class ChanDropServiceTest extends TestCase
         $debug->expects(self::once())->method('log')->with('OperUser', 'DROP', '#soft', null, null, 'manual', self::anything());
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
-        $channelActions->expects(self::once())->method('setChannelModes')->with('#soft', '-r');
+        $channelActions->expects(self::once())
+            ->method('removeRegistrationForPendingDeletion')
+            ->with('#soft', false, $channel->getCreatedAt()->getTimestamp());
 
         $service = new ChanDropService(
             $channelRepository,
@@ -206,7 +208,9 @@ final class ChanDropServiceTest extends TestCase
         $debug->expects(self::once())->method('log')->with('OperUser', 'RESTORE', '#restore', null, null, 'manual');
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
-        $channelActions->expects(self::once())->method('setChannelModes')->with('#restore', '+r');
+        $channelActions->expects(self::once())
+            ->method('restoreRegistrationAfterPendingDeletion')
+            ->with('#restore', false, $channel->getCreatedAt()->getTimestamp());
 
         $service = new ChanDropService(
             $channelRepository,
@@ -232,16 +236,9 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('save')->with($channel);
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
-        $matcher = self::exactly(2);
-        $channelActions->expects($matcher)->method('setChannelModes')->willReturnCallback(
-            static function (string $ch, string $modes) use ($matcher): void {
-                match ($matcher->numberOfInvocations()) {
-                    1 => self::assertSame('-r', $modes),
-                    2 => self::assertSame('-P', $modes),
-                    default => self::fail('Unexpected call'),
-                };
-            }
-        );
+        $channelActions->expects(self::once())
+            ->method('removeRegistrationForPendingDeletion')
+            ->with('#softperm', true, $channel->getCreatedAt()->getTimestamp());
 
         $service = new ChanDropService(
             $channelRepository,
@@ -266,16 +263,9 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('save')->with($channel);
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
-        $matcher = self::exactly(2);
-        $channelActions->expects($matcher)->method('setChannelModes')->willReturnCallback(
-            static function (string $ch, string $modes) use ($matcher): void {
-                match ($matcher->numberOfInvocations()) {
-                    1 => self::assertSame('+r', $modes),
-                    2 => self::assertSame('+P', $modes),
-                    default => self::fail('Unexpected call'),
-                };
-            }
-        );
+        $channelActions->expects(self::once())
+            ->method('restoreRegistrationAfterPendingDeletion')
+            ->with('#restoreperm', true, $channel->getCreatedAt()->getTimestamp());
 
         $service = new ChanDropService(
             $channelRepository,

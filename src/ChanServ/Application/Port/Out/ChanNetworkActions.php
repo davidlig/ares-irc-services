@@ -9,17 +9,23 @@ namespace App\ChanServ\Application\Port\Out;
  */
 interface ChanNetworkActions
 {
-    /**
-     * @param list<string> $modeParams
-     */
-    public function setChannelModes(
+    public function removeRegistrationForPendingDeletion(
         string $channelName,
-        string $modeString,
-        array $modeParams = [],
-        ?int $channelCreationTime = null,
+        bool $removePermanentStatus,
+        int $channelCreationTime,
     ): void;
 
+    public function restoreRegistrationAfterPendingDeletion(
+        string $channelName,
+        bool $restorePermanentStatus,
+        int $channelCreationTime,
+    ): void;
+
+    public function enforceForbiddenModes(string $channelName, ?int $channelCreationTime = null): void;
+
     public function joinChannelAsService(string $channelName, ?int $channelCreationTime = null): void;
+
+    public function partChannelAsService(string $channelName): void;
 
     public function kickFromChannel(string $channelName, string $targetUid, string $reason): void;
 

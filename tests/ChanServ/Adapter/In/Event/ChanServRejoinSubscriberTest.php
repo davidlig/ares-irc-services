@@ -8,7 +8,9 @@ use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\ChanServ\Adapter\In\Event\ChanServRejoinSubscriber;
+use App\ChanServ\Adapter\Out\Network\IrcChannelRegistrationNetworkActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Service\ChannelRegistrationService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
@@ -21,6 +23,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(ChanServRejoinSubscriber::class)]
+#[CoversClass(ChannelRegistrationService::class)]
+#[CoversClass(IrcChannelRegistrationNetworkActions::class)]
 final class ChanServRejoinSubscriberTest extends TestCase
 {
     private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
@@ -46,7 +50,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $this->modeSupport = $this->createMock(ChannelModeSupportInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->subscriber = new ChanServRejoinSubscriber(
+        $this->subscriber = $this->createSubscriber(
             $this->channelRepository,
             $this->channelLookup,
             $this->modeSupportProvider,
@@ -303,12 +307,12 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn([$registered1, $registered2]);
 
         $this->modeSupportProvider
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getChannelRegisteredModeLetter')
             ->willReturn('r');
 
@@ -337,12 +341,12 @@ final class ChanServRejoinSubscriberTest extends TestCase
     public function doesNothingWhenNoRegisteredChannels(): void
     {
         $this->modeSupportProvider
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getChannelRegisteredModeLetter')
             ->willReturn('r');
 
@@ -365,12 +369,12 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $registered->method('getName')->willReturn('#channelnotonnetwork');
 
         $this->modeSupportProvider
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getChannelRegisteredModeLetter')
             ->willReturn('r');
 
@@ -420,6 +424,33 @@ final class ChanServRejoinSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function registrationNetworkActionsSkipReconciliationWhenRegisteredModeIsNotSupported(): void
+    {
+        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn(null);
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('debug');
+
+        $networkActions = new IrcChannelRegistrationNetworkActions(
+            $this->modeSupportProvider,
+            $this->channelLookup,
+            $this->channelServiceActions,
+            $this->logger,
+        );
+
+        $networkActions->reconcileRegisteredMode([], []);
+    }
+
+    #[Test]
     public function onSyncCompleteReconcileRegisteredModeRemovesRFromUnregisteredChannels(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -431,12 +462,12 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getChannelRegisteredModeLetter')
             ->willReturn('r');
 
@@ -478,12 +509,12 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getChannelRegisteredModeLetter')
             ->willReturn('r');
 
@@ -526,6 +557,33 @@ final class ChanServRejoinSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function registrationNetworkActionsSkipReconciliationWhenPermanentModeIsNotSupported(): void
+    {
+        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn(null);
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('debug');
+
+        $networkActions = new IrcChannelRegistrationNetworkActions(
+            $this->modeSupportProvider,
+            $this->channelLookup,
+            $this->channelServiceActions,
+            $this->logger,
+        );
+
+        $networkActions->reconcilePermanentMode([], []);
+    }
+
+    #[Test]
     public function onSyncCompleteReconcilePermanentModeAddsPToRegisteredChannelsMissingIt(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -537,12 +595,12 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getPermanentChannelModeLetter')
             ->willReturn('P');
 
@@ -583,12 +641,12 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getPermanentChannelModeLetter')
             ->willReturn('P');
 
@@ -623,12 +681,12 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getPermanentChannelModeLetter')
             ->willReturn('P');
 
@@ -670,12 +728,12 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
-            ->expects(self::once())
+            ->expects(self::exactly(2))
             ->method('getPermanentChannelModeLetter')
             ->willReturn('P');
 
@@ -723,7 +781,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $localChannelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $localChannelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServRejoinSubscriber(
+        $subscriber = $this->createSubscriber(
             $localChannelRepository,
             $localChannelLookup,
             $localModeSupportProvider,
@@ -771,7 +829,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $localChannelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $localChannelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServRejoinSubscriber(
+        $subscriber = $this->createSubscriber(
             $localChannelRepository,
             $localChannelLookup,
             $localModeSupportProvider,
@@ -816,7 +874,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $localChannelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $localChannelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServRejoinSubscriber(
+        $subscriber = $this->createSubscriber(
             $localChannelRepository,
             $localChannelLookup,
             $localModeSupportProvider,
@@ -825,5 +883,23 @@ final class ChanServRejoinSubscriberTest extends TestCase
         );
         $event = new NetworkSynchronizationCompletedEvent('001');
         $subscriber->onSyncCompleteReconcilePermanentMode($event);
+    }
+
+    private function createSubscriber(
+        RegisteredChannelRepositoryInterface $channelRepository,
+        ChannelLookupPort $channelLookup,
+        ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        ChannelServiceActionsPort $channelServiceActions,
+        LoggerInterface $logger,
+    ): ChanServRejoinSubscriber {
+        $networkActions = new IrcChannelRegistrationNetworkActions(
+            $modeSupportProvider,
+            $channelLookup,
+            $channelServiceActions,
+            $logger,
+        );
+        $registrationLifecycle = new ChannelRegistrationService($channelRepository, $networkActions);
+
+        return new ChanServRejoinSubscriber($registrationLifecycle);
     }
 }

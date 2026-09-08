@@ -8,16 +8,26 @@ use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelSyncCompletedRegistryInterface;
 use App\Application\Port\UidResolverInterface;
 use App\ChanServ\Adapter\In\Event\ChanServTopicSyncSubscriber;
+use App\ChanServ\Adapter\Out\Network\IrcChannelTopicActions;
+use App\ChanServ\Adapter\Out\Network\IrcChannelTopicNetworkQuery;
+use App\ChanServ\Adapter\Out\Time\SystemChannelTopicClock;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\UseCase\SynchronizeTopic\SynchronizeReceivedChannelTopic;
+use App\ChanServ\Application\UseCase\SynchronizeTopic\SynchronizeReceivedChannelTopicHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\PublishedEvent\ChannelTopicReceivedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 #[CoversClass(ChanServTopicSyncSubscriber::class)]
+#[CoversClass(IrcChannelTopicActions::class)]
+#[CoversClass(IrcChannelTopicNetworkQuery::class)]
+#[CoversClass(SystemChannelTopicClock::class)]
+#[CoversClass(SynchronizeReceivedChannelTopic::class)]
+#[CoversClass(SynchronizeReceivedChannelTopicHandler::class)]
 final class ChanServTopicSyncSubscriberTest extends TestCase
 {
     private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
@@ -28,8 +38,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
 
     private UidResolverInterface $uidResolver;
 
-    private LoggerInterface&MockObject $logger;
-
     private ChanServTopicSyncSubscriber $subscriber;
 
     protected function setUp(): void
@@ -38,17 +46,23 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $this->syncCompletedRegistry = $this->createMock(ChannelSyncCompletedRegistryInterface::class);
         $this->uidResolver = $this->createStub(UidResolverInterface::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->subscriber = $this->createSubscriber($this->uidResolver);
+    }
 
-        $this->subscriber = new ChanServTopicSyncSubscriber(
+    private function createSubscriber(UidResolverInterface $uidResolver): ChanServTopicSyncSubscriber
+    {
+        return new ChanServTopicSyncSubscriber(new SynchronizeReceivedChannelTopicHandler(
             $this->channelRepository,
-            $this->channelServiceActions,
-            $this->syncCompletedRegistry,
-            $this->uidResolver,
+            new IrcChannelTopicNetworkQuery(
+                $this->createStub(ChannelLookupPort::class),
+                $this->syncCompletedRegistry,
+                $uidResolver,
+            ),
+            new IrcChannelTopicActions($this->channelServiceActions),
+            new SystemChannelTopicClock(),
             'ChanServ',
             'NickServ',
-            $this->logger,
-        );
+        ));
     }
 
     #[Test]
@@ -57,7 +71,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->channelRepository->expects(self::never())->method('findByChannelName');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
         $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
-        $this->logger->expects(self::never())->method('warning');
 
         self::assertSame(
             [ChannelTopicReceivedEvent::class => ['onTopicReceived', 0]],
@@ -86,7 +99,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->syncCompletedRegistry
             ->expects(self::never())
             ->method('isSyncCompleted');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -110,7 +122,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelTopic');
         $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -138,7 +149,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->method('setChannelTopic')
             ->with('#test', null);
         $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -173,8 +183,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('save');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -213,8 +221,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('save');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -248,8 +254,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('save');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -281,7 +285,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->syncCompletedRegistry
             ->expects(self::never())
             ->method('isSyncCompleted');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -316,7 +319,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('save');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -351,7 +353,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('save');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -386,8 +387,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('save');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -428,8 +427,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->method('save')
             ->with($registered);
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -470,8 +467,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->method('save')
             ->with($registered);
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -510,8 +505,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('save');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -537,7 +530,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelTopic');
         $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
-        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -553,15 +545,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $uidResolver = $this->createMock(UidResolverInterface::class);
         $uidResolver->expects(self::once())->method('resolveUidToNick')->with('994AAAGUW')->willReturn('davidlig');
 
-        $subscriber = new ChanServTopicSyncSubscriber(
-            $this->channelRepository,
-            $this->channelServiceActions,
-            $this->syncCompletedRegistry,
-            $uidResolver,
-            'ChanServ',
-            'NickServ',
-            $this->logger,
-        );
+        $subscriber = $this->createSubscriber($uidResolver);
 
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
@@ -590,8 +574,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->method('save')
             ->with($registered);
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',
@@ -609,15 +591,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $uidResolver = $this->createMock(UidResolverInterface::class);
         $uidResolver->expects(self::once())->method('resolveUidToNick')->with('994ZZZZZZ')->willReturn(null);
 
-        $subscriber = new ChanServTopicSyncSubscriber(
-            $this->channelRepository,
-            $this->channelServiceActions,
-            $this->syncCompletedRegistry,
-            $uidResolver,
-            'ChanServ',
-            'NickServ',
-            $this->logger,
-        );
+        $subscriber = $this->createSubscriber($uidResolver);
 
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
@@ -646,8 +620,6 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->method('save')
             ->with($registered);
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new ChannelTopicReceivedEvent(
             channelName: '#test',

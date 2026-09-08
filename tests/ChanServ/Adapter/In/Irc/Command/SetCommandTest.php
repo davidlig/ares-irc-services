@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
@@ -21,15 +20,18 @@ use App\ChanServ\Adapter\In\Irc\Command\SetSuccessorHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetTopiclockHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetUrlHandler;
 use App\ChanServ\Adapter\In\Irc\MlockStateFromChannelResolver;
-use App\ChanServ\Adapter\Out\InMemory\FounderChangeTokenRegistry;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
-use App\ChanServ\Application\Port\Out\FounderChangeMailSender;
-use App\ChanServ\Application\Port\Out\FounderChangeTokenGenerator;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
+use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandlerInterface;
+use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandlerInterface;
+use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounder;
+use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderHandlerInterface;
+use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderResult;
+use App\ChanServ\Application\UseCase\TransferFounder\TransferFounderOutcome;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
@@ -44,7 +46,6 @@ use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 #[CoversClass(SetCommand::class)]
 final class SetCommandTest extends TestCase
@@ -84,35 +85,21 @@ final class SetCommandTest extends TestCase
         $nickRepo ??= $this->createStub(ChanUserAccountPort::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
         $trans = $this->createStub(TranslationInterface::class);
         $trans->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $logger = $this->createStub(LoggerInterface::class);
 
         return new SetCommand(
             $channelRepo,
             $accessHelper,
-            new SetFounderHandler(
-                $channelRepo,
-                $accessRepo,
-                $nickRepo,
-                new FounderChangeTokenRegistry(),
-                $eventDispatcher,
-                $this->createStub(FounderChangeTokenGenerator::class),
-                $this->createStub(FounderChangeMailSender::class),
-                3600,
-                600,
-                3,
-                $logger,
-            ),
+            $this->createFounderHandler(),
             new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class)),
             new SetDescHandler($channelRepo),
             new SetUrlHandler($channelRepo),
             new SetEmailHandler($channelRepo),
             new SetEntrymsgHandler($channelRepo),
             new SetTopiclockHandler($channelRepo, $eventDispatcher),
-            new SetMlockHandler($channelRepo, $eventDispatcher, new MlockStateFromChannelResolver()),
-            new SetSecureHandler($channelRepo, $eventDispatcher),
+            new SetMlockHandler($this->createStub(ConfigureChannelMlockHandlerInterface::class), new MlockStateFromChannelResolver()),
+            new SetSecureHandler($this->createStub(ConfigureChannelSecureHandlerInterface::class)),
         );
     }
 
@@ -421,12 +408,7 @@ final class SetCommandTest extends TestCase
         $channel->method('getSuccessorNickId')->willReturn(null);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
-        $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $newFounder = new ChanAccountView(20, 'NewFounder', 'en');
-        $nickRepo = $this->createMock(ChanUserAccountPort::class);
-        $nickRepo->expects(self::once())->method('findAccountByNick')->with('NewFounder')->willReturn($newFounder);
-        $currentFounder = new ChanAccountView(10, 'CurrentFounder', 'en', email: 'founder@test.com');
-        $nickRepo->method('findAccountById')->willReturn($currentFounder);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $accessHelper = new ChanServAccessHelper(
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
@@ -439,33 +421,23 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = new ChanAccountView(10, 'User', 'en');
-        $mailSender = $this->createMock(FounderChangeMailSender::class);
-        $mailSender->expects(self::once())->method('sendFounderChangeToken');
+        $founderHandler = $this->createMock(TransferChannelFounderHandlerInterface::class);
+        $founderHandler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (TransferChannelFounder $command): bool => 'NewFounder' === $command->targetNickname,
+        ))->willReturn(new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo***@test.com'));
 
         $cmd = new SetCommand(
             $channelRepo,
             $accessHelper,
-            new SetFounderHandler(
-                $channelRepo,
-                $this->createStub(ChannelAccessRepositoryInterface::class),
-                $nickRepo,
-                new FounderChangeTokenRegistry(),
-                $this->createStub(EventBusInterface::class),
-                $this->createStub(FounderChangeTokenGenerator::class),
-                $mailSender,
-                3600,
-                600,
-                3,
-                $this->createStub(LoggerInterface::class),
-            ),
+            new SetFounderHandler($founderHandler),
             new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class)),
             new SetDescHandler($channelRepo),
             new SetUrlHandler($channelRepo),
             new SetEmailHandler($channelRepo),
             new SetEntrymsgHandler($channelRepo),
             new SetTopiclockHandler($channelRepo, $this->createStub(EventBusInterface::class)),
-            new SetMlockHandler($channelRepo, $this->createStub(EventBusInterface::class), new MlockStateFromChannelResolver()),
-            new SetSecureHandler($channelRepo, $this->createStub(EventBusInterface::class)),
+            new SetMlockHandler($this->createStub(ConfigureChannelMlockHandlerInterface::class), new MlockStateFromChannelResolver()),
+            new SetSecureHandler($this->createStub(ConfigureChannelSecureHandlerInterface::class)),
         );
         $cmd->execute($this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -580,6 +552,20 @@ final class SetCommandTest extends TestCase
         );
 
         self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    private function createFounderHandler(): SetFounderHandler
+    {
+        $handler = $this->createStub(TransferChannelFounderHandlerInterface::class);
+        $handler->method('handle')->willReturnCallback(
+            static fn (TransferChannelFounder $command): TransferChannelFounderResult => new TransferChannelFounderResult(
+                '' === $command->targetNickname
+                    ? TransferFounderOutcome::MissingTarget
+                    : TransferFounderOutcome::Ignored,
+            ),
+        );
+
+        return new SetFounderHandler($handler);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

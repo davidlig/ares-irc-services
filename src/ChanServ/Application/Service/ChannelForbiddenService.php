@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\Service;
 
+use App\ChanServ\Application\Port\In\ForbiddenChannelEnforcement;
 use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\ChanServActivitySink;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
@@ -12,9 +13,10 @@ use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 
+use function count;
 use function sprintf;
 
-readonly class ChannelForbiddenService
+readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
 {
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
@@ -126,10 +128,107 @@ readonly class ChannelForbiddenService
 
         $this->kickAllUsers($channelName);
 
-        $this->channelActions->setChannelModes($channelName, '+ntims', [], $timestamp);
+        $this->channelActions->enforceForbiddenModes($channelName, $timestamp);
 
         $this->logger->info(sprintf(
-            'ChannelForbidden: Enforced forbidden channel %s (bot joined, users kicked, +ntims set)',
+            'ChannelForbidden: Enforced forbidden channel %s (bot joined, users kicked, forbidden modes set)',
+            $channelName,
+        ));
+    }
+
+    public function enforcePublishedForbiddenChannel(string $channelName): void
+    {
+        if (!$this->channelActions->isChannelOnNetwork($channelName)) {
+            $this->logger->debug(sprintf(
+                'ChannelForbidden: channel %s not found on network, skipping enforcement',
+                $channelName,
+            ));
+
+            return;
+        }
+
+        $timestamp = $this->channelActions->getChannelTimestamp($channelName);
+        $this->channelActions->joinChannelAsService($channelName, $timestamp);
+        $this->kickAllUsers($channelName);
+        $this->channelActions->enforceForbiddenModes($channelName);
+        $this->logger->info(sprintf(
+            'ChannelForbidden: enforced forbidden channel %s (bot joined, users kicked, forbidden modes set)',
+            $channelName,
+        ));
+    }
+
+    public function releaseUnforbiddenChannel(string $channelName): void
+    {
+        if (!$this->channelActions->isChannelOnNetwork($channelName)) {
+            $this->logger->debug(sprintf(
+                'ChannelUnforbidden: channel %s not found on network, no action needed',
+                $channelName,
+            ));
+
+            return;
+        }
+
+        $this->channelActions->partChannelAsService($channelName);
+        $this->logger->info(sprintf(
+            'ChannelUnforbidden: bot left forbidden channel %s',
+            $channelName,
+        ));
+    }
+
+    public function enforceAllForbiddenChannels(): void
+    {
+        $forbiddenChannels = $this->channelRepository->findForbiddenChannels();
+        if ([] === $forbiddenChannels) {
+            return;
+        }
+
+        $this->logger->info(sprintf(
+            'ChanServForbiddenChannelBurst: enforcing %d forbidden channel(s)',
+            count($forbiddenChannels),
+        ));
+
+        foreach ($forbiddenChannels as $channel) {
+            if (!$this->channelActions->isChannelOnNetwork($channel->getName())) {
+                $this->logger->debug(sprintf(
+                    'ChanServForbiddenChannelBurst: channel %s not on network, skipping',
+                    $channel->getName(),
+                ));
+
+                continue;
+            }
+
+            $this->enforceForbiddenChannel($channel->getName());
+        }
+    }
+
+    public function enforceForbiddenUserJoin(string $channelName, string $userUid): void
+    {
+        $channel = $this->channelRepository->findByChannelName($channelName);
+        if (null === $channel || !$channel->isForbidden()) {
+            return;
+        }
+
+        $this->channelActions->kickFromChannel($channelName, $userUid, 'Forbidden channel');
+        if ($this->channelActions->isChannelOnNetwork($channelName)) {
+            $this->enforceForbiddenChannel($channelName);
+        }
+
+        $this->logger->info(sprintf(
+            'ChanServForbiddenChannelJoin: kicked user from forbidden channel %s',
+            $channelName,
+        ));
+    }
+
+    public function enforceConfiguredForbiddenChannel(string $channelName): void
+    {
+        $channel = $this->channelRepository->findByChannelName($channelName);
+        if (null === $channel || !$channel->isForbidden()) {
+            return;
+        }
+
+        $this->enforceForbiddenChannel($channelName);
+        $this->logger->info(sprintf(
+            'ChanServForbiddenChannelJoin: enforcing forbidden channel %s on sync',
             $channelName,
         ));
     }

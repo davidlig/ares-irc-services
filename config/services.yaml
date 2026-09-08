@@ -250,11 +250,17 @@ services:
     App\ChanServ\Application\Port\Out\ChannelMlockPolicyRepository:
         alias: App\ChanServ\Adapter\Out\Persistence\LegacyChannelMlockPolicyRepository
 
+    App\ChanServ\Application\Port\Out\ChannelMlockStorage:
+        alias: App\ChanServ\Adapter\Out\Persistence\LegacyChannelMlockStorage
+
     App\ChanServ\Application\Port\Out\ChannelRankNetworkQuery:
         alias: App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery
 
     App\ChanServ\Application\Port\Out\ChannelMlockNetworkQuery:
         alias: App\ChanServ\Adapter\Out\Network\IrcChannelMlockNetworkQuery
+
+    App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery:
+        alias: App\ChanServ\Adapter\Out\Network\IrcChannelEntryNetworkQuery
 
     App\ChanServ\Application\Port\Out\ChannelRankActions:
         alias: App\ChanServ\Adapter\Out\Network\IrcChannelRankActions
@@ -262,18 +268,105 @@ services:
     App\ChanServ\Application\Port\Out\ChannelModeActions:
         alias: App\ChanServ\Adapter\Out\Network\IrcChannelModeActions
 
+    App\ChanServ\Application\Port\Out\AkickActions:
+        alias: App\ChanServ\Adapter\Out\Network\IrcAkickActions
+
+    App\ChanServ\Application\Port\Out\NojoinActions:
+        alias: App\ChanServ\Adapter\Out\Network\IrcNojoinActions
+
+    App\ChanServ\Application\Port\Out\ChannelTopicNetworkQuery:
+        alias: App\ChanServ\Adapter\Out\Network\IrcChannelTopicNetworkQuery
+
+    App\ChanServ\Application\Port\Out\ChannelTopicActions:
+        alias: App\ChanServ\Adapter\Out\Network\IrcChannelTopicActions
+
+    App\ChanServ\Application\Port\Out\ChannelEntryMessageDelivery:
+        alias: App\ChanServ\Adapter\Out\Network\IrcChannelEntryMessageDelivery
+
+    App\ChanServ\Application\Port\Out\ChanServNetworkIdentity:
+        alias: App\ChanServ\Adapter\Out\Network\ServiceRegistryChanServNetworkIdentity
+
+    App\ChanServ\Application\Port\Out\ChannelTopicClock:
+        alias: App\ChanServ\Adapter\Out\Time\SystemChannelTopicClock
+
     App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandlerInterface:
         alias: App\ChanServ\Application\UseCase\EnforceRanks\EnforceChannelRanksHandler
 
     App\ChanServ\Application\UseCase\EnforceMlock\EnforceChannelMlockHandlerInterface:
         alias: App\ChanServ\Application\UseCase\EnforceMlock\EnforceChannelMlockHandler
 
+    App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandler
+
+    App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicksHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\EnforceAkick\SynchronizeAllChannelAkicksHandler
+
+    App\ChanServ\Application\UseCase\EnforceNojoin\EnforceChannelNojoinHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\EnforceNojoin\EnforceChannelNojoinHandler
+
+    App\ChanServ\Application\UseCase\EnforceNojoin\SynchronizeAllChannelNojoinHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\EnforceNojoin\SynchronizeAllChannelNojoinHandler
+
+    App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandler
+
+    App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandler
+
+    App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsHandler
+
+    App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessHandler
+
+    App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickHandler
+
+    App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderHandler
+
+    App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopicHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopicHandler
+
+    App\ChanServ\Application\UseCase\SynchronizeTopic\SynchronizeReceivedChannelTopicHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\SynchronizeTopic\SynchronizeReceivedChannelTopicHandler
+
+    App\ChanServ\Application\UseCase\DeliverEntryMessage\DeliverChannelEntryMessageHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\DeliverEntryMessage\DeliverChannelEntryMessageHandler
+
     App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery:
         arguments:
             $chanservNick: '%chanserv.nick%'
 
+    App\ChanServ\Adapter\Out\Network\IrcChannelEntryNetworkQuery:
+        arguments:
+            $chanservNick: '%chanserv.nick%'
+
+    App\ChanServ\Adapter\Out\Network\IrcAkickActions:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\ChanServ\Adapter\Out\Network\IrcNojoinActions:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\ChanServ\Application\UseCase\EnforceNojoin\EnforceChannelNojoinHandler:
+        arguments:
+            $defaultLanguage: '%services.default_language%'
+
+    App\ChanServ\Application\UseCase\SynchronizeTopic\SynchronizeReceivedChannelTopicHandler:
+        arguments:
+            $chanservNick: '%chanserv.nick%'
+            $nickservNick: '%nickserv.nick%'
+
     App\ChanServ\Application\Port\In\NickChannelAssociationQuery:
         alias: App\ChanServ\Application\Service\NickChannelAssociationQueryService
+
+    App\ChanServ\Application\Port\In\RegisteredChannelSetup:
+        alias: App\ChanServ\Application\Service\RegisteredChannelSetupService
+
+    App\ChanServ\Application\Port\Out\RegisteredChannelSetupActions:
+        alias: App\ChanServ\Adapter\Out\Network\IrcRegisteredChannelSetupActions
 
     App\NickServ\Application\UseCase\Identify\IdentifyNickHandlerInterface:
         alias: App\NickServ\Application\UseCase\Identify\IdentifyNickHandler
@@ -339,6 +432,13 @@ services:
             $nickservNick: '%nickserv.nick%'
 
     App\NickServ\Adapter\Out\Mail\RegistrationVerificationEmailHandler:
+        arguments:
+            $from: '%mailer.from%'
+            $senderName: '%irc.server_name%'
+            $sendDelaySeconds: '%mailer.send_delay_seconds%'
+        tags: ['messenger.message_handler']
+
+    App\ChanServ\Adapter\Out\Mail\FounderChangeEmailHandler:
         arguments:
             $from: '%mailer.from%'
             $senderName: '%irc.server_name%'
@@ -719,23 +819,6 @@ services:
         tags: ['service_command_listener']
 
     App\ChanServ\Adapter\In\Event\ChanServRejoinSubscriber:
-        arguments:
-            $logger: '@monolog.logger.irc'
-
-    App\ChanServ\Adapter\In\Event\ChanServEntryMsgSubscriber:
-        arguments:
-            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
-
-    App\ChanServ\Adapter\In\Event\ChanServTopicApplySubscriber:
-        arguments:
-            $logger: '@monolog.logger.irc'
-
-    App\ChanServ\Adapter\In\Event\ChanServTopicSyncSubscriber:
-        arguments:
-            $chanservNick: '%chanserv.nick%'
-            $nickservNick: '%nickserv.nick%'
-            $logger: '@monolog.logger.irc'
-
     App\Irc\Adapter\Network\NetworkStateSubscriber:
         arguments:
             $logger: '@monolog.logger.irc'
@@ -1022,6 +1105,13 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
 
+    App\ChanServ\Application\Port\Out\NickDropCleanupActivitySink:
+        alias: App\ChanServ\Adapter\Out\Service\PsrNickDropCleanupActivitySink
+
+    App\ChanServ\Adapter\Out\Service\PsrNickDropCleanupActivitySink:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
     App\ChanServ\Application\Port\Out\ChannelSuspensionNotifier:
         alias: App\ChanServ\Adapter\Out\Service\ChanServSuspensionNoticeAdapter
 
@@ -1112,12 +1202,11 @@ services:
     App\ChanServ\Adapter\In\Irc\Command\SetCommand:
         tags: ['chanserv.command']
 
-    App\ChanServ\Adapter\In\Irc\Command\SetFounderHandler:
+    App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderHandler:
         arguments:
             $founderTokenTtlSeconds: '%chanserv.founder_token_ttl_seconds%'
             $founderMinIntervalSeconds: '%chanserv.founder_min_interval_seconds%'
             $maxChannelsPerNick: '%chanserv.max_channels_per_nick%'
-            $logger: '@monolog.logger.irc'
 
     # Commands
     App\ChanServ\Adapter\In\Irc\Command\RegisterCommand:
@@ -1246,43 +1335,27 @@ services:
 
     # Event Subscribers
     App\ChanServ\Adapter\In\Event\ChanServChannelForbiddenSubscriber:
-        arguments:
-            $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     App\ChanServ\Adapter\In\Event\ChanServChannelUnforbiddenSubscriber:
-        arguments:
-            $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     App\ChanServ\Adapter\In\Event\ChanServForbiddenChannelBurstSubscriber:
-        arguments:
-            $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     App\ChanServ\Adapter\In\Event\ChanServForbiddenChannelJoinSubscriber:
-        arguments:
-            $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     App\ChanServ\Adapter\In\Event\ChanServAkickEnforceSubscriber:
-        arguments:
-            $chanservNick: '%chanserv.nick%'
-            $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     App\ChanServ\Adapter\In\Event\ChanServUnsuspendSubscriber:
         arguments:
             $debugNotifier: '@App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier'
             $defaultLanguage: '%services.default_language%'
-            $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     App\ChanServ\Adapter\In\Event\ChanServNojoinEnforceSubscriber:
-        arguments:
-            $chanservNick: '%chanserv.nick%'
-            $defaultLanguage: '%services.default_language%'
-            $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     # --- MemoServ Service -------------------------------------------------------
@@ -2139,12 +2212,7 @@ services:
         arguments:
             $debugNotifiers: !tagged_iterator app.debug_notifier
             $debugChannel: '%ircops.debug_channel%'
-            $registeredChannelRepository: '@App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface'
-            $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
-            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
-            $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
-            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
-            $logger: '@monolog.logger.ircops'
+            $registeredChannelSetup: '@App\ChanServ\Application\Port\In\RegisteredChannelSetup'
         tags: ['kernel.event_subscriber']
 
     # --- IRCop Command Audit ----------------------------------------------------

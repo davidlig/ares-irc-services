@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
+use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceUidProviderInterface;
 use App\Application\Shared\ServiceUidRegistry;
 use App\ChanServ\Adapter\In\Event\ChanServEntryMsgSubscriber;
-use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Adapter\Out\Network\IrcChannelEntryMessageDelivery;
+use App\ChanServ\Adapter\Out\Network\ServiceRegistryChanServNetworkIdentity;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\UseCase\DeliverEntryMessage\DeliverChannelEntryMessage;
+use App\ChanServ\Application\UseCase\DeliverEntryMessage\DeliverChannelEntryMessageHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -17,11 +21,15 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ChanServEntryMsgSubscriber::class)]
+#[CoversClass(IrcChannelEntryMessageDelivery::class)]
+#[CoversClass(ServiceRegistryChanServNetworkIdentity::class)]
+#[CoversClass(DeliverChannelEntryMessage::class)]
+#[CoversClass(DeliverChannelEntryMessageHandler::class)]
 final class ChanServEntryMsgSubscriberTest extends TestCase
 {
     private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
 
-    private ChanServNotifierInterface&MockObject $notifier;
+    private MockObject&SendNoticePort $notifier;
 
     private ChanServEntryMsgSubscriber $subscriber;
 
@@ -30,11 +38,14 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
     protected function setUp(): void
     {
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $this->notifier = $this->createMock(ChanServNotifierInterface::class);
+        $this->notifier = $this->createMock(SendNoticePort::class);
+        $uidRegistry = $this->createUidRegistry();
         $this->subscriber = new ChanServEntryMsgSubscriber(
-            $this->channelRepository,
-            $this->notifier,
-            $this->createUidRegistry(),
+            new DeliverChannelEntryMessageHandler(
+                $this->channelRepository,
+                new IrcChannelEntryMessageDelivery($this->notifier, $uidRegistry),
+                new ServiceRegistryChanServNetworkIdentity($uidRegistry),
+            ),
         );
     }
 
@@ -91,7 +102,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
         $this->notifier
             ->expects(self::once())
             ->method('sendNotice')
-            ->with('001ABCD', "[\x0303#test\x03] Welcome to #test!");
+            ->with('001CHAN', '001ABCD', "[\x0303#test\x03] Welcome to #test!");
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -189,7 +200,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
         $this->notifier
             ->expects(self::once())
             ->method('sendNotice')
-            ->with('001ABCD', "[\x0303#test\x03] Welcome to #test! Enjoy your stay :)");
+            ->with('001CHAN', '001ABCD', "[\x0303#test\x03] Welcome to #test! Enjoy your stay :)");
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -227,7 +238,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
         $this->notifier
             ->expects(self::once())
             ->method('sendNotice')
-            ->with('001ABCD', "[\x0303#test\x03] Welcome operator!");
+            ->with('001CHAN', '001ABCD', "[\x0303#test\x03] Welcome operator!");
 
         $this->subscriber->onUserJoinedChannel($event);
     }
