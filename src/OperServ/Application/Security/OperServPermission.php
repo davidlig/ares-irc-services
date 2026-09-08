@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\OperServ\Security;
+namespace App\OperServ\Application\Security;
 
 final class OperServPermission
 {

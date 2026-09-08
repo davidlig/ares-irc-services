@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Subscriber;
 
-use App\Application\OperServ\OperServService as LegacyOperServService;
 use App\Application\OperServ\Port\Out\ServiceUserPreferences;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceCommandListenerInterface;
@@ -20,7 +19,7 @@ final readonly class OperServCommandListener implements ServiceCommandListenerIn
 {
     public function __construct(
         private OperServBot $operServBot,
-        private LegacyOperServService|OperServService $operServService,
+        private OperServService $operServService,
         private NetworkUserLookupPort $userLookup,
         private SendNoticePort $sendNotice,
         private ServiceUserPreferences $messageTypeResolver,

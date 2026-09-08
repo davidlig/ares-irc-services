@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Service;
 
-use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
@@ -12,6 +11,7 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterface

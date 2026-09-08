@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\OperServ\Security;
 
 use App\Application\Security\PermissionProviderInterface;
+use App\OperServ\Application\Security\OperServPermission;
 
 final readonly class OperServIrcopPermission implements PermissionProviderInterface
 {

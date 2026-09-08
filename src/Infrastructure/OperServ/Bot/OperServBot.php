@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Bot;
 
-use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceUidProviderInterface;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
@@ -18,7 +17,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class OperServBot implements OperServNotifierInterface, NewOperServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
+final class OperServBot implements NewOperServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
 {
     private string $uid = '';
 

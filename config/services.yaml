@@ -791,7 +791,7 @@ services:
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $sendNotice: '@App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter'
             $messageTypeResolver: '@App\Irc\Application\Port\Out\ServiceUserPreferences'
-            $notifier: '@App\Application\OperServ\Command\OperServNotifierInterface'
+            $notifier: '@App\OperServ\Adapter\In\Irc\OperServNotifierInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
@@ -2003,10 +2003,6 @@ services:
 
     App\Application\OperServ\IrcopAccessHelper: ~
 
-    App\Application\OperServ\Command\OperServCommandRegistry:
-        arguments:
-            $commands: !tagged_iterator operserv.command
-
     App\OperServ\Adapter\In\Irc\OperServCommandRegistry:
         arguments:
             $commands: !tagged_iterator operserv.command.new
@@ -2018,19 +2014,6 @@ services:
             $defaultTimezone: '%services.default_timezone%'
 
 
-    App\Application\OperServ\OperServService:
-        arguments:
-            $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
-            $languageResolver: '@App\Application\OperServ\Port\Out\ServiceUserPreferences'
-            $authorizationContext: '@App\NickServ\Application\Port\Out\AuthorizationContextInterface'
-            $authorizationChecker: '@App\NickServ\Application\Port\Out\AuthorizationCheckerInterface'
-            $defaultLanguage: '%services.default_language%'
-            $defaultTimezone: '%services.default_timezone%'
-            $logger: '@monolog.logger.irc'
-
-    App\Application\OperServ\Command\Handler\IrcopCommand:
-        tags: ['operserv.command']
-
     App\Application\OperServ\IrcopModeApplier:
         arguments:
             $identifiedRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
@@ -2039,16 +2022,6 @@ services:
             $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $userLookup: '@App\Irc\Adapter\ServiceBridge\CoreNetworkUserLookupAdapter'
             $logger: '@monolog.logger.irc'
-
-    App\Application\OperServ\Command\Handler\RoleCommand:
-        tags: ['operserv.command']
-
-    App\Application\OperServ\Command\Handler\RolePermissionsHandler:
-        arguments:
-            $permissionRegistry: '@App\Application\Security\PermissionRegistry'
-
-    App\Application\OperServ\Command\Handler\HelpCommand:
-        tags: ['operserv.command']
 
     App\OperServ\Adapter\In\Irc\Command\HelpCommand:
         tags: ['operserv.command.new']
@@ -2149,12 +2122,6 @@ services:
     App\OperServ\Adapter\In\Irc\Command\GlobalCommand:
         tags: ['operserv.command.new']
 
-    App\Application\OperServ\Command\Handler\MotdCommand:
-        arguments:
-            $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
-            $debugNotifier: '@App\Infrastructure\OperServ\Service\OperServDebugNotifier'
-        tags: ['operserv.command']
-
     # --- OperServ Infrastructure -------------------------------------------------
 
     App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter:
@@ -2170,9 +2137,6 @@ services:
             $logger: '@monolog.logger.irc'
             $sendNoticePort: '@App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter'
         tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
-
-    App\Application\OperServ\Command\OperServNotifierInterface:
-        alias: App\Infrastructure\OperServ\Bot\OperServBot
 
     App\OperServ\Adapter\In\Irc\OperServNotifierInterface:
         alias: App\Infrastructure\OperServ\Bot\OperServBot
@@ -2229,7 +2193,7 @@ services:
         arguments:
             $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $notifier: '@App\Application\OperServ\Command\OperServNotifierInterface'
+            $notifier: '@App\OperServ\Adapter\In\Irc\OperServNotifierInterface'
             $identifiedRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
             $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
@@ -2240,50 +2204,9 @@ services:
         tags: ['app.debug_notifier']
 
 
-    App\Application\OperServ\Command\Handler\KillCommand:
-        arguments:
-            $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $nickRepo: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
-            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
-            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
-            $logger: '@monolog.logger.ircops'
-        tags: ['operserv.command']
-
-    App\Application\OperServ\Command\Handler\GlineCommand:
-        arguments:
-            $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
-            $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
-            $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
-            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
-            $logger: '@monolog.logger.ircops'
-            $maxGlines: '%operserv.max_glines%'
-        tags: ['operserv.command']
-
     App\Application\OperServ\Service\PseudoClientUidGenerator:
         arguments:
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
-
-    App\Application\OperServ\Command\Handler\GlobalCommand:
-        arguments:
-            $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
-            $serviceUidRegistry: '@App\Application\Shared\ServiceUidRegistry'
-            $uidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
-            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
-            $sendNoticePort: '@App\Application\Port\SendNoticePort'
-            $logger: '@monolog.logger.ircops'
-        tags: ['operserv.command']
-
-    App\Application\OperServ\Command\Handler\RawCommand:
-        arguments:
-            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
-            $udbCommands: '@App\Application\Port\UdbRawCommandHandlerProviderInterface'
-        tags: ['operserv.command']
 
     App\Application\Port\UdbRawCommandHandlerProviderInterface:
         alias: App\Infrastructure\IRC\Connection\ActiveUdbRawCommandHandlerProvider

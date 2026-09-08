@@ -4,19 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
-use App\Application\OperServ\Command\OperServCommandInterface;
-use App\Application\OperServ\Command\OperServCommandRegistry;
-use App\Application\OperServ\Command\OperServContext;
-use App\Application\OperServ\Command\OperServNotifierInterface;
-use App\Application\OperServ\IrcopAccessHelper;
-use App\Application\OperServ\OperServService;
 use App\Application\OperServ\Port\Out\ServiceUserPreferences;
-use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\EventBusInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\TranslationInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Infrastructure\OperServ\Bot\OperServBot;
 use App\Infrastructure\OperServ\Subscriber\OperServCommandListener;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
@@ -25,9 +15,14 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
-use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
-use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickAccountQuery;
+use App\NickServ\Application\Port\In\UserLanguageQuery;
+use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
+use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
+use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
+use App\OperServ\Adapter\In\Irc\OperServContext;
+use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
+use App\OperServ\Adapter\In\Irc\OperServService;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
@@ -56,15 +51,6 @@ final class OperServCommandListenerTest extends TestCase
             isOper: true,
             serverSid: '001',
         );
-    }
-
-    private static function createAccessHelper(): IrcopAccessHelper
-    {
-        $rootRegistry = new RootUserRegistry('');
-        $ircopRepo = self::createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = self::createStub(OperRoleRepositoryInterface::class);
-
-        return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
     private static function createServiceNicks(): ServiceNicknameRegistry
@@ -128,6 +114,27 @@ final class OperServCommandListenerTest extends TestCase
             $memoservProvider,
             $operservProvider,
         ]);
+    }
+
+    private static function createOperServService(OperServCommandRegistry $registry, OperServNotifierInterface $notifier): OperServService
+    {
+        $preferences = self::createStub(UserMessagePreferenceQuery::class);
+        $preferences->method('prefersPrivateMessages')->willReturn(false);
+        $language = self::createStub(UserLanguageQuery::class);
+        $language->method('resolveFromAccount')->willReturn('en');
+
+        return new OperServService(
+            $registry,
+            self::createStub(NickAccountQuery::class),
+            $language,
+            $preferences,
+            $notifier,
+            self::createStub(TranslationInterface::class),
+            self::createServiceNicks(),
+            self::createStub(OperatorAuthorizationQuery::class),
+            'en',
+            'UTC',
+        );
     }
 
     private static function createThrowCommand(string $name, Throwable $e): OperServCommandInterface
@@ -214,30 +221,11 @@ final class OperServCommandListenerTest extends TestCase
             '001',
         ));
 
-        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
         $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
-        $translator = self::createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
-        $accessHelper = self::createAccessHelper();
 
-        $operServService = new OperServService(
-            new OperServCommandRegistry([]),
-            $nickRepository,
-            $messageTypeResolver,
-            $operServNotifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            self::createServiceNicks(),
-            self::createStub(AuthorizationContextInterface::class),
-            self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventBusInterface::class),
-            self::createStub(OperatorAuthorizationQuery::class),
-            'en',
-            'UTC',
-        );
+        $operServService = self::createOperServService(new OperServCommandRegistry([]), $operServNotifier);
 
         $userLookup = self::createStub(NetworkUserLookupPort::class);
         $sendNotice = self::createStub(SendNoticePort::class);
@@ -277,30 +265,11 @@ final class OperServCommandListenerTest extends TestCase
             '001',
         ));
 
-        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
         $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
-        $translator = self::createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
-        $accessHelper = self::createAccessHelper();
 
-        $operServService = new OperServService(
-            new OperServCommandRegistry([]),
-            $nickRepository,
-            $messageTypeResolver,
-            $operServNotifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            self::createServiceNicks(),
-            self::createStub(AuthorizationContextInterface::class),
-            self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventBusInterface::class),
-            self::createStub(OperatorAuthorizationQuery::class),
-            'en',
-            'UTC',
-        );
+        $operServService = self::createOperServService(new OperServCommandRegistry([]), $operServNotifier);
 
         $userLookup = self::createStub(NetworkUserLookupPort::class);
         $sendNotice = self::createStub(SendNoticePort::class);
@@ -338,32 +307,13 @@ final class OperServCommandListenerTest extends TestCase
             '001',
         ));
 
-        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
         $operServNotifier->expects(self::never())->method('sendMessage');
 
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
         $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
-        $translator = self::createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
-        $accessHelper = self::createAccessHelper();
 
-        $operServService = new OperServService(
-            new OperServCommandRegistry([]),
-            $nickRepository,
-            $messageTypeResolver,
-            $operServNotifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            self::createServiceNicks(),
-            self::createStub(AuthorizationContextInterface::class),
-            self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventBusInterface::class),
-            self::createStub(OperatorAuthorizationQuery::class),
-            'en',
-            'UTC',
-        );
+        $operServService = self::createOperServService(new OperServCommandRegistry([]), $operServNotifier);
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::never())->method('findByUid');
@@ -407,30 +357,11 @@ final class OperServCommandListenerTest extends TestCase
             '001',
         ));
 
-        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
         $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
-        $translator = self::createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
-        $accessHelper = self::createAccessHelper();
 
-        $operServService = new OperServService(
-            new OperServCommandRegistry([]),
-            $nickRepository,
-            $messageTypeResolver,
-            $operServNotifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            self::createServiceNicks(),
-            self::createStub(AuthorizationContextInterface::class),
-            self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventBusInterface::class),
-            self::createStub(OperatorAuthorizationQuery::class),
-            'en',
-            'UTC',
-        );
+        $operServService = self::createOperServService(new OperServCommandRegistry([]), $operServNotifier);
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::once())->method('findByUid')->with(self::SENDER_UID)->willReturn(null);
@@ -473,32 +404,13 @@ final class OperServCommandListenerTest extends TestCase
             '001',
         ));
 
-        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
         $operServNotifier->expects(self::once())->method('sendMessage')->with(self::SENDER_UID, self::anything(), 'NOTICE');
 
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
         $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
-        $translator = self::createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
-        $accessHelper = self::createAccessHelper();
 
-        $operServService = new OperServService(
-            new OperServCommandRegistry([]),
-            $nickRepository,
-            $messageTypeResolver,
-            $operServNotifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            self::createServiceNicks(),
-            self::createStub(AuthorizationContextInterface::class),
-            self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventBusInterface::class),
-            self::createStub(OperatorAuthorizationQuery::class),
-            'en',
-            'UTC',
-        );
+        $operServService = self::createOperServService(new OperServCommandRegistry([]), $operServNotifier);
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::once())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
@@ -540,32 +452,13 @@ final class OperServCommandListenerTest extends TestCase
             '001',
         ));
 
-        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
         $operServNotifier->expects(self::once())->method('sendMessage');
 
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
         $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
-        $translator = self::createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
-        $accessHelper = self::createAccessHelper();
 
-        $operServService = new OperServService(
-            new OperServCommandRegistry([]),
-            $nickRepository,
-            $messageTypeResolver,
-            $operServNotifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            self::createServiceNicks(),
-            self::createStub(AuthorizationContextInterface::class),
-            self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventBusInterface::class),
-            self::createStub(OperatorAuthorizationQuery::class),
-            'en',
-            'UTC',
-        );
+        $operServService = self::createOperServService(new OperServCommandRegistry([]), $operServNotifier);
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::once())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
@@ -612,30 +505,11 @@ final class OperServCommandListenerTest extends TestCase
         );
 
         $throwCommand = self::createThrowCommand('TEST', new RuntimeException('Test error.'));
-        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
         $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
-        $translator = self::createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $accessHelper = self::createAccessHelper();
 
-        $operServService = new OperServService(
-            new OperServCommandRegistry([$throwCommand]),
-            $nickRepository,
-            $messageTypeResolver,
-            $operServNotifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            self::createServiceNicks(),
-            self::createStub(AuthorizationContextInterface::class),
-            self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventBusInterface::class),
-            self::createStub(OperatorAuthorizationQuery::class),
-            'en',
-            'UTC',
-        );
+        $operServService = self::createOperServService(new OperServCommandRegistry([$throwCommand]), $operServNotifier);
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);

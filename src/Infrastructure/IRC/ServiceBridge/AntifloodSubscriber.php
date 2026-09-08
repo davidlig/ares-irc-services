@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SendNoticePort;
 use App\Application\Services\Antiflood\AntifloodRegistry;
@@ -13,6 +12,7 @@ use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\Out\ServiceUserPreferences;
+use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

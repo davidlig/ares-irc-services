@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Irc\Command;
 
-use App\Application\OperServ\Security\OperServPermission;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
+use App\OperServ\Application\Security\OperServPermission;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUser;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserOutcome;

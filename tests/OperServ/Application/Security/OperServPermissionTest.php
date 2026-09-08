@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Application\OperServ\Security;
+namespace App\Tests\OperServ\Application\Security;
 
-use App\Application\OperServ\Security\OperServPermission;
+use App\OperServ\Application\Security\OperServPermission;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
