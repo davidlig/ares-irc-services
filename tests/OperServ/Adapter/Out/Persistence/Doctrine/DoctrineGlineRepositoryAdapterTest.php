@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\OperServ\Adapter\Out\Persistence\Legacy;
+namespace App\Tests\OperServ\Adapter\Out\Persistence\Doctrine;
 
 use App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineGlineRepositoryAdapter;
 use App\OperServ\Application\Port\Out\GlineEntry;

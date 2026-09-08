@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\OperServ\Adapter\In\Event;
+namespace App\Tests\OperServ\Application;
 
 use App\OperServ\Application\ProtectedNickQueryService;
 use App\OperServ\Application\RootUserRegistry;
