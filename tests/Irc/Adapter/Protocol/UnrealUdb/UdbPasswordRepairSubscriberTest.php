@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\Domain\OperServ\Repository\GlineRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
@@ -16,14 +13,14 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbPasswordRepairSubscrib
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\OperServ\Application\Port\In\GlineProjectionQuery;
+use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use ReflectionClass;
 
 #[CoversClass(UdbPasswordRepairSubscriber::class)]
 final class UdbPasswordRepairSubscriberTest extends TestCase
@@ -179,7 +176,7 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
     }
 
     /**
-     * @param list<RegisteredNick>  $nicks
+     * @param list<NickProjection>  $nicks
      * @param array<string, string> $store
      */
     private function createSubscriber(
@@ -187,7 +184,7 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
         array $nicks = [],
         array $store = [],
     ): UdbPasswordRepairSubscriber {
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('all')->willReturn($nicks);
 
         $recordRepository = $this->createStub(UdbRecordRepositoryInterface::class);
@@ -202,30 +199,25 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
         );
     }
 
-    private function createExporter(RegisteredNickRepositoryInterface $nickRepository): UdbRecordExporter
+    private function createExporter(NickProjectionQuery $nickRepository): UdbRecordExporter
     {
         return new UdbRecordExporter(
             $nickRepository,
-            $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(ChannelAccessRepositoryInterface::class),
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(GlineRepositoryInterface::class),
+            $this->createStub(ChannelProjectionQuery::class),
+            $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
     }
 
-    private function createNick(string $nickname, string $passwordHash = self::BCRYPT_HASH): RegisteredNick
+    private function createNick(string $nickname, string $passwordHash = self::BCRYPT_HASH): NickProjection
     {
-        $nick = RegisteredNick::createPending($nickname, $passwordHash, 'owner@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
-        $nick->activate();
-        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($nick, 7);
-
-        return $nick;
+        return new NickProjection(7, $nickname, $passwordHash, null);
     }
 
-    private function createForbidden(string $nickname): RegisteredNick
+    private function createForbidden(string $nickname): NickProjection
     {
-        return RegisteredNick::createForbidden($nickname, 'forbidden', 'en');
+        return new NickProjection(7, $nickname, null, null);
     }
 }

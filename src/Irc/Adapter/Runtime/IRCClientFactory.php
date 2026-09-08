@@ -7,8 +7,6 @@ namespace App\Irc\Adapter\Runtime;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
-use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
-use App\Infrastructure\IRC\Runtime\RevoltLoopScheduler;
 use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
 use App\Irc\Application\BurstCompleteRegistry;
 use App\Irc\Domain\Server\ServerLink;

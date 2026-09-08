@@ -474,9 +474,9 @@ services:
 
     # --- Application services — inject the irc Monolog channel ---------------
 
-    App\Infrastructure\IRC\Runtime\RevoltLoopScheduler: ~
+    App\Irc\Adapter\Runtime\RevoltLoopScheduler: ~
 
-    App\Infrastructure\IRC\Runtime\LoopSchedulerInterface: '@App\Infrastructure\IRC\Runtime\RevoltLoopScheduler'
+    App\Irc\Adapter\Runtime\LoopSchedulerInterface: '@App\Irc\Adapter\Runtime\RevoltLoopScheduler'
 
     App\Irc\Adapter\Runtime\IRCClientFactoryInterface: '@App\Irc\Adapter\Runtime\IRCClientFactory'
 
@@ -686,7 +686,7 @@ services:
 
     App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbMigrationState: ~
 
-    App\Application\Port\PasswordMigrationStateInterface:
+    App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\PasswordMigrationStateInterface:
         alias: App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbMigrationState
 
     App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbModule:
@@ -1933,6 +1933,18 @@ services:
 
     App\NickServ\Adapter\Out\User\NickAccountResolver: ~
 
+    App\NickServ\Application\Port\In\NickProjectionQuery:
+        alias: App\NickServ\Adapter\Out\User\NickProjectionResolver
+
+    App\ChanServ\Application\Port\In\ChannelProjectionQuery:
+        alias: App\ChanServ\Adapter\Out\Projection\ChannelProjectionResolver
+
+    App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorNetworkProjectionQuery
+
+    App\OperServ\Application\Port\In\GlineProjectionQuery:
+        alias: App\OperServ\Adapter\Out\Legacy\LegacyGlineProjectionQuery
+
     App\NickServ\Application\Port\In\NickAccountQuery:
         alias: App\NickServ\Adapter\Out\User\NickAccountResolver
 
@@ -2035,7 +2047,10 @@ services:
         alias: App\OperServ\Adapter\Out\Irc\LegacyRawLineTransport
 
     App\OperServ\Application\Port\Out\RawDatabaseMutationHandler:
-        alias: App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawDatabaseMutationAdapter
+        alias: App\OperServ\Adapter\Out\Irc\ProtocolRawDatabaseMutationHandler
+
+    App\Irc\Application\Port\In\ProtocolDatabaseMutation:
+        alias: App\Irc\Adapter\Protocol\UnrealUdb\ActiveUdbDatabaseMutation
 
     App\OperServ\Adapter\In\Irc\Command\RawCommand:
         tags: ['operserv.command.new']

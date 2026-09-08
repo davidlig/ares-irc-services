@@ -6,42 +6,36 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelModeSupportInterface;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Domain\Entity\ChannelAccess;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\ValueObject\ChannelStatus;
-use App\Domain\OperServ\Entity\Gline;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\GlineRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\ChanServ\Application\Port\In\ChannelAccessProjection;
+use App\ChanServ\Application\Port\In\ChannelProjection;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\OperServ\Application\Port\In\GlineProjection;
+use App\OperServ\Application\Port\In\GlineProjectionQuery;
+use App\OperServ\Application\Port\In\OperatorNetworkProjection;
+use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use RuntimeException;
 
 #[CoversClass(UdbRecordExporter::class)]
 final class UdbRecordExporterTest extends TestCase
 {
-    private RegisteredNickRepositoryInterface&Stub $nickRepository;
+    private NickProjectionQuery&Stub $nicks;
 
-    private RegisteredChannelRepositoryInterface&Stub $channelRepository;
+    private ChannelProjectionQuery&Stub $channels;
 
-    private ChannelAccessRepositoryInterface&Stub $accessRepository;
+    private OperatorNetworkProjectionQuery&Stub $operators;
 
-    private OperIrcopRepositoryInterface&Stub $ircopRepository;
-
-    private GlineRepositoryInterface&Stub $glineRepository;
+    private GlineProjectionQuery&Stub $glines;
 
     private ChannelLookupPort $channelLookup;
 
@@ -49,19 +43,17 @@ final class UdbRecordExporterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $this->channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $this->accessRepository = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $this->ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $this->glineRepository = $this->createStub(GlineRepositoryInterface::class);
+        $this->nicks = $this->createStub(NickProjectionQuery::class);
+        $this->channels = $this->createStub(ChannelProjectionQuery::class);
+        $this->operators = $this->createStub(OperatorNetworkProjectionQuery::class);
+        $this->glines = $this->createStub(GlineProjectionQuery::class);
         $this->channelLookup = $this->createStub(ChannelLookupPort::class);
 
         $this->exporter = new UdbRecordExporter(
-            $this->nickRepository,
-            $this->channelRepository,
-            $this->accessRepository,
-            $this->ircopRepository,
-            $this->glineRepository,
+            $this->nicks,
+            $this->channels,
+            $this->operators,
+            $this->glines,
             $this->channelLookup,
             $this->createModeSupportProvider(),
         );
@@ -96,13 +88,9 @@ final class UdbRecordExporterTest extends TestCase
     public function effectiveVhostPrefersRoleForcedPattern(): void
     {
         $nick = $this->createNick('davidlig', vhost: 'personal.tld');
-        $role = OperRole::create('netadmin');
-        $roleProp = new ReflectionClass(OperRole::class)->getProperty('forcedVhostPattern');
-        $roleProp->setValue($role, 'staff.example.net');
-
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create($nick->getId(), $role));
-        $exporter = $this->createExporterWithIrcopRepo($ircopRepo);
+        $operators = $this->createStub(OperatorNetworkProjectionQuery::class);
+        $operators->method('findForNick')->willReturn(new OperatorNetworkProjection($nick->id, 'davidlig.staff.example.net', null));
+        $exporter = $this->createExporterWithOperators($operators);
 
         self::assertSame('davidlig.staff.example.net', $exporter->effectiveVhost($nick));
     }
@@ -126,11 +114,9 @@ final class UdbRecordExporterTest extends TestCase
     {
         $bcryptHash = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';
         $nick = $this->createNick('davidlig', vhost: 'david.tld', passwordHash: $bcryptHash);
-        $role = OperRole::create('netadmin');
-        $role->changeOperclass('services:netadmin');
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create($nick->getId(), $role));
-        $exporter = $this->createExporterWithIrcopRepo($ircopRepo);
+        $operators = $this->createStub(OperatorNetworkProjectionQuery::class);
+        $operators->method('findForNick')->willReturn(new OperatorNetworkProjection($nick->id, null, 'services:netadmin'));
+        $exporter = $this->createExporterWithOperators($operators);
 
         self::assertSame([
             'davidlig::pass' => 'crypt:' . $bcryptHash,
@@ -160,24 +146,22 @@ final class UdbRecordExporterTest extends TestCase
     public function channelRecordsBuildFullActiveProfile(): void
     {
         $founder = $this->createNick('founder');
-        $channel = $this->createChannel('#chan', founderNickId: 7, topic: 'Welcome', mlockActive: true, topicLock: true);
-
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findById')->willReturnCallback(static fn (int $id): ?RegisteredNick => 7 === $id ? $founder : null);
-
-        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $accessRepo->method('listByChannel')->willReturn([
-            new ChannelAccess(1, 7, 300),
-        ]);
-
-        $channel->configureMlock(true, '+nt');
+        $nicks = $this->createStub(NickProjectionQuery::class);
+        $nicks->method('findById')->willReturnCallback(static fn (int $id): ?NickProjection => 7 === $id ? $founder : null);
+        $channel = $this->createChannel(
+            '#chan',
+            founderNickId: 7,
+            topic: 'Welcome',
+            mlockActive: true,
+            topicLock: true,
+            access: [new ChannelAccessProjection(7, 300)],
+        );
 
         $exporter = new UdbRecordExporter(
-            $nickRepo,
-            $this->channelRepository,
-            $accessRepo,
-            $this->ircopRepository,
-            $this->createStub(GlineRepositoryInterface::class),
+            $nicks,
+            $this->channels,
+            $this->operators,
+            $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createModeSupportProvider(),
         );
@@ -206,7 +190,7 @@ final class UdbRecordExporterTest extends TestCase
     #[Test]
     public function suspendedChannelExportsSuspendedRecordWithoutPersistentBit(): void
     {
-        $channel = $this->createChannel('#suspended', status: ChannelStatus::Suspended);
+        $channel = $this->createChannel('#suspended', suspended: true);
 
         $records = $this->exporter->channelRecords($channel);
 
@@ -217,7 +201,7 @@ final class UdbRecordExporterTest extends TestCase
     #[Test]
     public function forbiddenChannelExportsOnlyForbidRecord(): void
     {
-        $channel = $this->createChannel('#bad', status: ChannelStatus::Forbidden, forbiddenReason: 'spam');
+        $channel = $this->createChannel('#bad', forbidden: true, forbiddenReason: 'spam');
 
         self::assertSame(['#bad::forbid' => 'spam'], $this->exporter->channelRecords($channel));
     }
@@ -225,7 +209,7 @@ final class UdbRecordExporterTest extends TestCase
     #[Test]
     public function forbiddenChannelWithoutReasonExportsNothing(): void
     {
-        $channel = $this->createChannel('#bad', status: ChannelStatus::Forbidden);
+        $channel = $this->createChannel('#bad', forbidden: true);
 
         self::assertSame([], $this->exporter->channelRecords($channel));
     }
@@ -237,38 +221,25 @@ final class UdbRecordExporterTest extends TestCase
         self::assertSame(10, $this->exporter->channelOptions($this->createChannel('#m', mlockActive: true)));
         self::assertSame(12, $this->exporter->channelOptions($this->createChannel('#t', topicLock: true)));
         self::assertSame(14, $this->exporter->channelOptions($this->createChannel('#mt', mlockActive: true, topicLock: true)));
-        self::assertSame(6, $this->exporter->channelOptions($this->createChannel('#pd', status: ChannelStatus::PendingDeletion, mlockActive: true, topicLock: true)));
+        self::assertSame(6, $this->exporter->channelOptions($this->createChannel('#pd', pendingDeletion: true, mlockActive: true, topicLock: true)));
     }
 
     #[Test]
     public function accessEntriesWithUnknownNicksAreSkipped(): void
     {
-        $channel = $this->createChannel('#chan');
-        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $accessRepo->method('listByChannel')->willReturn([new ChannelAccess(1, 999, 100)]);
+        $access = new ChannelAccessProjection(999, 100);
+        $channel = $this->createChannel('#chan', access: [$access]);
 
-        $exporter = new UdbRecordExporter(
-            $this->nickRepository,
-            $this->channelRepository,
-            $accessRepo,
-            $this->ircopRepository,
-            $this->createStub(GlineRepositoryInterface::class),
-            $this->channelLookup,
-            $this->createModeSupportProvider(),
-        );
-
-        self::assertSame([], $exporter->accessRecord($channel, new ChannelAccess(1, 999, 100)));
+        self::assertSame([], $this->exporter->accessRecord($channel, $access));
         // The channel profile still exports everything else (options), just without the access entry.
-        self::assertSame(['#chan::options' => '*8'], $exporter->channelRecords($channel));
+        self::assertSame(['#chan::options' => '*8'], $this->exporter->channelRecords($channel));
     }
 
     #[Test]
     public function glineRecordsIncludeRootReasonAndDuration(): void
     {
         $createdAt = new DateTimeImmutable('2026-08-30 10:00:00');
-        $gline = Gline::create('*@bad.example', null, 'abuse', new DateTimeImmutable('2026-08-30 11:00:00'));
-        $createdAtProp = new ReflectionClass(Gline::class)->getProperty('createdAt');
-        $createdAtProp->setValue($gline, $createdAt);
+        $gline = new GlineProjection('*@bad.example', 'abuse', $createdAt, new DateTimeImmutable('2026-08-30 11:00:00'));
 
         self::assertSame([
             'G::*@bad.example' => 'abuse',
@@ -283,23 +254,22 @@ final class UdbRecordExporterTest extends TestCase
         self::assertSame([
             'G::*@bad.example' => 'abuse',
             'G::*@bad.example::reason' => 'abuse',
-        ], $this->exporter->glineRecords(Gline::create('*@bad.example', null, 'abuse')));
+        ], $this->exporter->glineRecords(new GlineProjection('*@bad.example', 'abuse', new DateTimeImmutable('2026-08-30 10:00:00'), null)));
     }
 
     #[Test]
     public function glineWithoutReasonExportsNothing(): void
     {
-        self::assertSame([], $this->exporter->glineRecords(Gline::create('*@bad.example')));
+        self::assertSame([], $this->exporter->glineRecords(new GlineProjection('*@bad.example', null, new DateTimeImmutable('2026-08-30 10:00:00'), null)));
     }
 
-    private function createExporterWithIrcopRepo(OperIrcopRepositoryInterface $ircopRepo): UdbRecordExporter
+    private function createExporterWithOperators(OperatorNetworkProjectionQuery $operators): UdbRecordExporter
     {
         return new UdbRecordExporter(
-            $this->nickRepository,
-            $this->channelRepository,
-            $this->accessRepository,
-            $ircopRepo,
-            $this->createStub(GlineRepositoryInterface::class),
+            $this->nicks,
+            $this->channels,
+            $operators,
+            $this->createStub(GlineProjectionQuery::class),
             $this->channelLookup,
             $this->createModeSupportProvider(),
         );
@@ -324,7 +294,7 @@ final class UdbRecordExporterTest extends TestCase
     public function encodedBlockRecordsEncodesSqlOwnedBlockPaths(): void
     {
         $nick = $this->createNick('davidlig', vhost: 'david.tld');
-        $this->nickRepository->method('all')->willReturn([$nick]);
+        $this->nicks->method('all')->willReturn([$nick]);
 
         $encoded = UdbPathCodec::encodePath(['davidlig', 'vhost']);
 
@@ -341,9 +311,9 @@ final class UdbRecordExporterTest extends TestCase
     #[Test]
     public function encodedBlockRecordsAggregatesAllChannels(): void
     {
-        $this->channelRepository->method('listAll')->willReturn([
+        $this->channels->method('all')->willReturn([
             $this->createChannel('#first'),
-            $this->createChannel('#second', status: ChannelStatus::Suspended),
+            $this->createChannel('#second', suspended: true),
         ]);
         $firstOptions = UdbPathCodec::encodePath(['#first', 'options']);
         $secondSuspended = UdbPathCodec::encodePath(['#second', 'suspended']);
@@ -359,9 +329,10 @@ final class UdbRecordExporterTest extends TestCase
     #[Test]
     public function encodedBlockRecordsAggregatesAllActiveGlines(): void
     {
-        $this->glineRepository->method('findActive')->willReturn([
-            Gline::create('*@first.example', null, 'first reason'),
-            Gline::create('*@second.example', null, 'second reason'),
+        $createdAt = new DateTimeImmutable('2026-08-30 10:00:00');
+        $this->glines->method('active')->willReturn([
+            new GlineProjection('*@first.example', 'first reason', $createdAt, null),
+            new GlineProjection('*@second.example', 'second reason', $createdAt, null),
         ]);
         $firstRoot = UdbPathCodec::encodePath(['G', '*@first.example']);
         $firstReason = UdbPathCodec::encodePath(['G', '*@first.example', 'reason']);
@@ -384,7 +355,7 @@ final class UdbRecordExporterTest extends TestCase
     public function encodedBlockRecordsRejectsAnInvalidSqlExportRecord(): void
     {
         $nick = $this->createNick('davidlig', vhost: 'bad vhost with spaces');
-        $this->nickRepository->method('all')->willReturn([$nick]);
+        $this->nicks->method('all')->willReturn([$nick]);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Current SQL export contains an invalid N-block record.');
@@ -392,46 +363,43 @@ final class UdbRecordExporterTest extends TestCase
         $this->exporter->encodedBlockRecords(UdbBlock::Nicks);
     }
 
-    private function createNick(string $nickname, ?string $vhost = null, ?string $passwordHash = null): RegisteredNick
+    private function createNick(string $nickname, ?string $vhost = null, ?string $passwordHash = null): NickProjection
     {
-        $nick = RegisteredNick::createPending($nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $nickname . '@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
-        $nick->activate();
-
-        $reflection = new ReflectionClass(RegisteredNick::class);
-        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($nick, 42);
-        if (null !== $vhost) {
-            $reflection->getProperty('vhost')->setValue($nick, $vhost);
-        }
-
-        return $nick;
+        return new NickProjection(42, $nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $vhost);
     }
 
+    /**
+     * @param array<string, string>         $mlockParams
+     * @param list<ChannelAccessProjection> $access
+     */
     private function createChannel(
         string $name,
         int $founderNickId = 7,
         ?string $topic = null,
         bool $mlockActive = false,
         bool $topicLock = false,
-        ChannelStatus $status = ChannelStatus::Active,
+        bool $forbidden = false,
         ?string $forbiddenReason = null,
-    ): RegisteredChannel {
-        $channel = RegisteredChannel::register($name, $founderNickId, 'desc');
-        $reflection = new ReflectionClass(RegisteredChannel::class);
-        $reflection->getProperty('id')->setValue($channel, 1);
-        if (null !== $topic) {
-            $channel->updateTopic($topic);
-        }
-        if ($mlockActive) {
-            $channel->configureMlock(true, '+nt');
-        }
-        if ($topicLock) {
-            $channel->configureTopicLock(true);
-        }
-        $reflection->getProperty('status')->setValue($channel, $status);
-        if (null !== $forbiddenReason) {
-            $reflection->getProperty('forbiddenReason')->setValue($channel, $forbiddenReason);
-        }
-
-        return $channel;
+        bool $suspended = false,
+        bool $pendingDeletion = false,
+        string $mlock = '+nt',
+        array $mlockParams = [],
+        array $access = [],
+    ): ChannelProjection {
+        return new ChannelProjection(
+            id: 1,
+            name: $name,
+            founderNickId: $founderNickId,
+            topic: $topic,
+            mlockActive: $mlockActive,
+            mlock: $mlock,
+            mlockParams: $mlockParams,
+            topicLock: $topicLock,
+            forbidden: $forbidden,
+            forbiddenReason: $forbiddenReason,
+            suspended: $suspended,
+            pendingDeletion: $pendingDeletion,
+            access: $access,
+        );
     }
 }

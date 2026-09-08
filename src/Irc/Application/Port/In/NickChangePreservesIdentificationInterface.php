@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Port;
+namespace App\Irc\Application\Port\In;
 
 /**
  * Marker interface for protocol modules where the IRCd handles authentication

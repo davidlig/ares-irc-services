@@ -6,12 +6,12 @@ namespace App\Tests\Irc\Adapter\Runtime;
 
 use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
-use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Runtime\IRCClientFactory;
+use App\Irc\Adapter\Runtime\LoopSchedulerInterface;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Application\BurstCompleteRegistry;
 use App\Irc\Domain\Server\ServerLink;

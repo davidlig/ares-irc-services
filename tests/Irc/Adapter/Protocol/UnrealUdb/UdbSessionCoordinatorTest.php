@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\Domain\OperServ\Repository\GlineRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Infrastructure\IRC\Runtime\SessionEventPump;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface;
@@ -26,8 +22,11 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbOclgViewDigest;
+use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\OperServ\Application\Port\In\GlineProjectionQuery;
+use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -41,6 +40,7 @@ use function array_slice;
 use function count;
 
 #[CoversClass(UdbSessionCoordinator::class)]
+#[CoversClass(UdbPeerSession::class)]
 final class UdbSessionCoordinatorTest extends TestCase
 {
     private const string OWN_NAME = 'services.example.net';
@@ -575,8 +575,9 @@ final class UdbSessionCoordinatorTest extends TestCase
         $logger->expects($this->atLeastOnce())->method('warning');
         $this->coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, $logger, new UdbOclgView($logger));
         $this->prepareLink();
+        $this->handle($this->peerHel());
 
-        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: '0123456789abcdef', status: 'BROKEN', count: 1, checksum: str_repeat('a', 64)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'BROKEN', count: 1, checksum: str_repeat('a', 64)));
 
         self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
     }
@@ -588,12 +589,13 @@ final class UdbSessionCoordinatorTest extends TestCase
         $logger->expects($this->atLeastOnce())->method('warning');
         $this->coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, $logger, new UdbOclgView($logger));
         $this->prepareLink();
+        $this->handle($this->peerHel());
 
         $entries = ['netadmin' => str_repeat('a', 64)];
-        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: '0123456789abcdef', status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: '0123456789abcdef', path: 'netadmin', checksum: $entries['netadmin']));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: '0123456789abcdef', path: 'netadmin', checksum: $entries['netadmin']));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 7, epoch: '0123456789abcdef'));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: $entries['netadmin']));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: $entries['netadmin']));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 7, epoch: self::PEER_EPOCH));
 
         self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
     }
@@ -602,11 +604,12 @@ final class UdbSessionCoordinatorTest extends TestCase
     public function oclgEndForAnotherGenerationIsIgnored(): void
     {
         $this->prepareLink();
+        $this->handle($this->peerHel());
 
         $entries = ['netadmin' => str_repeat('a', 64)];
-        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: '0123456789abcdef', status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: '0123456789abcdef', path: 'netadmin', checksum: $entries['netadmin']));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 99, epoch: '0123456789abcdef'));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: $entries['netadmin']));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 99, epoch: self::PEER_EPOCH));
 
         // The stage is still pending: nothing was committed or withdrawn.
         self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
@@ -616,12 +619,13 @@ final class UdbSessionCoordinatorTest extends TestCase
     public function oclgReadySnapshotIsCommittedAtomically(): void
     {
         $this->prepareLink();
+        $this->handle($this->peerHel());
         $entries = ['netadmin' => str_repeat('a', 64)];
-        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: '0123456789abcdef', status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
         self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
 
-        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: '0123456789abcdef', path: 'netadmin', checksum: $entries['netadmin']));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 7, epoch: '0123456789abcdef'));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: $entries['netadmin']));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 7, epoch: self::PEER_EPOCH));
 
         self::assertTrue($this->coordinator->isOperclassGloballyAvailable('netadmin'));
         self::assertSame(['netadmin'], $this->coordinator->getAvailableOperclasses());
@@ -631,22 +635,58 @@ final class UdbSessionCoordinatorTest extends TestCase
     public function invalidOrIncompleteOclgSnapshotsWithdrawAvailability(): void
     {
         $this->prepareLink();
+        $this->handle($this->peerHel());
         $entries = ['netadmin' => str_repeat('a', 64)];
-        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: '0123456789abcdef', status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: '0123456789abcdef', path: 'netadmin', checksum: $entries['netadmin']));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 7, epoch: '0123456789abcdef'));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: $entries['netadmin']));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 7, epoch: self::PEER_EPOCH));
         self::assertTrue($this->coordinator->isOperclassGloballyAvailable('netadmin'));
         self::assertSame(['netadmin'], $this->coordinator->getAvailableOperclasses());
 
-        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 8, epoch: '0123456789abcdef', status: 'INCOMPLETE', count: 0, checksum: UdbOclgViewDigest::fromEntries(false, [])));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 8, epoch: '0123456789abcdef'));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 8, epoch: self::PEER_EPOCH, status: 'INCOMPLETE', count: 0, checksum: UdbOclgViewDigest::fromEntries(false, [])));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 8, epoch: self::PEER_EPOCH));
         self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
         self::assertSame([], $this->coordinator->getAvailableOperclasses());
 
-        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 9, epoch: '0123456789abcdef', status: 'READY', count: 1, checksum: str_repeat('b', 64)));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 9, epoch: '0123456789abcdef', path: 'netadmin', checksum: $entries['netadmin']));
-        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 9, epoch: '0123456789abcdef'));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 9, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: str_repeat('b', 64)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 9, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: $entries['netadmin']));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 9, epoch: self::PEER_EPOCH));
         self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
+        self::assertSame([], $this->coordinator->getAvailableOperclasses());
+    }
+
+    #[Test]
+    public function coordinatorExpiresAnIncompleteOclgStageDeterministically(): void
+    {
+        $view = new UdbOclgView(clock: $this->clock);
+        $this->coordinator = new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            oclgView: $view,
+            scheduler: $this->scheduler,
+            clock: $this->clock,
+        );
+        $this->prepareLink();
+        $this->handle($this->peerHel());
+
+        $entries = ['netadmin' => str_repeat('a', 64)];
+        $this->handle(new UdbFrame(
+            UdbFrameKind::OclgBegin,
+            '001',
+            '002',
+            roundId: 7,
+            epoch: self::PEER_EPOCH,
+            status: 'READY',
+            count: 1,
+            checksum: UdbOclgViewDigest::fromEntries(true, $entries),
+        ));
+        self::assertNotNull($view->nextDeadline());
+
+        $this->clock->advance(30);
+        $this->coordinator->tick($this->connection);
+
+        self::assertNull($view->nextDeadline());
         self::assertSame([], $this->coordinator->getAvailableOperclasses());
     }
 
@@ -933,6 +973,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $peer->setOwnName(self::OWN_NAME);
         $peer->captureRemote('001', 'ircd.example.net');
         $peer->observeAdvertisement($this->peerHel(), false);
+        self::assertSame(self::PEER_EPOCH, $peer->remoteEpoch());
         $barrier = new UdbHelloBarrier();
         $barrier->acknowledge();
         $barrier->sent(20, 60);
@@ -1140,13 +1181,100 @@ final class UdbSessionCoordinatorTest extends TestCase
         $coordinator->handleFrame($this->peerHelAck(), $connection);
         $this->written = [];
 
-        // The peer stages one block; the END is validated and ACKed.
+        // The peer first advertises the inventory. Services request the
+        // divergent block with RES before accepting BEGIN/PUT/END.
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: UdbBlock::Ips, checksum: $digest, timestamp: 1), $connection);
+        self::assertSame(':002 DB 001 RES 1 I', $this->firstWrittenLine());
+        $this->written = [];
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: $digest), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Put, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', path: '1.2.3.4::clones', value: '*5'), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: $digest), $connection);
 
         self::assertMatchesRegularExpression('/^:002 DB 001 ACK 1 I tx1 ' . $digest . '$/', $this->firstWrittenLine());
+    }
+
+    #[Test]
+    public function wireBootstrapIgnoresInventoryUntilTheHelloBarrierIsConfirmed(): void
+    {
+        $takeover = $this->createWireTakeover();
+        $coordinator = $this->bootstrapCoordinator($takeover);
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $connection = $this->captureConnection($coordinator);
+        $coordinator->onLinkReady($connection);
+        $this->written = [];
+
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: UdbBlock::Ips, checksum: UdbChecksum::EMPTY, timestamp: 1), $connection);
+
+        self::assertSame([], $this->written);
+        self::assertSame([], $takeover->completedBlocks());
+    }
+
+    #[Test]
+    public function wireBootstrapRejectsBeginUntilThatBlockWasRequestedFromAnInventory(): void
+    {
+        $takeover = $this->createWireTakeover();
+        $coordinator = $this->bootstrapCoordinator($takeover);
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $connection = $this->captureConnection($coordinator);
+        $coordinator->onLinkReady($connection);
+        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $this->written = [];
+
+        $coordinator->handleFrame(new UdbFrame(
+            UdbFrameKind::Begin,
+            '001',
+            '002',
+            roundId: 7,
+            block: UdbBlock::Ips,
+            txid: 'tx1',
+            checksum: UdbChecksum::EMPTY,
+        ), $connection);
+
+        self::assertSame([':002 DB 001 ERR BEGIN 5 7 I'], $this->written);
+        self::assertSame([], $takeover->completedBlocks());
+    }
+
+    #[Test]
+    public function wireBootstrapRejectsInventoriesFromAnotherRoundWithoutMixingThem(): void
+    {
+        $takeover = $this->createWireTakeover();
+        $coordinator = $this->bootstrapCoordinator($takeover);
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $connection = $this->captureConnection($coordinator);
+        $coordinator->onLinkReady($connection);
+        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $this->written = [];
+
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 7, block: UdbBlock::Ips, checksum: UdbChecksum::EMPTY, timestamp: 1), $connection);
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 8, block: UdbBlock::Settings, checksum: UdbChecksum::EMPTY, timestamp: 1), $connection);
+
+        self::assertSame([
+            ':002 DB 001 RES 7 I',
+            ':002 DB 001 ERR INF 5 8 S',
+        ], $this->written);
+        self::assertSame([], $takeover->completedBlocks());
+    }
+
+    #[Test]
+    public function unapprovedBootstrapNeverOffersTheLocalStoreOrBecomesReady(): void
+    {
+        $this->seedStore();
+        $takeover = $this->createWireTakeover();
+        $coordinator = $this->bootstrapCoordinator($takeover);
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $connection = $this->captureConnection($coordinator);
+
+        $coordinator->onLinkReady($connection);
+        $coordinator->handleFrame($this->peerHel(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(), $connection);
+
+        self::assertStringNotContainsString(' INF ', implode("\n", $this->written));
+        self::assertFalse($coordinator->isAuthorityReady());
     }
 
     #[Test]
@@ -1162,6 +1290,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->written = [];
 
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Inf, '999', '002', roundId: 1, block: UdbBlock::Ips, checksum: $digest, timestamp: 1), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Begin, '999', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: $digest), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Put, '999', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', path: '1.2.3.4::clones', value: '*5'), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::End, '999', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: $digest), $connection);
@@ -1183,13 +1312,16 @@ final class UdbSessionCoordinatorTest extends TestCase
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
         $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: UdbBlock::Ips, checksum: UdbChecksum::EMPTY, timestamp: 1), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: UdbChecksum::EMPTY), $connection);
 
         $this->clock->advance(60);
+        $this->written = [];
         $coordinator->tick($connection);
 
         self::assertNull($takeover->nextDeadline());
         self::assertFalse($takeover->isComplete());
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 \? [0-9a-f]{16} OCL OCLG$/', $this->firstWrittenLine());
     }
 
     #[Test]
@@ -1255,6 +1387,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         // Stage every block over the wire (SQL-owned blocks are discarded).
         foreach ($this->bootstrapRecords() as [$block, $path, $value]) {
             $digest = UdbChecksum::fromRecords([[$path, $value]]);
+            $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: $block, checksum: $digest, timestamp: 1), $connection);
             $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: $block, txid: 'tx', checksum: $digest), $connection);
             $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Put, '001', '002', roundId: 1, block: $block, txid: 'tx', path: $path, value: $value), $connection);
             $coordinator->handleFrame(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: $block, txid: 'tx', checksum: $digest), $connection);
@@ -1296,6 +1429,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         // Complete a full six-block exchange with a broken authority store.
         foreach ($this->bootstrapRecords() as [$block, $path, $value]) {
             $digest = UdbChecksum::fromRecords([[$path, $value]]);
+            $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: $block, checksum: $digest, timestamp: 1), $connection);
             $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: $block, txid: 'tx', checksum: $digest), $connection);
             $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Put, '001', '002', roundId: 1, block: $block, txid: 'tx', path: $path, value: $value), $connection);
             $coordinator->handleFrame(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: $block, txid: 'tx', checksum: $digest), $connection);
@@ -1457,11 +1591,10 @@ final class UdbSessionCoordinatorTest extends TestCase
     private function createEmptyExporter(): UdbRecordExporter
     {
         return new UdbRecordExporter(
-            $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(ChannelAccessRepositoryInterface::class),
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(GlineRepositoryInterface::class),
+            $this->createStub(NickProjectionQuery::class),
+            $this->createStub(ChannelProjectionQuery::class),
+            $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
@@ -1744,6 +1877,14 @@ final class UdbSessionCoordinatorTest extends TestCase
     }
 
     #[Test]
+    public function retryWireBootstrapIsANoOpWhenTheStoreIsAlreadyApproved(): void
+    {
+        new ReflectionMethod(UdbSessionCoordinator::class, 'retryWireBootstrap')->invoke($this->coordinator);
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
     public function deadlineWatcherWithEventPumpEnqueuesTickOnPump(): void
     {
         $this->seedStore();
@@ -1768,5 +1909,43 @@ final class UdbSessionCoordinatorTest extends TestCase
         $pump->drain();
 
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->firstWrittenLine());
+    }
+
+    #[Test]
+    public function queuedCallbackFromThePreviousLinkCannotTouchTheReplacementSession(): void
+    {
+        $pump = new SessionEventPump();
+        $this->coordinator->setEventPump($pump);
+        $this->prepareLink();
+
+        // The scheduler callback has fired, but its serialized tick has not
+        // run yet. This is the race where cancelling the watcher is too late.
+        $this->scheduler->runNext();
+
+        $this->coordinator->reset();
+        $this->coordinator->setOwnName(self::OWN_NAME);
+        $this->coordinator->onRemoteServer('003', 'replacement.example.net');
+        $this->coordinator->onLinkReady($this->connection);
+        $replacementWatcher = $this->coordinator->getDeadlineWatcherId();
+        self::assertNotNull($replacementWatcher);
+
+        $pump->enqueue(static function () use ($pump): void {
+            $pump->stop();
+        });
+        $pump->drain();
+
+        self::assertSame('replacement.example.net', $this->coordinator->getRemoteServerName());
+        self::assertSame($replacementWatcher, $this->coordinator->getDeadlineWatcherId());
+    }
+
+    #[Test]
+    public function cancelledSchedulerCallbackCannotTouchTheResetSession(): void
+    {
+        $this->prepareLink();
+        $this->coordinator->reset();
+
+        $this->scheduler->runCancelled();
+
+        self::assertNull($this->coordinator->getDeadlineWatcherId());
     }
 }

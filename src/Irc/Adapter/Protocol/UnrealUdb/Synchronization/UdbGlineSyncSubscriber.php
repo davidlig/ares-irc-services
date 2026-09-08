@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
-use App\Domain\OperServ\Event\GlineRemovedEvent;
+use App\OperServ\Application\PublishedEvent\GlineRemovedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function sprintf;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
+use App\Irc\Adapter\Runtime\LoopSchedulerInterface;
 use Closure;
 
 final class DeterministicLoopScheduler implements LoopSchedulerInterface
@@ -13,6 +13,9 @@ final class DeterministicLoopScheduler implements LoopSchedulerInterface
 
     /** @var array<string, Closure> */
     private array $callbacks = [];
+
+    /** @var array<string, Closure> */
+    private array $cancelledCallbacks = [];
 
     public function repeat(float $intervalSeconds, Closure $callback): string
     {
@@ -26,6 +29,9 @@ final class DeterministicLoopScheduler implements LoopSchedulerInterface
 
     public function cancel(string $watcherId): void
     {
+        if (isset($this->callbacks[$watcherId])) {
+            $this->cancelledCallbacks[$watcherId] = $this->callbacks[$watcherId];
+        }
         unset($this->callbacks[$watcherId]);
     }
 
@@ -38,6 +44,18 @@ final class DeterministicLoopScheduler implements LoopSchedulerInterface
 
         $callback = $this->callbacks[$id];
         unset($this->callbacks[$id]);
+        $callback($id);
+    }
+
+    public function runCancelled(): void
+    {
+        $id = array_key_first($this->cancelledCallbacks);
+        if (null === $id) {
+            return;
+        }
+
+        $callback = $this->cancelledCallbacks[$id];
+        unset($this->cancelledCallbacks[$id]);
         $callback($id);
     }
 

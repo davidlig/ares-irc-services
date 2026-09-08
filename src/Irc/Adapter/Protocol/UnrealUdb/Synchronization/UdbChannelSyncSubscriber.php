@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Port\In\ChannelProjection;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\ChanServ\Application\PublishedEvent\ChannelAccessChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
@@ -15,7 +16,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Domain\Event\ChannelTopicChangedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -37,7 +37,7 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 
     public function __construct(
         private UdbRecordWriterInterface $recordWriter,
-        private RegisteredChannelRepositoryInterface $channelRepository,
+        private ChannelProjectionQuery $channels,
         private UdbRecordExporter $exporter,
     ) {}
 
@@ -60,7 +60,7 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 
     public function onChannelRegistered(ChannelRegisteredEvent $event): void
     {
-        $channel = $this->channelRepository->findByChannelName($event->channelNameLower);
+        $channel = $this->channels->findByName($event->channelNameLower);
         if (null === $channel) {
             return;
         }
@@ -77,13 +77,13 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 
     public function onChannelFounderChanged(ChannelFounderChangedEvent $event): void
     {
-        $channel = $this->channelRepository->findByChannelName(strtolower($event->channelName));
+        $channel = $this->channels->findByName(strtolower($event->channelName));
         if (null === $channel) {
             return;
         }
 
         $records = $this->exporter->channelRecords($channel);
-        $path = sprintf('%s::founder', $channel->getName());
+        $path = sprintf('%s::founder', $channel->name);
         if (isset($records[$path])) {
             $this->recordWriter->insert(self::BLOCK, $path, $records[$path]);
         }
@@ -136,13 +136,13 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 
     private function refreshMlock(string $channelNameLower): void
     {
-        $channel = $this->channelRepository->findByChannelName($channelNameLower);
-        if (null === $channel || $channel->isForbidden()) {
+        $channel = $this->channels->findByName($channelNameLower);
+        if (null === $channel || $channel->forbidden) {
             return;
         }
 
         $records = $this->exporter->channelRecords($channel);
-        $path = sprintf('%s::modes', $channel->getName());
+        $path = sprintf('%s::modes', $channel->name);
         if (isset($records[$path])) {
             $this->recordWriter->insert(self::BLOCK, $path, $records[$path]);
 
@@ -155,8 +155,8 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
     public function onChannelTopicChanged(ChannelTopicChangedEvent $event): void
     {
         $channelName = $event->channel->name->value;
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel || $channel->isForbidden()) {
+        $channel = $this->channels->findByName(strtolower($channelName));
+        if (null === $channel || $channel->forbidden) {
             return;
         }
 
@@ -173,7 +173,7 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
     /** Recomputes the numeric options record after any flag change. */
     private function refreshOptions(string $channelNameLower): void
     {
-        $channel = $this->channelRepository->findByChannelName($channelNameLower);
+        $channel = $this->channels->findByName($channelNameLower);
         if (null === $channel) {
             return;
         }
@@ -181,9 +181,9 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
         $this->writeOptions($channel);
     }
 
-    private function writeOptions(RegisteredChannel $channel): void
+    private function writeOptions(ChannelProjection $channel): void
     {
-        $path = sprintf('%s::options', $channel->getName());
+        $path = sprintf('%s::options', $channel->name);
         $options = $this->exporter->channelOptions($channel);
         if (0 !== $options) {
             $this->recordWriter->insert(self::BLOCK, $path, '*' . $options);

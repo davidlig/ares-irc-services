@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Application\Port\PasswordMigrationStateInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\PasswordMigrationStateInterface;
 
 final class UnrealUdbMigrationState implements PasswordMigrationStateInterface
 {

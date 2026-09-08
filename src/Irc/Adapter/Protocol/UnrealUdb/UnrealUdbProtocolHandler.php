@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Infrastructure\IRC\Runtime\SessionEventPump;
-use App\Infrastructure\IRC\Runtime\SessionEventPumpAwareInterface;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
@@ -13,6 +11,8 @@ use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionController;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
+use App\Irc\Adapter\Runtime\SessionEventPump;
+use App\Irc\Adapter\Runtime\SessionEventPumpAwareInterface;
 use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -90,6 +90,12 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
         return self::CAPABILITIES;
     }
 
+    public function resetRemoteIdentity(): void
+    {
+        $this->remoteSid = null;
+        $this->remoteServerName = null;
+    }
+
     public function parseRawLine(string $rawLine): IRCMessage
     {
         return IRCMessage::fromRawLine($rawLine);
@@ -108,6 +114,10 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
     /** The daemon holds the UDB directory lock for the whole link lifetime. */
     public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
     {
+        // A fresh transport must never inherit the direct-peer identity from
+        // the previous one, even if a caller reconnects without first
+        // dispatching ConnectionLostEvent.
+        $this->resetRemoteIdentity();
         $this->lock->acquire();
         try {
             $this->sendHandshake($connection, $link);
@@ -115,6 +125,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
         } catch (Throwable $e) {
             $this->lock->release();
             $this->coordinator->reset();
+            $this->resetRemoteIdentity();
             throw $e;
         }
     }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\Service;
 
-use App\Application\Port\NickChangePreservesIdentificationInterface;
+use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;

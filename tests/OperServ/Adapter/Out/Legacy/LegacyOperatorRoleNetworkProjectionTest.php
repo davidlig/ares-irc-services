@@ -9,7 +9,6 @@ use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
-use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
@@ -19,6 +18,7 @@ use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleNetworkProjection;
+use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
 use App\Tests\Application\OperServ\RecordingOperclassActions;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +27,7 @@ use Psr\Log\NullLogger;
 use ReflectionClass;
 
 #[CoversClass(LegacyOperatorRoleNetworkProjection::class)]
+#[CoversClass(OperRoleForcedVhostChangedEvent::class)]
 final class LegacyOperatorRoleNetworkProjectionTest extends TestCase
 {
     #[Test]

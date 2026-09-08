@@ -8,10 +8,10 @@ use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\EventBusInterface;
 use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Event\OperIrcopChangedEvent;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\OperServ\Application\Port\Out\OperatorAssignmentNetworkProjection;
 use App\OperServ\Application\Port\Out\OperatorRoleRecord;
+use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
 use LogicException;
 
 final readonly class LegacyOperatorAssignmentNetworkProjection implements OperatorAssignmentNetworkProjection

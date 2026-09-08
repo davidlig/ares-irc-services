@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Session;
 
-use App\Infrastructure\IRC\Runtime\SessionEventPump;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
+use App\Irc\Adapter\Runtime\SessionEventPump;
 
 /** Lifecycle and inbound-wire boundary consumed by the protocol handler. */
 interface UdbSessionController

@@ -8,14 +8,15 @@ use App\Application\OperServ\Maintenance\PurgeExpiredGlinesTask;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\OperServ\Entity\Gline;
-use App\Domain\OperServ\Event\GlineRemovedEvent;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
+use App\OperServ\Application\PublishedEvent\GlineRemovedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
 #[CoversClass(PurgeExpiredGlinesTask::class)]
+#[CoversClass(GlineRemovedEvent::class)]
 final class PurgeExpiredGlinesTaskTest extends TestCase
 {
     private const string SERVER_NAME = 'test-server.example.com';

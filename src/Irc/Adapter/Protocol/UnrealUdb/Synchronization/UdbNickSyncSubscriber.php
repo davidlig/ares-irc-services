@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
-use App\Application\Port\PasswordMigrationStateInterface;
-use App\Domain\OperServ\Event\OperIrcopChangedEvent;
-use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\NickServ\Application\PublishedEvent\NickDropEvent;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
 use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
+use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
+use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function sprintf;
@@ -33,9 +32,9 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
 
     public function __construct(
         private UdbRecordWriterInterface $recordWriter,
-        private RegisteredNickRepositoryInterface $nickRepository,
+        private NickProjectionQuery $nicks,
         private PasswordMigrationStateInterface $migrationState,
-        private OperIrcopRepositoryInterface $ircopRepository,
+        private OperatorNetworkProjectionQuery $operators,
         private UdbRecordExporter $exporter,
         private ?UdbSessionStateInterface $sessionState = null,
     ) {}
@@ -73,7 +72,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $nick = $this->nickRepository->findById($event->nickId);
+        $nick = $this->nicks->findById($event->nickId);
         if (null === $nick) {
             return;
         }
@@ -86,7 +85,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
 
     public function onVhostChanged(NickVhostChangedEvent $event): void
     {
-        $account = $this->nickRepository->findById($event->nickId);
+        $account = $this->nicks->findById($event->nickId);
         if (null === $account) {
             return;
         }
@@ -106,17 +105,17 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
 
     public function onOperRoleForcedVhostChanged(OperRoleForcedVhostChangedEvent $event): void
     {
-        foreach ($this->ircopRepository->findByRoleId($event->roleId) as $ircop) {
-            $account = $this->nickRepository->findById($ircop->getNickId());
+        foreach ($this->operators->findNickIdsByRoleId($event->roleId) as $nickId) {
+            $account = $this->nicks->findById($nickId);
             if (null !== $account) {
-                $this->writeVhost($account->getNickname(), $account);
+                $this->writeVhost($account->nickname, $account);
             }
         }
     }
 
     public function onOperIrcopChanged(OperIrcopChangedEvent $event): void
     {
-        $account = $this->nickRepository->findById($event->nickId);
+        $account = $this->nicks->findById($event->nickId);
         if (null === $account) {
             return;
         }
@@ -124,14 +123,14 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         $this->writeVhost($event->nickname, $account);
 
         $path = sprintf('%s::oper', $event->nickname);
-        $ircop = $this->ircopRepository->findByNickId($event->nickId);
-        if (null === $ircop) {
+        $operator = $this->operators->findForNick($event->nickId, $event->nickname);
+        if (null === $operator) {
             $this->recordWriter->delete(self::BLOCK, $path);
 
             return;
         }
 
-        $operclass = $ircop->getRole()->getOperclass();
+        $operclass = $operator->operclass;
         if (null === $operclass || '' === $operclass || (null !== $this->sessionState && !$this->sessionState->isOperclassGloballyAvailable($operclass))) {
             $this->recordWriter->delete(self::BLOCK, $path);
 
@@ -141,7 +140,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         $this->recordWriter->insert(self::BLOCK, $path, $operclass);
     }
 
-    private function writeVhost(string $nickname, RegisteredNick $account): void
+    private function writeVhost(string $nickname, NickProjection $account): void
     {
         $vhost = $this->exporter->effectiveVhost($account);
         if (null !== $vhost) {

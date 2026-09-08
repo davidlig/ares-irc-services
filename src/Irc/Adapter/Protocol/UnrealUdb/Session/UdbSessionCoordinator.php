@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Session;
 
-use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
-use App\Infrastructure\IRC\Runtime\RevoltLoopScheduler;
-use App\Infrastructure\IRC\Runtime\SessionEventPump;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface;
@@ -18,6 +15,8 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterfa
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutationQueue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeover;
+use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeoverOutcome;
+use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeoverOutcomeKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Transfer\UdbOutboundTransferTracker;
 use App\Irc\Adapter\Protocol\UnrealUdb\Transfer\UdbTransferAcknowledgement;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
@@ -25,6 +24,9 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
+use App\Irc\Adapter\Runtime\LoopSchedulerInterface;
+use App\Irc\Adapter\Runtime\RevoltLoopScheduler;
+use App\Irc\Adapter\Runtime\SessionEventPump;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -127,6 +129,8 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private ?string $deadlineWatcherId = null;
 
+    private int $deadlineGeneration = 0;
+
     public function setEventPump(?SessionEventPump $eventPump): void
     {
         $this->eventPump = $eventPump;
@@ -195,7 +199,13 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
         $now = $this->clock->now();
         if ($this->wireTakeover?->expire()) {
-            $this->logger->warning('UDB wire takeover stage timed out; discarded incomplete staged state.');
+            $this->logger->warning('UDB wire takeover round timed out; requesting a fresh inventory.');
+            $this->retryWireBootstrap();
+
+            return;
+        }
+        if ($this->oclgView->expire()) {
+            $this->logger->warning('UDB OCLG stage timed out.');
         }
         $expiredTransfer = $this->transfers->firstExpired($now);
         if (null !== $expiredTransfer) {
@@ -263,6 +273,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             $this->reconciliation->nextDeadline(),
             $this->transfers->nextDeadline(),
             $this->wireTakeover?->nextDeadline(),
+            $this->oclgView->nextDeadline(),
         ], static fn (?int $deadline): bool => null !== $deadline);
         $earliestDeadline = [] !== $deadlines ? min($deadlines) : null;
 
@@ -272,11 +283,17 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
         $delaySeconds = max(0.01, $earliestDeadline - $this->clock->now());
 
-        $this->deadlineWatcherId = $this->scheduler->delay($delaySeconds, function (): void {
+        $generation = $this->deadlineGeneration;
+        $this->deadlineWatcherId = $this->scheduler->delay($delaySeconds, function () use ($generation): void {
+            if ($generation !== $this->deadlineGeneration) {
+                return;
+            }
             $this->deadlineWatcherId = null;
             if (null !== $this->eventPump) {
-                $this->eventPump->enqueue(function (): void {
-                    $this->tick();
+                $this->eventPump->enqueue(function () use ($generation): void {
+                    if ($generation === $this->deadlineGeneration) {
+                        $this->tick();
+                    }
                 });
             } else {
                 $this->tick();
@@ -286,6 +303,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private function cancelDeadlineTimer(): void
     {
+        ++$this->deadlineGeneration;
         if (null !== $this->deadlineWatcherId) {
             $this->scheduler->cancel($this->deadlineWatcherId);
             $this->deadlineWatcherId = null;
@@ -299,9 +317,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         match ($frame->kind) {
             UdbFrameKind::HelAck => $this->handleHelAck($frame),
             UdbFrameKind::Hel => $this->handleHel($frame),
-            UdbFrameKind::Inf => $this->logger->debug('Ignoring peer INF: services are the UDB authority.', [
-                'block' => $frame->block?->letter(),
-            ]),
+            UdbFrameKind::Inf => $this->handleInf($frame),
             UdbFrameKind::Res => $this->handleRes($frame),
             UdbFrameKind::Begin, UdbFrameKind::Put, UdbFrameKind::End => $this->handleInboundStaged($frame),
             UdbFrameKind::Ack => $this->handleAck($frame),
@@ -319,7 +335,8 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     public function isAuthorityReady(): bool
     {
-        return $this->helloBarrier->isConfirmed()
+        return !$this->isWireBootstrapActive()
+            && $this->helloBarrier->isConfirmed()
             && $this->peer->isAuthorized()
             && $this->isStoreReady()
             && !$this->helloBarrier->hasPending()
@@ -370,10 +387,13 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         }
         if (UdbPeerAdvertisementChange::NewInstance === $change) {
             $this->resetPeerInstanceState();
+            $this->oclgView->expectEpoch($frame->epoch ?? '');
             $this->sendHel(force: true);
+            $this->scheduleNextDeadlineTimer();
 
             return;
         }
+        $this->oclgView->expectEpoch($frame->epoch ?? '');
 
         $hadActiveRound = $this->reconciliation->isActive();
         $barrierTicket = $this->helloBarrier->acknowledge();
@@ -414,6 +434,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         if (UdbPeerAdvertisementChange::NewInstance === $change) {
             $this->resetPeerInstanceState();
         }
+        $this->oclgView->expectEpoch($frame->epoch ?? '');
 
         $this->logger->info('UDB HEL 4 received from peer.', [
             'peer' => $frame->sourceSid,
@@ -431,13 +452,17 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             $this->sendHel();
         }
 
-        // A repeated authorized selection is also an explicit retry trigger.
-        $this->maybeOfferReconciliation();
+        // Bootstrap requests the peer inventory with our HEL; approved sessions
+        // may instead offer the authoritative local inventory.
+        if (!$this->isWireBootstrapActive()) {
+            $this->maybeOfferReconciliation();
+        }
+        $this->scheduleNextDeadlineTimer();
     }
 
     private function maybeOfferReconciliation(): void
     {
-        if (!$this->helloBarrier->isConfirmed() || !$this->peer->isAuthorized() || !$this->isStoreReady()) {
+        if ($this->isWireBootstrapActive() || !$this->helloBarrier->isConfirmed() || !$this->peer->isAuthorized() || !$this->isStoreReady()) {
             return;
         }
 
@@ -451,7 +476,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     /** Offers our authoritative snapshot: one INF per block plus a barrier HEL. */
     private function offerReconciliation(): void
     {
-        if (!$this->helloBarrier->isConfirmed() || !$this->peer->isAuthorized()) {
+        if ($this->isWireBootstrapActive() || !$this->helloBarrier->isConfirmed() || !$this->peer->isAuthorized()) {
             return;
         }
 
@@ -489,6 +514,26 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->logger->info('Offered UDB reconciliation round to peer.', ['round' => $roundId]);
     }
 
+    private function handleInf(UdbFrame $frame): void
+    {
+        if (!$this->isDirectPeerFrame($frame)) {
+            return;
+        }
+        if (!$this->isWireBootstrapActive()) {
+            $this->logger->debug('Ignoring peer INF: services are the UDB authority.', [
+                'block' => $frame->block?->letter(),
+            ]);
+
+            return;
+        }
+        if (!$this->helloBarrier->isConfirmed()) {
+            return;
+        }
+
+        $this->writeTakeoverOutcome($this->wireTakeover?->accept($frame) ?? UdbWireTakeoverOutcome::ignored(), $frame->sourceSid);
+        $this->scheduleNextDeadlineTimer();
+    }
+
     private function handleRes(UdbFrame $frame): void
     {
         $block = $frame->block;
@@ -503,7 +548,8 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
-        if (!$this->helloBarrier->isConfirmed()
+        if ($this->isWireBootstrapActive()
+            || !$this->helloBarrier->isConfirmed()
             || !$this->peer->isAuthorized()
             || !$this->isStoreReady()
         ) {
@@ -606,22 +652,36 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private function acceptWireStaged(UdbFrame $frame): void
     {
-        $completed = $this->wireTakeover?->accept($frame);
+        $outcome = $this->wireTakeover?->accept($frame) ?? UdbWireTakeoverOutcome::ignored();
+        $this->writeTakeoverOutcome($outcome, $frame->sourceSid);
         $this->scheduleNextDeadlineTimer();
-        if (null !== $completed) {
-            $this->write(UdbWireCodec::ack(
-                $this->sid,
-                $frame->sourceSid,
-                $completed['roundId'],
-                $completed['block'],
-                $completed['txid'],
-                $completed['digest'],
-            ));
-        }
 
         if (null !== $this->wireTakeover && $this->wireTakeover->isComplete()) {
             $this->completeWireBootstrap();
         }
+    }
+
+    private function writeTakeoverOutcome(UdbWireTakeoverOutcome $outcome, string $targetSid): void
+    {
+        if (UdbWireTakeoverOutcomeKind::Request === $outcome->kind && null !== $outcome->block && null !== $outcome->roundId) {
+            $this->write(UdbWireCodec::res($this->sid, $targetSid, $outcome->roundId, $outcome->block));
+        } elseif (UdbWireTakeoverOutcomeKind::Acknowledge === $outcome->kind && null !== $outcome->block && null !== $outcome->roundId && null !== $outcome->txid && null !== $outcome->digest) {
+            $this->write(UdbWireCodec::ack($this->sid, $targetSid, $outcome->roundId, $outcome->block, $outcome->txid, $outcome->digest));
+        } elseif (UdbWireTakeoverOutcomeKind::Error === $outcome->kind && null !== $outcome->block && null !== $outcome->roundId && null !== $outcome->subcommand && null !== $outcome->errorCode) {
+            $this->write(UdbWireCodec::err($this->sid, $targetSid, $outcome->subcommand, $outcome->errorCode, $outcome->roundId, $outcome->block));
+        }
+    }
+
+    private function retryWireBootstrap(bool $reset = true): void
+    {
+        if (!$this->isWireBootstrapActive()) {
+            return;
+        }
+        if ($reset) {
+            $this->wireTakeover?->reset();
+        }
+        $this->sendHel(force: true);
+        $this->scheduleNextDeadlineTimer();
     }
 
     /** Applies the adopted generation, approves the authority and renegotiates as the FQDN authority. */
@@ -652,6 +712,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         // reconciliation serves any remaining divergence (SQL-backed N/C/K).
         $this->sendHel(force: true);
         $this->maybeOfferReconciliation();
+        $this->scheduleNextDeadlineTimer();
     }
 
     private function isWireBootstrapActive(): bool
@@ -766,6 +827,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         }
 
         $this->oclgView->begin($frame);
+        $this->scheduleNextDeadlineTimer();
     }
 
     private function handleOclgItem(UdbFrame $frame): void
@@ -784,6 +846,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         }
 
         $this->oclgView->end($frame);
+        $this->scheduleNextDeadlineTimer();
     }
 
     /** True when every UDB block has been initialized in the authoritative store. */

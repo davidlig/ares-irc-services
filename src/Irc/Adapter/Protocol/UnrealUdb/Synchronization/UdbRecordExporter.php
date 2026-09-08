@@ -5,21 +5,19 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Domain\Entity\ChannelAccess;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\Domain\OperServ\Entity\Gline;
-use App\Domain\OperServ\Repository\GlineRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Domain\OperServ\ValueObject\ForcedVhost;
+use App\ChanServ\Application\Port\In\ChannelAccessProjection;
+use App\ChanServ\Application\Port\In\ChannelProjection;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
 use App\Irc\Adapter\Protocol\UnrealUdb\UdbChannelModesFormatter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\OperServ\Application\Port\In\GlineProjection;
+use App\OperServ\Application\Port\In\GlineProjectionQuery;
+use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use RuntimeException;
 
 use function array_filter;
@@ -39,11 +37,10 @@ use function trim;
 final readonly class UdbRecordExporter
 {
     public function __construct(
-        private RegisteredNickRepositoryInterface $nickRepository,
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChannelAccessRepositoryInterface $accessRepository,
-        private OperIrcopRepositoryInterface $ircopRepository,
-        private GlineRepositoryInterface $glineRepository,
+        private NickProjectionQuery $nicks,
+        private ChannelProjectionQuery $channels,
+        private OperatorNetworkProjectionQuery $operators,
+        private GlineProjectionQuery $glines,
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private UdbChannelModesFormatter $modesFormatter = new UdbChannelModesFormatter(),
@@ -73,17 +70,14 @@ final readonly class UdbRecordExporter
     }
 
     /** vhost as seen by the network: role-forced pattern wins over personal vhost. */
-    public function effectiveVhost(RegisteredNick $nick): ?string
+    public function effectiveVhost(NickProjection $nick): ?string
     {
-        $ircop = $this->ircopRepository->findByNickId($nick->getId());
-        if (null !== $ircop) {
-            $forcedPattern = $ircop->getRole()->getForcedVhostPattern();
-            if (null !== $forcedPattern && '' !== $forcedPattern && ForcedVhost::isValidPattern($forcedPattern)) {
-                return ForcedVhost::fromPattern($forcedPattern)->generateVhost($nick->getNickname());
-            }
+        $operator = $this->operators->findForNick($nick->id, $nick->nickname);
+        if (null !== $operator?->forcedVhost) {
+            return $operator->forcedVhost;
         }
 
-        $personalVhost = $nick->getVhost();
+        $personalVhost = $nick->vhost;
         if (null !== $personalVhost && '' !== trim($personalVhost)) {
             return trim($personalVhost);
         }
@@ -99,7 +93,7 @@ final readonly class UdbRecordExporter
     public function allNickRecords(): array
     {
         $records = [];
-        foreach ($this->nickRepository->all() as $nick) {
+        foreach ($this->nicks->all() as $nick) {
             $records += $this->nickRecords($nick);
         }
 
@@ -114,7 +108,7 @@ final readonly class UdbRecordExporter
     public function allChannelRecords(): array
     {
         $records = [];
-        foreach ($this->channelRepository->listAll() as $channel) {
+        foreach ($this->channels->all() as $channel) {
             $records += $this->channelRecords($channel);
         }
 
@@ -129,7 +123,7 @@ final readonly class UdbRecordExporter
     public function allGlineRecords(): array
     {
         $records = [];
-        foreach ($this->glineRepository->findActive() as $gline) {
+        foreach ($this->glines->active() as $gline) {
             $records += $this->glineRecords($gline);
         }
 
@@ -174,24 +168,23 @@ final readonly class UdbRecordExporter
      *
      * @return array<string, string>
      */
-    public function nickRecords(RegisteredNick $nick): array
+    public function nickRecords(NickProjection $nick): array
     {
         $records = [];
 
-        $udbHash = $this->toUdbPasswordHash($nick->getPasswordHash());
+        $udbHash = $this->toUdbPasswordHash($nick->passwordHash);
         if (null !== $udbHash) {
-            $records[sprintf('%s::pass', $nick->getNickname())] = $udbHash;
+            $records[sprintf('%s::pass', $nick->nickname)] = $udbHash;
         }
 
         $vhost = $this->effectiveVhost($nick);
         if (null !== $vhost) {
-            $records[sprintf('%s::vhost', $nick->getNickname())] = $vhost;
+            $records[sprintf('%s::vhost', $nick->nickname)] = $vhost;
         }
 
-        $ircop = $this->ircopRepository->findByNickId($nick->getId());
-        $operclass = $ircop?->getRole()->getOperclass();
+        $operclass = $this->operators->findForNick($nick->id, $nick->nickname)?->operclass;
         if (null !== $operclass && '' !== $operclass) {
-            $records[sprintf('%s::oper', $nick->getNickname())] = $operclass;
+            $records[sprintf('%s::oper', $nick->nickname)] = $operclass;
         }
 
         return $records;
@@ -203,47 +196,47 @@ final readonly class UdbRecordExporter
      *
      * @return array<string, string>
      */
-    public function channelRecords(RegisteredChannel $channel): array
+    public function channelRecords(ChannelProjection $channel): array
     {
-        if ($channel->isForbidden()) {
-            $reason = $channel->getForbiddenReason();
+        if ($channel->forbidden) {
+            $reason = $channel->forbiddenReason;
             if (null === $reason || '' === $reason) {
                 return [];
             }
 
-            return [sprintf('%s::forbid', $channel->getName()) => $reason];
+            return [sprintf('%s::forbid', $channel->name) => $reason];
         }
 
         $records = [];
 
-        if ($channel->isSuspended()) {
-            $records[sprintf('%s::suspended', $channel->getName())] = '1';
+        if ($channel->suspended) {
+            $records[sprintf('%s::suspended', $channel->name)] = '1';
         }
 
-        $founder = $this->nickRepository->findById($channel->getFounderNickId());
+        $founder = $this->nicks->findById($channel->founderNickId);
         if (null !== $founder) {
-            $records[sprintf('%s::founder', $channel->getName())] = $founder->getNickname();
+            $records[sprintf('%s::founder', $channel->name)] = $founder->nickname;
         }
 
         // Empty topics are not valid UDB records (string validators reject
         // empty values), so they are never exported.
-        if (null !== $channel->getTopic() && '' !== $channel->getTopic()) {
-            $records[sprintf('%s::topic', $channel->getName())] = $channel->getTopic();
+        if (null !== $channel->topic && '' !== $channel->topic) {
+            $records[sprintf('%s::topic', $channel->name)] = $channel->topic;
         }
 
-        if ($channel->isMlockActive()) {
-            $formatted = $this->modesFormatter->format($channel->getMlock(), $channel->getMlockParams(), $this->modeSupportProvider->getSupport());
+        if ($channel->mlockActive) {
+            $formatted = $this->modesFormatter->format($channel->mlock, $channel->mlockParams, $this->modeSupportProvider->getSupport());
             if (null !== $formatted) {
-                $records[sprintf('%s::modes', $channel->getName())] = $formatted;
+                $records[sprintf('%s::modes', $channel->name)] = $formatted;
             }
         }
 
         $options = $this->channelOptions($channel);
         if (0 !== $options) {
-            $records[sprintf('%s::options', $channel->getName())] = '*' . $options;
+            $records[sprintf('%s::options', $channel->name)] = '*' . $options;
         }
 
-        foreach ($this->accessRepository->listByChannel($channel->getId()) as $access) {
+        foreach ($channel->access as $access) {
             $records += $this->accessRecord($channel, $access);
         }
 
@@ -254,16 +247,16 @@ final readonly class UdbRecordExporter
      * Channel option bitmask: LOCK_MODES (2) = MLOCK active, LOCK_TOPIC (4) =
      * TOPICLOCK, PERSISTENT (8) = active registered channel (+P).
      */
-    public function channelOptions(RegisteredChannel $channel): int
+    public function channelOptions(ChannelProjection $channel): int
     {
         $options = 0;
-        if ($channel->isMlockActive()) {
+        if ($channel->mlockActive) {
             $options |= 2;
         }
-        if ($channel->isTopicLock()) {
+        if ($channel->topicLock) {
             $options |= 4;
         }
-        if (!$channel->isForbidden() && !$channel->isSuspended() && !$channel->isPendingDeletion()) {
+        if (!$channel->forbidden && !$channel->suspended && !$channel->pendingDeletion) {
             $options |= 8;
         }
 
@@ -271,16 +264,16 @@ final readonly class UdbRecordExporter
     }
 
     /** @return array<string, string> Single-element map, or [] when the entry is not exportable. */
-    public function accessRecord(RegisteredChannel $channel, ChannelAccess $access): array
+    public function accessRecord(ChannelProjection $channel, ChannelAccessProjection $access): array
     {
-        $targetNick = $this->nickRepository->findById($access->getNickId());
+        $targetNick = $this->nicks->findById($access->nickId);
         if (null === $targetNick) {
             return [];
         }
 
-        $path = sprintf('%s::access::%s', $channel->getName(), $targetNick->getNickname());
+        $path = sprintf('%s::access::%s', $channel->name, $targetNick->nickname);
 
-        return [$path => (string) $access->getLevel()];
+        return [$path => (string) $access->level];
     }
 
     /**
@@ -290,23 +283,23 @@ final readonly class UdbRecordExporter
      *
      * @return array<string, string>
      */
-    public function glineRecords(Gline $gline): array
+    public function glineRecords(GlineProjection $gline): array
     {
-        $reason = $gline->getReason();
+        $reason = $gline->reason;
         if (null === $reason || '' === $reason) {
             return [];
         }
 
         $records = [
-            sprintf('G::%s', $gline->getMask()) => $reason,
-            sprintf('G::%s::reason', $gline->getMask()) => $reason,
+            sprintf('G::%s', $gline->mask) => $reason,
+            sprintf('G::%s::reason', $gline->mask) => $reason,
         ];
 
-        $expiresAt = $gline->getExpiresAt();
+        $expiresAt = $gline->expiresAt;
         if (null !== $expiresAt) {
-            $duration = $expiresAt->getTimestamp() - $gline->getCreatedAt()->getTimestamp();
+            $duration = $expiresAt->getTimestamp() - $gline->createdAt->getTimestamp();
             if ($duration > 0) {
-                $records[sprintf('G::%s::duration', $gline->getMask())] = '*' . $duration;
+                $records[sprintf('G::%s::duration', $gline->mask)] = '*' . $duration;
             }
         }
 

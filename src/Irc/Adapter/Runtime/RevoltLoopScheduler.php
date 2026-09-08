@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\IRC\Runtime;
+namespace App\Irc\Adapter\Runtime;
 
 use Closure;
 use Revolt\EventLoop;

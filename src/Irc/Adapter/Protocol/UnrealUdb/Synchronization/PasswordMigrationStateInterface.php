@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Port;
+namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
 interface PasswordMigrationStateInterface
 {

@@ -9,7 +9,6 @@ use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
 use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Event\OperIrcopChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
@@ -17,6 +16,7 @@ use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\OperServ\Adapter\Out\Legacy\LegacyOperatorAssignmentNetworkProjection;
 use App\OperServ\Application\Port\Out\OperatorRoleRecord;
+use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +24,7 @@ use Psr\Log\NullLogger;
 
 #[CoversClass(LegacyOperatorAssignmentNetworkProjection::class)]
 #[CoversClass(OperatorRoleRecord::class)]
+#[CoversClass(OperIrcopChangedEvent::class)]
 final class LegacyOperatorAssignmentNetworkProjectionTest extends TestCase
 {
     #[Test]

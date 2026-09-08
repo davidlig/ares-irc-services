@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Infrastructure\IRC\Runtime;
+namespace App\Tests\Irc\Adapter\Runtime;
 
-use App\Infrastructure\IRC\Runtime\RevoltLoopScheduler;
+use App\Irc\Adapter\Runtime\RevoltLoopScheduler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

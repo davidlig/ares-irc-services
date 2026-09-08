@@ -5,40 +5,37 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\PasswordMigrationStateInterface;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Event\OperIrcopChangedEvent;
-use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
-use App\Domain\OperServ\Repository\GlineRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\PasswordMigrationStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbNickSyncSubscriber;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\NickServ\Application\PublishedEvent\NickDropEvent;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
 use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Application\Port\In\GlineProjectionQuery;
+use App\OperServ\Application\Port\In\OperatorNetworkProjection;
+use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
+use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
+use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(UdbNickSyncSubscriber::class)]
 final class UdbNickSyncSubscriberTest extends TestCase
 {
     private function createSubscriber(
-        ?RegisteredNickRepositoryInterface $repo = null,
+        ?NickProjectionQuery $repo = null,
         ?PasswordMigrationStateInterface $migrationState = null,
-        ?OperIrcopRepositoryInterface $ircopRepo = null,
+        ?OperatorNetworkProjectionQuery $ircopRepo = null,
         ?UdbRecordWriterInterface $writer = null,
     ): UdbNickSyncSubscriber {
         $defaultWriter = $this->createStub(UdbRecordWriterInterface::class);
@@ -48,38 +45,30 @@ final class UdbNickSyncSubscriberTest extends TestCase
 
         return new UdbNickSyncSubscriber(
             $writer,
-            $repo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
+            $repo ?? $this->createStub(NickProjectionQuery::class),
             $migrationState ?? $this->createStub(PasswordMigrationStateInterface::class),
-            $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
+            $ircopRepo ?? $this->createStub(OperatorNetworkProjectionQuery::class),
             $this->createExporter($repo, $ircopRepo),
         );
     }
 
     private function createExporter(
-        ?RegisteredNickRepositoryInterface $repo = null,
-        ?OperIrcopRepositoryInterface $ircopRepo = null,
+        ?NickProjectionQuery $repo = null,
+        ?OperatorNetworkProjectionQuery $ircopRepo = null,
     ): UdbRecordExporter {
         return new UdbRecordExporter(
-            $repo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(ChannelAccessRepositoryInterface::class),
-            $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(GlineRepositoryInterface::class),
+            $repo ?? $this->createStub(NickProjectionQuery::class),
+            $this->createStub(ChannelProjectionQuery::class),
+            $ircopRepo ?? $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
     }
 
-    private function createNick(string $nickname, ?string $vhost = null): RegisteredNick
+    private function createNick(string $nickname, ?string $vhost = null): NickProjection
     {
-        $nick = RegisteredNick::createPending($nickname, 'argon2id:$argon2id$hash', $nickname . '@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
-        $nick->activate();
-        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($nick, 7);
-        if (null !== $vhost) {
-            new ReflectionClass(RegisteredNick::class)->getProperty('vhost')->setValue($nick, $vhost);
-        }
-
-        return $nick;
+        return new NickProjection(7, $nickname, 'argon2id:$argon2id$hash', $vhost);
     }
 
     #[Test]
@@ -145,7 +134,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onPasswordHashAvailableRefreshesVhostWhenNickExists(): void
     {
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn($this->createNick('nick', 'nick.tld'));
 
         $inserts = [];
@@ -170,7 +159,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onPasswordHashAvailableIsSkippedWhenTheNickVanished(): void
     {
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn(null);
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
@@ -183,7 +172,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onVhostChangedWritesVhostWhenPresent(): void
     {
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn($this->createNick('nick', 'nick.tld'));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
@@ -196,7 +185,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onVhostChangedDeletesVhostWhenAbsent(): void
     {
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn($this->createNick('nick'));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
@@ -209,7 +198,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onVhostChangedIsSkippedForUnknownAccounts(): void
     {
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn(null);
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
@@ -243,14 +232,13 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onOperRoleForcedVhostChangedRefreshesEveryIrcopOfTheRole(): void
     {
-        $nick = $this->createNick('oper1', 'forced.tld');
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nick = $this->createNick('oper1');
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn($nick);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByRoleId')->willReturn([
-            OperIrcop::create(7, OperRole::create('netadmin')),
-        ]);
+        $ircopRepo = $this->createStub(OperatorNetworkProjectionQuery::class);
+        $ircopRepo->method('findNickIdsByRoleId')->willReturn([7]);
+        $ircopRepo->method('findForNick')->willReturn(new OperatorNetworkProjection(7, 'forced.tld', null));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'oper1::vhost', 'forced.tld');
@@ -262,12 +250,11 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onOperIrcopChangedDeletesOperRecordWhenOperclassIsMissing(): void
     {
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn($this->createNick('oper1'));
 
-        $role = OperRole::create('Helper');
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create(7, $role));
+        $ircopRepo = $this->createStub(OperatorNetworkProjectionQuery::class);
+        $ircopRepo->method('findForNick')->willReturn(new OperatorNetworkProjection(7, null, null));
 
         $deletes = [];
         $writer = $this->createMock(UdbRecordWriterInterface::class);
@@ -292,13 +279,11 @@ final class UdbNickSyncSubscriberTest extends TestCase
     public function onOperIrcopChangedDeletesOperRecordWhenOperclassIsNotGloballyAvailable(): void
     {
         $nick = $this->createNick('oper1');
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn($nick);
 
-        $role = OperRole::create('NetAdmin');
-        $role->changeOperclass('services:netadmin');
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create(7, $role));
+        $ircopRepo = $this->createStub(OperatorNetworkProjectionQuery::class);
+        $ircopRepo->method('findForNick')->willReturn(new OperatorNetworkProjection(7, null, 'services:netadmin'));
 
         $sessionState = $this->createStub(UdbSessionStateInterface::class);
         $sessionState->method('isOperclassGloballyAvailable')->willReturn(false);
@@ -334,13 +319,11 @@ final class UdbNickSyncSubscriberTest extends TestCase
     public function onOperIrcopChangedWritesOperRecordAndRefreshesVhost(): void
     {
         $nick = $this->createNick('oper1', 'oper.tld');
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn($nick);
 
-        $role = OperRole::create('NetAdmin');
-        $role->changeOperclass('services:netadmin');
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create(7, $role));
+        $ircopRepo = $this->createStub(OperatorNetworkProjectionQuery::class);
+        $ircopRepo->method('findForNick')->willReturn(new OperatorNetworkProjection(7, null, 'services:netadmin'));
 
         $inserts = [];
         $writer = $this->createMock(UdbRecordWriterInterface::class);
@@ -364,7 +347,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onOperIrcopChangedDeletesOperRecordWhenRemoved(): void
     {
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn($this->createNick('oper1'));
 
         $deletes = [];
@@ -389,7 +372,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onOperIrcopChangedIsSkippedForUnknownAccounts(): void
     {
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo = $this->createStub(NickProjectionQuery::class);
         $repo->method('findById')->willReturn(null);
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);

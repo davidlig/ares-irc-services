@@ -13,23 +13,33 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+use const STR_PAD_LEFT;
+
 #[CoversClass(UdbOclgView::class)]
 final class UdbOclgViewTest extends TestCase
 {
     private const int GENERATION = 7;
 
+    private const string EPOCH = '0123456789abcdef';
+
     private UdbOclgView $view;
+
+    private MutableUdbClock $clock;
 
     protected function setUp(): void
     {
-        $this->view = new UdbOclgView();
+        $this->clock = new MutableUdbClock();
+        $this->view = new UdbOclgView(clock: $this->clock);
+        $this->view->expectEpoch(self::EPOCH);
     }
 
     #[Test]
     public function readySnapshotBecomesAvailableOnlyAfterEnd(): void
     {
         $entries = ['netadmin' => str_repeat('a', 64)];
-        $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+        $begin = $this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries));
+        $this->view->begin($begin);
+        $this->view->begin($begin);
         self::assertFalse($this->view->isOperclassGloballyAvailable('netadmin'));
 
         $this->view->item($this->frame(UdbFrameKind::OclgItem, path: 'netadmin', checksum: $entries['netadmin']));
@@ -74,11 +84,12 @@ final class UdbOclgViewTest extends TestCase
     }
 
     #[Test]
-    public function invalidBeginDescriptorDiscardsTheStageWithAWarning(): void
+    public function invalidBeginDescriptorIsIgnoredWithAWarning(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->atLeastOnce())->method('warning');
-        $view = new UdbOclgView($logger);
+        $view = new UdbOclgView($logger, $this->clock);
+        $view->expectEpoch(self::EPOCH);
 
         $view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'BROKEN', count: 1, checksum: str_repeat('a', 64)));
         self::assertFalse($view->isOperclassGloballyAvailable('netadmin'));
@@ -101,7 +112,8 @@ final class UdbOclgViewTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->atLeastOnce())->method('warning');
-        $view = new UdbOclgView($logger);
+        $view = new UdbOclgView($logger, $this->clock);
+        $view->expectEpoch(self::EPOCH);
         $entries = ['netadmin' => str_repeat('a', 64)];
 
         $view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
@@ -117,7 +129,8 @@ final class UdbOclgViewTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->atLeastOnce())->method('warning');
-        $view = new UdbOclgView($logger);
+        $view = new UdbOclgView($logger, $this->clock);
+        $view->expectEpoch(self::EPOCH);
         $entries = ['netadmin' => str_repeat('a', 64), 'services' => str_repeat('b', 64)];
 
         $view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, ['netadmin' => $entries['netadmin']])));
@@ -133,7 +146,8 @@ final class UdbOclgViewTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->atLeastOnce())->method('warning');
-        $view = new UdbOclgView($logger);
+        $view = new UdbOclgView($logger, $this->clock);
+        $view->expectEpoch(self::EPOCH);
 
         $view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: str_repeat('c', 64)));
         $view->item($this->frame(UdbFrameKind::OclgItem, path: 'netadmin', checksum: str_repeat('a', 64)));
@@ -222,6 +236,179 @@ final class UdbOclgViewTest extends TestCase
         self::assertSame([], $this->view->getAvailableOperclasses());
     }
 
+    #[Test]
+    public function framesAreAcceptedOnlyForTheExpectedEpoch(): void
+    {
+        $entries = ['netadmin' => str_repeat('a', 64)];
+
+        $this->view->begin($this->frame(
+            UdbFrameKind::OclgBegin,
+            status: 'READY',
+            count: 1,
+            checksum: UdbOclgViewDigest::fromEntries(true, $entries),
+            epoch: 'fedcba9876543210',
+        ));
+        $this->view->item($this->frame(UdbFrameKind::OclgItem, path: 'netadmin', checksum: $entries['netadmin'], epoch: 'fedcba9876543210'));
+        $this->view->end($this->frame(UdbFrameKind::OclgEnd, epoch: 'fedcba9876543210'));
+
+        self::assertSame([], $this->view->getAvailableOperclasses());
+        self::assertNull($this->view->nextDeadline());
+    }
+
+    #[Test]
+    public function generationHighWaterRejectsCompletedDuplicateAndOlderSnapshots(): void
+    {
+        $entries = ['netadmin' => str_repeat('a', 64)];
+        $this->commitReady($entries, generation: 8);
+
+        foreach ([8, 7] as $generation) {
+            $this->view->begin($this->frame(
+                UdbFrameKind::OclgBegin,
+                status: 'INCOMPLETE',
+                count: 0,
+                checksum: UdbOclgViewDigest::fromEntries(false, []),
+                generation: $generation,
+            ));
+        }
+
+        self::assertSame(['netadmin'], $this->view->getAvailableOperclasses());
+        self::assertNull($this->view->nextDeadline());
+    }
+
+    #[Test]
+    public function malformedNewerDescriptorDoesNotWithdrawTheCommittedView(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('warning')->with('Ignored invalid OCLG BEGIN descriptor.');
+        $view = new UdbOclgView($logger, $this->clock);
+        $view->expectEpoch(self::EPOCH);
+        $entries = ['netadmin' => str_repeat('a', 64)];
+
+        $view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+        $view->item($this->frame(UdbFrameKind::OclgItem, path: 'netadmin', checksum: $entries['netadmin']));
+        $view->end($this->frame(UdbFrameKind::OclgEnd));
+
+        $view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1025, checksum: str_repeat('b', 64), generation: 8));
+
+        self::assertSame(['netadmin'], $view->getAvailableOperclasses());
+        self::assertNull($view->nextDeadline());
+    }
+
+    #[Test]
+    public function conflictingDescriptorForTheHighWaterGenerationIsIgnored(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('warning')->with('Ignored conflicting OCLG high-water descriptor.');
+        $view = new UdbOclgView($logger, $this->clock);
+        $view->expectEpoch(self::EPOCH);
+        $entries = ['netadmin' => str_repeat('a', 64)];
+        $digest = UdbOclgViewDigest::fromEntries(true, $entries);
+
+        $view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: $digest));
+        $deadline = $view->nextDeadline();
+        $view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'INCOMPLETE', count: 0, checksum: UdbOclgViewDigest::fromEntries(false, [])));
+
+        self::assertSame($deadline, $view->nextDeadline());
+        $view->item($this->frame(UdbFrameKind::OclgItem, path: 'netadmin', checksum: $entries['netadmin']));
+        $view->end($this->frame(UdbFrameKind::OclgEnd));
+        self::assertSame(['netadmin'], $view->getAvailableOperclasses());
+    }
+
+    #[Test]
+    public function abortedHighWaterGenerationCanRetryTheExactDescriptor(): void
+    {
+        $entries = ['netadmin' => str_repeat('a', 64)];
+        $digest = UdbOclgViewDigest::fromEntries(true, $entries);
+        $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: $digest));
+
+        $this->clock->advance(30);
+        self::assertTrue($this->view->expire());
+
+        $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: $digest));
+        $this->view->item($this->frame(UdbFrameKind::OclgItem, path: 'netadmin', checksum: $entries['netadmin']));
+        $this->view->end($this->frame(UdbFrameKind::OclgEnd));
+
+        self::assertSame(['netadmin'], $this->view->getAvailableOperclasses());
+    }
+
+    #[Test]
+    public function changingEpochWithdrawsTheViewAndResetsTheGenerationHighWater(): void
+    {
+        $entries = ['netadmin' => str_repeat('a', 64)];
+        $this->commitReady($entries, generation: 8);
+
+        $this->view->expectEpoch('fedcba9876543210');
+        self::assertSame([], $this->view->getAvailableOperclasses());
+
+        $replacement = ['services' => str_repeat('b', 64)];
+        $this->view->begin($this->frame(
+            UdbFrameKind::OclgBegin,
+            status: 'READY',
+            count: 1,
+            checksum: UdbOclgViewDigest::fromEntries(true, $replacement),
+            generation: 1,
+            epoch: 'fedcba9876543210',
+        ));
+        $this->view->item($this->frame(UdbFrameKind::OclgItem, path: 'services', checksum: $replacement['services'], generation: 1, epoch: 'fedcba9876543210'));
+        $this->view->end($this->frame(UdbFrameKind::OclgEnd, generation: 1, epoch: 'fedcba9876543210'));
+
+        self::assertSame(['services'], $this->view->getAvailableOperclasses());
+
+        $this->view->expectEpoch('fedcba9876543210');
+        self::assertSame(['services'], $this->view->getAvailableOperclasses());
+    }
+
+    #[Test]
+    public function stageHasAnAbsoluteDeadlineThatItemsCannotExtend(): void
+    {
+        $entries = ['netadmin' => str_repeat('a', 64)];
+        $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+
+        self::assertSame(50, $this->view->nextDeadline());
+        $this->clock->advance(29);
+        $this->view->item($this->frame(UdbFrameKind::OclgItem, path: 'netadmin', checksum: $entries['netadmin']));
+        self::assertSame(50, $this->view->nextDeadline());
+
+        $this->clock->advance(1);
+        self::assertTrue($this->view->expire());
+        self::assertNull($this->view->nextDeadline());
+        self::assertFalse($this->view->expire());
+
+        $this->view->end($this->frame(UdbFrameKind::OclgEnd));
+        self::assertSame([], $this->view->getAvailableOperclasses());
+    }
+
+    #[Test]
+    public function snapshotAcceptsExactlyTheOfficialMaximumOf1024Classes(): void
+    {
+        $entries = [];
+        for ($index = 0; $index < 1024; ++$index) {
+            $entries['class-' . $index] = str_pad(dechex($index), 64, '0', STR_PAD_LEFT);
+        }
+
+        $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1024, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+        foreach ($entries as $name => $digest) {
+            $this->view->item($this->frame(UdbFrameKind::OclgItem, path: $name, checksum: $digest));
+        }
+        $this->view->end($this->frame(UdbFrameKind::OclgEnd));
+
+        self::assertCount(1024, $this->view->getAvailableOperclasses());
+    }
+
+    #[Test]
+    public function snapshotRejectsADeclaredCountAboveTheOfficialMaximum(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('warning')->with('Ignored invalid OCLG BEGIN descriptor.');
+        $view = new UdbOclgView($logger, $this->clock);
+        $view->expectEpoch(self::EPOCH);
+
+        $view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1025, checksum: UdbOclgViewDigest::fromEntries(true, [])));
+
+        self::assertSame([], $view->getAvailableOperclasses());
+        self::assertNull($view->nextDeadline());
+    }
+
     private function frame(
         UdbFrameKind $kind,
         ?string $status = null,
@@ -229,15 +416,16 @@ final class UdbOclgViewTest extends TestCase
         ?string $checksum = null,
         ?string $path = null,
         int $generation = self::GENERATION,
+        string $epoch = self::EPOCH,
     ): UdbFrame {
-        return new UdbFrame($kind, '001', '002', roundId: $generation, epoch: '0123456789abcdef', status: $status, count: $count, checksum: $checksum, path: $path);
+        return new UdbFrame($kind, '001', '002', roundId: $generation, epoch: $epoch, status: $status, count: $count, checksum: $checksum, path: $path);
     }
 
     /** @param array<string, string> $entries */
-    private function commitReady(array $entries): void
+    private function commitReady(array $entries, int $generation = self::GENERATION): void
     {
-        $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
-        $this->view->item($this->frame(UdbFrameKind::OclgItem, path: 'netadmin', checksum: $entries['netadmin']));
-        $this->view->end($this->frame(UdbFrameKind::OclgEnd));
+        $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries), generation: $generation));
+        $this->view->item($this->frame(UdbFrameKind::OclgItem, path: 'netadmin', checksum: $entries['netadmin'], generation: $generation));
+        $this->view->end($this->frame(UdbFrameKind::OclgEnd, generation: $generation));
     }
 }

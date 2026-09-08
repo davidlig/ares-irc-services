@@ -49,6 +49,11 @@ final class UdbPeerSession
         return $this->remoteServerName;
     }
 
+    public function remoteEpoch(): ?string
+    {
+        return $this->remoteEpoch;
+    }
+
     public function isDirect(UdbFrame $frame, string $localSid): bool
     {
         return null !== $this->remoteSid

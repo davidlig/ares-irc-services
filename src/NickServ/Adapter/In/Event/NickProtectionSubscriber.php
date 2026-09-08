@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Event;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;

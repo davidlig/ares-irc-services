@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\Domain\OperServ\Entity\Gline;
-use App\Domain\OperServ\Repository\GlineRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\ChanServ\Application\Port\In\ChannelProjection;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
@@ -18,13 +14,15 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbStoreInitializer;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbStoreInitializationListener;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\OperServ\Application\Port\In\GlineProjection;
+use App\OperServ\Application\Port\In\GlineProjectionQuery;
+use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use ReflectionMethod;
 
 #[CoversClass(UdbStoreInitializer::class)]
@@ -47,38 +45,28 @@ final class UdbStoreInitializerTest extends TestCase
 
     private function createExporter(bool $withChannelAndGline = false): UdbRecordExporter
     {
-        $nick = RegisteredNick::createPending(
-            'david',
-            self::BCRYPT_HASH,
-            'david@example.com',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            registeredAt: new DateTimeImmutable(),
-        );
-        $nick->activate();
-        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($nick, 7);
-        new ReflectionClass(RegisteredNick::class)->getProperty('vhost')->setValue($nick, 'david.example.net');
+        $nick = new NickProjection(7, 'david', self::BCRYPT_HASH, 'david.example.net');
+        $nicks = $this->createStub(NickProjectionQuery::class);
+        $nicks->method('all')->willReturn([$nick]);
+        $nicks->method('findById')->willReturn($nick);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('all')->willReturn([$nick]);
-        $nickRepo->method('findById')->willReturn($nick);
-
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
+        $channels = $this->createStub(ChannelProjectionQuery::class);
+        $glines = $this->createStub(GlineProjectionQuery::class);
 
         if ($withChannelAndGline) {
-            $channel = RegisteredChannel::register('#chan', 7, 'desc');
-            new ReflectionClass(RegisteredChannel::class)->getProperty('id')->setValue($channel, 1);
-            $channelRepo->method('listAll')->willReturn([$channel]);
-            $glineRepo->method('findActive')->willReturn([Gline::create('*@bad.example', null, 'abuse')]);
+            $channels->method('all')->willReturn([
+                new ChannelProjection(1, '#chan', 7, null, false, '', [], false, false, null, false, false, []),
+            ]);
+            $glines->method('active')->willReturn([
+                new GlineProjection('*@bad.example', 'abuse', new DateTimeImmutable(), null),
+            ]);
         }
 
         return new UdbRecordExporter(
-            $nickRepo,
-            $channelRepo,
-            $this->createStub(ChannelAccessRepositoryInterface::class),
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            $glineRepo,
+            $nicks,
+            $channels,
+            $this->createStub(OperatorNetworkProjectionQuery::class),
+            $glines,
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );

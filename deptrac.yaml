@@ -5,7 +5,6 @@ imports:
   - { resource: deptrac-baseline/phase-05.yaml }
   - { resource: deptrac-baseline/phase-06.yaml }
   - { resource: deptrac-baseline/phase-07.yaml }
-  - { resource: deptrac-baseline/phase-08.yaml }
   - { resource: deptrac-baseline/phase-09.yaml }
 
 deptrac:

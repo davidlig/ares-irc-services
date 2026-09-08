@@ -6,8 +6,8 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelModeSupportInterface;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Port\In\ChannelProjection;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\ChanServ\Application\PublishedEvent\ChannelAccessChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
@@ -18,10 +18,6 @@ use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\ValueObject\ChannelStatus;
-use App\Domain\OperServ\Repository\GlineRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSyncSubscriber;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
@@ -29,21 +25,21 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Domain\Event\ChannelTopicChangedEvent;
 use App\Irc\Domain\Network\Channel as IrcChannel;
 use App\Irc\Domain\ValueObject\ChannelName;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\OperServ\Application\Port\In\GlineProjectionQuery;
+use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(UdbChannelSyncSubscriber::class)]
 final class UdbChannelSyncSubscriberTest extends TestCase
 {
     private function createSubscriber(
-        ?RegisteredChannelRepositoryInterface $channelRepo = null,
-        ?RegisteredNickRepositoryInterface $nickRepo = null,
-        ?ChannelAccessRepositoryInterface $accessRepo = null,
+        ?ChannelProjectionQuery $channelRepo = null,
+        ?NickProjectionQuery $nickRepo = null,
         ?ChannelLookupPort $lookup = null,
         ?UdbRecordWriterInterface $writer = null,
     ): UdbChannelSyncSubscriber {
@@ -54,15 +50,14 @@ final class UdbChannelSyncSubscriberTest extends TestCase
 
         return new UdbChannelSyncSubscriber(
             $writer,
-            $channelRepo ?? $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createExporter($channelRepo, $nickRepo, $accessRepo, $lookup),
+            $channelRepo ?? $this->createStub(ChannelProjectionQuery::class),
+            $this->createExporter($channelRepo, $nickRepo, $lookup),
         );
     }
 
     private function createExporter(
-        ?RegisteredChannelRepositoryInterface $channelRepo = null,
-        ?RegisteredNickRepositoryInterface $nickRepo = null,
-        ?ChannelAccessRepositoryInterface $accessRepo = null,
+        ?ChannelProjectionQuery $channelRepo = null,
+        ?NickProjectionQuery $nickRepo = null,
         ?ChannelLookupPort $lookup = null,
     ): UdbRecordExporter {
         $support = $this->createStub(ChannelModeSupportInterface::class);
@@ -76,39 +71,43 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $provider->method('getSupport')->willReturn($support);
 
         return new UdbRecordExporter(
-            $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
-            $channelRepo ?? $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $accessRepo ?? $this->createStub(ChannelAccessRepositoryInterface::class),
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(GlineRepositoryInterface::class),
+            $nickRepo ?? $this->createStub(NickProjectionQuery::class),
+            $channelRepo ?? $this->createStub(ChannelProjectionQuery::class),
+            $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createStub(GlineProjectionQuery::class),
             $lookup ?? $this->createStub(ChannelLookupPort::class),
             $provider,
         );
     }
 
+    /** @param array<string, string> $mlockParams */
     private function createChannel(
         string $name = '#chan',
         int $founderNickId = 7,
         ?string $topic = null,
         bool $mlockActive = false,
         bool $topicLock = false,
-        ChannelStatus $status = ChannelStatus::Active,
-    ): RegisteredChannel {
-        $channel = RegisteredChannel::register($name, $founderNickId, 'desc');
-        $reflection = new ReflectionClass(RegisteredChannel::class);
-        $reflection->getProperty('id')->setValue($channel, 1);
-        if (null !== $topic) {
-            $channel->updateTopic($topic);
-        }
-        if ($mlockActive) {
-            $channel->configureMlock(true, '+nt');
-        }
-        if ($topicLock) {
-            $channel->configureTopicLock(true);
-        }
-        $reflection->getProperty('status')->setValue($channel, $status);
-
-        return $channel;
+        bool $forbidden = false,
+        bool $suspended = false,
+        bool $pendingDeletion = false,
+        string $mlock = '+nt',
+        array $mlockParams = [],
+    ): ChannelProjection {
+        return new ChannelProjection(
+            id: 1,
+            name: $name,
+            founderNickId: $founderNickId,
+            topic: $topic,
+            mlockActive: $mlockActive,
+            mlock: $mlock,
+            mlockParams: $mlockParams,
+            topicLock: $topicLock,
+            forbidden: $forbidden,
+            forbiddenReason: $forbidden ? 'forbidden' : null,
+            suspended: $suspended,
+            pendingDeletion: $pendingDeletion,
+            access: [],
+        );
     }
 
     #[Test]
@@ -134,22 +133,12 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelRegisteredExportsFounderTopicModesAndOptions(): void
     {
-        $founder = RegisteredNick::createPending(
-            'founder',
-            'argon2id:$h',
-            'f@example.com',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
-        );
-        $founder->activate();
-        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($founder, 7);
+        $founder = new NickProjection(7, 'founder', null, null);
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturnCallback(static fn (int $id): ?NickProjection => 7 === $id ? $founder : null);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findById')->willReturnCallback(static fn (int $id): ?RegisteredNick => 7 === $id ? $founder : null);
-
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan', topic: 'Welcome'));
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan', topic: 'Welcome'));
 
         $inserts = [];
         $writer = $this->createStub(UdbRecordWriterInterface::class);
@@ -172,8 +161,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelRegisteredIsSkippedForUnknownChannels(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn(null);
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn(null);
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->never())->method('insert')->willReturn(true);
@@ -189,9 +178,9 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->never())->method('insert')->willReturn(true);
         $writer->expects($this->never())->method('delete')->willReturn(true);
 
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn(null);
-        $channelRepo->method('listAll')->willReturn([]);
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn(null);
+        $channelRepo->method('all')->willReturn([]);
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
         $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#chan', '#chan'));
@@ -204,8 +193,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function founderChangeIsSkippedForUnknownChannels(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn(null);
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn(null);
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->never())->method('insert')->willReturn(true);
@@ -217,9 +206,9 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function optionsRecordIsDeletedWhenNoFlagsRemain(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn(
-            $this->createChannel('#chan', status: ChannelStatus::Suspended),
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn(
+            $this->createChannel('#chan', suspended: true),
         );
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
@@ -243,22 +232,12 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelFounderChangedWritesFounderFromTheUpdatedEntity(): void
     {
-        $founder = RegisteredNick::createPending(
-            'newfounder',
-            'argon2id:$h',
-            'f@example.com',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
-        );
-        $founder->activate();
-        new ReflectionClass(RegisteredNick::class)->getProperty('id')->setValue($founder, 9);
+        $founder = new NickProjection(9, 'newfounder', null, null);
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan', founderNickId: 9));
 
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan', founderNickId: 9));
-
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findById')->willReturnCallback(static fn (int $id): ?RegisteredNick => 9 === $id ? $founder : null);
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturnCallback(static fn (int $id): ?NickProjection => 9 === $id ? $founder : null);
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::founder', 'newfounder');
@@ -282,8 +261,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelSuspendedManagesSuspendedRecordAndOptions(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan', mlockActive: true, topicLock: true, status: ChannelStatus::Suspended));
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan', mlockActive: true, topicLock: true, suspended: true));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->exactly(2))->method('insert')->willReturnCallback(static function (string $block, string $path, string $value): bool {
@@ -304,8 +283,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelUnsuspendedRestoresPersistentOptionBit(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan'));
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan'));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#chan::suspended');
@@ -330,8 +309,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelMlockUpdatedRefreshesOptions(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan'));
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan'));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::options', '*8');
@@ -343,8 +322,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelTopiclockUpdatedRefreshesOptions(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan', topicLock: true));
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan', topicLock: true));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::options', '*12');
@@ -356,8 +335,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function optionsRefreshIsSkippedForUnknownChannels(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn(null);
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn(null);
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->never())->method('insert')->willReturn(true);
@@ -369,10 +348,9 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelMlockUpdatedUpdatesModesRecord(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channel = $this->createChannel('#chan');
-        $channel->configureMlock(true, '+ntkl', ['k' => 'key', 'l' => '10']);
-        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channel = $this->createChannel('#chan', mlockActive: true, mlock: '+ntkl', mlockParams: ['k' => 'key', 'l' => '10']);
+        $channelRepo->method('findByName')->willReturn($channel);
 
         $inserts = [];
         $writer = $this->createStub(UdbRecordWriterInterface::class);
@@ -391,8 +369,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelMlockUpdatedDeletesModesWhenInactive(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan'));
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan'));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#chan::modes');
@@ -404,8 +382,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelTopicChangedInsertsAndDeletesTopic(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan'));
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan'));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::topic', 'New topic');
@@ -421,8 +399,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function wireEventsAreSkippedForForbiddenChannels(): void
     {
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#bad', status: ChannelStatus::Forbidden));
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#bad', forbidden: true));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->never())->method('insert')->willReturn(true);

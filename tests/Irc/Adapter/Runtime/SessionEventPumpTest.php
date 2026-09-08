@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Infrastructure\IRC\Runtime;
+namespace App\Tests\Irc\Adapter\Runtime;
 
-use App\Infrastructure\IRC\Runtime\SessionEventPump;
+use App\Irc\Adapter\Runtime\SessionEventPump;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

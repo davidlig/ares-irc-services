@@ -7,8 +7,8 @@ namespace App\Application\OperServ\Maintenance;
 use App\Application\Maintenance\MaintenanceTaskInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
-use App\Domain\OperServ\Event\GlineRemovedEvent;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
+use App\OperServ\Application\PublishedEvent\GlineRemovedEvent;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

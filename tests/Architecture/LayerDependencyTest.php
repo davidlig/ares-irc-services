@@ -192,6 +192,16 @@ final class LayerDependencyTest extends TestCase
     }
 
     #[Test]
+    public function phaseEightHasNoLegacyPaths(): void
+    {
+        self::assertSame(
+            [],
+            self::architectureDebt()['legacy_paths']['08-unreal-udb'] ?? null,
+            'Phase 08 is complete only when every UnrealUdb-owned legacy path has moved to its final owner.',
+        );
+    }
+
+    #[Test]
     public function newTopologyOnlyUsesTheModeledContextsAndHexagonalLayers(): void
     {
         $allowedRoots = [

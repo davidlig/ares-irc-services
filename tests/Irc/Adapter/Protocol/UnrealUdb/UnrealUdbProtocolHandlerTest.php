@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Infrastructure\IRC\Runtime\SessionEventPump;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
@@ -14,6 +13,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionController;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
+use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Domain\Server\ServerLink;
 use App\Irc\Domain\ValueObject\Hostname;
 use App\Irc\Domain\ValueObject\LinkPassword;
@@ -230,6 +230,27 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         self::assertStringContainsString('PROTOCTL EAUTH=services.test.local SID=002', $this->writtenLine(1));
         self::assertStringStartsWith('PROTOCTL ', $this->writtenLine(2));
         self::assertSame('SERVER services.test.local 1 :Ares IRC Services', $this->writtenLine(3));
+    }
+
+    #[Test]
+    public function reconnectHandshakeDoesNotReuseThePreviousPeerSid(): void
+    {
+        /** @var list<array{string, string}> $observed */
+        $observed = [];
+        $coordinator = $this->createStub(UdbSessionController::class);
+        $coordinator->method('onRemoteServer')->willReturnCallback(static function (string $sid, string $name) use (&$observed): void {
+            $observed[] = [$sid, $name];
+        });
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $connection = $this->createConnection();
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=001']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['old.example.net', '1']), $connection);
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['new.example.net', '1']), $connection);
+        self::assertSame([['001', 'old.example.net']], $observed);
     }
 
     #[Test]

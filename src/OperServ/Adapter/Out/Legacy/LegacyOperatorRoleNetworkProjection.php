@@ -10,9 +10,9 @@ use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\OperclassServiceActionsInterface;
-use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\OperServ\Application\Port\Out\OperatorRoleNetworkProjection;
+use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
 
 final readonly class LegacyOperatorRoleNetworkProjection implements OperatorRoleNetworkProjection
 {

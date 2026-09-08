@@ -7,7 +7,7 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -39,7 +39,7 @@ final readonly class UdbPasswordRepairSubscriber implements EventSubscriberInter
     private const string BLOCK = 'N';
 
     public function __construct(
-        private RegisteredNickRepositoryInterface $nickRepository,
+        private NickProjectionQuery $nicks,
         private UdbRecordRepositoryInterface $records,
         private UdbRecordWriterInterface $recordWriter,
         private UdbRecordExporter $exporter,
@@ -66,17 +66,17 @@ final readonly class UdbPasswordRepairSubscriber implements EventSubscriberInter
         $storeHashes = $this->storePassHashes();
 
         $repaired = 0;
-        foreach ($this->nickRepository->all() as $nick) {
-            $encodedPath = UdbPathCodec::encodePath([$nick->getNickname(), 'pass']);
+        foreach ($this->nicks->all() as $nick) {
+            $encodedPath = UdbPathCodec::encodePath([$nick->nickname, 'pass']);
             if (null === $encodedPath) {
                 continue;
             }
 
             $current = $storeHashes[strtolower($encodedPath)] ?? null;
-            $sqlHash = $nick->getPasswordHash();
+            $sqlHash = $nick->passwordHash;
 
             if (null === $sqlHash || '' === $sqlHash) {
-                if (null !== $current && $this->recordWriter->delete(self::BLOCK, sprintf('%s::pass', $nick->getNickname()))) {
+                if (null !== $current && $this->recordWriter->delete(self::BLOCK, sprintf('%s::pass', $nick->nickname))) {
                     ++$repaired;
                 }
 
@@ -88,7 +88,7 @@ final readonly class UdbPasswordRepairSubscriber implements EventSubscriberInter
                 continue;
             }
 
-            if ($this->recordWriter->insert(self::BLOCK, sprintf('%s::pass', $nick->getNickname()), $desired)) {
+            if ($this->recordWriter->insert(self::BLOCK, sprintf('%s::pass', $nick->nickname), $desired)) {
                 ++$repaired;
             }
         }

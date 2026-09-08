@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Session;
 
 use App\Irc\Adapter\Event\ConnectionLostEvent;
+use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -17,6 +18,7 @@ final readonly class UdbConnectionLifecycleSubscriber implements EventSubscriber
     public function __construct(
         private UdbSessionController $coordinator,
         private UdbSessionLock $lock = new UdbSessionLock(''),
+        private ?UnrealUdbProtocolHandler $protocolHandler = null,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -29,6 +31,7 @@ final readonly class UdbConnectionLifecycleSubscriber implements EventSubscriber
     public function onConnectionLost(ConnectionLostEvent $event): void
     {
         $this->coordinator->reset();
+        $this->protocolHandler?->resetRemoteIdentity();
         $this->lock->release();
     }
 }

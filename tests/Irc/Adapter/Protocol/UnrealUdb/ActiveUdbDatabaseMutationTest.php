@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawDatabaseMutationAdapter;
+use App\Irc\Adapter\Protocol\UnrealUdb\ActiveUdbDatabaseMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerProviderInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
-use App\OperServ\Application\Port\Out\RawDatabaseMutationFailure;
+use App\Irc\Application\Port\In\DatabaseMutationFailure;
+use App\Irc\Application\Port\In\DatabaseMutationResult;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(UnrealUdbRawDatabaseMutationAdapter::class)]
-final class UnrealUdbRawDatabaseMutationAdapterTest extends TestCase
+#[CoversClass(ActiveUdbDatabaseMutation::class)]
+#[CoversClass(DatabaseMutationResult::class)]
+final class ActiveUdbDatabaseMutationTest extends TestCase
 {
     #[Test]
     public function forwardsSuccessfulMutationsWithoutExposingTheLegacyAuditLine(): void
@@ -25,72 +27,72 @@ final class UnrealUdbRawDatabaseMutationAdapterTest extends TestCase
             ->willReturn(UdbRawCommandResult::success('DB * INS N::nick::vhost cloak.example'));
         $handler->expects(self::once())->method('del')->with('N::nick::vhost')
             ->willReturn(UdbRawCommandResult::success('DB * DEL N::nick::vhost'));
-        $adapter = new UnrealUdbRawDatabaseMutationAdapter($this->provider($handler));
+        $adapter = new ActiveUdbDatabaseMutation($this->provider($handler));
 
         self::assertTrue($adapter->isAvailable());
-        self::assertTrue($adapter->insert('N::nick::vhost', 'cloak.example')->successful);
-        self::assertTrue($adapter->delete('N::nick::vhost')->successful);
+        self::assertTrue($adapter->insert('N::nick::vhost', 'cloak.example')->success);
+        self::assertTrue($adapter->delete('N::nick::vhost')->success);
     }
 
     #[Test]
     public function reportsAProtocolNeutralFailureWhenNoHandlerIsActive(): void
     {
-        $adapter = new UnrealUdbRawDatabaseMutationAdapter($this->provider(null));
+        $adapter = new ActiveUdbDatabaseMutation($this->provider(null));
 
         self::assertFalse($adapter->isAvailable());
-        self::assertSame(RawDatabaseMutationFailure::Rejected, $adapter->insert('N::nick', 'value')->failure);
-        self::assertSame(RawDatabaseMutationFailure::Rejected, $adapter->delete('N::nick')->failure);
+        self::assertSame(DatabaseMutationFailure::Rejected, $adapter->insert('N::nick', 'value')->failure);
+        self::assertSame(DatabaseMutationFailure::Rejected, $adapter->delete('N::nick')->failure);
     }
 
     #[Test]
     #[DataProvider('legacyFailures')]
     public function mapsOnlyRecognizedLegacyErrorsToTypedSafeFields(
         UdbRawCommandResult $legacyResult,
-        RawDatabaseMutationFailure $expectedFailure,
+        DatabaseMutationFailure $expectedFailure,
         ?string $expectedRecordType,
-        ?string $expectedRecordPath,
+        ?string $expectedPath,
     ): void {
         $handler = $this->createStub(UdbRawCommandHandlerInterface::class);
         $handler->method('ins')->willReturn($legacyResult);
 
-        $result = new UnrealUdbRawDatabaseMutationAdapter($this->provider($handler))->insert('ignored', 'ignored');
+        $result = new ActiveUdbDatabaseMutation($this->provider($handler))->insert('ignored', 'ignored');
 
-        self::assertFalse($result->successful);
+        self::assertFalse($result->success);
         self::assertSame($expectedFailure, $result->failure);
         self::assertSame($expectedRecordType, $result->recordType);
-        self::assertSame($expectedRecordPath, $result->recordPath);
+        self::assertSame($expectedPath, $result->path);
     }
 
-    /** @return iterable<string, array{UdbRawCommandResult, RawDatabaseMutationFailure, ?string, ?string}> */
+    /** @return iterable<string, array{UdbRawCommandResult, DatabaseMutationFailure, ?string, ?string}> */
     public static function legacyFailures(): iterable
     {
         yield 'record type' => [
             UdbRawCommandResult::error('raw.udb.invalid_block', ['%block%' => 'X', 'payload' => 'discarded']),
-            RawDatabaseMutationFailure::UnsupportedRecordType,
+            DatabaseMutationFailure::UnsupportedRecordType,
             'X',
             null,
         ];
         yield 'record path' => [
             UdbRawCommandResult::error('raw.udb.invalid_path', ['%path%' => 'N::bad', 'payload' => 'discarded']),
-            RawDatabaseMutationFailure::InvalidRecordPath,
+            DatabaseMutationFailure::InvalidPath,
             null,
             'N::bad',
         ];
         yield 'record value' => [
             UdbRawCommandResult::error('raw.udb.invalid_value', ['%path%' => 'N::nick::pass <redacted>']),
-            RawDatabaseMutationFailure::InvalidRecordValue,
+            DatabaseMutationFailure::InvalidValue,
             null,
             'N::nick::pass <redacted>',
         ];
         yield 'non string detail' => [
             UdbRawCommandResult::error('raw.udb.invalid_path', ['%path%' => ['not-safe']]),
-            RawDatabaseMutationFailure::InvalidRecordPath,
+            DatabaseMutationFailure::InvalidPath,
             null,
             null,
         ];
         yield 'unknown error' => [
             UdbRawCommandResult::error('some.protocol.error', ['payload' => 'discarded']),
-            RawDatabaseMutationFailure::Rejected,
+            DatabaseMutationFailure::Rejected,
             null,
             null,
         ];

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Domain\OperServ\Event\GlineRemovedEvent;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbGlineSyncSubscriber;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
+use App\OperServ\Application\PublishedEvent\GlineRemovedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

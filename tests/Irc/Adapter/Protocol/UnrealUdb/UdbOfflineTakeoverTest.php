@@ -5,24 +5,21 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\Domain\OperServ\Repository\GlineRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbOfflineTakeover;
 use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\OperServ\Application\Port\In\GlineProjectionQuery;
+use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
 use Closure;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionProperty;
 use RuntimeException;
 
 use function file_put_contents;
@@ -265,16 +262,8 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     #[Test]
     public function rebuildsNickRecordsFromSqlDuringDryRun(): void
     {
-        $nick = RegisteredNick::createPending(
-            'alice',
-            '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe',
-            'alice@example.test',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable(),
-        );
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 1);
-        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nick = new NickProjection(1, 'alice', '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe', null);
+        $repository = $this->createStub(NickProjectionQuery::class);
         $repository->method('all')->willReturn([$nick]);
 
         $this->writeValidGeneration();
@@ -284,16 +273,8 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     #[Test]
     public function rejectsInvalidRecordsProducedByTheSqlExporter(): void
     {
-        $nick = RegisteredNick::createPending(
-            "invalid\0nick",
-            '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe',
-            'alice@example.test',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
-        );
-        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 1);
-        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nick = new NickProjection(1, "invalid\0nick", '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe', null);
+        $repository = $this->createStub(NickProjectionQuery::class);
         $repository->method('all')->willReturn([$nick]);
         $this->writeValidGeneration();
 
@@ -301,14 +282,13 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
         $this->takeover($repository)->takeover($this->directory, false);
     }
 
-    private function takeover(?RegisteredNickRepositoryInterface $nickRepository = null): UdbOfflineTakeover
+    private function takeover(?NickProjectionQuery $nickRepository = null): UdbOfflineTakeover
     {
         return new UdbOfflineTakeover($this->entityManager, new UdbRecordExporter(
-            $nickRepository ?? $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(ChannelAccessRepositoryInterface::class),
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(GlineRepositoryInterface::class),
+            $nickRepository ?? $this->createStub(NickProjectionQuery::class),
+            $this->createStub(ChannelProjectionQuery::class),
+            $this->createStub(OperatorNetworkProjectionQuery::class),
+            $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         ));

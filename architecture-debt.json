@@ -117,14 +117,7 @@
       "src/Infrastructure/Security/Voter/RootVoter.php",
       "src/Infrastructure/Translation/SymfonyTranslationAdapter.php"
     ],
-    "08-unreal-udb": [
-      "src/Application/Port/NickChangePreservesIdentificationInterface.php",
-      "src/Application/Port/PasswordMigrationStateInterface.php",
-      "src/Infrastructure/IRC/Runtime/LoopSchedulerInterface.php",
-      "src/Infrastructure/IRC/Runtime/RevoltLoopScheduler.php",
-      "src/Infrastructure/IRC/Runtime/SessionEventPump.php",
-      "src/Infrastructure/IRC/Runtime/SessionEventPumpAwareInterface.php"
-    ],
+    "08-unreal-udb": [],
     "09-final-convergence": [
       "src/Application/Port/ConsumerProcessManagerInterface.php",
       "src/Infrastructure/Messenger/ConsumerProcessManager.php",

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Projection\Oclg;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\SystemUdbClock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbOclgViewDigest;
 use Psr\Log\LoggerInterface;
@@ -13,36 +15,53 @@ use function array_keys;
 use function count;
 use function sort;
 
-/**
- * Consumer state for the UDB 4 OCLG global operclass projection.
- *
- * Owns ONLY the availability view: atomic stage building from OCLG
- * BEGIN/ITEM/END frames, fail-closed validation (exact count + upstream
- * SHA-256 view digest) and withdrawal semantics. Direct-peer filtering and
- * wire routing stay in UdbSessionCoordinator; this class holds no session
- * or connection state.
- */
+/** Atomic, epoch-correlated OCLG view with monotonic generations and a bounded stage. */
 final class UdbOclgView
 {
-    /** @var array<string, string> Global operclass name => effective SHA-256 digest. */
+    private const int STAGE_TIMEOUT = 30;
+
+    private const int MAX_CLASSES = 1024;
+
+    /** @var array<string, string> */
     private array $available = [];
 
-    /** @var array{epoch: string, generation: int, ready: bool, count: int, digest: string, entries: array<string, string>}|null */
+    /** @var array{epoch: string, generation: int, ready: bool, count: int, digest: string, entries: array<string, string>, deadline: int}|null */
     private ?array $stage = null;
+
+    /** @var array{epoch: string, generation: int, ready: bool, count: int, digest: string}|null */
+    private ?array $highWaterDescriptor = null;
+
+    private ?string $expectedEpoch = null;
+
+    private int $generationHighWater = 0;
+
+    private ?int $committedGeneration = null;
 
     public function __construct(
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly UdbClock $clock = new SystemUdbClock(),
     ) {}
 
-    /** True only for classes in the last complete READY OCLG projection. */
+    public function expectEpoch(string $epoch): void
+    {
+        if ($this->expectedEpoch === $epoch) {
+            return;
+        }
+
+        $this->available = [];
+        $this->stage = null;
+        $this->highWaterDescriptor = null;
+        $this->generationHighWater = 0;
+        $this->committedGeneration = null;
+        $this->expectedEpoch = $epoch;
+    }
+
     public function isOperclassGloballyAvailable(string $operclass): bool
     {
         return isset($this->available[$operclass]);
     }
 
-    /**
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function getAvailableOperclasses(): array
     {
         $keys = array_keys($this->available);
@@ -53,19 +72,40 @@ final class UdbOclgView
 
     public function begin(UdbFrame $frame): void
     {
-        if (null === $frame->epoch || null === $frame->roundId || null === $frame->status || null === $frame->count || null === $frame->checksum) {
+        if (null === $frame->epoch || $frame->epoch !== $this->expectedEpoch || null === $frame->roundId || null === $frame->status || null === $frame->count || null === $frame->checksum) {
             return;
         }
-
         $ready = 'READY' === $frame->status;
-        if ((!$ready && ('INCOMPLETE' !== $frame->status || 0 !== $frame->count)) || 0 > $frame->count) {
-            $this->discard('invalid OCLG BEGIN descriptor');
+        if ((!$ready && ('INCOMPLETE' !== $frame->status || 0 !== $frame->count)) || 0 > $frame->count || self::MAX_CLASSES < $frame->count) {
+            $this->logger->warning('Ignored invalid OCLG BEGIN descriptor.');
 
             return;
         }
 
-        // A replacement begins by withdrawing the prior projection. Consumers
-        // can never observe stale roles while an inbound view is incomplete.
+        $descriptor = [
+            'epoch' => $frame->epoch,
+            'generation' => $frame->roundId,
+            'ready' => $ready,
+            'count' => $frame->count,
+            'digest' => $frame->checksum,
+        ];
+        if ($frame->roundId < $this->generationHighWater) {
+            return;
+        }
+        if ($frame->roundId === $this->generationHighWater) {
+            if ($descriptor !== $this->highWaterDescriptor) {
+                $this->logger->warning('Ignored conflicting OCLG high-water descriptor.');
+
+                return;
+            }
+            if (null !== $this->stage || $this->committedGeneration === $frame->roundId) {
+                return;
+            }
+        } else {
+            $this->generationHighWater = $frame->roundId;
+            $this->highWaterDescriptor = $descriptor;
+        }
+
         $this->available = [];
         $this->stage = [
             'epoch' => $frame->epoch,
@@ -74,15 +114,15 @@ final class UdbOclgView
             'count' => $frame->count,
             'digest' => $frame->checksum,
             'entries' => [],
+            'deadline' => $this->clock->now() + self::STAGE_TIMEOUT,
         ];
     }
 
     public function item(UdbFrame $frame): void
     {
-        if (null === $frame->epoch || null === $frame->roundId || null === $frame->path || null === $frame->checksum || null === $this->stage) {
+        if ($this->expire() || null === $frame->epoch || null === $frame->roundId || null === $frame->path || null === $frame->checksum || null === $this->stage) {
             return;
         }
-
         if (!$this->matchesStage($frame) || !$this->stage['ready'] || isset($this->stage['entries'][$frame->path]) || $this->stage['count'] <= count($this->stage['entries'])) {
             $this->discard('invalid OCLG ITEM');
 
@@ -94,7 +134,7 @@ final class UdbOclgView
 
     public function end(UdbFrame $frame): void
     {
-        if (null === $this->stage || !$this->matchesStage($frame)) {
+        if ($this->expire() || null === $this->stage || !$this->matchesStage($frame)) {
             return;
         }
 
@@ -108,13 +148,33 @@ final class UdbOclgView
         }
 
         $this->available = $stage['ready'] ? $stage['entries'] : [];
+        $this->committedGeneration = $stage['generation'];
     }
 
-    /** Drops the volatile projection (connection loss / new session). */
+    public function expire(): bool
+    {
+        if (null === $this->stage || $this->clock->now() < $this->stage['deadline']) {
+            return false;
+        }
+
+        $this->discard('stage timeout');
+
+        return true;
+    }
+
+    public function nextDeadline(): ?int
+    {
+        return $this->stage['deadline'] ?? null;
+    }
+
     public function reset(): void
     {
         $this->stage = null;
         $this->available = [];
+        $this->highWaterDescriptor = null;
+        $this->expectedEpoch = null;
+        $this->generationHighWater = 0;
+        $this->committedGeneration = null;
     }
 
     private function matchesStage(UdbFrame $frame): bool
@@ -122,6 +182,7 @@ final class UdbOclgView
         return null !== $this->stage
             && null !== $frame->epoch
             && null !== $frame->roundId
+            && $frame->epoch === $this->expectedEpoch
             && $frame->epoch === $this->stage['epoch']
             && $frame->roundId === $this->stage['generation'];
     }
