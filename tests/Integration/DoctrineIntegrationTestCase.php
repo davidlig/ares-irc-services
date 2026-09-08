@@ -38,7 +38,7 @@ abstract class DoctrineIntegrationTestCase extends TestCase
         $config = new Configuration();
 
         $config->setMetadataDriverImpl(new SimplifiedXmlDriver([
-            __DIR__ . '/../../config/doctrine/domain' => 'App\Domain',
+            __DIR__ . '/../../config/doctrine/operserv' => 'App\OperServ\Domain',
             __DIR__ . '/../../config/doctrine/nickserv' => 'App\NickServ\Domain\Entity',
             __DIR__ . '/../../config/doctrine/memoserv' => 'App\MemoServ\Domain\Entity',
             __DIR__ . '/../../config/doctrine/chanserv' => 'App\ChanServ\Domain\Entity',

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ChannelServiceActionsPort;
 use App\ChanServ\Adapter\In\Event\ChanServPermanentChannelSubscriber;
 use App\ChanServ\Adapter\Out\Network\IrcChannelRegistrationNetworkActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
@@ -15,6 +12,9 @@ use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
 use App\ChanServ\Application\Service\ChannelRegistrationService;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
+use App\Shared\Application\Port\ChannelServiceActionsPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

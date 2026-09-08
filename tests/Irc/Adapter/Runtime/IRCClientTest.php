@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Runtime;
 
-use App\Application\Maintenance\Message\RunMaintenanceCycle;
-use App\Application\Port\AsyncMessageDispatcherInterface;
-use App\Application\Port\EventBusInterface;
+use App\Bootstrap\Maintenance\Message\RunMaintenanceCycle;
 use App\Irc\Adapter\Event\ConnectionEstablishedEvent;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
@@ -25,6 +23,8 @@ use App\Irc\Domain\ValueObject\Hostname;
 use App\Irc\Domain\ValueObject\LinkPassword;
 use App\Irc\Domain\ValueObject\Port;
 use App\Irc\Domain\ValueObject\ServerName;
+use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
+use App\Shared\Application\Port\EventBusInterface;
 use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
@@ -15,6 +14,7 @@ use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

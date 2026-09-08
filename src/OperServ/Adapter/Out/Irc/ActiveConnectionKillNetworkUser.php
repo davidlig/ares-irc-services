@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\Out\Irc;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\OperServ\Application\Port\Out\KillNetworkUser;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 
 /** Performs the protocol-specific KILL only when an active protocol connection exists. */
 final readonly class ActiveConnectionKillNetworkUser implements KillNetworkUser

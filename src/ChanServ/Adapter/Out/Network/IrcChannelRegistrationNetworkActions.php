@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Network;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelServiceActionsPort;
 use App\ChanServ\Application\Port\Out\ChannelRegistrationNetworkActions;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ChannelServiceActionsPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

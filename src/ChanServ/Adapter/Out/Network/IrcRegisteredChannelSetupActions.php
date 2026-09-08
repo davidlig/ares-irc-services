@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Network;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Shared\ServiceUidRegistry;
 use App\ChanServ\Application\Port\Out\ChannelModeActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelSetupActions;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeChange;
 use App\ChanServ\Domain\ValueObject\ModeChangeAction;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ChannelServiceActionsPort;
+use App\Shared\Application\ServiceUidRegistry;
 
 use function in_array;
 

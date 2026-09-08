@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\In\Event;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelModeSupportInterface;
 use App\Irc\Adapter\In\Event\ChannelRankEventBridge;
 use App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\PublishedEvent\ChannelMemberRankGrantedEvent;
 use App\Irc\Domain\ValueObject\ChannelName;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

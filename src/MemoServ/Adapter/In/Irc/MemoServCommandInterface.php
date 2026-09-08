@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc;
 
-use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Shared\Application\Help\HelpableCommandInterface;
 
 /**
  * Contract every MemoServ command module must implement.

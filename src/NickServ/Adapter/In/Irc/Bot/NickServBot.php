@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Bot;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceUidProviderInterface;
 use App\Irc\Application\Port\In\LocalUserModeSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
@@ -14,7 +11,10 @@ use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\Port\ServiceUidProviderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

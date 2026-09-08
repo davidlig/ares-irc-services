@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Security;
 
-use App\Application\OperServ\Port\In\IrcopAccessQuery;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
+use App\OperServ\Application\Port\In\IrcopAccessQuery;
 
 final readonly class OperNickServOperatorAccess implements NickServOperatorAccess
 {

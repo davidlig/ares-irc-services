@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc;
 
-use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\TranslationInterface;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\Security\IrcopAuthorizationSubject;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;

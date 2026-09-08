@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Event;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
@@ -37,6 +36,7 @@ use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

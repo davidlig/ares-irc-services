@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Protocol;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\NickServ\Application\Port\Out\NicknameReservation;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 
 final readonly class ProtocolNicknameReservation implements NicknameReservation
 {

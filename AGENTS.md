@@ -72,7 +72,8 @@ src/
 ├── Shared/
 │   ├── Domain/
 │   └── Application/
-└── Bootstrap/
+├── Bootstrap/
+└── Kernel.php
 ```
 
 Bounded contexts:
@@ -271,8 +272,8 @@ Non-negotiable:
 - neither extends the other;
 - neither decorates/composes the other;
 - neither shares persistence implementations with the other;
-- do not introduce `UnrealFamily`, `UnrealBase`, `AbstractUnreal*`, or shared behavioral traits merely
-  to deduplicate them;
+- do not introduce shared behavioral bases, inheritance, composition, or traits merely to deduplicate
+  them;
 - controlled duplication is preferred when it preserves independent evolution;
 - shared extraction is allowed only for truly protocol-neutral, stateless primitives whose semantics
   cannot diverge.

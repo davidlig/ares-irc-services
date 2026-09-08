@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Network;
 
-use App\Application\Port\ChannelServiceActionsPort;
 use App\ChanServ\Application\Port\Out\NojoinActions;
+use App\Shared\Application\Port\ChannelServiceActionsPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;

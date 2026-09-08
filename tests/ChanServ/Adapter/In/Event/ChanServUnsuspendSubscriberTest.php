@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
-use App\Application\Port\ServiceDebugNotifierInterface;
 use App\ChanServ\Adapter\In\Event\ChanServUnsuspendSubscriber;
 use App\ChanServ\Application\Port\In\UnsuspendedChannelRestoration;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
+use App\Shared\Application\Port\ServiceDebugNotifierInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\ChannelModeSupportInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevels;
@@ -15,6 +14,7 @@ use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsResult;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 use function in_array;
 use function sprintf;

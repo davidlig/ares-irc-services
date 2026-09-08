@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\AsyncMessageDispatcherInterface;
-use App\Application\Port\EventBusInterface;
-use App\Application\Port\TranslationInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\Out\InMemory\PendingEmailChangeRegistry;
 use App\NickServ\Adapter\Out\Mail\RegistrationVerificationEmail;
@@ -15,6 +12,9 @@ use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
+use App\Shared\Application\Port\EventBusInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 

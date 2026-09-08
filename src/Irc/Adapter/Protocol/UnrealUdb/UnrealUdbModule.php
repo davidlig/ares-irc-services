@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Application\Port\ChannelModeSupportInterface;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
@@ -14,6 +13,7 @@ use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceIntroductionFormatterInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 /**
  * UnrealUdb protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.

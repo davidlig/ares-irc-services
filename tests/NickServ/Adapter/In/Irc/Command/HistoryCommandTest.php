@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\HistoryCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -20,6 +19,7 @@ use App\NickServ\Application\UseCase\History\HistoryNickHandlerInterface;
 use App\NickServ\Application\UseCase\History\HistoryNickResult;
 use App\NickServ\Application\UseCase\History\NickHistoryEntryView;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

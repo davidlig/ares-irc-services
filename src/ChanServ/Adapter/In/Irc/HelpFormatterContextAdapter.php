@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc;
 
-use App\Application\Shared\Help\HelpableCommandInterface;
-use App\Application\Shared\Help\HelpFormatterContextInterface;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Security\ChanServPermission;
+use App\Shared\Application\Help\HelpableCommandInterface;
+use App\Shared\Application\Help\HelpFormatterContextInterface;
 
 use function str_starts_with;
 use function strtolower;

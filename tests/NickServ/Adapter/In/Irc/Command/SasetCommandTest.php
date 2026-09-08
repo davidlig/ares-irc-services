@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\AsyncMessageDispatcherInterface;
-use App\Application\Port\EventBusInterface;
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
@@ -35,7 +32,10 @@ use App\NickServ\Application\Service\NickTargetValidator;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
+use App\Shared\Application\Port\EventBusInterface;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

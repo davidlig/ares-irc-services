@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
-use App\Application\Shared\Help\UnifiedHelpFormatter;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
+use App\Shared\Application\Help\UnifiedHelpFormatter;
 
 use function array_find;
 use function strtoupper;

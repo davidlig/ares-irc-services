@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap;
 
-use App\Bootstrap\Kernel;
+use App\Kernel;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 

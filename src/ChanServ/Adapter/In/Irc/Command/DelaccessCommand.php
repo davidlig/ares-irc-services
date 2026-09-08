@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\EventBusInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\Model\ChanAccountView;
@@ -14,6 +13,7 @@ use App\ChanServ\Application\PublishedEvent\ChannelAccessChangedEvent;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
+use App\Shared\Application\Port\EventBusInterface;
 
 use function base64_decode;
 use function inet_ntop;

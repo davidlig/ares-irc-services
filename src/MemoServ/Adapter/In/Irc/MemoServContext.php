@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\MemoServ\Application\Model\MemoAccountView;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\Security\IrcopAuthorizationSubject;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;

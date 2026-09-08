@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\Out\Mail;
 
-use App\Application\Port\TranslationInterface;
 use App\ChanServ\Adapter\Out\Mail\FounderChangeEmail;
 use App\ChanServ\Adapter\Out\Mail\MessengerFounderChangeMailSender;
+use App\Shared\Application\Port\TranslationInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\Out\Irc;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\OperServ\Adapter\Out\Irc\ActiveConnectionKillNetworkUser;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Maintenance;
 
-use App\Application\Port\EventBusInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\Shared\Application\Port\EventBusInterface;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

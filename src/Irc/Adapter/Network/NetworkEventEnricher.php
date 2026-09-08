@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Network;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Irc\Adapter\Network\Event\ChannelJoinReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelKickReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelListModeReceivedEvent;
@@ -36,6 +34,8 @@ use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Network;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\ChannelModeSupportInterface;
 use App\Irc\Adapter\Network\ChannelModeStateSynchronizer;
 use App\Irc\Adapter\Network\Event\ChannelJoinReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelKickReceivedEvent;
@@ -41,6 +38,9 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

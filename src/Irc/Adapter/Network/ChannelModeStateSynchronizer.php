@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Network;
 
-use App\Application\Port\ChannelModeSupportInterface;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\Network\NetworkUser;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 use function count;
 use function in_array;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\DropCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -19,6 +18,7 @@ use App\NickServ\Application\UseCase\Drop\DropNick;
 use App\NickServ\Application\UseCase\Drop\DropNickHandlerInterface;
 use App\NickServ\Application\UseCase\Drop\DropNickResult;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

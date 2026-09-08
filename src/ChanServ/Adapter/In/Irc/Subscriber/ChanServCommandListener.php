@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc\Subscriber;
 
-use App\Application\Port\ServiceCommandListenerInterface;
 use App\ChanServ\Adapter\In\Irc\Bot\ChanServBot;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServService;
@@ -14,6 +13,7 @@ use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Shared\Application\Port\ServiceCommandListenerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;

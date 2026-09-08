@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc;
 
-use App\Application\Port\EventBusInterface;
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
+use App\Shared\Application\Port\EventBusInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\MemoServ\Adapter\In\Irc\Bot;
 
-use App\Application\Port\SendNoticePort;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\MemoServ\Adapter\In\Irc\Bot\MemoServBot;
+use App\Shared\Application\Port\SendNoticePort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\Out\Persistence\Doctrine;
 
-use App\Domain\OperServ\Entity\Motd;
 use App\OperServ\Application\Port\Out\MotdEntry;
 use App\OperServ\Application\Port\Out\MotdRepository;
+use App\OperServ\Domain\Entity\Motd;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Event;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
@@ -19,6 +18,7 @@ use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function str_contains;

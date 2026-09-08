@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
-use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceUidProviderInterface;
-use App\Application\Shared\ServiceUidRegistry;
 use App\ChanServ\Adapter\In\Event\ChanServEntryMsgSubscriber;
 use App\ChanServ\Adapter\Out\Network\IrcChannelEntryMessageDelivery;
 use App\ChanServ\Adapter\Out\Network\ServiceRegistryChanServNetworkIdentity;
@@ -15,6 +12,9 @@ use App\ChanServ\Application\UseCase\DeliverEntryMessage\DeliverChannelEntryMess
 use App\ChanServ\Application\UseCase\DeliverEntryMessage\DeliverChannelEntryMessageHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\Port\ServiceUidProviderInterface;
+use App\Shared\Application\ServiceUidRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

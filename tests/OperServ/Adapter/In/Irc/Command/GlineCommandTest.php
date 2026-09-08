@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\OperServ\Adapter\In\Irc\Command\GlineCommand;
@@ -18,6 +17,7 @@ use App\OperServ\Application\UseCase\ManageGline\ManageGline;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineOutcome;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineResult;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

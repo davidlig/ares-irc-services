@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Bootstrap\Security;
 
-use App\Application\Security\PermissionProviderInterface;
 use App\NickServ\Application\Security\NickServPermission;
+use App\OperServ\Application\Security\PermissionProviderInterface;
 
 final readonly class NickServPermissionProvider implements PermissionProviderInterface
 {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Network;
 
-use App\Application\Port\ChannelServiceActionsPort;
 use App\ChanServ\Application\Port\Out\ChannelModeActions;
 use App\ChanServ\Domain\ValueObject\ModeChangeAction;
+use App\Shared\Application\Port\ChannelServiceActionsPort;
 
 final readonly class IrcChannelModeActions implements ChannelModeActions
 {

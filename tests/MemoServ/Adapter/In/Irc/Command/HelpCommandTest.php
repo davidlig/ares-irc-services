@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\MemoServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\TranslationInterface;
-use App\Application\Shared\Help\UnifiedHelpFormatter;
 use App\Irc\Application\Port\In\SenderView;
 use App\MemoServ\Adapter\In\Irc\Command\HelpCommand;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
@@ -13,7 +11,9 @@ use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Model\MemoAccountView;
+use App\Shared\Application\Help\UnifiedHelpFormatter;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

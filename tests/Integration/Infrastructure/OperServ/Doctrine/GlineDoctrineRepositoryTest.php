@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Infrastructure\OperServ\Doctrine;
 
-use App\Domain\OperServ\Entity\Gline;
-use App\Domain\OperServ\Repository\GlineRepositoryInterface;
-use App\Infrastructure\OperServ\Doctrine\GlineDoctrineRepository;
+use App\OperServ\Adapter\Out\Persistence\Doctrine\GlineDoctrineRepository;
+use App\OperServ\Domain\Entity\Gline;
+use App\OperServ\Domain\Repository\GlineRepositoryInterface;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -31,12 +31,12 @@ final class GlineDoctrineRepositoryTest extends KernelTestCase
         self::assertInstanceOf(GlineRepositoryInterface::class, $repository);
         $this->repository = $repository;
 
-        $this->em->createQuery('DELETE FROM App\Domain\OperServ\Entity\Gline g')->execute();
+        $this->em->createQuery('DELETE FROM App\OperServ\Domain\Entity\Gline g')->execute();
     }
 
     protected function tearDown(): void
     {
-        $this->em->createQuery('DELETE FROM App\Domain\OperServ\Entity\Gline g')->execute();
+        $this->em->createQuery('DELETE FROM App\OperServ\Domain\Entity\Gline g')->execute();
         $this->em->flush();
 
         parent::tearDown();

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\Out\Irc;
 
-use App\Application\OperServ\Service\PseudoClientUidGenerator;
-use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceUidProviderInterface;
-use App\Application\Shared\ServiceUidRegistry;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\OperServ\Adapter\Out\Irc\ActiveConnectionGlobalMessageTransport;
+use App\OperServ\Application\Service\PseudoClientUidGenerator;
 use App\OperServ\Application\UseCase\Global\GlobalMessageType;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\Port\ServiceUidProviderInterface;
+use App\Shared\Application\ServiceUidRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

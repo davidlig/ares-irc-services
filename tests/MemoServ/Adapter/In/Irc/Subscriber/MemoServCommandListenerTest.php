@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\MemoServ\Adapter\In\Irc\Subscriber;
 
-use App\Application\Port\EventBusInterface;
-use App\Application\Port\SendNoticePort;
-use App\Application\Port\TranslationInterface;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
@@ -23,7 +20,10 @@ use App\MemoServ\Adapter\In\Irc\MemoServService;
 use App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences;
 use App\MemoServ\Adapter\In\Irc\Subscriber\MemoServCommandListener;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
+use App\Shared\Application\Port\EventBusInterface;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

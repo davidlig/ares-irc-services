@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\EventBusInterface;
-use App\Application\Port\TranslationInterface;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
@@ -22,6 +19,9 @@ use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\EventBusInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\StatusCommand;
@@ -17,6 +16,7 @@ use App\NickServ\Application\UseCase\Status\StatusNick;
 use App\NickServ\Application\UseCase\Status\StatusNickHandlerInterface;
 use App\NickServ\Application\UseCase\Status\StatusNickResult;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

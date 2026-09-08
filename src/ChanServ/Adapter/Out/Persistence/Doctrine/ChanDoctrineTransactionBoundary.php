@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Persistence\Doctrine;
 
-use App\Application\Port\TransactionManagerInterface;
 use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
+use App\Shared\Application\Port\TransactionManagerInterface;
 
 final readonly class ChanDoctrineTransactionBoundary implements ChanTransactionBoundary
 {

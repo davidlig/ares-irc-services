@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol;
 
-use App\Application\Port\ChannelModeSupportInterface;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 /**
  * No channel prefix modes supported (e.g. when no protocol module is active).

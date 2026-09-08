@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Runtime;
 
-use App\Application\Port\AsyncMessageDispatcherInterface;
-use App\Application\Port\EventBusInterface;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
@@ -19,6 +17,8 @@ use App\Irc\Domain\ValueObject\Hostname;
 use App\Irc\Domain\ValueObject\LinkPassword;
 use App\Irc\Domain\ValueObject\Port;
 use App\Irc\Domain\ValueObject\ServerName;
+use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
+use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

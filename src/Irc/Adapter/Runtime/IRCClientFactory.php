@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Runtime;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\AsyncMessageDispatcherInterface;
-use App\Application\Port\EventBusInterface;
 use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
 use App\Irc\Application\BurstCompleteRegistry;
 use App\Irc\Domain\Server\ServerLink;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
+use App\Shared\Application\Port\EventBusInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

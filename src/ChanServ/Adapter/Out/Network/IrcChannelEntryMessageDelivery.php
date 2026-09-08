@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Network;
 
-use App\Application\Port\SendNoticePort;
-use App\Application\Shared\ServiceUidRegistry;
 use App\ChanServ\Application\Port\Out\ChannelEntryMessageDelivery;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\ServiceUidRegistry;
 
 use function sprintf;
 

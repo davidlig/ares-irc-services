@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Event;
 
-use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\ChannelSyncCompletedRegistryInterface;
-use App\Application\Port\UidResolverInterface;
 use App\ChanServ\Adapter\In\Event\ChanServTopicApplySubscriber;
 use App\ChanServ\Adapter\Out\Network\IrcChannelTopicActions;
 use App\ChanServ\Adapter\Out\Network\IrcChannelTopicNetworkQuery;
@@ -20,6 +17,9 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\Shared\Application\Port\ChannelServiceActionsPort;
+use App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface;
+use App\Shared\Application\Port\UidResolverInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

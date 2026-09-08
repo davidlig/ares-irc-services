@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc\Bot;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceUidProviderInterface;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\Port\ServiceUidProviderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

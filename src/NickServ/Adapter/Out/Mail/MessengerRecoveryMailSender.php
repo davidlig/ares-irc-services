@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Mail;
 
-use App\Application\Port\TranslationInterface;
 use App\NickServ\Application\Port\Out\RecoveryMailSender;
+use App\Shared\Application\Port\TranslationInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Throwable;

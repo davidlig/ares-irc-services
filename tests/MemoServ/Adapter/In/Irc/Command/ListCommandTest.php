@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\MemoServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\MemoServ\Adapter\In\Irc\Command\ListCommand;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
@@ -16,6 +15,7 @@ use App\MemoServ\Application\UseCase\List\ListMemos;
 use App\MemoServ\Application\UseCase\List\ListMemosHandlerInterface;
 use App\MemoServ\Application\UseCase\List\ListMemosResult;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

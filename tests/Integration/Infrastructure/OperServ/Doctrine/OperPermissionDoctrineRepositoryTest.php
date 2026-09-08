@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Infrastructure\OperServ\Doctrine;
 
-use App\Domain\OperServ\Entity\OperPermission;
-use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
-use App\Infrastructure\OperServ\Doctrine\OperPermissionDoctrineRepository;
+use App\OperServ\Adapter\Out\Persistence\Doctrine\OperPermissionDoctrineRepository;
+use App\OperServ\Domain\Entity\OperPermission;
+use App\OperServ\Domain\Repository\OperPermissionRepositoryInterface;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;

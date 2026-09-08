@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Infrastructure\OperServ\Doctrine;
 
-use App\Domain\OperServ\Entity\OperPermission;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
-use App\Infrastructure\OperServ\Doctrine\OperRoleDoctrineRepository;
+use App\OperServ\Adapter\Out\Persistence\Doctrine\OperRoleDoctrineRepository;
+use App\OperServ\Domain\Entity\OperPermission;
+use App\OperServ\Domain\Entity\OperRole;
+use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;

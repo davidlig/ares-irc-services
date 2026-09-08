@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\Out\Event;
 
-use App\Application\Port\EventBusInterface;
 use App\ChanServ\Adapter\Out\Event\SymfonyChanServEventPublisher;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
+use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

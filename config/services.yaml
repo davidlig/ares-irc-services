@@ -156,8 +156,8 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
 
-    App\Application\Mail\MailerInterface:
-        class: App\Infrastructure\Mail\SymfonyMailerAdapter
+    App\Shared\Application\Mail\MailerInterface:
+        class: App\Bootstrap\Adapter\Out\Mail\SymfonyMailerAdapter
         arguments:
             $from: '%mailer.from%'
             $senderName: '%irc.server_name%'
@@ -245,13 +245,13 @@ services:
         alias: App\NickServ\Adapter\Out\ChanServ\ChanServNickAssociatedChannelsAdapter
 
     App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository:
-        alias: App\ChanServ\Adapter\Out\Persistence\LegacyChannelRankPolicyRepository
+        alias: App\ChanServ\Adapter\Out\Persistence\DoctrineChannelRankPolicyRepository
 
     App\ChanServ\Application\Port\Out\ChannelMlockPolicyRepository:
-        alias: App\ChanServ\Adapter\Out\Persistence\LegacyChannelMlockPolicyRepository
+        alias: App\ChanServ\Adapter\Out\Persistence\DoctrineChannelMlockPolicyRepository
 
     App\ChanServ\Application\Port\Out\ChannelMlockStorage:
-        alias: App\ChanServ\Adapter\Out\Persistence\LegacyChannelMlockStorage
+        alias: App\ChanServ\Adapter\Out\Persistence\DoctrineChannelMlockStorage
 
     App\ChanServ\Application\Port\Out\ChannelRankNetworkQuery:
         alias: App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery
@@ -445,14 +445,14 @@ services:
             $sendDelaySeconds: '%mailer.send_delay_seconds%'
         tags: ['messenger.message_handler']
 
-    App\Infrastructure\Messenger\Middleware\EmailDelayMiddleware:
+    App\Bootstrap\Adapter\Out\Messenger\Middleware\EmailDelayMiddleware:
         arguments:
             $emailDelaySeconds: '%mailer.send_delay_seconds%'
 
-    App\Application\Mail\Message\SendEmailHandler:
+    App\Shared\Application\Mail\Message\SendEmailHandler:
         tags: ['messenger.message_handler']
 
-    App\Application\Maintenance\Message\RunMaintenanceCycleHandler:
+    App\Bootstrap\Maintenance\Message\RunMaintenanceCycleHandler:
         tags: ['messenger.message_handler']
 
     # --- Service Nickname Registry (dynamic service names for placeholders) ---------
@@ -463,8 +463,8 @@ services:
 
     # --- Service UID Registry (resolve service nick to UID) -------------------------
 
-    App\Application\Shared\ServiceUidRegistry:
-        factory: ['App\Application\Shared\ServiceUidRegistry', 'fromIterable']
+    App\Shared\Application\ServiceUidRegistry:
+        factory: ['App\Shared\Application\ServiceUidRegistry', 'fromIterable']
         arguments: [!tagged_iterator app.service_uid_provider]
 
     # --- Service UID Generator (auto-generates UIDs on burst) --------------------
@@ -493,29 +493,7 @@ services:
             $maintenanceDispatchIntervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
 
-    # --- Messenger consumer process (started/stopped with irc:connect) ---
-
-    App\Application\Port\ConsumerProcessManagerInterface: '@App\Infrastructure\Messenger\ConsumerProcessManager'
-
-    App\Infrastructure\Messenger\ConsumerProcessManager:
-        arguments:
-            $consolePath: '%kernel.project_dir%/bin/console'
-            $transportNames: ['async', 'async_emails']
-
-    # --- CLI command — inject .env defaults so the command runs without arguments ---
-
     App\Irc\Application\Connect\ConnectToServerHandlerInterface: '@App\Irc\Application\Connect\ConnectToServerHandler'
-
-    App\UI\CLI\ConnectCommand:
-        arguments:
-            $consumerManager:   '@App\Infrastructure\Messenger\ConsumerProcessManager'
-            $defaultServerName:  '%irc.server_name%'
-            $defaultHost:        '%irc.ircd_host%'
-            $defaultPort:        '%irc.ircd_port%'
-            $defaultPassword:    '%irc.link_password%'
-            $defaultDescription: '%irc.description%'
-            $defaultUseTls:      '%irc.use_tls%'
-            $defaultTlsVerifyPeer: '%irc.tls_verify_peer%'
 
     App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight:
         arguments:
@@ -729,7 +707,7 @@ services:
     App\Irc\Domain\Repository\NetworkUserRepositoryInterface:
         class: App\Irc\Adapter\Network\InMemoryNetworkUserRepository
 
-    App\Application\Port\UidResolverInterface:
+    App\Shared\Application\Port\UidResolverInterface:
         class: App\Irc\Adapter\Network\NetworkUidResolver
 
     App\Irc\Domain\Repository\ChannelRepositoryInterface:
@@ -772,7 +750,7 @@ services:
 
     # --- Service Command Gateway: PRIVMSG → registered service listeners ---
 
-    App\Infrastructure\IRC\ServiceBridge\ServiceCommandGateway:
+    App\Irc\Adapter\In\Event\ServiceCommandGateway:
         arguments:
             $listeners: !tagged_iterator service_command_listener
             $logger: '@monolog.logger.irc'
@@ -780,22 +758,22 @@ services:
 
     # --- Antiflood: command rate limiting for service bots (IRCops exempt) ---
 
-    App\Application\Services\Antiflood\AntifloodRegistry: ~
+    App\Irc\Application\Antiflood\AntifloodRegistry: ~
 
-    App\Application\Services\Antiflood\ClientKeyResolver: ~
+    App\Irc\Application\Antiflood\ClientKeyResolver: ~
 
-    App\Application\Services\Antiflood\AntifloodPruner:
+    App\Irc\Application\Antiflood\AntifloodPruner:
         arguments:
             $windowSeconds: '%services.antiflood_window_seconds%'
         tags: ['maintenance.prunable']
 
-    App\Infrastructure\IRC\ServiceBridge\AntifloodSubscriber:
+    App\Irc\Adapter\In\Event\AntifloodSubscriber:
         arguments:
-            $registry: '@App\Application\Services\Antiflood\AntifloodRegistry'
-            $clientKeyResolver: '@App\Application\Services\Antiflood\ClientKeyResolver'
-            $gateway: '@App\Infrastructure\IRC\ServiceBridge\ServiceCommandGateway'
+            $registry: '@App\Irc\Application\Antiflood\AntifloodRegistry'
+            $clientKeyResolver: '@App\Irc\Application\Antiflood\ClientKeyResolver'
+            $gateway: '@App\Irc\Adapter\In\Event\ServiceCommandGateway'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $sendNotice: '@App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter'
+            $sendNotice: '@App\Irc\Adapter\In\Event\CoreSendNoticeAdapter'
             $messageTypeResolver: '@App\Irc\Application\Port\Out\ServiceUserPreferences'
             $notifier: '@App\OperServ\Adapter\In\Irc\OperServNotifierInterface'
             $authorization: '@App\OperServ\Application\Port\In\OperatorAuthorizationQuery'
@@ -853,62 +831,62 @@ services:
     App\Irc\Application\Port\In\ChannelLookupPort:
         class: App\Irc\Adapter\ServiceBridge\CoreChannelLookupAdapter
 
-    App\Application\Port\ServiceChannelRegistrationPort:
-        class: App\Infrastructure\IRC\ServiceBridge\CoreServiceChannelRegistrationAdapter
+    App\Shared\Application\Port\ServiceChannelRegistrationPort:
+        class: App\Irc\Adapter\In\Event\CoreServiceChannelRegistrationAdapter
 
-    App\Application\Port\ApplyOutgoingChannelModesPort:
-        class: App\Infrastructure\IRC\ServiceBridge\CoreApplyOutgoingChannelModesAdapter
+    App\Shared\Application\Port\ApplyOutgoingChannelModesPort:
+        class: App\Irc\Adapter\In\Event\CoreApplyOutgoingChannelModesAdapter
 
     App\Irc\Adapter\Network\ApplyOutgoingChannelModesApplicatorInterface: '@App\Irc\Adapter\Network\NetworkEventEnricher'
 
-    App\Application\Port\ChannelSyncCompletedRegistryInterface:
+    App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface:
         class: App\Irc\Adapter\Network\ChannelSyncCompletedRegistry
 
     App\Irc\Adapter\Network\ChannelSyncCompletedMarkerSubscriber:
         arguments:
-            $registry: '@App\Application\Port\ChannelSyncCompletedRegistryInterface'
+            $registry: '@App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface'
         tags: ['kernel.event_subscriber']
 
     App\Irc\Adapter\In\Event\DoctrineIdentityMapClearSubscriber:
         tags: ['kernel.event_subscriber']
 
-    App\Application\Port\SendNoticePort:
-        class: App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter
+    App\Shared\Application\Port\SendNoticePort:
+        class: App\Irc\Adapter\In\Event\CoreSendNoticeAdapter
 
     # --- CTCP Handler: handles CTCP VERSION requests ---
 
-    App\Application\Port\SendCtcpPort:
-        class: App\Infrastructure\IRC\ServiceBridge\CoreSendCtcpAdapter
+    App\Shared\Application\Port\SendCtcpPort:
+        class: App\Irc\Adapter\In\Event\CoreSendCtcpAdapter
 
-    App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder:
+    App\Irc\Adapter\In\Event\CtcpVersionResponder:
         arguments:
             $translator: '@translator'
             $languageResolver: '@App\Irc\Application\Port\Out\ServiceUserPreferences'
             $servicesVersion: '%services.version%'
 
-    App\Infrastructure\IRC\ServiceBridge\CtcpHandler:
+    App\Irc\Adapter\In\Event\CtcpHandler:
         arguments:
-            $sendCtcp: '@App\Application\Port\SendCtcpPort'
-            $sendNotice: '@App\Application\Port\SendNoticePort'
-            $versionResponder: '@App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder'
+            $sendCtcp: '@App\Shared\Application\Port\SendCtcpPort'
+            $sendNotice: '@App\Shared\Application\Port\SendNoticePort'
+            $versionResponder: '@App\Irc\Adapter\In\Event\CtcpVersionResponder'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $languageResolver: '@App\Irc\Application\Port\Out\ServiceUserPreferences'
-            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
+            $uidRegistry: '@App\Shared\Application\ServiceUidRegistry'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Application\Port\ActiveChannelModeSupportProviderInterface:
-        class: App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider
+    App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface:
+        class: App\Irc\Adapter\In\Event\ActiveChannelModeSupportProvider
 
     App\Irc\Adapter\Protocol\NullChannelModeSupport: ~
 
-    App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider:
+    App\Irc\Adapter\In\Event\ActiveChannelModeSupportProvider:
         arguments:
             $nullSupport: '@App\Irc\Adapter\Protocol\NullChannelModeSupport'
 
     # --- ActiveConnectionHolder — stores the live S2S connection for all services ---
 
-    App\Application\Port\ActiveConnectionHolderInterface:
+    App\Shared\Application\Port\ActiveConnectionHolderInterface:
         alias: App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
 
     App\Irc\Adapter\Out\Connection\ActiveConnectionHolder:
@@ -1058,10 +1036,10 @@ services:
     App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface:
         alias: App\ChanServ\Adapter\In\Irc\Bot\ChanServBot
 
-    App\Application\Port\ChannelServiceActionsPort:
+    App\Shared\Application\Port\ChannelServiceActionsPort:
         alias: App\ChanServ\Adapter\In\Irc\Bot\ChanServBot
 
-    App\Application\Port\ChanServBotPort:
+    App\Shared\Application\Port\ChanServBotPort:
         alias: App\ChanServ\Adapter\In\Irc\Bot\ChanServBot
 
     # --- MemoServ Bot pseudo-client ---------------------------------------------
@@ -1472,7 +1450,7 @@ services:
     # MemoServ Event Subscribers
     App\MemoServ\Adapter\In\Event\MemoServPendingChannelNoticeSubscriber:
         arguments:
-            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
+            $uidRegistry: '@App\Shared\Application\ServiceUidRegistry'
             $defaultLanguage: '%services.default_language%'
         tags: ['kernel.event_subscriber']
 
@@ -1497,11 +1475,11 @@ services:
     App\ChanServ\Adapter\In\Event\ChanServAccessChannelDropSubscriber:
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber:
+    App\OperServ\Adapter\In\Event\OperServNickDropCleanupSubscriber:
         arguments:
-            $operIrcopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
-            $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
+            $operIrcopRepository: '@App\OperServ\Domain\Repository\OperIrcopRepositoryInterface'
+            $glineRepository: '@App\OperServ\Domain\Repository\GlineRepositoryInterface'
+            $motdRepository: '@App\OperServ\Domain\Repository\MotdRepositoryInterface'
         tags: ['kernel.event_subscriber']
 
     # --- NickServ Command Registry — auto-collects all tagged commands ----------
@@ -1576,11 +1554,11 @@ services:
 
     App\NickServ\Adapter\In\Irc\Command\SetPasswordHandler:
         arguments:
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+            $eventDispatcher: '@App\Shared\Application\Port\EventBusInterface'
 
     App\NickServ\Adapter\In\Irc\Command\SetEmailHandler:
         arguments:
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+            $eventDispatcher: '@App\Shared\Application\Port\EventBusInterface'
 
     App\NickServ\Adapter\In\Irc\Command\SasetCommand:
         arguments:
@@ -1608,13 +1586,13 @@ services:
             $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $targetValidator: '@App\NickServ\Application\Service\NickTargetValidator'
             $suspensionService: '@App\NickServ\Application\Service\NickSuspensionService'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+            $eventDispatcher: '@App\Shared\Application\Port\EventBusInterface'
         tags: ['nickserv.command']
 
     App\NickServ\Adapter\In\Irc\Command\UnsuspendCommand:
         arguments:
             $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+            $eventDispatcher: '@App\Shared\Application\Port\EventBusInterface'
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Rename\RenameNickHandler:
@@ -1676,11 +1654,11 @@ services:
             $protectionExemption: '@App\NickServ\Application\Port\Out\NickProtectionExemption'
             $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
 
-    App\Application\OperServ\Port\In\ProtectedNickQuery:
-        alias: App\Application\OperServ\ProtectedNickQueryService
+    App\OperServ\Application\Port\In\ProtectedNickQuery:
+        alias: App\OperServ\Application\ProtectedNickQueryService
 
-    App\Application\OperServ\Port\In\IrcopAccessQuery:
-        alias: App\Application\OperServ\IrcopAccessQueryService
+    App\OperServ\Application\Port\In\IrcopAccessQuery:
+        alias: App\OperServ\Application\IrcopAccessQueryService
 
     App\NickServ\Application\Port\Out\NickServOperatorAccess:
         alias: App\NickServ\Adapter\Out\Security\OperNickServOperatorAccess
@@ -1728,11 +1706,11 @@ services:
 
     Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage: ~
 
-    App\Infrastructure\Security\Voter\IdentifiedVoter: ~
+    App\OperServ\Adapter\In\Security\IdentifiedVoter: ~
 
-    App\Infrastructure\Security\Voter\IrcopPermissionVoter: ~
+    App\OperServ\Adapter\In\Security\IrcopPermissionVoter: ~
 
-    App\Infrastructure\Security\Voter\RootVoter: ~
+    App\OperServ\Adapter\In\Security\RootVoter: ~
 
     App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter: ~
 
@@ -1744,9 +1722,9 @@ services:
                 - '@App\NickServ\Adapter\Out\Security\Voter\NickServIdentifiedOwnerVoter'
                 - '@App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter'
                 - '@App\ChanServ\Adapter\Out\Security\Voter\ChanServLevelFounderVoter'
-                - '@App\Infrastructure\Security\Voter\IdentifiedVoter'
-                - '@App\Infrastructure\Security\Voter\IrcopPermissionVoter'
-                - '@App\Infrastructure\Security\Voter\RootVoter'
+                - '@App\OperServ\Adapter\In\Security\IdentifiedVoter'
+                - '@App\OperServ\Adapter\In\Security\IrcopPermissionVoter'
+                - '@App\OperServ\Adapter\In\Security\RootVoter'
 
     Symfony\Component\Security\Core\Authorization\AuthorizationChecker:
         arguments:
@@ -1771,7 +1749,7 @@ services:
 
     # --- Permission Registry (IRCOP permissions across all services) ----------------
 
-    App\Application\Security\PermissionRegistry:
+    App\OperServ\Application\Security\PermissionRegistry:
         arguments:
             $providers: !tagged_iterator permission.provider
 
@@ -1784,7 +1762,7 @@ services:
     App\Bootstrap\Security\MemoServPermissionProvider:
         tags: ['permission.provider']
 
-    App\Application\OperServ\Security\OperServIrcopPermission:
+    App\OperServ\Application\Security\OperServIrcopPermission:
         tags: ['permission.provider']
 
     # --- NickServ registries ----------------------------------------------------
@@ -1825,7 +1803,7 @@ services:
             $burstState:                '@App\NickServ\Application\Service\BurstState'
             $networkUserLookup:        '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $pendingProtectionRegistry: '@App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface'
-            $connectionHolder:          '@App\Application\Port\ActiveConnectionHolderInterface'
+            $connectionHolder:          '@App\Shared\Application\Port\ActiveConnectionHolderInterface'
         tags: ['kernel.event_subscriber']
 
     App\NickServ\Adapter\In\Event\ForbiddenNickEnforceSubscriber:
@@ -1840,7 +1818,7 @@ services:
 
     # --- Maintenance system -----------------------------------------------------
 
-    App\Application\Maintenance\MaintenanceScheduler:
+    App\Bootstrap\Maintenance\MaintenanceScheduler:
         arguments:
             $tasks:  !tagged_iterator maintenance.task
             $logger: '@monolog.logger.maintenance'
@@ -1940,10 +1918,10 @@ services:
         alias: App\ChanServ\Adapter\Out\Projection\ChannelProjectionResolver
 
     App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorNetworkProjectionQuery
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineOperatorNetworkProjectionQuery
 
     App\OperServ\Application\Port\In\GlineProjectionQuery:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyGlineProjectionQuery
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineGlineProjectionQuery
 
     App\NickServ\Application\Port\In\NickAccountQuery:
         alias: App\NickServ\Adapter\Out\User\NickAccountResolver
@@ -1962,43 +1940,43 @@ services:
     App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences:
         alias: App\MemoServ\Adapter\Out\NickServ\NickServUserPreferencesAdapter
 
-    App\Application\OperServ\Port\Out\ServiceUserPreferences:
-        alias: App\Infrastructure\OperServ\User\NickServUserPreferencesAdapter
+    App\OperServ\Application\Port\Out\ServiceUserPreferences:
+        alias: App\OperServ\Adapter\Out\NickServ\NickServUserPreferencesAdapter
 
     App\NickServ\Adapter\Out\User\UserMessageTypeResolver: ~
 
-    App\Application\Port\EventBusInterface:
-        alias: App\Infrastructure\Event\SymfonyEventBus
+    App\Shared\Application\Port\EventBusInterface:
+        alias: App\Irc\Adapter\Out\Event\SymfonyEventBus
 
-    App\Application\Port\TransactionManagerInterface:
-        alias: App\Infrastructure\Persistence\DoctrineTransactionManager
+    App\Shared\Application\Port\TransactionManagerInterface:
+        alias: App\Bootstrap\Adapter\Out\Persistence\DoctrineTransactionManager
 
-    App\Application\Port\AsyncMessageDispatcherInterface:
-        alias: App\Infrastructure\Messenger\SymfonyAsyncMessageDispatcher
+    App\Shared\Application\Port\AsyncMessageDispatcherInterface:
+        alias: App\Bootstrap\Adapter\Out\Messenger\SymfonyAsyncMessageDispatcher
 
-    App\Application\Port\TranslationInterface:
-        alias: App\Infrastructure\Translation\SymfonyTranslationAdapter
+    App\Shared\Application\Port\TranslationInterface:
+        alias: App\Bootstrap\Adapter\Out\Translation\SymfonyTranslationAdapter
 
     # --- OperServ Domain --------------------------------------------------------
 
-    App\Domain\OperServ\Repository\OperIrcopRepositoryInterface:
-        class: App\Infrastructure\OperServ\Doctrine\OperIrcopDoctrineRepository
+    App\OperServ\Domain\Repository\OperIrcopRepositoryInterface:
+        class: App\OperServ\Adapter\Out\Persistence\Doctrine\OperIrcopDoctrineRepository
 
-    App\Domain\OperServ\Repository\OperRoleRepositoryInterface:
-        class: App\Infrastructure\OperServ\Doctrine\OperRoleDoctrineRepository
+    App\OperServ\Domain\Repository\OperRoleRepositoryInterface:
+        class: App\OperServ\Adapter\Out\Persistence\Doctrine\OperRoleDoctrineRepository
 
-    App\Domain\OperServ\Repository\OperPermissionRepositoryInterface:
-        class: App\Infrastructure\OperServ\Doctrine\OperPermissionDoctrineRepository
+    App\OperServ\Domain\Repository\OperPermissionRepositoryInterface:
+        class: App\OperServ\Adapter\Out\Persistence\Doctrine\OperPermissionDoctrineRepository
 
-    App\Domain\OperServ\Repository\GlineRepositoryInterface:
-        class: App\Infrastructure\OperServ\Doctrine\GlineDoctrineRepository
+    App\OperServ\Domain\Repository\GlineRepositoryInterface:
+        class: App\OperServ\Adapter\Out\Persistence\Doctrine\GlineDoctrineRepository
 
-    App\Domain\OperServ\Repository\MotdRepositoryInterface:
-        class: App\Infrastructure\OperServ\Doctrine\MotdDoctrineRepository
+    App\OperServ\Domain\Repository\MotdRepositoryInterface:
+        class: App\OperServ\Adapter\Out\Persistence\Doctrine\MotdDoctrineRepository
 
     # --- OperServ Application ---------------------------------------------------
 
-    App\Application\OperServ\RootUserRegistry:
+    App\OperServ\Application\RootUserRegistry:
         arguments:
             $rootUsers: '%operserv.root_users%'
 
@@ -2009,13 +1987,13 @@ services:
     App\OperServ\Application\Port\Out\RootIdentityRegistry:
         alias: App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry
 
-    App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleAccess:
+    App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleAccess:
         arguments:
-            $operators: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $roles: '@App\Domain\OperServ\Repository\OperRoleRepositoryInterface'
+            $operators: '@App\OperServ\Domain\Repository\OperIrcopRepositoryInterface'
+            $roles: '@App\OperServ\Domain\Repository\OperRoleRepositoryInterface'
 
     App\OperServ\Application\Port\Out\OperatorRoleAccess:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleAccess
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleAccess
 
     App\OperServ\Application\Port\In\OperatorAuthorizationQuery:
         alias: App\OperServ\Application\Security\OperatorAuthorizationService
@@ -2031,11 +2009,11 @@ services:
             $defaultTimezone: '%services.default_timezone%'
 
 
-    App\Application\OperServ\IrcopModeApplier:
+    App\OperServ\Adapter\In\Event\IrcopModeApplier:
         arguments:
             $identifiedRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
             $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
-            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $ircopRepository: '@App\OperServ\Domain\Repository\OperIrcopRepositoryInterface'
             $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $userLookup: '@App\Irc\Adapter\ServiceBridge\CoreNetworkUserLookupAdapter'
             $logger: '@monolog.logger.irc'
@@ -2044,7 +2022,7 @@ services:
         tags: ['operserv.command.new']
 
     App\OperServ\Application\Port\Out\RawLineTransport:
-        alias: App\OperServ\Adapter\Out\Irc\LegacyRawLineTransport
+        alias: App\OperServ\Adapter\Out\Irc\ActiveConnectionRawLineTransport
 
     App\OperServ\Application\Port\Out\RawDatabaseMutationHandler:
         alias: App\OperServ\Adapter\Out\Irc\ProtocolRawDatabaseMutationHandler
@@ -2063,16 +2041,16 @@ services:
             $maxGlines: '%operserv.max_glines%'
 
     App\OperServ\Application\Port\Out\GlineRepository:
-        alias: App\OperServ\Adapter\Out\Persistence\Legacy\LegacyGlineRepository
+        alias: App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineGlineRepositoryAdapter
 
     App\OperServ\Application\Port\Out\GlineNetworkActions:
-        alias: App\OperServ\Adapter\Out\Irc\LegacyGlineNetworkActions
+        alias: App\OperServ\Adapter\Out\Irc\ActiveConnectionGlineNetworkActions
 
     App\OperServ\Application\Port\Out\GlineUserLookup:
         alias: App\OperServ\Adapter\Out\Irc\NetworkGlineUserLookup
 
     App\OperServ\Application\Port\Out\ProtectedGlineSubjects:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyProtectedGlineSubjects
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineProtectedGlineSubjects
 
     App\OperServ\Adapter\In\Irc\Command\GlineCommand:
         arguments:
@@ -2092,13 +2070,13 @@ services:
         alias: App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopHandler
 
     App\OperServ\Application\Port\Out\OperatorAssignmentStore:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorAssignmentStore
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineOperatorAssignmentStore
 
     App\OperServ\Application\Port\Out\OperatorAssignmentNetworkProjection:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorAssignmentNetworkProjection
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineOperatorAssignmentNetworkProjection
 
     App\OperServ\Application\Port\Out\OperatorRoleStore:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleStore
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleStore
 
     App\OperServ\Adapter\In\Irc\Command\IrcopCommand:
         tags: ['operserv.command.new']
@@ -2113,13 +2091,13 @@ services:
         alias: App\Irc\Adapter\Out\Security\RegisteredNetworkPermissionCatalog
 
     App\OperServ\Application\Port\Out\OperatorRoleNetworkProjection:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleNetworkProjection
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleNetworkProjection
 
     App\OperServ\Application\Port\Out\OperatorModeCatalog:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyOperatorModeCatalog
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineOperatorModeCatalog
 
     App\OperServ\Application\Port\Out\ForcedVhostPolicy:
-        alias: App\OperServ\Adapter\Out\Legacy\LegacyForcedVhostPolicy
+        alias: App\OperServ\Adapter\Out\Projection\DoctrineForcedVhostPolicy
 
     App\OperServ\Adapter\In\Irc\Command\RoleCommand:
         tags: ['operserv.command.new']
@@ -2144,10 +2122,10 @@ services:
 
     # --- OperServ Infrastructure -------------------------------------------------
 
-    App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter:
-        class: App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter
+    App\Irc\Adapter\In\Event\OperServSendNoticeAdapter:
+        class: App\Irc\Adapter\In\Event\CoreSendNoticeAdapter
 
-    App\Infrastructure\OperServ\Bot\OperServBot:
+    App\OperServ\Adapter\In\Irc\Bot\OperServBot:
         arguments:
             $uidGenerator: '@App\Irc\Application\Port\In\ServiceUidGeneratorInterface'
             $servicesVhost: '%services.vhost%'
@@ -2155,37 +2133,37 @@ services:
             $operservIdent: '%operserv.ident%'
             $operservRealname: '%operserv.realname%'
             $logger: '@monolog.logger.irc'
-            $sendNoticePort: '@App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter'
+            $sendNoticePort: '@App\Irc\Adapter\In\Event\OperServSendNoticeAdapter'
         tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
 
     App\OperServ\Adapter\In\Irc\OperServNotifierInterface:
-        alias: App\Infrastructure\OperServ\Bot\OperServBot
+        alias: App\OperServ\Adapter\In\Irc\Bot\OperServBot
 
-    App\Infrastructure\OperServ\Subscriber\OperServCommandListener:
+    App\OperServ\Adapter\In\Event\OperServCommandListener:
         arguments:
             $operServService: '@App\OperServ\Adapter\In\Irc\OperServService'
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
 
-    App\Infrastructure\OperServ\Subscriber\MotdOnConnectSubscriber:
+    App\OperServ\Adapter\In\Event\MotdOnConnectSubscriber:
         arguments:
-            $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
-            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
-            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $motdRepository: '@App\OperServ\Domain\Repository\MotdRepositoryInterface'
+            $uidRegistry: '@App\Shared\Application\ServiceUidRegistry'
+            $connectionHolder: '@App\Shared\Application\Port\ActiveConnectionHolderInterface'
             $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
-            $channelRegistration: '@App\Application\Port\ServiceChannelRegistrationPort'
-            $pseudoUidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
+            $channelRegistration: '@App\Shared\Application\Port\ServiceChannelRegistrationPort'
+            $pseudoUidGenerator: '@App\OperServ\Application\Service\PseudoClientUidGenerator'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
-            $sendNoticePort: '@App\Application\Port\SendNoticePort'
+            $sendNoticePort: '@App\Shared\Application\Port\SendNoticePort'
             $nickForce: '@App\NickServ\Application\Service\NickForceService'
             $debugChannel: '%ircops.debug_channel%'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\OperServ\Subscriber\OperRoleModesDeidentifiedSubscriber:
+    App\OperServ\Adapter\In\Event\OperRoleModesDeidentifiedSubscriber:
         arguments:
-            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $ircopRepository: '@App\OperServ\Domain\Repository\OperIrcopRepositoryInterface'
             $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $userLookup: '@App\Irc\Adapter\ServiceBridge\CoreNetworkUserLookupAdapter'
             $logger: '@monolog.logger.irc'
@@ -2193,7 +2171,7 @@ services:
 
     # --- Debug Notifiers -----------------------------------------------------------
 
-    App\Application\Port\ServiceDebugNotifierRegistry:
+    App\Shared\Application\Port\ServiceDebugNotifierRegistry:
         arguments:
             $notifierIter: !tagged_iterator app.debug_notifier
 
@@ -2209,9 +2187,9 @@ services:
             $debugChannel: '%ircops.debug_channel%'
         tags: ['app.debug_notifier']
 
-    App\Infrastructure\OperServ\Service\OperServDebugNotifier:
+    App\OperServ\Adapter\Out\Service\OperServDebugNotifier:
         arguments:
-            $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $channelActions: '@App\Shared\Application\Port\ChannelServiceActionsPort'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $notifier: '@App\OperServ\Adapter\In\Irc\OperServNotifierInterface'
             $identifiedRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
@@ -2223,35 +2201,35 @@ services:
         tags: ['app.debug_notifier']
 
 
-    App\Application\OperServ\Service\PseudoClientUidGenerator:
+    App\OperServ\Application\Service\PseudoClientUidGenerator:
         arguments:
-            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $connectionHolder: '@App\Shared\Application\Port\ActiveConnectionHolderInterface'
 
     App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerProviderInterface:
         alias: App\Irc\Adapter\Protocol\UnrealUdb\ActiveUdbRawCommandHandlerProvider
 
-    App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
+    App\OperServ\Adapter\In\Event\OperServGlineEnforceSubscriber:
         arguments:
-            $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
-            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $glineRepository: '@App\OperServ\Domain\Repository\GlineRepositoryInterface'
+            $connectionHolder: '@App\Shared\Application\Port\ActiveConnectionHolderInterface'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Application\OperServ\Maintenance\PurgeExpiredGlinesTask:
+    App\OperServ\Adapter\In\Maintenance\PurgeExpiredGlinesTask:
         arguments:
-            $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
-            $debugNotifier: '@App\Infrastructure\OperServ\Service\OperServDebugNotifier'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+            $glineRepository: '@App\OperServ\Domain\Repository\GlineRepositoryInterface'
+            $debugNotifier: '@App\OperServ\Adapter\Out\Service\OperServDebugNotifier'
+            $eventDispatcher: '@App\Shared\Application\Port\EventBusInterface'
             $serverName: '%irc.server_name%'
             $logger: '@monolog.logger.maintenance'
             $intervalSeconds: '%maintenance.purge_expired_glines_interval%'
         tags: ['maintenance.task']
 
-    App\Application\OperServ\Maintenance\PurgeExpiredMotdsTask:
+    App\OperServ\Adapter\In\Maintenance\PurgeExpiredMotdsTask:
         arguments:
-            $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
-            $debugNotifier: '@App\Infrastructure\OperServ\Service\OperServDebugNotifier'
-            $translator: '@App\Application\Port\TranslationInterface'
+            $motdRepository: '@App\OperServ\Domain\Repository\MotdRepositoryInterface'
+            $debugNotifier: '@App\OperServ\Adapter\Out\Service\OperServDebugNotifier'
+            $translator: '@App\Shared\Application\Port\TranslationInterface'
             $logger: '@monolog.logger.maintenance'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
@@ -2260,9 +2238,9 @@ services:
 
     # --- IRCops Debug Channel Protection ----------------------------------------
 
-    App\Infrastructure\IRC\Subscriber\IrcopsDebugChannelProtectionSubscriber:
+    App\Irc\Adapter\In\Event\IrcopsDebugChannelProtectionSubscriber:
         arguments:
-            $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $channelActions: '@App\Shared\Application\Port\ChannelServiceActionsPort'
             $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $nickAccounts: '@App\NickServ\Application\Port\In\NickAccountQuery'
@@ -2276,7 +2254,7 @@ services:
 
     # --- Debug Channel Join on Startup -----------------------------------------
 
-    App\Infrastructure\IRC\Subscriber\DebugChannelJoinSubscriber:
+    App\Irc\Adapter\In\Event\DebugChannelJoinSubscriber:
         arguments:
             $debugNotifiers: !tagged_iterator app.debug_notifier
             $debugChannel: '%ircops.debug_channel%'
@@ -2298,7 +2276,7 @@ services:
         tags: ['app.command_audit_sink']
 
     App\OperServ\Adapter\Out\Irc\CommandAuditIrcPresenter:
-        alias: App\OperServ\Adapter\Out\Irc\LegacyDebugChannelCommandAuditPresenter
+        alias: App\OperServ\Adapter\Out\Irc\ActiveConnectionCommandAuditPresenter
 
     App\OperServ\Adapter\Out\Irc\DebugChannelCommandAuditSink:
         tags: ['app.command_audit_sink']

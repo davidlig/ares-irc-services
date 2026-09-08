@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc;
 
-use App\Application\OperServ\IrcopAccessQueryService;
-use App\Application\Port\TranslationInterface;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
@@ -20,12 +14,18 @@ use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Adapter\Out\Security\OperNickServOperatorAccess;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleAccess;
+use App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleAccess;
 use App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry;
+use App\OperServ\Application\IrcopAccessQueryService;
 use App\OperServ\Application\Security\OperatorAuthorizationService;
 use App\OperServ\Application\Security\OperatorPermissionPolicy;
 use App\OperServ\Application\Security\RootAuthorizationPolicy;
+use App\OperServ\Domain\Entity\OperIrcop;
+use App\OperServ\Domain\Entity\OperRole;
+use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -456,7 +456,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         OperRoleRepositoryInterface $roleRepository,
     ): OperNickServOperatorAccess {
         $rootPolicy = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry($rootUsers));
-        $roleAccess = new LegacyOperatorRoleAccess($ircopRepository, $roleRepository);
+        $roleAccess = new DoctrineOperatorRoleAccess($ircopRepository, $roleRepository);
 
         return new OperNickServOperatorAccess(new IrcopAccessQueryService(
             new OperatorAuthorizationService(

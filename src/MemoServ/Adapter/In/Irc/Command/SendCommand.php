@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
@@ -12,6 +11,7 @@ use App\MemoServ\Application\UseCase\Send\SendMemo;
 use App\MemoServ\Application\UseCase\Send\SendMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Send\SendMemoOutcome;
 use App\MemoServ\Domain\Entity\Memo;
+use App\Shared\Application\Port\TranslationInterface;
 use DateTimeImmutable;
 
 use function array_slice;

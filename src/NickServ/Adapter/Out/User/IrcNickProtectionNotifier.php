@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\User;
 
-use App\Application\Port\TranslationInterface;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Application\Model\UserMessagePreference;
 use App\NickServ\Application\Port\Out\NickProtectionNotifier;
+use App\Shared\Application\Port\TranslationInterface;
 
 final readonly class IrcNickProtectionNotifier implements NickProtectionNotifier
 {

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\Security\IrcopAuthorizationSubject;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;

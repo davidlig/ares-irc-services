@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Event;
 
-use App\Application\Port\EventBusInterface;
 use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\Shared\Application\Port\EventBusInterface;
 
 final readonly class SymfonyRegistrationEventPublisher implements RegistrationEventPublisher
 {

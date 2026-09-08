@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerProviderInterface;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 
 final readonly class ActiveUdbRawCommandHandlerProvider implements UdbRawCommandHandlerProviderInterface
 {

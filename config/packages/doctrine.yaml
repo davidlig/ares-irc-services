@@ -6,11 +6,11 @@ doctrine:
         auto_mapping: false
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         mappings:
-            App:
+            OperServ:
                 is_bundle: false
-                dir: '%kernel.project_dir%/config/doctrine/domain'
-                prefix: 'App\Domain'
-                alias: App
+                dir: '%kernel.project_dir%/config/doctrine/operserv'
+                prefix: 'App\OperServ\Domain'
+                alias: OperServ
                 type: xml
             NickServ:
                 is_bundle: false

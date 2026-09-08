@@ -1,0 +1,39 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\OperServ\Application\Security;
+
+use App\OperServ\Application\Security\OperServIrcopPermission;
+use App\OperServ\Application\Security\PermissionProviderInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(OperServIrcopPermission::class)]
+final class OperServIrcopPermissionTest extends TestCase
+{
+    #[Test]
+    public function implementsPermissionProviderInterface(): void
+    {
+        $permission = new OperServIrcopPermission();
+
+        self::assertContains(PermissionProviderInterface::class, class_implements($permission));
+    }
+
+    #[Test]
+    public function getServiceNameReturnsOperServ(): void
+    {
+        $permission = new OperServIrcopPermission();
+
+        self::assertSame('OperServ', $permission->getServiceName());
+    }
+
+    #[Test]
+    public function getPermissionsReturnsOperServPermissions(): void
+    {
+        $permission = new OperServIrcopPermission();
+
+        self::assertSame(['operserv.kill', 'operserv.gline', 'operserv.global', 'operserv.raw', 'operserv.motd'], $permission->getPermissions());
+    }
+}

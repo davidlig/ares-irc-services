@@ -1,12 +1,3 @@
-imports:
-  - { resource: deptrac-baseline/phase-02.yaml }
-  - { resource: deptrac-baseline/phase-03.yaml }
-  - { resource: deptrac-baseline/phase-04.yaml }
-  - { resource: deptrac-baseline/phase-05.yaml }
-  - { resource: deptrac-baseline/phase-06.yaml }
-  - { resource: deptrac-baseline/phase-07.yaml }
-  - { resource: deptrac-baseline/phase-09.yaml }
-
 deptrac:
   paths:
     - ./src
@@ -19,93 +10,61 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Irc\\Domain\\#'
-        - type: classNameRegex
-          value: '#^App\\Domain\\IRC\\#'
 
     - name: Irc Application Public
       collectors:
         - type: classNameRegex
           value: '#^App\\Irc\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Application\\IRC\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Application\\Port(?:\\|$)#'
 
     - name: Irc Application Internal
       collectors:
         - type: classNameRegex
           value: '#^App\\Irc\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
-        - type: classNameRegex
-          value: '#^App\\Application\\IRC\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
-        - type: classNameRegex
-          value: '#^App\\Application\\(?!(?:ChanServ|MemoServ|NickServ|OperServ|IRC|Port|Shared)(?:\\|$))#'
 
     - name: Irc Adapter
       collectors:
         - type: classNameRegex
           value: '#^App\\Irc\\Adapter\\(?!(?:Protocol\\(?:InspIRCd|UnrealStandalone|UnrealUdb))(?:\\|$))#'
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\IRC\\(?!(?:Protocol\\UnrealUdb)(?:\\|$))#'
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\(?!(?:ChanServ|IRC|MemoServ|NickServ|OperServ|Udb)(?:\\|$))#'
-        - type: classNameRegex
-          value: '#^App\\UI(?:\\|$)#'
 
     - name: NickServ Domain
       collectors:
         - type: classNameRegex
           value: '#^App\\NickServ\\Domain\\#'
-        - type: classNameRegex
-          value: '#^App\\Domain\\NickServ\\#'
 
     - name: NickServ Application Public
       collectors:
         - type: classNameRegex
           value: '#^App\\NickServ\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Application\\NickServ\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
 
     - name: NickServ Application Internal
       collectors:
         - type: classNameRegex
           value: '#^App\\NickServ\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
-        - type: classNameRegex
-          value: '#^App\\Application\\NickServ\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
 
     - name: NickServ Adapter
       collectors:
         - type: classNameRegex
           value: '#^App\\NickServ\\Adapter(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\NickServ(?:\\|$)#'
 
     - name: ChanServ Domain
       collectors:
         - type: classNameRegex
           value: '#^App\\ChanServ\\Domain\\#'
-        - type: classNameRegex
-          value: '#^App\\Domain\\ChanServ\\#'
 
     - name: ChanServ Application Public
       collectors:
         - type: classNameRegex
           value: '#^App\\ChanServ\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Application\\ChanServ\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
 
     - name: ChanServ Application Internal
       collectors:
         - type: classNameRegex
           value: '#^App\\ChanServ\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
-        - type: classNameRegex
-          value: '#^App\\Application\\ChanServ\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
 
     - name: ChanServ Adapter
       collectors:
         - type: classNameRegex
           value: '#^App\\ChanServ\\Adapter(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\ChanServ(?:\\|$)#'
 
     - name: MemoServ Domain
       collectors:
@@ -131,43 +90,31 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\OperServ\\Domain\\#'
-        - type: classNameRegex
-          value: '#^App\\Domain\\OperServ\\#'
 
     - name: OperServ Application Public
       collectors:
         - type: classNameRegex
           value: '#^App\\OperServ\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Application\\OperServ\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
 
     - name: OperServ Application Internal
       collectors:
         - type: classNameRegex
           value: '#^App\\OperServ\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
-        - type: classNameRegex
-          value: '#^App\\Application\\OperServ\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
 
     - name: OperServ Adapter
       collectors:
         - type: classNameRegex
           value: '#^App\\OperServ\\Adapter(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\OperServ(?:\\|$)#'
 
     - name: Shared Domain
       collectors:
         - type: classNameRegex
           value: '#^App\\Shared\\Domain(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Domain\\Shared(?:\\|$)#'
 
     - name: Shared Application
       collectors:
         - type: classNameRegex
           value: '#^App\\Shared\\Application(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Application\\Shared(?:\\|$)#'
 
     - name: InspIRCd
       collectors:

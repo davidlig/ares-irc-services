@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\Out\Network;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\ServiceUidProviderInterface;
-use App\Application\Shared\ServiceUidRegistry;
 use App\ChanServ\Adapter\Out\Network\IrcRegisteredChannelSetupActions;
 use App\ChanServ\Application\Port\Out\ChannelModeActions;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
@@ -16,6 +11,11 @@ use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeChange;
 use App\ChanServ\Domain\ValueObject\ModeChangeAction;
 use App\ChanServ\Domain\ValueObject\ModeName;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
+use App\Shared\Application\Port\ChannelServiceActionsPort;
+use App\Shared\Application\Port\ServiceUidProviderInterface;
+use App\Shared\Application\ServiceUidRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;

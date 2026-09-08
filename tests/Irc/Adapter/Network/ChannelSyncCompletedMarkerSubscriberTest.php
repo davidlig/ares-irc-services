@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Network;
 
-use App\Application\Port\ChannelSyncCompletedRegistryInterface;
 use App\Irc\Adapter\Network\ChannelSyncCompletedMarkerSubscriber;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\ValueObject\ChannelName;
+use App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

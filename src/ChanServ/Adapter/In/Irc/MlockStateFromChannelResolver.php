@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc;
 
-use App\Application\Port\ChannelModeSupportInterface;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeName;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 use function array_flip;
 use function array_merge;

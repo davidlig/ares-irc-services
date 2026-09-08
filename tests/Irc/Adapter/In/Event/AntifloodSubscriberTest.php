@@ -1,0 +1,602 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Irc\Adapter\In\Event;
+
+use App\Irc\Adapter\Event\MessageReceivedEvent;
+use App\Irc\Adapter\In\Event\AntifloodSubscriber;
+use App\Irc\Adapter\In\Event\ServiceCommandGateway;
+use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Adapter\Protocol\MessageDirection;
+use App\Irc\Application\Antiflood\AntifloodRegistry;
+use App\Irc\Application\Antiflood\ClientKeyResolver;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\Out\ServiceUserPreferences;
+use App\NickServ\Application\Port\In\NickAccountQuery;
+use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
+use App\OperServ\Application\Port\In\AuthorizationDecision;
+use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\Port\ServiceCommandListenerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+#[CoversClass(AntifloodSubscriber::class)]
+final class AntifloodSubscriberTest extends TestCase
+{
+    private AntifloodRegistry $registry;
+
+    private ClientKeyResolver $clientKeyResolver;
+
+    private ServiceCommandGateway $gateway;
+
+    private NetworkUserLookupPort $userLookup;
+
+    private SendNoticePort $sendNotice;
+
+    private ServiceUserPreferences $messageTypeResolver;
+
+    private OperServNotifierInterface $notifier;
+
+    private OperatorAuthorizationQuery $authorization;
+
+    private NickAccountQuery $nickAccounts;
+
+    private TranslatorInterface $translator;
+
+    private ServiceCommandListenerInterface $nickservListener;
+
+    protected function setUp(): void
+    {
+        $this->registry = new AntifloodRegistry();
+        $this->clientKeyResolver = new ClientKeyResolver();
+        $this->userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $this->sendNotice = $this->createStub(SendNoticePort::class);
+        $this->messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
+        $this->notifier = $this->createStub(OperServNotifierInterface::class);
+        $this->authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $this->authorization->method('root')->willReturn(AuthorizationDecision::denied());
+        $this->nickAccounts = $this->createStub(NickAccountQuery::class);
+        $this->translator = $this->createStub(TranslatorInterface::class);
+        $this->nickservListener = $this->createStub(ServiceCommandListenerInterface::class);
+        $this->nickservListener->method('getServiceName')->willReturn('NickServ');
+        $this->nickservListener->method('getServiceUid')->willReturn('002AAAAAA');
+
+        $this->gateway = new ServiceCommandGateway(
+            listeners: [$this->nickservListener],
+            logger: new NullLogger(),
+        );
+    }
+
+    private function createSubscriber(int $maxMessages = 5, int $windowSeconds = 10, int $cooldownSeconds = 60, ?string $debugChannel = null): AntifloodSubscriber
+    {
+        return new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $this->userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->notifier,
+            $this->authorization,
+            $this->nickAccounts,
+            $this->translator,
+            'en',
+            $debugChannel,
+            $maxMessages,
+            $windowSeconds,
+            $cooldownSeconds,
+            new NullLogger(),
+        );
+    }
+
+    private function createSender(bool $isOper = false, string $ipBase64 = 'AQID', string $nick = 'TestUser', bool $isIdentified = false): SenderView
+    {
+        return new SenderView(
+            uid: '002AAAAAB',
+            nick: $nick,
+            ident: 'test',
+            hostname: 'host.example.com',
+            cloakedHost: 'cloak.example.com',
+            ipBase64: $ipBase64,
+            isIdentified: $isIdentified,
+            isOper: $isOper,
+        );
+    }
+
+    private function createMessage(string $command, string $target, string $text, string $sourceId = '002CCCCCC'): MessageReceivedEvent
+    {
+        $message = new IRCMessage(
+            command: $command,
+            prefix: $sourceId,
+            params: [$target],
+            trailing: $text,
+            direction: MessageDirection::Incoming,
+        );
+
+        return new MessageReceivedEvent($message);
+    }
+
+    #[Test]
+    public function onMessageDoesNothingWhenMaxMessagesIsZero(): void
+    {
+        $subscriber = $this->createSubscriber(maxMessages: 0);
+
+        $event = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresNonPrivmsgCommands(): void
+    {
+        $subscriber = $this->createSubscriber();
+
+        $event = $this->createMessage('JOIN', '#test', 'hello');
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresUnknownTarget(): void
+    {
+        $subscriber = $this->createSubscriber();
+
+        $event = $this->createMessage('PRIVMSG', 'UnknownBot', 'HELP');
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresUnknownSender(): void
+    {
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->willReturn(null);
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->notifier,
+            $this->authorization,
+            $this->nickAccounts,
+            $this->translator,
+            'en',
+            null,
+            5,
+            10,
+            60,
+            new NullLogger(),
+        );
+
+        $event = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageAllowsCommandWhenUnderLimit(): void
+    {
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->willReturn($this->createSender());
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->notifier,
+            $this->authorization,
+            $this->nickAccounts,
+            $this->translator,
+            'en',
+            null,
+            3,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageBlocksCommandWhenOverLimit(): void
+    {
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::exactly(3))->method('findByUid')->willReturn($this->createSender());
+
+        $messageTypeResolver = $this->createMock(ServiceUserPreferences::class);
+        $messageTypeResolver->expects(self::once())->method('prefersPrivateMessages')->with('TestUser')->willReturn(false);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(
+            static fn (string $id) => 'antiflood.debug_channel' === $id ? 'debug msg' : 'Slow down!',
+        );
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::once())->method('sendMessage')->with('002AAAAAA', '002AAAAAB', 'Slow down!', 'NOTICE');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage');
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $sendNotice,
+            $messageTypeResolver,
+            $notifier,
+            $this->authorization,
+            $this->nickAccounts,
+            $translator,
+            'en',
+            '#ircops',
+            2,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event1 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event1);
+        self::assertFalse($event1->isPropagationStopped());
+
+        $event2 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event2);
+        self::assertFalse($event2->isPropagationStopped());
+
+        $event3 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event3);
+        self::assertTrue($event3->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageSendsNoticeOnlyOnceDuringLockout(): void
+    {
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::exactly(3))->method('findByUid')->willReturn($this->createSender());
+
+        $messageTypeResolver = $this->createMock(ServiceUserPreferences::class);
+        $messageTypeResolver->expects(self::once())->method('prefersPrivateMessages')->with('TestUser')->willReturn(false);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(
+            static fn (string $id) => 'antiflood.debug_channel' === $id ? 'debug msg' : 'Slow down!',
+        );
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::once())->method('sendMessage');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage');
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $sendNotice,
+            $messageTypeResolver,
+            $notifier,
+            $this->authorization,
+            $this->nickAccounts,
+            $translator,
+            'en',
+            '#ircops',
+            1,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event1 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event1);
+        self::assertFalse($event1->isPropagationStopped());
+
+        $event2 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event2);
+        self::assertTrue($event2->isPropagationStopped());
+
+        $event3 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event3);
+        self::assertTrue($event3->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageExemptsIrcops(): void
+    {
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender(isOper: true));
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::never())->method('root');
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->notifier,
+            $authorization,
+            $this->nickAccounts,
+            $this->translator,
+            'en',
+            null,
+            1,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event1 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event1);
+        self::assertFalse($event1->isPropagationStopped());
+
+        $event2 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event2);
+        self::assertFalse($event2->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageExemptsRootAdmins(): void
+    {
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender(
+            isOper: false,
+            nick: 'TestUser',
+            isIdentified: true,
+        ));
+        $nickAccounts = $this->createMock(NickAccountQuery::class);
+        $nickAccounts->expects(self::exactly(2))->method('findIdByNick')->with('TestUser')->willReturn(42);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::exactly(2))
+            ->method('root')
+            ->with(self::equalTo(new OperatorActor('TestUser', 42, true, false)))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->notifier,
+            $authorization,
+            $nickAccounts,
+            $this->translator,
+            'en',
+            null,
+            1,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event1 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event1);
+        self::assertFalse($event1->isPropagationStopped());
+
+        $event2 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event2);
+        self::assertFalse($event2->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIrcopNotBlockedBySharedIpWithRegularUser(): void
+    {
+        $regularUser = $this->createSender(isOper: false, ipBase64: 'c2hhcmVk');
+        $ircopUser = $this->createSender(isOper: true, ipBase64: 'c2hhcmVk');
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::exactly(4))->method('findByUid')
+            ->willReturnOnConsecutiveCalls($regularUser, $regularUser, $ircopUser, $ircopUser);
+
+        $messageTypeResolver = $this->createMock(ServiceUserPreferences::class);
+        $messageTypeResolver->expects(self::once())->method('prefersPrivateMessages')->willReturn(false);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(
+            static fn (string $id) => 'antiflood.debug_channel' === $id ? 'debug msg' : 'Slow down!',
+        );
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::once())->method('sendMessage');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage');
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $sendNotice,
+            $messageTypeResolver,
+            $notifier,
+            $this->authorization,
+            $this->nickAccounts,
+            $translator,
+            'en',
+            '#ircops',
+            1,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event1 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event1);
+        self::assertFalse($event1->isPropagationStopped());
+
+        $event2 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event2);
+        self::assertTrue($event2->isPropagationStopped());
+
+        $event3 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event3);
+        self::assertFalse($event3->isPropagationStopped());
+
+        $event4 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event4);
+        self::assertFalse($event4->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageSkipsDebugChannelWhenNull(): void
+    {
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender());
+
+        $messageTypeResolver = $this->createMock(ServiceUserPreferences::class);
+        $messageTypeResolver->expects(self::once())->method('prefersPrivateMessages')->willReturn(false);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')->willReturn('Slow down!');
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::once())->method('sendMessage');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $sendNotice,
+            $messageTypeResolver,
+            $notifier,
+            $this->authorization,
+            $this->nickAccounts,
+            $translator,
+            'en',
+            null,
+            1,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event1 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event1);
+        self::assertFalse($event1->isPropagationStopped());
+
+        $event2 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event2);
+        self::assertTrue($event2->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageHandlesSqueryCommand(): void
+    {
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->willReturn($this->createSender());
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->notifier,
+            $this->authorization,
+            $this->nickAccounts,
+            $this->translator,
+            'en',
+            null,
+            5,
+            10,
+            60,
+            new NullLogger(),
+        );
+
+        $event = $this->createMessage('SQUERY', 'NickServ', 'HELP');
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresEmptyTarget(): void
+    {
+        $subscriber = $this->createSubscriber();
+
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: '002CCCCCC',
+            params: [],
+            trailing: 'HELP',
+            direction: MessageDirection::Incoming,
+        );
+        $event = new MessageReceivedEvent($message);
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresEmptySourceId(): void
+    {
+        $subscriber = $this->createSubscriber();
+
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: '',
+            params: ['NickServ'],
+            trailing: 'HELP',
+            direction: MessageDirection::Incoming,
+        );
+        $event = new MessageReceivedEvent($message);
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresMissingPrefix(): void
+    {
+        $subscriber = $this->createSubscriber();
+        $event = new MessageReceivedEvent(new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: null,
+            params: ['NickServ'],
+            trailing: 'HELP',
+            direction: MessageDirection::Incoming,
+        ));
+
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function getSubscribedEventsReturnsCorrectPriority(): void
+    {
+        $events = AntifloodSubscriber::getSubscribedEvents();
+        self::assertArrayHasKey(MessageReceivedEvent::class, $events);
+        self::assertSame(['onMessage', 10], $events[MessageReceivedEvent::class]);
+    }
+}

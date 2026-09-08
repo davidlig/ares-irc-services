@@ -1,0 +1,298 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\OperServ\Adapter\In\Event;
+
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Service\NickForceService;
+use App\OperServ\Application\Service\PseudoClientUidGenerator;
+use App\OperServ\Domain\Entity\Motd;
+use App\OperServ\Domain\Repository\MotdRepositoryInterface;
+use App\OperServ\Domain\ValueObject\GlobalMessageMask;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\Port\ServiceChannelRegistrationPort;
+use App\Shared\Application\ServiceUidRegistry;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use ValueError;
+
+use function in_array;
+use function sprintf;
+use function strtolower;
+
+/**
+ * Sends configured MOTD messages to users when they connect to the network.
+ *
+ * Pseudo-clients (nick!ident@vhost) stay connected as long as at least one
+ * active MOTD references them. Multiple MOTDs sharing the same mask reuse
+ * the same pseudo-client, which quits only when the last MOTD is removed.
+ *
+ * Late MOTD additions (after sync) are reconciled on every user join.
+ * On services restart, active pseudo-clients are re-introduced.
+ */
+final class MotdOnConnectSubscriber implements EventSubscriberInterface
+{
+    private const int PERMANENT_RESERVE_SECONDS = 365 * 86400;
+
+    private bool $isSynced = false;
+
+    /**
+     * Map of nickname_lower => pseudo-client aggregated info.
+     *
+     * @var array<string, array{uid: string, mask: GlobalMessageMask, motdIds: int[]}>
+     */
+    private array $pseudoClients = [];
+
+    public function __construct(
+        private readonly MotdRepositoryInterface $motdRepository,
+        private readonly ServiceUidRegistry $uidRegistry,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
+        private readonly ChannelLookupPort $channelLookup,
+        private readonly ServiceChannelRegistrationPort $channelRegistration,
+        private readonly PseudoClientUidGenerator $pseudoUidGenerator,
+        private readonly NetworkUserLookupPort $userLookup,
+        private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly SendNoticePort $sendNoticePort,
+        private readonly NickForceService $nickForce,
+        private readonly ?string $debugChannel,
+        private readonly LoggerInterface $logger = new NullLogger(),
+    ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            NetworkSyncCompleteEvent::class => ['onSyncComplete', -50],
+            UserJoinedNetworkAppEvent::class => ['onUserJoined', -60],
+        ];
+    }
+
+    public function onSyncComplete(): void
+    {
+        $this->isSynced = true;
+        $this->ensurePseudoClients();
+    }
+
+    public function onUserJoined(UserJoinedNetworkAppEvent $event): void
+    {
+        if (!$this->isSynced) {
+            return;
+        }
+
+        $this->ensurePseudoClients();
+        $this->cleanupStale();
+        $this->sendMotds($event);
+    }
+
+    /**
+     * Ensures every active MOTD (mask format) has a pseudo-client connected.
+     * Idempotent — safe to call multiple times (sync, user join, late add).
+     */
+    private function ensurePseudoClients(): void
+    {
+        $activeMotds = $this->motdRepository->findActive();
+
+        foreach ($activeMotds as $motd) {
+            $botSpec = $motd->getBotNickname();
+
+            if (null !== $this->uidRegistry->getUidByNickname($botSpec)) {
+                continue;
+            }
+
+            try {
+                $mask = GlobalMessageMask::fromString($botSpec);
+            } catch (ValueError) {
+                continue;
+            }
+
+            $nickLower = strtolower($mask->nickname);
+
+            if (isset($this->pseudoClients[$nickLower])) {
+                $pc = &$this->pseudoClients[$nickLower];
+                if (!in_array($motd->getId(), $pc['motdIds'], true)) {
+                    $pc['motdIds'][] = $motd->getId();
+                }
+                continue;
+            }
+
+            $existingUser = $this->userLookup->findByNick($mask->nickname);
+            if (null !== $existingUser) {
+                $this->nickForce->forceGuestNick($existingUser->uid, null, 'motd-collision');
+
+                $this->logger->info('MotdOnConnect: renamed colliding user for MOTD pseudo-client.', [
+                    'motd_id' => $motd->getId(),
+                    'nickname' => $mask->nickname,
+                    'uid' => $existingUser->uid,
+                ]);
+            }
+
+            if (null !== $this->nickRepository->findByNick($nickLower)) {
+                continue;
+            }
+
+            $module = $this->connectionHolder->getProtocolModule();
+            $serverSid = $this->connectionHolder->getServerSid();
+            $nickReservation = null !== $module ? $module->getNickReservation() : null;
+
+            if (null === $module || null === $serverSid || null === $nickReservation) {
+                return;
+            }
+
+            $uid = $this->pseudoUidGenerator->generate();
+            if (null === $uid) {
+                return;
+            }
+
+            $reserveSeconds = null !== $motd->getExpiresAt()
+                ? max(1, $motd->getExpiresAt()->getTimestamp() - time())
+                : self::PERMANENT_RESERVE_SECONDS;
+
+            $nickReservation->reserveNickWithDuration(
+                $mask->nickname,
+                $reserveSeconds,
+                sprintf('MOTD #%d pseudo-client', $motd->getId()),
+            );
+
+            $module->getServiceActions()->introducePseudoClient(
+                $serverSid,
+                $mask->nickname,
+                $mask->ident,
+                $mask->vhost,
+                $uid,
+                $mask->nickname,
+            );
+
+            $motdId = $motd->getId();
+            $this->pseudoClients[$nickLower] = [
+                'uid' => $uid,
+                'mask' => $mask,
+                'motdIds' => null !== $motdId ? [$motdId] : [],
+            ];
+
+            $this->joinPseudoClientToDebugChannel($uid);
+
+            $this->logger->info('MotdOnConnect: introduced pseudo-client.', [
+                'motd_id' => $motd->getId(),
+                'nickname' => $mask->nickname,
+                'uid' => $uid,
+            ]);
+        }
+    }
+
+    /**
+     * Removes stale MOTD IDs from pseudo-clients. Quits the pseudo-client
+     * only when no active MOTDs reference it anymore.
+     */
+    private function cleanupStale(): void
+    {
+        $all = $this->motdRepository->findAll();
+        $activeMap = [];
+        foreach ($all as $m) {
+            $mId = $m->getId();
+            if (null !== $mId && $m->isEnabled() && !$m->isExpired()) {
+                $activeMap[$mId] = true;
+            }
+        }
+
+        $toQuit = [];
+        foreach ($this->pseudoClients as $nickLower => $pc) {
+            $pc['motdIds'] = array_values(array_filter(
+                $pc['motdIds'],
+                static fn (int $motdId): bool => isset($activeMap[$motdId]),
+            ));
+
+            if ([] === $pc['motdIds']) {
+                $toQuit[] = $nickLower;
+            } else {
+                $this->pseudoClients[$nickLower] = $pc;
+            }
+        }
+
+        foreach ($toQuit as $nickLower) {
+            $this->quitPseudoClient($this->pseudoClients[$nickLower]['uid']);
+            unset($this->pseudoClients[$nickLower]);
+        }
+    }
+
+    private function sendMotds(UserJoinedNetworkAppEvent $event): void
+    {
+        $activeMotds = $this->motdRepository->findActive();
+
+        foreach ($activeMotds as $motd) {
+            $botSpec = $motd->getBotNickname();
+
+            $serviceUid = $this->uidRegistry->getUidByNickname($botSpec);
+            if (null !== $serviceUid) {
+                $this->sendNoticePort->sendMessage(
+                    $serviceUid,
+                    $event->user->uid,
+                    $motd->getText(),
+                    $motd->getMessageType(),
+                );
+                $motd->recordShown();
+                $this->motdRepository->save($motd);
+
+                continue;
+            }
+
+            try {
+                $mask = GlobalMessageMask::fromString($botSpec);
+            } catch (ValueError) {
+                continue;
+            }
+
+            $nickLower = strtolower($mask->nickname);
+            $pc = $this->pseudoClients[$nickLower] ?? null;
+
+            if (null !== $pc) {
+                $this->sendNoticePort->sendMessage(
+                    $pc['uid'],
+                    $event->user->uid,
+                    $motd->getText(),
+                    $motd->getMessageType(),
+                );
+                $motd->recordShown();
+                $this->motdRepository->save($motd);
+            }
+        }
+    }
+
+    private function joinPseudoClientToDebugChannel(string $uid): void
+    {
+        if (null === $this->debugChannel || '' === $this->debugChannel) {
+            return;
+        }
+
+        $module = $this->connectionHolder->getProtocolModule();
+        $serverSid = $this->connectionHolder->getServerSid();
+
+        if (null === $module || null === $serverSid) {
+            return;
+        }
+
+        $channel = $this->channelLookup->findByChannelName($this->debugChannel);
+        $channelTimestamp = null !== $channel ? $channel->timestamp : time();
+        $module->getServiceActions()->joinChannelAsService($serverSid, $this->debugChannel, $uid, '', $channelTimestamp);
+        $this->channelRegistration->registerServiceChannelJoin($this->debugChannel, $uid, '', $channelTimestamp);
+    }
+
+    private function quitPseudoClient(string $uid): void
+    {
+        $module = $this->connectionHolder->getProtocolModule();
+        $serverSid = $this->connectionHolder->getServerSid();
+
+        if (null !== $module && null !== $serverSid) {
+            $module->getServiceActions()->quitPseudoClient($serverSid, $uid, 'MOTD expired');
+        }
+
+        $this->logger->info('MotdOnConnect: quit pseudo-client.', [
+            'uid' => $uid,
+        ]);
+    }
+}

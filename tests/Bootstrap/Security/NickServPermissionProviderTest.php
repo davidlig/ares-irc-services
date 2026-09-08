@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap\Security;
 
-use App\Application\Security\PermissionProviderInterface;
 use App\Bootstrap\Security\NickServPermissionProvider;
 use App\NickServ\Application\Security\NickServPermission;
+use App\OperServ\Application\Security\PermissionProviderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

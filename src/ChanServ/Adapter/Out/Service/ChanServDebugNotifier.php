@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Service;
 
-use App\Application\Port\ServiceDebugNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Application\Port\Out\ChanAuditSink;
+use App\Shared\Application\Port\ServiceDebugNotifierInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebugNotifierInterface

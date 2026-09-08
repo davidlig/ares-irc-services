@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\Out\Network;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelModeSupportInterface;
 use App\ChanServ\Adapter\Out\Network\ChannelRankModeMapper;
 use App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
@@ -15,6 +13,8 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

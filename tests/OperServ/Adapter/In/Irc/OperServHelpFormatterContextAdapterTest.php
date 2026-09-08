@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Irc;
 
-use App\Application\Port\TranslationInterface;
-use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
@@ -16,6 +14,8 @@ use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Application\Help\HelpableCommandInterface;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

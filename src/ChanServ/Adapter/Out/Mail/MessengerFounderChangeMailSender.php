@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Mail;
 
-use App\Application\Port\TranslationInterface;
 use App\ChanServ\Application\Port\Out\FounderChangeMailSender;
+use App\Shared\Application\Port\TranslationInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Throwable;

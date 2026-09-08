@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\ChanServ\Application\Port\In\ChannelAccessProjection;
 use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
@@ -18,6 +17,7 @@ use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Application\Port\In\GlineProjection;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
 use RuntimeException;
 
 use function array_filter;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Irc;
 
-use App\Application\Shared\Help\HelpableCommandInterface;
+use App\Shared\Application\Help\HelpableCommandInterface;
 
 /**
  * IRC metadata and presentation boundary for an OperServ operation.

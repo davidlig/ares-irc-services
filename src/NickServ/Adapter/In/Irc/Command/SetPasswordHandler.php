@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\EventBusInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Event\NickPasswordChangedEvent;
 use App\NickServ\Application\Port\Out\Clock;
@@ -12,6 +11,7 @@ use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Application\Port\EventBusInterface;
 
 use function sprintf;
 

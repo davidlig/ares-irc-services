@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Maintenance;
 
-use App\Application\Port\ServiceDebugNotifierInterface;
 use App\ChanServ\Adapter\In\Maintenance\PurgeExpiredAkickTask;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelAkick;
+use App\Shared\Application\Port\ServiceDebugNotifierInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

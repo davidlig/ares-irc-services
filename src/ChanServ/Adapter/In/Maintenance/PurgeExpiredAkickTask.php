@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Maintenance;
 
-use App\Application\Port\ServiceDebugNotifierInterface;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\Shared\Application\Port\ServiceDebugNotifierInterface;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

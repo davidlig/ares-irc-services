@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\Out\Security;
 
-use App\Application\OperServ\Port\In\IrcopAccessQuery;
 use App\ChanServ\Adapter\Out\Security\OperChanServOperatorAccess;
+use App\OperServ\Application\Port\In\IrcopAccessQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

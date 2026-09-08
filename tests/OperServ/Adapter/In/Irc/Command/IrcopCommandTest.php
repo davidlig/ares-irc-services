@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\OperServ\Adapter\In\Irc\Command\IrcopCommand;
@@ -19,6 +18,7 @@ use App\OperServ\Application\UseCase\ManageIrcop\IrcopOutcome;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcop;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopHandlerInterface;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopResult;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

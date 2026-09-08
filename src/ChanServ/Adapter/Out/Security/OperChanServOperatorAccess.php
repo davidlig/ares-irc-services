@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Security;
 
-use App\Application\OperServ\Port\In\IrcopAccessQuery;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
+use App\OperServ\Application\Port\In\IrcopAccessQuery;
 
 final readonly class OperChanServOperatorAccess implements ChanServOperatorAccess
 {

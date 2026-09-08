@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\OperServ\Adapter\In\Irc\Command\RawCommand;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
@@ -20,6 +19,7 @@ use App\OperServ\Application\Port\Out\RawLineTransport;
 use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRaw;
 use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRawHandler;
 use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRawResult;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

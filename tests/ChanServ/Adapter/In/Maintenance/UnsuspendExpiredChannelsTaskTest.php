@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Maintenance;
 
-use App\Application\Port\EventBusInterface;
 use App\ChanServ\Adapter\In\Maintenance\UnsuspendExpiredChannelsTask;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Shared\Application\Port\EventBusInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

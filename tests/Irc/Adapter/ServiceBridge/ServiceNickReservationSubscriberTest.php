@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\ServiceBridge;
 
-use App\Application\Port\ServiceCommandListenerInterface;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
@@ -14,6 +13,7 @@ use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
+use App\Shared\Application\Port\ServiceCommandListenerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

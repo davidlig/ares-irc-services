@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Event;
 
-use App\Application\Port\ServiceDebugNotifierInterface;
 use App\ChanServ\Application\Port\In\UnsuspendedChannelRestoration;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
+use App\Shared\Application\Port\ServiceDebugNotifierInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 

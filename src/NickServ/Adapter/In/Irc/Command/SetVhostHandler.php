@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\EventBusInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
@@ -14,6 +13,7 @@ use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Application\Port\EventBusInterface;
 
 use function in_array;
 use function strtoupper;

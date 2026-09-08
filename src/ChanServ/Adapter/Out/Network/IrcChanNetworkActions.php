@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Network;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelServiceActionsPort;
 use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ChannelServiceActionsPort;
 
 use function array_column;
 use function implode;

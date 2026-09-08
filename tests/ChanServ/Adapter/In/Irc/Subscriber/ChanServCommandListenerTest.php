@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Irc\Subscriber;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ApplyOutgoingChannelModesPort;
-use App\Application\Port\EventBusInterface;
-use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceChannelRegistrationPort;
-use App\Application\Port\TranslationInterface;
 use App\ChanServ\Adapter\In\Irc\Bot\ChanServBot;
 use App\ChanServ\Adapter\In\Irc\ChanAuthorizationCheckerInterface as AuthorizationCheckerInterface;
 use App\ChanServ\Adapter\In\Irc\ChanAuthorizationContextInterface as AuthorizationContextInterface;
@@ -33,6 +27,12 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Shared\Application\Port\ApplyOutgoingChannelModesPort;
+use App\Shared\Application\Port\EventBusInterface;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\Port\ServiceChannelRegistrationPort;
+use App\Shared\Application\Port\TranslationInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;

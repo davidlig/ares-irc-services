@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Out\Security;
 
-use App\Application\Security\PermissionProviderInterface;
-use App\Application\Security\PermissionRegistry;
 use App\Irc\Adapter\Out\Security\RegisteredNetworkPermissionCatalog;
+use App\OperServ\Application\Security\PermissionProviderInterface;
+use App\OperServ\Application\Security\PermissionRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

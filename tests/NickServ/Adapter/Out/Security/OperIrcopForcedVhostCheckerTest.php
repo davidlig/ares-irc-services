@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Security;
 
-use App\Application\OperServ\Port\In\ProtectedNickQuery;
 use App\NickServ\Adapter\Out\Security\OperIrcopForcedVhostChecker;
+use App\OperServ\Application\Port\In\ProtectedNickQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

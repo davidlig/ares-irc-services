@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Irc\Command;
 
-use App\Application\Shared\Help\UnifiedHelpFormatter;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Adapter\In\Irc\OperServHelpFormatterContextAdapter;
+use App\Shared\Application\Help\UnifiedHelpFormatter;
 
 use function array_find;
 use function strtoupper;

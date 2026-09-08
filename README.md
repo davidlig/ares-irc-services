@@ -603,7 +603,7 @@ php bin/console lint:container                           # DI validation
 php bin/console lint:yaml . --exclude vendor/ --parse-tags  # YAML lint
 composer phpstan                                        # PHPStan level max
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php  # format
-composer architecture                                   # Deptrac + exact debt baseline
+composer architecture                                   # Deptrac architecture boundaries
 ./scripts/check-coverage.sh 100 --issues                 # tests + coverage floor (single run)
 ```
 
@@ -620,8 +620,9 @@ The target architecture uses five bounded contexts with hexagonal layers inside 
 | Adapter | `src/<Context>/Adapter/` | Own inner layers and public cross-context boundaries | External mechanisms |
 | Protocol | `src/Irc/Adapter/Protocol/{InspIRCd,UnrealStandalone,UnrealUdb}/` | Irc boundaries | Protocol-specific wire/runtime code |
 | Bootstrap | `src/Bootstrap/` | All composition boundaries | Framework/container wiring only |
+| Kernel | `src/Kernel.php` | Bootstrap | Framework entry point only |
 
-`composer architecture` enforces this graph with Deptrac and fails on uncovered dependencies. `architecture-debt.json` and the imported Deptrac baselines enumerate every temporary legacy exception by exact file or dependency and assign it to a later migration phase. Removing debt requires removing its baseline entry; adding unlisted legacy structure fails the gate.
+`composer architecture` enforces this graph with Deptrac. The gate accepts only the final bounded-context topology and its declared dependency boundaries.
 
 Read `AGENTS.md` and `.agents/architecture.md` for the full architecture contract.
 

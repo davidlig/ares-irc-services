@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\Out\Persistence\Doctrine;
 
-use App\Application\Port\TransactionManagerInterface;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\ChanDoctrineTransactionBoundary;
+use App\Shared\Application\Port\TransactionManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

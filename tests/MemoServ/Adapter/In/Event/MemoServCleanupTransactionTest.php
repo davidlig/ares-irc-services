@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\MemoServ\Adapter\In\Event;
 
+use App\Bootstrap\Adapter\Out\Persistence\DoctrineTransactionManager;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
-use App\Infrastructure\Persistence\DoctrineTransactionManager;
 use App\MemoServ\Adapter\In\Event\MemoServChannelDropCleanupSubscriber;
 use App\MemoServ\Adapter\In\Event\MemoServNickDropCleanupSubscriber;
 use App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoDoctrineRepository;

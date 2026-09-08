@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
@@ -15,6 +14,7 @@ use App\NickServ\Application\Port\In\NickProjection;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
 use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;

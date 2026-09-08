@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\User;
 
-use App\Application\Port\TranslationInterface;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\User\IrcNickProtectionNotifier;
 use App\NickServ\Application\Model\UserMessagePreference;
+use App\Shared\Application\Port\TranslationInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

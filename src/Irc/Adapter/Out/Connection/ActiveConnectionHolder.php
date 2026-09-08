@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Out\Connection;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

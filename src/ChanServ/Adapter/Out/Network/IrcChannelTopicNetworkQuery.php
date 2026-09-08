@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\Out\Network;
 
-use App\Application\Port\ChannelSyncCompletedRegistryInterface;
-use App\Application\Port\UidResolverInterface;
 use App\ChanServ\Application\Model\ChannelTopicNetworkState;
 use App\ChanServ\Application\Port\Out\ChannelTopicNetworkQuery;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface;
+use App\Shared\Application\Port\UidResolverInterface;
 
 final readonly class IrcChannelTopicNetworkQuery implements ChannelTopicNetworkQuery
 {

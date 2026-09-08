@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc\Subscriber;
 
-use App\Application\Port\ServiceCommandListenerInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\MemoServ\Adapter\In\Irc\Bot\MemoServBot;
 use App\MemoServ\Adapter\In\Irc\MemoServService;
+use App\Shared\Application\Port\ServiceCommandListenerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Infrastructure\OperServ\Doctrine;
 
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Infrastructure\OperServ\Doctrine\OperIrcopDoctrineRepository;
+use App\OperServ\Adapter\Out\Persistence\Doctrine\OperIrcopDoctrineRepository;
+use App\OperServ\Domain\Entity\OperIrcop;
+use App\OperServ\Domain\Entity\OperRole;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

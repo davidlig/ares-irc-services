@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Event;
 
-use App\Application\Port\EventBusInterface;
 use App\NickServ\Adapter\Out\Event\SymfonyIdentifyEventPublisher;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

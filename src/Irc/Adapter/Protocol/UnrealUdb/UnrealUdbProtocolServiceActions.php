@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Application\Port\OperclassServiceActionsInterface;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
+use App\Shared\Application\Port\OperclassServiceActionsInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

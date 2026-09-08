@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Application\Port\In;
 
-use App\Application\Port\ChannelModeSupportInterface;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 /**
  * Bundles all protocol-specific pieces for one IRCd type (Unreal, InspIRCd, P10, etc.).

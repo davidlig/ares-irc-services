@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Application\UseCase\ConfigureMlock;
 
-use App\ChanServ\Adapter\Out\Persistence\LegacyChannelMlockStorage;
+use App\ChanServ\Adapter\Out\Persistence\DoctrineChannelMlockStorage;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ConfigureChannelMlock::class)]
 #[CoversClass(ConfigureChannelMlockHandler::class)]
 #[CoversClass(ConfigureChannelMlockResult::class)]
-#[CoversClass(LegacyChannelMlockStorage::class)]
+#[CoversClass(DoctrineChannelMlockStorage::class)]
 final class ConfigureChannelMlockHandlerTest extends TestCase
 {
     #[Test]
@@ -40,7 +40,7 @@ final class ConfigureChannelMlockHandlerTest extends TestCase
             new ChannelSetting(new ModeName('k'), 'secret'),
         ]);
 
-        $result = new ConfigureChannelMlockHandler($channels, new LegacyChannelMlockStorage(), $events)->handle(new ConfigureChannelMlock($channel, $lock));
+        $result = new ConfigureChannelMlockHandler($channels, new DoctrineChannelMlockStorage(), $events)->handle(new ConfigureChannelMlock($channel, $lock));
 
         self::assertSame($lock, $result->modeLock);
         self::assertSame('+nk', $channel->getMlock());
@@ -54,7 +54,7 @@ final class ConfigureChannelMlockHandlerTest extends TestCase
         $channel = RegisteredChannel::register('#test', 1, 'Test');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $events = $this->createStub(ChanServEventPublisher::class);
-        $handler = new ConfigureChannelMlockHandler($channels, new LegacyChannelMlockStorage(), $events);
+        $handler = new ConfigureChannelMlockHandler($channels, new DoctrineChannelMlockStorage(), $events);
 
         $activeResult = $handler->handle(new ConfigureChannelMlock($channel, ChannelModeLock::active()));
         self::assertTrue($activeResult->modeLock->active);

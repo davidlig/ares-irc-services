@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\PasswordMigrationStateInterface;
@@ -24,6 +23,7 @@ use App\OperServ\Application\Port\In\OperatorNetworkProjection;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
 use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
+use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
-use App\Application\Port\OperclassServiceActionsInterface;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
+use App\Shared\Application\Port\OperclassServiceActionsInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

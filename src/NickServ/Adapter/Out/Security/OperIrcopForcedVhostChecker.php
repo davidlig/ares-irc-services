@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Security;
 
-use App\Application\OperServ\Port\In\ProtectedNickQuery;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
+use App\OperServ\Application\Port\In\ProtectedNickQuery;
 
 final readonly class OperIrcopForcedVhostChecker implements ForcedVhostCheckerInterface
 {

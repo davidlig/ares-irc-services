@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Security;
 
-use App\Application\OperServ\Port\In\ProtectedNickQuery;
-use App\Application\Shared\ServiceUidRegistry;
 use App\NickServ\Application\Port\Out\NickProtectionExemption;
+use App\OperServ\Application\Port\In\ProtectedNickQuery;
+use App\Shared\Application\ServiceUidRegistry;
 
 final readonly class OperNickProtectionExemption implements NickProtectionExemption
 {

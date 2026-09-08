@@ -1,4 +1,0 @@
-# Phase 04: NickServ.
-# All owned dependency violations were removed during the final phase review.
-deptrac:
-  skip_violations: {}

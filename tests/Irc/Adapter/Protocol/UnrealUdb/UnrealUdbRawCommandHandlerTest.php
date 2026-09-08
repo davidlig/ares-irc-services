@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\ParsedUdbPath;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawCommandHandler;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
+use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

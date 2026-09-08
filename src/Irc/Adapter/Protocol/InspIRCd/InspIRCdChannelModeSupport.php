@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\InspIRCd;
 
-use App\Application\Port\ChannelModeSupportInterface;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 use function in_array;
 

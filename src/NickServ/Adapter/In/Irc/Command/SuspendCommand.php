@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\Port\EventBusInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
@@ -19,6 +18,7 @@ use App\NickServ\Application\Service\NickProtectabilityStatus;
 use App\NickServ\Application\Service\NickSuspensionService;
 use App\NickServ\Application\Service\NickTargetValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Application\Port\EventBusInterface;
 use App\Shared\Application\Time\RelativeExpiryParser;
 use DateTimeImmutable;
 

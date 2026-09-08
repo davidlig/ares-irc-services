@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Network;
 
-use App\Application\Port\ChannelSyncCompletedRegistryInterface;
+use App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface;
 
 /**
  * In-memory registry of channel names that have completed sync

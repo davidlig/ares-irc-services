@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Persistence\Doctrine;
 
-use App\Application\Port\TransactionManagerInterface;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\NickDoctrineTransactionBoundary;
+use App\Shared\Application\Port\TransactionManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

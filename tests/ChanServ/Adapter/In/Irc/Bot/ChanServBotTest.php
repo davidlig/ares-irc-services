@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Irc\Bot;
 
-use App\Application\Port\ApplyOutgoingChannelModesPort;
-use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceChannelRegistrationPort;
 use App\ChanServ\Adapter\In\Irc\Bot\ChanServBot;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
@@ -18,6 +14,10 @@ use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
+use App\Shared\Application\Port\ApplyOutgoingChannelModesPort;
+use App\Shared\Application\Port\ChannelModeSupportInterface;
+use App\Shared\Application\Port\SendNoticePort;
+use App\Shared\Application\Port\ServiceChannelRegistrationPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

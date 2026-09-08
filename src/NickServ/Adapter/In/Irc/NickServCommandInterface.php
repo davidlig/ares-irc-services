@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
-use App\Application\Shared\Help\HelpableCommandInterface;
+use App\Shared\Application\Help\HelpableCommandInterface;
 
 /**
  * Contract every NickServ command module must implement.

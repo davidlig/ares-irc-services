@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 
-use App\Application\Port\TransactionManagerInterface;
 use App\NickServ\Application\Port\Out\NickTransactionBoundary;
+use App\Shared\Application\Port\TransactionManagerInterface;
 
 final readonly class NickDoctrineTransactionBoundary implements NickTransactionBoundary
 {

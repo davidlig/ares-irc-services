@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Infrastructure\OperServ\Doctrine;
 
-use App\Domain\OperServ\Entity\Motd;
-use App\Infrastructure\OperServ\Doctrine\MotdDoctrineRepository;
+use App\OperServ\Adapter\Out\Persistence\Doctrine\MotdDoctrineRepository;
+use App\OperServ\Domain\Entity\Motd;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
