@@ -6,9 +6,6 @@ namespace App\OperServ\Adapter\In\Irc\Command;
 
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServContext;
-use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
-use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRaw;
 use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRawHandler;
 use App\OperServ\Application\UseCase\ExecuteRaw\RawDatabaseExecutionOutcome;
@@ -16,7 +13,7 @@ use DateTimeImmutable;
 
 final readonly class RawCommand implements OperServCommandInterface
 {
-    public function __construct(private ExecuteRawHandler $handler, private CommandAuditRecorder $audit) {}
+    public function __construct(private ExecuteRawHandler $handler) {}
 
     public function getName(): string
     {
@@ -70,16 +67,22 @@ final readonly class RawCommand implements OperServCommandInterface
 
     public function execute(OperServContext $context): void
     {
-        $result = $this->handler->handle(new ExecuteRaw($context->args));
+        if (null === $context->sender) {
+            return;
+        }
+
+        $result = $this->handler->handle(new ExecuteRaw(
+            actorNickname: $context->sender->nick,
+            arguments: $context->args,
+            occurredAt: new DateTimeImmutable(),
+        ));
         switch ($result->outcome) {
             case RawDatabaseExecutionOutcome::Executed:
                 $context->reply('raw.done');
-                $this->recordAudit($context, $result->operation ?? 'UNKNOWN', 'irc');
 
                 return;
             case RawDatabaseExecutionOutcome::DatabaseExecuted:
                 $context->reply('raw.udb.done');
-                $this->recordAudit($context, $result->operation ?? 'DB', 'udb');
 
                 return;
             case RawDatabaseExecutionOutcome::Empty:
@@ -95,7 +98,7 @@ final readonly class RawCommand implements OperServCommandInterface
 
                 return;
             case RawDatabaseExecutionOutcome::DatabaseTargetInvalid:
-                $context->reply('raw.udb.target', ['target' => $result->parameters['target'] ?? '']);
+                $context->reply('raw.udb.target', ['target' => $result->recordPath ?? '']);
 
                 return;
             case RawDatabaseExecutionOutcome::DatabaseSyntaxInvalid:
@@ -106,27 +109,22 @@ final readonly class RawCommand implements OperServCommandInterface
                 $context->reply('raw.udb.unsupported');
 
                 return;
+            case RawDatabaseExecutionOutcome::DatabaseRecordTypeInvalid:
+                $context->reply('raw.udb.invalid_block', ['block' => $result->recordType ?? '']);
+
+                return;
+            case RawDatabaseExecutionOutcome::DatabasePathInvalid:
+                $context->reply('raw.udb.invalid_path', ['path' => $result->recordPath ?? '']);
+
+                return;
+            case RawDatabaseExecutionOutcome::DatabaseValueInvalid:
+                $context->reply('raw.udb.invalid_value', ['path' => $result->recordPath ?? '']);
+
+                return;
             case RawDatabaseExecutionOutcome::DatabaseFailed:
-                $context->reply((string) ($result->parameters['errorKey'] ?? 'raw.udb.error'), $result->parameters);
+                $context->reply('raw.udb.error');
 
                 return;
         }
-    }
-
-    private function recordAudit(OperServContext $context, string $operation, string $transport): void
-    {
-        if (null === $context->sender) {
-            return;
-        }
-
-        $this->audit->record(new CommandAuditRecord(
-            category: CommandAuditCategory::SystemAction,
-            service: 'operserv',
-            actor: $context->sender->nick,
-            operation: 'RAW',
-            occurredAt: new DateTimeImmutable(),
-            target: $operation,
-            metadata: ['transport' => $transport],
-        ));
     }
 }

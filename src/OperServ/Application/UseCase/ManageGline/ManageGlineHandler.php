@@ -181,7 +181,7 @@ final readonly class ManageGlineHandler implements ManageGlineHandlerInterface
     private function recordAudit(ManageGline $command, string $operation, string $target, ?string $reason, array $metadata = []): void
     {
         $this->audit->record(new CommandAuditRecord(
-            CommandAuditCategory::ResourceOverride,
+            CommandAuditCategory::OperatorAction,
             'operserv',
             $command->actor,
             $operation,

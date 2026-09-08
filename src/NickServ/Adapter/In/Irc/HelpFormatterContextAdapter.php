@@ -79,17 +79,13 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
             return [];
         }
 
-        $nickLower = strtolower($sender->nick);
-
-        if ($this->operatorAccess->isRoot($nickLower)) {
-            return $this->filterIrcopCommands($this->context->getRegistry()->all());
-        }
-
-        $allCommands = $this->context->getRegistry()->all();
-
-        return $sender->isOper
-            ? $this->filterByPermission($allCommands, (int) $account->getId(), $nickLower)
-            : [];
+        return $this->filterByPermission(
+            $this->context->getRegistry()->all(),
+            strtolower($sender->nick),
+            (int) $account->getId(),
+            $sender->isIdentified,
+            $sender->isOper,
+        );
     }
 
     public function hasIrcopAccess(): bool
@@ -101,18 +97,13 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
             return false;
         }
 
-        $nickLower = strtolower($sender->nick);
-
-        if ($this->operatorAccess->isRoot($nickLower)) {
-            return true;
-        }
-
-        $result = false;
-        if ($sender->isOper) {
-            $result = $this->operatorAccess->hasAnyPermission((int) $account->getId(), $nickLower, NickServPermission::allIrcop());
-        }
-
-        return $result;
+        return $this->operatorAccess->hasAnyPermission(
+            strtolower($sender->nick),
+            (int) $account->getId(),
+            $sender->isIdentified,
+            $sender->isOper,
+            NickServPermission::allIrcop(),
+        );
     }
 
     /**
@@ -120,28 +111,18 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
      *
      * @return iterable<HelpableCommandInterface>
      */
-    private function filterIrcopCommands(iterable $commands): iterable
-    {
-        foreach ($commands as $command) {
-            $permission = $command->getRequiredPermission();
-            if (null !== $permission && self::isNickServIrcopPermission($permission)) {
-                yield $command;
-            }
-        }
-    }
-
-    /**
-     * @param iterable<NickServCommandInterface> $commands
-     *
-     * @return iterable<HelpableCommandInterface>
-     */
-    private function filterByPermission(iterable $commands, int $nickId, string $nickLower): iterable
-    {
+    private function filterByPermission(
+        iterable $commands,
+        string $nickname,
+        int $accountId,
+        bool $identified,
+        bool $ircOperator,
+    ): iterable {
         foreach ($commands as $command) {
             $permission = $command->getRequiredPermission();
             if (null !== $permission
                 && self::isNickServIrcopPermission($permission)
-                && $this->operatorAccess->hasPermission($nickId, $nickLower, $permission)) {
+                && $this->operatorAccess->hasPermission($nickname, $accountId, $identified, $ircOperator, $permission)) {
                 yield $command;
             }
         }

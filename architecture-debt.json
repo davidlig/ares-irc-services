@@ -36,7 +36,6 @@
       "src/Application/Maintenance/Message/RunMaintenanceCycle.php",
       "src/Application/Maintenance/Message/RunMaintenanceCycleHandler.php",
       "src/Application/OperServ/ForcedVhostApplier.php",
-      "src/Application/OperServ/IrcopAccessHelper.php",
       "src/Application/OperServ/IrcopAccessQueryService.php",
       "src/Application/OperServ/IrcopModeApplier.php",
       "src/Application/OperServ/IrcopOperclassApplier.php",

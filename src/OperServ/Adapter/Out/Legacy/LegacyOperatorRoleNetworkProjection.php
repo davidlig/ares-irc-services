@@ -11,6 +11,7 @@ use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\OperclassServiceActionsInterface;
 use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
+use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\OperServ\Application\Port\Out\OperatorRoleNetworkProjection;
 
 final readonly class LegacyOperatorRoleNetworkProjection implements OperatorRoleNetworkProjection
@@ -37,15 +38,23 @@ final readonly class LegacyOperatorRoleNetworkProjection implements OperatorRole
         $this->operclass->updateForRole($roleId, $operclass);
     }
 
+    public function supportsOperclass(): bool
+    {
+        return $this->actions() instanceof OperclassServiceActionsInterface;
+    }
+
     public function availableOperclasses(): ?array
     {
-        $actions = $this->connection->getProtocolModule()?->getServiceActions();
+        $actions = $this->actions();
         if (!$actions instanceof OperclassServiceActionsInterface) {
             return null;
         }
 
-        $operclasses = $actions->getAvailableOperclasses();
+        return $actions->getAvailableOperclasses();
+    }
 
-        return $operclasses;
+    private function actions(): ?ProtocolServiceActionsInterface
+    {
+        return $this->connection->getProtocolModule()?->getServiceActions();
     }
 }

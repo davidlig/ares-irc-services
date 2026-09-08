@@ -829,8 +829,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $this->createServiceNicks(),
         );
 
-        $operatorAccess = $this->createStub(ChanServOperatorAccess::class);
-        $operatorAccess->method('isRoot')->willReturn(true);
+        $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
+        $operatorAccess->expects(self::once())
+            ->method('hasPermission')
+            ->with('rootadmin', 1, true, true, ChanServPermission::DROP)
+            ->willReturn(true);
         $adapter = new HelpFormatterContextAdapter($context, $operatorAccess);
 
         $ircopCommands = iterator_to_array($adapter->getIrcopCommands());
@@ -900,8 +903,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $this->createServiceNicks(),
         );
 
-        $operatorAccess = $this->createStub(ChanServOperatorAccess::class);
-        $operatorAccess->method('isRoot')->willReturn(true);
+        $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
+        $operatorAccess->expects(self::once())
+            ->method('hasAnyPermission')
+            ->with('rootadmin', 1, true, true, ChanServPermission::allIrcop())
+            ->willReturn(true);
         $adapter = new HelpFormatterContextAdapter($context, $operatorAccess);
 
         self::assertTrue($adapter->hasIrcopAccess());

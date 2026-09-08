@@ -6,12 +6,12 @@ namespace App\NickServ\Application\Port\Out;
 
 interface NickServOperatorAccess
 {
-    public function isRoot(string $nickname): bool;
+    public function isRoot(string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool;
 
-    public function isIrcop(int $nickId, string $nickname): bool;
+    public function isIrcop(string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool;
 
-    public function hasPermission(int $nickId, string $nickname, string $permission): bool;
+    public function hasPermission(string $nickname, ?int $accountId, bool $identified, bool $ircOperator, string $permission): bool;
 
     /** @param list<string> $permissions */
-    public function hasAnyPermission(int $nickId, string $nickname, array $permissions): bool;
+    public function hasAnyPermission(string $nickname, ?int $accountId, bool $identified, bool $ircOperator, array $permissions): bool;
 }

@@ -12,13 +12,22 @@ use App\OperServ\Application\Port\Out\MotdRepository;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotd;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotdHandler;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotdOutcome;
+use App\OperServ\Application\UseCase\ManageMotd\ManageMotdResult;
 use App\OperServ\Application\UseCase\ManageMotd\MotdAction;
+use App\OperServ\Application\UseCase\ManageMotd\MotdListEntry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use const DATE_ATOM;
+
 #[CoversClass(ManageMotdHandler::class)]
+#[CoversClass(ManageMotd::class)]
+#[CoversClass(ManageMotdResult::class)]
+#[CoversClass(MotdListEntry::class)]
+#[CoversClass(MotdEntry::class)]
 final class ManageMotdHandlerTest extends TestCase
 {
     private DateTimeImmutable $now;
@@ -42,7 +51,7 @@ final class ManageMotdHandlerTest extends TestCase
         )->willReturn($this->entry(4));
         $audit = $this->createMock(CommandAuditRecorder::class);
         $audit->expects(self::once())->method('record')->with(self::callback(
-            static fn (CommandAuditRecord $record): bool => CommandAuditCategory::ResourceOverride === $record->category
+            static fn (CommandAuditRecord $record): bool => CommandAuditCategory::OperatorAction === $record->category
                 && 'Oper' === $record->actor
                 && 'MOTD ADD' === $record->operation
                 && 'NickServ' === $record->target
@@ -199,6 +208,41 @@ final class ManageMotdHandlerTest extends TestCase
             new ManageMotdHandler($this->createStub(MotdRepository::class), $this->createStub(CommandAuditRecorder::class))
                 ->handle($this->command(MotdAction::Unknown))->outcome,
         );
+    }
+
+    #[Test]
+    #[DataProvider('validDurations')]
+    public function parsesEverySupportedDuration(string $duration, ?string $expectedExpiry): void
+    {
+        $repository = $this->createMock(MotdRepository::class);
+        $repository->expects(self::once())->method('add')->with(
+            'Welcome',
+            'NickServ',
+            'NOTICE',
+            42,
+            $this->now,
+            self::callback(static fn (?DateTimeImmutable $expiry): bool => $expectedExpiry === $expiry?->format(DATE_ATOM)),
+        )->willReturn($this->entry(9));
+
+        $result = new ManageMotdHandler($repository, $this->createStub(CommandAuditRecorder::class))->handle($this->command(
+            MotdAction::Add,
+            botNickname: 'NickServ',
+            messageType: 'NOTICE',
+            expiry: $duration,
+            text: 'Welcome',
+        ));
+
+        self::assertSame(ManageMotdOutcome::Added, $result->outcome);
+    }
+
+    /** @return iterable<string, array{string, ?string}> */
+    public static function validDurations(): iterable
+    {
+        yield 'permanent' => ['0', null];
+        yield 'seconds' => ['5s', '2026-09-08T10:15:05+00:00'];
+        yield 'minutes' => ['2m', '2026-09-08T10:17:00+00:00'];
+        yield 'hours' => ['3h', '2026-09-08T13:15:00+00:00'];
+        yield 'days' => ['2d', '2026-09-10T10:15:00+00:00'];
     }
 
     private function command(

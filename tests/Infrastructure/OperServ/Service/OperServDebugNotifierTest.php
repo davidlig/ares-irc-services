@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Service;
 
-use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ChannelServiceActionsPort;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\OperServ\Service\OperServDebugNotifier;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
-use DateTimeImmutable;
+use App\OperServ\Application\Port\In\AuthorizationDecision;
+use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(OperServDebugNotifier::class)]
@@ -198,58 +195,46 @@ final class OperServDebugNotifierTest extends TestCase
     #[Test]
     public function isIrcopOrRootReturnsTrueForRoot(): void
     {
-        $rootRegistry = new RootUserRegistry('RootUser');
-
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(42);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with(self::equalTo(new OperatorActor('RootUser', 42, true, false)))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
         $debug = $this->createDebugNotifier(
-            rootRegistry: $rootRegistry,
+            nickAccounts: $nickAccounts,
+            authorization: $authorization,
         );
 
-        self::assertTrue($debug->isIrcopOrRoot('RootUser', true));
+        self::assertTrue($debug->isIrcopOrRoot('RootUser', true, false));
     }
 
     #[Test]
     public function isIrcopOrRootReturnsTrueForIdentifiedIrcop(): void
     {
-        $nick = RegisteredNick::createPending(
-            'OperUser',
-            'hash',
-            'test@test.com',
-            'en',
-            new DateTimeImmutable('+1 day'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
-        $nickRefl = new ReflectionClass($nick);
-        $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setValue($nick, 42);
-
-        $role = OperRole::create('OPER', 'Oper role');
-        $ircop = OperIrcop::create(42, $role, 1, null);
-
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn($nick);
-
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn($ircop);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(42);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with(self::equalTo(new OperatorActor('OperUser', 42, true, true)))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IrcOperatorStatus));
 
         $debug = $this->createDebugNotifier(
-            nickRepo: $nickRepo,
-            ircopRepo: $ircopRepo,
+            nickAccounts: $nickAccounts,
+            authorization: $authorization,
         );
 
-        self::assertTrue($debug->isIrcopOrRoot('OperUser', true));
+        self::assertTrue($debug->isIrcopOrRoot('OperUser', true, true));
     }
 
     #[Test]
     public function isIrcopOrRootReturnsFalseForNonOper(): void
     {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $debug = $this->createDebugNotifier();
 
-        $debug = $this->createDebugNotifier(
-            nickRepo: $nickRepo,
-        );
-
-        self::assertFalse($debug->isIrcopOrRoot('NormalUser', false));
+        self::assertFalse($debug->isIrcopOrRoot('NormalUser', false, false));
     }
 
     #[Test]
@@ -257,50 +242,39 @@ final class OperServDebugNotifierTest extends TestCase
     {
         $debug = $this->createDebugNotifier();
 
-        self::assertFalse($debug->isIrcopOrRoot('SomeUser', false));
+        self::assertFalse($debug->isIrcopOrRoot('SomeUser', false, true));
     }
 
     #[Test]
     public function isIrcopOrRootReturnsFalseForIdentifiedNonIrcop(): void
     {
-        $nick = RegisteredNick::createPending(
-            'NormalUser',
-            'hash',
-            'test@test.com',
-            'en',
-            new DateTimeImmutable('+1 day'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
-        $nickRefl = new ReflectionClass($nick);
-        $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setValue($nick, 42);
-
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn($nick);
-
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(42);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with(self::equalTo(new OperatorActor('NormalUser', 42, true, true)))
+            ->willReturn(AuthorizationDecision::denied());
 
         $debug = $this->createDebugNotifier(
-            nickRepo: $nickRepo,
-            ircopRepo: $ircopRepo,
+            nickAccounts: $nickAccounts,
+            authorization: $authorization,
         );
 
-        self::assertFalse($debug->isIrcopOrRoot('NormalUser', true));
+        self::assertFalse($debug->isIrcopOrRoot('NormalUser', true, true));
     }
 
     #[Test]
     public function isIrcopOrRootReturnsFalseForIdentifiedUserWithoutRegisteredNick(): void
     {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn(null);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(null);
 
         $debug = $this->createDebugNotifier(
-            nickRepo: $nickRepo,
+            nickAccounts: $nickAccounts,
         );
 
-        self::assertFalse($debug->isIrcopOrRoot('UnknownUser', true));
+        self::assertFalse($debug->isIrcopOrRoot('UnknownUser', true, true));
     }
 
     #[Test]
@@ -409,9 +383,8 @@ final class OperServDebugNotifierTest extends TestCase
         ?NetworkUserLookupPort $userLookup = null,
         ?OperServNotifierInterface $notifier = null,
         ?IdentifiedSessionRegistry $identifiedRegistry = null,
-        ?OperIrcopRepositoryInterface $ircopRepo = null,
-        ?RootUserRegistry $rootRegistry = null,
-        ?RegisteredNickRepositoryInterface $nickRepo = null,
+        ?NickAccountQuery $nickAccounts = null,
+        ?OperatorAuthorizationQuery $authorization = null,
         ?TranslatorInterface $translator = null,
         ?string $debugChannel = '#ircops',
     ): OperServDebugNotifier {
@@ -420,12 +393,19 @@ final class OperServDebugNotifierTest extends TestCase
             userLookup: $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             notifier: $notifier ?? $this->createStub(OperServNotifierInterface::class),
             identifiedRegistry: $identifiedRegistry ?? new IdentifiedSessionRegistry(),
-            ircopRepo: $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
-            rootRegistry: $rootRegistry ?? new RootUserRegistry(''),
-            nickRepo: $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
+            nickAccounts: $nickAccounts ?? $this->createStub(NickAccountQuery::class),
+            authorization: $authorization ?? $this->deniedAuthorization(),
             translator: $translator ?? $this->createStub(TranslatorInterface::class),
             defaultLanguage: 'en',
             debugChannel: $debugChannel,
         );
+    }
+
+    private function deniedAuthorization(): OperatorAuthorizationQuery
+    {
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('ircOperator')->willReturn(AuthorizationDecision::denied());
+
+        return $authorization;
     }
 }

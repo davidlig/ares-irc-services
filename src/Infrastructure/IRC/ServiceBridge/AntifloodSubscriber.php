@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SendNoticePort;
 use App\Application\Services\Antiflood\AntifloodRegistry;
 use App\Application\Services\Antiflood\ClientKeyResolver;
@@ -12,7 +11,10 @@ use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\Out\ServiceUserPreferences;
+use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -49,7 +51,8 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         private SendNoticePort $sendNotice,
         private ServiceUserPreferences $messageTypeResolver,
         private OperServNotifierInterface $notifier,
-        private RootUserRegistry $rootRegistry,
+        private OperatorAuthorizationQuery $authorization,
+        private NickAccountQuery $nickAccounts,
         private TranslatorInterface $translator,
         private string $defaultLanguage,
         private ?string $debugChannel,
@@ -98,9 +101,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         $sender = $this->userLookup->findByUid($message->prefix);
         $listener = $this->gateway->findListenerFor($target);
 
-        if (null === $sender || null === $listener || $sender->isOper
-            || ($sender->isIdentified && $this->rootRegistry->isRoot($sender->nick))
-        ) {
+        if (null === $sender || null === $listener || $sender->isOper || $this->isRoot($sender)) {
             return;
         }
 
@@ -135,6 +136,18 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         }
 
         $this->registry->recordCommand($clientKey, $this->windowSeconds);
+    }
+
+    private function isRoot(SenderView $sender): bool
+    {
+        $accountId = $sender->isIdentified ? $this->nickAccounts->findIdByNick($sender->nick) : null;
+
+        return $this->authorization->root(new OperatorActor(
+            $sender->nick,
+            $accountId,
+            $sender->isIdentified,
+            $sender->isOper,
+        ))->granted;
     }
 
     private function logToDebugChannel(SenderView $sender, int $remaining): void

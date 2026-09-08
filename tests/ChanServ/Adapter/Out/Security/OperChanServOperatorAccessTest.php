@@ -17,16 +17,16 @@ final class OperChanServOperatorAccessTest extends TestCase
     public function delegatesToQuery(): void
     {
         $query = $this->createMock(IrcopAccessQuery::class);
-        $query->expects(self::once())->method('isRoot')->with('root')->willReturn(true);
-        $query->expects(self::once())->method('isIrcop')->with(1, 'oper')->willReturn(true);
-        $query->expects(self::once())->method('hasPermission')->with(1, 'oper', 'perm')->willReturn(true);
-        $query->expects(self::once())->method('hasAnyPermission')->with(1, 'oper', ['p1'])->willReturn(true);
+        $query->expects(self::once())->method('isRoot')->with('root', 1, true, false)->willReturn(true);
+        $query->expects(self::once())->method('isIrcop')->with('oper', 1, true, true)->willReturn(true);
+        $query->expects(self::once())->method('hasPermission')->with('oper', 1, true, true, 'perm')->willReturn(true);
+        $query->expects(self::once())->method('hasAnyPermission')->with('oper', 1, true, true, ['p1'])->willReturn(true);
 
         $access = new OperChanServOperatorAccess($query);
 
-        self::assertTrue($access->isRoot('root'));
-        self::assertTrue($access->isIrcop(1, 'oper'));
-        self::assertTrue($access->hasPermission(1, 'oper', 'perm'));
-        self::assertTrue($access->hasAnyPermission(1, 'oper', ['p1']));
+        self::assertTrue($access->isRoot('root', 1, true, false));
+        self::assertTrue($access->isIrcop('oper', 1, true, true));
+        self::assertTrue($access->hasPermission('oper', 1, true, true, 'perm'));
+        self::assertTrue($access->hasAnyPermission('oper', 1, true, true, ['p1']));
     }
 }

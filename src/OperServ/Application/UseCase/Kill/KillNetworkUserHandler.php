@@ -6,6 +6,7 @@ namespace App\OperServ\Application\UseCase\Kill;
 
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
+use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\Out\KillNetworkUser as KillNetworkUserPort;
 use App\OperServ\Application\Port\Out\NetworkUserLookup;
 use App\OperServ\Application\Port\Out\OperatorAccountLookup;
@@ -24,6 +25,7 @@ final readonly class KillNetworkUserHandler
         private OperatorAccountLookup $nickAccounts,
         private OperatorRoleAccess $operatorRoles,
         private KillNetworkUserPort $network,
+        private CommandAuditRecorder $audit,
     ) {}
 
     public function handle(KillNetworkUser $command): KillNetworkUserResult
@@ -46,22 +48,20 @@ final readonly class KillNetworkUserHandler
             return KillNetworkUserResult::networkUnavailable($command->targetNickname);
         }
 
-        return KillNetworkUserResult::killed(
-            $command->targetNickname,
-            $command->reason,
-            new CommandAuditRecord(
-                category: CommandAuditCategory::OperatorAction,
-                service: 'OperServ',
-                actor: $command->actorNickname,
-                operation: 'KILL',
-                occurredAt: $command->occurredAt,
-                target: $command->targetNickname,
-                reason: $command->reason,
-                permission: 'operserv.kill',
-                targetHost: $target->ident . '@' . $target->hostname,
-                targetIp: $target->ipBase64,
-            ),
-        );
+        $this->audit->record(new CommandAuditRecord(
+            category: CommandAuditCategory::OperatorAction,
+            service: 'OperServ',
+            actor: $command->actorNickname,
+            operation: 'KILL',
+            occurredAt: $command->occurredAt,
+            target: $command->targetNickname,
+            reason: $command->reason,
+            permission: 'operserv.kill',
+            targetHost: $target->ident . '@' . $target->hostname,
+            targetIp: $target->ipBase64,
+        ));
+
+        return KillNetworkUserResult::killed($command->targetNickname, $command->reason);
     }
 
     private function isProtectedIrcOperator(string $nickname, bool $isOper, bool $isIdentified): bool

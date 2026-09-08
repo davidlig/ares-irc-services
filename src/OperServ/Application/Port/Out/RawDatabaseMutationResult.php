@@ -6,11 +6,11 @@ namespace App\OperServ\Application\Port\Out;
 
 final readonly class RawDatabaseMutationResult
 {
-    /** @param array<string, scalar|null> $errorParams */
     private function __construct(
         public bool $successful,
-        public ?string $errorKey = null,
-        public array $errorParams = [],
+        public ?RawDatabaseMutationFailure $failure = null,
+        public ?string $recordType = null,
+        public ?string $recordPath = null,
     ) {}
 
     public static function success(): self
@@ -18,9 +18,11 @@ final readonly class RawDatabaseMutationResult
         return new self(true);
     }
 
-    /** @param array<string, scalar|null> $params */
-    public static function failure(string $key, array $params = []): self
-    {
-        return new self(false, $key, $params);
+    public static function failure(
+        RawDatabaseMutationFailure $failure,
+        ?string $recordType = null,
+        ?string $recordPath = null,
+    ): self {
+        return new self(false, $failure, $recordType, $recordPath);
     }
 }

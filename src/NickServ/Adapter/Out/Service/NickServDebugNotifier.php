@@ -150,20 +150,16 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
         $this->notify($message);
     }
 
-    public function isIrcopOrRoot(string $nick, bool $isIdentified): bool
+    public function isIrcopOrRoot(string $nick, bool $isIdentified, bool $isIrcOperator): bool
     {
-        if (!$isIdentified) {
-            return false;
-        }
-
-        if ($this->operatorAccess->isRoot($nick)) {
-            return true;
-        }
-
         $registeredNick = $this->nickRepo->findByNick($nick);
 
-        return null !== $registeredNick
-            && $this->operatorAccess->isIrcop($registeredNick->getId(), $nick);
+        return $this->operatorAccess->isIrcop(
+            $nick,
+            $registeredNick?->getId(),
+            $isIdentified,
+            $isIrcOperator,
+        );
     }
 
     public function getDebugChannel(): ?string

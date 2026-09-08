@@ -334,11 +334,18 @@ final class NickServDebugNotifierTest extends TestCase
     #[Test]
     public function isIrcopOrRootReturnsTrueForRoot(): void
     {
-        $operatorAccess = $this->createStub(NickServOperatorAccess::class);
-        $operatorAccess->method('isRoot')->willReturn(true);
-        $debug = $this->createNotifier(operatorAccess: $operatorAccess);
+        $registeredNick = $this->createStub(RegisteredNick::class);
+        $registeredNick->method('getId')->willReturn(123);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($registeredNick);
+        $operatorAccess = $this->createMock(NickServOperatorAccess::class);
+        $operatorAccess->expects(self::once())
+            ->method('isIrcop')
+            ->with('AdminRoot', 123, true, false)
+            ->willReturn(true);
+        $debug = $this->createNotifier(operatorAccess: $operatorAccess, nickRepo: $nickRepo);
 
-        self::assertTrue($debug->isIrcopOrRoot('AdminRoot', true));
+        self::assertTrue($debug->isIrcopOrRoot('AdminRoot', true, false));
     }
 
     #[Test]
@@ -346,7 +353,7 @@ final class NickServDebugNotifierTest extends TestCase
     {
         $debug = $this->createNotifier();
 
-        self::assertFalse($debug->isIrcopOrRoot('SomeUser', false));
+        self::assertFalse($debug->isIrcopOrRoot('SomeUser', false, false));
     }
 
     #[Test]
@@ -357,7 +364,7 @@ final class NickServDebugNotifierTest extends TestCase
 
         $debug = $this->createNotifier(nickRepo: $nickRepo);
 
-        self::assertFalse($debug->isIrcopOrRoot('SomeUser', true));
+        self::assertFalse($debug->isIrcopOrRoot('SomeUser', true, true));
     }
 
     #[Test]
@@ -372,12 +379,14 @@ final class NickServDebugNotifierTest extends TestCase
             ->willReturn($registeredNick);
 
         $operatorAccess = $this->createMock(NickServOperatorAccess::class);
-        $operatorAccess->expects(self::once())->method('isRoot')->with('OperUser')->willReturn(false);
-        $operatorAccess->expects(self::once())->method('isIrcop')->with(123, 'OperUser')->willReturn(true);
+        $operatorAccess->expects(self::once())
+            ->method('isIrcop')
+            ->with('OperUser', 123, true, true)
+            ->willReturn(true);
 
         $debug = $this->createNotifier(nickRepo: $nickRepo, operatorAccess: $operatorAccess);
 
-        self::assertTrue($debug->isIrcopOrRoot('OperUser', true));
+        self::assertTrue($debug->isIrcopOrRoot('OperUser', true, true));
     }
 
     #[Test]

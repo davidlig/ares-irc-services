@@ -9,4 +9,6 @@ interface OperatorAssignmentNetworkProjection
     public function apply(int $nickId, string $nickname, OperatorRoleRecord $role): void;
 
     public function remove(int $nickId, string $nickname, OperatorRoleRecord $role): void;
+
+    public function replace(int $nickId, string $nickname, OperatorRoleRecord $oldRole, OperatorRoleRecord $newRole): void;
 }

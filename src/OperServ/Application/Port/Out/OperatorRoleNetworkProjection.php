@@ -6,6 +6,8 @@ namespace App\OperServ\Application\Port\Out;
 
 interface OperatorRoleNetworkProjection
 {
+    public function supportsOperclass(): bool;
+
     /**
      * @param list<string> $oldModes
      * @param list<string> $newModes
@@ -16,6 +18,6 @@ interface OperatorRoleNetworkProjection
 
     public function refreshOperclass(int $roleId, ?string $operclass): void;
 
-    /** @return list<string>|null Null when the protocol lacks operclass support. */
+    /** @return list<string>|null Null when the supported protocol cannot enumerate its catalog. */
     public function availableOperclasses(): ?array;
 }

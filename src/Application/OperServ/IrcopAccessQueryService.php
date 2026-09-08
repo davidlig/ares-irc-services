@@ -5,28 +5,38 @@ declare(strict_types=1);
 namespace App\Application\OperServ;
 
 use App\Application\OperServ\Port\In\IrcopAccessQuery;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 
 final readonly class IrcopAccessQueryService implements IrcopAccessQuery
 {
-    public function __construct(private IrcopAccessHelper $accessHelper) {}
+    public function __construct(private OperatorAuthorizationQuery $authorization) {}
 
-    public function isRoot(string $nickname): bool
+    public function isRoot(string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool
     {
-        return $this->accessHelper->isRoot($nickname);
+        return $this->authorization->root($this->actor($nickname, $accountId, $identified, $ircOperator))->granted;
     }
 
-    public function isIrcop(int $nickId, string $nickname): bool
+    public function isIrcop(string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool
     {
-        return $this->accessHelper->isIrcop($nickId, $nickname);
+        return $this->authorization->ircOperator($this->actor($nickname, $accountId, $identified, $ircOperator))->granted;
     }
 
-    public function hasPermission(int $nickId, string $nickname, string $permission): bool
+    public function hasPermission(string $nickname, ?int $accountId, bool $identified, bool $ircOperator, string $permission): bool
     {
-        return $this->accessHelper->hasPermission($nickId, $nickname, $permission);
+        return $this->authorization->permission($this->actor($nickname, $accountId, $identified, $ircOperator), $permission)->granted;
     }
 
-    public function hasAnyPermission(int $nickId, string $nickname, array $permissions): bool
+    public function hasAnyPermission(string $nickname, ?int $accountId, bool $identified, bool $ircOperator, array $permissions): bool
     {
-        return $this->accessHelper->hasAnyPermission($nickId, $nickname, $permissions);
+        return array_any(
+            $permissions,
+            fn (string $permission): bool => $this->hasPermission($nickname, $accountId, $identified, $ircOperator, $permission),
+        );
+    }
+
+    private function actor(string $nickname, ?int $accountId, bool $identified, bool $ircOperator): OperatorActor
+    {
+        return new OperatorActor($nickname, $accountId, $identified, $ircOperator);
     }
 }

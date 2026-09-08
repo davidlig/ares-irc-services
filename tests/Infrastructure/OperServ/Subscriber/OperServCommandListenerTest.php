@@ -19,6 +19,7 @@ use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\In\UserLanguageQuery;
 use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
+use App\OperServ\Adapter\In\Irc\OperServCommandLogSanitizer;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
@@ -30,13 +31,26 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use ReflectionClass;
 use RuntimeException;
 use Throwable;
 
 #[CoversClass(OperServCommandListener::class)]
+#[CoversClass(OperServCommandLogSanitizer::class)]
 final class OperServCommandListenerTest extends TestCase
 {
     private const string SENDER_UID = '001ABC';
+
+    #[Test]
+    public function commandLogSanitizerCannotBeInstantiated(): void
+    {
+        $reflection = new ReflectionClass(OperServCommandLogSanitizer::class);
+        $constructor = $reflection->getConstructor();
+
+        self::assertNotNull($constructor);
+        self::assertTrue($constructor->isPrivate());
+        $constructor->invoke($reflection->newInstanceWithoutConstructor());
+    }
 
     private static function senderView(): SenderView
     {
@@ -467,12 +481,12 @@ final class OperServCommandListenerTest extends TestCase
         $userMessageTypeResolver = $messageTypeResolver;
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('debug')->with(
-            'OperServ: command from {nick} [{uid}]: {text}',
+            'OperServ: command from {nick} [{uid}]: {command}',
             self::callback(static fn (array $context): bool => isset(
                 $context['nick'],
                 $context['uid'],
-                $context['text']
-            ) && 'TestOper' === $context['nick'] && self::SENDER_UID === $context['uid'])
+                $context['command']
+            ) && 'TestOper' === $context['nick'] && self::SENDER_UID === $context['uid'] && 'RAW' === $context['command'] && !isset($context['text']))
         );
 
         $listener = new OperServCommandListener(
@@ -484,7 +498,7 @@ final class OperServCommandListenerTest extends TestCase
             $logger,
         );
 
-        $listener->onCommand(self::SENDER_UID, 'HELP');
+        $listener->onCommand(self::SENDER_UID, 'RAW DB * INS N::nick::pass reset-token');
     }
 
     #[Test]
@@ -504,7 +518,7 @@ final class OperServCommandListenerTest extends TestCase
             'OperServ',
         );
 
-        $throwCommand = self::createThrowCommand('TEST', new RuntimeException('Test error.'));
+        $throwCommand = self::createThrowCommand('RAW', new RuntimeException('reset-token must not be logged'));
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
         $messageTypeResolver->method('prefersPrivateMessages')->willReturn(false);
@@ -518,8 +532,11 @@ final class OperServCommandListenerTest extends TestCase
         $userMessageTypeResolver = $messageTypeResolver;
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
-            self::stringContains('OperServ dispatch error:'),
-            self::callback(static fn (array $context): bool => isset($context['exception'], $context['sender'], $context['text']))
+            'OperServ dispatch error',
+            self::callback(static fn (array $context): bool => isset($context['exception_class'], $context['sender'], $context['command'])
+                && RuntimeException::class === $context['exception_class']
+                && 'RAW' === $context['command']
+                && !isset($context['text'], $context['exception']))
         );
 
         $listener = new OperServCommandListener(
@@ -531,6 +548,14 @@ final class OperServCommandListenerTest extends TestCase
             $logger,
         );
 
-        $listener->onCommand(self::SENDER_UID, 'TEST');
+        $listener->onCommand(self::SENDER_UID, 'RAW DB * INS N::nick::pass reset-token');
+    }
+
+    #[Test]
+    public function loggingNeverRetainsRawOrGlobalPayloads(): void
+    {
+        self::assertSame('RAW', OperServCommandLogSanitizer::commandName('RAW DB * INS N::nick::pass reset-token'));
+        self::assertSame('GLOBAL', OperServCommandLogSanitizer::commandName('GLOBAL * NOTICE private-secret'));
+        self::assertSame('UNKNOWN', OperServCommandLogSanitizer::commandName('private-secret payload'));
     }
 }

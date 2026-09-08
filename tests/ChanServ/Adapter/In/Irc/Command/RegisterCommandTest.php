@@ -794,7 +794,9 @@ final class RegisterCommandTest extends TestCase
     private function createNonRootRegistry(): ChanServOperatorAccess
     {
         $access = $this->createStub(ChanServOperatorAccess::class);
-        $access->method('isRoot')->willReturn(false);
+        $access->method('isIrcop')->willReturnCallback(
+            static fn (string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool => $ircOperator,
+        );
 
         return $access;
     }
@@ -802,7 +804,11 @@ final class RegisterCommandTest extends TestCase
     private function createRootRegistryFor(string $nick): ChanServOperatorAccess
     {
         $access = $this->createStub(ChanServOperatorAccess::class);
-        $access->method('isRoot')->willReturnCallback(static fn (string $n): bool => 0 === strcasecmp($n, $nick));
+        $access->method('isIrcop')->willReturnCallback(
+            static fn (string $nickname, ?int $accountId, bool $identified): bool => null !== $accountId
+                && $identified
+                && 0 === strcasecmp($nickname, $nick),
+        );
 
         return $access;
     }
@@ -867,7 +873,12 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createRootRegistryFor('RootAdmin'), 3, 3600);
+        $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
+        $operatorAccess->expects(self::once())
+            ->method('isIrcop')
+            ->with('RootAdmin', 10, true, false)
+            ->willReturn(true);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $operatorAccess, 3, 3600);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.success'], $messages);

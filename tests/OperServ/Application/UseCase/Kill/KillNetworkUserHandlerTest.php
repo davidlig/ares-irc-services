@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Application\UseCase\Kill;
 
+use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
+use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\Out\KillNetworkUser as KillNetworkUserPort;
 use App\OperServ\Application\Port\Out\NetworkUser;
 use App\OperServ\Application\Port\Out\NetworkUserLookup;
@@ -14,6 +16,7 @@ use App\OperServ\Application\Port\Out\RootIdentityRegistry;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUser;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserOutcome;
+use App\OperServ\Application\UseCase\Kill\KillNetworkUserResult;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,24 +24,33 @@ use PHPUnit\Framework\TestCase;
 
 use function in_array;
 
+#[CoversClass(KillNetworkUser::class)]
 #[CoversClass(KillNetworkUserHandler::class)]
+#[CoversClass(KillNetworkUserResult::class)]
+#[CoversClass(NetworkUser::class)]
+#[CoversClass(OperatorAccountData::class)]
 final class KillNetworkUserHandlerTest extends TestCase
 {
     #[Test]
     public function killsOrdinaryUserAndReturnsSafeAuditRecord(): void
     {
         $network = new KillTestNetwork();
-        $result = $this->handler(new KillTestUsers(['Target' => $this->target()]), new KillTestRoots(), new KillTestAccounts(), new KillTestRoles(), $network)
+        $audit = $this->createMock(CommandAuditRecorder::class);
+        $audit->expects(self::once())->method('record')->with(self::callback(static function (CommandAuditRecord $record) use ($network): bool {
+            self::assertSame([['UID123', 'Killed (OperServ: Oper): abuse']], $network->kills);
+            self::assertSame('KILL', $record->operation);
+            self::assertSame('Target', $record->target);
+            self::assertSame('ident@host.test', $record->targetHost);
+            self::assertSame('encoded-ip', $record->targetIp);
+            self::assertSame('abuse', $record->reason);
+
+            return true;
+        }));
+        $result = $this->handler(new KillTestUsers(['Target' => $this->target()]), new KillTestRoots(), new KillTestAccounts(), new KillTestRoles(), $network, $audit)
             ->handle(new KillNetworkUser('Oper', 'OperServ', 'Target', 'abuse', new DateTimeImmutable('2026-09-08T10:00:00+00:00')));
 
         self::assertSame(KillNetworkUserOutcome::Killed, $result->outcome);
         self::assertSame([['UID123', 'Killed (OperServ: Oper): abuse']], $network->kills);
-        self::assertNotNull($result->auditRecord);
-        self::assertSame('KILL', $result->auditRecord->operation);
-        self::assertSame('Target', $result->auditRecord->target);
-        self::assertSame('ident@host.test', $result->auditRecord->targetHost);
-        self::assertSame('encoded-ip', $result->auditRecord->targetIp);
-        self::assertSame('abuse', $result->auditRecord->reason);
     }
 
     #[Test]
@@ -61,16 +73,23 @@ final class KillNetworkUserHandlerTest extends TestCase
     #[Test]
     public function reportsUnavailableNetworkWithoutAuditRecord(): void
     {
-        $result = $this->handler(new KillTestUsers(['Target' => $this->target()]), new KillTestRoots(), new KillTestAccounts(), new KillTestRoles(), new KillTestNetwork(false))
+        $audit = $this->createMock(CommandAuditRecorder::class);
+        $audit->expects(self::never())->method('record');
+        $result = $this->handler(new KillTestUsers(['Target' => $this->target()]), new KillTestRoots(), new KillTestAccounts(), new KillTestRoles(), new KillTestNetwork(false), $audit)
             ->handle(new KillNetworkUser('Oper', 'OperServ', 'Target', 'reason', new DateTimeImmutable()));
 
         self::assertSame(KillNetworkUserOutcome::NetworkUnavailable, $result->outcome);
-        self::assertNull($result->auditRecord);
     }
 
-    private function handler(NetworkUserLookup $users, RootIdentityRegistry $roots, OperatorAccountLookup $accounts, OperatorRoleAccess $roles, KillNetworkUserPort $network): KillNetworkUserHandler
-    {
-        return new KillNetworkUserHandler($users, $roots, $accounts, $roles, $network);
+    private function handler(
+        NetworkUserLookup $users,
+        RootIdentityRegistry $roots,
+        OperatorAccountLookup $accounts,
+        OperatorRoleAccess $roles,
+        KillNetworkUserPort $network,
+        ?CommandAuditRecorder $audit = null,
+    ): KillNetworkUserHandler {
+        return new KillNetworkUserHandler($users, $roots, $accounts, $roles, $network, $audit ?? $this->createStub(CommandAuditRecorder::class));
     }
 
     private function target(string $nickname = 'Target', bool $oper = false, bool $identified = false): NetworkUser

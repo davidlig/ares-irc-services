@@ -6,5 +6,7 @@ namespace App\OperServ\Application\UseCase\ManageRole;
 
 interface ManageRoleHandlerInterface
 {
+    public function supportsOperclass(): bool;
+
     public function handle(ManageRole $command): ManageRoleResult;
 }

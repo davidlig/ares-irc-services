@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\OperServ\Application\Port\Out;
+namespace App\OperServ\Adapter\Out\Irc;
 
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 

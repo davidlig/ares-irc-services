@@ -6,7 +6,6 @@ namespace App\OperServ\Adapter\In\Irc\Command;
 
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServContext;
-use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Security\OperServPermission;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUser;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
@@ -20,10 +19,7 @@ use function implode;
 /** IRC parsing and presentation adapter for KILL <nickname> <reason>. */
 final readonly class KillCommand implements OperServCommandInterface
 {
-    public function __construct(
-        private KillNetworkUserHandler $handler,
-        private CommandAuditRecorder $audit,
-    ) {}
+    public function __construct(private KillNetworkUserHandler $handler) {}
 
     public function getName(): string
     {
@@ -98,10 +94,6 @@ final readonly class KillCommand implements OperServCommandInterface
 
     private function present(OperServContext $context, KillNetworkUserResult $result): void
     {
-        if (null !== $result->auditRecord) {
-            $this->audit->record($result->auditRecord);
-        }
-
         match ($result->outcome) {
             KillNetworkUserOutcome::Killed => $context->reply('kill.done', [
                 'nickname' => $result->targetNickname,

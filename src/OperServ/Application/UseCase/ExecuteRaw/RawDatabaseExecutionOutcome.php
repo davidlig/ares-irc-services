@@ -14,5 +14,8 @@ enum RawDatabaseExecutionOutcome
     case DatabaseTargetInvalid;
     case DatabaseSyntaxInvalid;
     case DatabaseUnsupported;
+    case DatabaseRecordTypeInvalid;
+    case DatabasePathInvalid;
+    case DatabaseValueInvalid;
     case DatabaseFailed;
 }

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\OperServ\Application\UseCase\Kill;
 
-use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-
 /** Semantic outcome; IRC wording is deliberately left to the inbound adapter. */
 final readonly class KillNetworkUserResult
 {
@@ -13,12 +11,11 @@ final readonly class KillNetworkUserResult
         public KillNetworkUserOutcome $outcome,
         public string $targetNickname,
         public string $reason,
-        public ?CommandAuditRecord $auditRecord = null,
     ) {}
 
-    public static function killed(string $targetNickname, string $reason, CommandAuditRecord $auditRecord): self
+    public static function killed(string $targetNickname, string $reason): self
     {
-        return new self(KillNetworkUserOutcome::Killed, $targetNickname, $reason, $auditRecord);
+        return new self(KillNetworkUserOutcome::Killed, $targetNickname, $reason);
     }
 
     public static function notOnline(string $targetNickname): self

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Application\UseCase\Global;
 
+use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
+use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\Out\GlobalMessageTransport;
 use App\OperServ\Application\Port\Out\NetworkUser;
 use App\OperServ\Application\Port\Out\NetworkUserLookup;
@@ -13,27 +15,69 @@ use App\OperServ\Application\UseCase\Global\GlobalMessageType;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessage;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageHandler;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageOutcome;
+use App\OperServ\Application\UseCase\Global\SendGlobalMessageResult;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(GlobalMessageMask::class)]
+#[CoversClass(NetworkUser::class)]
+#[CoversClass(OperatorAccountData::class)]
+#[CoversClass(SendGlobalMessage::class)]
 #[CoversClass(SendGlobalMessageHandler::class)]
+#[CoversClass(SendGlobalMessageResult::class)]
 final class SendGlobalMessageHandlerTest extends TestCase
 {
     #[Test]
     public function sendsFromExistingServiceAndRedactsMessageFromAudit(): void
     {
         $network = new GlobalTestTransport(['NickServ' => 'SVC001']);
-        $result = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), $network)
+        $audit = $this->createMock(CommandAuditRecorder::class);
+        $audit->expects(self::once())->method('record')->with(self::callback(static function (CommandAuditRecord $record) use ($network): bool {
+            self::assertSame([['SVC001', 'password=never-audit', GlobalMessageType::Notice]], $network->serviceMessages);
+            self::assertSame('GLOBAL', $record->operation);
+            self::assertSame('NickServ', $record->target);
+            self::assertNull($record->reason);
+            self::assertSame(['message_type' => 'NOTICE', 'recipient_count' => 2, 'sender_kind' => 'service'], $record->metadata);
+
+            return true;
+        }));
+        $result = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), $network, $audit)
             ->handle(new SendGlobalMessage('Oper', 'NickServ', 'notice', 'password=never-audit', new DateTimeImmutable('2026-09-08T10:00:00+00:00')));
 
         self::assertSame(SendGlobalMessageOutcome::Sent, $result->outcome);
         self::assertSame([['SVC001', 'password=never-audit', GlobalMessageType::Notice]], $network->serviceMessages);
         self::assertSame(2, $result->recipientCount);
-        self::assertNull($result->auditRecord?->reason);
-        self::assertSame(['message_type' => 'NOTICE', 'recipient_count' => 2, 'sender_kind' => 'service'], $result->auditRecord?->metadata);
+    }
+
+    #[Test]
+    public function sendsFromServiceResolvedAfterParsingTheMask(): void
+    {
+        $network = new GlobalTestTransport(['NickServ' => 'SVC001']);
+
+        $result = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), $network)
+            ->handle(new SendGlobalMessage('Oper', 'NickServ!service@services.test', 'NOTICE', 'hello', new DateTimeImmutable()));
+
+        self::assertSame(SendGlobalMessageOutcome::Sent, $result->outcome);
+        self::assertSame('NickServ', $result->senderNickname);
+        self::assertSame([['SVC001', 'hello', GlobalMessageType::Notice]], $network->serviceMessages);
+    }
+
+    #[Test]
+    public function reportsUnavailableServiceDeliveryBeforeAndAfterParsingTheMask(): void
+    {
+        $network = new GlobalTestTransport(['NickServ' => 'SVC001'], serviceCount: null);
+        $handler = $this->handler(new GlobalTestUsers(), new GlobalTestAccounts(), $network);
+
+        $direct = $handler->handle(new SendGlobalMessage('Oper', 'NickServ', 'NOTICE', 'hello', new DateTimeImmutable()));
+        $parsed = $handler->handle(new SendGlobalMessage('Oper', 'NickServ!service@services.test', 'NOTICE', 'hello', new DateTimeImmutable()));
+
+        self::assertSame(SendGlobalMessageOutcome::NetworkUnavailable, $direct->outcome);
+        self::assertSame('NickServ', $direct->senderNickname);
+        self::assertSame(SendGlobalMessageOutcome::NetworkUnavailable, $parsed->outcome);
+        self::assertSame('NickServ', $parsed->senderNickname);
     }
 
     #[Test]
@@ -79,9 +123,13 @@ final class SendGlobalMessageHandlerTest extends TestCase
         self::assertSame([], $network->serviceMessages);
     }
 
-    private function handler(NetworkUserLookup $users, OperatorAccountLookup $accounts, GlobalMessageTransport $network): SendGlobalMessageHandler
-    {
-        return new SendGlobalMessageHandler($users, $accounts, $network);
+    private function handler(
+        NetworkUserLookup $users,
+        OperatorAccountLookup $accounts,
+        GlobalMessageTransport $network,
+        ?CommandAuditRecorder $audit = null,
+    ): SendGlobalMessageHandler {
+        return new SendGlobalMessageHandler($users, $accounts, $network, $audit ?? $this->createStub(CommandAuditRecorder::class));
     }
 }
 

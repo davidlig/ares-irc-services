@@ -792,7 +792,8 @@ services:
             $sendNotice: '@App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter'
             $messageTypeResolver: '@App\Irc\Application\Port\Out\ServiceUserPreferences'
             $notifier: '@App\OperServ\Adapter\In\Irc\OperServNotifierInterface'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $authorization: '@App\OperServ\Application\Port\In\OperatorAuthorizationQuery'
+            $nickAccounts: '@App\NickServ\Application\Port\In\NickAccountQuery'
             $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'
@@ -2001,8 +2002,6 @@ services:
     App\OperServ\Application\Port\In\OperatorAuthorizationQuery:
         alias: App\OperServ\Application\Security\OperatorAuthorizationService
 
-    App\Application\OperServ\IrcopAccessHelper: ~
-
     App\OperServ\Adapter\In\Irc\OperServCommandRegistry:
         arguments:
             $commands: !tagged_iterator operserv.command.new
@@ -2195,9 +2194,8 @@ services:
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $notifier: '@App\OperServ\Adapter\In\Irc\OperServNotifierInterface'
             $identifiedRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
-            $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $nickRepo: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $nickAccounts: '@App\NickServ\Application\Port\In\NickAccountQuery'
+            $authorization: '@App\OperServ\Application\Port\In\OperatorAuthorizationQuery'
             $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'
@@ -2246,9 +2244,8 @@ services:
             $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
             $channelLookup: '@App\Irc\Application\Port\In\ChannelLookupPort'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $nickRepo: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $nickAccounts: '@App\NickServ\Application\Port\In\NickAccountQuery'
+            $authorization: '@App\OperServ\Application\Port\In\OperatorAuthorizationQuery'
             $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $chanservNick: '%chanserv.nick%'
@@ -2279,7 +2276,7 @@ services:
             $logger: '@monolog.logger.ircops'
         tags: ['app.command_audit_sink']
 
-    App\OperServ\Application\Port\Out\CommandAuditIrcPresenter:
+    App\OperServ\Adapter\Out\Irc\CommandAuditIrcPresenter:
         alias: App\OperServ\Adapter\Out\Irc\LegacyDebugChannelCommandAuditPresenter
 
     App\OperServ\Adapter\Out\Irc\DebugChannelCommandAuditSink:

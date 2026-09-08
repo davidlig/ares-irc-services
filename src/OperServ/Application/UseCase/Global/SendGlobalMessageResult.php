@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\OperServ\Application\UseCase\Global;
 
-use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-
 /** Semantic outcome for GLOBAL; message content is intentionally never exposed for audit/presentation. */
 final readonly class SendGlobalMessageResult
 {
@@ -14,12 +12,11 @@ final readonly class SendGlobalMessageResult
         public string $senderNickname,
         public ?int $recipientCount = null,
         public ?string $maskError = null,
-        public ?CommandAuditRecord $auditRecord = null,
     ) {}
 
-    public static function sent(string $senderNickname, int $recipientCount, CommandAuditRecord $auditRecord): self
+    public static function sent(string $senderNickname, int $recipientCount): self
     {
-        return new self(SendGlobalMessageOutcome::Sent, $senderNickname, $recipientCount, auditRecord: $auditRecord);
+        return new self(SendGlobalMessageOutcome::Sent, $senderNickname, $recipientCount);
     }
 
     public static function invalidMessageType(): self

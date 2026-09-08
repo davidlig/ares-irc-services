@@ -12,6 +12,7 @@ use App\OperServ\Application\UseCase\ManageRole\ManageRoleHandlerInterface;
 use App\OperServ\Application\UseCase\ManageRole\ManageRoleResult;
 use App\OperServ\Application\UseCase\ManageRole\RoleAction;
 use App\OperServ\Application\UseCase\ManageRole\RoleOutcome;
+use DateTimeImmutable;
 
 use function array_slice;
 use function implode;
@@ -40,12 +41,12 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     public function getSyntaxKey(): string
     {
-        return 'role.syntax';
+        return $this->handler->supportsOperclass() ? 'role.syntax_operclass' : 'role.syntax';
     }
 
     public function getHelpKey(): string
     {
-        return 'role.help';
+        return $this->handler->supportsOperclass() ? 'role.help_operclass' : 'role.help';
     }
 
     public function getOrder(): int
@@ -60,7 +61,12 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     public function getSubCommandHelp(): array
     {
-        return [['name' => 'LIST', 'desc_key' => 'role.list.short', 'help_key' => 'role.list.help', 'syntax_key' => 'role.list.syntax'], ['name' => 'ADD', 'desc_key' => 'role.add.short', 'help_key' => 'role.add.help', 'syntax_key' => 'role.add.syntax'], ['name' => 'DEL', 'desc_key' => 'role.del.short', 'help_key' => 'role.del.help', 'syntax_key' => 'role.del.syntax'], ['name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help', 'syntax_key' => 'role.perms.syntax'], ['name' => 'MODES', 'desc_key' => 'role.modes.short', 'help_key' => 'role.modes.help', 'syntax_key' => 'role.modes.syntax'], ['name' => 'VHOST', 'desc_key' => 'role.vhost.short', 'help_key' => 'role.vhost.help', 'syntax_key' => 'role.vhost.syntax'], ['name' => 'OPERCLASS', 'desc_key' => 'role.operclass.short', 'help_key' => 'role.operclass.help', 'syntax_key' => 'role.operclass.syntax']];
+        $commands = [['name' => 'LIST', 'desc_key' => 'role.list.short', 'help_key' => 'role.list.help', 'syntax_key' => 'role.list.syntax'], ['name' => 'ADD', 'desc_key' => 'role.add.short', 'help_key' => 'role.add.help', 'syntax_key' => 'role.add.syntax'], ['name' => 'DEL', 'desc_key' => 'role.del.short', 'help_key' => 'role.del.help', 'syntax_key' => 'role.del.syntax'], ['name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help', 'syntax_key' => 'role.perms.syntax'], ['name' => 'MODES', 'desc_key' => 'role.modes.short', 'help_key' => 'role.modes.help', 'syntax_key' => 'role.modes.syntax'], ['name' => 'VHOST', 'desc_key' => 'role.vhost.short', 'help_key' => 'role.vhost.help', 'syntax_key' => 'role.vhost.syntax']];
+        if ($this->handler->supportsOperclass()) {
+            $commands[] = ['name' => 'OPERCLASS', 'desc_key' => 'role.operclass.short', 'help_key' => 'role.operclass.help', 'syntax_key' => 'role.operclass.syntax'];
+        }
+
+        return $commands;
     }
 
     public function isOperOnly(): bool
@@ -75,9 +81,17 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     public function execute(OperServContext $c): void
     {
+        if (null === $c->sender) {
+            return;
+        }
         $sub = strtoupper($c->args[0] ?? '');
+        if ('OPERCLASS' === $sub && !$this->handler->supportsOperclass()) {
+            $c->reply('role.unknown_sub', ['%sub%' => $sub]);
+
+            return;
+        }
         [$action,$role,$value,$description] = $this->parse($c, $sub);
-        $r = $this->handler->handle(new ManageRole($action, $role, $value, description: $description));
+        $r = $this->handler->handle(new ManageRole($action, $c->sender->nick, new DateTimeImmutable(), $role, $value, description: $description));
         $this->present($c, $sub, $r, $value);
     }
 
@@ -104,7 +118,7 @@ final readonly class RoleCommand implements OperServCommandInterface
     private function present(OperServContext $c, string $sub, ManageRoleResult $r, string $value): void
     {
         match ($r->outcome) {
-            RoleOutcome::Added => $c->reply('role.add.done', ['%role%' => $r->role?->name]),RoleOutcome::Deleted => $c->reply('role.del.done', ['%role%' => $r->role?->name]),RoleOutcome::AlreadyExists => $c->reply('role.already_exists', ['%role%' => $r->role?->name]),RoleOutcome::NotFound => $c->reply('role.not_found', ['%role%' => strtoupper($value)]),RoleOutcome::Protected => $c->reply('role.protected', ['%role%' => $r->role?->name]),RoleOutcome::Listed => $this->roles($c, $r),RoleOutcome::PermissionsListed => $this->permissions($c, $r),RoleOutcome::PermissionAdded => $c->reply('role.perms.add.done', ['%role%' => $r->role?->name, '%perm%' => $r->values[0] ?? '']),RoleOutcome::PermissionAddedAll => $c->reply('role.perms.add.all_done', ['%role%' => $r->role?->name, '%count%' => (string) $r->count]),RoleOutcome::PermissionAlreadyAssigned => $c->reply('role.perms.already_has', ['%role%' => $r->role?->name, '%perm%' => $value]),RoleOutcome::PermissionNotFound => $c->reply('role.perms.not_found', ['%perm%' => $value]),RoleOutcome::PermissionRemoved => $c->reply('role.perms.del.done', ['%role%' => $r->role?->name, '%perm%' => $r->values[0] ?? '']),RoleOutcome::PermissionMissing => $c->reply('role.perms.does_not_have', ['%role%' => $r->role?->name, '%perm%' => $value]),RoleOutcome::PermissionsCleared => $c->reply('role.perms.clear.done', ['%role%' => $r->role?->name, '%count%' => (string) $r->count]),RoleOutcome::PermissionsEmpty => $c->reply('role.perms.clear.empty', ['%role%' => $r->role?->name]),RoleOutcome::ModesViewed => $this->modes($c, $r),RoleOutcome::ModesSet => $c->reply('role.modes.set.done', ['%role%' => $r->role?->name, '%modes%' => '+' . implode('', $r->values)]),RoleOutcome::ModesCleared => $c->reply('role.modes.set.cleared', ['%role%' => $r->role?->name]),RoleOutcome::InvalidModes => $c->reply('role.modes.set.invalid_modes', ['%invalid%' => '+' . implode('', $r->values), '%valid%' => '+' . implode('', $r->availableValues)]),RoleOutcome::ModesNotSupported => $c->reply('role.modes.set.no_irc_user_modes'),RoleOutcome::VhostViewed => $this->vhost($c, $r),RoleOutcome::VhostSet => $c->reply('role.vhost.set.done', ['%role%' => $r->role?->name]),RoleOutcome::VhostCleared => $c->reply('role.vhost.set.cleared', ['%role%' => $r->role?->name]),RoleOutcome::InvalidVhost => $c->reply('role.vhost.set.invalid'),RoleOutcome::OperclassesListed => $this->operclasses($c, $r),RoleOutcome::OperclassViewed => $this->operclass($c, $r),RoleOutcome::OperclassSet => $c->reply('role.operclass.set.done', ['%role%' => $r->role?->name]),RoleOutcome::OperclassCleared => $c->reply('role.operclass.set.cleared', ['%role%' => $r->role?->name]),RoleOutcome::OperclassNotAvailable => $c->reply('role.operclass.set.not_available', ['%operclass%' => $value, '%available%' => implode(', ', $r->availableValues)]),RoleOutcome::OperclassNotSupported => $c->reply('role.operclass.list.not_supported'),RoleOutcome::InvalidRequest => $c->reply('error.syntax', ['%syntax%' => $c->trans('role.syntax')]),RoleOutcome::UnknownAction => $c->reply('role.unknown_sub', ['%sub%' => $sub])
+            RoleOutcome::Added => $c->reply('role.add.done', ['%role%' => $r->role?->name]),RoleOutcome::Deleted => $c->reply('role.del.done', ['%role%' => $r->role?->name]),RoleOutcome::AlreadyExists => $c->reply('role.already_exists', ['%role%' => $r->role?->name]),RoleOutcome::NotFound => $c->reply('role.not_found', ['%role%' => strtoupper($value)]),RoleOutcome::Protected => $c->reply('role.protected', ['%role%' => $r->role?->name]),RoleOutcome::Listed => $this->roles($c, $r),RoleOutcome::PermissionsListed => $this->permissions($c, $r),RoleOutcome::PermissionAdded => $c->reply('role.perms.add.done', ['%role%' => $r->role?->name, '%perm%' => $r->values[0] ?? '']),RoleOutcome::PermissionAddedAll => $c->reply('role.perms.add.all_done', ['%role%' => $r->role?->name, '%count%' => (string) $r->count]),RoleOutcome::PermissionAlreadyAssigned => $c->reply('role.perms.already_has', ['%role%' => $r->role?->name, '%perm%' => $value]),RoleOutcome::PermissionNotFound => $c->reply('role.perms.not_found', ['%perm%' => $value]),RoleOutcome::PermissionRemoved => $c->reply('role.perms.del.done', ['%role%' => $r->role?->name, '%perm%' => $r->values[0] ?? '']),RoleOutcome::PermissionMissing => $c->reply('role.perms.does_not_have', ['%role%' => $r->role?->name, '%perm%' => $value]),RoleOutcome::PermissionsCleared => $c->reply('role.perms.clear.done', ['%role%' => $r->role?->name, '%count%' => (string) $r->count]),RoleOutcome::PermissionsEmpty => $c->reply('role.perms.clear.empty', ['%role%' => $r->role?->name]),RoleOutcome::ModesViewed => $this->modes($c, $r),RoleOutcome::ModesSet => $c->reply('role.modes.set.done', ['%role%' => $r->role?->name, '%modes%' => '+' . implode('', $r->values)]),RoleOutcome::ModesCleared => $c->reply('role.modes.set.cleared', ['%role%' => $r->role?->name]),RoleOutcome::InvalidModes => $c->reply('role.modes.set.invalid_modes', ['%invalid%' => '+' . implode('', $r->values), '%valid%' => '+' . implode('', $r->availableValues)]),RoleOutcome::ModesNotSupported => $c->reply('role.modes.set.no_irc_user_modes'),RoleOutcome::VhostViewed => $this->vhost($c, $r),RoleOutcome::VhostSet => $c->reply('role.vhost.set.done', ['%role%' => $r->role?->name]),RoleOutcome::VhostCleared => $c->reply('role.vhost.set.cleared', ['%role%' => $r->role?->name]),RoleOutcome::InvalidVhost => $c->reply('role.vhost.set.invalid'),RoleOutcome::OperclassesListed => $this->operclasses($c, $r),RoleOutcome::OperclassViewed => $this->operclass($c, $r),RoleOutcome::OperclassSet => $c->reply('role.operclass.set.done', ['%role%' => $r->role?->name]),RoleOutcome::OperclassCleared => $c->reply('role.operclass.set.cleared', ['%role%' => $r->role?->name]),RoleOutcome::OperclassNotAvailable => $c->reply('role.operclass.set.not_available', ['%operclass%' => $value, '%available%' => implode(', ', $r->availableValues)]),RoleOutcome::OperclassNotSupported => $c->reply('role.operclass.list.not_supported'),RoleOutcome::InvalidRequest => $c->reply('error.syntax', ['%syntax%' => $c->trans($this->getSyntaxKey())]),RoleOutcome::UnknownAction => $c->reply($this->handler->supportsOperclass() ? 'role.unknown_sub_operclass' : 'role.unknown_sub', ['%sub%' => $sub])
         };
     }
 

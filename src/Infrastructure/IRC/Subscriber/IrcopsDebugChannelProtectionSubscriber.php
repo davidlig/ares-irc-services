@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Subscriber;
 
-use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ChannelServiceActionsPort;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickAccountQuery;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -25,9 +25,8 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         private ChannelServiceActionsPort $channelActions,
         private ChannelLookupPort $channelLookup,
         private NetworkUserLookupPort $userLookup,
-        private OperIrcopRepositoryInterface $ircopRepo,
-        private RootUserRegistry $rootRegistry,
-        private RegisteredNickRepositoryInterface $nickRepo,
+        private NickAccountQuery $nickAccounts,
+        private OperatorAuthorizationQuery $authorization,
         private TranslatorInterface $translator,
         private string $defaultLanguage,
         private string $chanservNick,
@@ -98,13 +97,13 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
             return;
         }
 
-        if ($this->isIrcopOrRoot($user->nick, $user->isIdentified)) {
+        if ($this->isAuthorized($user)) {
             return;
         }
 
-        $registeredNick = $this->nickRepo->findByNick($user->nick);
-        $language = null !== $registeredNick
-            ? $registeredNick->getLanguage()
+        $account = $this->nickAccounts->findAccountByNick($user->nick);
+        $language = null !== $account
+            ? $account->language
             : $this->defaultLanguage;
 
         $reason = $this->translator->trans(
@@ -123,19 +122,15 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         ]);
     }
 
-    private function isIrcopOrRoot(string $nick, bool $isIdentified): bool
+    private function isAuthorized(SenderView $user): bool
     {
-        if (!$isIdentified) {
-            return false;
-        }
+        $accountId = $user->isIdentified ? $this->nickAccounts->findIdByNick($user->nick) : null;
 
-        if ($this->rootRegistry->isRoot($nick)) {
-            return true;
-        }
-
-        $registeredNick = $this->nickRepo->findByNick($nick);
-
-        return null !== $registeredNick
-            && null !== $this->ircopRepo->findByNickId($registeredNick->getId());
+        return $this->authorization->ircOperator(new OperatorActor(
+            $user->nick,
+            $accountId,
+            $user->isIdentified,
+            $user->isOper,
+        ))->granted;
     }
 }

@@ -17,15 +17,15 @@ final class OperNickServOperatorAccessTest extends TestCase
     public function delegatesSemanticChecksToOperServPublicQuery(): void
     {
         $query = $this->createMock(IrcopAccessQuery::class);
-        $query->expects(self::once())->method('isRoot')->with('Root')->willReturn(true);
-        $query->expects(self::once())->method('isIrcop')->with(42, 'Oper')->willReturn(true);
-        $query->expects(self::once())->method('hasPermission')->with(42, 'Oper', 'nickserv.saset')->willReturn(true);
-        $query->expects(self::once())->method('hasAnyPermission')->with(42, 'Oper', ['one', 'two'])->willReturn(true);
+        $query->expects(self::once())->method('isRoot')->with('Root', 7, true, false)->willReturn(true);
+        $query->expects(self::once())->method('isIrcop')->with('Oper', 42, true, true)->willReturn(true);
+        $query->expects(self::once())->method('hasPermission')->with('Oper', 42, true, true, 'nickserv.saset')->willReturn(true);
+        $query->expects(self::once())->method('hasAnyPermission')->with('Oper', 42, true, true, ['one', 'two'])->willReturn(true);
         $access = new OperNickServOperatorAccess($query);
 
-        self::assertTrue($access->isRoot('Root'));
-        self::assertTrue($access->isIrcop(42, 'Oper'));
-        self::assertTrue($access->hasPermission(42, 'Oper', 'nickserv.saset'));
-        self::assertTrue($access->hasAnyPermission(42, 'Oper', ['one', 'two']));
+        self::assertTrue($access->isRoot('Root', 7, true, false));
+        self::assertTrue($access->isIrcop('Oper', 42, true, true));
+        self::assertTrue($access->hasPermission('Oper', 42, true, true, 'nickserv.saset'));
+        self::assertTrue($access->hasAnyPermission('Oper', 42, true, true, ['one', 'two']));
     }
 }

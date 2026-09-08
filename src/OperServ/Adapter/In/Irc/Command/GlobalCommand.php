@@ -6,7 +6,6 @@ namespace App\OperServ\Adapter\In\Irc\Command;
 
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServContext;
-use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Security\OperServPermission;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessage;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageHandler;
@@ -20,10 +19,7 @@ use function implode;
 /** IRC parsing and presentation adapter for GLOBAL <mask|service> <NOTICE|PRIVMSG> <message>. */
 final readonly class GlobalCommand implements OperServCommandInterface
 {
-    public function __construct(
-        private SendGlobalMessageHandler $handler,
-        private CommandAuditRecorder $audit,
-    ) {}
+    public function __construct(private SendGlobalMessageHandler $handler) {}
 
     public function getName(): string
     {
@@ -98,10 +94,6 @@ final readonly class GlobalCommand implements OperServCommandInterface
 
     private function present(OperServContext $context, SendGlobalMessageResult $result): void
     {
-        if (null !== $result->auditRecord) {
-            $this->audit->record($result->auditRecord);
-        }
-
         match ($result->outcome) {
             SendGlobalMessageOutcome::Sent => $context->reply('global.done', [
                 'nickname' => $result->senderNickname,

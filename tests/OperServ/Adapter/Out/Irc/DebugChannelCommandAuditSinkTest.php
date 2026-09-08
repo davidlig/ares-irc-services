@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\Out\Irc;
 
+use App\OperServ\Adapter\Out\Irc\CommandAuditIrcPresenter;
 use App\OperServ\Adapter\Out\Irc\DebugChannelCommandAuditSink;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-use App\OperServ\Application\Port\Out\CommandAuditIrcPresenter;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

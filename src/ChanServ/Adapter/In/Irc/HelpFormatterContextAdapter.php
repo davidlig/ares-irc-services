@@ -6,10 +6,8 @@ namespace App\ChanServ\Adapter\In\Irc;
 
 use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
-use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Security\ChanServPermission;
-use App\Irc\Application\Port\In\SenderView;
 
 use function str_starts_with;
 use function strtolower;
@@ -103,28 +101,12 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
             return [];
         }
 
-        $nickLower = strtolower($sender->nick);
-
-        return $this->resolveIrcopCommands($sender, $account, $nickLower);
-    }
-
-    /**
-     * @return iterable<HelpableCommandInterface>
-     */
-    private function resolveIrcopCommands(SenderView $sender, ChanAccountView $account, string $nickLower): iterable
-    {
-        if ($this->operatorAccess->isRoot($nickLower)) {
-            return $this->filterIrcopCommands($this->context->getRegistry()->all());
-        }
-
-        if (!$sender->isOper) {
-            return [];
-        }
-
         return $this->filterByPermission(
             $this->context->getRegistry()->all(),
+            strtolower($sender->nick),
             $account->id,
-            $nickLower,
+            $sender->isIdentified,
+            $sender->isOper,
         );
     }
 
@@ -137,17 +119,13 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
             return false;
         }
 
-        $nickLower = strtolower($sender->nick);
-
-        if ($this->operatorAccess->isRoot($nickLower)) {
-            return true;
-        }
-
-        if ($sender->isOper) {
-            return $this->operatorAccess->hasAnyPermission($account->id, $nickLower, ChanServPermission::allIrcop());
-        }
-
-        return false;
+        return $this->operatorAccess->hasAnyPermission(
+            strtolower($sender->nick),
+            $account->id,
+            $sender->isIdentified,
+            $sender->isOper,
+            ChanServPermission::allIrcop(),
+        );
     }
 
     /**
@@ -155,28 +133,18 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
      *
      * @return iterable<HelpableCommandInterface>
      */
-    private function filterIrcopCommands(iterable $commands): iterable
-    {
-        foreach ($commands as $command) {
-            $permission = $command->getRequiredPermission();
-            if (null !== $permission && self::isChanServIrcopPermission($permission)) {
-                yield $command;
-            }
-        }
-    }
-
-    /**
-     * @param iterable<ChanServCommandInterface> $commands
-     *
-     * @return iterable<HelpableCommandInterface>
-     */
-    private function filterByPermission(iterable $commands, int $nickId, string $nickLower): iterable
-    {
+    private function filterByPermission(
+        iterable $commands,
+        string $nickname,
+        int $accountId,
+        bool $identified,
+        bool $ircOperator,
+    ): iterable {
         foreach ($commands as $command) {
             $permission = $command->getRequiredPermission();
             if (null !== $permission
                 && self::isChanServIrcopPermission($permission)
-                && $this->operatorAccess->hasPermission($nickId, $nickLower, $permission)) {
+                && $this->operatorAccess->hasPermission($nickname, $accountId, $identified, $ircOperator, $permission)) {
                 yield $command;
             }
         }

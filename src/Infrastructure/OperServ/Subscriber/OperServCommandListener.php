@@ -8,8 +8,8 @@ use App\Application\OperServ\Port\Out\ServiceUserPreferences;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceCommandListenerInterface;
 use App\Infrastructure\OperServ\Bot\OperServBot;
-use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\OperServ\Adapter\In\Irc\OperServCommandLogSanitizer;
 use App\OperServ\Adapter\In\Irc\OperServService;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -60,19 +60,20 @@ final readonly class OperServCommandListener implements ServiceCommandListenerIn
             return;
         }
 
-        $this->logger->debug('OperServ: command from {nick} [{uid}]: {text}', [
+        $command = OperServCommandLogSanitizer::commandName($text);
+        $this->logger->debug('OperServ: command from {nick} [{uid}]: {command}', [
             'nick' => $sender->nick,
             'uid' => $sender->uid,
-            'text' => SensitiveDataRedactor::redactNickServCommand($text),
+            'command' => $command,
         ]);
 
         try {
             $this->operServService->dispatch($text, $sender);
         } catch (Throwable $e) {
-            $this->logger->error('OperServ dispatch error: ' . $e->getMessage(), [
-                'exception' => $e,
+            $this->logger->error('OperServ dispatch error', [
+                'exception_class' => $e::class,
                 'sender' => $sender->uid,
-                'text' => SensitiveDataRedactor::redactNickServCommand($text),
+                'command' => $command,
             ]);
         }
     }

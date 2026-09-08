@@ -52,9 +52,11 @@ final readonly class LegacyOperatorRoleStore implements OperatorRoleStore
             $role->removePermission($p);
         }foreach ($permissions as $name) {
             $p = $this->permissions->findByName($name);
-            if (null !== $p) {
-                $role->addPermission($p);
+            if (null === $p) {
+                $p = OperPermission::create($name);
+                $this->permissions->save($p);
             }
+            $role->addPermission($p);
         }$this->roles->save($role);
     }
 

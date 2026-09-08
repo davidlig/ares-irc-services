@@ -94,7 +94,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
                 return;
             }
-        }$r = $this->handler->handle(new ManageIrcop($action, $c->sender->nick, $c->senderAccountId(), $nick, strtoupper($role), new DateTimeImmutable()));
+        }$r = $this->handler->handle(new ManageIrcop($action, $c->sender->nick, $c->senderAccountId(), new DateTimeImmutable(), $nick, strtoupper($role)));
         $this->present($c, $first, $r);
     }
 

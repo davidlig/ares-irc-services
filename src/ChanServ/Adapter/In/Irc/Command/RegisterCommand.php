@@ -166,8 +166,12 @@ final readonly class RegisterCommand implements ChanServCommandInterface
     private function validateRegisterPermissions(ChanServContext $context, string $channelName, ChannelView $channelView, ChanAccountView $senderAccount): ?array
     {
         $sender = $context->sender;
-        $isPrivileged = (null !== $sender && $sender->isOper)
-            || $this->operatorAccess->isRoot($context->sender->nick ?? '');
+        $isPrivileged = null !== $sender && $this->operatorAccess->isIrcop(
+            $sender->nick,
+            $senderAccount->id,
+            $sender->isIdentified,
+            $sender->isOper,
+        );
 
         if (!$isPrivileged && (null === $sender || !$this->senderHasRequiredChannelPrefix($channelView, $sender->uid))) {
             $context->reply('register.insufficient_channel_rank', ['%channel%' => $channelName]);

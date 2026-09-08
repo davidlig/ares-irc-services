@@ -151,7 +151,7 @@ final readonly class ManageMotdHandler implements ManageMotdHandlerInterface
     private function recordAudit(ManageMotd $command, string $operation, ?string $target, array $metadata): void
     {
         $this->audit->record(new CommandAuditRecord(
-            CommandAuditCategory::ResourceOverride,
+            CommandAuditCategory::OperatorAction,
             'operserv',
             $command->actor,
             $operation,

@@ -10,11 +10,6 @@ deptrac:
       - App\Application\Port\ServiceUidProviderInterface
     App\Infrastructure\IRC\ServiceBridge\AntifloodSubscriber:
       - App\OperServ\Adapter\In\Irc\OperServNotifierInterface
-      - App\Application\OperServ\RootUserRegistry
-    App\Infrastructure\IRC\Subscriber\IrcopsDebugChannelProtectionSubscriber:
-      - App\Application\OperServ\RootUserRegistry
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
-      - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
     App\Application\OperServ\ForcedVhostApplier:
       - App\NickServ\Adapter\In\Irc\NickServNotifierInterface
       - App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry
@@ -54,7 +49,6 @@ deptrac:
       - App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
     App\Infrastructure\OperServ\Service\OperServDebugNotifier:
       - App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry
-      - App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface
     App\Infrastructure\OperServ\Subscriber\MotdOnConnectSubscriber:
       - App\NickServ\Application\Service\NickForceService
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
@@ -63,8 +57,6 @@ deptrac:
     App\Infrastructure\OperServ\Subscriber\OperRoleModesDeidentifiedSubscriber:
       - App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
     App\Infrastructure\OperServ\Subscriber\OperRoleModesSubscriber:
-    App\Infrastructure\OperServ\Subscriber\OperServCommandListener:
-      - App\Irc\Adapter\Security\SensitiveDataRedactor
     App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber:

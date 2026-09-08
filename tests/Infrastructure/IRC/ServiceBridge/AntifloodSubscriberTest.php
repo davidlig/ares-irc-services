@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceCommandListenerInterface;
 use App\Application\Services\Antiflood\AntifloodRegistry;
@@ -17,7 +16,12 @@ use App\Irc\Adapter\Protocol\MessageDirection;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\Out\ServiceUserPreferences;
+use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
+use App\OperServ\Application\Port\In\AuthorizationDecision;
+use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +45,9 @@ final class AntifloodSubscriberTest extends TestCase
 
     private OperServNotifierInterface $notifier;
 
-    private RootUserRegistry $rootRegistry;
+    private OperatorAuthorizationQuery $authorization;
+
+    private NickAccountQuery $nickAccounts;
 
     private TranslatorInterface $translator;
 
@@ -55,7 +61,9 @@ final class AntifloodSubscriberTest extends TestCase
         $this->sendNotice = $this->createStub(SendNoticePort::class);
         $this->messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
         $this->notifier = $this->createStub(OperServNotifierInterface::class);
-        $this->rootRegistry = new RootUserRegistry('');
+        $this->authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $this->authorization->method('root')->willReturn(AuthorizationDecision::denied());
+        $this->nickAccounts = $this->createStub(NickAccountQuery::class);
         $this->translator = $this->createStub(TranslatorInterface::class);
         $this->nickservListener = $this->createStub(ServiceCommandListenerInterface::class);
         $this->nickservListener->method('getServiceName')->willReturn('NickServ');
@@ -67,10 +75,8 @@ final class AntifloodSubscriberTest extends TestCase
         );
     }
 
-    private function createSubscriber(int $maxMessages = 5, int $windowSeconds = 10, int $cooldownSeconds = 60, ?string $debugChannel = null, string $rootUsers = ''): AntifloodSubscriber
+    private function createSubscriber(int $maxMessages = 5, int $windowSeconds = 10, int $cooldownSeconds = 60, ?string $debugChannel = null): AntifloodSubscriber
     {
-        $rootRegistry = '' !== $rootUsers ? new RootUserRegistry($rootUsers) : $this->rootRegistry;
-
         return new AntifloodSubscriber(
             $this->registry,
             $this->clientKeyResolver,
@@ -79,7 +85,8 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
-            $rootRegistry,
+            $this->authorization,
+            $this->nickAccounts,
             $this->translator,
             'en',
             $debugChannel,
@@ -163,7 +170,8 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
-            $this->rootRegistry,
+            $this->authorization,
+            $this->nickAccounts,
             $this->translator,
             'en',
             null,
@@ -192,7 +200,8 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
-            $this->rootRegistry,
+            $this->authorization,
+            $this->nickAccounts,
             $this->translator,
             'en',
             null,
@@ -236,7 +245,8 @@ final class AntifloodSubscriberTest extends TestCase
             $sendNotice,
             $messageTypeResolver,
             $notifier,
-            $this->rootRegistry,
+            $this->authorization,
+            $this->nickAccounts,
             $translator,
             'en',
             '#ircops',
@@ -287,7 +297,8 @@ final class AntifloodSubscriberTest extends TestCase
             $sendNotice,
             $messageTypeResolver,
             $notifier,
-            $this->rootRegistry,
+            $this->authorization,
+            $this->nickAccounts,
             $translator,
             'en',
             '#ircops',
@@ -315,6 +326,8 @@ final class AntifloodSubscriberTest extends TestCase
     {
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender(isOper: true));
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::never())->method('root');
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,
@@ -324,7 +337,8 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
-            $this->rootRegistry,
+            $authorization,
+            $this->nickAccounts,
             $this->translator,
             'en',
             null,
@@ -346,13 +360,19 @@ final class AntifloodSubscriberTest extends TestCase
     #[Test]
     public function onMessageExemptsRootAdmins(): void
     {
-        $rootRegistry = new RootUserRegistry('TestUser');
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender(
             isOper: false,
             nick: 'TestUser',
             isIdentified: true,
         ));
+        $nickAccounts = $this->createMock(NickAccountQuery::class);
+        $nickAccounts->expects(self::exactly(2))->method('findIdByNick')->with('TestUser')->willReturn(42);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::exactly(2))
+            ->method('root')
+            ->with(self::equalTo(new OperatorActor('TestUser', 42, true, false)))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,
@@ -362,7 +382,8 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
-            $rootRegistry,
+            $authorization,
+            $nickAccounts,
             $this->translator,
             'en',
             null,
@@ -413,7 +434,8 @@ final class AntifloodSubscriberTest extends TestCase
             $sendNotice,
             $messageTypeResolver,
             $notifier,
-            $this->rootRegistry,
+            $this->authorization,
+            $this->nickAccounts,
             $translator,
             'en',
             '#ircops',
@@ -466,7 +488,8 @@ final class AntifloodSubscriberTest extends TestCase
             $sendNotice,
             $messageTypeResolver,
             $notifier,
-            $this->rootRegistry,
+            $this->authorization,
+            $this->nickAccounts,
             $translator,
             'en',
             null,
@@ -499,7 +522,8 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
-            $this->rootRegistry,
+            $this->authorization,
+            $this->nickAccounts,
             $this->translator,
             'en',
             null,

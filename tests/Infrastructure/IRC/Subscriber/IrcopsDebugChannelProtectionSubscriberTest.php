@@ -4,11 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Subscriber;
 
-use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ChannelServiceActionsPort;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Subscriber\IrcopsDebugChannelProtectionSubscriber;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
@@ -20,14 +16,16 @@ use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
-use DateTimeImmutable;
+use App\NickServ\Application\Port\In\NickAccountData;
+use App\NickServ\Application\Port\In\NickAccountQuery;
+use App\OperServ\Application\Port\In\AuthorizationDecision;
+use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\OperatorActor;
+use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(IrcopsDebugChannelProtectionSubscriber::class)]
@@ -134,13 +132,19 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
-
-        $rootRegistry = new RootUserRegistry('RootUser');
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(42);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with(self::equalTo(new OperatorActor('RootUser', 42, true, false)))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
 
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             userLookup: $userLookup,
-            rootRegistry: $rootRegistry,
+            nickAccounts: $nickAccounts,
+            authorization: $authorization,
             debugChannel: '#ircops',
         );
 
@@ -159,15 +163,18 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $rootRegistry = new RootUserRegistry('RootUser');
-
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('kick_reason');
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with(self::equalTo(new OperatorActor('RootUser', null, false, false)))
+            ->willReturn(AuthorizationDecision::denied());
 
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             userLookup: $userLookup,
-            rootRegistry: $rootRegistry,
+            authorization: $authorization,
             translator: $translator,
             debugChannel: '#ircops',
         );
@@ -182,39 +189,26 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::never())->method('kickFromChannel');
 
-        $nick = RegisteredNick::createPending(
-            'OperUser',
-            'hash',
-            'test@test.com',
-            'en',
-            new DateTimeImmutable('+1 day'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
-        $nickRefl = new ReflectionClass($nick);
-        $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setValue($nick, 42);
-
-        $role = OperRole::create('OPER', 'Oper role');
-        $ircop = OperIrcop::create(42, $role, 1, null);
-
         // SenderView: uid, nick, ident, hostname, cloakedHost, ipBase64, isIdentified, isOper, serverSid, displayHost, modes
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'encoded', true, false, 'SID1', 'c', 'i');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'encoded', true, true, 'SID1', 'c', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn($nick);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(42);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn($ircop);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with(self::equalTo(new OperatorActor('OperUser', 42, true, true)))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IrcOperatorStatus));
 
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             userLookup: $userLookup,
-            nickRepo: $nickRepo,
-            ircopRepo: $ircopRepo,
+            nickAccounts: $nickAccounts,
+            authorization: $authorization,
             debugChannel: '#ircops',
         );
 
@@ -234,8 +228,8 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn(null);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findAccountByNick')->willReturn(null);
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id) => $id);
@@ -245,7 +239,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             userLookup: $userLookup,
-            nickRepo: $nickRepo,
+            nickAccounts: $nickAccounts,
             translator: $translator,
             logger: $logger,
             debugChannel: '#ircops',
@@ -262,23 +256,13 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions->expects(self::once())->method('kickFromChannel')
             ->with('#ircops', 'UID1', 'No estás autorizado para entrar en este canal.');
 
-        $nick = RegisteredNick::createPending(
-            'NormalUser',
-            'hash',
-            'test@test.com',
-            'es',
-            new DateTimeImmutable('+1 day'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
-
         $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn($nick);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findAccountByNick')->willReturn(new NickAccountData(42, 'NormalUser', 'es'));
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())->method('trans')
@@ -290,7 +274,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             userLookup: $userLookup,
-            nickRepo: $nickRepo,
+            nickAccounts: $nickAccounts,
             translator: $translator,
             logger: $logger,
             debugChannel: '#ircops',
@@ -311,8 +295,9 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn(null);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(null);
+        $nickAccounts->method('findAccountByNick')->willReturn(null);
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('kick_reason');
@@ -320,7 +305,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             userLookup: $userLookup,
-            nickRepo: $nickRepo,
+            nickAccounts: $nickAccounts,
             translator: $translator,
             debugChannel: '#ircops',
         );
@@ -335,29 +320,14 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::once())->method('kickFromChannel');
 
-        $nick = RegisteredNick::createPending(
-            'OperUser',
-            'hash',
-            'test@test.com',
-            'en',
-            new DateTimeImmutable('+1 day'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
-        $nickRefl = new ReflectionClass($nick);
-        $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setValue($nick, 42);
-
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'encoded', true, false, 'SID1', 'c', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn($nick);
-
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(null);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(42);
+        $nickAccounts->method('findAccountByNick')->willReturn(new NickAccountData(42, 'OperUser', 'en'));
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('kick_reason');
@@ -365,8 +335,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             userLookup: $userLookup,
-            nickRepo: $nickRepo,
-            ircopRepo: $ircopRepo,
+            nickAccounts: $nickAccounts,
             translator: $translator,
             debugChannel: '#ircops',
         );
@@ -515,8 +484,8 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
                 default => null,
             });
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn(null);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findAccountByNick')->willReturn(null);
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('debug_channel.kick_reason');
@@ -525,7 +494,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
             channelActions: $channelActions,
             channelLookup: $channelLookup,
             userLookup: $userLookup,
-            nickRepo: $nickRepo,
+            nickAccounts: $nickAccounts,
             translator: $translator,
             chanservNick: 'ChanServ',
             debugChannel: '#ircops',
@@ -559,13 +528,20 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $rootRegistry = new RootUserRegistry('RootUser');
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(42);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with(self::equalTo(new OperatorActor('RootUser', 42, true, false)))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
 
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             channelLookup: $channelLookup,
             userLookup: $userLookup,
-            rootRegistry: $rootRegistry,
+            nickAccounts: $nickAccounts,
+            authorization: $authorization,
             debugChannel: '#ircops',
         );
 
@@ -597,16 +573,19 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $rootRegistry = new RootUserRegistry('RootUser');
-
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('kick_reason');
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with(self::equalTo(new OperatorActor('RootUser', null, false, false)))
+            ->willReturn(AuthorizationDecision::denied());
 
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             channelLookup: $channelLookup,
             userLookup: $userLookup,
-            rootRegistry: $rootRegistry,
+            authorization: $authorization,
             translator: $translator,
             debugChannel: '#ircops',
         );
@@ -621,22 +600,6 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::never())->method('kickFromChannel');
 
-        $nick = RegisteredNick::createPending(
-            'OperUser',
-            'hash',
-            'test@test.com',
-            'en',
-            new DateTimeImmutable('+1 day'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
-        $nickRefl = new ReflectionClass($nick);
-        $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setValue($nick, 42);
-
-        $role = OperRole::create('OPER', 'Oper role');
-        $ircop = OperIrcop::create(42, $role, 1, null);
-
         $channelView = new ChannelView(
             name: '#ircops',
             modes: '+nt',
@@ -650,23 +613,26 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'encoded', true, false, 'SID1', 'c', 'i');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'encoded', true, true, 'SID1', 'c', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn($nick);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findIdByNick')->willReturn(42);
 
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn($ircop);
+        $authorization = $this->createMock(OperatorAuthorizationQuery::class);
+        $authorization->expects(self::once())
+            ->method('ircOperator')
+            ->with(self::equalTo(new OperatorActor('OperUser', 42, true, true)))
+            ->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IrcOperatorStatus));
 
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             channelLookup: $channelLookup,
             userLookup: $userLookup,
-            nickRepo: $nickRepo,
-            ircopRepo: $ircopRepo,
+            nickAccounts: $nickAccounts,
+            authorization: $authorization,
             debugChannel: '#ircops',
         );
 
@@ -681,16 +647,6 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions->expects(self::once())
             ->method('kickFromChannel')
             ->with('#ircops', 'UID1', 'No estás autorizado para entrar en este canal.');
-
-        $nick = RegisteredNick::createPending(
-            'NormalUser',
-            'hash',
-            'test@test.com',
-            'es',
-            new DateTimeImmutable('+1 day'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
 
         $channelView = new ChannelView(
             name: '#ircops',
@@ -710,8 +666,8 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->willReturn($nick);
+        $nickAccounts = $this->createStub(NickAccountQuery::class);
+        $nickAccounts->method('findAccountByNick')->willReturn(new NickAccountData(42, 'NormalUser', 'es'));
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())
@@ -725,7 +681,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
             channelActions: $channelActions,
             channelLookup: $channelLookup,
             userLookup: $userLookup,
-            nickRepo: $nickRepo,
+            nickAccounts: $nickAccounts,
             translator: $translator,
             logger: $logger,
             debugChannel: '#ircops',
@@ -810,9 +766,8 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         ?ChannelServiceActionsPort $channelActions = null,
         ?ChannelLookupPort $channelLookup = null,
         ?NetworkUserLookupPort $userLookup = null,
-        ?OperIrcopRepositoryInterface $ircopRepo = null,
-        ?RootUserRegistry $rootRegistry = null,
-        ?RegisteredNickRepositoryInterface $nickRepo = null,
+        ?NickAccountQuery $nickAccounts = null,
+        ?OperatorAuthorizationQuery $authorization = null,
         ?TranslatorInterface $translator = null,
         ?LoggerInterface $logger = null,
         ?string $debugChannel = '#ircops',
@@ -822,14 +777,21 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
             channelActions: $channelActions ?? $this->createStub(ChannelServiceActionsPort::class),
             channelLookup: $channelLookup ?? $this->createStub(ChannelLookupPort::class),
             userLookup: $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
-            ircopRepo: $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
-            rootRegistry: $rootRegistry ?? new RootUserRegistry(''),
-            nickRepo: $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
+            nickAccounts: $nickAccounts ?? $this->createStub(NickAccountQuery::class),
+            authorization: $authorization ?? $this->deniedAuthorization(),
             translator: $translator ?? $this->createStub(TranslatorInterface::class),
             defaultLanguage: 'en',
             chanservNick: $chanservNick,
             debugChannel: $debugChannel,
             logger: $logger ?? $this->createStub(LoggerInterface::class),
         );
+    }
+
+    private function deniedAuthorization(): OperatorAuthorizationQuery
+    {
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('ircOperator')->willReturn(AuthorizationDecision::denied());
+
+        return $authorization;
     }
 }

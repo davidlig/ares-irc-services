@@ -34,6 +34,17 @@ final readonly class LegacyOperatorAssignmentNetworkProjection implements Operat
         $this->events->dispatch(new OperIrcopChangedEvent($nickId, $nick));
     }
 
+    public function replace(int $nickId, string $nick, OperatorRoleRecord $oldRole, OperatorRoleRecord $newRole): void
+    {
+        $old = $this->role($oldRole->name);
+        $new = $this->role($newRole->name);
+        $this->modes->removeModesForNick($nick, $old);
+        $this->operclass->removeForNick($nick);
+        $this->modes->applyModesForNick($nick, $new);
+        $this->operclass->applyForNick($nick, $new);
+        $this->events->dispatch(new OperIrcopChangedEvent($nickId, $nick));
+    }
+
     private function role(string $name): OperRole
     {
         return $this->roles->findByName($name) ?? throw new LogicException('Role disappeared during projection.');

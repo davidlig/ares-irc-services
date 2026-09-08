@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc;
 
-use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopAccessQueryService;
-use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\TranslationInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
@@ -22,6 +20,11 @@ use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Adapter\Out\Security\OperNickServOperatorAccess;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\OperServ\Adapter\Out\Legacy\LegacyOperatorRoleAccess;
+use App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry;
+use App\OperServ\Application\Security\OperatorAuthorizationService;
+use App\OperServ\Application\Security\OperatorPermissionPolicy;
+use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -162,10 +165,9 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $cmd1 = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
         $cmd2 = $this->createIrcopCommandStub('INFO', 'nickserv.info');
         $registry = new NickServCommandRegistry([$cmd1, $cmd2]);
-        $rootRegistry = new RootUserRegistry('RootAdmin');
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $operatorAccess = $this->operatorAccess('RootAdmin', $ircopRepo, $roleRepo);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $context = new NickServContext(
@@ -185,7 +187,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         );
         $adapter = new HelpFormatterContextAdapter(
             $context,
-            new OperNickServOperatorAccess(new IrcopAccessQueryService($accessHelper)),
+            $operatorAccess,
         );
 
         $commands = iterator_to_array($adapter->getIrcopCommands());
@@ -200,10 +202,9 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
     {
         $cmd = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
         $registry = new NickServCommandRegistry([$cmd]);
-        $rootRegistry = new RootUserRegistry('');
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
         $context = new NickServContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true, true),
             null,
@@ -221,7 +222,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         );
         $adapter = new HelpFormatterContextAdapter(
             $context,
-            new OperNickServOperatorAccess(new IrcopAccessQueryService($accessHelper)),
+            $operatorAccess,
         );
 
         $commands = iterator_to_array($adapter->getIrcopCommands());
@@ -234,10 +235,9 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
     {
         $cmd = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
         $registry = new NickServCommandRegistry([$cmd]);
-        $rootRegistry = new RootUserRegistry('');
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $context = new NickServContext(
@@ -257,7 +257,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         );
         $adapter = new HelpFormatterContextAdapter(
             $context,
-            new OperNickServOperatorAccess(new IrcopAccessQueryService($accessHelper)),
+            $operatorAccess,
         );
 
         $commands = iterator_to_array($adapter->getIrcopCommands());
@@ -271,7 +271,6 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $cmd1 = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
         $cmd2 = $this->createIrcopCommandStub('SOMEOTHER', 'nickserv.other');
         $registry = new NickServCommandRegistry([$cmd1, $cmd2]);
-        $rootRegistry = new RootUserRegistry('');
         $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(10);
         $role->method('hasPermission')->willReturnCallback(static fn (string $perm): bool => 'nickserv.userip' === $perm);
@@ -283,7 +282,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $roleRepo->expects(self::atLeastOnce())
             ->method('hasPermission')
             ->willReturnCallback(static fn (int $roleId, string $perm): bool => 10 === $roleId && 'nickserv.userip' === $perm);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $context = new NickServContext(
@@ -303,7 +302,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         );
         $adapter = new HelpFormatterContextAdapter(
             $context,
-            new OperNickServOperatorAccess(new IrcopAccessQueryService($accessHelper)),
+            $operatorAccess,
         );
 
         $commands = iterator_to_array($adapter->getIrcopCommands());
@@ -315,10 +314,9 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
     #[Test]
     public function hasIrcopAccessReturnsTrueForRootUser(): void
     {
-        $rootRegistry = new RootUserRegistry('RootAdmin');
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $operatorAccess = $this->operatorAccess('RootAdmin', $ircopRepo, $roleRepo);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $context = new NickServContext(
@@ -338,7 +336,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         );
         $adapter = new HelpFormatterContextAdapter(
             $context,
-            new OperNickServOperatorAccess(new IrcopAccessQueryService($accessHelper)),
+            $operatorAccess,
         );
 
         self::assertTrue($adapter->hasIrcopAccess());
@@ -347,7 +345,6 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
     #[Test]
     public function hasIrcopAccessReturnsTrueForOperWithPermissions(): void
     {
-        $rootRegistry = new RootUserRegistry('');
         $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(10);
         $ircop = $this->createStub(OperIrcop::class);
@@ -358,7 +355,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $roleRepo->expects(self::atLeastOnce())
             ->method('hasPermission')
             ->willReturnCallback(static fn (int $roleId, string $perm): bool => 10 === $roleId && 'nickserv.userip' === $perm);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $context = new NickServContext(
@@ -378,7 +375,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         );
         $adapter = new HelpFormatterContextAdapter(
             $context,
-            new OperNickServOperatorAccess(new IrcopAccessQueryService($accessHelper)),
+            $operatorAccess,
         );
 
         self::assertTrue($adapter->hasIrcopAccess());
@@ -387,7 +384,6 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
     #[Test]
     public function hasIrcopAccessReturnsFalseForOperWithoutPermissions(): void
     {
-        $rootRegistry = new RootUserRegistry('');
         $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(10);
         $ircop = $this->createStub(OperIrcop::class);
@@ -398,7 +394,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $roleRepo->expects(self::atLeastOnce())
             ->method('hasPermission')
             ->willReturn(false);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $context = new NickServContext(
@@ -418,7 +414,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         );
         $adapter = new HelpFormatterContextAdapter(
             $context,
-            new OperNickServOperatorAccess(new IrcopAccessQueryService($accessHelper)),
+            $operatorAccess,
         );
 
         self::assertFalse($adapter->hasIrcopAccess());
@@ -443,15 +439,31 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
         );
-        $rootRegistry = new RootUserRegistry('');
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
         $adapter = new HelpFormatterContextAdapter(
             $context,
-            new OperNickServOperatorAccess(new IrcopAccessQueryService($accessHelper)),
+            $operatorAccess,
         );
 
         self::assertFalse($adapter->shouldShowCommandInGeneralHelp($command));
+    }
+
+    private function operatorAccess(
+        string $rootUsers,
+        OperIrcopRepositoryInterface $ircopRepository,
+        OperRoleRepositoryInterface $roleRepository,
+    ): OperNickServOperatorAccess {
+        $rootPolicy = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry($rootUsers));
+        $roleAccess = new LegacyOperatorRoleAccess($ircopRepository, $roleRepository);
+
+        return new OperNickServOperatorAccess(new IrcopAccessQueryService(
+            new OperatorAuthorizationService(
+                $rootPolicy,
+                new OperatorPermissionPolicy($rootPolicy, $roleAccess),
+                $roleAccess,
+            ),
+        ));
     }
 }

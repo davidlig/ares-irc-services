@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace App\OperServ\Domain\Policy;
 
 use function ctype_alnum;
+use function explode;
 use function preg_match;
 use function str_contains;
 use function str_split;
-use function strpos;
 use function strtolower;
-use function substr;
 use function trim;
 
 final class GlineMaskPolicy
@@ -42,12 +41,7 @@ final class GlineMaskPolicy
             return false;
         }
 
-        $at = strpos($mask, '@');
-        if (false === $at) {
-            return false;
-        }
-
-        $user = substr($mask, 0, $at);
+        [$user, $host] = explode('@', $mask, 2);
         foreach (str_split($user) as $character) {
             if (ctype_alnum($character)) {
                 return true;
@@ -55,7 +49,7 @@ final class GlineMaskPolicy
         }
 
         $hostCharacters = 0;
-        foreach (str_split(substr($mask, $at + 1)) as $character) {
+        foreach (str_split($host) as $character) {
             if (ctype_alnum($character)) {
                 ++$hostCharacters;
             }

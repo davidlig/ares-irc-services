@@ -6,6 +6,7 @@ namespace App\OperServ\Application\UseCase\Global;
 
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
+use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\Out\GlobalMessageTransport;
 use App\OperServ\Application\Port\Out\NetworkUserLookup;
 use App\OperServ\Application\Port\Out\OperatorAccountLookup;
@@ -22,6 +23,7 @@ final readonly class SendGlobalMessageHandler
         private NetworkUserLookup $users,
         private OperatorAccountLookup $nickAccounts,
         private GlobalMessageTransport $network,
+        private CommandAuditRecorder $audit,
     ) {}
 
     public function handle(SendGlobalMessage $command): SendGlobalMessageResult
@@ -72,23 +74,21 @@ final readonly class SendGlobalMessageHandler
 
     private function sent(SendGlobalMessage $command, string $nickname, GlobalMessageType $messageType, int $count, string $senderKind): SendGlobalMessageResult
     {
-        return SendGlobalMessageResult::sent(
-            $nickname,
-            $count,
-            new CommandAuditRecord(
-                category: CommandAuditCategory::OperatorAction,
-                service: 'OperServ',
-                actor: $command->actorNickname,
-                operation: 'GLOBAL',
-                occurredAt: $command->occurredAt,
-                target: $nickname,
-                permission: 'operserv.global',
-                metadata: [
-                    'message_type' => $messageType->value,
-                    'recipient_count' => $count,
-                    'sender_kind' => $senderKind,
-                ],
-            ),
-        );
+        $this->audit->record(new CommandAuditRecord(
+            category: CommandAuditCategory::OperatorAction,
+            service: 'OperServ',
+            actor: $command->actorNickname,
+            operation: 'GLOBAL',
+            occurredAt: $command->occurredAt,
+            target: $nickname,
+            permission: 'operserv.global',
+            metadata: [
+                'message_type' => $messageType->value,
+                'recipient_count' => $count,
+                'sender_kind' => $senderKind,
+            ],
+        ));
+
+        return SendGlobalMessageResult::sent($nickname, $count);
     }
 }

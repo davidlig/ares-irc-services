@@ -6,7 +6,6 @@ namespace App\OperServ\Adapter\Out\Irc;
 
 use App\Application\Port\ServiceDebugNotifierRegistry;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-use App\OperServ\Application\Port\Out\CommandAuditIrcPresenter;
 
 final readonly class LegacyDebugChannelCommandAuditPresenter implements CommandAuditIrcPresenter
 {

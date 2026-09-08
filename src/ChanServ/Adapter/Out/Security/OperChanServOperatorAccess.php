@@ -11,23 +11,23 @@ final readonly class OperChanServOperatorAccess implements ChanServOperatorAcces
 {
     public function __construct(private IrcopAccessQuery $query) {}
 
-    public function isRoot(string $nickname): bool
+    public function isRoot(string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool
     {
-        return $this->query->isRoot($nickname);
+        return $this->query->isRoot($nickname, $accountId, $identified, $ircOperator);
     }
 
-    public function isIrcop(int $nickId, string $nickname): bool
+    public function isIrcop(string $nickname, ?int $accountId, bool $identified, bool $ircOperator): bool
     {
-        return $this->query->isIrcop($nickId, $nickname);
+        return $this->query->isIrcop($nickname, $accountId, $identified, $ircOperator);
     }
 
-    public function hasPermission(int $nickId, string $nickname, string $permission): bool
+    public function hasPermission(string $nickname, ?int $accountId, bool $identified, bool $ircOperator, string $permission): bool
     {
-        return $this->query->hasPermission($nickId, $nickname, $permission);
+        return $this->query->hasPermission($nickname, $accountId, $identified, $ircOperator, $permission);
     }
 
-    public function hasAnyPermission(int $nickId, string $nickname, array $permissions): bool
+    public function hasAnyPermission(string $nickname, ?int $accountId, bool $identified, bool $ircOperator, array $permissions): bool
     {
-        return $this->query->hasAnyPermission($nickId, $nickname, $permissions);
+        return $this->query->hasAnyPermission($nickname, $accountId, $identified, $ircOperator, $permissions);
     }
 }

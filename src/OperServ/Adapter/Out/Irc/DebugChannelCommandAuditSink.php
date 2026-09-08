@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\OperServ\Adapter\Out\Irc;
 
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-use App\OperServ\Application\Port\Out\CommandAuditIrcPresenter;
 use App\OperServ\Application\Port\Out\CommandAuditSink;
 
 final readonly class DebugChannelCommandAuditSink implements CommandAuditSink

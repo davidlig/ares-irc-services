@@ -6,9 +6,11 @@ namespace App\OperServ\Adapter\Out\Irc;
 
 use App\Application\Port\UdbRawCommandHandlerProviderInterface;
 use App\Application\Port\UdbRawCommandResult;
+use App\OperServ\Application\Port\Out\RawDatabaseMutationFailure;
 use App\OperServ\Application\Port\Out\RawDatabaseMutationHandler;
 use App\OperServ\Application\Port\Out\RawDatabaseMutationResult;
-use App\Shared\Application\Audit\SafeAuditMetadata;
+
+use function is_string;
 
 final readonly class LegacyRawDatabaseMutationHandler implements RawDatabaseMutationHandler
 {
@@ -23,23 +25,45 @@ final readonly class LegacyRawDatabaseMutationHandler implements RawDatabaseMuta
     {
         $handler = $this->provider->getActiveHandler();
 
-        return null === $handler ? RawDatabaseMutationResult::failure('raw.udb.error') : $this->map($handler->ins($path, $value));
+        return null === $handler
+            ? RawDatabaseMutationResult::failure(RawDatabaseMutationFailure::Rejected)
+            : $this->map($handler->ins($path, $value));
     }
 
     public function delete(string $path): RawDatabaseMutationResult
     {
         $handler = $this->provider->getActiveHandler();
 
-        return null === $handler ? RawDatabaseMutationResult::failure('raw.udb.error') : $this->map($handler->del($path));
+        return null === $handler
+            ? RawDatabaseMutationResult::failure(RawDatabaseMutationFailure::Rejected)
+            : $this->map($handler->del($path));
     }
 
     private function map(UdbRawCommandResult $result): RawDatabaseMutationResult
     {
-        return $result->success
-            ? RawDatabaseMutationResult::success()
-            : RawDatabaseMutationResult::failure(
-                $result->errorKey ?? 'raw.udb.error',
-                SafeAuditMetadata::validate($result->errorParams),
-            );
+        if ($result->success) {
+            return RawDatabaseMutationResult::success();
+        }
+
+        return match ($result->errorKey) {
+            'raw.udb.invalid_block' => RawDatabaseMutationResult::failure(
+                RawDatabaseMutationFailure::UnsupportedRecordType,
+                recordType: $this->safeString($result->errorParams['%block%'] ?? null),
+            ),
+            'raw.udb.invalid_path' => RawDatabaseMutationResult::failure(
+                RawDatabaseMutationFailure::InvalidRecordPath,
+                recordPath: $this->safeString($result->errorParams['%path%'] ?? null),
+            ),
+            'raw.udb.invalid_value' => RawDatabaseMutationResult::failure(
+                RawDatabaseMutationFailure::InvalidRecordValue,
+                recordPath: $this->safeString($result->errorParams['%path%'] ?? null),
+            ),
+            default => RawDatabaseMutationResult::failure(RawDatabaseMutationFailure::Rejected),
+        };
+    }
+
+    private function safeString(mixed $value): ?string
+    {
+        return is_string($value) ? $value : null;
     }
 }
