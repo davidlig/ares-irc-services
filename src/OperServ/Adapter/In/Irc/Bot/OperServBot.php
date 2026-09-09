@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Irc\Bot;
 
-use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
-use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
-use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\Irc\Application\Port\In\ServiceUidProviderInterface;
+use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface as NewOperServNotifierInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceUidProviderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -22,7 +21,7 @@ final class OperServBot implements NewOperServNotifierInterface, ServiceNickname
     private string $uid = '';
 
     public function __construct(
-        private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly ActiveProtocolModuleHolderInterface $connectionHolder,
         private readonly NetworkUserLookupPort $userLookup,
         private readonly SendNoticePort $sendNoticePort,
         private readonly ServiceUidGeneratorInterface $uidGenerator,
@@ -36,17 +35,17 @@ final class OperServBot implements NewOperServNotifierInterface, ServiceNickname
     public static function getSubscribedEvents(): array
     {
         return [
-            NetworkBurstCompleteEvent::class => ['onBurstComplete', 90],
+            ServiceIntroductionRequestedEvent::class => ['onBurstComplete', 90],
         ];
     }
 
-    public function onBurstComplete(NetworkBurstCompleteEvent $event): void
+    public function onBurstComplete(ServiceIntroductionRequestedEvent $event): void
     {
         $this->uid = $this->uidGenerator->generateUid('operserv');
-        $this->introduce($event->connection, $event->serverSid);
+        $this->introduce($event->serverSid);
     }
 
-    private function introduce(ConnectionInterface $connection, string $serverSid): void
+    private function introduce(string $serverSid): void
     {
         $module = $this->connectionHolder->getProtocolModule();
         if (null === $module) {

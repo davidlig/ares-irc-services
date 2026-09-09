@@ -5,31 +5,29 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\UseCase\UpdateSetting\ChannelSetting;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerInterface;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingOutcome;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-
-use function filter_var;
-use function trim;
-
-use const FILTER_VALIDATE_EMAIL;
 
 final readonly class SetEmailHandler implements SetOptionHandlerInterface
 {
-    public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-    ) {}
+    use BuildsUpdateChannelSettingRequest;
+
+    public function __construct(private UpdateChannelSettingHandlerInterface $handler) {}
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
-        $value = trim($value);
-        if ('' !== $value && false === filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        $request = $this->settingRequest($context, $channel, ChannelSetting::Email, $value);
+        if (null === $request) {
+            return;
+        }
+        $result = $this->handler->handle($request);
+        if (UpdateChannelSettingOutcome::InvalidEmail === $result->outcome) {
             $context->reply('set.email.invalid');
 
             return;
         }
-        $email = '' === $value ? null : $value;
-        $channel->updateEmail($email);
-        $this->channelRepository->save($channel);
-        $context->reply(null !== $email ? 'set.email.updated' : 'set.email.cleared');
+        $context->reply(UpdateChannelSettingOutcome::Cleared === $result->outcome ? 'set.email.cleared' : 'set.email.updated');
     }
 }

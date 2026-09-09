@@ -72,13 +72,13 @@ final readonly class EnableCommand implements MemoServCommandInterface
         return 'IDENTIFIED';
     }
 
-    public function execute(MemoServContext $context): void
+    public function execute(MemoServContext $context): null
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
             $context->reply('error.not_identified');
 
-            return;
+            return null;
         }
 
         $first = $context->args[0] ?? null;
@@ -115,5 +115,7 @@ final readonly class EnableCommand implements MemoServCommandInterface
                 $context->reply('enable.founder_only', ['channel' => $result->channelName ?? '']);
                 break;
         }
+
+        return null;
     }
 }

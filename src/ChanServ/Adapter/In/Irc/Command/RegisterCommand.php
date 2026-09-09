@@ -6,44 +6,23 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Model\ChanAccountView;
-use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
-use App\ChanServ\Application\Port\Out\ChannelRegisterThrottlePort;
-use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
-use App\ChanServ\Domain\Entity\ChannelLevel;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
+use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannel;
+use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandlerInterface;
+use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelOutcome;
+use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelResult;
 use App\Irc\Application\Port\In\ChannelView;
-use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 
 use function array_slice;
-use function ceil;
-use function count;
 use function implode;
 use function in_array;
-use function strtolower;
 
-/**
- * REGISTER <#channel> <description>.
- *
- * Registers a channel. User must be identified. ChanServ joins with max level
- * and sets +nt if the channel has no MLOCK.
- */
+/** REGISTER <#channel> <description>. */
 final readonly class RegisterCommand implements ChanServCommandInterface
 {
     private const array REQUIRED_REGISTER_PREFIX_MODES = ['q', 'a', 'o'];
 
-    public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChannelLevelRepositoryInterface $levelRepository,
-        private ChannelRegisterThrottlePort $throttleRegistry,
-        private EventBusInterface $eventDispatcher,
-        private ChanServOperatorAccess $operatorAccess,
-        private int $maxChannelsPerNick = 3,
-        private int $registerMinIntervalSeconds = 21600,
-    ) {}
+    public function __construct(private RegisterChannelHandlerInterface $handler) {}
 
     public function getName(): string
     {
@@ -100,7 +79,6 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return false;
     }
 
-    /** Whether this command is allowed on forbidden channels. */
     public function allowsForbiddenChannel(): bool
     {
         return false;
@@ -120,132 +98,39 @@ final readonly class RegisterCommand implements ChanServCommandInterface
             return;
         }
 
-        $description = implode(' ', array_slice($context->args, 1));
-        $channelNameLower = strtolower($channelName);
-
-        if ($this->channelRepository->existsByChannelName($channelNameLower)) {
-            $existing = $this->channelRepository->findByChannelName($channelNameLower);
-            if (null !== $existing && $existing->isPendingDeletion()) {
-                $context->reply('register.pending_deletion', ['%channel%' => $channelName]);
-
-                return;
-            }
-
-            throw ChannelAlreadyRegisteredException::forChannel($channelName);
-        }
-
-        $validation = $this->validateRegisterPrerequisites($context, $channelName, $channelNameLower);
-        if (null === $validation) {
-            return;
-        }
-
-        $this->performRegister($context, $channelName, $description, $validation);
-    }
-
-    /** @return array{senderAccount: ChanAccountView, isPrivileged: bool}|null */
-    private function validateRegisterPrerequisites(ChanServContext $context, string $channelName, string $channelNameLower): ?array
-    {
         $channelView = $context->getChannelView($channelName);
-        if (null === $channelView) {
-            $context->reply('register.channel_not_on_network', ['%channel%' => $channelName]);
-
-            return null;
-        }
-
-        $senderAccount = $context->senderAccount;
-        if (null === $senderAccount) {
+        $sender = $context->sender;
+        if (null === $sender) {
             $context->reply('error.not_identified');
 
-            return null;
+            return;
         }
-
-        return $this->validateRegisterPermissions($context, $channelName, $channelView, $senderAccount);
-    }
-
-    /** @return array{senderAccount: ChanAccountView, isPrivileged: bool}|null */
-    private function validateRegisterPermissions(ChanServContext $context, string $channelName, ChannelView $channelView, ChanAccountView $senderAccount): ?array
-    {
-        $sender = $context->sender;
-        $isPrivileged = null !== $sender && $this->operatorAccess->isIrcop(
-            $sender->nick,
-            $senderAccount->id,
-            $sender->isIdentified,
-            $sender->isOper,
-        );
-
-        if (!$isPrivileged && (null === $sender || !$this->senderHasRequiredChannelPrefix($channelView, $sender->uid))) {
-            $context->reply('register.insufficient_channel_rank', ['%channel%' => $channelName]);
-
-            return null;
-        }
-
-        if (!$isPrivileged) {
-            return $this->validateRegisterLimits($context, $channelName, ['senderAccount' => $senderAccount, 'isPrivileged' => $isPrivileged]);
-        }
-
-        return ['senderAccount' => $senderAccount, 'isPrivileged' => $isPrivileged];
-    }
-
-    /**
-     * @param array{senderAccount: ChanAccountView, isPrivileged: bool} $prelim
-     *
-     * @return array{senderAccount: ChanAccountView, isPrivileged: bool}|null
-     */
-    private function validateRegisterLimits(ChanServContext $context, string $channelName, array $prelim): ?array
-    {
-        $senderAccount = $prelim['senderAccount'];
-        $remainingCooldown = $this->throttleRegistry->getRemainingCooldownSeconds(
-            $senderAccount->id,
-            $this->registerMinIntervalSeconds
-        );
-        if ($remainingCooldown > 0) {
-            $minutes = (int) ceil($remainingCooldown / 60);
-            $context->reply('register.throttled', ['minutes' => (string) $minutes]);
-
-            return null;
-        }
-
-        $existingChannels = $this->channelRepository->findByFounderNickId($senderAccount->id);
-        if (count($existingChannels) >= $this->maxChannelsPerNick) {
-            $context->reply('register.limit_exceeded', ['%max%' => (string) $this->maxChannelsPerNick]);
-
-            return null;
-        }
-
-        return $prelim;
-    }
-
-    /**
-     * @param array{senderAccount: ChanAccountView, isPrivileged: bool} $validation
-     */
-    private function performRegister(ChanServContext $context, string $channelName, string $description, array $validation): void
-    {
-        $senderAccount = $validation['senderAccount'];
-        $isPrivileged = $validation['isPrivileged'];
-
-        $channel = RegisteredChannel::register(
-            $channelName,
-            $senderAccount->id,
-            $description,
-        );
-        $this->channelRepository->save($channel);
-
-        if (!$isPrivileged) {
-            $this->throttleRegistry->recordRegistration($senderAccount->id);
-        }
-
-        foreach (ChannelLevel::DEFAULTS as $key => $value) {
-            $level = new ChannelLevel($channel->getId(), $key, $value);
-            $this->levelRepository->save($level);
-        }
-
-        $this->eventDispatcher->dispatch(new ChannelRegisteredEvent(
-            $channel->getId(),
-            $channelName,
-            strtolower($channelName),
+        $result = $this->handler->handle(new RegisterChannel(
+            channelName: $channelName,
+            description: implode(' ', array_slice($context->args, 1)),
+            accountId: $context->senderAccount?->id,
+            actorNickname: $sender->nick,
+            actorIdentified: $sender->isIdentified,
+            actorIrcOperator: $sender->isOper,
+            channelExistsOnNetwork: null !== $channelView,
+            hasRequiredChannelRank: null !== $channelView && $this->senderHasRequiredChannelPrefix($channelView, $sender->uid),
+            occurredAt: new DateTimeImmutable(),
         ));
 
-        $context->reply('register.success', ['%channel%' => $channelName]);
+        $this->present($context, $channelName, $result);
+    }
+
+    private function present(ChanServContext $context, string $channelName, RegisterChannelResult $result): void
+    {
+        match ($result->outcome) {
+            RegisterChannelOutcome::Registered => $context->reply('register.success', ['%channel%' => $channelName]),
+            RegisterChannelOutcome::NotIdentified => $context->reply('error.not_identified'),
+            RegisterChannelOutcome::PendingDeletion => $context->reply('register.pending_deletion', ['%channel%' => $channelName]),
+            RegisterChannelOutcome::ChannelNotOnNetwork => $context->reply('register.channel_not_on_network', ['%channel%' => $channelName]),
+            RegisterChannelOutcome::InsufficientChannelRank => $context->reply('register.insufficient_channel_rank', ['%channel%' => $channelName]),
+            RegisterChannelOutcome::Throttled => $context->reply('register.throttled', ['minutes' => (string) $result->remainingMinutes]),
+            RegisterChannelOutcome::FounderLimitExceeded => $context->reply('register.limit_exceeded', ['%max%' => (string) $result->maximumChannels]),
+        };
     }
 
     private function senderHasRequiredChannelPrefix(ChannelView $channelView, string $senderUid): bool
@@ -255,8 +140,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface
                 continue;
             }
 
-            $prefixLetters = $member['prefixLetters'] ?? [$member['roleLetter']];
-            foreach ($prefixLetters as $letter) {
+            foreach ($member['prefixLetters'] ?? [$member['roleLetter']] as $letter) {
                 if (in_array($letter, self::REQUIRED_REGISTER_PREFIX_MODES, true)) {
                     return true;
                 }

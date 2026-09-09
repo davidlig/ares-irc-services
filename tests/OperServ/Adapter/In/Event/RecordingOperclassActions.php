@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\OperclassServiceActionsInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
-use App\Shared\Application\Port\OperclassServiceActionsInterface;
 
 /**
  * Protocol service actions double implementing both the mandatory surface and

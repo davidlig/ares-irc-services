@@ -26,13 +26,11 @@ final class ChannelRegisteredEventTest extends TestCase
     }
 
     #[Test]
-    public function constructorDefaultsOccurredAt(): void
+    public function constructorRequiresExplicitOccurredAt(): void
     {
-        $before = new DateTimeImmutable();
-        $event = new ChannelRegisteredEvent(1, '#channel', '#channel');
-        $after = new DateTimeImmutable();
+        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $event = new ChannelRegisteredEvent(1, '#channel', '#channel', $occurredAt);
 
-        self::assertGreaterThanOrEqual($before, $event->occurredAt);
-        self::assertLessThanOrEqual($after, $event->occurredAt);
+        self::assertSame($occurredAt, $event->occurredAt);
     }
 }

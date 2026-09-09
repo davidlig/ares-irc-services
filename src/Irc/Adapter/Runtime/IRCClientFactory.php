@@ -6,8 +6,8 @@ namespace App\Irc\Adapter\Runtime;
 
 use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
 use App\Irc\Application\BurstCompleteRegistry;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Domain\Server\ServerLink;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
 use App\Shared\Application\Port\EventBusInterface;
 use Psr\Log\LoggerInterface;
@@ -23,7 +23,7 @@ final readonly class IRCClientFactory implements IRCClientFactoryInterface
     public function __construct(
         private ProtocolRuntimeModuleInterface $module,
         private ConnectionFactoryInterface $connectionFactory,
-        private ActiveConnectionHolderInterface $connectionHolder,
+        private ActiveProtocolModuleHolderInterface $connectionHolder,
         private EventBusInterface $eventDispatcher,
         private AsyncMessageDispatcherInterface $messageBus,
         private BurstCompleteRegistry $burstCompleteRegistry,

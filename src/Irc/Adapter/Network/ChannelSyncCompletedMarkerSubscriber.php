@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Network;
 
+use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
-use App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

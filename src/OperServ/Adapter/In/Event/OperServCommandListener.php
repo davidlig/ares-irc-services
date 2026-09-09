@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\OperServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
 use App\OperServ\Adapter\In\Irc\Bot\OperServBot;
 use App\OperServ\Adapter\In\Irc\OperServCommandLogSanitizer;
 use App\OperServ\Adapter\In\Irc\OperServService;
 use App\OperServ\Application\Port\Out\ServiceUserPreferences;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceCommandListenerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;

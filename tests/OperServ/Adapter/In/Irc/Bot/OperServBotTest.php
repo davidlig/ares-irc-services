@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Irc\Bot;
 
-use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
-use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
+use App\Irc\Application\Port\In\SendNoticePort;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\OperServ\Adapter\In\Irc\Bot\OperServBot;
-use App\Shared\Application\Port\SendNoticePort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -71,14 +70,13 @@ final class OperServBotTest extends TestCase
     {
         $events = OperServBot::getSubscribedEvents();
 
-        self::assertArrayHasKey(NetworkBurstCompleteEvent::class, $events);
-        self::assertSame(['onBurstComplete', 90], $events[NetworkBurstCompleteEvent::class]);
+        self::assertArrayHasKey(ServiceIntroductionRequestedEvent::class, $events);
+        self::assertSame(['onBurstComplete', 90], $events[ServiceIntroductionRequestedEvent::class]);
     }
 
     #[Test]
     public function onBurstCompleteIntroducesBot(): void
     {
-        $connection = $this->createStub(ConnectionInterface::class);
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
 
@@ -121,7 +119,7 @@ final class OperServBotTest extends TestCase
             $logger,
         );
 
-        $event = new NetworkBurstCompleteEvent($connection, $serverSid);
+        $event = new ServiceIntroductionRequestedEvent($serverSid);
 
         $bot->onBurstComplete($event);
     }
@@ -129,10 +127,7 @@ final class OperServBotTest extends TestCase
     #[Test]
     public function onBurstCompleteDoesNothingIfProtocolModuleIsNull(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
         $serverSid = '001';
-
-        $connection->expects(self::never())->method('writeLine');
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('info');
@@ -152,7 +147,7 @@ final class OperServBotTest extends TestCase
             $logger,
         );
 
-        $event = new NetworkBurstCompleteEvent($connection, $serverSid);
+        $event = new ServiceIntroductionRequestedEvent($serverSid);
 
         $bot->onBurstComplete($event);
     }
@@ -184,10 +179,7 @@ final class OperServBotTest extends TestCase
             $this->logger,
         );
 
-        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
-            $this->createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
         $bot->sendNotice($targetUidOrNick, $message);
     }
 
@@ -219,10 +211,7 @@ final class OperServBotTest extends TestCase
             $this->logger,
         );
 
-        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
-            $this->createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
         $bot->sendMessage($targetUidOrNick, $message, $messageType);
     }
 
@@ -247,10 +236,7 @@ final class OperServBotTest extends TestCase
     {
         $bot = $this->createBot();
 
-        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
-            $this->createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $bot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
         self::assertSame($this->operservUid, $bot->getUid());
     }
 

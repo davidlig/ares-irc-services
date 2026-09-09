@@ -16,9 +16,17 @@ interface GlineRepository
     /** @return list<GlineEntry> */
     public function findByMaskPattern(string $pattern): array;
 
+    /** @return list<GlineEntry> */
+    public function findActiveAt(DateTimeImmutable $at): array;
+
+    /** @return list<GlineEntry> */
+    public function findExpiredAt(DateTimeImmutable $at): array;
+
     public function countAll(): int;
 
-    public function save(string $mask, ?int $creatorAccountId, string $reason, ?DateTimeImmutable $expiresAt): void;
+    public function save(string $mask, ?int $creatorAccountId, string $reason, DateTimeImmutable $createdAt, ?DateTimeImmutable $expiresAt): void;
 
     public function remove(GlineEntry $entry): void;
+
+    public function clearCreatorAccountId(int $accountId): void;
 }

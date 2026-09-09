@@ -14,8 +14,8 @@ use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbModule;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNickReservation;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions;
+use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawCommandInterceptor;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
-use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbUserModeSupport;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
@@ -40,7 +40,6 @@ final class UnrealUdbModuleTest extends TestCase
         );
         $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator());
         $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter);
-        $formatter = new UnrealUdbServiceIntroductionFormatter();
         $channelModeSupport = new UnrealUdbChannelModeSupport();
         $userModeSupport = new UnrealUdbUserModeSupport();
         $nickReservation = new UnrealUdbNickReservation($recordWriter);
@@ -48,11 +47,10 @@ final class UnrealUdbModuleTest extends TestCase
         return new UnrealUdbModule(
             $handler,
             $serviceActions,
-            $formatter,
             $channelModeSupport,
             $userModeSupport,
             $nickReservation,
-            $this->createStub(UdbRawCommandHandlerInterface::class),
+            new UnrealUdbRawCommandInterceptor($this->createStub(UdbRawCommandHandlerInterface::class)),
         );
     }
 
@@ -88,11 +86,10 @@ final class UnrealUdbModuleTest extends TestCase
         $module = new UnrealUdbModule(
             $handler,
             new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter),
-            new UnrealUdbServiceIntroductionFormatter(),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
             new UnrealUdbNickReservation($recordWriter),
-            $this->createStub(UdbRawCommandHandlerInterface::class),
+            new UnrealUdbRawCommandInterceptor($this->createStub(UdbRawCommandHandlerInterface::class)),
         );
 
         self::assertSame($handler, $module->getHandler());
@@ -104,14 +101,6 @@ final class UnrealUdbModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(UnrealUdbProtocolServiceActions::class, $module->getServiceActions());
-    }
-
-    #[Test]
-    public function getIntroductionFormatterReturnsInjectedFormatter(): void
-    {
-        $module = $this->createModule();
-
-        self::assertInstanceOf(UnrealUdbServiceIntroductionFormatter::class, $module->getIntroductionFormatter());
     }
 
     #[Test]
@@ -148,7 +137,7 @@ final class UnrealUdbModuleTest extends TestCase
     }
 
     #[Test]
-    public function delegatesRawCommandsToInjectedCapability(): void
+    public function delegatesRawCommandsToInjectedInterceptor(): void
     {
         $rawCommands = $this->createMock(UdbRawCommandHandlerInterface::class);
         $rawCommands->expects(self::once())->method('ins')->with('S::propagator', 'hub.example')
@@ -166,14 +155,13 @@ final class UnrealUdbModuleTest extends TestCase
         $module = new UnrealUdbModule(
             new UnrealUdbProtocolHandler('001', $this->createCoordinator()),
             new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter),
-            new UnrealUdbServiceIntroductionFormatter(),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
             new UnrealUdbNickReservation($recordWriter),
-            $rawCommands,
+            new UnrealUdbRawCommandInterceptor($rawCommands),
         );
 
-        self::assertSame('inserted', $module->ins('S::propagator', 'hub.example')->auditLine);
-        self::assertSame('deleted', $module->del('N::nick')->auditLine);
+        self::assertSame('DB INS', $module->intercept(['DB', '*', 'INS', 'S::propagator', 'hub.example'])->operation);
+        self::assertSame('DB DEL', $module->intercept(['DB', '*', 'DEL', 'N::nick'])->operation);
     }
 }

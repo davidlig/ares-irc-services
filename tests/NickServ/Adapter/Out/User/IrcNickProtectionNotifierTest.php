@@ -7,10 +7,10 @@ namespace App\Tests\NickServ\Adapter\Out\User;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\User\IrcNickProtectionNotifier;
 use App\NickServ\Application\Model\UserMessagePreference;
-use App\Shared\Application\Port\TranslationInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(IrcNickProtectionNotifier::class)]
 #[CoversClass(UserMessagePreference::class)]
@@ -19,7 +19,7 @@ final class IrcNickProtectionNotifierTest extends TestCase
     #[Test]
     public function presentsForbiddenNicknameAsANotice(): void
     {
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('forbidden');
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->with('UID1', 'forbidden', 'NOTICE');
@@ -30,7 +30,7 @@ final class IrcNickProtectionNotifierTest extends TestCase
     #[Test]
     public function presentsRenameMessagesUsingTheAccountPreference(): void
     {
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnOnConsecutiveCalls('in-use', 'renamed', 'in-use', 'renamed');
         $sentMessageTypes = [];
         $notifier = $this->createMock(NickServNotifierInterface::class);

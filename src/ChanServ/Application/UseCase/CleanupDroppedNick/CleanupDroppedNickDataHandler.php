@@ -13,6 +13,7 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use DateTimeImmutable;
 
 final readonly class CleanupDroppedNickDataHandler
 {
@@ -34,11 +35,11 @@ final readonly class CleanupDroppedNickDataHandler
         $this->channelRepository->clearSuccessorNickId($nickId);
 
         foreach ($this->channelRepository->findByFounderNickId($nickId) as $channel) {
-            $this->handleFounderDrop($channel);
+            $this->handleFounderDrop($channel, $command->occurredAt);
         }
     }
 
-    private function handleFounderDrop(RegisteredChannel $channel): void
+    private function handleFounderDrop(RegisteredChannel $channel, DateTimeImmutable $occurredAt): void
     {
         $successorNickId = $channel->getSuccessorNickId();
 
@@ -55,10 +56,11 @@ final readonly class CleanupDroppedNickDataHandler
         }
 
         $cleanupEvent = new ChannelDropCleanupEvent(
-            $channel->getId(),
-            $channel->getName(),
-            $channel->getNameLower(),
-            'founder_dropped',
+            channelId: $channel->getId(),
+            occurredAt: $occurredAt,
+            channelName: $channel->getName(),
+            channelNameLower: $channel->getNameLower(),
+            reason: 'founder_dropped',
         );
 
         $this->eventPublisher->publish($cleanupEvent);

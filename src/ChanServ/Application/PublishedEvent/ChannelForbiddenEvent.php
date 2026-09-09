@@ -14,6 +14,6 @@ final readonly class ChannelForbiddenEvent
         public string $channelNameLower,
         public string $reason,
         public string $performedBy,
-        public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
+        public DateTimeImmutable $occurredAt,
     ) {}
 }

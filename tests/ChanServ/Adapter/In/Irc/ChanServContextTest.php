@@ -10,18 +10,18 @@ use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use DateTime;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
 
@@ -97,7 +97,7 @@ final class ChanServContextTest extends TestCase
     private function createContext(
         ?SenderView $sender,
         ChanServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         array $args = ['#test', 'INFO'],
         ?ChannelLookupPort $channelLookup = null,
         ?ChannelModeSupportInterface $modeSupport = null,
@@ -129,7 +129,7 @@ final class ChanServContextTest extends TestCase
         $context = $this->createContext(
             $sender,
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             senderAccount: $account,
         );
 
@@ -143,7 +143,7 @@ final class ChanServContextTest extends TestCase
     public function getChannelNameArgReturnsChannelWhenStartsWithHash(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -159,7 +159,7 @@ final class ChanServContextTest extends TestCase
     public function getChannelNameArgReturnsNullWhenNotChannelLike(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -174,7 +174,7 @@ final class ChanServContextTest extends TestCase
     public function getChannelNameArgReturnsNullWhenIndexOutOfBounds(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -192,7 +192,7 @@ final class ChanServContextTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
 
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -211,7 +211,7 @@ final class ChanServContextTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn(null);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
 
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -233,7 +233,7 @@ final class ChanServContextTest extends TestCase
             $sent[] = ['uid' => $uid, 'msg' => $msg, 'type' => $type];
         });
         $notifier->method('getNick')->willReturn('ChanServ');
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params, string $domain, ?string $locale): string => $id . '|' . (is_string($params['%name%'] ?? null) ? $params['%name%'] : ''));
         $context = $this->createContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
@@ -258,7 +258,7 @@ final class ChanServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function () use (&$sent): void {
             $sent[] = true;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('translated');
         $context = $this->createContext(
             null,
@@ -279,7 +279,7 @@ final class ChanServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg, string $type) use (&$sent): void {
             $sent[] = ['uid' => $uid, 'msg' => $msg, 'type' => $type];
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -300,7 +300,7 @@ final class ChanServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function () use (&$sent): void {
             $sent[] = true;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             null,
             $notifier,
@@ -316,7 +316,7 @@ final class ChanServContextTest extends TestCase
     public function getNotifierReturnsCorrectValue(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -330,7 +330,7 @@ final class ChanServContextTest extends TestCase
     public function getLanguageReturnsCorrectValue(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -344,7 +344,7 @@ final class ChanServContextTest extends TestCase
     public function getTimezoneReturnsCorrectValue(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -358,7 +358,7 @@ final class ChanServContextTest extends TestCase
     public function formatDateReturnsFormattedDateInTimezone(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -375,7 +375,7 @@ final class ChanServContextTest extends TestCase
     public function formatDateReturnsEmDashWhenDateIsNull(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -389,7 +389,7 @@ final class ChanServContextTest extends TestCase
     public function getRegistryReturnsCorrectValue(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $registry = new ChanServCommandRegistry([]);
         $context = new ChanServContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
@@ -417,7 +417,7 @@ final class ChanServContextTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects($this->once())
             ->method('trans')
             ->with(
@@ -445,7 +445,7 @@ final class ChanServContextTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects($this->once())
             ->method('trans')
             ->with(
@@ -469,7 +469,7 @@ final class ChanServContextTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects($this->once())
             ->method('trans')
             ->with(
@@ -492,7 +492,7 @@ final class ChanServContextTest extends TestCase
     {
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
 
         $context = new ChanServContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
@@ -519,7 +519,7 @@ final class ChanServContextTest extends TestCase
     {
         $modeSupport = new NullChannelModeSupport();
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
 
         $context = new ChanServContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
@@ -546,7 +546,7 @@ final class ChanServContextTest extends TestCase
     {
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
 
         $context = new ChanServContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
@@ -574,7 +574,7 @@ final class ChanServContextTest extends TestCase
         $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
         $account = new ChanAccountView(1, 'TestNick', 'en');
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $registry = new ChanServCommandRegistry([]);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -607,7 +607,7 @@ final class ChanServContextTest extends TestCase
         $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
         $account = new ChanAccountView(1, 'TestNick', 'en');
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $registry = new ChanServCommandRegistry([]);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -638,7 +638,7 @@ final class ChanServContextTest extends TestCase
     public function getSenderReturnsNullWhenSenderIsNull(): void
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $registry = new ChanServCommandRegistry([]);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);

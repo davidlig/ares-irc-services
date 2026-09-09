@@ -6,16 +6,16 @@ namespace App\ChanServ\Adapter\In\Irc;
 
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\Security\IrcopAuthorizationSubject;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\OperServ\Application\Port\In\IrcopAuthorizationSubject;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class ChanServContext implements IrcopAuthorizationSubject
 {
@@ -26,7 +26,7 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
         /** @var string[] */
         public array $args,
         private ChanServNotifierInterface $notifier,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private string $language,
         private string $timezone,
         /** @var 'NOTICE'|'PRIVMSG' */

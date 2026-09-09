@@ -7,6 +7,9 @@ namespace App\Tests\MemoServ\Adapter\In\Irc\Subscriber;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\MemoServ\Adapter\In\Irc\Bot\MemoServBot;
@@ -21,10 +24,6 @@ use App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences;
 use App\MemoServ\Adapter\In\Irc\Subscriber\MemoServCommandListener;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +31,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 use stdClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 #[CoversClass(MemoServCommandListener::class)]
@@ -105,7 +105,7 @@ final class MemoServCommandListenerTest extends TestCase
             languageResolver: $preferences ?? $this->createStub(MemoServUserPresentationPreferences::class),
             notifier: $notifier ?? $this->createStub(MemoServNotifierInterface::class),
             messageTypeResolver: $preferences ?? $this->createStub(MemoServUserPresentationPreferences::class),
-            translator: $this->createStub(TranslationInterface::class),
+            translator: $this->createStub(TranslatorInterface::class),
             serviceNicks: $this->createServiceNicks(),
             authorizationContext: $this->createStub(MemoAuthorizationContextInterface::class),
             authorizationChecker: $this->createStub(MemoAuthorizationCheckerInterface::class),
@@ -174,7 +174,7 @@ final class MemoServCommandListenerTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void
+            public function execute(MemoServContext $context): null
             {
                 throw $this->exception;
             }
@@ -291,9 +291,11 @@ final class MemoServCommandListenerTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void
+            public function execute(MemoServContext $context): null
             {
                 $this->state->executed = true;
+
+                return null;
             }
         };
 

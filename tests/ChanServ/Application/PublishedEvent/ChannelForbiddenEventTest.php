@@ -35,20 +35,19 @@ final class ChannelForbiddenEventTest extends TestCase
     }
 
     #[Test]
-    public function occurredAtDefaultsToNow(): void
+    public function requiresAnExplicitOccurrenceTime(): void
     {
-        $before = new DateTimeImmutable('-1 second');
+        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
         $event = new ChannelForbiddenEvent(
             channelId: 1,
             channelName: '#Test',
             channelNameLower: '#test',
             reason: 'test',
             performedBy: 'Oper',
+            occurredAt: $occurredAt,
         );
-        $after = new DateTimeImmutable('+1 second');
 
-        self::assertGreaterThanOrEqual($before, $event->occurredAt);
-        self::assertLessThanOrEqual($after, $event->occurredAt);
+        self::assertSame($occurredAt, $event->occurredAt);
     }
 
     #[Test]

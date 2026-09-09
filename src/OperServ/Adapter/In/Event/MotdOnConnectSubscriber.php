@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Event;
 
-use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
+use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Application\Service\NickForceService;
-use App\OperServ\Application\Service\PseudoClientUidGenerator;
-use App\OperServ\Domain\Entity\Motd;
-use App\OperServ\Domain\Repository\MotdRepositoryInterface;
+use App\NickServ\Application\Port\In\NickAccountQuery;
+use App\NickServ\Application\Port\In\NickCollisionResolver;
+use App\OperServ\Adapter\Out\Irc\PseudoClientUidGenerator;
+use App\OperServ\Application\Model\MessageDelivery;
+use App\OperServ\Application\Port\Out\MotdRepository;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceChannelRegistrationPort;
-use App\Shared\Application\ServiceUidRegistry;
+use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -51,16 +52,16 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
     private array $pseudoClients = [];
 
     public function __construct(
-        private readonly MotdRepositoryInterface $motdRepository,
+        private readonly MotdRepository $motdRepository,
         private readonly ServiceUidRegistry $uidRegistry,
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
+        private readonly ActiveProtocolModuleHolderInterface $connectionHolder,
         private readonly ChannelLookupPort $channelLookup,
         private readonly ServiceChannelRegistrationPort $channelRegistration,
         private readonly PseudoClientUidGenerator $pseudoUidGenerator,
         private readonly NetworkUserLookupPort $userLookup,
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly NickAccountQuery $nickAccounts,
         private readonly SendNoticePort $sendNoticePort,
-        private readonly NickForceService $nickForce,
+        private readonly NickCollisionResolver $nickCollisionResolver,
         private readonly ?string $debugChannel,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
@@ -68,7 +69,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            NetworkSyncCompleteEvent::class => ['onSyncComplete', -50],
+            NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', -50],
             UserJoinedNetworkAppEvent::class => ['onUserJoined', -60],
         ];
     }
@@ -96,10 +97,11 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
      */
     private function ensurePseudoClients(): void
     {
-        $activeMotds = $this->motdRepository->findActive();
+        $now = new DateTimeImmutable();
+        $activeMotds = $this->motdRepository->findActiveAt($now);
 
         foreach ($activeMotds as $motd) {
-            $botSpec = $motd->getBotNickname();
+            $botSpec = $motd->botNickname;
 
             if (null !== $this->uidRegistry->getUidByNickname($botSpec)) {
                 continue;
@@ -115,24 +117,24 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
 
             if (isset($this->pseudoClients[$nickLower])) {
                 $pc = &$this->pseudoClients[$nickLower];
-                if (!in_array($motd->getId(), $pc['motdIds'], true)) {
-                    $pc['motdIds'][] = $motd->getId();
+                if (!in_array($motd->id, $pc['motdIds'], true)) {
+                    $pc['motdIds'][] = $motd->id;
                 }
                 continue;
             }
 
             $existingUser = $this->userLookup->findByNick($mask->nickname);
             if (null !== $existingUser) {
-                $this->nickForce->forceGuestNick($existingUser->uid, null, 'motd-collision');
+                $this->nickCollisionResolver->forceGuestNick($existingUser->uid, null, 'motd-collision');
 
                 $this->logger->info('MotdOnConnect: renamed colliding user for MOTD pseudo-client.', [
-                    'motd_id' => $motd->getId(),
+                    'motd_id' => $motd->id,
                     'nickname' => $mask->nickname,
                     'uid' => $existingUser->uid,
                 ]);
             }
 
-            if (null !== $this->nickRepository->findByNick($nickLower)) {
+            if (null !== $this->nickAccounts->findIdByNick($nickLower)) {
                 continue;
             }
 
@@ -149,14 +151,14 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 return;
             }
 
-            $reserveSeconds = null !== $motd->getExpiresAt()
-                ? max(1, $motd->getExpiresAt()->getTimestamp() - time())
+            $reserveSeconds = null !== $motd->expiresAt
+                ? max(1, $motd->expiresAt->getTimestamp() - $now->getTimestamp())
                 : self::PERMANENT_RESERVE_SECONDS;
 
             $nickReservation->reserveNickWithDuration(
                 $mask->nickname,
                 $reserveSeconds,
-                sprintf('MOTD #%d pseudo-client', $motd->getId()),
+                sprintf('MOTD #%d pseudo-client', $motd->id),
             );
 
             $module->getServiceActions()->introducePseudoClient(
@@ -168,17 +170,16 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 $mask->nickname,
             );
 
-            $motdId = $motd->getId();
             $this->pseudoClients[$nickLower] = [
                 'uid' => $uid,
                 'mask' => $mask,
-                'motdIds' => null !== $motdId ? [$motdId] : [],
+                'motdIds' => [$motd->id],
             ];
 
             $this->joinPseudoClientToDebugChannel($uid);
 
             $this->logger->info('MotdOnConnect: introduced pseudo-client.', [
-                'motd_id' => $motd->getId(),
+                'motd_id' => $motd->id,
                 'nickname' => $mask->nickname,
                 'uid' => $uid,
             ]);
@@ -193,10 +194,10 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
     {
         $all = $this->motdRepository->findAll();
         $activeMap = [];
-        foreach ($all as $m) {
-            $mId = $m->getId();
-            if (null !== $mId && $m->isEnabled() && !$m->isExpired()) {
-                $activeMap[$mId] = true;
+        $now = new DateTimeImmutable();
+        foreach ($all as $motd) {
+            if ($motd->enabled && !$motd->isExpiredAt($now)) {
+                $activeMap[$motd->id] = true;
             }
         }
 
@@ -222,21 +223,20 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
 
     private function sendMotds(UserJoinedNetworkAppEvent $event): void
     {
-        $activeMotds = $this->motdRepository->findActive();
+        $activeMotds = $this->motdRepository->findActiveAt(new DateTimeImmutable());
 
         foreach ($activeMotds as $motd) {
-            $botSpec = $motd->getBotNickname();
+            $botSpec = $motd->botNickname;
 
             $serviceUid = $this->uidRegistry->getUidByNickname($botSpec);
             if (null !== $serviceUid) {
                 $this->sendNoticePort->sendMessage(
                     $serviceUid,
                     $event->user->uid,
-                    $motd->getText(),
-                    $motd->getMessageType(),
+                    $motd->text,
+                    $this->messageType($motd->delivery),
                 );
-                $motd->recordShown();
-                $this->motdRepository->save($motd);
+                $this->motdRepository->recordShown($motd->id);
 
                 continue;
             }
@@ -254,13 +254,21 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 $this->sendNoticePort->sendMessage(
                     $pc['uid'],
                     $event->user->uid,
-                    $motd->getText(),
-                    $motd->getMessageType(),
+                    $motd->text,
+                    $this->messageType($motd->delivery),
                 );
-                $motd->recordShown();
-                $this->motdRepository->save($motd);
+                $this->motdRepository->recordShown($motd->id);
             }
         }
+    }
+
+    /** @return 'NOTICE'|'PRIVMSG' */
+    private function messageType(MessageDelivery $delivery): string
+    {
+        return match ($delivery) {
+            MessageDelivery::NonInteractive => 'NOTICE',
+            MessageDelivery::Interactive => 'PRIVMSG',
+        };
     }
 
     private function joinPseudoClientToDebugChannel(string $uid): void

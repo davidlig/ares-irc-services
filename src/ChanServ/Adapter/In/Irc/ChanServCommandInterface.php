@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Adapter\In\Irc;
 
+use App\ChanServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
-use App\Shared\Application\Help\HelpableCommandInterface;
 
 /**
  * Contract every ChanServ command module must implement.

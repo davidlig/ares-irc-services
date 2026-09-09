@@ -13,7 +13,7 @@ use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Shared\Application\Port\ServiceCommandListenerInterface;
+use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;

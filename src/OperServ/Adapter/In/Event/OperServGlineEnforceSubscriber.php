@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Event;
 
-use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
+use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
+use App\OperServ\Application\Port\Out\GlineEntry;
+use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Domain\Entity\Gline;
-use App\OperServ\Domain\Repository\GlineRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -18,21 +20,21 @@ use function count;
 final readonly class OperServGlineEnforceSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private GlineRepositoryInterface $glineRepository,
-        private ActiveConnectionHolderInterface $connectionHolder,
+        private GlineRepository $glineRepository,
+        private ActiveProtocolModuleHolderInterface $connectionHolder,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public static function getSubscribedEvents(): array
     {
         return [
-            NetworkSyncCompleteEvent::class => ['onSyncComplete', 0],
+            NetworkSynchronizationCompletedEvent::class => ['onSyncComplete', 0],
         ];
     }
 
-    public function onSyncComplete(NetworkSyncCompleteEvent $event): void
+    public function onSyncComplete(NetworkSynchronizationCompletedEvent $event): void
     {
-        $glines = $this->glineRepository->findActive();
+        $glines = $this->glineRepository->findActiveAt(new DateTimeImmutable());
 
         if ([] === $glines) {
             return;
@@ -63,23 +65,23 @@ final readonly class OperServGlineEnforceSubscriber implements EventSubscriberIn
         ]);
     }
 
-    private function sendGline(Gline $gline, string $serverSid, ProtocolServiceActionsInterface $serviceActions): void
+    private function sendGline(GlineEntry $gline, string $serverSid, ProtocolServiceActionsInterface $serviceActions): void
     {
-        $parts = Gline::parseUserHost($gline->getMask());
-        $duration = null === $gline->getExpiresAt()
+        $parts = Gline::parseUserHost($gline->mask);
+        $duration = null === $gline->expiresAt
             ? 0
-            : max(0, $gline->getExpiresAt()->getTimestamp() - time());
+            : max(0, $gline->expiresAt->getTimestamp() - time());
 
         $serviceActions->addGline(
             $serverSid,
             $parts['user'],
             $parts['host'],
             $duration,
-            $gline->getReason() ?? 'No reason provided',
+            $gline->reason ?? 'No reason provided',
         );
 
         $this->logger->debug('GLINE reapplied', [
-            'mask' => $gline->getMask(),
+            'mask' => $gline->mask,
             'duration' => $duration,
         ]);
     }

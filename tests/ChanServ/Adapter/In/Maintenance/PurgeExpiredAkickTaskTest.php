@@ -7,7 +7,7 @@ namespace App\Tests\ChanServ\Adapter\In\Maintenance;
 use App\ChanServ\Adapter\In\Maintenance\PurgeExpiredAkickTask;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelAkick;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -6,7 +6,7 @@ namespace App\ChanServ\Adapter\Out\Network;
 
 use App\ChanServ\Application\Port\Out\ChannelModeActions;
 use App\ChanServ\Domain\ValueObject\ModeChangeAction;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 
 final readonly class IrcChannelModeActions implements ChannelModeActions
 {

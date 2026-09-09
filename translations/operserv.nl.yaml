@@ -274,15 +274,15 @@ raw:
   too_long:         "\x0304✗\x03 Regel is te lang. Maximum 510 tekens."
   not_connected:    "\x0304✗\x03 Niet verbonden met IRCd."
   done:             "\x0303✓\x03 Rauwe regel verzonden."
-  udb:
-    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
-    done:          "\x0303✓\x03 UDB-mutatie toegepast: autoritatief opgeslagen en in de wachtrij voor verspreiding."
-    target:        "\x0304✗\x03 UDB-mutaties moeten aan alle servers gericht zijn (DB * ...), niet aan %target%."
-    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT wordt niet ondersteund via RAW."
-    invalid_block: "\x0304✗\x03 Onbekende UDB-blok: %block%."
-    invalid_path:  "\x0304✗\x03 Ongeldig UDB-recordpad: %path%."
-    invalid_value: "\x0304✗\x03 Ongeldige UDB-recordwaarde voor: %path%."
-    error:         "\x0304✗\x03 Schrijven naar de UDB-opslag mislukt; de mutatie is niet verspreid."
+  protocol:
+    syntax: "\x0304✗\x03 Het actieve protocol heeft de syntaxis van het RAW-commando geweigerd."
+    done: "\x0303✓\x03 RAW-commando van het protocol uitgevoerd."
+    target: "\x0304✗\x03 Het actieve protocol heeft doel %target% geweigerd."
+    unsupported: "\x0304✗\x03 Het actieve protocol ondersteunt dit RAW-commando niet."
+    invalid_resource_type: "\x0304✗\x03 Onbekend protocolresourcetype: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Ongeldige protocolresource: %resource%."
+    invalid_value: "\x0304✗\x03 Ongeldige waarde voor protocolresource: %resource%."
+    error: "\x0304✗\x03 Het actieve protocol kon het RAW-commando niet uitvoeren."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

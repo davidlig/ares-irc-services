@@ -116,7 +116,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
 
     private function createChannelWithId(string $name, int $id, string $description): RegisteredChannel
     {
-        $channel = RegisteredChannel::register($name, 1, $description);
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), $name, 1, $description);
 
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, $id);

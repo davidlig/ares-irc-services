@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\RecoverCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
@@ -14,14 +16,12 @@ use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\UseCase\Recover\RecoverNick;
 use App\NickServ\Application\UseCase\Recover\RecoverNickHandlerInterface;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function base64_encode;
 use function inet_pton;
@@ -188,7 +188,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
             unset($params['%bot%'], $params['%nickserv%']);
             if ([] === $params) {

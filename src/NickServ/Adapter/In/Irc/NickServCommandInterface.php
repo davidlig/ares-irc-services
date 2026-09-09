@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
-use App\Shared\Application\Help\HelpableCommandInterface;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\NickServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 
 /**
  * Contract every NickServ command module must implement.
@@ -89,6 +90,5 @@ interface NickServCommandInterface extends HelpableCommandInterface
      */
     public function getHelpParams(): array;
 
-    /** @phpstan-return mixed Legacy handlers return either a command outcome or void. */
-    public function execute(NickServContext $context);
+    public function execute(NickServContext $context): ?CommandOutcome;
 }

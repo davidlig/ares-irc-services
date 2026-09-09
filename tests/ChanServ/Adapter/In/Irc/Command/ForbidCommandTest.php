@@ -10,22 +10,33 @@ use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\ForbidCommand;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\Service\ChannelSuspensionService;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleResult;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ForbidCommand::class)]
+#[UsesClass(ManageChannelLifecycleHandler::class)]
+#[UsesClass(ManageChannelLifecycle::class)]
+#[UsesClass(ChannelLifecycleResult::class)]
 final class ForbidCommandTest extends TestCase
 {
     #[Test]
@@ -133,7 +144,7 @@ final class ForbidCommandTest extends TestCase
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
         $forbiddenService->expects(self::never())->method('forbid');
 
-        $cmd = new ForbidCommand($channelRepository, $forbiddenService);
+        $cmd = $this->createCommandWith($channelRepository, $forbiddenService);
 
         $messages = [];
         $context = $this->createContext(null, ['#test', 'abuse'], $messages);
@@ -153,7 +164,7 @@ final class ForbidCommandTest extends TestCase
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
         $forbiddenService->expects(self::never())->method('forbid');
 
-        $cmd = new ForbidCommand($channelRepository, $forbiddenService);
+        $cmd = $this->createCommandWith($channelRepository, $forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['notachannel', 'abuse'], $messages);
@@ -173,7 +184,7 @@ final class ForbidCommandTest extends TestCase
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
         $forbiddenService->expects(self::never())->method('forbid');
 
-        $cmd = new ForbidCommand($channelRepository, $forbiddenService);
+        $cmd = $this->createCommandWith($channelRepository, $forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test', ''], $messages);
@@ -193,7 +204,7 @@ final class ForbidCommandTest extends TestCase
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
         $forbiddenService->expects(self::never())->method('forbid');
 
-        $cmd = new ForbidCommand($channelRepository, $forbiddenService);
+        $cmd = $this->createCommandWith($channelRepository, $forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test', '  '], $messages);
@@ -207,7 +218,7 @@ final class ForbidCommandTest extends TestCase
     public function executeForbidsNewChannelSuccessfully(): void
     {
         $sender = $this->createSender();
-        $forbiddenChannel = RegisteredChannel::createForbidden('#test', 'abuse');
+        $forbiddenChannel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#test', 'abuse');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($forbiddenChannel, 1);
 
@@ -215,9 +226,9 @@ final class ForbidCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn(null);
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
-        $forbiddenService->expects(self::once())->method('forbid')->with('#test', 'abuse', 'OperUser')->willReturn($forbiddenChannel);
+        $forbiddenService->expects(self::once())->method('forbid')->with('#test', 'abuse', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn($forbiddenChannel);
 
-        $cmd = new ForbidCommand($channelRepository, $forbiddenService);
+        $cmd = $this->createCommandWith($channelRepository, $forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test', 'abuse'], $messages);
@@ -231,7 +242,7 @@ final class ForbidCommandTest extends TestCase
     public function executeUpdatesReasonOfAlreadyForbiddenChannel(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::createForbidden('#test', 'old reason');
+        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#test', 'old reason');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, 1);
 
@@ -239,9 +250,9 @@ final class ForbidCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
-        $forbiddenService->expects(self::once())->method('forbid')->with('#test', 'new reason', 'OperUser')->willReturn($channel);
+        $forbiddenService->expects(self::once())->method('forbid')->with('#test', 'new reason', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn($channel);
 
-        $cmd = new ForbidCommand($channelRepository, $forbiddenService);
+        $cmd = $this->createCommandWith($channelRepository, $forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test', 'new', 'reason'], $messages);
@@ -255,11 +266,11 @@ final class ForbidCommandTest extends TestCase
     public function executeForbidsExistingNonForbiddenChannel(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::register('#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, 1);
 
-        $forbiddenChannel = RegisteredChannel::createForbidden('#test', 'abuse');
+        $forbiddenChannel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#test', 'abuse');
         $ref2 = new ReflectionProperty(RegisteredChannel::class, 'id');
         $ref2->setValue($forbiddenChannel, 2);
 
@@ -267,9 +278,9 @@ final class ForbidCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
-        $forbiddenService->expects(self::once())->method('forbid')->with('#test', 'abuse', 'OperUser')->willReturn($forbiddenChannel);
+        $forbiddenService->expects(self::once())->method('forbid')->with('#test', 'abuse', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn($forbiddenChannel);
 
-        $cmd = new ForbidCommand($channelRepository, $forbiddenService);
+        $cmd = $this->createCommandWith($channelRepository, $forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test', 'abuse'], $messages);
@@ -283,7 +294,7 @@ final class ForbidCommandTest extends TestCase
     public function getAuditDataReturnsDataAfterSuccessfulForbid(): void
     {
         $sender = $this->createSender();
-        $forbiddenChannel = RegisteredChannel::createForbidden('#test', 'abuse');
+        $forbiddenChannel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#test', 'abuse');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($forbiddenChannel, 1);
 
@@ -293,7 +304,7 @@ final class ForbidCommandTest extends TestCase
         $forbiddenService = $this->createStub(ChannelForbiddenService::class);
         $forbiddenService->method('forbid')->willReturn($forbiddenChannel);
 
-        $cmd = new ForbidCommand($channelRepository, $forbiddenService);
+        $cmd = $this->createCommandWith($channelRepository, $forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test', 'abuse'], $messages);
@@ -310,7 +321,7 @@ final class ForbidCommandTest extends TestCase
     public function getAuditDataReturnsDataAfterUpdatedForbid(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::createForbidden('#test', 'old reason');
+        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#test', 'old reason');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, 1);
 
@@ -320,7 +331,7 @@ final class ForbidCommandTest extends TestCase
         $forbiddenService = $this->createStub(ChannelForbiddenService::class);
         $forbiddenService->method('forbid')->willReturn($channel);
 
-        $cmd = new ForbidCommand($channelRepository, $forbiddenService);
+        $cmd = $this->createCommandWith($channelRepository, $forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test', 'new', 'reason'], $messages);
@@ -338,7 +349,7 @@ final class ForbidCommandTest extends TestCase
     {
         $sender = $this->createSender();
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommandWith(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelForbiddenService::class),
         );
@@ -356,7 +367,7 @@ final class ForbidCommandTest extends TestCase
     {
         $sender = $this->createSender();
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommandWith(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelForbiddenService::class),
         );
@@ -371,10 +382,23 @@ final class ForbidCommandTest extends TestCase
 
     private function createCommand(): ForbidCommand
     {
-        return new ForbidCommand(
+        return $this->createCommandWith(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelForbiddenService::class),
         );
+    }
+
+    private function createCommandWith(
+        RegisteredChannelRepositoryInterface $channels,
+        ChannelForbiddenService $forbiddenService,
+    ): ForbidCommand {
+        return new ForbidCommand(new ManageChannelLifecycleHandler(
+            $channels,
+            $this->createStub(ChanDropService::class),
+            $forbiddenService,
+            $this->createStub(ChannelSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+        ));
     }
 
     private function createSender(): SenderView
@@ -398,7 +422,7 @@ final class ForbidCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(

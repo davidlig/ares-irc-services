@@ -74,7 +74,7 @@ final readonly class StatusCommand implements NickServCommandInterface
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): null
     {
         $targetNick = $context->args[0];
         $onlineUser = $this->userLookup->findByNick($targetNick);
@@ -86,6 +86,8 @@ final readonly class StatusCommand implements NickServCommandInterface
         ));
 
         $this->present($context, $result);
+
+        return null;
     }
 
     private function present(NickServContext $context, StatusNickResult $result): void

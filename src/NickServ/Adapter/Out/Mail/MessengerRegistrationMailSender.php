@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\Mail;
 
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
-use App\Shared\Application\Port\TranslationInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 final readonly class MessengerRegistrationMailSender implements RegistrationMailSender
 {
     public function __construct(
         private MessageBusInterface $messageBus,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private LoggerInterface $logger,
         private string $nickservNick,
     ) {}

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Protocol;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\NickServ\Application\Port\Out\NicknameReservation;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 
 final readonly class ProtocolNicknameReservation implements NicknameReservation
 {
-    public function __construct(private ActiveConnectionHolderInterface $connectionHolder) {}
+    public function __construct(private ActiveProtocolModuleHolderInterface $connectionHolder) {}
 
     public function reserve(string $nickname, string $reason): void
     {

@@ -10,7 +10,7 @@ framework:
             async_emails: 'doctrine://default?queue_name=emails&auto_setup=0'
 
         routing:
-            App\Bootstrap\Maintenance\Message\RunMaintenanceCycle: sync
+            App\Irc\Application\Port\In\Maintenance\RunMaintenanceCycle: sync
             App\Shared\Application\Mail\Message\SendEmail: async_emails
             App\NickServ\Adapter\Out\Mail\RegistrationVerificationEmail: async_emails
             App\ChanServ\Adapter\Out\Mail\FounderChangeEmail: async_emails

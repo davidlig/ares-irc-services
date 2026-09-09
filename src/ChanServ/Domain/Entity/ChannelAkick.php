@@ -49,6 +49,7 @@ class ChannelAkick
     private ?DateTimeImmutable $expiresAt = null;
 
     private function __construct(
+        DateTimeImmutable $createdAt,
         int $channelId,
         int $creatorNickId,
         string $mask,
@@ -59,18 +60,19 @@ class ChannelAkick
         $this->creatorNickId = $creatorNickId;
         $this->setMask($mask);
         $this->setReason($reason);
-        $this->createdAt = new DateTimeImmutable();
+        $this->createdAt = $createdAt;
         $this->expiresAt = $expiresAt;
     }
 
     public static function create(
+        DateTimeImmutable $createdAt,
         int $channelId,
         int $creatorNickId,
         string $mask,
         ?string $reason = null,
         ?DateTimeImmutable $expiresAt = null,
     ): self {
-        return new self($channelId, $creatorNickId, $mask, $reason, $expiresAt);
+        return new self($createdAt, $channelId, $creatorNickId, $mask, $reason, $expiresAt);
     }
 
     public function getId(): int
@@ -108,9 +110,9 @@ class ChannelAkick
         return $this->createdAt;
     }
 
-    public function isExpired(): bool
+    public function isExpired(DateTimeImmutable $now): bool
     {
-        return null !== $this->expiresAt && $this->expiresAt < new DateTimeImmutable();
+        return null !== $this->expiresAt && $this->expiresAt < $now;
     }
 
     /**

@@ -14,22 +14,31 @@ use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
 use App\ChanServ\Application\Service\ChannelHistoryService;
+use App\ChanServ\Application\UseCase\ManageHistory\ChannelHistoryEntryView;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistory;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryHandler;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryResult;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HistoryCommand::class)]
+#[CoversClass(ChannelHistoryEntryView::class)]
+#[CoversClass(ManageChannelHistory::class)]
+#[CoversClass(ManageChannelHistoryHandler::class)]
+#[CoversClass(ManageChannelHistoryResult::class)]
 final class HistoryCommandTest extends TestCase
 {
     #[Test]
@@ -152,7 +161,7 @@ final class HistoryCommandTest extends TestCase
 
         $context = $this->createContextWithNullSender(['#test', 'VIEW'], historyRepo: $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -201,7 +210,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['#test', 'ADD'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -225,7 +234,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['#test', 'ADD', '   '], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -256,7 +265,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['#test', 'ADD', 'Manual', 'note'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             $historyService,
@@ -342,6 +351,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 999,
             action: 'TEST',
             performedBy: 'OtherUser',
@@ -369,6 +379,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'TEST',
             performedBy: 'OperUser',
@@ -430,7 +441,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['#test', 'VIEW', '2'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -478,7 +489,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['#test', 'VIEW', '-5'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -504,7 +515,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['#test', 'VIEW', '1'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -524,6 +535,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'SUSPEND',
             performedBy: 'OperUser',
@@ -534,6 +546,7 @@ final class HistoryCommandTest extends TestCase
         $history1 = self::historyWithId($history1, 1);
 
         $history2 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'SET_EMAIL',
             performedBy: 'User',
@@ -544,6 +557,7 @@ final class HistoryCommandTest extends TestCase
         $history2 = self::historyWithId($history2, 2);
 
         $history3 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'RECOVER',
             performedBy: 'Admin',
@@ -577,6 +591,7 @@ final class HistoryCommandTest extends TestCase
         $nickRepo->method('findAccountById')->willReturn(null);
 
         $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'TEST',
             performedBy: 'OldUser',
@@ -593,7 +608,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo, nickRepo: $nickRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -616,6 +631,7 @@ final class HistoryCommandTest extends TestCase
         $nickRepo->method('findAccountById')->willReturn($operNick);
 
         $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'TEST',
             performedBy: 'KnownOper',
@@ -632,7 +648,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo, nickRepo: $nickRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -651,6 +667,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'SUSPEND',
             performedBy: 'OperUser',
@@ -734,7 +751,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContextWithIp(['#test', 'ADD', 'Test', 'note'], $messages, '', $channelRepo, $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -765,7 +782,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContextWithIp(['#test', 'ADD', 'Test', 'note'], $messages, '*', $channelRepo, $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -796,7 +813,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContextWithIp(['#test', 'ADD', 'Test', 'note'], $messages, 'invalid!base64', $channelRepo, $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -827,7 +844,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContextWithIp(['#test', 'ADD', 'Test', 'note'], $messages, 'AQID', $channelRepo, $historyRepo);
 
-        $cmd = new HistoryCommand(
+        $cmd = $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -848,6 +865,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'SUCCESSOR',
             performedBy: 'OperUser',
@@ -878,6 +896,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'FOUNDER',
             performedBy: 'OperUser',
@@ -908,6 +927,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'ACCESS_ADD',
             performedBy: 'OperUser',
@@ -938,6 +958,7 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
             channelId: 1,
             action: 'AKICK_ADD',
             performedBy: 'OperUser',
@@ -960,11 +981,27 @@ final class HistoryCommandTest extends TestCase
         self::assertContains('history.view.header', $messages);
     }
 
+    private function buildCommand(
+        RegisteredChannelRepositoryInterface $channelRepository,
+        ChannelHistoryRepositoryInterface $historyRepository,
+        ChannelHistoryService $historyService,
+        ChanUserAccountPort $accountPort,
+        int $historyViewLimit = 40,
+    ): HistoryCommand {
+        return new HistoryCommand(new ManageChannelHistoryHandler(
+            $channelRepository,
+            $historyRepository,
+            $historyService,
+            $accountPort,
+            $historyViewLimit,
+        ));
+    }
+
     private function createCommand(): HistoryCommand
     {
         $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
 
-        return new HistoryCommand(
+        return $this->buildCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -976,7 +1013,7 @@ final class HistoryCommandTest extends TestCase
         RegisteredChannelRepositoryInterface $channelRepo,
         ChannelHistoryRepositoryInterface $historyRepo,
     ): HistoryCommand {
-        return new HistoryCommand(
+        return $this->buildCommand(
             $channelRepo,
             $historyRepo,
             new ChannelHistoryService($historyRepo),
@@ -996,7 +1033,7 @@ final class HistoryCommandTest extends TestCase
 
     private function createChannelWithId(string $channelName, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register($channelName, 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, 1, 'Test channel');
 
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
@@ -1023,7 +1060,7 @@ final class HistoryCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $historyRepoFinal = $historyRepo ?? $this->createStub(ChannelHistoryRepositoryInterface::class);
@@ -1051,7 +1088,7 @@ final class HistoryCommandTest extends TestCase
     private function createContextWithNullSender(array $args, ChannelHistoryRepositoryInterface $historyRepo): ChanServContext
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(
@@ -1090,7 +1127,7 @@ final class HistoryCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(

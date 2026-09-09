@@ -7,7 +7,7 @@ namespace App\Irc\Application\Port\In\Maintenance;
 /**
  * Contract for periodic maintenance tasks executed from the IRC event loop.
  *
- * Tasks are collected by MaintenanceScheduler and executed sequentially
+ * Tasks are collected by the IRC maintenance inbound adapter and executed sequentially
  * in ascending order (getOrder()). Gaps of 100 between values leave room
  * for future tasks to be inserted without renumbering.
  *

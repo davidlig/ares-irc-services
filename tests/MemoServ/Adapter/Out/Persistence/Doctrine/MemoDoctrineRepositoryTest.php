@@ -7,7 +7,7 @@ namespace App\Tests\MemoServ\Adapter\Out\Persistence\Doctrine;
 use App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoDoctrineRepository;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Domain\Entity\Memo;
-use App\Tests\Integration\DoctrineIntegrationTestCase;
+use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;

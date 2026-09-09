@@ -5,22 +5,24 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\UseCase\UpdateSetting\ChannelSetting;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerInterface;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingOutcome;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
-
-use function trim;
 
 final readonly class SetUrlHandler implements SetOptionHandlerInterface
 {
-    public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-    ) {}
+    use BuildsUpdateChannelSettingRequest;
+
+    public function __construct(private UpdateChannelSettingHandlerInterface $handler) {}
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
-        $url = '' === trim($value) ? null : trim($value);
-        $channel->updateUrl($url);
-        $this->channelRepository->save($channel);
-        $context->reply(null !== $url ? 'set.url.updated' : 'set.url.cleared');
+        $request = $this->settingRequest($context, $channel, ChannelSetting::Url, $value);
+        if (null === $request) {
+            return;
+        }
+        $result = $this->handler->handle($request);
+        $context->reply(UpdateChannelSettingOutcome::Cleared === $result->outcome ? 'set.url.cleared' : 'set.url.updated');
     }
 }

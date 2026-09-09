@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\In\Irc;
 
 use App\ChanServ\Adapter\In\Irc\MlockStateFromChannelResolver;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelView;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

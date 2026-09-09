@@ -11,7 +11,7 @@ use DateTimeImmutable;
  *
  * When an unidentified user joins or changes nick to a registered nickname,
  * a short grace period is scheduled before forcing a guest rename.
- * If the IRCd authenticates the user (e.g. UDB / SASL) and emits +r mode,
+ * If the IRCd authenticates the user and emits +r mode,
  * the pending check is cancelled, avoiding false guest renames.
  */
 interface PendingNickProtectionRegistryInterface

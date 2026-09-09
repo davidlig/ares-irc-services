@@ -18,23 +18,23 @@ use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeName;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetMlockHandler::class)]
 final class SetMlockHandlerTest extends TestCase
 {
     private function createContext(
         ChanServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         ?ChannelLookupPort $channelLookup = null,
         ?ChannelModeSupportInterface $modeSupport = null,
     ): ChanServContext {
@@ -67,7 +67,7 @@ final class SetMlockHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetMlockHandler($configureMlock, $resolver);
@@ -97,7 +97,7 @@ final class SetMlockHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetMlockHandler($configureMlock, $resolver);
@@ -133,7 +133,7 @@ final class SetMlockHandlerTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetMlockHandler($configureMlock, $resolver);
@@ -161,7 +161,7 @@ final class SetMlockHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetMlockHandler($configureMlock, $resolver);

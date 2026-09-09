@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Runtime;
 
 use Amp\Future;
-use App\Bootstrap\Maintenance\Message\RunMaintenanceCycle;
 use App\Irc\Adapter\Event\ConnectionEstablishedEvent;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
@@ -14,6 +13,7 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Application\BurstCompleteRegistry;
 use App\Irc\Application\IrcSessionInterface;
+use App\Irc\Application\Port\In\Maintenance\RunMaintenanceCycle;
 use App\Irc\Domain\Server\ServerLink;
 use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
 use App\Shared\Application\Port\EventBusInterface;

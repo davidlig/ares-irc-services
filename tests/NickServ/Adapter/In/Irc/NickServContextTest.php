@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NickServContext::class)]
 final class NickServContextTest extends TestCase
@@ -29,7 +29,7 @@ final class NickServContextTest extends TestCase
     private function createContext(
         ?SenderView $sender,
         NickServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         array $args = [],
         ?NickServCommandRegistry $registry = null,
         ?PendingVerificationRegistry $pendingVerification = null,
@@ -64,7 +64,7 @@ final class NickServContextTest extends TestCase
         $context = $this->createContext(
             $sender,
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             senderAccount: $account,
         );
 
@@ -136,7 +136,7 @@ final class NickServContextTest extends TestCase
     public function getLanguageAndGetTimezoneReturnInjectedValues(): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -159,7 +159,7 @@ final class NickServContextTest extends TestCase
             'INFO',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -185,7 +185,7 @@ final class NickServContextTest extends TestCase
             'INFO',
             [],
             $notifier,
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -204,7 +204,7 @@ final class NickServContextTest extends TestCase
     public function formatDateReturnsFormattedString(): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -223,7 +223,7 @@ final class NickServContextTest extends TestCase
     public function formatDateReturnsDashWhenNull(): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -238,7 +238,7 @@ final class NickServContextTest extends TestCase
     public function transDelegatesToTranslatorWithCatalogAndLocale(): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())
             ->method('trans')
             ->with('info.key', self::anything(), 'nickserv', 'en')
@@ -257,7 +257,7 @@ final class NickServContextTest extends TestCase
     public function transInUsesExplicitLanguageWhenProvided(): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())
             ->method('trans')
             ->with('key', self::anything(), 'nickserv', 'es')
@@ -280,7 +280,7 @@ final class NickServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -299,7 +299,7 @@ final class NickServContextTest extends TestCase
     {
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $context = $this->createContext(null, $notifier, $translator, []);
 
@@ -314,7 +314,7 @@ final class NickServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -332,7 +332,7 @@ final class NickServContextTest extends TestCase
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('NickServ');
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())
             ->method('trans')
             ->with('key', self::callback(static fn (array $p) => isset($p['%nick%']) && 'User' === $p['%nick%'] && isset($p['%bot%']) && 'NickServ' === $p['%bot%']), 'nickserv', 'en')
@@ -352,7 +352,7 @@ final class NickServContextTest extends TestCase
     {
         $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $serviceNicks = $this->createServiceNicks('NickServ');
 
         $context = new NickServContext(
@@ -380,7 +380,7 @@ final class NickServContextTest extends TestCase
         $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
         $account = $this->createStub(RegisteredNick::class);
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $serviceNicks = $this->createServiceNicks('NickServ');
 
         $context = new NickServContext(
@@ -406,7 +406,7 @@ final class NickServContextTest extends TestCase
     public function getSenderReturnsNullWhenSenderIsNull(): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $serviceNicks = $this->createServiceNicks('NickServ');
 
         $context = new NickServContext(

@@ -19,6 +19,6 @@ final readonly class ChannelUnsuspendedEvent
         public ?int $performedByNickId,
         public string $performedByIp,
         public string $performedByHost,
-        public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
+        public DateTimeImmutable $occurredAt,
     ) {}
 }

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\OperServ\Adapter\In\Irc\Command\MotdCommand;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
+use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotd;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotdHandlerInterface;
@@ -17,13 +19,12 @@ use App\OperServ\Application\UseCase\ManageMotd\ManageMotdOutcome;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotdResult;
 use App\OperServ\Application\UseCase\ManageMotd\MotdAction;
 use App\OperServ\Application\UseCase\ManageMotd\MotdListEntry;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_slice;
 
@@ -56,19 +57,21 @@ final class MotdCommandTest extends TestCase
         $handler = new RecordingMotdCommandHandler();
         $command = new MotdCommand($handler);
         $command->execute($this->context(['ADD', ' NickServ ', ' notice ', ' 1h ', ' Welcome ', 'all']));
+        $command->execute($this->context(['ADD', ' OperServ ', ' privmsg ', ' 2h ', ' Interactive ']));
         $command->execute($this->context(['DEL', ' 42 ']));
         $command->execute($this->context(['LIST']));
         $command->execute($this->context(['CLEAN']));
         $command->execute($this->context(['unknown']));
 
-        self::assertSame([MotdAction::Add, MotdAction::Delete, MotdAction::List, MotdAction::Clean, MotdAction::Unknown], array_map(static fn (ManageMotd $input): MotdAction => $input->action, $handler->inputs));
+        self::assertSame([MotdAction::Add, MotdAction::Add, MotdAction::Delete, MotdAction::List, MotdAction::Clean, MotdAction::Unknown], array_map(static fn (ManageMotd $input): MotdAction => $input->action, $handler->inputs));
         self::assertSame('Oper', $handler->inputs[0]->actor);
         self::assertSame(42, $handler->inputs[0]->actorAccountId);
         self::assertSame('NickServ', $handler->inputs[0]->botNickname);
-        self::assertSame('NOTICE', $handler->inputs[0]->messageType);
+        self::assertSame(MessageDelivery::NonInteractive, $handler->inputs[0]->delivery);
         self::assertSame('1h', $handler->inputs[0]->expiry);
         self::assertSame('Welcome  all', $handler->inputs[0]->text);
-        self::assertSame('42', $handler->inputs[1]->id);
+        self::assertSame(MessageDelivery::Interactive, $handler->inputs[1]->delivery);
+        self::assertSame('42', $handler->inputs[2]->id);
     }
 
     /** @param list<string> $arguments */
@@ -116,9 +119,9 @@ final class MotdCommandTest extends TestCase
     {
         $notifier = new RecordingMotdCommandNotifier();
         $result = new ManageMotdResult(ManageMotdOutcome::Listed, entries: [
-            new MotdListEntry(1, 'Expired', '', 'NOTICE', true, true, null, 0),
-            new MotdListEntry(2, 'Enabled', 'NickServ', 'PRIVMSG', true, false, new DateTimeImmutable('2026-09-08T10:00:00+00:00'), 2),
-            new MotdListEntry(3, 'Disabled', 'OperServ', 'NOTICE', false, false, null, 3),
+            new MotdListEntry(1, 'Expired', '', MessageDelivery::NonInteractive, true, true, null, 0),
+            new MotdListEntry(2, 'Enabled', 'NickServ', MessageDelivery::Interactive, true, false, new DateTimeImmutable('2026-09-08T10:00:00+00:00'), 2),
+            new MotdListEntry(3, 'Disabled', 'OperServ', MessageDelivery::NonInteractive, false, false, null, 3),
         ]);
 
         new MotdCommand(new RecordingMotdCommandHandler($result))->execute($this->context(['LIST'], $notifier));
@@ -181,11 +184,17 @@ final class RecordingMotdCommandHandler implements ManageMotdHandlerInterface
     }
 }
 
-final class RecordingMotdCommandTranslation implements TranslationInterface
+final class RecordingMotdCommandTranslation implements TranslatorInterface
 {
+    /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         return $id;
+    }
+
+    public function getLocale(): string
+    {
+        return 'en';
     }
 }
 

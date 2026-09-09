@@ -6,7 +6,6 @@ namespace App\Tests\NickServ\Adapter\Out\Mail;
 
 use App\NickServ\Adapter\Out\Mail\MessengerRecoveryMailSender;
 use App\NickServ\Adapter\Out\Mail\RegistrationVerificationEmail;
-use App\Shared\Application\Port\TranslationInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -14,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function serialize;
 use function str_contains;
@@ -24,7 +24,7 @@ final class MessengerRecoveryMailSenderTest extends TestCase
     #[Test]
     public function translatesAndDispatchesTheRecoveryMail(): void
     {
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::exactly(2))->method('trans')->willReturnMap([
             ['recovery_token_subject', ['%bot%' => 'ConfiguredServ'], 'mail', 'es', 'subject'],
             ['recovery_token_body', ['%nickname%' => 'Nick', '%token%' => 'safe-token', '%bot%' => 'ConfiguredServ'], 'mail', 'es', 'body'],
@@ -48,7 +48,7 @@ final class MessengerRecoveryMailSenderTest extends TestCase
     #[Test]
     public function logsOnlySafeMetadataAndRethrowsDeliveryFailure(): void
     {
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('translated');
         $dispatcher = $this->createMock(MessageBusInterface::class);
         $dispatcher->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('transport failed'));

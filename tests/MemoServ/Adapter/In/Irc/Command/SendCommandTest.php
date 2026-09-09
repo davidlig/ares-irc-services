@@ -6,6 +6,8 @@ namespace App\Tests\MemoServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\MemoServ\Adapter\In\Irc\Command\SendCommand;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
@@ -15,14 +17,12 @@ use App\MemoServ\Application\UseCase\Send\SendMemo;
 use App\MemoServ\Application\UseCase\Send\SendMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Send\SendMemoResult;
 use App\MemoServ\Domain\Entity\Memo;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
 use function is_scalar;
@@ -59,7 +59,7 @@ final class SendCommandTest extends TestCase
         array $args,
         array &$replies = [],
         ?MemoServNotifierInterface $notifier = null,
-        ?TranslationInterface $translator = null,
+        ?TranslatorInterface $translator = null,
     ): MemoServContext {
         if (null === $notifier) {
             $notifier = $this->createStub(MemoServNotifierInterface::class);
@@ -70,7 +70,7 @@ final class SendCommandTest extends TestCase
         }
 
         if (null === $translator) {
-            $translator = $this->createStub(TranslationInterface::class);
+            $translator = $this->createStub(TranslatorInterface::class);
             $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
                 unset($params['%bot%'], $params['%memoserv%']);
                 if ([] === $params) {
@@ -107,7 +107,7 @@ final class SendCommandTest extends TestCase
         $command = new SendCommand(
             $this->createStub(SendMemoHandlerInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
         );
 
         self::assertSame('SEND', $command->getName());
@@ -129,7 +129,7 @@ final class SendCommandTest extends TestCase
         $command = new SendCommand(
             $this->createStub(SendMemoHandlerInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
         );
 
         $replies = [];
@@ -154,7 +154,7 @@ final class SendCommandTest extends TestCase
         $command = new SendCommand(
             $this->createStub(SendMemoHandlerInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
         );
 
         $replies = [];
@@ -173,7 +173,7 @@ final class SendCommandTest extends TestCase
         $command = new SendCommand(
             $this->createStub(SendMemoHandlerInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
         );
 
         $replies = [];
@@ -213,7 +213,7 @@ final class SendCommandTest extends TestCase
             ->with('Recipient')
             ->willReturn($recipientSender);
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::exactly(2))
             ->method('trans')
             ->willReturnCallback(static function (string $id, array $params = []): string {
@@ -259,7 +259,7 @@ final class SendCommandTest extends TestCase
         $userLookup->expects(self::never())->method('findByNick');
 
         $replies = [];
-        $command = new SendCommand($handler, $userLookup, $this->createStub(TranslationInterface::class));
+        $command = new SendCommand($handler, $userLookup, $this->createStub(TranslatorInterface::class));
         $context = $this->createContext($sender, $account, ['Recipient', 'Hello'], $replies);
         $command->execute($context);
 
@@ -278,7 +278,7 @@ final class SendCommandTest extends TestCase
             ->willReturn(SendMemoResult::sentToChannel('#channel'));
 
         $replies = [];
-        $command = new SendCommand($handler, $this->createStub(NetworkUserLookupPort::class), $this->createStub(TranslationInterface::class));
+        $command = new SendCommand($handler, $this->createStub(NetworkUserLookupPort::class), $this->createStub(TranslatorInterface::class));
         $context = $this->createContext($sender, $account, ['#channel', 'Announcement'], $replies);
         $command->execute($context);
 
@@ -323,7 +323,7 @@ final class SendCommandTest extends TestCase
             $handler->expects(self::once())->method('handle')->willReturn($result);
 
             $replies = [];
-            $command = new SendCommand($handler, $this->createStub(NetworkUserLookupPort::class), $this->createStub(TranslationInterface::class));
+            $command = new SendCommand($handler, $this->createStub(NetworkUserLookupPort::class), $this->createStub(TranslatorInterface::class));
             $context = $this->createContext($sender, $account, ['target', 'msg'], $replies);
             $command->execute($context);
 

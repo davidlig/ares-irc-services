@@ -6,21 +6,18 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Application\UseCase\ClearAccess\ClearChannelAccess;
+use App\ChanServ\Application\UseCase\ClearAccess\ClearChannelAccessHandlerInterface;
+use App\ChanServ\Application\UseCase\ClearAccess\ClearChannelAccessOutcome;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 
-use function strtolower;
-
 final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
     public function __construct(
-        private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly ChannelAccessRepositoryInterface $accessRepository,
+        private readonly ClearChannelAccessHandlerInterface $handler,
     ) {}
 
     public function getName(): string
@@ -94,60 +91,27 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
             return CommandOutcome::rejected();
         }
 
-        $validation = $this->validateClearaccess($context);
-        if (null === $validation) {
-            return CommandOutcome::rejected();
-        }
-
-        [$channelName, $channel, $count] = $validation;
-        $this->accessRepository->deleteByChannelId($channel->getId());
-
-        $auditData = new IrcopAuditData(
-            target: $channelName,
-            extra: ['count' => $count],
-        );
-
-        $context->reply('clearaccess.success', [
-            '%channel%' => $channelName,
-            '%count%' => $count,
-        ]);
-
-        return CommandOutcome::success($auditData);
-    }
-
-    /** @return array{string, RegisteredChannel, int}|null */
-    private function validateClearaccess(ChanServContext $context): ?array
-    {
         $channelName = $context->getChannelNameArg(0);
-
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return null;
+            return CommandOutcome::rejected();
         }
 
-        return $this->validateClearaccessChannel($context, $channelName);
-    }
-
-    /** @return array{string, RegisteredChannel, int}|null */
-    private function validateClearaccessChannel(ChanServContext $context, string $channelName): ?array
-    {
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-
-        if (null === $channel) {
+        $result = $this->handler->handle(new ClearChannelAccess($channelName));
+        if (ClearChannelAccessOutcome::ChannelNotRegistered === $result->outcome) {
             $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
-            return null;
+            return CommandOutcome::rejected();
         }
-
-        $count = $this->accessRepository->countByChannel($channel->getId());
-
-        if (0 === $count) {
+        if (ClearChannelAccessOutcome::AlreadyEmpty === $result->outcome) {
             $context->reply('clearaccess.empty', ['%channel%' => $channelName]);
 
-            return null;
+            return CommandOutcome::rejected();
         }
 
-        return [$channelName, $channel, $count];
+        $context->reply('clearaccess.success', ['%channel%' => $channelName, '%count%' => $result->removedCount]);
+
+        return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: ['count' => $result->removedCount]));
     }
 }

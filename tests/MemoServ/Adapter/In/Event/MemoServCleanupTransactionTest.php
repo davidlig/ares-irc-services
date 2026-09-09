@@ -17,7 +17,7 @@ use App\MemoServ\Domain\Entity\Memo;
 use App\MemoServ\Domain\Entity\MemoIgnore;
 use App\MemoServ\Domain\Entity\MemoSettings;
 use App\NickServ\Application\PublishedEvent\NickDropCleanupEvent;
-use App\Tests\Integration\DoctrineIntegrationTestCase;
+use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -83,7 +83,7 @@ final class MemoServCleanupTransactionTest extends DoctrineIntegrationTestCase
 
         try {
             $transactionManager->transactional(static function () use ($dispatcher): never {
-                $dispatcher->dispatch(new ChannelDropCleanupEvent(44));
+                $dispatcher->dispatch(new ChannelDropCleanupEvent(44, new DateTimeImmutable('2026-09-07 08:00:00')));
 
                 throw new RuntimeException('provider deletion failed');
             });

@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Event;
 
-use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
-use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
+use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\OperServ\Adapter\In\Event\OperServGlineEnforceSubscriber;
-use App\OperServ\Domain\Entity\Gline;
-use App\OperServ\Domain\Repository\GlineRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use App\OperServ\Application\Port\Out\GlineEntry;
+use App\OperServ\Application\Port\Out\GlineRepository;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,17 +26,17 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     {
         $events = OperServGlineEnforceSubscriber::getSubscribedEvents();
 
-        self::assertArrayHasKey(NetworkSyncCompleteEvent::class, $events);
+        self::assertArrayHasKey(NetworkSynchronizationCompletedEvent::class, $events);
     }
 
     #[Test]
     public function onSyncCompleteAppliesActiveGlines(): void
     {
-        $gline1 = Gline::create('*@badhost1.com', null, 'Spam');
-        $gline2 = Gline::create('*@badhost2.com', null, 'Bots');
+        $gline1 = new GlineEntry('*@badhost1.com', null, 'Spam', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
+        $gline2 = new GlineEntry('*@badhost2.com', null, 'Bots', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 2);
 
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
-        $glineRepo->method('findActive')->willReturn([$gline1, $gline2]);
+        $glineRepo = $this->createStub(GlineRepository::class);
+        $glineRepo->method('findActiveAt')->willReturn([$gline1, $gline2]);
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::exactly(2))->method('addGline');
@@ -45,7 +44,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getServiceActions')->willReturn($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
@@ -55,8 +54,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
             new NullLogger(),
         );
 
-        $connection = $this->createStub(ConnectionInterface::class);
-        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $event = new NetworkSynchronizationCompletedEvent('001');
 
         $subscriber->onSyncComplete($event);
     }
@@ -64,8 +62,8 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteWithNoGlinesDoesNothing(): void
     {
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
-        $glineRepo->method('findActive')->willReturn([]);
+        $glineRepo = $this->createStub(GlineRepository::class);
+        $glineRepo->method('findActiveAt')->willReturn([]);
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::never())->method('addGline');
@@ -73,7 +71,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getServiceActions')->willReturn($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
@@ -83,8 +81,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
             new NullLogger(),
         );
 
-        $connection = $this->createStub(ConnectionInterface::class);
-        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $event = new NetworkSynchronizationCompletedEvent('001');
 
         $subscriber->onSyncComplete($event);
     }
@@ -92,11 +89,11 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteNoProtocolModuleLogsWarning(): void
     {
-        $gline = Gline::create('*@test1234.com', null, 'Test');
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
-        $glineRepo->method('findActive')->willReturn([$gline]);
+        $gline = new GlineEntry('*@test1234.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
+        $glineRepo = $this->createStub(GlineRepository::class);
+        $glineRepo->method('findActiveAt')->willReturn([$gline]);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn(null);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
@@ -115,8 +112,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
             $logger,
         );
 
-        $connection = $this->createStub(ConnectionInterface::class);
-        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $event = new NetworkSynchronizationCompletedEvent('001');
 
         $subscriber->onSyncComplete($event);
 
@@ -126,13 +122,13 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteNoServerSidLogsWarning(): void
     {
-        $gline = Gline::create('*@test1234.com', null, 'Test');
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
-        $glineRepo->method('findActive')->willReturn([$gline]);
+        $gline = new GlineEntry('*@test1234.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
+        $glineRepo = $this->createStub(GlineRepository::class);
+        $glineRepo->method('findActiveAt')->willReturn([$gline]);
 
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn(null);
 
@@ -151,8 +147,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
             $logger,
         );
 
-        $connection = $this->createStub(ConnectionInterface::class);
-        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $event = new NetworkSynchronizationCompletedEvent('001');
 
         $subscriber->onSyncComplete($event);
 
@@ -163,10 +158,10 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     public function onSyncCompleteUsesCorrectDuration(): void
     {
         $futureExpiry = new DateTimeImmutable('+1 hour');
-        $gline = Gline::create('*@test1234.com', null, 'Test', $futureExpiry);
+        $gline = new GlineEntry('*@test1234.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), $futureExpiry, 1);
 
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
-        $glineRepo->method('findActive')->willReturn([$gline]);
+        $glineRepo = $this->createStub(GlineRepository::class);
+        $glineRepo->method('findActiveAt')->willReturn([$gline]);
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())->method('addGline')
@@ -181,7 +176,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getServiceActions')->willReturn($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
@@ -191,8 +186,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
             new NullLogger(),
         );
 
-        $connection = $this->createStub(ConnectionInterface::class);
-        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $event = new NetworkSynchronizationCompletedEvent('001');
 
         $subscriber->onSyncComplete($event);
     }
@@ -200,10 +194,10 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompletePermanentGlineUsesZeroDuration(): void
     {
-        $gline = Gline::create('*@test1234.com', null, 'Test');
+        $gline = new GlineEntry('*@test1234.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
 
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
-        $glineRepo->method('findActive')->willReturn([$gline]);
+        $glineRepo = $this->createStub(GlineRepository::class);
+        $glineRepo->method('findActiveAt')->willReturn([$gline]);
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())->method('addGline')
@@ -212,7 +206,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getServiceActions')->willReturn($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
@@ -222,8 +216,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
             new NullLogger(),
         );
 
-        $connection = $this->createStub(ConnectionInterface::class);
-        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $event = new NetworkSynchronizationCompletedEvent('001');
 
         $subscriber->onSyncComplete($event);
     }
@@ -231,10 +224,10 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteParsesUserAtHostMaskCorrectly(): void
     {
-        $gline = Gline::create('ident@*.badisp.com', null, 'Test');
+        $gline = new GlineEntry('ident@*.badisp.com', null, 'Test', new DateTimeImmutable('2026-01-01T00:00:00+00:00'), null, 1);
 
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
-        $glineRepo->method('findActive')->willReturn([$gline]);
+        $glineRepo = $this->createStub(GlineRepository::class);
+        $glineRepo->method('findActiveAt')->willReturn([$gline]);
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())->method('addGline')
@@ -243,7 +236,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getServiceActions')->willReturn($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
@@ -253,8 +246,7 @@ final class OperServGlineEnforceSubscriberTest extends TestCase
             new NullLogger(),
         );
 
-        $connection = $this->createStub(ConnectionInterface::class);
-        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $event = new NetworkSynchronizationCompletedEvent('001');
 
         $subscriber->onSyncComplete($event);
     }

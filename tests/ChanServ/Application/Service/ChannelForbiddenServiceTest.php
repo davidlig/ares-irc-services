@@ -13,6 +13,7 @@ use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelForbiddenService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -64,7 +65,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
     private function createForbiddenChannelWithId(string $channelName, string $reason, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::createForbidden($channelName, $reason);
+        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), $channelName, $reason);
 
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
@@ -75,7 +76,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
     private function createRegisteredChannelWithId(string $channelName, int $founderId, string $desc, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register($channelName, $founderId, $desc);
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, $founderId, $desc);
 
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
@@ -122,7 +123,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $result = $this->createService(
             channelRepository: $channelRepository,
             eventPublisher: $eventPublisher,
-        )->forbid('#spam', 'Spam channel', 'OperNick');
+        )->forbid('#spam', 'Spam channel', 'OperNick', new DateTimeImmutable());
 
         self::assertTrue($result->isForbidden());
         self::assertSame('#spam', $result->getName());
@@ -158,7 +159,7 @@ final class ChannelForbiddenServiceTest extends TestCase
             channelRepository: $channelRepository,
             dropService: $dropService,
             eventPublisher: $eventPublisher,
-        )->forbid('#abuse', 'New reason', 'OperNick');
+        )->forbid('#abuse', 'New reason', 'OperNick', new DateTimeImmutable());
 
         self::assertSame($existing, $result);
         self::assertSame('New reason', $result->getForbiddenReason());
@@ -178,7 +179,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::once())
             ->method('dropChannel')
-            ->with($existing, 'forbid', 'OperNick');
+            ->with($existing, self::isInstanceOf(DateTimeImmutable::class), 'forbid', 'OperNick');
 
         $channelActions = $this->createMock(ChanNetworkActions::class);
         $channelActions->expects(self::once())
@@ -208,7 +209,7 @@ final class ChannelForbiddenServiceTest extends TestCase
             dropService: $dropService,
             channelActions: $channelActions,
             eventPublisher: $eventPublisher,
-        )->forbid('#taken', 'Forbidden', 'OperNick');
+        )->forbid('#taken', 'Forbidden', 'OperNick', new DateTimeImmutable());
     }
 
     #[Test]
@@ -228,7 +229,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $result = $this->createService(
             channelRepository: $channelRepository,
             eventPublisher: $eventPublisher,
-        )->forbid('#testchan', 'Violation', 'AdminNick');
+        )->forbid('#testchan', 'Violation', 'AdminNick', new DateTimeImmutable());
 
         self::assertInstanceOf(ChannelForbiddenEvent::class, $dispatchedEvent);
         self::assertSame($result->getId(), $dispatchedEvent->channelId);
@@ -248,6 +249,7 @@ final class ChannelForbiddenServiceTest extends TestCase
             '#forbidme',
             'Bad channel',
             'OperNick',
+            new DateTimeImmutable()
         );
 
         self::assertTrue($result->isForbidden());
@@ -266,12 +268,12 @@ final class ChannelForbiddenServiceTest extends TestCase
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::once())
             ->method('dropChannel')
-            ->with($existing, 'forbid', 'OperNick');
+            ->with($existing, self::isInstanceOf(DateTimeImmutable::class), 'forbid', 'OperNick');
 
         $this->createService(
             channelRepository: $channelRepository,
             dropService: $dropService,
-        )->forbid('#registered', 'Now forbidden', 'OperNick');
+        )->forbid('#registered', 'Now forbidden', 'OperNick', new DateTimeImmutable());
     }
 
     #[Test]
@@ -303,7 +305,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $this->createService(
             channelRepository: $channelRepository,
             channelActions: $channelActions,
-        )->forbid('#enforce', 'Forbidden', 'Oper');
+        )->forbid('#enforce', 'Forbidden', 'Oper', new DateTimeImmutable());
     }
 
     #[Test]
@@ -320,7 +322,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $this->createService(
             channelRepository: $channelRepository,
             dropService: $dropService,
-        )->forbid('#forbid', 'Updated reason', 'Oper');
+        )->forbid('#forbid', 'Updated reason', 'Oper', new DateTimeImmutable());
     }
 
     #[Test]
@@ -339,7 +341,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $this->createService(
             channelRepository: $channelRepository,
             channelActions: $channelActions,
-        )->forbid('#already', 'Updated', 'Oper');
+        )->forbid('#already', 'Updated', 'Oper', new DateTimeImmutable());
     }
 
     #[Test]
@@ -356,7 +358,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $this->createService(
             channelRepository: $channelRepository,
             logger: $logger,
-        )->forbid('#newforbid', 'Reason', 'Oper');
+        )->forbid('#newforbid', 'Reason', 'Oper', new DateTimeImmutable());
     }
 
     #[Test]
@@ -375,7 +377,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $this->createService(
             channelRepository: $channelRepository,
             logger: $logger,
-        )->forbid('#existing', 'New reason', 'Oper');
+        )->forbid('#existing', 'New reason', 'Oper', new DateTimeImmutable());
     }
 
     #[Test]
@@ -397,7 +399,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $this->createService(
             channelRepository: $channelRepository,
             logger: $logger,
-        )->forbid('#regchan', 'Forbidden now', 'Oper');
+        )->forbid('#regchan', 'Forbidden now', 'Oper', new DateTimeImmutable());
 
         self::assertCount(2, $logMessages);
         self::assertStringContainsString('Dropped existing', $logMessages[0]);
@@ -407,7 +409,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     #[Test]
     public function forbidForbidsSuspendedChannel(): void
     {
-        $existing = RegisteredChannel::register('#suspended', 1, 'Desc');
+        $existing = RegisteredChannel::register(new DateTimeImmutable(), '#suspended', 1, 'Desc');
         $existing->suspend('Abuse');
 
         $channelRepository = $this->repositoryThatSavesAndSetsId();
@@ -416,12 +418,12 @@ final class ChannelForbiddenServiceTest extends TestCase
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::once())
             ->method('dropChannel')
-            ->with($existing, 'forbid', 'Oper');
+            ->with($existing, self::isInstanceOf(DateTimeImmutable::class), 'forbid', 'Oper');
 
         $result = $this->createService(
             channelRepository: $channelRepository,
             dropService: $dropService,
-        )->forbid('#suspended', 'Now forbidden', 'Oper');
+        )->forbid('#suspended', 'Now forbidden', 'Oper', new DateTimeImmutable());
 
         self::assertTrue($result->isForbidden());
     }
@@ -452,7 +454,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $result = $this->createService(
             channelRepository: $channelRepository,
             eventPublisher: $eventPublisher,
-        )->unforbid('#badchan', 'OperNick');
+        )->unforbid('#badchan', 'OperNick', new DateTimeImmutable());
 
         self::assertTrue($result);
     }
@@ -463,7 +465,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn(null);
 
-        $result = $this->createService(channelRepository: $channelRepository)->unforbid('#ghost', 'OperNick');
+        $result = $this->createService(channelRepository: $channelRepository)->unforbid('#ghost', 'OperNick', new DateTimeImmutable());
 
         self::assertFalse($result);
     }
@@ -471,12 +473,12 @@ final class ChannelForbiddenServiceTest extends TestCase
     #[Test]
     public function unforbidReturnsFalseWhenChannelExistsButIsNotForbidden(): void
     {
-        $channel = RegisteredChannel::register('#active', 1, 'Active channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#active', 1, 'Active channel');
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
-        $result = $this->createService(channelRepository: $channelRepository)->unforbid('#active', 'OperNick');
+        $result = $this->createService(channelRepository: $channelRepository)->unforbid('#active', 'OperNick', new DateTimeImmutable());
 
         self::assertFalse($result);
     }
@@ -500,7 +502,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $this->createService(
             channelRepository: $channelRepository,
             eventPublisher: $eventPublisher,
-        )->unforbid('#rmchan', 'Admin');
+        )->unforbid('#rmchan', 'Admin', new DateTimeImmutable());
 
         self::assertInstanceOf(ChannelUnforbiddenEvent::class, $dispatchedEvent);
         self::assertSame('#rmchan', $dispatchedEvent->channelName);
@@ -517,13 +519,13 @@ final class ChannelForbiddenServiceTest extends TestCase
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
         $eventPublisher->expects(self::never())->method('publish');
 
-        $this->createService(eventPublisher: $eventPublisher)->unforbid('#ghost', 'OperNick');
+        $this->createService(eventPublisher: $eventPublisher)->unforbid('#ghost', 'OperNick', new DateTimeImmutable());
     }
 
     #[Test]
     public function unforbidDoesNotDispatchEventWhenChannelNotForbidden(): void
     {
-        $channel = RegisteredChannel::register('#active', 1, 'Active');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#active', 1, 'Active');
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
@@ -531,7 +533,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
         $eventPublisher->expects(self::never())->method('publish');
 
-        $this->createService(eventPublisher: $eventPublisher)->unforbid('#active', 'OperNick');
+        $this->createService(eventPublisher: $eventPublisher)->unforbid('#active', 'OperNick', new DateTimeImmutable());
     }
 
     // --- enforceForbiddenChannel() tests ---
@@ -736,8 +738,8 @@ final class ChannelForbiddenServiceTest extends TestCase
     #[Test]
     public function enforceAllForbiddenChannelsOnlyEnforcesOnlineEntries(): void
     {
-        $online = RegisteredChannel::createForbidden('#online', 'bad');
-        $offline = RegisteredChannel::createForbidden('#offline', 'bad');
+        $online = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#online', 'bad');
+        $offline = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#offline', 'bad');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findForbiddenChannels')->willReturn([$online, $offline]);
         $actions = $this->createMock(ChanNetworkActions::class);
@@ -775,7 +777,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     #[Test]
     public function forbiddenUserJoinIsIgnoredForRegularChannel(): void
     {
-        $regular = RegisteredChannel::register('#regular', 1, 'regular');
+        $regular = RegisteredChannel::register(new DateTimeImmutable(), '#regular', 1, 'regular');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($regular);
         $actions = $this->createMock(ChanNetworkActions::class);
@@ -788,7 +790,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     #[Test]
     public function forbiddenUserJoinKicksAndReenforcesOnlineChannel(): void
     {
-        $forbidden = RegisteredChannel::createForbidden('#bad', 'bad');
+        $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#bad', 'bad');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($forbidden);
         $actions = $this->createMock(ChanNetworkActions::class);
@@ -811,7 +813,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     #[Test]
     public function forbiddenUserJoinStillKicksWhenChannelSnapshotIsGone(): void
     {
-        $forbidden = RegisteredChannel::createForbidden('#bad', 'bad');
+        $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#bad', 'bad');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($forbidden);
         $actions = $this->createMock(ChanNetworkActions::class);
@@ -826,7 +828,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     #[Test]
     public function configuredForbiddenChannelIsIgnoredWhenNotForbidden(): void
     {
-        $regular = RegisteredChannel::register('#regular', 1, 'regular');
+        $regular = RegisteredChannel::register(new DateTimeImmutable(), '#regular', 1, 'regular');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($regular);
         $actions = $this->createMock(ChanNetworkActions::class);
@@ -839,7 +841,7 @@ final class ChannelForbiddenServiceTest extends TestCase
     #[Test]
     public function configuredForbiddenChannelIsEnforcedOnSynchronization(): void
     {
-        $forbidden = RegisteredChannel::createForbidden('#bad', 'bad');
+        $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#bad', 'bad');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($forbidden);
         $actions = $this->createMock(ChanNetworkActions::class);

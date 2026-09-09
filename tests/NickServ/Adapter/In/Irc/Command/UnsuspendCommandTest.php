@@ -6,30 +6,41 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\UnsuspendCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
+use App\NickServ\Adapter\Out\Event\SymfonyNickServEventPublisher;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Model\NickOperationActor;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNick;
+use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickHandler;
+use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickOutcome;
+use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const DATE_ATOM;
 
 #[CoversClass(UnsuspendCommand::class)]
+#[CoversClass(UnsuspendNickHandler::class)]
+#[CoversClass(UnsuspendNick::class)]
+#[CoversClass(UnsuspendNickResult::class)]
+#[CoversClass(UnsuspendNickOutcome::class)]
+#[CoversClass(NickOperationActor::class)]
 final class UnsuspendCommandTest extends TestCase
 {
     #[Test]
@@ -117,7 +128,7 @@ final class UnsuspendCommandTest extends TestCase
     {
         $messages = [];
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $outcome = new UnsuspendCommand($repository, $this->createStub(EventBusInterface::class), $this->clock())
+        $outcome = $this->createCommandWith($repository, $this->createStub(EventBusInterface::class), $this->clock())
             ->execute($this->createContext(null, [], $messages, nickRepository: $repository));
 
         self::assertFalse($outcome->success);
@@ -135,7 +146,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['UnknownNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $this->createStub(EventBusInterface::class), $this->clock());
+        $cmd = $this->createCommandWith($nickRepository, $this->createStub(EventBusInterface::class), $this->clock());
 
         $cmd->execute($context);
 
@@ -162,7 +173,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $this->createStub(EventBusInterface::class), $this->clock());
+        $cmd = $this->createCommandWith($nickRepository, $this->createStub(EventBusInterface::class), $this->clock());
 
         $cmd->execute($context);
 
@@ -188,7 +199,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
+        $cmd = $this->createCommandWith($nickRepository, $eventDispatcher, $this->clock());
 
         $cmd->execute($context);
 
@@ -217,7 +228,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
+        $cmd = $this->createCommandWith($nickRepository, $eventDispatcher, $this->clock());
 
         $cmd->execute($context);
 
@@ -243,7 +254,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
+        $cmd = $this->createCommandWith($nickRepository, $eventDispatcher, $this->clock());
 
         $outcome = $cmd->execute($context);
 
@@ -279,7 +290,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
+        $cmd = $this->createCommandWith($nickRepository, $eventDispatcher, $this->clock());
 
         $cmd->execute($context);
 
@@ -315,7 +326,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher, $this->clock());
+        $cmd = $this->createCommandWith($nickRepository, $eventDispatcher, $this->clock());
 
         $cmd->execute($context);
 
@@ -347,11 +358,23 @@ final class UnsuspendCommandTest extends TestCase
 
     private function createCommand(): UnsuspendCommand
     {
-        return new UnsuspendCommand(
+        return $this->createCommandWith(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->clock(),
         );
+    }
+
+    private function createCommandWith(
+        RegisteredNickRepositoryInterface $repository,
+        EventBusInterface $eventBus,
+        Clock $clock,
+    ): UnsuspendCommand {
+        return new UnsuspendCommand(new UnsuspendNickHandler(
+            $repository,
+            new SymfonyNickServEventPublisher($eventBus),
+            $clock,
+        ));
     }
 
     private function createSender(): SenderView
@@ -374,7 +397,7 @@ final class UnsuspendCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

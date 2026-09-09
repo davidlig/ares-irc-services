@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Application\Antiflood;
 
-use App\Bootstrap\Maintenance\InMemoryPrunableInterface;
+use App\Irc\Application\Port\In\Maintenance\InMemoryPrunableInterface;
+use App\Irc\Application\Port\Out\AntifloodClock;
 
 /**
  * Maintenance pruner for AntifloodRegistry.
@@ -14,11 +15,12 @@ final readonly class AntifloodPruner implements InMemoryPrunableInterface
 {
     public function __construct(
         private AntifloodRegistry $registry,
+        private AntifloodClock $clock,
         private int $windowSeconds,
     ) {}
 
     public function prune(): int
     {
-        return $this->registry->pruneStale($this->windowSeconds);
+        return $this->registry->pruneStale($this->windowSeconds, $this->clock->now());
     }
 }

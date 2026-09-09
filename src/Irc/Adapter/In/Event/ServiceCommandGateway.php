@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Event\MessageReceivedEvent;
-use App\Shared\Application\Port\ServiceCommandListenerInterface;
+use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

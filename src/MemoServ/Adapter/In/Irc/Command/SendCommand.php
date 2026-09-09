@@ -11,8 +11,8 @@ use App\MemoServ\Application\UseCase\Send\SendMemo;
 use App\MemoServ\Application\UseCase\Send\SendMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Send\SendMemoOutcome;
 use App\MemoServ\Domain\Entity\Memo;
-use App\Shared\Application\Port\TranslationInterface;
 use DateTimeImmutable;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_slice;
 use function implode;
@@ -26,7 +26,7 @@ final readonly class SendCommand implements MemoServCommandInterface
     public function __construct(
         private SendMemoHandlerInterface $sendMemoHandler,
         private NetworkUserLookupPort $userLookup,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
     ) {}
 
     public function getName(): string
@@ -79,13 +79,13 @@ final readonly class SendCommand implements MemoServCommandInterface
         return 'IDENTIFIED';
     }
 
-    public function execute(MemoServContext $context): void
+    public function execute(MemoServContext $context): null
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
             $context->reply('error.not_identified');
 
-            return;
+            return null;
         }
 
         $targetArg = $context->args[0] ?? '';
@@ -94,13 +94,13 @@ final readonly class SendCommand implements MemoServCommandInterface
         if ('' === $message) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
         if (mb_strlen($message) > Memo::MESSAGE_MAX_LENGTH) {
             $context->reply('send.message_too_long', ['max' => Memo::MESSAGE_MAX_LENGTH]);
 
-            return;
+            return null;
         }
 
         $result = $this->sendMemoHandler->handle(new SendMemo(
@@ -157,5 +157,7 @@ final readonly class SendCommand implements MemoServCommandInterface
                 $context->reply('send.limit_reached', ['target' => $result->targetName ?? $targetArg]);
                 break;
         }
+
+        return null;
     }
 }

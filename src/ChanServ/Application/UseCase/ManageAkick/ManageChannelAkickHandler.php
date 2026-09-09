@@ -131,7 +131,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             $this->akicks->remove($existing);
         }
 
-        $akick = ChannelAkick::create($channel->getId(), $actorNickId, $mask->value, $command->reason, $command->expiresAt);
+        $akick = ChannelAkick::create($command->now, $channel->getId(), $actorNickId, $mask->value, $command->reason, $command->expiresAt);
         $this->akicks->save($akick);
 
         if ($this->network->synchronizationComplete()) {
@@ -148,6 +148,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             performedByNickId: $actorNickId,
             performedByIp: $command->performedByIp,
             performedByHost: $command->performedByHost,
+            occurredAt: $command->now,
         ));
 
         return new ManageChannelAkickResult(ManageChannelAkickOutcome::Added, mask: $mask->value, reason: $command->reason);
@@ -178,6 +179,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             performedByNickId: $actorNickId,
             performedByIp: $command->performedByIp,
             performedByHost: $command->performedByHost,
+            occurredAt: $command->now,
         ));
 
         return new ManageChannelAkickResult(ManageChannelAkickOutcome::Deleted, mask: $mask);

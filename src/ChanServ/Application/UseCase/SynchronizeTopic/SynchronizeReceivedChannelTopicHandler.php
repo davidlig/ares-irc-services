@@ -56,7 +56,7 @@ final readonly class SynchronizeReceivedChannelTopicHandler implements Synchroni
             $setterNickname = null;
         }
 
-        $registered->updateTopic($command->topic, $setterNickname);
+        $registered->updateTopic($command->topic, $command->occurredAt, $setterNickname);
         $this->channels->save($registered);
     }
 

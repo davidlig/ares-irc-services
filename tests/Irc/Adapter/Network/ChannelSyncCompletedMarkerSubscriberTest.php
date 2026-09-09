@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Network;
 
 use App\Irc\Adapter\Network\ChannelSyncCompletedMarkerSubscriber;
+use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
 use App\Irc\Domain\Event\ChannelSyncedEvent;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\ValueObject\ChannelName;
-use App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -41,7 +42,7 @@ final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
     #[Test]
     public function onChannelSyncedMarksChannelAsCompletedWhenSetupApplicable(): void
     {
-        $channel = new Channel(new ChannelName('#test'));
+        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
 
         $event = new ChannelSyncedEvent($channel, true);
 
@@ -55,7 +56,7 @@ final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
     #[Test]
     public function onChannelSyncedMarksChannelAsCompletedWhenSetupNotApplicable(): void
     {
-        $channel = new Channel(new ChannelName('#test'));
+        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
 
         $event = new ChannelSyncedEvent($channel, false);
 

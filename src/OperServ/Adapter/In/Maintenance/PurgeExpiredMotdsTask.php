@@ -4,22 +4,24 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Maintenance;
 
-use App\Bootstrap\Maintenance\MaintenanceTaskInterface;
-use App\OperServ\Domain\Entity\Motd;
-use App\OperServ\Domain\Repository\MotdRepositoryInterface;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
-use App\Shared\Application\Port\TranslationInterface;
+use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
+use App\OperServ\Application\Model\MessageDelivery;
+use App\OperServ\Application\Port\Out\MotdEntry;
+use App\OperServ\Application\Port\Out\MotdRepository;
+use DateTimeImmutable;
 use DateTimeZone;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function sprintf;
 
 final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
 {
     public function __construct(
-        private MotdRepositoryInterface $motdRepository,
+        private MotdRepository $motdRepository,
         private ServiceDebugNotifierInterface $debugNotifier,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private LoggerInterface $logger,
         private string $defaultLanguage,
         private string $defaultTimezone,
@@ -43,10 +45,10 @@ final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
 
     public function run(): void
     {
-        $expired = $this->motdRepository->findExpired();
+        $expired = $this->motdRepository->findExpiredAt(new DateTimeImmutable());
 
         foreach ($expired as $motd) {
-            $motdId = $motd->getId();
+            $motdId = $motd->id;
 
             $this->debugNotifier->notify($this->formatFinalizedMessage($motd));
             $this->motdRepository->remove($motd);
@@ -59,20 +61,23 @@ final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
         }
     }
 
-    private function formatFinalizedMessage(Motd $motd): string
+    private function formatFinalizedMessage(MotdEntry $motd): string
     {
         $timezone = new DateTimeZone($this->defaultTimezone);
-        $date = ($motd->getExpiresAt() ?? $motd->getCreatedAt())
+        $date = ($motd->expiresAt ?? $motd->createdAt)
             ->setTimezone($timezone)
             ->format('d/m/Y H:i T');
 
         return $this->translator->trans('motd.debug.finalized', [
-            '%id%' => (string) $motd->getId(),
-            '%type%' => $motd->getMessageType(),
-            '%message%' => $motd->getText(),
+            '%id%' => (string) $motd->id,
+            '%type%' => match ($motd->delivery) {
+                MessageDelivery::NonInteractive => 'NOTICE',
+                MessageDelivery::Interactive => 'PRIVMSG',
+            },
+            '%message%' => $motd->text,
             '%date%' => $date,
             '%shown_count%' => $this->translator->trans('motd.list.shown_count', [
-                '%count%' => (string) $motd->getShownCount(),
+                '%count%' => (string) $motd->shownCount,
             ], 'operserv', $this->defaultLanguage),
         ], 'operserv', $this->defaultLanguage);
     }

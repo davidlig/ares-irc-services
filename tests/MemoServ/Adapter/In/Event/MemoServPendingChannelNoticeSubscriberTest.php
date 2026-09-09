@@ -6,6 +6,8 @@ namespace App\Tests\MemoServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceUidProviderInterface;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use App\MemoServ\Adapter\In\Event\MemoServPendingChannelNoticeSubscriber;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
@@ -16,8 +18,6 @@ use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeHandler;
-use App\Shared\Application\Port\ServiceUidProviderInterface;
-use App\Shared\Application\ServiceUidRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

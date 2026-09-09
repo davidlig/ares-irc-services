@@ -63,7 +63,7 @@ final class ManageIrcopHandlerTest extends TestCase
 
         self::assertSame(IrcopOutcome::Added, $result->outcome);
         self::assertSame(['assign', 'audit', 'apply'], $operations->entries);
-        self::assertSame([[7, $role, 41]], $assignments->assigned);
+        self::assertSame([[7, $role, 41, $this->occurredAt]], $assignments->assigned);
         self::assertSame([[7, 'Alice', $role]], $network->applied);
         $this->assertAudit($audit->records[0], 'IRCOP ADD', 'Alice', ['role' => 'ADMIN']);
     }
@@ -267,7 +267,7 @@ final readonly class MemoryOperatorAccountLookup implements OperatorAccountLooku
 
 final class MemoryOperatorAssignmentStore implements OperatorAssignmentStore
 {
-    /** @var list<array{int, OperatorRoleRecord, ?int}> */
+    /** @var list<array{int, OperatorRoleRecord, ?int, DateTimeImmutable}> */
     public array $assigned = [];
 
     /** @var list<int> */
@@ -286,10 +286,10 @@ final class MemoryOperatorAssignmentStore implements OperatorAssignmentStore
         return array_values($this->assignments);
     }
 
-    public function assign(int $nickId, OperatorRoleRecord $role, ?int $addedById): void
+    public function assign(int $nickId, OperatorRoleRecord $role, ?int $addedById, DateTimeImmutable $addedAt): void
     {
         $this->operations->entries[] = 'assign';
-        $this->assigned[] = [$nickId, $role, $addedById];
+        $this->assigned[] = [$nickId, $role, $addedById, $addedAt];
     }
 
     public function remove(int $nickId): void

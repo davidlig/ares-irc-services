@@ -15,7 +15,7 @@ final readonly class RelativeExpiryParser
 {
     private const string RELATIVE_PATTERN = '/^(\d+)([dhm])$/';
 
-    public static function parse(string $value, ?DateTimeImmutable $now = null): ?DateTimeImmutable
+    public static function parse(string $value, DateTimeImmutable $now): ?DateTimeImmutable
     {
         $value = self::normalize($value);
 
@@ -28,9 +28,7 @@ final readonly class RelativeExpiryParser
             return null;
         }
 
-        $date = $now ?? new DateTimeImmutable();
-
-        return $date->add(new DateInterval(self::intervalSpec((int) $matches[1], $matches[2])));
+        return $now->add(new DateInterval(self::intervalSpec((int) $matches[1], $matches[2])));
     }
 
     public static function isPermanent(string $value): bool

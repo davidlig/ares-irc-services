@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
@@ -18,7 +19,6 @@ use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function str_contains;
@@ -36,7 +36,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private IdentifiedUserVhostSyncService $identifiedUserVhostSync,
         private BurstState $burstState,
         private NetworkUserLookupPort $networkUserLookup,
-        private ActiveConnectionHolderInterface $connectionHolder,
+        private ActiveProtocolModuleHolderInterface $connectionHolder,
         private Clock $clock,
         private ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
     ) {}

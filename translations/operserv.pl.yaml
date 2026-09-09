@@ -274,15 +274,15 @@ raw:
   too_long:         "\x0304✗\x03 Linia jest za długa. Maksymalnie 510 znaków."
   not_connected:    "\x0304✗\x03 Brak połączenia z IRCd."
   done:             "\x0303✓\x03 Surowa linia wysłana."
-  udb:
-    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
-    done:          "\x0303✓\x03 Zmiana UDB zastosowana: zapisana autorytatywnie i ustawiona w kolejce do propagacji."
-    target:        "\x0304✗\x03 Zmiany UDB muszą być kierowane do wszystkich serwerów (DB * ...), nie do %target%."
-    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT nie jest obsługiwane przez RAW."
-    invalid_block: "\x0304✗\x03 Nieznany blok UDB: %block%."
-    invalid_path:  "\x0304✗\x03 Nieprawidłowa ścieżka rekordu UDB: %path%."
-    invalid_value: "\x0304✗\x03 Nieprawidłowa wartość rekordu UDB dla: %path%."
-    error:         "\x0304✗\x03 Zapis do magazynu UDB nie powiódł się; zmiana nie została rozpropagowana."
+  protocol:
+    syntax: "\x0304✗\x03 Aktywny protokół odrzucił składnię komendy RAW."
+    done: "\x0303✓\x03 Wykonano komendę RAW obsługiwaną przez protokół."
+    target: "\x0304✗\x03 Aktywny protokół odrzucił cel %target%."
+    unsupported: "\x0304✗\x03 Aktywny protokół nie obsługuje tej komendy RAW."
+    invalid_resource_type: "\x0304✗\x03 Nieznany typ zasobu protokołu: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Nieprawidłowy zasób protokołu: %resource%."
+    invalid_value: "\x0304✗\x03 Nieprawidłowa wartość zasobu protokołu: %resource%."
+    error: "\x0304✗\x03 Aktywny protokół nie mógł wykonać komendy RAW."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

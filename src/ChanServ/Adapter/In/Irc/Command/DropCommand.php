@@ -7,22 +7,22 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 use App\ChanServ\Adapter\In\Irc\ChanAuthorizationCheckerInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
-use App\ChanServ\Application\Service\ChanDropService;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleAction;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleOutcome;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandlerInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 
-use function assert;
 use function strcasecmp;
 
 final class DropCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use BuildsChannelLifecycleRequest;
+
     public function __construct(
-        private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly ChanDropService $dropService,
+        private readonly ManageChannelLifecycleHandlerInterface $handler,
         private readonly ?ChanAuthorizationCheckerInterface $authorizationChecker = null,
     ) {}
 
@@ -106,71 +106,33 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
             return CommandOutcome::rejected();
         }
 
-        $validation = $this->validateDrop($context);
-        if (null === $validation) {
-            return CommandOutcome::rejected();
-        }
-
-        return $this->performDrop($context, ...$validation);
-    }
-
-    /** @return array{string, RegisteredChannel, bool}|null */
-    private function validateDrop(ChanServContext $context): ?array
-    {
         $channelName = $context->getChannelNameArg(0);
-        $force = isset($context->args[1]) && 0 === strcasecmp($context->args[1], 'force');
-
         if (null === $channelName) {
             $context->reply('drop.invalid_channel');
 
-            return null;
+            return CommandOutcome::rejected();
         }
-
-        $channel = $this->channelRepository->findByChannelName($channelName);
-
-        if (null === $channel) {
-            $context->reply('drop.not_registered', ['%channel%' => $channelName]);
-
-            return null;
-        }
-
-        return $this->validateDropAccess($context, $channel, $channelName, $force);
-    }
-
-    /** @return array{string, RegisteredChannel, bool}|null */
-    private function validateDropAccess(ChanServContext $context, RegisteredChannel $channel, string $channelName, bool $force): ?array
-    {
-        if ($channel->isPendingDeletion() && !$force) {
-            $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
-
-            return null;
-        }
-
+        $force = isset($context->args[1]) && 0 === strcasecmp($context->args[1], 'force');
         if ($force && (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(ChanServPermission::DROP_FORCE, $context))) {
             $context->reply('error.permission_denied');
 
-            return null;
+            return CommandOutcome::rejected();
         }
 
-        return [$channelName, $channel, $force];
-    }
+        $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Drop, force: $force));
+        if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
+            $context->reply('drop.not_registered', ['%channel%' => $channelName]);
 
-    private function performDrop(ChanServContext $context, string $channelName, RegisteredChannel $channel, bool $force): CommandOutcome
-    {
-        $sender = $context->sender;
-        assert(null !== $sender);
+            return CommandOutcome::rejected();
+        }
+        if (ChannelLifecycleOutcome::PendingDeletion === $result->outcome) {
+            $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
 
-        if ($force) {
-            $this->dropService->hardDropChannel($channel, 'manual-force', $sender->nick);
-            $context->reply('drop.force_success', ['%channel%' => $channelName]);
-
-            return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: ['force' => true]));
+            return CommandOutcome::rejected();
         }
 
-        $this->dropService->softDropChannel($channel, $sender->nick);
+        $context->reply($force ? 'drop.force_success' : 'drop.success', ['%channel%' => $channelName]);
 
-        $context->reply('drop.success', ['%channel%' => $channelName]);
-
-        return CommandOutcome::success(new IrcopAuditData(target: $channelName));
+        return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: $force ? ['force' => true] : []));
     }
 }

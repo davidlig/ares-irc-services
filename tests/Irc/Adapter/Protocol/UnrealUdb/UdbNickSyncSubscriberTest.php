@@ -10,6 +10,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\PasswordMigrationStateInt
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbNickSyncSubscriber;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\NickServ\Application\Port\In\NickProjection;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
@@ -23,7 +24,6 @@ use App\OperServ\Application\Port\In\OperatorNetworkProjection;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
 use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

@@ -6,14 +6,13 @@ namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
-use App\Irc\Application\Port\In\ServiceIntroductionFormatterInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 /**
- * UnrealIRCd protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.
+ * UnrealIRCd protocol module: handler, service actions, mode support, and nick reservation.
  */
 final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInterface
 {
@@ -22,7 +21,6 @@ final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInte
     public function __construct(
         private UnrealStandaloneProtocolHandler $handler,
         private UnrealStandaloneProtocolServiceActions $serviceActions,
-        private UnrealStandaloneServiceIntroductionFormatter $introductionFormatter,
         private UnrealStandaloneChannelModeSupport $channelModeSupport,
         private UnrealStandaloneUserModeSupport $userModeSupport,
         private UnrealStandaloneNickReservation $nickReservation,
@@ -41,11 +39,6 @@ final readonly class UnrealStandaloneModule implements ProtocolRuntimeModuleInte
     public function getServiceActions(): ProtocolServiceActionsInterface
     {
         return $this->serviceActions;
-    }
-
-    public function getIntroductionFormatter(): ServiceIntroductionFormatterInterface
-    {
-        return $this->introductionFormatter;
     }
 
     public function getChannelModeSupport(): ChannelModeSupportInterface

@@ -23,6 +23,7 @@ use App\Irc\Application\PublishedEvent\IrcMessageHandlingStartedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserDepartedChannelEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -171,6 +172,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
     private function founderChanged(string $channelName): ChannelFounderChangedEvent
     {
-        return new ChannelFounderChangedEvent(1, $channelName, 10, 20, 'Oper', null, '127.0.0.1', 'host.example');
+        return new ChannelFounderChangedEvent(
+            1,
+            $channelName,
+            10,
+            20,
+            'Oper',
+            null,
+            '127.0.0.1',
+            'host.example',
+            new DateTimeImmutable('2026-01-02 03:04:05'),
+        );
     }
 }

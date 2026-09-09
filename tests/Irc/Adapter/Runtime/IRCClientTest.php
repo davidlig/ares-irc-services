@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Runtime;
 
-use App\Bootstrap\Maintenance\Message\RunMaintenanceCycle;
 use App\Irc\Adapter\Event\ConnectionEstablishedEvent;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
@@ -18,6 +17,7 @@ use App\Irc\Adapter\Runtime\RevoltLoopScheduler;
 use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Adapter\Runtime\SessionEventPumpAwareInterface;
 use App\Irc\Application\BurstCompleteRegistry;
+use App\Irc\Application\Port\In\Maintenance\RunMaintenanceCycle;
 use App\Irc\Domain\Server\ServerLink;
 use App\Irc\Domain\ValueObject\Hostname;
 use App\Irc\Domain\ValueObject\LinkPassword;

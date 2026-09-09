@@ -14,6 +14,7 @@ final readonly class GlineEntry
         public ?string $reason,
         public DateTimeImmutable $createdAt,
         public ?DateTimeImmutable $expiresAt,
+        public ?int $id = null,
     ) {}
 
     public function isExpiredAt(DateTimeImmutable $now): bool

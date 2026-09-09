@@ -8,6 +8,8 @@ use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -25,14 +27,12 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
 
@@ -116,7 +116,7 @@ final class NickServServiceTest extends TestCase
         $authorizationChecker = $this->createStub(AuthorizationCheckerInterface::class);
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $pendingRegistry = new PendingVerificationRegistry();
         $recoveryRegistry = new RecoveryTokenRegistry();
         $logger = $this->createStub(LoggerInterface::class);
@@ -183,9 +183,11 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): null
             {
                 $this->contextHolder->context = $context;
+
+                return null;
             }
         };
 
@@ -231,7 +233,7 @@ final class NickServServiceTest extends TestCase
         $authorizationChecker = $this->createStub(AuthorizationCheckerInterface::class);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createMock(NickServNotifierInterface::class);
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $pendingRegistry = new PendingVerificationRegistry();
         $recoveryRegistry = new RecoveryTokenRegistry();
         $logger = $this->createStub(LoggerInterface::class);
@@ -290,7 +292,7 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
@@ -365,9 +367,11 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): null
             {
                 $this->holder->context = $context;
+
+                return null;
             }
         };
 
@@ -377,7 +381,7 @@ final class NickServServiceTest extends TestCase
             ->with(NickServPermission::IDENTIFIED_OWNER, self::anything())
             ->willReturn(false);
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id
         );
@@ -468,9 +472,11 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): null
             {
                 $this->holder->context = $context;
+
+                return null;
             }
         };
 
@@ -480,7 +486,7 @@ final class NickServServiceTest extends TestCase
             ->with('IDENTIFIED', self::anything())
             ->willReturn(false);
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
         );
@@ -571,13 +577,15 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): null
             {
                 $this->holder->context = $context;
+
+                return null;
             }
         };
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . (is_string($params['syntax'] ?? null) ? $params['syntax'] : '') : $id
         );
@@ -665,7 +673,7 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): null
             {
                 throw new RuntimeException('Handler error');
             }
@@ -683,7 +691,7 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $this->createStub(NickServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
@@ -811,7 +819,7 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
@@ -890,9 +898,11 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): null
             {
                 $this->holder->context = $context;
+
+                return null;
             }
         };
 
@@ -923,7 +933,7 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $this->createStub(NickServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
@@ -1037,7 +1047,7 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $this->createStub(NickServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
@@ -1116,9 +1126,11 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): null
             {
                 $this->holder->context = $context;
+
+                return null;
             }
         };
 
@@ -1140,7 +1152,7 @@ final class NickServServiceTest extends TestCase
 
         $registry = new NickServCommandRegistry([$handler]);
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('drop.pending_deletion-translated');
 
         $service = new NickServService(
@@ -1234,9 +1246,11 @@ final class NickServServiceTest extends TestCase
                     return [];
                 }
 
-                public function execute(NickServContext $context): void
+                public function execute(NickServContext $context): null
                 {
                     $this->holder->context = $context;
+
+                    return null;
                 }
             };
 
@@ -1257,7 +1271,7 @@ final class NickServServiceTest extends TestCase
                 new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
                 $this->createStub(NickServNotifierInterface::class),
                 new UserMessageTypeResolver($nickRepository),
-                $this->createStub(TranslationInterface::class),
+                $this->createStub(TranslatorInterface::class),
                 new PendingVerificationRegistry(),
                 new RecoveryTokenRegistry(),
                 $this->createServiceNicks(),

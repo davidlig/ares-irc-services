@@ -8,6 +8,9 @@ use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Application\Port\In\LocalUserModeSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\NickServ\Adapter\In\Irc\Bot\NickServBot;
@@ -29,16 +32,13 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Exception\InvalidCredentialsException;
 use App\NickServ\Domain\Exception\NickAlreadyRegisteredException;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 #[CoversClass(NickServCommandListener::class)]
@@ -99,7 +99,7 @@ final class NickServCommandListenerTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $this->nickServNotifier = $this->createMock(NickServNotifierInterface::class);
         $this->messageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
         $this->nickServService = new NickServService(
@@ -362,7 +362,7 @@ final class NickServCommandListenerTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): null
             {
                 throw $this->exception;
             }
@@ -377,7 +377,7 @@ final class NickServCommandListenerTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServService(

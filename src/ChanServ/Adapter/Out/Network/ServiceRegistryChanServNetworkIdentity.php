@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\Out\Network;
 
 use App\ChanServ\Application\Port\Out\ChanServNetworkIdentity;
-use App\Shared\Application\ServiceUidRegistry;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
 
 final readonly class ServiceRegistryChanServNetworkIdentity implements ChanServNetworkIdentity
 {

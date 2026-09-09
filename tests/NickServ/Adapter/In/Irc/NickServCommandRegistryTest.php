@@ -126,7 +126,10 @@ final class NickServCommandRegistryTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void {}
+            public function execute(NickServContext $context): null
+            {
+                return null;
+            }
         };
     }
 }

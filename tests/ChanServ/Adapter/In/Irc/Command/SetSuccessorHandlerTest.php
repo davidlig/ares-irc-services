@@ -12,25 +12,33 @@ use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelSuccessorChangedEvent;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerInterface;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingOutcome;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingResult;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetSuccessorHandler::class)]
+#[CoversClass(UpdateChannelSetting::class)]
+#[CoversClass(UpdateChannelSettingHandler::class)]
+#[CoversClass(UpdateChannelSettingResult::class)]
 final class SetSuccessorHandlerTest extends TestCase
 {
     private function createContext(
         ChanServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         string $senderNick = 'Founder',
         string $ipBase64 = 'ip',
         bool $withoutSender = false,
@@ -70,11 +78,11 @@ final class SetSuccessorHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
 
-        $handler = new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
+        $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, '   ');
 
         self::assertSame(['set.successor.cleared'], $messages);
@@ -90,13 +98,13 @@ final class SetSuccessorHandlerTest extends TestCase
         $channelRepository->expects(self::never())->method('save');
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
-        $handler = new SetSuccessorHandler(
+        $handler = $this->createHandler(
             $channelRepository,
             $this->createStub(ChanUserAccountPort::class),
             $this->createStub(EventBusInterface::class),
         );
 
-        $handler->handle($this->createContext($notifier, $this->createStub(TranslationInterface::class), withoutSender: true), $channel, '   ');
+        $handler->handle($this->createContext($notifier, $this->createStub(TranslatorInterface::class), withoutSender: true), $channel, '   ');
     }
 
     #[Test]
@@ -111,10 +119,10 @@ final class SetSuccessorHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
+        $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $ctx = $this->createContext($notifier, $translator);
         $handler->handle($ctx, $channel, 'Nobody');
 
@@ -134,10 +142,10 @@ final class SetSuccessorHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
+        $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, 'Suspended');
 
         self::assertSame(['set.successor.suspended'], $messages);
@@ -156,10 +164,10 @@ final class SetSuccessorHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
+        $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, 'Pending');
 
         self::assertSame(['set.successor.must_be_registered'], $messages);
@@ -179,10 +187,10 @@ final class SetSuccessorHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
+        $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, 'FounderNick');
 
         self::assertSame(['set.successor.cannot_be_founder'], $messages);
@@ -209,10 +217,10 @@ final class SetSuccessorHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
+        $handler = $this->createHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $channel, ' Successor ');
 
         self::assertSame(['set.successor.updated'], $messages);
@@ -224,18 +232,18 @@ final class SetSuccessorHandlerTest extends TestCase
     {
         $account = new ChanAccountView(20, 'Successor', 'en');
         $channel = $this->createMock(RegisteredChannel::class);
-        $channel->expects(self::once())->method('isFounder')->with(20)->willReturn(false);
+        $channel->expects(self::never())->method('isFounder');
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::never())->method('save');
         $nickRepository = $this->createMock(ChanUserAccountPort::class);
-        $nickRepository->expects(self::once())->method('findAccountByNick')->with('Successor')->willReturn($account);
+        $nickRepository->expects(self::never())->method('findAccountByNick');
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
 
-        $handler = new SetSuccessorHandler($channelRepository, $nickRepository, $eventDispatcher);
-        $handler->handle($this->createContext($notifier, $this->createStub(TranslationInterface::class), withoutSender: true), $channel, 'Successor');
+        $handler = $this->createHandler($channelRepository, $nickRepository, $eventDispatcher);
+        $handler->handle($this->createContext($notifier, $this->createStub(TranslatorInterface::class), withoutSender: true), $channel, 'Successor');
     }
 
     #[Test]
@@ -260,10 +268,10 @@ final class SetSuccessorHandlerTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (): void {});
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSuccessorHandler($channelRepo, $nickRepo, $eventDispatcher);
+        $handler = $this->createHandler($channelRepo, $nickRepo, $eventDispatcher);
         $handler->handle($this->createContext($notifier, $translator, ipBase64: '*'), $channel, ' Successor ');
 
         self::assertSame('*', $dispatchedIp);
@@ -291,13 +299,43 @@ final class SetSuccessorHandlerTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (): void {});
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetSuccessorHandler($channelRepo, $nickRepo, $eventDispatcher);
+        $handler = $this->createHandler($channelRepo, $nickRepo, $eventDispatcher);
         $handler->handle($this->createContext($notifier, $translator, ipBase64: '!!!invalid!!!'), $channel, ' Successor ');
 
         self::assertSame('!!!invalid!!!', $dispatchedIp);
+    }
+
+    #[Test]
+    public function unrelatedSettingOutcomeProducesNoReply(): void
+    {
+        $application = $this->createStub(UpdateChannelSettingHandlerInterface::class);
+        $application->method('handle')->willReturn(new UpdateChannelSettingResult(UpdateChannelSettingOutcome::MissingValue));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        new SetSuccessorHandler($application)->handle(
+            $this->createContext($notifier, $translator),
+            $this->createStub(RegisteredChannel::class),
+            'Successor',
+        );
+
+        self::assertSame([], $messages);
+    }
+
+    private function createHandler(
+        RegisteredChannelRepositoryInterface $channels,
+        ChanUserAccountPort $accounts,
+        EventBusInterface $events,
+    ): SetSuccessorHandler {
+        return new SetSuccessorHandler(new UpdateChannelSettingHandler($channels, $accounts, $events));
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

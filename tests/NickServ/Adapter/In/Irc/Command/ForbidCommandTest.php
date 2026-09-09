@@ -6,6 +6,8 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\ForbidCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
@@ -19,18 +21,23 @@ use App\NickServ\Application\Service\ForbiddenNickService;
 use App\NickServ\Application\Service\NickDropService;
 use App\NickServ\Application\Service\NickProtectabilityResult;
 use App\NickServ\Application\Service\NickTargetValidator;
+use App\NickServ\Application\UseCase\Forbid\ForbidNick;
+use App\NickServ\Application\UseCase\Forbid\ForbidNickHandler;
+use App\NickServ\Application\UseCase\Forbid\ForbidNickOutcome;
+use App\NickServ\Application\UseCase\Forbid\ForbidNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ForbidCommand::class)]
+#[CoversClass(ForbidNickHandler::class)]
+#[CoversClass(ForbidNick::class)]
+#[CoversClass(ForbidNickResult::class)]
+#[CoversClass(ForbidNickOutcome::class)]
 final class ForbidCommandTest extends TestCase
 {
     #[Test]
@@ -127,12 +134,11 @@ final class ForbidCommandTest extends TestCase
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->expects(self::never())->method('findByNick');
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommand(
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
             $this->clock(),
         );
 
@@ -152,12 +158,11 @@ final class ForbidCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages);
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickTargetValidator::class),
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
             $this->clock(),
         );
 
@@ -177,12 +182,11 @@ final class ForbidCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['RootUser', 'Test reason'], $messages);
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $validator,
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
             $this->clock(),
         );
 
@@ -202,12 +206,11 @@ final class ForbidCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['OperUser', 'Test reason'], $messages);
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $validator,
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
             $this->clock(),
         );
 
@@ -227,12 +230,11 @@ final class ForbidCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['NickServ', 'Test reason'], $messages);
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $validator,
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
             $this->clock(),
         );
 
@@ -259,12 +261,11 @@ final class ForbidCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['BadNick', 'New reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommand(
             $nickRepository,
             $validator,
             $forbiddenService,
             $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
             $this->clock(),
         );
 
@@ -290,12 +291,11 @@ final class ForbidCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['BadNick', 'Test reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommand(
             $nickRepository,
             $validator,
             $forbiddenService,
             $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
             $this->clock(),
         );
 
@@ -335,12 +335,11 @@ final class ForbidCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['BadUser', 'Test reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new ForbidCommand(
+        $cmd = $this->createCommand(
             $nickRepository,
             $validator,
             $forbiddenService,
             $dropService,
-            $this->createStub(LoggerInterface::class),
             $this->clock(),
         );
 
@@ -349,16 +348,20 @@ final class ForbidCommandTest extends TestCase
         self::assertContains('forbid.success', $messages);
     }
 
-    private function createCommand(): ForbidCommand
-    {
-        return new ForbidCommand(
-            $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(NickTargetValidator::class),
-            $this->createStub(ForbiddenNickService::class),
-            $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
-            $this->clock(),
-        );
+    private function createCommand(
+        ?RegisteredNickRepositoryInterface $repository = null,
+        ?NickTargetValidator $validator = null,
+        ?ForbiddenNickService $forbiddenService = null,
+        ?NickDropService $dropService = null,
+        ?Clock $clock = null,
+    ): ForbidCommand {
+        return new ForbidCommand(new ForbidNickHandler(
+            $repository ?? $this->createStub(RegisteredNickRepositoryInterface::class),
+            $validator ?? $this->createStub(NickTargetValidator::class),
+            $forbiddenService ?? $this->createStub(ForbiddenNickService::class),
+            $dropService ?? $this->createStub(NickDropService::class),
+            $clock ?? $this->clock(),
+        ));
     }
 
     private function createSender(): SenderView
@@ -393,7 +396,7 @@ final class ForbidCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

@@ -14,22 +14,22 @@ use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Security\ChanServPermission;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HelpFormatterContextAdapter::class)]
 final class HelpFormatterContextAdapterTest extends TestCase
 {
     private function createContext(
         ChanServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         ChanServCommandRegistry $registry,
         ?ChannelModeSupportInterface $channelModeSupport = null,
         ?NetworkUserLookupPort $userLookup = null,
@@ -120,7 +120,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $context = $this->createContext($notifier, $translator, new ChanServCommandRegistry([]));
         $adapter = $this->createAdapter($context);
@@ -138,7 +138,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $context = $this->createContext($notifier, $translator, new ChanServCommandRegistry([]));
         $adapter = $this->createAdapter($context);
@@ -151,7 +151,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function transDelegatesToContext(): void
     {
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $context = $this->createContext($this->createStub(ChanServNotifierInterface::class), $translator, new ChanServCommandRegistry([]));
         $adapter = $this->createAdapter($context);
@@ -233,7 +233,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $registry = new ChanServCommandRegistry([$cmd]);
         $context = $this->createContext(
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $registry,
         );
         $adapter = $this->createAdapter($context);
@@ -318,7 +318,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $registry = new ChanServCommandRegistry([$cmd]);
         $context = $this->createContext(
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $registry,
         );
         $adapter = $this->createAdapter($context);
@@ -400,7 +400,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $registry = new ChanServCommandRegistry([$cmd]);
         $context = $this->createContext(
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $registry,
         );
         $adapter = $this->createAdapter($context);
@@ -484,7 +484,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $modeSupport->method('hasAdmin')->willReturn(true);
         $context = $this->createContext(
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $registry,
             $modeSupport,
         );
@@ -567,7 +567,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $registry = new ChanServCommandRegistry([$cmd]);
         $context = $this->createContext(
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $registry,
             new NullChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
@@ -582,7 +582,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     {
         $context = $this->createContext(
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             new ChanServCommandRegistry([]),
         );
         $adapter = $this->createAdapter($context);
@@ -595,7 +595,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     {
         $context = $this->createContext(
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             new ChanServCommandRegistry([]),
         );
         $adapter = $this->createAdapter($context);
@@ -608,7 +608,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     {
         $context = $this->createContext(
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             new ChanServCommandRegistry([]),
             sender: new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true, false),
             account: new ChanAccountView(1, 'User', 'en'),
@@ -692,7 +692,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
 
         $context = $this->createContext(
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             new ChanServCommandRegistry([$cmd]),
         );
         $adapter = $this->createAdapter($context);
@@ -706,7 +706,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new ChanServContext(
@@ -809,7 +809,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new ChanServContext(
@@ -850,7 +850,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new ChanServContext(
@@ -883,7 +883,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new ChanServContext(
@@ -922,7 +922,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new ChanServContext(
@@ -958,7 +958,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new ChanServContext(
@@ -1132,7 +1132,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message): void {});
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new ChanServContext(

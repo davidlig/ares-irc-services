@@ -13,45 +13,47 @@ use ReflectionClass;
 #[CoversClass(AntifloodRegistry::class)]
 final class AntifloodRegistryTest extends TestCase
 {
+    private const int NOW = 1_750_000_000;
+
     #[Test]
     public function recordCommandAddsTimestamp(): void
     {
         $registry = new AntifloodRegistry();
-        $registry->recordCommand('key1', 3600);
-        $registry->recordCommand('key1', 3600);
-        $registry->recordCommand('key1', 3600);
+        $registry->recordCommand('key1', 3600, self::NOW);
+        $registry->recordCommand('key1', 3600, self::NOW);
+        $registry->recordCommand('key1', 3600, self::NOW);
 
-        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60));
+        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60, self::NOW));
     }
 
     #[Test]
     public function getRemainingLockoutSecondsReturnsZeroWhenMaxMessagesZero(): void
     {
         $registry = new AntifloodRegistry();
-        $registry->recordCommand('key1', 3600);
-        $registry->recordCommand('key1', 3600);
+        $registry->recordCommand('key1', 3600, self::NOW);
+        $registry->recordCommand('key1', 3600, self::NOW);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 0, 60, 60));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 0, 60, 60, self::NOW));
     }
 
     #[Test]
     public function getRemainingLockoutSecondsReturnsZeroWhenLockoutSecondsZero(): void
     {
         $registry = new AntifloodRegistry();
-        $registry->recordCommand('key1', 3600);
-        $registry->recordCommand('key1', 3600);
+        $registry->recordCommand('key1', 3600, self::NOW);
+        $registry->recordCommand('key1', 3600, self::NOW);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 2, 3600, 0));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 2, 3600, 0, self::NOW));
     }
 
     #[Test]
     public function getRemainingLockoutSecondsReturnsZeroWhenMaxMessagesNegative(): void
     {
         $registry = new AntifloodRegistry();
-        $registry->recordCommand('key1', 3600);
-        $registry->recordCommand('key1', 3600);
+        $registry->recordCommand('key1', 3600, self::NOW);
+        $registry->recordCommand('key1', 3600, self::NOW);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', -1, 60, 60));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', -1, 60, 60, self::NOW));
     }
 
     #[Test]
@@ -59,17 +61,17 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('nonexistent', 5, 10, 60));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('nonexistent', 5, 10, 60, self::NOW));
     }
 
     #[Test]
     public function getRemainingLockoutSecondsReturnsZeroWhenUnderLimit(): void
     {
         $registry = new AntifloodRegistry();
-        $registry->recordCommand('key1', 3600);
-        $registry->recordCommand('key1', 3600);
+        $registry->recordCommand('key1', 3600, self::NOW);
+        $registry->recordCommand('key1', 3600, self::NOW);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 5, 3600, 60));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 5, 3600, 60, self::NOW));
     }
 
     #[Test]
@@ -77,10 +79,10 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
         for ($i = 0; $i < 5; ++$i) {
-            $registry->recordCommand('key1', 3600);
+            $registry->recordCommand('key1', 3600, self::NOW);
         }
 
-        $remaining = $registry->getRemainingLockoutSeconds('key1', 5, 3600, 60);
+        $remaining = $registry->getRemainingLockoutSeconds('key1', 5, 3600, 60, self::NOW);
         self::assertGreaterThan(0, $remaining);
         self::assertLessThanOrEqual(60, $remaining);
     }
@@ -90,12 +92,12 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
         for ($i = 0; $i < 5; ++$i) {
-            $registry->recordCommand('key1', 3600);
+            $registry->recordCommand('key1', 3600, self::NOW);
         }
-        $registry->recordCommand('key2', 3600);
+        $registry->recordCommand('key2', 3600, self::NOW);
 
-        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key1', 5, 3600, 60));
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key2', 5, 3600, 60));
+        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key1', 5, 3600, 60, self::NOW));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key2', 5, 3600, 60, self::NOW));
     }
 
     #[Test]
@@ -103,14 +105,14 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 100;
+        $oldTimestamp = self::NOW - 100;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, ['key1' => [$oldTimestamp]]);
 
-        $registry->recordCommand('key1', 10);
+        $registry->recordCommand('key1', 10, self::NOW);
 
-        $remaining = $registry->getRemainingLockoutSeconds('key1', 2, 10, 60);
+        $remaining = $registry->getRemainingLockoutSeconds('key1', 2, 10, 60, self::NOW);
         self::assertSame(0, $remaining);
     }
 
@@ -118,20 +120,20 @@ final class AntifloodRegistryTest extends TestCase
     public function recordCommandUnsetsKeyWhenAllTimestampsFilteredOut(): void
     {
         $registry = new AntifloodRegistry();
-        $registry->recordCommand('key1', 0);
+        $registry->recordCommand('key1', 0, self::NOW);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 60, 30));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 60, 30, self::NOW));
     }
 
     #[Test]
     public function recordCommandUnsetsKeyWhenAllTimestampsFilteredOutWithReflection(): void
     {
         $registry = new AntifloodRegistry();
-        $registry->recordCommand('key1', 3600);
+        $registry->recordCommand('key1', 3600, self::NOW);
 
-        $registry->recordCommand('key1', -1);
+        $registry->recordCommand('key1', -1, self::NOW);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 60, 30));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 60, 30, self::NOW));
     }
 
     #[Test]
@@ -139,7 +141,7 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 3600;
+        $oldTimestamp = self::NOW - 3600;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, [
@@ -148,7 +150,7 @@ final class AntifloodRegistryTest extends TestCase
             'key3' => [$oldTimestamp],
         ]);
 
-        $removed = $registry->pruneStale(0);
+        $removed = $registry->pruneStale(0, self::NOW);
         self::assertSame(3, $removed);
     }
 
@@ -157,11 +159,11 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
         for ($i = 0; $i < 3; ++$i) {
-            $registry->recordCommand('key', 3600);
+            $registry->recordCommand('key', 3600, self::NOW);
         }
-        $removed = $registry->pruneStale(3600);
+        $removed = $registry->pruneStale(3600, self::NOW);
         self::assertSame(0, $removed);
-        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key', 3, 3600, 60));
+        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key', 3, 3600, 60, self::NOW));
     }
 
     #[Test]
@@ -169,16 +171,16 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        self::assertSame(0, $registry->pruneStale(60));
+        self::assertSame(0, $registry->pruneStale(60, self::NOW));
     }
 
     #[Test]
     public function atExactLimitTriggersLockout(): void
     {
         $registry = new AntifloodRegistry();
-        $registry->recordCommand('key1', 3600);
+        $registry->recordCommand('key1', 3600, self::NOW);
 
-        $remaining = $registry->getRemainingLockoutSeconds('key1', 1, 3600, 60);
+        $remaining = $registry->getRemainingLockoutSeconds('key1', 1, 3600, 60, self::NOW);
         self::assertGreaterThan(0, $remaining);
     }
 
@@ -187,12 +189,12 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 10;
+        $oldTimestamp = self::NOW - 10;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, ['key1' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 1, 1));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 1, 1, self::NOW));
     }
 
     #[Test]
@@ -201,10 +203,10 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         for ($i = 0; $i < 3; ++$i) {
-            $registry->recordCommand('key1', 3600);
+            $registry->recordCommand('key1', 3600, self::NOW);
         }
 
-        $remaining = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 120);
+        $remaining = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 120, self::NOW);
         self::assertGreaterThan(0, $remaining);
         self::assertLessThanOrEqual(120, $remaining);
     }
@@ -214,12 +216,12 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 100;
+        $oldTimestamp = self::NOW - 100;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, ['key1' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 10, 60));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 10, 60, self::NOW));
     }
 
     #[Test]
@@ -228,13 +230,13 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         for ($i = 0; $i < 3; ++$i) {
-            $registry->recordCommand('key1', 3600);
+            $registry->recordCommand('key1', 3600, self::NOW);
         }
 
-        $remaining = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60);
+        $remaining = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60, self::NOW);
         self::assertGreaterThan(0, $remaining);
 
-        $remaining2 = $registry->getRemainingLockoutSeconds('key1', 3, 1, 60);
+        $remaining2 = $registry->getRemainingLockoutSeconds('key1', 3, 1, 60, self::NOW);
         self::assertGreaterThan(0, $remaining2);
     }
 
@@ -243,12 +245,12 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 100;
+        $oldTimestamp = self::NOW - 100;
         $reflection = new ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
         $lockoutProperty->setValue($registry, ['key1' => $oldTimestamp + 1]);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 1, 60));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 1, 60, self::NOW));
     }
 
     #[Test]
@@ -256,14 +258,14 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $registry->recordCommand('key1', 3600);
-        $registry->recordCommand('key1', 3600);
-        $registry->recordCommand('key1', 3600);
+        $registry->recordCommand('key1', 3600, self::NOW);
+        $registry->recordCommand('key1', 3600, self::NOW);
+        $registry->recordCommand('key1', 3600, self::NOW);
 
-        $remaining1 = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60);
+        $remaining1 = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60, self::NOW);
         self::assertGreaterThan(0, $remaining1);
 
-        $remaining2 = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60);
+        $remaining2 = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60, self::NOW);
         self::assertLessThanOrEqual($remaining1, $remaining2);
     }
 
@@ -273,13 +275,13 @@ final class AntifloodRegistryTest extends TestCase
         $registry = new AntifloodRegistry();
 
         for ($i = 0; $i < 3; ++$i) {
-            $registry->recordCommand('key1', 3600);
+            $registry->recordCommand('key1', 3600, self::NOW);
         }
 
-        $remaining = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60);
+        $remaining = $registry->getRemainingLockoutSeconds('key1', 3, 3600, 60, self::NOW);
         self::assertGreaterThan(0, $remaining);
 
-        $remainingWithShortWindow = $registry->getRemainingLockoutSeconds('key1', 3, 1, 60);
+        $remainingWithShortWindow = $registry->getRemainingLockoutSeconds('key1', 3, 1, 60, self::NOW);
         self::assertGreaterThan(0, $remainingWithShortWindow);
     }
 
@@ -287,9 +289,9 @@ final class AntifloodRegistryTest extends TestCase
     public function recordCommandPreservesExistingValidTimestamps(): void
     {
         $registry = new AntifloodRegistry();
-        $registry->recordCommand('key1', 3600);
-        $registry->recordCommand('key1', 3600);
-        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key1', 2, 3600, 60));
+        $registry->recordCommand('key1', 3600, self::NOW);
+        $registry->recordCommand('key1', 3600, self::NOW);
+        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key1', 2, 3600, 60, self::NOW));
     }
 
     #[Test]
@@ -297,7 +299,7 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 3600;
+        $oldTimestamp = self::NOW - 3600;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, [
@@ -306,7 +308,7 @@ final class AntifloodRegistryTest extends TestCase
             'key3' => [$oldTimestamp],
         ]);
 
-        $removed = $registry->pruneStale(0);
+        $removed = $registry->pruneStale(0, self::NOW);
         self::assertSame(3, $removed);
     }
 
@@ -315,7 +317,7 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('nonexistent', 3, 60, 30));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('nonexistent', 3, 60, 30, self::NOW));
     }
 
     #[Test]
@@ -323,12 +325,12 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 100;
+        $oldTimestamp = self::NOW - 100;
         $reflection = new ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
         $lockoutProperty->setValue($registry, ['key1' => $oldTimestamp + 1]);
 
-        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 100, 1));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key1', 3, 100, 1, self::NOW));
     }
 
     #[Test]
@@ -336,15 +338,15 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 3600;
+        $oldTimestamp = self::NOW - 3600;
         $reflection = new ReflectionClass($registry);
         $timestampsProperty = $reflection->getProperty('timestampsByKey');
         $timestampsProperty->setValue($registry, ['key1' => [$oldTimestamp]]);
 
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
-        $lockoutProperty->setValue($registry, ['key1' => time() + 60]);
+        $lockoutProperty->setValue($registry, ['key1' => self::NOW + 60]);
 
-        $removed = $registry->pruneStale(60);
+        $removed = $registry->pruneStale(60, self::NOW);
         self::assertSame(0, $removed);
     }
 
@@ -355,9 +357,9 @@ final class AntifloodRegistryTest extends TestCase
 
         $reflection = new ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
-        $lockoutProperty->setValue($registry, ['key1' => time() - 60]);
+        $lockoutProperty->setValue($registry, ['key1' => self::NOW - 60]);
 
-        $removed = $registry->pruneStale(60);
+        $removed = $registry->pruneStale(60, self::NOW);
         self::assertSame(1, $removed);
     }
 
@@ -394,7 +396,7 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 100;
+        $oldTimestamp = self::NOW - 100;
         $reflection = new ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
         $lockoutProperty->setValue($registry, ['key1' => $oldTimestamp + 1]);
@@ -402,7 +404,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry->markNotified('key1');
         self::assertTrue($registry->isNotified('key1'));
 
-        $registry->getRemainingLockoutSeconds('key1', 3, 1, 60);
+        $registry->getRemainingLockoutSeconds('key1', 3, 1, 60, self::NOW);
 
         self::assertFalse($registry->isNotified('key1'));
     }
@@ -412,7 +414,7 @@ final class AntifloodRegistryTest extends TestCase
     {
         $registry = new AntifloodRegistry();
 
-        $oldTimestamp = time() - 3600;
+        $oldTimestamp = self::NOW - 3600;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
         $property->setValue($registry, ['key1' => [$oldTimestamp]]);
@@ -420,7 +422,7 @@ final class AntifloodRegistryTest extends TestCase
         $registry->markNotified('key1');
         self::assertTrue($registry->isNotified('key1'));
 
-        $removed = $registry->pruneStale(0);
+        $removed = $registry->pruneStale(0, self::NOW);
         self::assertSame(1, $removed);
         self::assertFalse($registry->isNotified('key1'));
     }
@@ -432,12 +434,12 @@ final class AntifloodRegistryTest extends TestCase
 
         $reflection = new ReflectionClass($registry);
         $lockoutProperty = $reflection->getProperty('lockoutUntilByKey');
-        $lockoutProperty->setValue($registry, ['key1' => time() - 60]);
+        $lockoutProperty->setValue($registry, ['key1' => self::NOW - 60]);
 
         $registry->markNotified('key1');
         self::assertTrue($registry->isNotified('key1'));
 
-        $removed = $registry->pruneStale(60);
+        $removed = $registry->pruneStale(60, self::NOW);
         self::assertSame(1, $removed);
         self::assertFalse($registry->isNotified('key1'));
     }

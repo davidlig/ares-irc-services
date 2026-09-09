@@ -11,9 +11,9 @@ final readonly class ChannelDropCleanupEvent
 {
     public function __construct(
         public int $channelId,
+        public DateTimeImmutable $occurredAt,
         public string $channelName = '',
         public string $channelNameLower = '',
         public string $reason = '',
-        public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
     ) {}
 }

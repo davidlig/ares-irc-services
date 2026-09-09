@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\InMemory;
 
+use App\NickServ\Application\Port\In\IdentifiedSessionQuery;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use Psr\Log\LoggerInterface;
 
@@ -18,7 +19,7 @@ use function count;
  * that the correct registered account is updated even if the user had
  * changed to a different nick (e.g. 'david') before quitting.
  */
-final class IdentifiedSessionRegistry implements IdentifiedSessionTracker
+final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, IdentifiedSessionTracker
 {
     /** @var array<string, string> uid → registered nick */
     private array $sessions;

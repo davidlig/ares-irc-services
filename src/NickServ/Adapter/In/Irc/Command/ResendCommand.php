@@ -72,11 +72,11 @@ final readonly class ResendCommand implements NickServCommandInterface
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): null
     {
         $sender = $context->sender;
         if (null === $sender) {
-            return;
+            return null;
         }
 
         $result = $this->handler->handle(new ResendVerification(
@@ -85,6 +85,8 @@ final readonly class ResendCommand implements NickServCommandInterface
         ));
 
         $this->present($context, $result);
+
+        return null;
     }
 
     private function present(NickServContext $context, ResendVerificationResult $result): void

@@ -6,7 +6,7 @@ namespace App\ChanServ\Adapter\Out\Network;
 
 use App\ChanServ\Application\Port\Out\ChannelRankActions;
 use App\ChanServ\Domain\ValueObject\RankChangeAction;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 
 final readonly class IrcChannelRankActions implements ChannelRankActions
 {

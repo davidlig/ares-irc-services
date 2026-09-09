@@ -11,21 +11,21 @@ use App\ChanServ\Application\Security\ChanServPermission;
 use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 use function array_slice;
@@ -54,7 +54,7 @@ final readonly class ChanServService
         private ChanUserAccountPort $accountPort,
         private ChanServUserPresentationPreferences $preferences,
         private ChanServNotifierInterface $notifier,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private NetworkUserLookupPort $userLookup,
@@ -249,7 +249,7 @@ final readonly class ChanServService
         $channelName = $context->getChannelNameArg(0);
         if (null !== $channelName) {
             $channel = $this->channelRepository->findByChannelName($channelName);
-            if (null !== $channel && $channel->isCurrentlySuspended()) {
+            if (null !== $channel && $channel->isCurrentlySuspended(new DateTimeImmutable())) {
                 $context->reply('suspend.channel_suspended', ['%channel%' => $channelName]);
 
                 return true;

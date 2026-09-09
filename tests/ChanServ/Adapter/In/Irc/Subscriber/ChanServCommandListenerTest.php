@@ -21,19 +21,18 @@ use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
+use App\Irc\Application\Port\In\ApplyOutgoingChannelModesPort;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Shared\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceChannelRegistrationPort;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -132,7 +131,7 @@ final class ChanServCommandListenerTest extends TestCase
             accountPort: $this->createStub(ChanUserAccountPort::class),
             preferences: $this->messageTypeResolver,
             notifier: $this->chanServNotifier,
-            translator: $this->createStub(TranslationInterface::class),
+            translator: $this->createStub(TranslatorInterface::class),
             channelLookup: $this->createStub(ChannelLookupPort::class),
             modeSupportProvider: $this->createStub(ActiveChannelModeSupportProviderInterface::class),
             userLookup: $this->userLookup,

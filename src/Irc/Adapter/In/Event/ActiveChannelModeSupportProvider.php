@@ -6,8 +6,8 @@ namespace App\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 
 final readonly class ActiveChannelModeSupportProvider implements ActiveChannelModeSupportProviderInterface
 {

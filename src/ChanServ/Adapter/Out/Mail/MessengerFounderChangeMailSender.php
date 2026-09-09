@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\Out\Mail;
 
 use App\ChanServ\Application\Port\Out\FounderChangeMailSender;
-use App\Shared\Application\Port\TranslationInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 use function sprintf;
@@ -16,7 +16,7 @@ final readonly class MessengerFounderChangeMailSender implements FounderChangeMa
 {
     public function __construct(
         private MessageBusInterface $messageBus,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private LoggerInterface $logger,
     ) {}
 

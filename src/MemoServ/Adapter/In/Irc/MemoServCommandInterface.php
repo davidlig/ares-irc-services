@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\MemoServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\Command\CommandOutcome;
-use App\Shared\Application\Help\HelpableCommandInterface;
+use App\MemoServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 
 /**
  * Contract every MemoServ command module must implement.
@@ -39,8 +39,5 @@ interface MemoServCommandInterface extends HelpableCommandInterface
     /** Null = no permission; 'IDENTIFIED' = sender must have a registered nick (senderAccount). */
     public function getRequiredPermission(): ?string;
 
-    /**
-     * @return CommandOutcome|void|null
-     */
-    public function execute(MemoServContext $context);
+    public function execute(MemoServContext $context): ?CommandOutcome;
 }

@@ -6,7 +6,6 @@ namespace App\Tests\ChanServ\Adapter\Out\Mail;
 
 use App\ChanServ\Adapter\Out\Mail\FounderChangeEmail;
 use App\ChanServ\Adapter\Out\Mail\MessengerFounderChangeMailSender;
-use App\Shared\Application\Port\TranslationInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -14,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(MessengerFounderChangeMailSender::class)]
 final class MessengerFounderChangeMailSenderTest extends TestCase
@@ -21,7 +21,7 @@ final class MessengerFounderChangeMailSenderTest extends TestCase
     #[Test]
     public function translatesAndDispatchesTheSemanticFounderChangeMail(): void
     {
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::exactly(2))->method('trans')->willReturnMap([
             ['founder_change_token_subject', ['%channel%' => '#channel'], 'mail', 'es', 'subject'],
             ['founder_change_token_body', [
@@ -50,7 +50,7 @@ final class MessengerFounderChangeMailSenderTest extends TestCase
     #[Test]
     public function logsOnlySafeMetadataAndRethrowsDeliveryFailure(): void
     {
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('translated');
         $dispatcher = $this->createMock(MessageBusInterface::class);
         $dispatcher->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('transport failed'));

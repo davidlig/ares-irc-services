@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\Out\Irc;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\OperServ\Application\Port\Out\GlineNetworkActions;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 
@@ -17,7 +17,7 @@ use function time;
 final readonly class ActiveConnectionGlineNetworkActions implements GlineNetworkActions
 {
     public function __construct(
-        private ActiveConnectionHolderInterface $connection,
+        private ActiveProtocolModuleHolderInterface $connection,
         private LoggerInterface $logger,
     ) {}
 

@@ -6,25 +6,20 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Application\Security\ChanServPermission;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleAction;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleOutcome;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandlerInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
-use App\Shared\Application\Port\EventBusInterface;
-
-use function assert;
-use function base64_decode;
-use function inet_ntop;
-use function sprintf;
 
 final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use BuildsChannelLifecycleRequest;
+
     public function __construct(
-        private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly EventBusInterface $eventDispatcher,
+        private readonly ManageChannelLifecycleHandlerInterface $handler,
     ) {}
 
     public function getName(): string
@@ -99,89 +94,28 @@ final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditable
             return CommandOutcome::rejected();
         }
 
-        $validation = $this->validateUnsuspend($context);
-        if (null === $validation) {
-            return CommandOutcome::rejected();
-        }
-
-        return $this->performUnsuspend($context, ...$validation);
-    }
-
-    /** @return array{string, RegisteredChannel}|null */
-    private function validateUnsuspend(ChanServContext $context): ?array
-    {
         $channelName = $context->getChannelNameArg(0);
 
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return null;
+            return CommandOutcome::rejected();
         }
 
-        $channel = $this->channelRepository->findByChannelName($channelName);
-
-        if (null === $channel) {
+        $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Unsuspend));
+        if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
             $context->reply('unsuspend.not_registered', ['%channel%' => $channelName]);
 
-            return null;
+            return CommandOutcome::rejected();
         }
-
-        return $this->checkUnsuspendStatus($context, $channel, $channelName);
-    }
-
-    /** @return array{string, RegisteredChannel}|null */
-    private function checkUnsuspendStatus(ChanServContext $context, RegisteredChannel $channel, string $channelName): ?array
-    {
-        if (!$channel->isSuspended()) {
+        if (ChannelLifecycleOutcome::NotSuspended === $result->outcome) {
             $context->reply('unsuspend.not_suspended', ['%channel%' => $channelName]);
 
-            return null;
+            return CommandOutcome::rejected();
         }
-
-        return [$channelName, $channel];
-    }
-
-    private function performUnsuspend(ChanServContext $context, string $channelName, RegisteredChannel $channel): CommandOutcome
-    {
-        $sender = $context->sender;
-        assert(null !== $sender);
-
-        $channel->unsuspend();
-        $this->channelRepository->save($channel);
-
-        $ip = $this->decodeIp($sender->ipBase64);
-        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
-        $performedByNickId = $context->senderAccount?->id;
-
-        $this->eventDispatcher->dispatch(new ChannelUnsuspendedEvent(
-            channelId: $channel->getId(),
-            channelName: $channel->getName(),
-            channelNameLower: $channel->getNameLower(),
-            performedBy: $sender->nick,
-            performedByNickId: $performedByNickId,
-            performedByIp: $ip,
-            performedByHost: $host,
-        ));
 
         $context->reply('unsuspend.success', ['%channel%' => $channelName]);
 
         return CommandOutcome::success(new IrcopAuditData(target: $channelName));
-    }
-
-    private function decodeIp(string $ipBase64): string
-    {
-        if ('' === $ipBase64 || '*' === $ipBase64) {
-            return '*';
-        }
-
-        $binary = base64_decode($ipBase64, true);
-
-        if (false === $binary) {
-            return $ipBase64;
-        }
-
-        $ip = inet_ntop($binary);
-
-        return false !== $ip ? $ip : $ipBase64;
     }
 }

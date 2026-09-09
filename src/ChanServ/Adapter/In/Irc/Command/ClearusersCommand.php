@@ -6,24 +6,21 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
-use App\Irc\Application\Port\In\ChannelView;
+use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsers;
+use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsersHandlerInterface;
+use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsersOutcome;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 
 use function array_slice;
-use function count;
-use function strtolower;
 use function trim;
 
 final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
     public function __construct(
-        private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly ChanServNotifierInterface $notifier,
+        private readonly ClearChannelUsersHandlerInterface $handler,
     ) {}
 
     public function getName(): string
@@ -97,80 +94,37 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
             return CommandOutcome::rejected();
         }
 
-        $validation = $this->validateClearusers($context);
-        if (null === $validation) {
-            return CommandOutcome::rejected();
-        }
-
-        [$channelName, $view, $reason] = $validation;
-        $members = $view->members;
-        $count = count($members);
-        $kickReason = '' !== $reason ? $reason : $context->trans('clearusers.default_reason');
-
-        foreach ($members as $member) {
-            $this->notifier->kickFromChannel(
-                $channelName,
-                $member['uid'],
-                $kickReason,
-            );
-        }
-
-        $auditData = new IrcopAuditData(
-            target: $channelName,
-            reason: '' !== $reason ? $reason : null,
-            extra: ['kicked_count' => $count],
-        );
-
-        $context->reply('clearusers.success', [
-            '%channel%' => $channelName,
-            '%count%' => (string) $count,
-        ]);
-
-        return CommandOutcome::success($auditData);
-    }
-
-    /** @return array{string, ChannelView, string}|null */
-    private function validateClearusers(ChanServContext $context): ?array
-    {
         $channelName = $context->getChannelNameArg(0);
-
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return null;
+            return CommandOutcome::rejected();
         }
-
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-
-        if (null === $channel) {
+        $reason = trim(implode(' ', array_slice($context->args, 1)));
+        $kickReason = '' !== $reason ? $reason : $context->trans('clearusers.default_reason');
+        $result = $this->handler->handle(new ClearChannelUsers($channelName, $kickReason));
+        if (ClearChannelUsersOutcome::ChannelNotRegistered === $result->outcome) {
             $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
-            return null;
+            return CommandOutcome::rejected();
         }
-
-        return $this->validateClearusersView($context, $channelName);
-    }
-
-    /** @return array{string, ChannelView, string}|null */
-    private function validateClearusersView(ChanServContext $context, string $channelName): ?array
-    {
-        $view = $context->getChannelView($channelName);
-
-        if (null === $view) {
+        if (ClearChannelUsersOutcome::ChannelNotOnNetwork === $result->outcome) {
             $context->reply('clearusers.not_on_network', ['%channel%' => $channelName]);
 
-            return null;
+            return CommandOutcome::rejected();
         }
-
-        $reason = trim(implode(' ', array_slice($context->args, 1)));
-        $members = $view->members;
-
-        if (0 === count($members)) {
+        if (ClearChannelUsersOutcome::AlreadyEmpty === $result->outcome) {
             $context->reply('clearusers.empty', ['%channel%' => $channelName]);
 
-            return null;
+            return CommandOutcome::rejected();
         }
 
-        return [$channelName, $view, $reason];
+        $context->reply('clearusers.success', ['%channel%' => $channelName, '%count%' => (string) $result->kickedCount]);
+
+        return CommandOutcome::success(new IrcopAuditData(
+            target: $channelName,
+            reason: '' !== $reason ? $reason : null,
+            extra: ['kicked_count' => $result->kickedCount],
+        ));
     }
 }

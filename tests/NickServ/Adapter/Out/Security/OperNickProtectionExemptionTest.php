@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Security;
 
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceUidProviderInterface;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
 use App\NickServ\Adapter\Out\Security\OperNickProtectionExemption;
 use App\OperServ\Application\Port\In\ProtectedNickQuery;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\ServiceUidProviderInterface;
-use App\Shared\Application\ServiceUidRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

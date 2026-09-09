@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\InMemory;
 
+use App\NickServ\Application\Port\Out\PendingEmailChangeStore;
 use DateTimeImmutable;
 
 use function sprintf;
@@ -17,7 +18,7 @@ use function sprintf;
  *
  * Token is sent to the CURRENT email so only the legitimate owner can confirm.
  */
-final class PendingEmailChangeRegistry
+final class PendingEmailChangeRegistry implements PendingEmailChangeStore
 {
     private const int TTL_SECONDS = 3600;
 

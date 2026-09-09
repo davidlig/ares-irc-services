@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\RestoreCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
@@ -15,13 +17,11 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Restore\RestoreNick;
 use App\NickServ\Application\UseCase\Restore\RestoreNickHandlerInterface;
 use App\NickServ\Application\UseCase\Restore\RestoreNickResult;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_scalar;
 
@@ -120,7 +120,7 @@ final class RestoreCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
             unset($params['%bot%'], $params['%nickserv%']);
             if ([] === $params) {

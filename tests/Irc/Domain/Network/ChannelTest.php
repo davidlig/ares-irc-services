@@ -21,7 +21,7 @@ final class ChannelTest extends TestCase
     public function newChannelHasNoMembersAndDefaultState(): void
     {
         $name = new ChannelName('#test');
-        $channel = new Channel($name);
+        $channel = new Channel($name, '', new DateTimeImmutable('@0'));
 
         self::assertSame('', $channel->getModes());
         self::assertSame(0, $channel->getMemberCount());
@@ -42,7 +42,7 @@ final class ChannelTest extends TestCase
     #[Test]
     public function syncMemberAndMembershipQueries(): void
     {
-        $channel = new Channel(new ChannelName('#chan'));
+        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $uid = new Uid('AAA111');
 
         self::assertFalse($channel->isMember($uid));
@@ -58,7 +58,7 @@ final class ChannelTest extends TestCase
     #[Test]
     public function applyMemberPrefixChangeUpdatesRoleAndPrefixes(): void
     {
-        $channel = new Channel(new ChannelName('#chan'));
+        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $uid = new Uid('AAA111');
 
         $channel->syncMember($uid, ChannelMemberRole::None, []);
@@ -77,7 +77,7 @@ final class ChannelTest extends TestCase
     #[Test]
     public function applyMemberPrefixChangeForUnknownUidDoesNothing(): void
     {
-        $channel = new Channel(new ChannelName('#chan'));
+        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $uidIn = new Uid('AAA111');
         $uidUnknown = new Uid('BBB222');
         $channel->syncMember($uidIn, ChannelMemberRole::Op);
@@ -95,7 +95,7 @@ final class ChannelTest extends TestCase
     #[Test]
     public function removeMember(): void
     {
-        $channel = new Channel(new ChannelName('#chan'));
+        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $uid = new Uid('AAA111');
 
         $channel->syncMember($uid, ChannelMemberRole::Voice);
@@ -109,7 +109,7 @@ final class ChannelTest extends TestCase
     #[Test]
     public function modesAndModeParams(): void
     {
-        $channel = new Channel(new ChannelName('#chan'), '+nt');
+        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
 
         self::assertSame('+nt', $channel->getModes());
         $channel->updateModes('+n');
@@ -128,7 +128,7 @@ final class ChannelTest extends TestCase
     #[Test]
     public function createdAtCanBeUpdated(): void
     {
-        $channel = new Channel(new ChannelName('#chan'));
+        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $original = $channel->getCreatedAt();
         $later = $original->modify('+1 hour');
 
@@ -141,7 +141,7 @@ final class ChannelTest extends TestCase
     #[Test]
     public function topicAndListsManagement(): void
     {
-        $channel = new Channel(new ChannelName('#chan'));
+        $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
 
         $channel->updateTopic('Hello');
         self::assertSame('Hello', $channel->getTopic());

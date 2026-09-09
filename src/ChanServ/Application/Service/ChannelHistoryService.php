@@ -26,9 +26,9 @@ final readonly class ChannelHistoryService
         ?int $performedByNickId,
         string $performedByIp,
         string $performedByHost,
+        DateTimeImmutable $performedAt,
         string $message,
         array $extraData = [],
-        ?DateTimeImmutable $performedAt = null,
     ): ChannelHistory {
         $extra = array_merge([
             'ip' => $performedByIp,
@@ -40,9 +40,9 @@ final readonly class ChannelHistoryService
             action: $action,
             performedBy: $performedBy,
             performedByNickId: $performedByNickId,
+            performedAt: $performedAt,
             message: $message,
             extraData: $extra,
-            performedAt: $performedAt,
         );
 
         $this->historyRepository->save($history);

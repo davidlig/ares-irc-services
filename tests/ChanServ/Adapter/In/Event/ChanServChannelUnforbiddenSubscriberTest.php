@@ -7,6 +7,7 @@ namespace App\Tests\ChanServ\Adapter\In\Event;
 use App\ChanServ\Adapter\In\Event\ChanServChannelUnforbiddenSubscriber;
 use App\ChanServ\Application\Port\In\ForbiddenChannelEnforcement;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +34,7 @@ final class ChanServChannelUnforbiddenSubscriberTest extends TestCase
             channelName: '#forbidden',
             channelNameLower: '#forbidden',
             performedBy: 'Oper',
+            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
         ));
     }
 }

@@ -18,7 +18,13 @@ final class ChannelDropCleanupEventTest extends TestCase
     {
         $occurredAt = new DateTimeImmutable('2026-09-05 12:00:00');
 
-        $event = new ChannelDropCleanupEvent(42, '#Test', '#test', 'manual', $occurredAt);
+        $event = new ChannelDropCleanupEvent(
+            channelId: 42,
+            occurredAt: $occurredAt,
+            channelName: '#Test',
+            channelNameLower: '#test',
+            reason: 'manual',
+        );
 
         self::assertSame(42, $event->channelId);
         self::assertSame('#Test', $event->channelName);
@@ -28,13 +34,15 @@ final class ChannelDropCleanupEventTest extends TestCase
     }
 
     #[Test]
-    public function createsOccurrenceTimeByDefault(): void
+    public function supportsCleanupWithOnlyIdentityAndOccurrenceTime(): void
     {
-        $before = new DateTimeImmutable();
+        $occurredAt = new DateTimeImmutable('2026-09-05 13:00:00');
 
-        $event = new ChannelDropCleanupEvent(7, '#Other', '#other', 'inactivity');
+        $event = new ChannelDropCleanupEvent(7, $occurredAt);
 
-        self::assertGreaterThanOrEqual($before, $event->occurredAt);
-        self::assertLessThanOrEqual(new DateTimeImmutable(), $event->occurredAt);
+        self::assertSame($occurredAt, $event->occurredAt);
+        self::assertSame('', $event->channelName);
+        self::assertSame('', $event->channelNameLower);
+        self::assertSame('', $event->reason);
     }
 }

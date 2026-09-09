@@ -6,23 +6,24 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
-use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleAction;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleOutcome;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandlerInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 
 use function array_slice;
-use function assert;
 use function implode;
 use function trim;
 
 final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use BuildsChannelLifecycleRequest;
+
     public function __construct(
-        private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly ChannelForbiddenService $forbiddenService,
+        private readonly ManageChannelLifecycleHandlerInterface $handler,
     ) {}
 
     public function getName(): string
@@ -102,7 +103,20 @@ final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCom
             return CommandOutcome::rejected();
         }
 
-        return $this->performForbid($context, ...$validation);
+        [$channelName, $reason] = $validation;
+        $result = $this->handler->handle($this->lifecycleRequest(
+            $context,
+            $channelName,
+            ChannelLifecycleAction::Forbid,
+            reason: $reason,
+        ));
+
+        $context->reply(
+            ChannelLifecycleOutcome::ForbiddenUpdated === $result->outcome ? 'forbid.updated' : 'forbid.success',
+            ['%channel%' => $channelName],
+        );
+
+        return CommandOutcome::success(new IrcopAuditData(target: $channelName, reason: $reason));
     }
 
     /** @return array{string, string}|null */
@@ -126,25 +140,5 @@ final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCom
         }
 
         return [$channelName, $reason];
-    }
-
-    private function performForbid(ChanServContext $context, string $channelName, string $reason): CommandOutcome
-    {
-        $sender = $context->sender;
-        assert(null !== $sender);
-
-        $existing = $this->channelRepository->findByChannelName($channelName);
-
-        $this->forbiddenService->forbid($channelName, $reason, $sender->nick);
-
-        $auditData = new IrcopAuditData(
-            target: $channelName,
-            reason: $reason,
-        );
-
-        $replyKey = null !== $existing && $existing->isForbidden() ? 'forbid.updated' : 'forbid.success';
-        $context->reply($replyKey, ['%channel%' => $channelName]);
-
-        return CommandOutcome::success($auditData);
     }
 }

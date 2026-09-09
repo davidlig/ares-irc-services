@@ -274,15 +274,15 @@ raw:
   too_long:         "\x0304✗\x03 Zeile ist zu lang. Maximal 510 Zeichen."
   not_connected:    "\x0304✗\x03 Nicht mit IRCd verbunden."
   done:             "\x0303✓\x03 Rohe Zeile gesendet."
-  udb:
-    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
-    done:          "\x0303✓\x03 UDB-Änderung angewendet: maßgeblich gespeichert und zur Weiterleitung eingereiht."
-    target:        "\x0304✗\x03 UDB-Änderungen müssen an alle Server gerichtet sein (DB * ...), nicht an %target%."
-    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT wird über RAW nicht unterstützt."
-    invalid_block: "\x0304✗\x03 Unbekannter UDB-Block: %block%."
-    invalid_path:  "\x0304✗\x03 Ungültiger UDB-Datensatzpfad: %path%."
-    invalid_value: "\x0304✗\x03 Ungültiger UDB-Datensatzwert für: %path%."
-    error:         "\x0304✗\x03 Schreiben in den UDB-Speicher fehlgeschlagen; die Änderung wurde nicht weitergeleitet."
+  protocol:
+    syntax: "\x0304✗\x03 Das aktive Protokoll hat die Syntax des RAW-Befehls abgelehnt."
+    done: "\x0303✓\x03 Protokolleigener RAW-Befehl ausgeführt."
+    target: "\x0304✗\x03 Das aktive Protokoll hat das Ziel %target% abgelehnt."
+    unsupported: "\x0304✗\x03 Das aktive Protokoll unterstützt diesen RAW-Befehl nicht."
+    invalid_resource_type: "\x0304✗\x03 Unbekannter Protokoll-Ressourcentyp: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Ungültige Protokollressource: %resource%."
+    invalid_value: "\x0304✗\x03 Ungültiger Wert für Protokollressource: %resource%."
+    error: "\x0304✗\x03 Das aktive Protokoll konnte den RAW-Befehl nicht ausführen."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

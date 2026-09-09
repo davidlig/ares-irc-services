@@ -15,6 +15,8 @@ use App\Irc\Adapter\Network\Event\UserMetadataReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\SkipIdentifiedModeStripRegistry;
 use App\Irc\Domain\Event\ChannelModesChangedEvent;
@@ -34,8 +36,6 @@ use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
@@ -58,7 +58,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         private EventDispatcherInterface $eventDispatcher,
         private SkipIdentifiedModeStripRegistry $skipIdentifiedModeStripRegistry,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
-        private ActiveConnectionHolderInterface $connectionHolder,
+        private ActiveProtocolModuleHolderInterface $connectionHolder,
         private LoggerInterface $logger = new NullLogger(),
         private ChannelModeStateSynchronizer $channelModeStateSynchronizer = new ChannelModeStateSynchronizer(),
     ) {}
@@ -131,7 +131,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
 
         // Do not strip +r when:
         // 1. Services originated this nick change (e.g. restore from Guest nick).
-        // 2. The active protocol module handles authentication server-side (e.g. UDB),
+        // 2. The active protocol module handles authentication server-side,
         //    so the IRCd itself manages +r on nick changes with nick:password.
         if (!$this->skipIdentifiedModeStripRegistry->peek($user->uid->value)
             && !$this->protocolPreservesIdentificationOnNickChange()) {

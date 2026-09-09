@@ -15,6 +15,7 @@ use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementOutcome;
 use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementResult;
 use App\ChanServ\Application\UseCase\EnforceMlock\MlockEnforcementTrigger;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +41,7 @@ final class ChannelUnsuspensionServiceTest extends TestCase
     #[Test]
     public function liftsThenEnforcesMlockWhenChannelIsOnNetwork(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Test');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Test');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($channel);
         $actions = $this->createMock(ChanNetworkActions::class);
@@ -69,7 +70,7 @@ final class ChannelUnsuspensionServiceTest extends TestCase
     #[Test]
     public function recreatesMissingNetworkChannelBeforeLiftAndMlock(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Test');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Test');
         $repository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repository->method('findByChannelName')->willReturn($channel);
         $sequence = [];

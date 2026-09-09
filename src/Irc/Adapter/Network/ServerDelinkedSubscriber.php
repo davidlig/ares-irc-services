@@ -7,8 +7,6 @@ namespace App\Irc\Adapter\Network;
 use App\Irc\Domain\Event\ServerDelinkedEvent;
 use App\Irc\Domain\Event\UserQuitNetworkEvent;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
-use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Service\NickProtectionService;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

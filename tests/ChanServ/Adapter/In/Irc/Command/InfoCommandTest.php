@@ -11,6 +11,9 @@ use App\ChanServ\Adapter\In\Irc\Command\InfoCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\UseCase\ShowInfo\ChannelInfoView;
+use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfo;
+use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
@@ -18,16 +21,19 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(InfoCommand::class)]
+#[CoversClass(ChannelInfoView::class)]
+#[CoversClass(ShowChannelInfo::class)]
+#[CoversClass(ShowChannelInfoHandler::class)]
 final class InfoCommandTest extends TestCase
 {
     /**
@@ -36,7 +42,7 @@ final class InfoCommandTest extends TestCase
     private function createContext(
         array $args,
         ChanServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         ?ChannelLookupPort $channelLookup = null,
         ?ChanAccountView $senderAccount = null,
         ?SenderView $sender = null,
@@ -69,10 +75,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['notachannel'], $notifier, $translator));
 
         self::assertSame(['error.invalid_channel'], $messages);
@@ -81,7 +87,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsPendingDeletionStatus(): void
     {
-        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Desc');
         $channel->markPendingDeletion(new DateTimeImmutable('2026-05-01 12:00:00'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -91,10 +97,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo, 7);
+        $cmd = $this->createCommand($channelRepo, $nickRepo, 7);
         $cmd->execute($this->createContext(['#test'], $notifier, $translator));
 
         self::assertContains('info.pending_deletion_status', $messages);
@@ -110,10 +116,10 @@ final class InfoCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn(null);
         $nickRepo = $this->createStub(ChanUserAccountPort::class);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
 
         $this->expectException(ChannelNotRegisteredException::class);
 
@@ -123,7 +129,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function successRepliesHeaderFounderAndFooter(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -135,10 +141,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.header', $rawMessages);
@@ -149,7 +155,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsSuccessorWhenSet(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->assignSuccessor(2);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -163,10 +169,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.successor', $rawMessages);
@@ -175,7 +181,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsDescriptionWhenSet(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'My Channel Description');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'My Channel Description');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -187,10 +193,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.description', $rawMessages);
@@ -199,7 +205,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsUrlWhenSet(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->updateUrl('https://example.com');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -212,10 +218,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.url', $rawMessages);
@@ -224,7 +230,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsEmailWhenSet(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->updateEmail('test@example.com');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -237,10 +243,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.email', $rawMessages);
@@ -249,8 +255,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenSet(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Welcome to the channel', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Welcome to the channel', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -262,10 +268,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.topic', $rawMessages);
@@ -275,7 +281,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsMlockWhenActive(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureMlock(true, '+nt');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -288,10 +294,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.mlock_modes', $rawMessages);
@@ -300,7 +306,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsMlockNoModesWhenActiveButEmpty(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->configureMlock(true, '');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -313,10 +319,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.mlock_modes', $rawMessages);
@@ -327,7 +333,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function getNameReturnsInfo(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -337,7 +343,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function getAliasesReturnsEmptyArray(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -347,7 +353,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function getMinArgsReturnsOne(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -357,7 +363,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function getSyntaxKeyReturnsInfoSyntax(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -367,7 +373,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function getHelpKeyReturnsInfoHelp(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -377,7 +383,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function getOrderReturnsTwo(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -387,7 +393,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function getShortDescKeyReturnsInfoShort(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -397,7 +403,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function getSubCommandHelpReturnsEmptyArray(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -407,7 +413,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function isOperOnlyReturnsFalse(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -417,7 +423,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function getRequiredPermissionReturnsNull(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -427,7 +433,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsSuspendedStatusForSuspendedChannel(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->suspend('Abuse violation');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -440,10 +446,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.suspended_status', $rawMessages);
@@ -454,7 +460,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsSuspendedStatusWithExpiryForTimedSuspension(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->suspend('Spam', new DateTimeImmutable('+7 days'));
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -467,10 +473,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.suspended_status', $rawMessages);
@@ -481,7 +487,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsSuspendedStatusWithoutReasonWhenReasonIsNull(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->suspend('Abuse', null);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -494,10 +500,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.suspended_status', $rawMessages);
@@ -507,7 +513,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function allowsSuspendedChannelReturnsTrue(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -517,7 +523,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function allowsForbiddenChannelReturnsTrue(): void
     {
-        $cmd = new InfoCommand(
+        $cmd = $this->createCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanUserAccountPort::class),
         );
@@ -527,7 +533,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsForbiddenStatusForForbiddenChannel(): void
     {
-        $channel = RegisteredChannel::createForbidden('#Test', 'Spam channel');
+        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#Test', 'Spam channel');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
@@ -536,10 +542,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = 'chanserv', string $locale = 'en'): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $this->createStub(ChanUserAccountPort::class));
+        $cmd = $this->createCommand($channelRepo, $this->createStub(ChanUserAccountPort::class));
         $context = $this->createContext(['#Test'], $notifier, $translator);
         $cmd->execute($context);
 
@@ -554,7 +560,7 @@ final class InfoCommandTest extends TestCase
     public function showsForbiddenStatusWithoutReasonWhenReasonIsNull(): void
     {
         $reflection = new ReflectionClass(RegisteredChannel::class);
-        $channel = RegisteredChannel::createForbidden('#Test', 'Some reason');
+        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#Test', 'Some reason');
         $reasonProp = $reflection->getProperty('forbiddenReason');
         $reasonProp->setValue($channel, null);
 
@@ -566,10 +572,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = 'chanserv', string $locale = 'en'): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $this->createStub(ChanUserAccountPort::class));
+        $cmd = $this->createCommand($channelRepo, $this->createStub(ChanUserAccountPort::class));
         $context = $this->createContext(['#Test'], $notifier, $translator);
         $cmd->execute($context);
 
@@ -580,7 +586,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsNoExpireLineWhenNoExpireIsOn(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channel->changeNoExpire(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -593,10 +599,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.no_expire', $rawMessages);
@@ -605,7 +611,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function doesNotShowNoExpireLineWhenNoExpireIsOff(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -617,10 +623,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertNotContains('info.no_expire', $rawMessages);
@@ -629,8 +635,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenChannelHasSecretMode(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Secret topic', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -645,10 +651,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
 
         self::assertNotContains('info.topic', $rawMessages);
@@ -657,8 +663,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenChannelHasPrivateMode(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Private topic', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -673,10 +679,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
 
         self::assertNotContains('info.topic', $rawMessages);
@@ -685,8 +691,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenSenderIsFounderEvenWithSecretMode(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Secret topic', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -701,14 +707,14 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $senderAccount = new ChanAccountView(1, 'User', 'en');
 
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', isIdentified: true);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup, $senderAccount, $sender));
 
         self::assertContains('info.topic', $rawMessages);
@@ -717,8 +723,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenSenderIsOperEvenWithPrivateMode(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Private topic', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -733,12 +739,12 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $sender = new SenderView('UID1', 'OperNick', 'i', 'h', 'c', 'ip', isIdentified: false, isOper: true);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup, null, $sender));
 
         self::assertContains('info.topic', $rawMessages);
@@ -747,8 +753,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenSenderIdentifiedButNotFounderWithPrivateMode(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Private topic', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -763,14 +769,14 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         // Sender is identified but NOT founder and NOT oper — hits the final return false in isSenderFounderOrOper
         $senderAccount = new ChanAccountView(999, 'User', 'en');
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', isIdentified: true);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup, $senderAccount, $sender));
 
         self::assertNotContains('info.topic', $rawMessages);
@@ -779,8 +785,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenSenderNullAndChannelHasSecretMode(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Secret topic', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -795,10 +801,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
 
         $context = new ChanServContext(
             null,
@@ -825,8 +831,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenChannelHasNoSecretOrPrivateMode(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Public topic', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Public topic', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = new ChanAccountView(1, 'FounderNick', 'en');
@@ -841,10 +847,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
 
         self::assertContains('info.topic', $rawMessages);
@@ -853,8 +859,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenMlockContainsSecretMode(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Secret topic via MLOCK', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic via MLOCK', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channel->configureMlock(true, '+nts');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -870,10 +876,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
 
         self::assertNotContains('info.topic', $rawMessages);
@@ -882,8 +888,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function hidesTopicWhenMlockContainsPrivateMode(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Private topic via MLOCK', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic via MLOCK', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channel->configureMlock(true, '+ntp');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -899,10 +905,10 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
 
         self::assertNotContains('info.topic', $rawMessages);
@@ -911,8 +917,8 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showsTopicWhenMlockHasNoSecretOrPrivate(): void
     {
-        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->updateTopic('Public topic with MLOCK', 'TopicSetter');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateTopic('Public topic with MLOCK', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
         $channel->configureMlock(true, '+nt');
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -928,13 +934,21 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd = $this->createCommand($channelRepo, $nickRepo);
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
 
         self::assertContains('info.topic', $rawMessages);
+    }
+
+    private function createCommand(
+        RegisteredChannelRepositoryInterface $channels,
+        ChanUserAccountPort $accounts,
+        int $dropGraceDays = 7,
+    ): InfoCommand {
+        return new InfoCommand(new ShowChannelInfoHandler($channels, $accounts, $dropGraceDays));
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

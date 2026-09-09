@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Maintenance;
 
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\OperServ\Adapter\In\Maintenance\PurgeExpiredGlinesTask;
+use App\OperServ\Application\Port\Out\GlineEntry;
+use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Application\PublishedEvent\GlineRemovedEvent;
-use App\OperServ\Domain\Entity\Gline;
-use App\OperServ\Domain\Repository\GlineRepositoryInterface;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
+use DateTimeImmutable;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +26,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function getNameReturnsOperservPurgeExpiredGlines(): void
     {
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
+        $glineRepo = $this->createStub(GlineRepository::class);
         $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
         $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $this->createStub(EventBusInterface::class), new NullLogger(), self::SERVER_NAME, 3600);
 
@@ -34,7 +36,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function getIntervalSecondsReturnsConfiguredValue(): void
     {
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
+        $glineRepo = $this->createStub(GlineRepository::class);
         $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
         $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $this->createStub(EventBusInterface::class), new NullLogger(), self::SERVER_NAME, 7200);
 
@@ -44,7 +46,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function getOrderReturns360(): void
     {
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
+        $glineRepo = $this->createStub(GlineRepository::class);
         $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
         $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $this->createStub(EventBusInterface::class), new NullLogger(), self::SERVER_NAME, 3600);
 
@@ -54,16 +56,12 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function runRemovesExpiredGlinesAndLogsToDebug(): void
     {
-        $expiredGline1 = $this->createStub(Gline::class);
-        $expiredGline1->method('getMask')->willReturn('*@host1.com');
-        $expiredGline1->method('getId')->willReturn(101);
+        $expiredGline1 = new GlineEntry('*@host1.com', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 101);
 
-        $expiredGline2 = $this->createStub(Gline::class);
-        $expiredGline2->method('getMask')->willReturn('*@host2.com');
-        $expiredGline2->method('getId')->willReturn(102);
+        $expiredGline2 = new GlineEntry('*@host2.com', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 102);
 
-        $glineRepo = $this->createMock(GlineRepositoryInterface::class);
-        $glineRepo->expects(self::once())->method('findExpired')->willReturn([$expiredGline1, $expiredGline2]);
+        $glineRepo = $this->createMock(GlineRepository::class);
+        $glineRepo->expects(self::once())->method('findExpiredAt')->willReturn([$expiredGline1, $expiredGline2]);
         $glineRepo->expects(self::exactly(2))->method('remove');
 
         $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -87,8 +85,8 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     #[Test]
     public function runDoesNothingWhenNoExpiredGlines(): void
     {
-        $glineRepo = $this->createMock(GlineRepositoryInterface::class);
-        $glineRepo->expects(self::once())->method('findExpired')->willReturn([]);
+        $glineRepo = $this->createMock(GlineRepository::class);
+        $glineRepo->expects(self::once())->method('findExpiredAt')->willReturn([]);
         $glineRepo->expects(self::never())->method('remove');
 
         $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -99,17 +97,38 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     }
 
     #[Test]
+    public function rejectsPersistedGlineWithoutIdentifier(): void
+    {
+        $gline = new GlineEntry('*@host.test', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'));
+        $glineRepo = $this->createMock(GlineRepository::class);
+        $glineRepo->expects(self::once())->method('findExpiredAt')->willReturn([$gline]);
+        $glineRepo->expects(self::never())->method('remove');
+
+        $task = new PurgeExpiredGlinesTask(
+            $glineRepo,
+            $this->createStub(ServiceDebugNotifierInterface::class),
+            $this->createStub(EventBusInterface::class),
+            new NullLogger(),
+            self::SERVER_NAME,
+            3600,
+        );
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Persisted GLINE entry must have an identifier.');
+
+        $task->run();
+    }
+
+    #[Test]
     public function runRemovesCorrectGlineById(): void
     {
-        $expiredGline = $this->createStub(Gline::class);
-        $expiredGline->method('getMask')->willReturn('*@isp.com');
-        $expiredGline->method('getId')->willReturn(999);
+        $expiredGline = new GlineEntry('*@isp.com', null, null, new DateTimeImmutable('-2 hours'), new DateTimeImmutable('-1 hour'), 999);
 
         $removed = [];
-        $glineRepo = $this->createStub(GlineRepositoryInterface::class);
-        $glineRepo->method('findExpired')->willReturn([$expiredGline]);
+        $glineRepo = $this->createStub(GlineRepository::class);
+        $glineRepo->method('findExpiredAt')->willReturn([$expiredGline]);
         $glineRepo->method('remove')
-            ->willReturnCallback(static function (Gline $gline) use (&$removed): void {
+            ->willReturnCallback(static function (GlineEntry $gline) use (&$removed): void {
                 $removed[] = $gline;
             });
 

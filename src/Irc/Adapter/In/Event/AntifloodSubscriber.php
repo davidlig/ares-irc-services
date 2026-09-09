@@ -9,12 +9,12 @@ use App\Irc\Application\Antiflood\AntifloodRegistry;
 use App\Irc\Application\Antiflood\ClientKeyResolver;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use App\NickServ\Application\Port\In\NickAccountQuery;
-use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Port\SendNoticePort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -50,7 +50,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         private NetworkUserLookupPort $userLookup,
         private SendNoticePort $sendNotice,
         private ServiceUserPreferences $messageTypeResolver,
-        private OperServNotifierInterface $notifier,
+        private ServiceDebugNotifierInterface $debugNotifier,
         private OperatorAuthorizationQuery $authorization,
         private NickAccountQuery $nickAccounts,
         private TranslatorInterface $translator,
@@ -112,6 +112,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
             $this->maxMessages,
             $this->windowSeconds,
             $this->cooldownSeconds,
+            $event->occurredAt->getTimestamp(),
         );
 
         if ($remaining > 0) {
@@ -135,7 +136,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->registry->recordCommand($clientKey, $this->windowSeconds);
+        $this->registry->recordCommand($clientKey, $this->windowSeconds, $event->occurredAt->getTimestamp());
     }
 
     private function isRoot(SenderView $sender): bool
@@ -172,6 +173,6 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
             $this->defaultLanguage,
         );
 
-        $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
+        $this->debugNotifier->notify($message);
     }
 }

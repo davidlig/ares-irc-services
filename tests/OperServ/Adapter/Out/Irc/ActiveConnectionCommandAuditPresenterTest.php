@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\Out\Irc;
 
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
+use App\Irc\Application\Port\In\ServiceDebugNotifierRegistry;
 use App\OperServ\Adapter\Out\Irc\ActiveConnectionCommandAuditPresenter;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
-use App\Shared\Application\Port\ServiceDebugNotifierRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

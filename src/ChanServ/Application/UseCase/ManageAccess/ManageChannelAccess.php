@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\ManageAccess;
 
+use DateTimeImmutable;
+
 final readonly class ManageChannelAccess
 {
     public function __construct(
@@ -14,6 +16,7 @@ final readonly class ManageChannelAccess
         public string $performedBy,
         public string $performedByIp,
         public string $performedByHost,
+        public DateTimeImmutable $occurredAt,
         public ?string $targetNickname = null,
         public ?int $level = null,
     ) {}

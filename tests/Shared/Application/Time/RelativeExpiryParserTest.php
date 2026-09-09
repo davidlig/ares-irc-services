@@ -35,7 +35,7 @@ final class RelativeExpiryParserTest extends TestCase
     #[Test]
     public function parseReturnsNullForPermanentExpiry(): void
     {
-        self::assertNull(RelativeExpiryParser::parse(' 0 '));
+        self::assertNull(RelativeExpiryParser::parse(' 0 ', new DateTimeImmutable('2026-05-10 12:00:00')));
     }
 
     #[Test]

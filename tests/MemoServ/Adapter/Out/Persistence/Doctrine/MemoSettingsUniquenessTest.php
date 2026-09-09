@@ -6,7 +6,7 @@ namespace App\Tests\MemoServ\Adapter\Out\Persistence\Doctrine;
 
 use App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoSettingsDoctrineRepository;
 use App\MemoServ\Domain\Entity\MemoSettings;
-use App\Tests\Integration\DoctrineIntegrationTestCase;
+use App\Tests\Shared\DoctrineIntegrationTestCase;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;

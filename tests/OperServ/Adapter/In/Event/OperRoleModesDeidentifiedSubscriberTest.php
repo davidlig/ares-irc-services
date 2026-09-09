@@ -14,6 +14,7 @@ use App\OperServ\Adapter\In\Event\OperRoleModesDeidentifiedSubscriber;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -69,11 +70,9 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
     {
         $event = new UserDeidentifiedEvent('UID123', 42, 'TestNick');
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getUserModes')->willReturn([]);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
+        $role = OperRole::create('ADMIN');
+        $role->changeUserModes([]);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository
@@ -100,11 +99,9 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
     {
         $event = new UserDeidentifiedEvent('UID123', 42, 'TestNick');
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getUserModes')->willReturn(['H', 'W']);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
+        $role = OperRole::create('ADMIN');
+        $role->changeUserModes(['H', 'W']);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository
@@ -131,11 +128,9 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
     {
         $event = new UserDeidentifiedEvent('UID123', 42, 'TestNick');
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getUserModes')->willReturn(['H']);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
+        $role = OperRole::create('ADMIN');
+        $role->changeUserModes(['H']);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByNickId')->willReturn($ircop);
@@ -162,11 +157,9 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
     {
         $event = new UserDeidentifiedEvent('001ABC', 42, 'TestNick');
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getUserModes')->willReturn(['H', 'q']);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
+        $role = OperRole::create('ADMIN');
+        $role->changeUserModes(['H', 'q']);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository

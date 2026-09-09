@@ -13,6 +13,6 @@ final readonly class GlineRemovedEvent
         public string $mask,
         public string $removedBy,
         public string $cause,
-        public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
+        public DateTimeImmutable $occurredAt,
     ) {}
 }

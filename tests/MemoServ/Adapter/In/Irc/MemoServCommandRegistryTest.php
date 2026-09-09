@@ -120,7 +120,10 @@ final class MemoServCommandRegistryTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void {}
+            public function execute(MemoServContext $context): null
+            {
+                return null;
+            }
         };
     }
 }

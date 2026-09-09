@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Event;
 
-use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
@@ -18,7 +18,7 @@ final readonly class OperRoleModesDeidentifiedSubscriber implements EventSubscri
 {
     public function __construct(
         private OperIrcopRepositoryInterface $ircopRepository,
-        private ActiveConnectionHolder $connectionHolder,
+        private ActiveProtocolModuleHolderInterface $connectionHolder,
         private NetworkUserLookupPort $userLookup,
         private LoggerInterface $logger,
     ) {}

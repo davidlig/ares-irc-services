@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\In\UserLanguageQuery;
@@ -19,13 +20,12 @@ use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(OperServService::class)]
 #[CoversClass(OperServContext::class)]
@@ -301,10 +301,16 @@ final class RecordingOperServNotifier implements OperServNotifierInterface
     }
 }
 
-final class KeyTranslation implements TranslationInterface
+final class KeyTranslation implements TranslatorInterface
 {
+    /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         return $id;
+    }
+
+    public function getLocale(): string
+    {
+        return 'en';
     }
 }

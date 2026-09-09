@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;
@@ -45,6 +46,7 @@ final readonly class UnsuspendExpiredChannelsTask implements MaintenanceTaskInte
 
     public function run(): void
     {
+        $occurredAt = new DateTimeImmutable();
         $expired = $this->channelRepository->findExpiredSuspensions();
 
         foreach ($expired as $channel) {
@@ -63,6 +65,7 @@ final readonly class UnsuspendExpiredChannelsTask implements MaintenanceTaskInte
                 performedByNickId: null,
                 performedByIp: '*',
                 performedByHost: '*',
+                occurredAt: $occurredAt,
             ));
 
             $this->logger->info(sprintf(

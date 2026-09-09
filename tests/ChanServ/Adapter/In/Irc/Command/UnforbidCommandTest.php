@@ -8,21 +8,33 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\UnforbidCommand;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\Service\ChannelSuspensionService;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleResult;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UnforbidCommand::class)]
+#[UsesClass(ManageChannelLifecycleHandler::class)]
+#[UsesClass(ManageChannelLifecycle::class)]
+#[UsesClass(ChannelLifecycleResult::class)]
 final class UnforbidCommandTest extends TestCase
 {
     #[Test]
@@ -127,7 +139,7 @@ final class UnforbidCommandTest extends TestCase
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
         $forbiddenService->expects(self::never())->method('unforbid');
 
-        $cmd = new UnforbidCommand($forbiddenService);
+        $cmd = $this->createCommandWith($forbiddenService);
 
         $messages = [];
         $context = $this->createContext(null, ['#test'], $messages);
@@ -143,7 +155,7 @@ final class UnforbidCommandTest extends TestCase
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
         $forbiddenService->expects(self::never())->method('unforbid');
 
-        $cmd = new UnforbidCommand($forbiddenService);
+        $cmd = $this->createCommandWith($forbiddenService);
 
         $sender = $this->createSender();
         $messages = [];
@@ -160,9 +172,9 @@ final class UnforbidCommandTest extends TestCase
         $sender = $this->createSender();
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
-        $forbiddenService->expects(self::once())->method('unforbid')->with('#test', 'OperUser')->willReturn(true);
+        $forbiddenService->expects(self::once())->method('unforbid')->with('#test', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn(true);
 
-        $cmd = new UnforbidCommand($forbiddenService);
+        $cmd = $this->createCommandWith($forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test'], $messages);
@@ -178,9 +190,9 @@ final class UnforbidCommandTest extends TestCase
         $sender = $this->createSender();
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
-        $forbiddenService->expects(self::once())->method('unforbid')->with('#test', 'OperUser')->willReturn(false);
+        $forbiddenService->expects(self::once())->method('unforbid')->with('#test', 'OperUser', self::isInstanceOf(DateTimeImmutable::class))->willReturn(false);
 
-        $cmd = new UnforbidCommand($forbiddenService);
+        $cmd = $this->createCommandWith($forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test'], $messages);
@@ -198,7 +210,7 @@ final class UnforbidCommandTest extends TestCase
         $forbiddenService = $this->createStub(ChannelForbiddenService::class);
         $forbiddenService->method('unforbid')->willReturn(true);
 
-        $cmd = new UnforbidCommand($forbiddenService);
+        $cmd = $this->createCommandWith($forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test'], $messages);
@@ -219,7 +231,7 @@ final class UnforbidCommandTest extends TestCase
         $forbiddenService = $this->createStub(ChannelForbiddenService::class);
         $forbiddenService->method('unforbid')->willReturn(false);
 
-        $cmd = new UnforbidCommand($forbiddenService);
+        $cmd = $this->createCommandWith($forbiddenService);
 
         $messages = [];
         $context = $this->createContext($sender, ['#test'], $messages);
@@ -234,7 +246,7 @@ final class UnforbidCommandTest extends TestCase
     {
         $sender = $this->createSender();
 
-        $cmd = new UnforbidCommand($this->createStub(ChannelForbiddenService::class));
+        $cmd = $this->createCommandWith($this->createStub(ChannelForbiddenService::class));
 
         $messages = [];
         $context = $this->createContext($sender, ['notachannel'], $messages);
@@ -259,9 +271,20 @@ final class UnforbidCommandTest extends TestCase
 
     private function createCommand(): UnforbidCommand
     {
-        return new UnforbidCommand(
+        return $this->createCommandWith(
             $this->createStub(ChannelForbiddenService::class),
         );
+    }
+
+    private function createCommandWith(ChannelForbiddenService $forbiddenService): UnforbidCommand
+    {
+        return new UnforbidCommand(new ManageChannelLifecycleHandler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChanDropService::class),
+            $forbiddenService,
+            $this->createStub(ChannelSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+        ));
     }
 
     private function createSender(): SenderView
@@ -285,7 +308,7 @@ final class UnforbidCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(

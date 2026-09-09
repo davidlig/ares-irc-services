@@ -6,18 +6,19 @@ namespace App\OperServ\Adapter\Out\Projection;
 
 use App\OperServ\Application\Port\In\GlineProjection;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
-use App\OperServ\Domain\Entity\Gline;
-use App\OperServ\Domain\Repository\GlineRepositoryInterface;
+use App\OperServ\Application\Port\Out\GlineEntry;
+use App\OperServ\Application\Port\Out\GlineRepository;
+use DateTimeImmutable;
 
 final readonly class DoctrineGlineProjectionQuery implements GlineProjectionQuery
 {
-    public function __construct(private GlineRepositoryInterface $glines) {}
+    public function __construct(private GlineRepository $glines) {}
 
     public function active(): array
     {
-        return array_values(array_map(
-            static fn (Gline $gline): GlineProjection => new GlineProjection($gline->getMask(), $gline->getReason(), $gline->getCreatedAt(), $gline->getExpiresAt()),
-            $this->glines->findActive(),
-        ));
+        return array_map(
+            static fn (GlineEntry $gline): GlineProjection => new GlineProjection($gline->mask, $gline->reason, $gline->createdAt, $gline->expiresAt),
+            $this->glines->findActiveAt(new DateTimeImmutable()),
+        );
     }
 }

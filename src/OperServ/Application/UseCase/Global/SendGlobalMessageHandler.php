@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\OperServ\Application\UseCase\Global;
 
+use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
@@ -14,7 +15,6 @@ use App\OperServ\Domain\ValueObject\GlobalMessageMask;
 use ValueError;
 
 use function strtolower;
-use function strtoupper;
 
 /** Orchestrates GLOBAL delivery while keeping IRCd lifecycle operations behind one output port. */
 final readonly class SendGlobalMessageHandler
@@ -28,18 +28,17 @@ final readonly class SendGlobalMessageHandler
 
     public function handle(SendGlobalMessage $command): SendGlobalMessageResult
     {
-        $messageType = GlobalMessageType::tryFrom(strtoupper($command->messageType));
-        if (null === $messageType) {
+        if (null === $command->delivery) {
             return SendGlobalMessageResult::invalidMessageType();
         }
 
         $serviceUid = $this->network->serviceUidForNickname($command->senderMaskOrServiceNickname);
         if (null !== $serviceUid) {
-            $count = $this->network->broadcastFromService($serviceUid, $command->message, $messageType);
+            $count = $this->network->broadcastFromService($serviceUid, $command->message, $command->delivery);
 
             return null === $count
                 ? SendGlobalMessageResult::networkUnavailable($command->senderMaskOrServiceNickname)
-                : $this->sent($command, $command->senderMaskOrServiceNickname, $messageType, $count, 'service');
+                : $this->sent($command, $command->senderMaskOrServiceNickname, $command->delivery, $count, 'service');
         }
 
         try {
@@ -50,11 +49,11 @@ final readonly class SendGlobalMessageHandler
 
         $serviceUid = $this->network->serviceUidForNickname($sender->nickname);
         if (null !== $serviceUid) {
-            $count = $this->network->broadcastFromService($serviceUid, $command->message, $messageType);
+            $count = $this->network->broadcastFromService($serviceUid, $command->message, $command->delivery);
 
             return null === $count
                 ? SendGlobalMessageResult::networkUnavailable($sender->nickname)
-                : $this->sent($command, $sender->nickname, $messageType, $count, 'service');
+                : $this->sent($command, $sender->nickname, $command->delivery, $count, 'service');
         }
 
         if (null !== $this->users->findByNickname($sender->nickname)) {
@@ -65,14 +64,14 @@ final readonly class SendGlobalMessageHandler
             return SendGlobalMessageResult::nicknameRegistered($sender->nickname);
         }
 
-        $count = $this->network->broadcastFromTemporaryClient($sender, $command->message, $messageType, $command->actorNickname);
+        $count = $this->network->broadcastFromTemporaryClient($sender, $command->message, $command->delivery, $command->actorNickname);
 
         return null === $count
             ? SendGlobalMessageResult::networkUnavailable($sender->nickname)
-            : $this->sent($command, $sender->nickname, $messageType, $count, 'temporary_client');
+            : $this->sent($command, $sender->nickname, $command->delivery, $count, 'temporary_client');
     }
 
-    private function sent(SendGlobalMessage $command, string $nickname, GlobalMessageType $messageType, int $count, string $senderKind): SendGlobalMessageResult
+    private function sent(SendGlobalMessage $command, string $nickname, MessageDelivery $delivery, int $count, string $senderKind): SendGlobalMessageResult
     {
         $this->audit->record(new CommandAuditRecord(
             category: CommandAuditCategory::OperatorAction,
@@ -83,7 +82,7 @@ final readonly class SendGlobalMessageHandler
             target: $nickname,
             permission: 'operserv.global',
             metadata: [
-                'message_type' => $messageType->value,
+                'delivery' => $delivery->value,
                 'recipient_count' => $count,
                 'sender_kind' => $senderKind,
             ],

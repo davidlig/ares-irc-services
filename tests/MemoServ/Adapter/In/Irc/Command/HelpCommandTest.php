@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace App\Tests\MemoServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\MemoServ\Adapter\In\Irc\Command\HelpCommand;
+use App\MemoServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Model\MemoAccountView;
-use App\Shared\Application\Help\UnifiedHelpFormatter;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
 use function is_scalar;
@@ -62,7 +62,7 @@ final class HelpCommandTest extends TestCase
         });
         $notifier->method('getNick')->willReturn('MemoServ');
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
             unset($params['%bot%'], $params['%memoserv%']);
             if ([] === $params) {
@@ -160,7 +160,10 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void {}
+            public function execute(MemoServContext $context): null
+            {
+                return null;
+            }
         };
     }
 

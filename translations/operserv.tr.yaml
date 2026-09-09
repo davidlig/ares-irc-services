@@ -274,15 +274,15 @@ raw:
   too_long:         "\x0304✗\x03 Satır çok uzun. Maksimum 510 karakter."
   not_connected:    "\x0304✗\x03 IRCd'ye bağlı değil."
   done:             "\x0303✓\x03 Ham satır gönderildi."
-  udb:
-    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
-    done:          "\x0303✓\x03 UDB değişikliği uygulandı: yetkili olarak saklandı ve yayım için kuyruğa alındı."
-    target:        "\x0304✗\x03 UDB değişiklikleri tüm sunuculara yöneltilmelidir (DB * ...), %target% değil."
-    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT RAW üzerinden desteklenmiyor."
-    invalid_block: "\x0304✗\x03 Bilinmeyen UDB bloğu: %block%."
-    invalid_path:  "\x0304✗\x03 Geçersiz UDB kayıt yolu: %path%."
-    invalid_value: "\x0304✗\x03 Geçersiz UDB kayıt değeri: %path%."
-    error:         "\x0304✗\x03 UDB deposuna yazma başarısız; değişiklik yayılmadı."
+  protocol:
+    syntax: "\x0304✗\x03 Etkin protokol RAW komutunun sözdizimini reddetti."
+    done: "\x0303✓\x03 Protokol tarafından yönetilen RAW komutu yürütüldü."
+    target: "\x0304✗\x03 Etkin protokol %target% hedefini reddetti."
+    unsupported: "\x0304✗\x03 Etkin protokol bu RAW komutunu desteklemiyor."
+    invalid_resource_type: "\x0304✗\x03 Bilinmeyen protokol kaynak türü: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Geçersiz protokol kaynağı: %resource%."
+    invalid_value: "\x0304✗\x03 Protokol kaynağı için geçersiz değer: %resource%."
+    error: "\x0304✗\x03 Etkin protokol RAW komutunu yürütemedi."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

@@ -12,6 +12,12 @@ doctrine:
                 prefix: 'App\OperServ\Domain'
                 alias: OperServ
                 type: xml
+            OperServAdapter:
+                is_bundle: false
+                dir: '%kernel.project_dir%/config/doctrine/operserv_adapter'
+                prefix: 'App\OperServ\Adapter\Out\Persistence\Doctrine'
+                alias: OperServAdapter
+                type: xml
             NickServ:
                 is_bundle: false
                 dir: '%kernel.project_dir%/config/doctrine/nickserv'

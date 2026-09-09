@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
-use App\Shared\Application\Port\ServiceChannelRegistrationPort;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;

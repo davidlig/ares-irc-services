@@ -16,7 +16,7 @@ final class ChannelUnsuspendedEventTest extends TestCase
     #[Test]
     public function constructionWithAllProperties(): void
     {
-        $before = new DateTimeImmutable();
+        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
         $event = new ChannelUnsuspendedEvent(
             channelId: 1,
             channelName: '#Test',
@@ -25,8 +25,8 @@ final class ChannelUnsuspendedEventTest extends TestCase
             performedByNickId: 10,
             performedByIp: '192.168.1.1',
             performedByHost: 'user@host',
+            occurredAt: $occurredAt,
         );
-        $after = new DateTimeImmutable();
 
         self::assertSame(1, $event->channelId);
         self::assertSame('#Test', $event->channelName);
@@ -35,8 +35,7 @@ final class ChannelUnsuspendedEventTest extends TestCase
         self::assertSame(10, $event->performedByNickId);
         self::assertSame('192.168.1.1', $event->performedByIp);
         self::assertSame('user@host', $event->performedByHost);
-        self::assertGreaterThanOrEqual($before, $event->occurredAt);
-        self::assertLessThanOrEqual($after, $event->occurredAt);
+        self::assertSame($occurredAt, $event->occurredAt);
     }
 
     #[Test]
@@ -50,6 +49,7 @@ final class ChannelUnsuspendedEventTest extends TestCase
             performedByNickId: null,
             performedByIp: '*',
             performedByHost: 'admin@*',
+            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
         );
 
         self::assertNull($event->performedByNickId);

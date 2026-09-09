@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\Out\Service;
 
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterface
@@ -26,7 +25,6 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
         private ChannelServiceActionsPort $channelActions,
         private NetworkUserLookupPort $userLookup,
         private OperServNotifierInterface $notifier,
-        private IdentifiedSessionRegistry $identifiedRegistry,
         private NickAccountQuery $nickAccounts,
         private OperatorAuthorizationQuery $authorization,
         private TranslatorInterface $translator,
@@ -37,11 +35,6 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
     public function getUserLookup(): NetworkUserLookupPort
     {
         return $this->userLookup;
-    }
-
-    public function getIdentifiedRegistry(): IdentifiedSessionRegistry
-    {
-        return $this->identifiedRegistry;
     }
 
     public function getServiceName(): string

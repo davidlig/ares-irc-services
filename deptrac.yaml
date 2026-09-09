@@ -24,7 +24,7 @@ deptrac:
     - name: Irc Adapter
       collectors:
         - type: classNameRegex
-          value: '#^App\\Irc\\Adapter\\(?!(?:Protocol\\(?:InspIRCd|UnrealStandalone|UnrealUdb))(?:\\|$))#'
+          value: '#^App\\Irc\\Adapter\\(?!(?:Protocol\\(?:InspIRCd|UnrealStandalone|UnrealUdb)(?:\\|$)))#'
 
     - name: NickServ Domain
       collectors:

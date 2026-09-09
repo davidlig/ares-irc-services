@@ -83,11 +83,11 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): null
     {
         $sender = $context->sender;
         if (null === $sender) {
-            return;
+            return null;
         }
 
         $targetNick = $context->args[0];
@@ -104,6 +104,8 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         ));
 
         $this->present($context, $result);
+
+        return null;
     }
 
     private function present(NickServContext $context, IdentifyNickResult $result): void

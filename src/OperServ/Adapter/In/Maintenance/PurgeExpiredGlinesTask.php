@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Maintenance;
 
-use App\Bootstrap\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
+use App\OperServ\Application\Port\Out\GlineRepository;
 use App\OperServ\Application\PublishedEvent\GlineRemovedEvent;
-use App\OperServ\Domain\Repository\GlineRepositoryInterface;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
+use DateTimeImmutable;
+use LogicException;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;
@@ -16,7 +18,7 @@ use function sprintf;
 final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
 {
     public function __construct(
-        private GlineRepositoryInterface $glineRepository,
+        private GlineRepository $glineRepository,
         private ServiceDebugNotifierInterface $debugNotifier,
         private EventBusInterface $eventDispatcher,
         private LoggerInterface $logger,
@@ -41,11 +43,15 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
 
     public function run(): void
     {
-        $expired = $this->glineRepository->findExpired();
+        $occurredAt = new DateTimeImmutable();
+        $expired = $this->glineRepository->findExpiredAt($occurredAt);
 
         foreach ($expired as $gline) {
-            $mask = $gline->getMask();
-            $glineId = $gline->getId();
+            $mask = $gline->mask;
+            $glineId = $gline->id;
+            if (null === $glineId) {
+                throw new LogicException('Persisted GLINE entry must have an identifier.');
+            }
 
             $this->glineRepository->remove($gline);
 
@@ -54,6 +60,7 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
                 mask: $mask,
                 removedBy: $this->serverName,
                 cause: 'expired',
+                occurredAt: $occurredAt,
             ));
 
             $this->debugNotifier->log(

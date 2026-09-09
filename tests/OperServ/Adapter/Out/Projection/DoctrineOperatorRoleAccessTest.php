@@ -9,6 +9,7 @@ use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +37,7 @@ final class DoctrineOperatorRoleAccessTest extends TestCase
         $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(7);
         $role->method('getName')->willReturn('ADMIN');
-        $operator = OperIrcop::create(10, $role);
+        $operator = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 10, $role);
         $operators = $this->createStub(OperIrcopRepositoryInterface::class);
         $operators->method('findByNickId')->willReturn($operator);
         $roles = $this->createMock(OperRoleRepositoryInterface::class);

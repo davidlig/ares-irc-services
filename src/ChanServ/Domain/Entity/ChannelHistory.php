@@ -52,13 +52,13 @@ final class ChannelHistory
      * @param array<string, mixed> $extraData
      */
     public static function record(
+        DateTimeImmutable $performedAt,
         int $channelId,
         string $action,
         string $performedBy,
         ?int $performedByNickId,
         string $message,
         array $extraData = [],
-        ?DateTimeImmutable $performedAt = null,
     ): self {
         return new self(
             id: 0,
@@ -66,7 +66,7 @@ final class ChannelHistory
             action: $action,
             performedBy: $performedBy,
             performedByNickId: $performedByNickId,
-            performedAt: $performedAt ?? new DateTimeImmutable(),
+            performedAt: $performedAt,
             message: $message,
             extraData: $extraData,
         );

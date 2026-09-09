@@ -6,12 +6,16 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\SuspendCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
+use App\NickServ\Adapter\Out\Event\SymfonyNickServEventPublisher;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Model\NickOperationActor;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
@@ -19,20 +23,27 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\NickProtectabilityResult;
 use App\NickServ\Application\Service\NickSuspensionService;
 use App\NickServ\Application\Service\NickTargetValidator;
+use App\NickServ\Application\UseCase\Suspend\SuspendNick;
+use App\NickServ\Application\UseCase\Suspend\SuspendNickHandler;
+use App\NickServ\Application\UseCase\Suspend\SuspendNickOutcome;
+use App\NickServ\Application\UseCase\Suspend\SuspendNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const DATE_ATOM;
 
 #[CoversClass(SuspendCommand::class)]
+#[CoversClass(SuspendNickHandler::class)]
+#[CoversClass(SuspendNick::class)]
+#[CoversClass(SuspendNickResult::class)]
+#[CoversClass(SuspendNickOutcome::class)]
+#[CoversClass(NickOperationActor::class)]
 final class SuspendCommandTest extends TestCase
 {
     #[Test]
@@ -155,7 +166,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $suspensionService,
@@ -203,7 +214,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $suspensionService,
@@ -239,7 +250,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick', '7d'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
@@ -263,7 +274,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['UnknownNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
@@ -288,7 +299,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['BadNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
@@ -314,7 +325,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick', '7d', 'Another reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
@@ -342,7 +353,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['RootUser', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $this->createStub(NickSuspensionService::class),
@@ -370,7 +381,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['OperUser', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $this->createStub(NickSuspensionService::class),
@@ -398,7 +409,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['NickServ', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $this->createStub(NickSuspensionService::class),
@@ -426,7 +437,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick', 'invalid', 'Reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $this->createStub(NickSuspensionService::class),
@@ -458,7 +469,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick', '0', 'Permanent'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $suspensionService,
@@ -496,7 +507,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $suspensionService,
@@ -529,7 +540,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick', '30m', 'Testing'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $suspensionService,
@@ -562,7 +573,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick', '2h', 'Testing'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $nickRepository,
             $validator,
             $suspensionService,
@@ -578,13 +589,29 @@ final class SuspendCommandTest extends TestCase
 
     private function createCommand(): SuspendCommand
     {
-        return new SuspendCommand(
+        return $this->createCommandWith(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
             $this->clock(),
         );
+    }
+
+    private function createCommandWith(
+        RegisteredNickRepositoryInterface $repository,
+        NickTargetValidator $validator,
+        NickSuspensionService $suspensionService,
+        EventBusInterface $eventBus,
+        Clock $clock,
+    ): SuspendCommand {
+        return new SuspendCommand(new SuspendNickHandler(
+            $repository,
+            $validator,
+            $suspensionService,
+            new SymfonyNickServEventPublisher($eventBus),
+            $clock,
+        ));
     }
 
     private function createSender(): SenderView
@@ -627,7 +654,7 @@ final class SuspendCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

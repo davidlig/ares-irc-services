@@ -11,23 +11,33 @@ use App\ChanServ\Adapter\In\Irc\Command\SuspendCommand;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\Service\ChanDropService;
+use App\ChanServ\Application\Service\ChannelForbiddenService;
 use App\ChanServ\Application\Service\ChannelSuspensionService;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleResult;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SuspendCommand::class)]
+#[UsesClass(ManageChannelLifecycleHandler::class)]
+#[UsesClass(ManageChannelLifecycle::class)]
+#[UsesClass(ChannelLifecycleResult::class)]
 final class SuspendCommandTest extends TestCase
 {
     #[Test]
@@ -176,7 +186,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '7d', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $this->createStub(ChannelSuspensionService::class),
             $this->createStub(EventBusInterface::class),
@@ -191,7 +201,7 @@ final class SuspendCommandTest extends TestCase
     public function executeWithAlreadySuspendedChannelRepliesAlreadySuspended(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::register('#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('previous reason');
         $messages = [];
 
@@ -200,7 +210,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '7d', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $this->createStub(ChannelSuspensionService::class),
             $this->createStub(EventBusInterface::class),
@@ -223,7 +233,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', 'abc', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $this->createStub(ChannelSuspensionService::class),
             $this->createStub(EventBusInterface::class),
@@ -261,7 +271,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '0', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $suspensionService,
             $eventDispatcher,
@@ -296,7 +306,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '7d', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $suspensionService,
             $this->createStub(EventBusInterface::class),
@@ -338,7 +348,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '0', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $suspensionService,
             $this->createStub(EventBusInterface::class),
@@ -355,11 +365,25 @@ final class SuspendCommandTest extends TestCase
 
     private function createCommand(): SuspendCommand
     {
-        return new SuspendCommand(
+        return $this->createCommandWith(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelSuspensionService::class),
             $this->createStub(EventBusInterface::class),
         );
+    }
+
+    private function createCommandWith(
+        RegisteredChannelRepositoryInterface $channels,
+        ChannelSuspensionService $suspensionService,
+        EventBusInterface $events,
+    ): SuspendCommand {
+        return new SuspendCommand(new ManageChannelLifecycleHandler(
+            $channels,
+            $this->createStub(ChanDropService::class),
+            $this->createStub(ChannelForbiddenService::class),
+            $suspensionService,
+            $events,
+        ));
     }
 
     private function createSender(): SenderView
@@ -369,7 +393,7 @@ final class SuspendCommandTest extends TestCase
 
     private function createChannelWithId(string $channelName, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register($channelName, 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, 1, 'Test channel');
 
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
@@ -395,7 +419,7 @@ final class SuspendCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(
@@ -432,7 +456,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '5h', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $suspensionService,
             $this->createStub(EventBusInterface::class),
@@ -460,7 +484,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '30m', 'spam'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $suspensionService,
             $this->createStub(EventBusInterface::class),
@@ -497,7 +521,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '0', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $suspensionService,
             $eventDispatcher,
@@ -535,7 +559,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '0', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $suspensionService,
             $eventDispatcher,
@@ -573,7 +597,7 @@ final class SuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['#test', '0', 'abuse'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new SuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $suspensionService,
             $eventDispatcher,

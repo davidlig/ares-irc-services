@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Application\UseCase\ManageMotd;
 
+use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
@@ -44,7 +45,7 @@ final class ManageMotdHandlerTest extends TestCase
         $repository->expects(self::once())->method('add')->with(
             'Welcome to the network',
             'NickServ',
-            'PRIVMSG',
+            MessageDelivery::Interactive,
             42,
             $this->now,
             new DateTimeImmutable('2026-09-15T10:15:00+00:00'),
@@ -62,7 +63,7 @@ final class ManageMotdHandlerTest extends TestCase
         $result = new ManageMotdHandler($repository, $audit)->handle($this->command(
             MotdAction::Add,
             botNickname: 'NickServ',
-            messageType: 'PRIVMSG',
+            delivery: MessageDelivery::Interactive,
             expiry: '7d',
             text: 'Welcome to the network',
         ));
@@ -84,14 +85,14 @@ final class ManageMotdHandlerTest extends TestCase
         self::assertSame(ManageMotdOutcome::InvalidMessageType, $handler->handle($this->command(
             MotdAction::Add,
             botNickname: 'NickServ',
-            messageType: 'INVALID',
+            delivery: null,
             expiry: '1h',
             text: 'hello',
         ))->outcome);
         self::assertSame(ManageMotdOutcome::InvalidExpiry, $handler->handle($this->command(
             MotdAction::Add,
             botNickname: 'NickServ',
-            messageType: 'NOTICE',
+            delivery: MessageDelivery::NonInteractive,
             expiry: 'never',
             text: 'hello',
         ))->outcome);
@@ -218,7 +219,7 @@ final class ManageMotdHandlerTest extends TestCase
         $repository->expects(self::once())->method('add')->with(
             'Welcome',
             'NickServ',
-            'NOTICE',
+            MessageDelivery::NonInteractive,
             42,
             $this->now,
             self::callback(static fn (?DateTimeImmutable $expiry): bool => $expectedExpiry === $expiry?->format(DATE_ATOM)),
@@ -227,7 +228,7 @@ final class ManageMotdHandlerTest extends TestCase
         $result = new ManageMotdHandler($repository, $this->createStub(CommandAuditRecorder::class))->handle($this->command(
             MotdAction::Add,
             botNickname: 'NickServ',
-            messageType: 'NOTICE',
+            delivery: MessageDelivery::NonInteractive,
             expiry: $duration,
             text: 'Welcome',
         ));
@@ -248,12 +249,12 @@ final class ManageMotdHandlerTest extends TestCase
     private function command(
         MotdAction $action,
         ?string $botNickname = null,
-        ?string $messageType = null,
+        ?MessageDelivery $delivery = null,
         ?string $expiry = null,
         ?string $text = null,
         ?string $id = null,
     ): ManageMotd {
-        return new ManageMotd($action, 'Oper', 42, $this->now, $botNickname, $messageType, $expiry, $text, $id);
+        return new ManageMotd($action, 'Oper', 42, $this->now, $botNickname, $delivery, $expiry, $text, $id);
     }
 
     private function entry(
@@ -262,6 +263,6 @@ final class ManageMotdHandlerTest extends TestCase
         ?DateTimeImmutable $expiresAt = null,
         bool $enabled = true,
     ): MotdEntry {
-        return new MotdEntry($id, $text, 'NickServ', 'NOTICE', $enabled, $this->now, $expiresAt, 4);
+        return new MotdEntry($id, $text, 'NickServ', MessageDelivery::NonInteractive, $enabled, $this->now, $expiresAt, 4);
     }
 }

@@ -17,7 +17,7 @@ final readonly class ChannelFounderChangedEvent
         public ?int $performedByNickId,
         public string $performedByIp,
         public string $performedByHost,
+        public DateTimeImmutable $occurredAt,
         public bool $byOperator = false,
-        public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
     ) {}
 }

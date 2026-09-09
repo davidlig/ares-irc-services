@@ -6,7 +6,7 @@ namespace App\OperServ\Domain\Entity;
 
 use DateTimeImmutable;
 
-class OperIrcop
+final class OperIrcop
 {
     private int $id;
 
@@ -21,6 +21,7 @@ class OperIrcop
     private ?string $reason = null;
 
     public static function create(
+        DateTimeImmutable $addedAt,
         int $nickId,
         OperRole $role,
         ?int $addedById = null,
@@ -29,7 +30,7 @@ class OperIrcop
         $admin = new self();
         $admin->nickId = $nickId;
         $admin->role = $role;
-        $admin->addedAt = new DateTimeImmutable();
+        $admin->addedAt = $addedAt;
         $admin->addedById = $addedById;
         $admin->reason = $reason;
 

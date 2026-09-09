@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\PublishedEvent\ChannelMemberRankGrantedEvent;
 use App\Irc\Domain\Network\ChannelMemberRole;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

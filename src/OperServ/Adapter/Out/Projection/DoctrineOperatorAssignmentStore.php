@@ -12,6 +12,7 @@ use App\OperServ\Domain\Entity\OperPermission;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
+use DateTimeImmutable;
 use LogicException;
 
 final readonly class DoctrineOperatorAssignmentStore implements OperatorAssignmentStore
@@ -30,12 +31,12 @@ final readonly class DoctrineOperatorAssignmentStore implements OperatorAssignme
         return array_values(array_map($this->record(...), $this->assignments->findAll()));
     }
 
-    public function assign(int $id, OperatorRoleRecord $role, ?int $by): void
+    public function assign(int $id, OperatorRoleRecord $role, ?int $by, DateTimeImmutable $addedAt): void
     {
         $legacy = $this->role($role->name);
         $current = $this->assignments->findByNickId($id);
         if (null === $current) {
-            $this->assignments->save(OperIrcop::create($id, $legacy, $by));
+            $this->assignments->save(OperIrcop::create($addedAt, $id, $legacy, $by));
         } else {
             $current->changeRole($legacy);
             $this->assignments->save($current);

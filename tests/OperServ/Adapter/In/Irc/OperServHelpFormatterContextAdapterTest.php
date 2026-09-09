@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Application\Port\In\NickAccountData;
+use App\OperServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
@@ -14,12 +16,10 @@ use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Help\HelpableCommandInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(OperServHelpFormatterContextAdapter::class)]
 final class OperServHelpFormatterContextAdapterTest extends TestCase
@@ -199,10 +199,16 @@ final class FormatterNotifier implements OperServNotifierInterface
     }
 }
 
-final class FormatterTranslation implements TranslationInterface
+final class FormatterTranslation implements TranslatorInterface
 {
+    /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         return $id;
+    }
+
+    public function getLocale(): string
+    {
+        return 'en';
     }
 }

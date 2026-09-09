@@ -6,6 +6,8 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\UseripCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
@@ -16,13 +18,11 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Userip\GetUserip;
 use App\NickServ\Application\UseCase\Userip\GetUseripHandlerInterface;
 use App\NickServ\Application\UseCase\Userip\GetUseripResult;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function base64_encode;
 use function inet_pton;
@@ -194,7 +194,7 @@ final class UseripCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
             unset($params['%bot%'], $params['%nickserv%']);
             if ([] === $params) {

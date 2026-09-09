@@ -6,6 +6,7 @@ namespace App\NickServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
@@ -15,10 +16,9 @@ use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function assert;
 use function count;
@@ -43,7 +43,7 @@ final readonly class NickServService
         private UserLanguageQuery $languageResolver,
         private NickServNotifierInterface $notifier,
         private UserMessagePreferenceQuery $messageTypeResolver,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private PendingVerificationRegistry $pendingVerificationRegistry,
         private RecoveryTokenRegistry $recoveryTokenRegistry,
         private ServiceNicknameRegistry $serviceNicks,

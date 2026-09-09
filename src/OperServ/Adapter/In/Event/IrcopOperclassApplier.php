@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Event;
 
-use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\OperclassServiceActionsInterface;
+use App\NickServ\Application\Port\In\IdentifiedSessionQuery;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
-use App\Shared\Application\Port\OperclassServiceActionsInterface;
 
 /**
  * Applies role operclasses to online IRC operators through the active
@@ -23,10 +23,10 @@ use App\Shared\Application\Port\OperclassServiceActionsInterface;
 final readonly class IrcopOperclassApplier
 {
     public function __construct(
-        private IdentifiedSessionRegistry $identifiedRegistry,
-        private ActiveConnectionHolderInterface $connectionHolder,
+        private IdentifiedSessionQuery $identifiedSessions,
+        private ActiveProtocolModuleHolderInterface $connectionHolder,
         private OperIrcopRepositoryInterface $ircopRepository,
-        private RegisteredNickRepositoryInterface $nickRepository,
+        private NickProjectionQuery $nicks,
     ) {}
 
     /** Apply the role operclass when the active protocol supports it. */
@@ -37,7 +37,7 @@ final readonly class IrcopOperclassApplier
             return false;
         }
 
-        $uid = $this->identifiedRegistry->findUidByNick($registeredNick);
+        $uid = $this->identifiedSessions->findUidByNick($registeredNick);
         $actions = null !== $uid ? $this->connectionHolder->getProtocolModule()?->getServiceActions() : null;
         if (null === $uid || !$actions instanceof OperclassServiceActionsInterface) {
             return false;
@@ -61,7 +61,7 @@ final readonly class IrcopOperclassApplier
     /** Remove an online user's operclass when their IRCOP assignment is removed. */
     public function removeForNick(string $registeredNick): bool
     {
-        $uid = $this->identifiedRegistry->findUidByNick($registeredNick);
+        $uid = $this->identifiedSessions->findUidByNick($registeredNick);
         $actions = null !== $uid ? $this->connectionHolder->getProtocolModule()?->getServiceActions() : null;
         if (null === $uid || !$actions instanceof OperclassServiceActionsInterface) {
             return false;
@@ -86,18 +86,18 @@ final readonly class IrcopOperclassApplier
     public function updateForRole(int $roleId, ?string $operclass): void
     {
         foreach ($this->ircopRepository->findByRoleId($roleId) as $ircop) {
-            $nick = $this->nickRepository->findById($ircop->getNickId());
+            $nick = $this->nicks->findById($ircop->getNickId());
             if (null === $nick) {
                 continue;
             }
 
             if (null === $operclass || '' === $operclass) {
-                $this->removeForNick($nick->getNickname());
+                $this->removeForNick($nick->nickname);
 
                 continue;
             }
 
-            $this->applyForNick($nick->getNickname(), $ircop->getRole());
+            $this->applyForNick($nick->nickname, $ircop->getRole());
         }
     }
 }

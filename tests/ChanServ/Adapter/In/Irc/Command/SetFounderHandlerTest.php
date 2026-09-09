@@ -18,14 +18,14 @@ use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function base64_encode;
 
@@ -134,7 +134,7 @@ final class SetFounderHandlerTest extends TestCase
             return array_shift($results) ?? throw new LogicException('Missing founder transfer result.');
         });
         $translated = [];
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $key, array $params) use (&$translated): string {
             $translated[$key] = $params;
 
@@ -181,7 +181,7 @@ final class SetFounderHandlerTest extends TestCase
         array $args,
         string $ipBase64 = 'raw-ip',
         bool $founderEquivalent = false,
-        ?TranslationInterface $translator = null,
+        ?TranslatorInterface $translator = null,
         bool $withoutSender = false,
     ): ChanServContext {
         return new ChanServContext(
@@ -221,9 +221,9 @@ final class SetFounderHandlerTest extends TestCase
         return $notifier;
     }
 
-    private function translator(): TranslationInterface
+    private function translator(): TranslatorInterface
     {
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
 
         return $translator;

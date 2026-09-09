@@ -42,6 +42,7 @@ final class ChannelHistoryTest extends TestCase
     public function recordWithNullPerformedByNickId(): void
     {
         $history = ChannelHistory::record(
+            new DateTimeImmutable('2026-01-02 03:04:05'),
             channelId: 42,
             action: 'SET_FOUNDER',
             performedBy: 'UnregisteredOper',
@@ -53,11 +54,12 @@ final class ChannelHistoryTest extends TestCase
     }
 
     #[Test]
-    public function recordWithDefaultPerformedAt(): void
+    public function recordWithExplicitPerformedAt(): void
     {
-        $before = new DateTimeImmutable();
+        $performedAt = new DateTimeImmutable('2026-01-02 03:04:05');
 
         $history = ChannelHistory::record(
+            $performedAt,
             channelId: 1,
             action: 'HISTORY_ADD',
             performedBy: 'Admin',
@@ -65,16 +67,14 @@ final class ChannelHistoryTest extends TestCase
             message: 'Manual note',
         );
 
-        $after = new DateTimeImmutable();
-
-        self::assertGreaterThanOrEqual($before, $history->getPerformedAt());
-        self::assertLessThanOrEqual($after, $history->getPerformedAt());
+        self::assertSame($performedAt, $history->getPerformedAt());
     }
 
     #[Test]
     public function recordWithEmptyExtraData(): void
     {
         $history = ChannelHistory::record(
+            new DateTimeImmutable('2026-01-02 03:04:05'),
             channelId: 1,
             action: 'UNSUSPEND',
             performedBy: 'Admin',
@@ -96,9 +96,9 @@ final class ChannelHistoryTest extends TestCase
             action: 'AKICK_ADD',
             performedBy: 'User',
             performedByNickId: null,
+            performedAt: $performedAt,
             message: 'AKICK added',
             extraData: ['mask' => '*!*@bad.isp'],
-            performedAt: $performedAt,
         );
 
         $array = $history->toArray();

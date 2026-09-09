@@ -26,10 +26,13 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
 use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandlerInterface;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandlerInterface;
+use App\ChanServ\Application\UseCase\ResolveSetting\ResolveChannelSetting;
+use App\ChanServ\Application\UseCase\ResolveSetting\ResolveChannelSettingHandler;
 use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounder;
 use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderHandlerInterface;
 use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderResult;
 use App\ChanServ\Application\UseCase\TransferFounder\TransferFounderOutcome;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
@@ -39,15 +42,17 @@ use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetCommand::class)]
+#[CoversClass(ResolveChannelSetting::class)]
+#[CoversClass(ResolveChannelSettingHandler::class)]
 final class SetCommandTest extends TestCase
 {
     /** @param array<string> $args */
@@ -56,7 +61,7 @@ final class SetCommandTest extends TestCase
         ?ChanAccountView $senderAccount,
         array $args,
         ChanServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
     ): ChanServContext {
         return new ChanServContext(
             $sender,
@@ -80,24 +85,25 @@ final class SetCommandTest extends TestCase
         RegisteredChannelRepositoryInterface $channelRepo,
         ChanServAccessHelper $accessHelper,
         ?ChanUserAccountPort $nickRepo = null,
+        ?SetFounderHandler $founderHandler = null,
     ): SetCommand {
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo ??= $this->createStub(ChanUserAccountPort::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $eventDispatcher = $this->createStub(EventBusInterface::class);
-        $trans = $this->createStub(TranslationInterface::class);
+        $trans = $this->createStub(TranslatorInterface::class);
         $trans->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $settingUpdater = new UpdateChannelSettingHandler($channelRepo, $nickRepo, $eventDispatcher);
 
         return new SetCommand(
-            $channelRepo,
-            $accessHelper,
-            $this->createFounderHandler(),
-            new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class)),
-            new SetDescHandler($channelRepo),
-            new SetUrlHandler($channelRepo),
-            new SetEmailHandler($channelRepo),
-            new SetEntrymsgHandler($channelRepo),
-            new SetTopiclockHandler($channelRepo, $eventDispatcher),
+            new ResolveChannelSettingHandler($channelRepo, $accessHelper),
+            $founderHandler ?? $this->createFounderHandler(),
+            new SetSuccessorHandler($settingUpdater),
+            new SetDescHandler($settingUpdater),
+            new SetUrlHandler($settingUpdater),
+            new SetEmailHandler($settingUpdater),
+            new SetEntrymsgHandler($settingUpdater),
+            new SetTopiclockHandler($settingUpdater),
             new SetMlockHandler($this->createStub(ConfigureChannelMlockHandlerInterface::class), new MlockStateFromChannelResolver()),
             new SetSecureHandler($this->createStub(ConfigureChannelSecureHandlerInterface::class)),
         );
@@ -116,7 +122,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
@@ -141,7 +147,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
@@ -161,7 +167,7 @@ final class SetCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
         );
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
@@ -185,7 +191,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = new ChanAccountView(2, 'User', 'en');
 
@@ -342,7 +348,7 @@ final class SetCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
         );
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = new ChanAccountView(2, 'User', 'en');
 
@@ -365,7 +371,7 @@ final class SetCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
         );
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = new ChanAccountView(2, 'User', 'en');
 
@@ -388,13 +394,30 @@ final class SetCommandTest extends TestCase
         $levelRepo->method('findByChannelAndKey')->willReturn(null);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = new ChanAccountView(2, 'User', 'en');
 
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
         $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'DESC', 'New description'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function levelFounderBypassesSettingAccessResolution(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $handler = new ResolveChannelSettingHandler(
+            $channelRepo,
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame($channel, $handler->handle(new ResolveChannelSetting('#test', 1, true, 'DESC')));
     }
 
     #[Test]
@@ -418,7 +441,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = new ChanAccountView(10, 'User', 'en');
         $founderHandler = $this->createMock(TransferChannelFounderHandlerInterface::class);
@@ -426,19 +449,7 @@ final class SetCommandTest extends TestCase
             static fn (TransferChannelFounder $command): bool => 'NewFounder' === $command->targetNickname,
         ))->willReturn(new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo***@test.com'));
 
-        $cmd = new SetCommand(
-            $channelRepo,
-            $accessHelper,
-            new SetFounderHandler($founderHandler),
-            new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class)),
-            new SetDescHandler($channelRepo),
-            new SetUrlHandler($channelRepo),
-            new SetEmailHandler($channelRepo),
-            new SetEntrymsgHandler($channelRepo),
-            new SetTopiclockHandler($channelRepo, $this->createStub(EventBusInterface::class)),
-            new SetMlockHandler($this->createStub(ConfigureChannelMlockHandlerInterface::class), new MlockStateFromChannelResolver()),
-            new SetSecureHandler($this->createStub(ConfigureChannelSecureHandlerInterface::class)),
-        );
+        $cmd = $this->createSetCommand($channelRepo, $accessHelper, $nickRepo, new SetFounderHandler($founderHandler));
         $cmd->execute($this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $account,
@@ -470,7 +481,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = new ChanAccountView(10, 'User', 'en');
 
@@ -510,7 +521,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = new ChanAccountView(10, 'User', 'en');
 

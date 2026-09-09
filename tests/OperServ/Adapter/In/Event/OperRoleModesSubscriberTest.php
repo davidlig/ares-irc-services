@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use App\OperServ\Adapter\In\Event\IrcopModeApplier;
 use App\OperServ\Adapter\In\Event\IrcopOperclassApplier;
@@ -18,7 +19,7 @@ use App\OperServ\Adapter\In\Event\OperRoleModesSubscriber;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -53,7 +54,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $subscriber = new OperRoleModesSubscriber(
             $ircopRepository,
             $modeApplier,
-            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $this->createStub(ActiveConnectionHolderInterface::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(RegisteredNickRepositoryInterface::class)),
+            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $this->createStub(ActiveProtocolModuleHolderInterface::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(NickProjectionQuery::class)),
         );
 
         $subscriber->onNickIdentified($event);
@@ -64,11 +65,8 @@ final class OperRoleModesSubscriberTest extends TestCase
     {
         $event = new NickIdentifiedEvent(42, 'TestNick', '001ABCD');
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getUserModes')->willReturn([]);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
+        $role = OperRole::create('ADMIN');
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository
@@ -82,7 +80,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $subscriber = new OperRoleModesSubscriber(
             $ircopRepository,
             $modeApplier,
-            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $this->createStub(ActiveConnectionHolderInterface::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(RegisteredNickRepositoryInterface::class)),
+            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $this->createStub(ActiveProtocolModuleHolderInterface::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(NickProjectionQuery::class)),
         );
 
         $subscriber->onNickIdentified($event);
@@ -96,7 +94,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $role = OperRole::create('ADMIN', 'Admin role');
         $role->changeUserModes(['o', 's']);
 
-        $ircop = OperIrcop::create(42, $role, null, null);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository
@@ -121,7 +119,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $protocolModule->method('getServiceActions')->willReturn($serviceActions);
         $protocolModule->method('getUserModeSupport')->willReturn($userModeSupport);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
@@ -140,7 +138,7 @@ final class OperRoleModesSubscriberTest extends TestCase
             modes: '+i',
         ));
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
 
         $modeApplier = new IrcopModeApplier(
@@ -155,7 +153,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $subscriber = new OperRoleModesSubscriber(
             $ircopRepository,
             $modeApplier,
-            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $this->createStub(ActiveConnectionHolderInterface::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(RegisteredNickRepositoryInterface::class)),
+            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $this->createStub(ActiveProtocolModuleHolderInterface::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(NickProjectionQuery::class)),
         );
 
         $subscriber->onNickIdentified($event);
@@ -165,9 +163,9 @@ final class OperRoleModesSubscriberTest extends TestCase
     {
         return new IrcopModeApplier(
             new IdentifiedSessionRegistry(),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NickProjectionQuery::class),
             $this->createStub(NetworkUserLookupPort::class),
             new NullLogger(),
         );

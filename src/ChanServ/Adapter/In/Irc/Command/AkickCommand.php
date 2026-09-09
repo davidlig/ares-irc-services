@@ -130,9 +130,10 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $expiresAt = null;
         $reason = null;
         $validRequest = true;
+        $now = new DateTimeImmutable();
 
         if (ManageChannelAkickAction::Add === $action) {
-            [$item, $expiresAt, $reason, $validRequest] = $this->parseAddition($context);
+            [$item, $expiresAt, $reason, $validRequest] = $this->parseAddition($context, $now);
         } elseif (ManageChannelAkickAction::Delete === $action) {
             $item = trim($context->args[2] ?? '');
             $validRequest = 3 <= count($context->args) && '' !== $item;
@@ -148,7 +149,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
             performedBy: $sender?->nick,
             performedByIp: null === $sender ? '*' : $this->decodeIp($sender->ipBase64),
             performedByHost: null === $sender ? '' : sprintf('%s@%s', $sender->ident, $sender->hostname),
-            now: new DateTimeImmutable(),
+            now: $now,
             item: $item,
             expiresAt: $expiresAt,
             reason: $reason,
@@ -157,7 +158,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
     }
 
     /** @return array{?string, ?DateTimeImmutable, ?string, bool} */
-    private function parseAddition(ChanServContext $context): array
+    private function parseAddition(ChanServContext $context, DateTimeImmutable $now): array
     {
         $mask = trim($context->args[2] ?? '');
         if (3 > count($context->args) || '' === $mask) {
@@ -177,7 +178,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
             return [$mask, null, $reason, true];
         }
 
-        $expiresAt = RelativeExpiryParser::parse($expiry);
+        $expiresAt = RelativeExpiryParser::parse($expiry, $now);
         if (null === $expiresAt) {
             return [$mask, null, null, false];
         }

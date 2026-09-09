@@ -6,6 +6,8 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\RenameCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
@@ -16,14 +18,12 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Rename\RenameNick;
 use App\NickServ\Application\UseCase\Rename\RenameNickHandlerInterface;
 use App\NickServ\Application\UseCase\Rename\RenameNickResult;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RenameCommand::class)]
 final class RenameCommandTest extends TestCase
@@ -197,7 +197,7 @@ final class RenameCommandTest extends TestCase
         array $args,
         bool $captureParams = false,
     ): NickServContext {
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $key, array $params) use (&$messages, $captureParams): string {
             $messages[] = $captureParams ? [$key, $params] : $key;
 

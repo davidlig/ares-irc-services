@@ -31,6 +31,6 @@ final readonly class ChanServNickDropCleanupSubscriber implements EventSubscribe
 
     public function onNickDrop(NickDropCleanupEvent $event): void
     {
-        $this->cleanupDroppedNickData->handle(new CleanupDroppedNickData($event->nickId));
+        $this->cleanupDroppedNickData->handle(new CleanupDroppedNickData($event->nickId, $event->occurredAt));
     }
 }

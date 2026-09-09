@@ -85,20 +85,20 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         return 'IDENTIFIED';
     }
 
-    public function execute(MemoServContext $context): void
+    public function execute(MemoServContext $context): null
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
             $context->reply('error.not_identified');
 
-            return;
+            return null;
         }
 
         $sub = strtoupper($context->args[0] ?? '');
         if (!in_array($sub, self::SUBCOMMANDS, true)) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
         if ('LIST' === $sub) {
@@ -115,7 +115,7 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
             if ('' === $nickToIgnore) {
                 $context->reply('error.syntax', ['syntax' => $context->trans('ignore.' . strtolower($sub) . '.syntax')]);
 
-                return;
+                return null;
             }
 
             $action = 'ADD' === $sub ? IgnoreMemoAction::Add : IgnoreMemoAction::Del;
@@ -134,7 +134,7 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
                 if ([] === $result->ignoredNicks) {
                     $context->reply('ignore.list_empty');
 
-                    return;
+                    return null;
                 }
                 $context->reply('ignore.list_header');
                 foreach ($result->ignoredNicks as $name) {
@@ -187,5 +187,7 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
                 }
                 break;
         }
+
+        return null;
     }
 }

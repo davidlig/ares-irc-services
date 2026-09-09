@@ -97,7 +97,7 @@ final class NetworkStateSubscriberTest extends TestCase
         $nick = new Nick('TestUser');
         $user = $this->createMock(NetworkUser::class);
         $user->expects(self::atLeastOnce())->method('getChannelNames')->willReturn(['#test', '#other']);
-        $channel = new Channel(new ChannelName('#test'));
+        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
 
         $this->userRepository->expects(self::once())
             ->method('findByUid')
@@ -244,7 +244,7 @@ final class NetworkStateSubscriberTest extends TestCase
     public function onChannelSyncedSavesChannelAndUpdatesUsers(): void
     {
         $channelName = new ChannelName('#test');
-        $channel = new Channel($channelName);
+        $channel = new Channel($channelName, '', new DateTimeImmutable('@0'));
         $uid = new Uid('001ABC123');
 
         $channel->syncMember($uid, ChannelMemberRole::Op);

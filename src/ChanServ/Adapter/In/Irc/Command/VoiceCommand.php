@@ -5,16 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
-use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Model\ChanAccountView;
-use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\Service\ChanServAccessHelper;
-use App\ChanServ\Domain\Entity\ChannelLevel;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Application\Port\In\SenderView;
 
 /**
  * VOICE <#channel> <nickname>.
@@ -23,12 +13,7 @@ use App\Irc\Application\Port\In\SenderView;
  */
 final readonly class VoiceCommand implements ChanServCommandInterface
 {
-    public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChanUserAccountPort $accountPort,
-        private NetworkUserLookupPort $userLookup,
-        private ChanServAccessHelper $accessHelper,
-    ) {}
+    use ManualRankCommandPresentation;
 
     public function getName(): string
     {
@@ -94,106 +79,5 @@ final readonly class VoiceCommand implements ChanServCommandInterface
     public function usesLevelFounder(): bool
     {
         return true;
-    }
-
-    public function execute(ChanServContext $context): void
-    {
-        $sender = $context->sender;
-        if (null === $sender) {
-            return;
-        }
-
-        $validation = $this->validateVoiceExecute($context);
-        if (null === $validation) {
-            return;
-        }
-
-        [$channelName, $targetNick, $channel, $targetSender] = $validation;
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'v', true, $channel->getCreatedAt()->getTimestamp());
-        $context->getNotifier()->sendNoticeToChannel(
-            $channelName,
-            $context->trans('voice.notice_grant', [
-                '%from%' => $sender->nick,
-                '%to%' => $targetNick,
-                '%mode%' => '+v',
-            ])
-        );
-        $context->reply('voice.done', ['%nickname%' => $targetNick]);
-    }
-
-    /** @return array{string, string, RegisteredChannel, SenderView}|null */
-    private function validateVoiceExecute(ChanServContext $context): ?array
-    {
-        $channelName = $context->getChannelNameArg(0);
-        if (null === $channelName) {
-            $context->reply('error.invalid_channel');
-
-            return null;
-        }
-
-        $targetNick = $context->args[1] ?? '';
-        if ('' === $targetNick) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-            return null;
-        }
-
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
-            throw ChannelNotRegisteredException::forChannel($channelName);
-        }
-
-        return $this->validateVoiceSender($context, $channel, $channelName, $targetNick);
-    }
-
-    /** @return array{string, string, RegisteredChannel, SenderView}|null */
-    private function validateVoiceSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
-    {
-        $senderAccount = $context->senderAccount;
-        if (null === $senderAccount) {
-            $context->reply('error.not_identified');
-
-            return null;
-        }
-
-        if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $senderAccount->id, ChannelLevel::KEY_VOICEDEVOICE, $channelName, 'VOICE');
-        }
-
-        $targetAccount = $this->accountPort->findAccountByNick($targetNick);
-        if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nickname%' => $targetNick]);
-
-            return null;
-        }
-
-        return $this->validateVoiceTarget($context, $channel, $channelName, $targetNick, $targetAccount);
-    }
-
-    /** @return array{string, string, RegisteredChannel, SenderView}|null */
-    private function validateVoiceTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, ChanAccountView $targetAccount): ?array
-    {
-        $targetSender = $this->userLookup->findByNick($targetNick);
-        if (null === $targetSender) {
-            $context->reply('voice.user_not_on_channel', ['%nickname%' => $targetNick]);
-
-            return null;
-        }
-
-        if (!$context->isLevelFounder && $channel->isSecure()) {
-            $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->id, $targetSender->isIdentified);
-            $minLevelForMode = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOVOICE);
-            if ($targetLevel < $minLevelForMode) {
-                $context->reply('secure.requires_min_level', [
-                    '%nickname%' => $targetNick,
-                    '%level%' => (string) $minLevelForMode,
-                    '%mode%' => '+v',
-                ]);
-
-                return null;
-            }
-        }
-
-        return [$channelName, $targetNick, $channel, $targetSender];
     }
 }

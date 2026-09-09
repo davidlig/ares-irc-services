@@ -9,6 +9,7 @@ use App\OperServ\Application\Port\In\OperatorNetworkProjection;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,7 +34,7 @@ final class DoctrineOperatorNetworkProjectionQueryTest extends TestCase
         $role->changeForcedVhostPattern('staff.example.test');
         $role->changeOperclass('services:admin');
         $repository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $repository->method('findByNickId')->willReturn(OperIrcop::create(42, $role));
+        $repository->method('findByNickId')->willReturn(OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role));
 
         $projection = new DoctrineOperatorNetworkProjectionQuery($repository)->findForNick(42, 'Alice');
         self::assertNotNull($projection);
@@ -48,7 +49,7 @@ final class DoctrineOperatorNetworkProjectionQueryTest extends TestCase
         $role = OperRole::create('ADMIN');
         $role->changeForcedVhostPattern('invalid');
         $repository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $repository->method('findByNickId')->willReturn(OperIrcop::create(42, $role));
+        $repository->method('findByNickId')->willReturn(OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role));
 
         $projection = new DoctrineOperatorNetworkProjectionQuery($repository)->findForNick(42, 'Alice');
         self::assertNotNull($projection);
@@ -63,8 +64,8 @@ final class DoctrineOperatorNetworkProjectionQueryTest extends TestCase
         $role = OperRole::create('ADMIN');
         $repository = $this->createStub(OperIrcopRepositoryInterface::class);
         $repository->method('findByRoleId')->willReturn([
-            OperIrcop::create(42, $role),
-            OperIrcop::create(84, $role),
+            OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role),
+            OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 84, $role),
         ]);
 
         self::assertSame(

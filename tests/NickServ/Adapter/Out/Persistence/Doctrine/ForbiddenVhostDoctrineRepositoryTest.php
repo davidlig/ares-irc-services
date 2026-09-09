@@ -7,7 +7,7 @@ namespace App\Tests\NickServ\Adapter\Out\Persistence\Doctrine;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\ForbiddenVhostDoctrineRepository;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
-use App\Tests\Integration\DoctrineIntegrationTestCase;
+use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use PHPUnit\Framework\Attributes\CoversClass;

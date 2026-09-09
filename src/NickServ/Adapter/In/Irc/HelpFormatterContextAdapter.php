@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
+use App\NickServ\Adapter\In\Irc\Help\HelpableCommandInterface;
+use App\NickServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Security\NickServPermission;
-use App\Shared\Application\Help\HelpableCommandInterface;
-use App\Shared\Application\Help\HelpFormatterContextInterface;
 
 use function str_starts_with;
 use function strtolower;

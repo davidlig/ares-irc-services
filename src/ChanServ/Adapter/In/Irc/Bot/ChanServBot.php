@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Bot;
 
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\ApplyOutgoingChannelModesPort;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\Irc\Application\Port\In\ServiceUidProviderInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
-use App\Shared\Application\Port\ApplyOutgoingChannelModesPort;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceChannelRegistrationPort;
-use App\Shared\Application\Port\ServiceUidProviderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -35,7 +35,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
     private string $uid = '';
 
     public function __construct(
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
+        private readonly ActiveProtocolModuleHolderInterface $connectionHolder,
         private readonly ChannelLookupPort $channelLookup,
         private readonly ApplyOutgoingChannelModesPort $applyOutgoingChannelModes,
         private readonly ServiceChannelRegistrationPort $channelRegistration,

@@ -8,7 +8,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\ParsedUdbPath;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawCommandHandler;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use App\Irc\Application\Port\In\ActiveConnectionHolderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -58,7 +58,7 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
     #[Test]
     public function insAcceptsQuotedAndColonPrefixedValuesVerbatim(): void
     {
-        // The handler receives the value already decoded by RawCommand; the
+        // The handler receives the value already decoded by the protocol interceptor; the
         // raw form is stored as-is (quoting is stripped there).
         $result = $this->handler->ins('N::davidlig::vhost', 'cloaked.host');
 

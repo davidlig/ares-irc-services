@@ -274,15 +274,15 @@ raw:
   too_long:         "\x0304✗\x03 Lerroa luzeegia da. Gehienez 510 karaktere."
   not_connected:    "\x0304✗\x03 Ez dago IRCd-ra konektatuta."
   done:             "\x0303✓\x03 Lerro gordina bidali da."
-  udb:
-    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
-    done:          "\x0303✓\x03 UDB aldaketa aplikatu da: modu autoritarioan gorde eta hedatzeko ilaran dago."
-    target:        "\x0304✗\x03 UDB aldaketak zerbitzari guztiei zuzendu behar zaizkie (DB * ...), ez %target%(r)i."
-    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT ez dago erabilgarri RAW bidez."
-    invalid_block: "\x0304✗\x03 UDB bloke ezezaguna: %block%."
-    invalid_path:  "\x0304✗\x03 UDB erregistro-bide baliogabea: %path%."
-    invalid_value: "\x0304✗\x03 UDB erregistro-balio baliogabea: %path%."
-    error:         "\x0304✗\x03 Errorea UDB biltegian idazten; aldaketa ez da hedatu."
+  protocol:
+    syntax: "\x0304✗\x03 Protokolo aktiboak RAW komandoaren sintaxia baztertu du."
+    done: "\x0303✓\x03 Protokoloak kudeatutako RAW komandoa exekutatu da."
+    target: "\x0304✗\x03 Protokolo aktiboak %target% helburua baztertu du."
+    unsupported: "\x0304✗\x03 Protokolo aktiboak ez du RAW komando hau onartzen."
+    invalid_resource_type: "\x0304✗\x03 Protokolo-baliabide mota ezezaguna: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Protokolo-baliabide baliogabea: %resource%."
+    invalid_value: "\x0304✗\x03 Protokolo-baliabidearen balio baliogabea: %resource%."
+    error: "\x0304✗\x03 Protokolo aktiboak ezin izan du RAW komandoa exekutatu."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

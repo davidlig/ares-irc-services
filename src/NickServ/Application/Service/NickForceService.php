@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Service;
 
+use App\NickServ\Application\Port\In\NickCollisionResolver;
 use App\NickServ\Application\Port\Out\GuestNicknameGenerator;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
@@ -29,7 +30,7 @@ use function sprintf;
  *
  * Used by: RenameCommand (IRCop), NickSuspensionService, NickProtectionService
  */
-readonly class NickForceService
+readonly class NickForceService implements NickCollisionResolver
 {
     public function __construct(
         private IdentifiedSessionTracker $identifiedRegistry,

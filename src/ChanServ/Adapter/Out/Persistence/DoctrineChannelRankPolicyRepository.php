@@ -11,6 +11,7 @@ use App\ChanServ\Application\Port\Out\ChannelRankPolicyRepository;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelLevelSet;
+use DateTimeImmutable;
 
 final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankPolicyRepository
 {
@@ -39,7 +40,7 @@ final readonly class DoctrineChannelRankPolicyRepository implements ChannelRankP
             return;
         }
 
-        $channel->touchLastUsed();
+        $channel->touchLastUsed(new DateTimeImmutable());
         $this->channels->save($channel);
     }
 

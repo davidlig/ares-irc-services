@@ -54,7 +54,8 @@ final class ManageGlineHandlerTest extends TestCase
         self::assertSame('ident@example.test', $repository->saved[0][0]);
         self::assertSame(44, $repository->saved[0][1]);
         self::assertSame('abuse', $repository->saved[0][2]);
-        self::assertSame('2026-09-09T10:00:00+00:00', $repository->saved[0][3]?->format(DATE_ATOM));
+        self::assertSame('2026-09-08T10:00:00+00:00', $repository->saved[0][3]->format(DATE_ATOM));
+        self::assertSame('2026-09-09T10:00:00+00:00', $repository->saved[0][4]?->format(DATE_ATOM));
         self::assertSame('ident@example.test', $network->added[0][0]);
         self::assertSame('2026-09-09T10:00:00+00:00', $network->added[0][1]?->format(DATE_ATOM));
         self::assertSame('abuse', $network->added[0][2]);
@@ -241,7 +242,7 @@ final class RecordingGlineRepository implements GlineRepository
     /** @var list<GlineEntry> */
     public array $entries;
 
-    /** @var list<array{string, ?int, string, ?DateTimeImmutable}> */
+    /** @var list<array{string, ?int, string, DateTimeImmutable, ?DateTimeImmutable}> */
     public array $saved = [];
 
     /** @var list<GlineEntry> */
@@ -274,20 +275,38 @@ final class RecordingGlineRepository implements GlineRepository
         return $this->entries;
     }
 
+    public function findActiveAt(DateTimeImmutable $at): array
+    {
+        return array_values(array_filter(
+            $this->entries,
+            static fn (GlineEntry $entry): bool => !$entry->isExpiredAt($at),
+        ));
+    }
+
+    public function findExpiredAt(DateTimeImmutable $at): array
+    {
+        return array_values(array_filter(
+            $this->entries,
+            static fn (GlineEntry $entry): bool => $entry->isExpiredAt($at),
+        ));
+    }
+
     public function countAll(): int
     {
         return count($this->entries);
     }
 
-    public function save(string $mask, ?int $creatorAccountId, string $reason, ?DateTimeImmutable $expiresAt): void
+    public function save(string $mask, ?int $creatorAccountId, string $reason, DateTimeImmutable $createdAt, ?DateTimeImmutable $expiresAt): void
     {
-        $this->saved[] = [$mask, $creatorAccountId, $reason, $expiresAt];
+        $this->saved[] = [$mask, $creatorAccountId, $reason, $createdAt, $expiresAt];
     }
 
     public function remove(GlineEntry $entry): void
     {
         $this->removed[] = $entry;
     }
+
+    public function clearCreatorAccountId(int $accountId): void {}
 }
 
 final class RecordingGlineNetworkActions implements GlineNetworkActions

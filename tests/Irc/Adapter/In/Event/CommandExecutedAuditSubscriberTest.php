@@ -51,6 +51,24 @@ final class CommandExecutedAuditSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function classifiesNonRootMutationAsOperatorAction(): void
+    {
+        $audit = $this->createMock(CommandAuditRecorder::class);
+        $audit->expects(self::once())->method('record')->with(self::callback(
+            static fn (CommandAuditRecord $record): bool => CommandAuditCategory::OperatorAction === $record->category
+                && 'operserv.kill' === $record->permission
+                && 'Trouble' === $record->target,
+        ));
+        $auditable = new class implements PublishedIrcopAuditableCommandInterface {};
+
+        new CommandExecutedAuditSubscriber($audit)->onPublishedCommandExecuted($this->publishedEvent(
+            $auditable,
+            'operserv.kill',
+            PublishedCommandOutcome::success(new PublishedIrcopAuditData('Trouble')),
+        ));
+    }
+
+    #[Test]
     public function ignoresNonAuditableRejectedIncompleteAndUnclassifiedPublishedEvents(): void
     {
         $audit = $this->createMock(CommandAuditRecorder::class);

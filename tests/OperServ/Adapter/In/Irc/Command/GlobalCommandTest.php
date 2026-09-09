@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\OperServ\Adapter\In\Irc\Command\GlobalCommand;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
+use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
@@ -18,18 +20,16 @@ use App\OperServ\Application\Port\Out\NetworkUser;
 use App\OperServ\Application\Port\Out\NetworkUserLookup;
 use App\OperServ\Application\Port\Out\OperatorAccountLookup;
 use App\OperServ\Application\Security\OperServPermission;
-use App\OperServ\Application\UseCase\Global\GlobalMessageType;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessage;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageHandler;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageResult;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(GlobalCommand::class)]
 #[CoversClass(SendGlobalMessage::class)]
@@ -65,12 +65,12 @@ final class GlobalCommandTest extends TestCase
         $before = new DateTimeImmutable();
 
         new GlobalCommand($this->handler($network, $audit))->execute(
-            $this->context(['GlobalServ', 'notice', 'credential=must-not-enter-audit'], $translation, new GlobalCommandNotifier($trace)),
+            $this->context(['GlobalServ', 'privmsg', 'credential=must-not-enter-audit'], $translation, new GlobalCommandNotifier($trace)),
         );
 
         $after = new DateTimeImmutable();
         self::assertSame(['effect', 'audit', 'reply'], $trace->events);
-        self::assertSame(['001GS', 'credential=must-not-enter-audit', GlobalMessageType::Notice], $network->broadcast);
+        self::assertSame(['001GS', 'credential=must-not-enter-audit', MessageDelivery::Interactive], $network->broadcast);
         self::assertNotNull($audit->record);
         self::assertSame(CommandAuditCategory::OperatorAction, $audit->record->category);
         self::assertSame('RootOper', $audit->record->actor);
@@ -78,7 +78,7 @@ final class GlobalCommandTest extends TestCase
         self::assertSame('GlobalServ', $audit->record->target);
         self::assertSame(OperServPermission::GLOBAL, $audit->record->permission);
         self::assertSame([
-            'message_type' => 'NOTICE',
+            'delivery' => 'interactive',
             'recipient_count' => 7,
             'sender_kind' => 'service',
         ], $audit->record->metadata);
@@ -169,7 +169,7 @@ final class GlobalCommandTest extends TestCase
     }
 
     /** @param list<string> $arguments */
-    private function context(array $arguments, TranslationInterface $translator, OperServNotifierInterface $notifier, bool $withoutSender = false): OperServContext
+    private function context(array $arguments, TranslatorInterface $translator, OperServNotifierInterface $notifier, bool $withoutSender = false): OperServContext
     {
         return new OperServContext(
             $withoutSender ? null : new SenderView('001AAA', 'RootOper', 'ident', 'host', 'cloak', 'ip', true, true),
@@ -194,19 +194,25 @@ final class GlobalCommandTrace
     public array $events = [];
 }
 
-final class GlobalCommandTranslation implements TranslationInterface
+final class GlobalCommandTranslation implements TranslatorInterface
 {
     public string $lastKey = '';
 
     /** @var array<string, mixed> */
     public array $lastParameters = [];
 
+    /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         $this->lastKey = $id;
         $this->lastParameters = $parameters;
 
         return $id;
+    }
+
+    public function getLocale(): string
+    {
+        return 'en';
     }
 }
 
@@ -242,7 +248,7 @@ final readonly class GlobalCommandNotifier implements OperServNotifierInterface
 
 final class GlobalCommandNetwork implements GlobalMessageTransport
 {
-    /** @var array{string, string, GlobalMessageType}|null */
+    /** @var array{string, string, MessageDelivery}|null */
     public ?array $broadcast = null;
 
     /**
@@ -259,15 +265,15 @@ final class GlobalCommandNetwork implements GlobalMessageTransport
         return $this->serviceUids[$nickname] ?? null;
     }
 
-    public function broadcastFromService(string $senderUid, string $message, GlobalMessageType $messageType): ?int
+    public function broadcastFromService(string $senderUid, string $message, MessageDelivery $delivery): ?int
     {
-        $this->broadcast = [$senderUid, $message, $messageType];
+        $this->broadcast = [$senderUid, $message, $delivery];
         $this->trace->events[] = 'effect';
 
         return $this->recipientCount;
     }
 
-    public function broadcastFromTemporaryClient(GlobalMessageMask $sender, string $message, GlobalMessageType $messageType, string $actorNickname): ?int
+    public function broadcastFromTemporaryClient(GlobalMessageMask $sender, string $message, MessageDelivery $delivery, string $actorNickname): ?int
     {
         $this->trace->events[] = 'effect';
 

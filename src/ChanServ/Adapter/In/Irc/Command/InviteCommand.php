@@ -6,22 +6,16 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\Service\ChanServAccessHelper;
-use App\ChanServ\Domain\Entity\ChannelLevel;
-use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
-
-use function strtolower;
+use App\ChanServ\Application\UseCase\PrepareInvite\PrepareChannelInvite;
+use App\ChanServ\Application\UseCase\PrepareInvite\PrepareChannelInviteHandlerInterface;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
 
 /**
  * INVITE <#channel>. Invites the sender to the channel. Requires INVITE level.
  */
 final readonly class InviteCommand implements ChanServCommandInterface
 {
-    public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChanServAccessHelper $accessHelper,
-    ) {}
+    public function __construct(private PrepareChannelInviteHandlerInterface $handler) {}
 
     public function getName(): string
     {
@@ -89,41 +83,37 @@ final readonly class InviteCommand implements ChanServCommandInterface
         return true;
     }
 
-    public function execute(ChanServContext $context): void
+    public function execute(ChanServContext $context): CommandOutcome
     {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return CommandOutcome::rejected();
         }
-
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
-            throw ChannelNotRegisteredException::forChannel($channelName);
-        }
-
-        $senderAccount = $context->senderAccount;
-        if (null === $senderAccount) {
+        $account = $context->senderAccount;
+        if (null === $account) {
             $context->reply('error.not_identified');
 
-            return;
+            return CommandOutcome::rejected();
         }
-
-        if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $senderAccount->id, ChannelLevel::KEY_INVITE, $channelName, 'INVITE');
-        }
-
-        if (null === $context->sender) {
+        $sender = $context->sender;
+        if (null === $sender) {
             $context->reply('error.generic');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $context->getNotifier()->inviteToChannel($channelName, $context->sender->uid, $channel->getCreatedAt()->getTimestamp());
+        $result = $this->handler->handle(new PrepareChannelInvite(
+            channelName: $channelName,
+            accountId: $account->id,
+            founderEquivalent: $context->isLevelFounder,
+        ));
+        $context->getNotifier()->inviteToChannel($channelName, $sender->uid, $result->channelCreationTimestamp);
         $context->reply('invite.done', ['%channel%' => $channelName]);
-
-        $notice = $context->trans('invite.notice_channel', ['%nickname%' => $context->sender->nick]);
+        $notice = $context->trans('invite.notice_channel', ['%nickname%' => $sender->nick]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $notice);
+
+        return CommandOutcome::success();
     }
 }

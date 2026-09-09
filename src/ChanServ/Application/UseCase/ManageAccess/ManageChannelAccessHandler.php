@@ -111,6 +111,7 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
             $command->actorNickId,
             $command->performedByIp,
             $command->performedByHost,
+            $command->occurredAt,
         ));
 
         return new ManageChannelAccessResult(ManageChannelAccessOutcome::Added, targetNickname: $nickname, level: $level);
@@ -151,6 +152,7 @@ final readonly class ManageChannelAccessHandler implements ManageChannelAccessHa
             $command->actorNickId,
             $command->performedByIp,
             $command->performedByHost,
+            $command->occurredAt,
         ));
 
         return new ManageChannelAccessResult(ManageChannelAccessOutcome::Deleted, targetNickname: $nickname);

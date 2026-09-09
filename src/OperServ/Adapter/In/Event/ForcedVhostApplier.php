@@ -4,26 +4,26 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\ActiveConnectionHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
-use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Application\Service\VhostDisplayResolver;
+use App\Irc\Application\Port\In\UserVhostSetter;
+use App\NickServ\Application\Port\In\IdentifiedSessionQuery;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\NickServ\Application\Port\In\NickVhostDisplayResolver;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\ValueObject\ForcedVhost;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use Psr\Log\LoggerInterface;
 
 final readonly class ForcedVhostApplier
 {
     public function __construct(
         private OperIrcopRepositoryInterface $ircopRepository,
-        private RegisteredNickRepositoryInterface $nickRepository,
-        private IdentifiedSessionRegistry $identifiedRegistry,
-        private NickServNotifierInterface $notifier,
+        private NickProjectionQuery $nicks,
+        private IdentifiedSessionQuery $identifiedSessions,
+        private UserVhostSetter $vhostSetter,
         private NetworkUserLookupPort $userLookup,
         private ActiveConnectionHolderInterface $connectionHolder,
-        private VhostDisplayResolver $vhostDisplayResolver,
+        private NickVhostDisplayResolver $vhostDisplayResolver,
         private LoggerInterface $logger,
     ) {}
 
@@ -45,7 +45,7 @@ final readonly class ForcedVhostApplier
                     if (null === $serverSid) {
                         return false;
                     }
-                    $this->notifier->setUserVhost($uid, $vhost, $serverSid);
+                    $this->vhostSetter->setUserVhost($uid, $vhost, $serverSid);
 
                     $this->logger->info('ForcedVhostApplier: applied forced vhost', [
                         'nickId' => $nickId,
@@ -78,13 +78,13 @@ final readonly class ForcedVhostApplier
 
         foreach ($ircops as $ircop) {
             $nickId = $ircop->getNickId();
-            $nick = $this->nickRepository->findById($nickId);
+            $nick = $this->nicks->findById($nickId);
 
             if (null === $nick) {
                 continue;
             }
 
-            $uid = $this->identifiedRegistry->findUidByNick($nick->getNickname());
+            $uid = $this->identifiedSessions->findUidByNick($nick->nickname);
 
             if (null === $uid) {
                 continue;
@@ -98,9 +98,9 @@ final readonly class ForcedVhostApplier
             $serverSid = $this->connectionHolder->getServerSid();
 
             if (null === $newPattern || '' === $newPattern) {
-                $personalVhost = $this->vhostDisplayResolver->getDisplayVhost($nick->getVhost());
+                $personalVhost = $this->vhostDisplayResolver->getDisplayVhost($nick->vhost);
                 if (null !== $serverSid) {
-                    $this->notifier->setUserVhost($uid, $personalVhost, $serverSid);
+                    $this->vhostSetter->setUserVhost($uid, $personalVhost, $serverSid);
                 }
                 $this->logger->info('ForcedVhostApplier: restored personal vhost (role pattern removed)', [
                     'nickId' => $nickId,
@@ -125,7 +125,7 @@ final readonly class ForcedVhostApplier
             $vhost = $forcedVhost->generateVhost($user->nick);
 
             if (null !== $serverSid) {
-                $this->notifier->setUserVhost($uid, $vhost, $serverSid);
+                $this->vhostSetter->setUserVhost($uid, $vhost, $serverSid);
             }
 
             $this->logger->info('ForcedVhostApplier: updated forced vhost for role change', [

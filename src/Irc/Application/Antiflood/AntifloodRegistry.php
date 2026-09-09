@@ -34,9 +34,8 @@ final class AntifloodRegistry
      * Records a command attempt for the given client key.
      * Prunes timestamps outside the window to keep memory bounded.
      */
-    public function recordCommand(string $clientKey, int $windowSeconds): void
+    public function recordCommand(string $clientKey, int $windowSeconds, int $now): void
     {
-        $now = time();
         $cutoff = $now - $windowSeconds;
 
         $timestamps = $this->timestampsByKey[$clientKey] ?? [];
@@ -69,12 +68,12 @@ final class AntifloodRegistry
         int $maxMessages,
         int $windowSeconds,
         int $lockoutSeconds,
+        int $now,
     ): int {
         if ($maxMessages <= 0 || $lockoutSeconds <= 0) {
             return 0;
         }
 
-        $now = time();
         $remaining = 0;
 
         if (isset($this->lockoutUntilByKey[$clientKey])) {
@@ -108,9 +107,8 @@ final class AntifloodRegistry
      * AND whose lockout has expired. Returns the number of keys removed.
      * Used by maintenance to free memory.
      */
-    public function pruneStale(int $windowSeconds): int
+    public function pruneStale(int $windowSeconds, int $now): int
     {
-        $now = time();
         $cutoff = $now - $windowSeconds;
         $removed = 0;
 

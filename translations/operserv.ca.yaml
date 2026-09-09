@@ -274,15 +274,15 @@ raw:
   too_long:         "\x0304✗\x03 La línia és massa llarga. Màxim 510 caràcters."
   not_connected:    "\x0304✗\x03 No està connectat a l'IRCd."
   done:             "\x0303✓\x03 Línia en brut enviada."
-  udb:
-    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
-    done:          "\x0303✓\x03 Mutació UDB aplicada: desada de manera autoritativa i en cua per propagar."
-    target:        "\x0304✗\x03 Les mutacions UDB han d'anar dirigides a tots els servidors (DB * ...), no a %target%."
-    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT no estan disponibles via RAW."
-    invalid_block: "\x0304✗\x03 Bloc UDB desconegut: %block%."
-    invalid_path:  "\x0304✗\x03 Camí de registre UDB no vàlid: %path%."
-    invalid_value: "\x0304✗\x03 Valor de registre UDB no vàlid per a: %path%."
-    error:         "\x0304✗\x03 Error en escriure a l'emmagatzematge UDB; la mutació no s'ha propagat."
+  protocol:
+    syntax: "\x0304✗\x03 El protocol actiu ha rebutjat la sintaxi de l’ordre RAW."
+    done: "\x0303✓\x03 Ordre RAW gestionada pel protocol executada."
+    target: "\x0304✗\x03 El protocol actiu ha rebutjat la destinació %target%."
+    unsupported: "\x0304✗\x03 El protocol actiu no admet aquesta ordre RAW."
+    invalid_resource_type: "\x0304✗\x03 Tipus de recurs de protocol desconegut: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Recurs de protocol no vàlid: %resource%."
+    invalid_value: "\x0304✗\x03 Valor no vàlid per al recurs de protocol: %resource%."
+    error: "\x0304✗\x03 El protocol actiu no ha pogut executar l’ordre RAW."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

@@ -60,6 +60,7 @@ final class ChannelHistoryEventsTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
+            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
             byOperator: false,
         );
 
@@ -103,6 +104,7 @@ final class ChannelHistoryEventsTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
+            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
         );
 
         self::assertSame(5, $event->oldSuccessorNickId);
@@ -152,6 +154,7 @@ final class ChannelHistoryEventsTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
+            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
         );
 
         self::assertSame('DEL', $event->action);
@@ -198,6 +201,7 @@ final class ChannelHistoryEventsTest extends TestCase
             performedByNickId: 1,
             performedByIp: '10.0.0.1',
             performedByHost: 'founder@host',
+            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
         );
 
         self::assertSame('DEL', $event->action);

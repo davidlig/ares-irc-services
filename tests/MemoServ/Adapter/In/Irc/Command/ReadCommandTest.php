@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\MemoServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\MemoServ\Adapter\In\Irc\Command\ReadCommand;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
@@ -13,14 +15,12 @@ use App\MemoServ\Application\Model\MemoAccountView;
 use App\MemoServ\Application\UseCase\Read\ReadMemo;
 use App\MemoServ\Application\UseCase\Read\ReadMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Read\ReadMemoResult;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
 use function is_scalar;
@@ -62,7 +62,7 @@ final class ReadCommandTest extends TestCase
         });
         $notifier->method('getNick')->willReturn('MemoServ');
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
             unset($params['%bot%'], $params['%memoserv%']);
             if ([] === $params) {

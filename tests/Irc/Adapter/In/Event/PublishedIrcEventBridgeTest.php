@@ -35,6 +35,7 @@ use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -158,7 +159,7 @@ final class PublishedIrcEventBridgeTest extends TestCase
             },
         );
         $bridge = new PublishedIrcEventBridge($dispatcher);
-        $channel = new Channel(new ChannelName('#test'));
+        $channel = new Channel(new ChannelName('#test'), '', new DateTimeImmutable('@0'));
 
         $bridge->publishUserDepartedChannel(new UserLeftChannelEvent(
             new Uid('001ABC'),

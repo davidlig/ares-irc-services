@@ -14,7 +14,7 @@ use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsResult;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 
 use function in_array;
 use function sprintf;

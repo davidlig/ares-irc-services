@@ -7,7 +7,7 @@ namespace App\Tests\Irc\Adapter\In\Event;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\In\Event\ServiceCommandGateway;
 use App\Irc\Adapter\Protocol\IRCMessage;
-use App\Shared\Application\Port\ServiceCommandListenerInterface;
+use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

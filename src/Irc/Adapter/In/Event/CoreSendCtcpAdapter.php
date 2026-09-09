@@ -7,7 +7,7 @@ namespace App\Irc\Adapter\In\Event;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\MessageDirection;
-use App\Shared\Application\Port\SendCtcpPort;
+use App\Irc\Application\Port\In\SendCtcpPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

@@ -12,6 +12,7 @@ use App\OperServ\Domain\Entity\OperPermission;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
+use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,7 +41,7 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
         $role->changeUserModes(['H', 'W']);
         $role->changeForcedVhostPattern('staff.example.net');
         $role->changeOperclass('netadmin');
-        $assignment = OperIrcop::create(42, $role, 1);
+        $assignment = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, 1);
         $assignments = $this->createStub(OperIrcopRepositoryInterface::class);
         $assignments->method('findByNickId')->willReturn($assignment);
         $assignments->method('findAll')->willReturn([$assignment]);
@@ -61,6 +62,7 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
     #[Test]
     public function persistsANewAssignmentWithTheResolvedRole(): void
     {
+        $addedAt = new DateTimeImmutable('2026-01-01T00:00:00+00:00');
         $role = self::role(7, 'ADMIN');
         $roles = $this->createStub(OperRoleRepositoryInterface::class);
         $roles->method('findByName')->willReturn($role);
@@ -69,13 +71,15 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
         $assignments->expects(self::once())->method('save')->with(self::callback(
             static fn (OperIrcop $assignment): bool => 42 === $assignment->getNickId()
                 && $role === $assignment->getRole()
-                && 1 === $assignment->getAddedById(),
+                && 1 === $assignment->getAddedById()
+                && $addedAt == $assignment->getAddedAt(),
         ));
 
         new DoctrineOperatorAssignmentStore($assignments, $roles)->assign(
             42,
             new OperatorRoleRecord(7, 'ADMIN', '', false),
             1,
+            $addedAt,
         );
     }
 
@@ -84,7 +88,7 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
     {
         $oldRole = self::role(6, 'OPER');
         $newRole = self::role(7, 'ADMIN');
-        $current = OperIrcop::create(42, $oldRole);
+        $current = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $oldRole);
         $roles = $this->createStub(OperRoleRepositoryInterface::class);
         $roles->method('findByName')->willReturn($newRole);
         $assignments = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -95,6 +99,7 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
             42,
             new OperatorRoleRecord(7, 'ADMIN', '', false),
             null,
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
         );
 
         self::assertSame($newRole, $current->getRole());
@@ -110,13 +115,13 @@ final class DoctrineOperatorAssignmentStoreTest extends TestCase
         new DoctrineOperatorAssignmentStore(
             $this->createStub(OperIrcopRepositoryInterface::class),
             $roles,
-        )->assign(42, new OperatorRoleRecord(7, 'MISSING', '', false), null);
+        )->assign(42, new OperatorRoleRecord(7, 'MISSING', '', false), null, new DateTimeImmutable('2026-01-01T00:00:00+00:00'));
     }
 
     #[Test]
     public function removesOnlyAnExistingAssignment(): void
     {
-        $current = OperIrcop::create(42, self::role(7, 'ADMIN'));
+        $current = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, self::role(7, 'ADMIN'));
         $assignments = $this->createMock(OperIrcopRepositoryInterface::class);
         $assignments->expects(self::exactly(2))->method('findByNickId')->willReturnMap([
             [42, $current],

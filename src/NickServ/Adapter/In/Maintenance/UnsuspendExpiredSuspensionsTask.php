@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Maintenance;
 
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

@@ -9,7 +9,7 @@ use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\In\Event\DebugChannelJoinSubscriber;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

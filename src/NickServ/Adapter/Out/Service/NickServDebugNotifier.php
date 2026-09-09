@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\Out\Service;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Application\Port\Out\NickAuditSink;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebugNotifierInterface

@@ -12,22 +12,33 @@ use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\Service\ChanDropService;
+use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\Service\ChannelSuspensionService;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleResult;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UnsuspendCommand::class)]
+#[UsesClass(ManageChannelLifecycleHandler::class)]
+#[UsesClass(ManageChannelLifecycle::class)]
+#[UsesClass(ChannelLifecycleResult::class)]
 final class UnsuspendCommandTest extends TestCase
 {
     #[Test]
@@ -133,7 +144,7 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::never())->method('findByChannelName');
 
-        $cmd = new UnsuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $this->createStub(EventBusInterface::class),
         );
@@ -153,7 +164,7 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn(null);
 
-        $cmd = new UnsuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $this->createStub(EventBusInterface::class),
         );
@@ -170,12 +181,12 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithNotSuspendedChannelRepliesNotSuspended(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::register('#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
-        $cmd = new UnsuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $this->createStub(EventBusInterface::class),
         );
@@ -192,7 +203,7 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithSuspendedChannelUnsuspendsSuccessfully(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::register('#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
@@ -205,7 +216,7 @@ final class UnsuspendCommandTest extends TestCase
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::isInstanceOf(ChannelUnsuspendedEvent::class));
 
-        $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
+        $cmd = $this->createCommandWith($channelRepository, $eventDispatcher);
 
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
@@ -225,7 +236,7 @@ final class UnsuspendCommandTest extends TestCase
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
-        $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
+        $cmd = $this->createCommandWith($channelRepository, $eventDispatcher);
 
         $messages = [];
         $context = $this->createContext(null, null, ['#test'], $messages);
@@ -238,13 +249,13 @@ final class UnsuspendCommandTest extends TestCase
     #[Test]
     public function executeReturnsRejectedWhenValidatedChannelHasNoSender(): void
     {
-        $channel = RegisteredChannel::register('#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
         $messages = [];
 
-        $outcome = new UnsuspendCommand($channelRepository, $this->createStub(EventBusInterface::class))
+        $outcome = $this->createCommandWith($channelRepository, $this->createStub(EventBusInterface::class))
             ->execute($this->createContext(null, null, ['#test'], $messages, $channelRepository));
 
         self::assertFalse($outcome->success);
@@ -255,7 +266,7 @@ final class UnsuspendCommandTest extends TestCase
     public function getAuditDataReturnsDataAfterExecute(): void
     {
         $sender = $this->createSender();
-        $channel = RegisteredChannel::register('#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
@@ -264,7 +275,7 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
-        $cmd = new UnsuspendCommand(
+        $cmd = $this->createCommandWith(
             $channelRepository,
             $this->createStub(EventBusInterface::class),
         );
@@ -281,10 +292,23 @@ final class UnsuspendCommandTest extends TestCase
 
     private function createCommand(): UnsuspendCommand
     {
-        return new UnsuspendCommand(
+        return $this->createCommandWith(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
         );
+    }
+
+    private function createCommandWith(
+        RegisteredChannelRepositoryInterface $channels,
+        EventBusInterface $events,
+    ): UnsuspendCommand {
+        return new UnsuspendCommand(new ManageChannelLifecycleHandler(
+            $channels,
+            $this->createStub(ChanDropService::class),
+            $this->createStub(ChannelForbiddenService::class),
+            $this->createStub(ChannelSuspensionService::class),
+            $events,
+        ));
     }
 
     private function createSender(): SenderView
@@ -309,7 +333,7 @@ final class UnsuspendCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(
@@ -392,7 +416,7 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithEmptyIpBase64DecodesAsAsterisk(): void
     {
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o');
-        $channel = RegisteredChannel::register('#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
@@ -414,7 +438,7 @@ final class UnsuspendCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
+        $cmd = $this->createCommandWith($channelRepository, $eventDispatcher);
         $cmd->execute($context);
 
         self::assertCount(1, $dispatchedEvents);
@@ -427,7 +451,7 @@ final class UnsuspendCommandTest extends TestCase
     {
         $invalidBase64 = '!!!invalid!!!';
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $invalidBase64, false, true, 'SID1', 'h', 'o');
-        $channel = RegisteredChannel::register('#test', 1, 'Test channel');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test channel');
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
@@ -449,7 +473,7 @@ final class UnsuspendCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
+        $cmd = $this->createCommandWith($channelRepository, $eventDispatcher);
         $cmd->execute($context);
 
         self::assertCount(1, $dispatchedEvents);

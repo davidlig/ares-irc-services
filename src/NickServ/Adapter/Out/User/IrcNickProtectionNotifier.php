@@ -7,13 +7,13 @@ namespace App\NickServ\Adapter\Out\User;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Application\Model\UserMessagePreference;
 use App\NickServ\Application\Port\Out\NickProtectionNotifier;
-use App\Shared\Application\Port\TranslationInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class IrcNickProtectionNotifier implements NickProtectionNotifier
 {
     public function __construct(
         private NickServNotifierInterface $notifier,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
     ) {}
 
     public function notifyForbidden(string $uid, string $nickname, string $reason, string $language): void

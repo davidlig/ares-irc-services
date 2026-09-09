@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Security;
 
+use App\OperServ\Application\Port\In\IrcopAuthorizationSubject;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Security\IrcopAuthorizationSubject;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 

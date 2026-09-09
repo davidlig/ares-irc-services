@@ -17,6 +17,9 @@ use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
 use App\Irc\Adapter\Network\NetworkEventEnricher;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\SkipIdentifiedModeStripRegistry;
@@ -38,9 +41,6 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -62,7 +62,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $events = $enricher->getSubscribedEvents();
@@ -82,7 +82,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $logger,
         );
 
@@ -104,7 +104,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserQuitReceived(new UserQuitReceivedEvent('001ABC123', 'Leaving'));
@@ -148,7 +148,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserQuitReceived(new UserQuitReceivedEvent('001ABC123', 'Bye'));
@@ -199,7 +199,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $skipRegistry,
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'NewNick'));
@@ -245,7 +245,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $channelName = new ChannelName('#test');
@@ -272,7 +272,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'NewNick'));
@@ -314,7 +314,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $skipRegistry,
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'NewNick'));
@@ -347,7 +347,7 @@ final class NetworkEventEnricherTest extends TestCase
 
         // Protocol module implements NickChangePreservesIdentificationInterface (e.g. UnrealUdbModule)
         $module = $this->createStub(PreservesIdentificationTestProtocolModule::class);
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
 
         $dispatched = [];
@@ -398,7 +398,7 @@ final class NetworkEventEnricherTest extends TestCase
 
         // Standard protocol module that does NOT implement NickChangePreservesIdentificationInterface
         $module = $this->createStub(ProtocolModuleInterface::class);
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
 
         $dispatched = [];
@@ -440,7 +440,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelPartReceived(new ChannelPartReceivedEvent('001ABC123', new ChannelName('#test'), 'Bye', false));
@@ -460,7 +460,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelKickReceived(new ChannelKickReceivedEvent(new ChannelName('#chan'), '002DEF', 'Kicked'));
@@ -500,7 +500,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelKickReceived(new ChannelKickReceivedEvent(new ChannelName('#chan'), '002DEF456', 'Kicked'));
@@ -533,7 +533,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -573,7 +573,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+t'));
@@ -597,7 +597,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+t'));
@@ -626,7 +626,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'b', ['*!*@bad.host']));
@@ -657,7 +657,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelTopicReceived(new ChannelTopicReceivedEvent(new ChannelName('#chan'), 'New topic'));
@@ -681,7 +681,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelTopicReceived(new ChannelTopicReceivedEvent(new ChannelName('#chan'), 'Topic'));
@@ -702,7 +702,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+n', []));
@@ -742,7 +742,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserModeReceived(new UserModeReceivedEvent('001ABC123', '+x'));
@@ -766,7 +766,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserModeReceived(new UserModeReceivedEvent('001ABC123', '+x'));
@@ -806,7 +806,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserHostReceived(new UserHostReceivedEvent('001ABC123', 'new.host.name'));
@@ -830,7 +830,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserHostReceived(new UserHostReceivedEvent('001ABC123', 'new.host'));
@@ -853,7 +853,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->applyOutgoingChannelModes('#chan', '+t', []);
@@ -876,7 +876,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->applyOutgoingChannelModes('#chan', '+t', []);
@@ -907,7 +907,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -948,7 +948,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -989,7 +989,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'e', ['*!*@exempt.host']));
@@ -1020,7 +1020,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'I', ['*!*@invite.host']));
@@ -1045,7 +1045,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'b', ['', '*!*@bad.host']));
@@ -1073,7 +1073,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -1118,7 +1118,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+t', []));
@@ -1167,7 +1167,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+o', ['001ABC123']));
@@ -1196,7 +1196,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+b-b', ['*!*@bad.host', '*!*@old.host']));
@@ -1225,7 +1225,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+k', ['secretkey']));
@@ -1243,7 +1243,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->applyOutgoingChannelModes('invalid', '+t', []);
@@ -1265,7 +1265,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->applyOutgoingChannelModes('#chan', '', []);
@@ -1291,7 +1291,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->applyOutgoingChannelModes('#chan', '+k', ['secretkey']);
@@ -1327,7 +1327,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', ''));
@@ -1361,7 +1361,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'Invalid Nick'));
@@ -1397,7 +1397,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelPartReceived(new ChannelPartReceivedEvent('NotAValidUID', new ChannelName('#test'), '', false));
@@ -1420,7 +1420,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelPartReceived(new ChannelPartReceivedEvent('NotAValidUID', new ChannelName('#test'), '', false));
@@ -1456,7 +1456,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelPartReceived(new ChannelPartReceivedEvent('NotAValidUID', new ChannelName('#test'), '', false));
@@ -1482,7 +1482,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->applyOutgoingChannelModes('#chan', '+ov', ['001ABC', 'nick']);
@@ -1511,7 +1511,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->applyOutgoingChannelModes('#chan', '+b', ['*!*@bad.host']);
@@ -1540,7 +1540,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->applyOutgoingChannelModes('#chan', '-k', []);
@@ -1571,7 +1571,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+s', []));
@@ -1601,7 +1601,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+o', ['someuser']));
@@ -1639,7 +1639,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+o', ['001NOTFND']));
@@ -1670,7 +1670,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -1708,7 +1708,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -1745,7 +1745,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -1778,7 +1778,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -1810,7 +1810,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -1843,7 +1843,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $event = new ChannelJoinReceivedEvent(
@@ -1877,7 +1877,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $before = time();
@@ -1934,7 +1934,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+o', []));
@@ -1963,7 +1963,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+b', []));
@@ -1992,7 +1992,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+k', []));
@@ -2028,7 +2028,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '-e', ['*!*@exempt.host']));
@@ -2066,7 +2066,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '-I', ['*!*@invite.host']));
@@ -2104,7 +2104,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '-k', []));
@@ -2141,7 +2141,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+s-n', []));
@@ -2166,7 +2166,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'b', ['*!*@bad.host']));
@@ -2195,7 +2195,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), ''));
@@ -2235,7 +2235,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '-k-l', ['dummykey', '']));
@@ -2277,7 +2277,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'account', 'TestAccount'));
@@ -2320,7 +2320,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'accountname', 'TestAccount'));
@@ -2363,7 +2363,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'accountid', '12345'));
@@ -2406,7 +2406,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'accountname', ''));
@@ -2449,7 +2449,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'account', '*'));
@@ -2473,7 +2473,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('999ZZZZZZ', 'accountname', 'TestAccount'));
@@ -2507,7 +2507,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'certfp', 'somevalue'));
@@ -2536,7 +2536,7 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), ''));
@@ -2592,7 +2592,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         // -l+k secret: -l has no param, +k has param 'secret'
@@ -2632,7 +2632,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(
@@ -2670,7 +2670,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(SkipIdentifiedModeStripRegistry::class),
             $modeProvider,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
         );
 
         $enricher->applyOutgoingChannelModes('#chan', '-k', ['oldsecret']);

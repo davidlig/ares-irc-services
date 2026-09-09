@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\MemoServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
 use App\Irc\Application\PublishedEvent\UserJoinedChannelEvent;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNotice;
 use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeHandler;
 use App\MemoServ\Application\UseCase\GetPendingChannelNotice\GetPendingChannelNoticeOutcome;
-use App\Shared\Application\ServiceUidRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 

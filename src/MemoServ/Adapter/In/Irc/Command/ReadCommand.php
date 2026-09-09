@@ -74,13 +74,13 @@ final readonly class ReadCommand implements MemoServCommandInterface
         return 'IDENTIFIED';
     }
 
-    public function execute(MemoServContext $context): void
+    public function execute(MemoServContext $context): null
     {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount || null === $context->sender) {
             $context->reply('error.not_identified');
 
-            return;
+            return null;
         }
 
         $first = $context->args[0] ?? '';
@@ -91,7 +91,7 @@ final readonly class ReadCommand implements MemoServCommandInterface
         if ('' === $indexArg || !ctype_digit($indexArg)) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
         $index = (int) $indexArg;
@@ -125,5 +125,7 @@ final readonly class ReadCommand implements MemoServCommandInterface
                 ]);
                 break;
         }
+
+        return null;
     }
 }

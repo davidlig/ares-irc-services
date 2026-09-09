@@ -13,6 +13,6 @@ final readonly class ChannelDropEvent
         public string $channelName,
         public string $channelNameLower,
         public string $reason,
-        public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
+        public DateTimeImmutable $occurredAt,
     ) {}
 }

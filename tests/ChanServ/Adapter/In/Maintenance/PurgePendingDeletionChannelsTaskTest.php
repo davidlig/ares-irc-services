@@ -51,7 +51,12 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
             ->willReturn([$channel]);
 
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, 'manual-grace-expired', null);
+        $dropService->expects(self::once())->method('hardDropChannel')->with(
+            $channel,
+            self::isInstanceOf(DateTimeImmutable::class),
+            'manual-grace-expired',
+            null,
+        );
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');

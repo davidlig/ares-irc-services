@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\Out\Irc;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
+use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Port\Out\GlobalMessageTransport;
-use App\OperServ\Application\Service\PseudoClientUidGenerator;
-use App\OperServ\Application\UseCase\Global\GlobalMessageType;
 use App\OperServ\Domain\ValueObject\GlobalMessageMask;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\ServiceUidRegistry;
 
 use function sprintf;
 
@@ -23,7 +22,7 @@ final readonly class ActiveConnectionGlobalMessageTransport implements GlobalMes
     public function __construct(
         private ServiceUidRegistry $serviceUids,
         private PseudoClientUidGenerator $pseudoClientUids,
-        private ActiveConnectionHolderInterface $connection,
+        private ActiveProtocolModuleHolderInterface $connection,
         private NetworkUserLookupPort $users,
         private SendNoticePort $messages,
     ) {}
@@ -33,16 +32,16 @@ final readonly class ActiveConnectionGlobalMessageTransport implements GlobalMes
         return $this->serviceUids->getUidByNickname($nickname);
     }
 
-    public function broadcastFromService(string $senderUid, string $message, GlobalMessageType $messageType): ?int
+    public function broadcastFromService(string $senderUid, string $message, MessageDelivery $delivery): ?int
     {
         if (!$this->connection->isConnected()) {
             return null;
         }
 
-        return $this->broadcast($senderUid, $message, $messageType);
+        return $this->broadcast($senderUid, $message, $delivery);
     }
 
-    public function broadcastFromTemporaryClient(GlobalMessageMask $sender, string $message, GlobalMessageType $messageType, string $actorNickname): ?int
+    public function broadcastFromTemporaryClient(GlobalMessageMask $sender, string $message, MessageDelivery $delivery, string $actorNickname): ?int
     {
         $module = $this->connection->getProtocolModule();
         $serverSid = $this->connection->getServerSid();
@@ -66,17 +65,20 @@ final readonly class ActiveConnectionGlobalMessageTransport implements GlobalMes
         );
 
         try {
-            return $this->broadcast($uid, $message, $messageType);
+            return $this->broadcast($uid, $message, $delivery);
         } finally {
             $module->getServiceActions()->quitPseudoClient($serverSid, $uid, 'Global message completed');
         }
     }
 
-    private function broadcast(string $senderUid, string $message, GlobalMessageType $messageType): int
+    private function broadcast(string $senderUid, string $message, MessageDelivery $delivery): int
     {
         $count = 0;
         foreach ($this->users->listConnectedUids() as $targetUid) {
-            $this->messages->sendMessage($senderUid, $targetUid, $message, $messageType->value);
+            $this->messages->sendMessage($senderUid, $targetUid, $message, match ($delivery) {
+                MessageDelivery::NonInteractive => 'NOTICE',
+                MessageDelivery::Interactive => 'PRIVMSG',
+            });
             ++$count;
         }
 

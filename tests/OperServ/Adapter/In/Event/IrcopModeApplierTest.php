@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Adapter\In\Event\IrcopModeApplier;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,14 +31,14 @@ final class IrcopModeApplierTest extends TestCase
 {
     private function createApplier(
         ?IdentifiedSessionRegistry $registry = null,
-        ?ActiveConnectionHolderInterface $holder = null,
+        ?ActiveProtocolModuleHolderInterface $holder = null,
         ?NetworkUserLookupPort $userLookup = null,
     ): IrcopModeApplier {
         return new IrcopModeApplier(
             $registry ?? new IdentifiedSessionRegistry(),
-            $holder ?? $this->createStub(ActiveConnectionHolderInterface::class),
+            $holder ?? $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NickProjectionQuery::class),
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             new NullLogger(),
         );
@@ -93,7 +93,7 @@ final class IrcopModeApplierTest extends TestCase
         $actions = $this->createMock(ProtocolServiceActionsInterface::class);
         $actions->expects(self::never())->method('setUserMode');
         $module = $this->createModuleWithUserModeSupport($actions);
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn(null);
         $applyRole = OperRole::create('ADMIN', 'Admin role');
@@ -123,7 +123,7 @@ final class IrcopModeApplierTest extends TestCase
             modes: '',
         ));
         $module = $this->createModuleWithUserModeSupport($this->createStub(ProtocolServiceActionsInterface::class));
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $role = OperRole::create('ADMIN', 'Admin role');
         $role->changeUserModes(['H']);
@@ -156,7 +156,7 @@ final class IrcopModeApplierTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $identifiedRegistry->register('UID123', 'TestNick');
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn(null);
 
         $packedIp = inet_pton('10.0.0.1');
@@ -204,7 +204,7 @@ final class IrcopModeApplierTest extends TestCase
             modes: '+ioHqW',
         ));
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($this->createStub(ProtocolModuleInterface::class));
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
@@ -244,7 +244,7 @@ final class IrcopModeApplierTest extends TestCase
 
         $module = $this->createModuleWithUserModeSupport($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
@@ -265,7 +265,7 @@ final class IrcopModeApplierTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn(null);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($this->createStub(ProtocolModuleInterface::class));
 
         $role = OperRole::create('ADMIN', 'Admin role');
@@ -304,7 +304,7 @@ final class IrcopModeApplierTest extends TestCase
 
         $module = $this->createModuleWithUserModeSupport($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
@@ -341,7 +341,7 @@ final class IrcopModeApplierTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $identifiedRegistry->register('UID123', 'TestNick');
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn(null);
 
         $role = OperRole::create('ADMIN', 'Admin role');
@@ -373,7 +373,7 @@ final class IrcopModeApplierTest extends TestCase
             modes: '+i',
         ));
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($this->createStub(ProtocolModuleInterface::class));
 
         $role = OperRole::create('ADMIN', 'Admin role');
@@ -412,7 +412,7 @@ final class IrcopModeApplierTest extends TestCase
 
         $module = $this->createModuleWithUserModeSupport($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
@@ -433,7 +433,7 @@ final class IrcopModeApplierTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn(null);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($this->createStub(ProtocolModuleInterface::class));
 
         $role = OperRole::create('ADMIN', 'Admin role');
@@ -448,12 +448,12 @@ final class IrcopModeApplierTest extends TestCase
     public function updateModesForRoleDoesNothingWhenNoChanges(): void
     {
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
 
         $applier = new IrcopModeApplier(
             new IdentifiedSessionRegistry(),
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $ircopRepository,
             $nickRepository,
             $userLookup,
@@ -477,19 +477,19 @@ final class IrcopModeApplierTest extends TestCase
         $role->changeUserModes(['H', 'q']);
         $roleId = 1;
 
-        $ircop = OperIrcop::create(42, $role, null, null);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn(null);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
 
         $applier = new IrcopModeApplier(
             $identifiedRegistry,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $ircopRepository,
             $nickRepository,
             $userLookup,
@@ -535,7 +535,7 @@ final class IrcopModeApplierTest extends TestCase
         $module->method('getServiceActions')->willReturn($serviceActions);
         $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
@@ -543,22 +543,14 @@ final class IrcopModeApplierTest extends TestCase
         $role->changeUserModes(['q']);
         $roleId = 1;
 
-        $ircop = OperIrcop::create(42, $role, null, null);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = RegisteredNick::createPending(
-            'TestNick',
-            'hash',
-            'test@example.com',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
+        $nick = new NickProjection(7, 'TestNick', 'hash', null);
 
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn($nick);
 
         $applier = new IrcopModeApplier(
@@ -584,7 +576,7 @@ final class IrcopModeApplierTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
@@ -592,12 +584,12 @@ final class IrcopModeApplierTest extends TestCase
         $role->changeUserModes(['q']);
         $roleId = 1;
 
-        $ircop = OperIrcop::create(42, $role, null, null);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn(null);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -627,7 +619,7 @@ final class IrcopModeApplierTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
@@ -635,22 +627,14 @@ final class IrcopModeApplierTest extends TestCase
         $role->changeUserModes(['q']);
         $roleId = 1;
 
-        $ircop = OperIrcop::create(42, $role, null, null);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = RegisteredNick::createPending(
-            'TestNick',
-            'hash',
-            'test@example.com',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
+        $nick = new NickProjection(7, 'TestNick', 'hash', null);
 
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn($nick);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -699,29 +683,21 @@ final class IrcopModeApplierTest extends TestCase
         $module->method('getServiceActions')->willReturn($serviceActions);
         $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
         $role = OperRole::create('ADMIN', 'Admin role');
         $roleId = 1;
 
-        $ircop = OperIrcop::create(42, $role, null, null);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = RegisteredNick::createPending(
-            'TestNick',
-            'hash',
-            'test@example.com',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
+        $nick = new NickProjection(7, 'TestNick', 'hash', null);
 
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn($nick);
 
         $applier = new IrcopModeApplier(
@@ -752,29 +728,21 @@ final class IrcopModeApplierTest extends TestCase
         $module->method('getServiceActions')->willReturn($serviceActions);
         $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
         $role = OperRole::create('ADMIN', 'Admin role');
         $roleId = 1;
 
-        $ircop = OperIrcop::create(42, $role, null, null);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 42, $role, null, null);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = RegisteredNick::createPending(
-            'TestNick',
-            'hash',
-            'test@example.com',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
+        $nick = new NickProjection(7, 'TestNick', 'hash', null);
 
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn($nick);
 
         $applier = new IrcopModeApplier(

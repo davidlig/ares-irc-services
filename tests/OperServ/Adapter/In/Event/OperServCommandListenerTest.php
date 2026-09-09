@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Event;
 
-use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
-use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\In\UserLanguageQuery;
 use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
@@ -23,16 +25,13 @@ use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Adapter\In\Irc\OperServService;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\OperServ\Application\Port\Out\ServiceUserPreferences;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use RuntimeException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 #[CoversClass(OperServCommandListener::class)]
@@ -143,7 +142,7 @@ final class OperServCommandListenerTest extends TestCase
             $language,
             $preferences,
             $notifier,
-            self::createStub(TranslationInterface::class),
+            self::createStub(TranslatorInterface::class),
             self::createServiceNicks(),
             self::createStub(OperatorAuthorizationQuery::class),
             'en',
@@ -230,10 +229,7 @@ final class OperServCommandListenerTest extends TestCase
             'services.example.com',
             'OperServ',
         );
-        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $operServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
@@ -274,10 +270,7 @@ final class OperServCommandListenerTest extends TestCase
             'services.example.com',
             'OperServ',
         );
-        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $operServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
@@ -316,10 +309,7 @@ final class OperServCommandListenerTest extends TestCase
             'services.example.com',
             'OperServ',
         );
-        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $operServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
         $operServNotifier->expects(self::never())->method('sendMessage');
@@ -366,10 +356,7 @@ final class OperServCommandListenerTest extends TestCase
             'services.example.com',
             'OperServ',
         );
-        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $operServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(ServiceUserPreferences::class);
@@ -413,10 +400,7 @@ final class OperServCommandListenerTest extends TestCase
             'services.example.com',
             'OperServ',
         );
-        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $operServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
         $operServNotifier->expects(self::once())->method('sendMessage')->with(self::SENDER_UID, self::anything(), 'NOTICE');
@@ -461,10 +445,7 @@ final class OperServCommandListenerTest extends TestCase
             'services.example.com',
             'OperServ',
         );
-        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(ConnectionInterface::class),
-            '001',
-        ));
+        $operServBot->onBurstComplete(new ServiceIntroductionRequestedEvent('001'));
 
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
         $operServNotifier->expects(self::once())->method('sendMessage');
@@ -498,7 +479,7 @@ final class OperServCommandListenerTest extends TestCase
             $logger,
         );
 
-        $listener->onCommand(self::SENDER_UID, 'RAW DB * INS N::nick::pass reset-token');
+        $listener->onCommand(self::SENDER_UID, 'RAW OPAQUE reset-token');
     }
 
     #[Test]
@@ -548,13 +529,13 @@ final class OperServCommandListenerTest extends TestCase
             $logger,
         );
 
-        $listener->onCommand(self::SENDER_UID, 'RAW DB * INS N::nick::pass reset-token');
+        $listener->onCommand(self::SENDER_UID, 'RAW OPAQUE reset-token');
     }
 
     #[Test]
     public function loggingNeverRetainsRawOrGlobalPayloads(): void
     {
-        self::assertSame('RAW', OperServCommandLogSanitizer::commandName('RAW DB * INS N::nick::pass reset-token'));
+        self::assertSame('RAW', OperServCommandLogSanitizer::commandName('RAW OPAQUE reset-token'));
         self::assertSame('GLOBAL', OperServCommandLogSanitizer::commandName('GLOBAL * NOTICE private-secret'));
         self::assertSame('UNKNOWN', OperServCommandLogSanitizer::commandName('private-secret payload'));
     }

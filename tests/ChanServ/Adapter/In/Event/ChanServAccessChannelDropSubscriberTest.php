@@ -9,6 +9,7 @@ use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\ChanServ\Application\UseCase\CleanupChannelAccess\CleanupChannelAccess;
 use App\ChanServ\Application\UseCase\CleanupChannelAccess\CleanupChannelAccessHandler;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,12 @@ final class ChanServAccessChannelDropSubscriberTest extends TestCase
         $repository->expects(self::once())->method('deleteByChannelId')->with(12345);
         $subscriber = new ChanServAccessChannelDropSubscriber(new CleanupChannelAccessHandler($repository));
 
-        $subscriber->onChannelDrop(new ChannelDropCleanupEvent(12345, '#test', '#test', 'manual'));
+        $subscriber->onChannelDrop(new ChannelDropCleanupEvent(
+            channelId: 12345,
+            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            channelName: '#test',
+            channelNameLower: '#test',
+            reason: 'manual',
+        ));
     }
 }

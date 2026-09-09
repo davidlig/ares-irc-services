@@ -4,43 +4,33 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
+use App\Irc\Application\Port\In\ActiveConnectionHolderInterface;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\OperServ\Adapter\In\Irc\Command\ProtocolRawCommandInterceptorInterface;
 use App\OperServ\Adapter\In\Irc\Command\RawCommand;
+use App\OperServ\Adapter\In\Irc\Command\RawCommandExecutionOutcome;
+use App\OperServ\Adapter\In\Irc\Command\RawCommandExecutionResult;
+use App\OperServ\Adapter\In\Irc\Command\RawCommandExecutor;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\OperServ\Application\Port\Out\RawDatabaseMutationFailure;
-use App\OperServ\Application\Port\Out\RawDatabaseMutationHandler;
-use App\OperServ\Application\Port\Out\RawDatabaseMutationResult;
-use App\OperServ\Application\Port\Out\RawLineTransport;
-use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRaw;
-use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRawHandler;
-use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRawResult;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RawCommand::class)]
-#[CoversClass(ExecuteRaw::class)]
-#[CoversClass(ExecuteRawHandler::class)]
-#[CoversClass(ExecuteRawResult::class)]
-#[CoversClass(RawDatabaseMutationResult::class)]
 final class RawCommandTest extends TestCase
 {
     #[Test]
     public function exposesOperOnlyPermissionAndHelpMetadata(): void
     {
-        $command = new RawCommand(new ExecuteRawHandler(
-            new RawCommandTransport(new RawCommandTrace()),
-            new RawCommandDatabase(RawDatabaseMutationResult::success()),
-            $this->createStub(CommandAuditRecorder::class),
-        ));
+        $command = $this->command(null);
 
         self::assertSame('RAW', $command->getName());
         self::assertSame([], $command->getAliases());
@@ -54,174 +44,118 @@ final class RawCommandTest extends TestCase
         self::assertSame('operserv.raw', $command->getRequiredPermission());
     }
 
-    /** @param array<string, string> $expectedParameters */
     #[Test]
-    #[DataProvider('semanticFailures')]
-    public function choosesIrcPresentationForSemanticDatabaseFailures(
-        RawDatabaseMutationResult $failure,
-        string $expectedKey,
-        array $expectedParameters,
-    ): void {
-        $translator = new RawCommandTranslation();
-        $context = $this->context(
-            ['DB', '*', 'INS', 'N::nick::field', ':value'],
-            $translator,
-            new RawCommandNotifier(new RawCommandTrace()),
-        );
-        $database = new RawCommandDatabase($failure);
-        $audit = $this->createMock(CommandAuditRecorder::class);
-        $audit->expects(self::never())->method('record');
-        $command = new RawCommand(new ExecuteRawHandler(new RawCommandTransport(new RawCommandTrace()), $database, $audit));
-
-        $command->execute($context);
-
-        self::assertSame($expectedKey, $translator->lastKey);
-        foreach ($expectedParameters as $key => $value) {
-            self::assertSame($value, $translator->lastParameters['%' . $key . '%'] ?? null);
-        }
-    }
-
-    #[Test]
-    public function recordsOnlyVerbAndTransportAfterEffectAndBeforeReply(): void
+    public function recordsSafeAuditAfterEffectAndBeforeReply(): void
     {
         $trace = new RawCommandTrace();
+        $connection = new RawCommandConnection($trace);
         $audit = new RawCommandAudit($trace);
-        $translator = new RawCommandTranslation();
-        $command = new RawCommand(new ExecuteRawHandler(
-            new RawCommandTransport($trace),
-            new RawCommandDatabase(RawDatabaseMutationResult::success(), false),
+        $command = new RawCommand(
+            new RawCommandExecutor($connection, new RawCommandInterceptor(null)),
             $audit,
-        ));
+        );
+        $translation = new RawCommandTranslation();
 
-        $command->execute($this->context(['KILL', 'UID', ':password=secret'], $translator, new RawCommandNotifier($trace)));
+        $command->execute($this->context(['KILL', 'UID', ':password=secret'], $translation, new RawCommandNotifier($trace)));
 
         self::assertSame(['effect', 'audit', 'reply'], $trace->events);
-        self::assertSame('raw.done', $translator->lastKey);
+        self::assertSame('raw.done', $translation->lastKey);
         self::assertNotNull($audit->record);
         self::assertSame('KILL', $audit->record->target);
         self::assertSame(['transport' => 'irc'], $audit->record->metadata);
     }
 
     #[Test]
-    public function missingSenderProducesNoEffect(): void
+    public function presentsInterceptedExecutionAndUsesProtocolNeutralAuditMetadata(): void
     {
         $trace = new RawCommandTrace();
-        $command = new RawCommand(new ExecuteRawHandler(
-            new RawCommandTransport($trace),
-            new RawCommandDatabase(RawDatabaseMutationResult::success()),
-            $this->createStub(CommandAuditRecorder::class),
-        ));
+        $audit = new RawCommandAudit($trace);
+        $translation = new RawCommandTranslation();
+        $command = new RawCommand(
+            new RawCommandExecutor(
+                new RawCommandConnection($trace),
+                new RawCommandInterceptor(RawCommandExecutionResult::executed('PROTOCOL ACTION', true)),
+            ),
+            $audit,
+        );
 
-        $command->execute($this->context(['PING'], new RawCommandTranslation(), new RawCommandNotifier($trace), true));
+        $command->execute($this->context(['opaque'], $translation, new RawCommandNotifier($trace)));
 
-        self::assertSame([], $trace->events);
+        self::assertSame('raw.protocol.done', $translation->lastKey);
+        self::assertNotNull($audit->record);
+        self::assertSame('PROTOCOL ACTION', $audit->record->target);
+        self::assertSame(['transport' => 'protocol'], $audit->record->metadata);
     }
 
-    /** @param list<string> $arguments
-     * @param array<string, string> $expectedParameters
-     */
+    /** @param array<string, string> $expectedParameters */
     #[Test]
-    #[DataProvider('nonDatabaseRejections')]
-    public function presentsInputAndConnectivityRejections(
-        array $arguments,
-        bool $connected,
+    #[DataProvider('protocolFailures')]
+    public function presentsProtocolNeutralFailures(
+        RawCommandExecutionResult $interception,
         string $expectedKey,
         array $expectedParameters,
     ): void {
-        $translator = new RawCommandTranslation();
-        $trace = new RawCommandTrace();
-        $command = new RawCommand(new ExecuteRawHandler(
-            new RawCommandTransport($trace, $connected),
-            new RawCommandDatabase(RawDatabaseMutationResult::success()),
-            $this->createStub(CommandAuditRecorder::class),
-        ));
+        $translation = new RawCommandTranslation();
+        $audit = $this->createMock(CommandAuditRecorder::class);
+        $audit->expects(self::never())->method('record');
+        $command = new RawCommand(
+            new RawCommandExecutor(new RawCommandConnection(new RawCommandTrace()), new RawCommandInterceptor($interception)),
+            $audit,
+        );
 
-        $command->execute($this->context($arguments, $translator, new RawCommandNotifier($trace)));
+        $command->execute($this->context(['opaque'], $translation, new RawCommandNotifier(new RawCommandTrace())));
 
-        self::assertSame($expectedKey, $translator->lastKey);
+        self::assertSame($expectedKey, $translation->lastKey);
         foreach ($expectedParameters as $key => $value) {
-            self::assertSame($value, $translator->lastParameters['%' . $key . '%'] ?? null);
+            self::assertSame($value, $translation->lastParameters['%' . $key . '%'] ?? null);
         }
     }
 
-    /** @return iterable<string, array{list<string>, bool, string, array<string, string>}> */
-    public static function nonDatabaseRejections(): iterable
+    /** @return iterable<string, array{RawCommandExecutionResult, string, array<string, string>}> */
+    public static function protocolFailures(): iterable
     {
-        yield 'empty' => [[], true, 'raw.empty', []];
-        yield 'too long' => [[str_repeat('x', 511)], true, 'raw.too_long', []];
-        yield 'disconnected' => [['PING'], false, 'raw.not_connected', []];
-        yield 'invalid database target' => [['DB', 'server', 'INS', 'N::nick::field', ':value'], true, 'raw.udb.target', ['target' => 'server']];
-        yield 'insert syntax' => [['DB', '*', 'INS'], true, 'raw.udb.syntax', []];
-        yield 'delete syntax' => [['DB', '*', 'DEL', 'N::nick', 'extra'], true, 'raw.udb.syntax', []];
-        yield 'unknown database subcommand falls back to raw transport' => [['DB', '*', 'UNKNOWN'], true, 'raw.done', []];
-        yield 'unsupported database mutation' => [['DB', '*', 'DRP', 'N::nick'], true, 'raw.udb.unsupported', []];
+        yield 'target' => [RawCommandExecutionResult::rejected(RawCommandExecutionOutcome::TargetInvalid, resourceIdentifier: 'server'), 'raw.protocol.target', ['target' => 'server']];
+        yield 'syntax' => [RawCommandExecutionResult::rejected(RawCommandExecutionOutcome::SyntaxInvalid), 'raw.protocol.syntax', []];
+        yield 'unsupported' => [RawCommandExecutionResult::rejected(RawCommandExecutionOutcome::Unsupported), 'raw.protocol.unsupported', []];
+        yield 'resource type' => [RawCommandExecutionResult::rejected(RawCommandExecutionOutcome::ResourceTypeInvalid, resourceType: 'X'), 'raw.protocol.invalid_resource_type', ['resource_type' => 'X']];
+        yield 'resource' => [RawCommandExecutionResult::rejected(RawCommandExecutionOutcome::ResourceIdentifierInvalid, resourceIdentifier: 'bad'), 'raw.protocol.invalid_resource', ['resource' => 'bad']];
+        yield 'value' => [RawCommandExecutionResult::rejected(RawCommandExecutionOutcome::ValueInvalid, resourceIdentifier: '<redacted>'), 'raw.protocol.invalid_value', ['resource' => '<redacted>']];
+        yield 'generic' => [RawCommandExecutionResult::rejected(RawCommandExecutionOutcome::Failed), 'raw.protocol.error', []];
     }
 
     #[Test]
-    public function successfulQuotedDatabaseInsertIsDecodedAuditedAndPresented(): void
+    public function presentsLocalRejectionsAndIgnoresMissingSender(): void
     {
         $trace = new RawCommandTrace();
-        $database = new RawCommandDatabase(RawDatabaseMutationResult::success());
-        $audit = new RawCommandAudit($trace);
-        $translator = new RawCommandTranslation();
-        $command = new RawCommand(new ExecuteRawHandler(new RawCommandTransport($trace), $database, $audit));
+        $translation = new RawCommandTranslation();
+        $command = $this->command(null, $trace);
 
-        $command->execute($this->context(
-            ['DB', '*', 'INS', 'N::nick::field', ':"quoted', 'value"'],
-            $translator,
-            new RawCommandNotifier($trace),
-        ));
+        $command->execute($this->context([], $translation, new RawCommandNotifier($trace)));
+        self::assertSame('raw.empty', $translation->lastKey);
+        $command->execute($this->context([str_repeat('x', 511)], $translation, new RawCommandNotifier($trace)));
+        self::assertSame('raw.too_long', $translation->lastKey);
+        $connection = new RawCommandConnection($trace, false);
+        $command = new RawCommand(new RawCommandExecutor($connection, new RawCommandInterceptor(null)), $this->createStub(CommandAuditRecorder::class));
+        $command->execute($this->context(['PING'], $translation, new RawCommandNotifier($trace)));
+        self::assertSame('raw.not_connected', $translation->lastKey);
 
-        self::assertSame('quoted value', $database->insertedValue);
-        self::assertSame('raw.udb.done', $translator->lastKey);
-        self::assertNotNull($audit->record);
-        self::assertSame('DB INS', $audit->record->target);
-        self::assertSame(['transport' => 'udb'], $audit->record->metadata);
+        $before = $trace->events;
+        $command->execute($this->context(['PING'], $translation, new RawCommandNotifier($trace), true));
+        self::assertSame($before, $trace->events);
     }
 
-    #[Test]
-    public function successfulDatabaseDeleteIsPresented(): void
+    private function command(?RawCommandExecutionResult $interception, ?RawCommandTrace $trace = null): RawCommand
     {
-        $translator = new RawCommandTranslation();
-        $trace = new RawCommandTrace();
-        $command = new RawCommand(new ExecuteRawHandler(
-            new RawCommandTransport($trace),
-            new RawCommandDatabase(RawDatabaseMutationResult::success()),
-            new RawCommandAudit($trace),
-        ));
+        $trace ??= new RawCommandTrace();
 
-        $command->execute($this->context(['DB', '*', 'DEL', 'N::nick'], $translator, new RawCommandNotifier($trace)));
-
-        self::assertSame('raw.udb.done', $translator->lastKey);
-    }
-
-    /** @return iterable<string, array{RawDatabaseMutationResult, string, array<string, string>}> */
-    public static function semanticFailures(): iterable
-    {
-        yield 'record type' => [
-            RawDatabaseMutationResult::failure(RawDatabaseMutationFailure::UnsupportedRecordType, recordType: 'X'),
-            'raw.udb.invalid_block',
-            ['block' => 'X'],
-        ];
-        yield 'record path' => [
-            RawDatabaseMutationResult::failure(RawDatabaseMutationFailure::InvalidRecordPath, recordPath: 'N::bad'),
-            'raw.udb.invalid_path',
-            ['path' => 'N::bad'],
-        ];
-        yield 'record value' => [
-            RawDatabaseMutationResult::failure(RawDatabaseMutationFailure::InvalidRecordValue, recordPath: 'N::nick::pass <redacted>'),
-            'raw.udb.invalid_value',
-            ['path' => 'N::nick::pass <redacted>'],
-        ];
-        yield 'generic rejection' => [
-            RawDatabaseMutationResult::failure(RawDatabaseMutationFailure::Rejected),
-            'raw.udb.error',
-            [],
-        ];
+        return new RawCommand(
+            new RawCommandExecutor(new RawCommandConnection($trace), new RawCommandInterceptor($interception)),
+            $this->createStub(CommandAuditRecorder::class),
+        );
     }
 
     /** @param list<string> $arguments */
-    private function context(array $arguments, TranslationInterface $translator, OperServNotifierInterface $notifier, bool $withoutSender = false): OperServContext
+    private function context(array $arguments, TranslatorInterface $translator, OperServNotifierInterface $notifier, bool $withoutSender = false): OperServContext
     {
         return new OperServContext(
             $withoutSender ? null : new SenderView('001AAA', 'Oper', 'ident', 'host', 'cloak', 'ip', true, true),
@@ -246,19 +180,25 @@ final class RawCommandTrace
     public array $events = [];
 }
 
-final class RawCommandTranslation implements TranslationInterface
+final class RawCommandTranslation implements TranslatorInterface
 {
     public string $lastKey = '';
 
     /** @var array<string, mixed> */
     public array $lastParameters = [];
 
+    /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         $this->lastKey = $id;
         $this->lastParameters = $parameters;
 
         return $id;
+    }
+
+    public function getLocale(): string
+    {
+        return 'en';
     }
 }
 
@@ -292,40 +232,31 @@ final readonly class RawCommandNotifier implements OperServNotifierInterface
     }
 }
 
-final readonly class RawCommandTransport implements RawLineTransport
+final class RawCommandConnection implements ActiveConnectionHolderInterface
 {
     public function __construct(private RawCommandTrace $trace, private bool $connected = true) {}
+
+    public function getServerSid(): string
+    {
+        return '001';
+    }
+
+    public function writeLine(string $line): void
+    {
+        $this->trace->events[] = 'effect';
+    }
 
     public function isConnected(): bool
     {
         return $this->connected;
     }
-
-    public function send(string $line): void
-    {
-        $this->trace->events[] = 'effect';
-    }
 }
 
-final class RawCommandDatabase implements RawDatabaseMutationHandler
+final readonly class RawCommandInterceptor implements ProtocolRawCommandInterceptorInterface
 {
-    public ?string $insertedValue = null;
+    public function __construct(private ?RawCommandExecutionResult $result) {}
 
-    public function __construct(private RawDatabaseMutationResult $result, private bool $available = true) {}
-
-    public function isAvailable(): bool
-    {
-        return $this->available;
-    }
-
-    public function insert(string $path, string $value): RawDatabaseMutationResult
-    {
-        $this->insertedValue = $value;
-
-        return $this->result;
-    }
-
-    public function delete(string $path): RawDatabaseMutationResult
+    public function intercept(array $arguments): ?RawCommandExecutionResult
     {
         return $this->result;
     }

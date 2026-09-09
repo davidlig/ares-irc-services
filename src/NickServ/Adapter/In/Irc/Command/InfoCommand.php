@@ -75,7 +75,7 @@ final readonly class InfoCommand implements NickServCommandInterface
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): null
     {
         $targetNick = $context->args[0];
         $sender = $context->sender;
@@ -90,6 +90,8 @@ final readonly class InfoCommand implements NickServCommandInterface
         ));
 
         $this->present($context, $result);
+
+        return null;
     }
 
     private function present(NickServContext $context, InfoNickResult $result): void

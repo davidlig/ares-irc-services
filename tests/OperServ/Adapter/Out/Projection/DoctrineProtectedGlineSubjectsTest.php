@@ -8,7 +8,9 @@ use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Adapter\Out\Projection\DoctrineProtectedGlineSubjects;
 use App\OperServ\Application\Port\Out\RootIdentityRegistry;
 use App\OperServ\Domain\Entity\OperIrcop;
+use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,12 +23,11 @@ final class DoctrineProtectedGlineSubjectsTest extends TestCase
     {
         $roots = $this->createStub(RootIdentityRegistry::class);
         $roots->method('allNicknames')->willReturn(['Root', 'SecondRoot']);
-        $duplicate = $this->createStub(OperIrcop::class);
-        $duplicate->method('getNickId')->willReturn(1);
-        $operator = $this->createStub(OperIrcop::class);
-        $operator->method('getNickId')->willReturn(2);
-        $missing = $this->createStub(OperIrcop::class);
-        $missing->method('getNickId')->willReturn(3);
+        $role = OperRole::create('OPER');
+        $addedAt = new DateTimeImmutable('2026-01-01T00:00:00+00:00');
+        $duplicate = OperIrcop::create($addedAt, 1, $role);
+        $operator = OperIrcop::create($addedAt, 2, $role);
+        $missing = OperIrcop::create($addedAt, 3, $role);
         $operators = $this->createStub(OperIrcopRepositoryInterface::class);
         $operators->method('findAll')->willReturn([$duplicate, $operator, $missing]);
         $accounts = $this->createStub(NickAccountQuery::class);

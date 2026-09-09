@@ -19,22 +19,20 @@ final class OperIrcopTest extends TestCase
     public function createWithAllParameters(): void
     {
         $role = $this->createStub(OperRole::class);
-        $before = new DateTimeImmutable();
+        $addedAt = new DateTimeImmutable('2026-01-01T00:00:00+00:00');
 
         $ircop = OperIrcop::create(
+            $addedAt,
             nickId: 42,
             role: $role,
             addedById: 10,
             reason: 'Promoted to operator',
         );
-        $after = new DateTimeImmutable();
-
         self::assertSame(42, $ircop->getNickId());
         self::assertSame($role, $ircop->getRole());
         self::assertSame(10, $ircop->getAddedById());
         self::assertSame('Promoted to operator', $ircop->getReason());
-        self::assertGreaterThanOrEqual($before, $ircop->getAddedAt());
-        self::assertLessThanOrEqual($after, $ircop->getAddedAt());
+        self::assertSame($addedAt, $ircop->getAddedAt());
     }
 
     #[Test]
@@ -43,6 +41,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 100,
             role: $role,
         );
@@ -59,6 +58,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             addedById: null,
@@ -75,6 +75,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 5,
             role: $role,
             addedById: 99,
@@ -89,7 +90,7 @@ final class OperIrcopTest extends TestCase
     public function getNickIdReturnsCorrectValue(): void
     {
         $role = $this->createStub(OperRole::class);
-        $ircop = OperIrcop::create(nickId: 777, role: $role);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 777, role: $role);
 
         self::assertSame(777, $ircop->getNickId());
     }
@@ -98,7 +99,7 @@ final class OperIrcopTest extends TestCase
     public function getRoleReturnsCorrectInstance(): void
     {
         $role = $this->createStub(OperRole::class);
-        $ircop = OperIrcop::create(nickId: 1, role: $role);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 1, role: $role);
 
         self::assertSame($role, $ircop->getRole());
     }
@@ -109,7 +110,7 @@ final class OperIrcopTest extends TestCase
         $originalRole = $this->createStub(OperRole::class);
         $newRole = $this->createStub(OperRole::class);
 
-        $ircop = OperIrcop::create(nickId: 1, role: $originalRole);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 1, role: $originalRole);
 
         self::assertSame($originalRole, $ircop->getRole());
 
@@ -122,14 +123,10 @@ final class OperIrcopTest extends TestCase
     public function getAddedAtReturnsDateTimeImmutable(): void
     {
         $role = $this->createStub(OperRole::class);
-        $beforeCreate = new DateTimeImmutable();
+        $addedAt = new DateTimeImmutable('2026-01-01T00:00:00+00:00');
+        $ircop = OperIrcop::create($addedAt, nickId: 1, role: $role);
 
-        $ircop = OperIrcop::create(nickId: 1, role: $role);
-
-        $afterCreate = new DateTimeImmutable();
-
-        self::assertGreaterThanOrEqual($beforeCreate, $ircop->getAddedAt());
-        self::assertLessThanOrEqual($afterCreate, $ircop->getAddedAt());
+        self::assertSame($addedAt, $ircop->getAddedAt());
     }
 
     #[Test]
@@ -138,6 +135,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             addedById: 500,
@@ -152,6 +150,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             reason: 'Trusted user',
@@ -166,6 +165,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             reason: 'Original reason',
@@ -184,6 +184,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             reason: 'Will be cleared',
@@ -202,6 +203,7 @@ final class OperIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
 
         $ircop = OperIrcop::create(
+            new DateTimeImmutable('2026-01-01T00:00:00+00:00'),
             nickId: 1,
             role: $role,
             reason: null,
@@ -219,7 +221,7 @@ final class OperIrcopTest extends TestCase
     {
         $role = $this->createStub(OperRole::class);
 
-        $ircop = OperIrcop::create(nickId: 1, role: $role);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 1, role: $role);
 
         $reflection = new ReflectionClass($ircop);
         $idProp = $reflection->getProperty('id');

@@ -22,12 +22,12 @@ use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function count;
 
@@ -43,7 +43,7 @@ final class LevelsCommandTest extends TestCase
         ?ChanAccountView $senderAccount,
         array $args,
         ChanServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
     ): ChanServContext {
         return new ChanServContext(
             $sender,
@@ -73,7 +73,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -95,7 +95,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -112,7 +112,7 @@ final class LevelsCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn(null);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -131,7 +131,7 @@ final class LevelsCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -154,7 +154,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -168,7 +168,7 @@ final class LevelsCommandTest extends TestCase
     {
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn(null);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
         $command = new LevelsCommand(new ManageChannelLevelsHandler(
             $channelRepo,
@@ -196,7 +196,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
             $messages[] = $message;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
         $command = new LevelsCommand(new ManageChannelLevelsHandler(
             $channelRepo,
@@ -232,7 +232,7 @@ final class LevelsCommandTest extends TestCase
             new ChanAccountView(2, 'User', 'en'),
             ['#test', 'INVALID'],
             $this->createStub(ChanServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
         ));
     }
 
@@ -252,7 +252,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -278,7 +278,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -309,7 +309,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -333,7 +333,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -359,7 +359,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -384,7 +384,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -408,7 +408,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -432,7 +432,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -460,7 +460,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -485,7 +485,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
@@ -522,7 +522,7 @@ final class LevelsCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));

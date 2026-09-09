@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\InspIRCd;
 
-use App\Irc\Application\Port\In\ServiceIntroductionFormatterInterface;
-
 use function sprintf;
 
 /**
  * InspIRCd SpanTree: introduce a service pseudo-client with a UID line.
  * Format (1206+): :serverSid UID uuid ts nick real_host displayed_host real_user displayed_user ip connect_time modes :realname.
  */
-final readonly class InspIRCdServiceIntroductionFormatter implements ServiceIntroductionFormatterInterface
+final readonly class InspIRCdServiceIntroductionFormatter
 {
     private const array SERVICE_UMODES = [
         'nickserv' => '+oBIkN',

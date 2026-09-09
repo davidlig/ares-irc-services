@@ -12,6 +12,6 @@ final readonly class ChannelRegisteredEvent
         public int $channelId,
         public string $channelName,
         public string $channelNameLower,
-        public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
+        public DateTimeImmutable $occurredAt,
     ) {}
 }

@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace App\Tests\MemoServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\MemoServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function iterator_to_array;
 
@@ -30,7 +30,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg) use (&$sent): void {
             $sent[] = ['uid' => $uid, 'msg' => $msg];
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('Translated text');
         $registry = new MemoServCommandRegistry([]);
         $context = new MemoServContext(
@@ -62,7 +62,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg) use (&$sent): void {
             $sent[] = $msg;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $registry = new MemoServCommandRegistry([]);
         $context = new MemoServContext(
             new SenderView('UID1', 'N', 'i', 'h', 'c', 'ip'),
@@ -88,7 +88,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function transDelegatesToContextAndReturnsString(): void
     {
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $context = new MemoServContext(
             null,
@@ -121,7 +121,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             'HELP',
             [],
             $this->createStub(MemoServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -179,7 +179,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             'HELP',
             [],
             $this->createStub(MemoServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -304,7 +304,10 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void {}
+            public function execute(MemoServContext $context): null
+            {
+                return null;
+            }
         };
     }
 }

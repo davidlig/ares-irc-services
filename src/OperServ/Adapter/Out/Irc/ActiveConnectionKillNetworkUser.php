@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\Out\Irc;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\OperServ\Application\Port\Out\KillNetworkUser;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 
 /** Performs the protocol-specific KILL only when an active protocol connection exists. */
 final readonly class ActiveConnectionKillNetworkUser implements KillNetworkUser
 {
-    public function __construct(private ActiveConnectionHolderInterface $connection) {}
+    public function __construct(private ActiveProtocolModuleHolderInterface $connection) {}
 
     public function kill(string $targetUid, string $reason): bool
     {

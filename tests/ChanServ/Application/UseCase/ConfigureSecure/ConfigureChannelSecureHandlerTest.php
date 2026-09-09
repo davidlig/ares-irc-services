@@ -10,6 +10,7 @@ use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecure;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,7 @@ final class ConfigureChannelSecureHandlerTest extends TestCase
     #[Test]
     public function itPersistsAndPublishesWhenSecureIsEnabled(): void
     {
-        $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('save')->with($channel);
         $events = $this->createMock(ChanServEventPublisher::class);
@@ -37,7 +38,7 @@ final class ConfigureChannelSecureHandlerTest extends TestCase
     #[Test]
     public function itPersistsWithoutPublishingWhenSecureIsDisabled(): void
     {
-        $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#test', 1, 'Test');
         $channel->configureSecure(true);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('save')->with($channel);

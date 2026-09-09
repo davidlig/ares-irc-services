@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
-use App\Shared\Application\Help\UnifiedHelpFormatter;
 
 use function strlen;
 
@@ -92,20 +92,22 @@ final readonly class HelpCommand implements NickServCommandInterface
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): null
     {
         $sender = $context->sender;
         if (null === $sender) {
-            return;
+            return null;
         }
 
         if (empty($context->args)) {
             $this->showGeneralHelp($context);
 
-            return;
+            return null;
         }
 
         $this->executeHelpForCommand($context, $sender);
+
+        return null;
     }
 
     private function executeHelpForCommand(NickServContext $context, SenderView $sender): void

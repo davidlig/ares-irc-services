@@ -25,7 +25,6 @@ final class UnrealStandaloneModuleTest extends TestCase
         $handler = new UnrealStandaloneProtocolHandler('001');
         $connectionHolder = new ActiveConnectionHolder();
         $serviceActions = new UnrealStandaloneProtocolServiceActions($connectionHolder, new UnrealStandaloneServiceIntroductionFormatter(), new NullLogger());
-        $formatter = new UnrealStandaloneServiceIntroductionFormatter();
         $channelModeSupport = new UnrealStandaloneChannelModeSupport();
         $userModeSupport = new UnrealStandaloneUserModeSupport();
         $nickReservation = new UnrealStandaloneNickReservation($connectionHolder, new NullLogger());
@@ -33,7 +32,6 @@ final class UnrealStandaloneModuleTest extends TestCase
         return new UnrealStandaloneModule(
             $handler,
             $serviceActions,
-            $formatter,
             $channelModeSupport,
             $userModeSupport,
             $nickReservation,
@@ -57,7 +55,6 @@ final class UnrealStandaloneModuleTest extends TestCase
         $module = new UnrealStandaloneModule(
             $handler,
             new UnrealStandaloneProtocolServiceActions($connectionHolder, new UnrealStandaloneServiceIntroductionFormatter(), new NullLogger()),
-            new UnrealStandaloneServiceIntroductionFormatter(),
             new UnrealStandaloneChannelModeSupport(),
             new UnrealStandaloneUserModeSupport(),
             new UnrealStandaloneNickReservation($connectionHolder, new NullLogger()),
@@ -72,14 +69,6 @@ final class UnrealStandaloneModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(UnrealStandaloneProtocolServiceActions::class, $module->getServiceActions());
-    }
-
-    #[Test]
-    public function getIntroductionFormatterReturnsInjectedFormatter(): void
-    {
-        $module = $this->createModule();
-
-        self::assertInstanceOf(UnrealStandaloneServiceIntroductionFormatter::class, $module->getIntroductionFormatter());
     }
 
     #[Test]

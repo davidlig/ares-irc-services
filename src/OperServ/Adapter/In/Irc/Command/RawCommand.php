@@ -6,14 +6,17 @@ namespace App\OperServ\Adapter\In\Irc\Command;
 
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServContext;
-use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRaw;
-use App\OperServ\Application\UseCase\ExecuteRaw\ExecuteRawHandler;
-use App\OperServ\Application\UseCase\ExecuteRaw\RawDatabaseExecutionOutcome;
+use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
+use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
+use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use DateTimeImmutable;
 
 final readonly class RawCommand implements OperServCommandInterface
 {
-    public function __construct(private ExecuteRawHandler $handler) {}
+    public function __construct(
+        private RawCommandExecutor $executor,
+        private CommandAuditRecorder $audit,
+    ) {}
 
     public function getName(): string
     {
@@ -71,60 +74,72 @@ final readonly class RawCommand implements OperServCommandInterface
             return;
         }
 
-        $result = $this->handler->handle(new ExecuteRaw(
-            actorNickname: $context->sender->nick,
-            arguments: $context->args,
-            occurredAt: new DateTimeImmutable(),
-        ));
+        $result = $this->executor->execute($context->args);
         switch ($result->outcome) {
-            case RawDatabaseExecutionOutcome::Executed:
+            case RawCommandExecutionOutcome::Sent:
+                $this->recordAudit($context->sender->nick, $result->operation ?? 'UNKNOWN', 'irc');
                 $context->reply('raw.done');
 
                 return;
-            case RawDatabaseExecutionOutcome::DatabaseExecuted:
-                $context->reply('raw.udb.done');
+            case RawCommandExecutionOutcome::Intercepted:
+                $this->recordAudit($context->sender->nick, $result->operation ?? 'UNKNOWN', 'protocol');
+                $context->reply('raw.protocol.done');
 
                 return;
-            case RawDatabaseExecutionOutcome::Empty:
+            case RawCommandExecutionOutcome::Empty:
                 $context->reply('raw.empty');
 
                 return;
-            case RawDatabaseExecutionOutcome::TooLong:
+            case RawCommandExecutionOutcome::TooLong:
                 $context->reply('raw.too_long');
 
                 return;
-            case RawDatabaseExecutionOutcome::Disconnected:
+            case RawCommandExecutionOutcome::Disconnected:
                 $context->reply('raw.not_connected');
 
                 return;
-            case RawDatabaseExecutionOutcome::DatabaseTargetInvalid:
-                $context->reply('raw.udb.target', ['target' => $result->recordPath ?? '']);
+            case RawCommandExecutionOutcome::TargetInvalid:
+                $context->reply('raw.protocol.target', ['target' => $result->resourceIdentifier ?? '']);
 
                 return;
-            case RawDatabaseExecutionOutcome::DatabaseSyntaxInvalid:
-                $context->reply('raw.udb.syntax');
+            case RawCommandExecutionOutcome::SyntaxInvalid:
+                $context->reply('raw.protocol.syntax');
 
                 return;
-            case RawDatabaseExecutionOutcome::DatabaseUnsupported:
-                $context->reply('raw.udb.unsupported');
+            case RawCommandExecutionOutcome::Unsupported:
+                $context->reply('raw.protocol.unsupported');
 
                 return;
-            case RawDatabaseExecutionOutcome::DatabaseRecordTypeInvalid:
-                $context->reply('raw.udb.invalid_block', ['block' => $result->recordType ?? '']);
+            case RawCommandExecutionOutcome::ResourceTypeInvalid:
+                $context->reply('raw.protocol.invalid_resource_type', ['resource_type' => $result->resourceType ?? '']);
 
                 return;
-            case RawDatabaseExecutionOutcome::DatabasePathInvalid:
-                $context->reply('raw.udb.invalid_path', ['path' => $result->recordPath ?? '']);
+            case RawCommandExecutionOutcome::ResourceIdentifierInvalid:
+                $context->reply('raw.protocol.invalid_resource', ['resource' => $result->resourceIdentifier ?? '']);
 
                 return;
-            case RawDatabaseExecutionOutcome::DatabaseValueInvalid:
-                $context->reply('raw.udb.invalid_value', ['path' => $result->recordPath ?? '']);
+            case RawCommandExecutionOutcome::ValueInvalid:
+                $context->reply('raw.protocol.invalid_value', ['resource' => $result->resourceIdentifier ?? '']);
 
                 return;
-            case RawDatabaseExecutionOutcome::DatabaseFailed:
-                $context->reply('raw.udb.error');
+            case RawCommandExecutionOutcome::Failed:
+                $context->reply('raw.protocol.error');
 
                 return;
         }
+    }
+
+    private function recordAudit(string $actor, string $operation, string $transport): void
+    {
+        $this->audit->record(new CommandAuditRecord(
+            category: CommandAuditCategory::OperatorAction,
+            service: 'OperServ',
+            actor: $actor,
+            operation: 'RAW',
+            occurredAt: new DateTimeImmutable(),
+            target: $operation,
+            permission: 'operserv.raw',
+            metadata: ['transport' => $transport],
+        ));
     }
 }

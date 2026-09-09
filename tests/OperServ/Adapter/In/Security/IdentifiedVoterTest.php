@@ -7,9 +7,9 @@ namespace App\Tests\OperServ\Adapter\In\Security;
 use App\OperServ\Adapter\In\Security\IdentifiedVoter;
 use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\IrcopAuthorizationSubject;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\OperServ\Application\Security\IrcopContextInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -73,9 +73,9 @@ final class IdentifiedVoterTest extends TestCase
         self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($token, new stdClass(), ['IDENTIFIED']));
     }
 
-    private function authorizationSubject(?string $nickname, ?int $accountId, bool $identified, bool $ircOperator): IrcopContextInterface
+    private function authorizationSubject(?string $nickname, ?int $accountId, bool $identified, bool $ircOperator): IrcopAuthorizationSubject
     {
-        $subject = $this->createStub(IrcopContextInterface::class);
+        $subject = $this->createStub(IrcopAuthorizationSubject::class);
         $subject->method('getSenderNickname')->willReturn($nickname);
         $subject->method('getSenderAccountId')->willReturn($accountId);
         $subject->method('isSenderIdentified')->willReturn($identified);

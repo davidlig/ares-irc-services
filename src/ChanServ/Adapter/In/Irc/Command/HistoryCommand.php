@@ -6,47 +6,32 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
-use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
-use App\ChanServ\Application\Service\ChannelHistoryService;
+use App\ChanServ\Application\UseCase\ManageHistory\ChannelHistoryAction;
+use App\ChanServ\Application\UseCase\ManageHistory\ChannelHistoryEntryView;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistory;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryHandlerInterface;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryOutcome;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryResult;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use DateTimeImmutable;
 
 use function array_slice;
-use function assert;
 use function base64_decode;
-use function ceil;
 use function count;
 use function implode;
 use function inet_ntop;
 use function is_scalar;
-use function min;
 use function sprintf;
 use function str_starts_with;
-use function strtolower;
 use function strtoupper;
 use function trim;
 
-final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
+final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
-    private const string ACTION_ADD = 'ADD';
-
-    private const string ACTION_DEL = 'DEL';
-
-    private const string ACTION_VIEW = 'VIEW';
-
-    private const string ACTION_CLEAR = 'CLEAR';
-
-    public function __construct(
-        private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly ChannelHistoryRepositoryInterface $historyRepository,
-        private readonly ChannelHistoryService $historyService,
-        private readonly ChanUserAccountPort $accountPort,
-        private readonly int $historyViewLimit = 40,
-    ) {}
+    public function __construct(private ManageChannelHistoryHandlerInterface $handler) {}
 
     public function getName(): string
     {
@@ -120,235 +105,169 @@ final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCo
 
     public function execute(ChanServContext $context): CommandOutcome
     {
-        if (null === $context->sender) {
+        $sender = $context->sender;
+        if (null === $sender) {
             return CommandOutcome::rejected();
         }
 
         $channelName = $context->getChannelNameArg(0);
-
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
             return CommandOutcome::rejected();
         }
 
-        $action = strtoupper($context->args[1] ?? '');
+        $action = $this->parseAction($context);
+        if (null === $action) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+            return CommandOutcome::rejected();
+        }
 
-        if (null === $channel) {
+        $message = null;
+        $entryId = null;
+        $page = 1;
+        $showAll = false;
+        if (ChannelHistoryAction::Add === $action) {
+            $message = trim(implode(' ', array_slice($context->args, 2)));
+            if (count($context->args) < 3 || '' === $message) {
+                $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
+
+                return CommandOutcome::rejected();
+            }
+        } elseif (ChannelHistoryAction::Delete === $action) {
+            if (count($context->args) < 3) {
+                $context->reply('error.syntax', ['syntax' => $context->trans('history.del.syntax')]);
+
+                return CommandOutcome::rejected();
+            }
+
+            $entryId = (int) $context->args[2];
+            if ($entryId <= 0) {
+                $context->reply('history.del.invalid_id', ['%id%' => $context->args[2]]);
+
+                return CommandOutcome::rejected();
+            }
+        } elseif (ChannelHistoryAction::View === $action && count($context->args) >= 3) {
+            if ('ALL' === strtoupper($context->args[2])) {
+                $showAll = true;
+            } else {
+                $page = (int) $context->args[2];
+            }
+        }
+
+        $result = $this->handler->handle(new ManageChannelHistory(
+            channelName: $channelName,
+            action: $action,
+            actorNickname: $sender->nick,
+            actorAccountId: $context->senderAccount?->id,
+            actorIp: $this->decodeIp($sender->ipBase64),
+            actorHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
+            occurredAt: new DateTimeImmutable(),
+            message: $message,
+            entryId: $entryId,
+            page: $page,
+            showAll: $showAll,
+        ));
+
+        return $this->present($context, $channelName, $message, $showAll, $result);
+    }
+
+    private function parseAction(ChanServContext $context): ?ChannelHistoryAction
+    {
+        return match (strtoupper($context->args[1] ?? '')) {
+            'ADD' => ChannelHistoryAction::Add,
+            'DEL' => ChannelHistoryAction::Delete,
+            'VIEW' => ChannelHistoryAction::View,
+            'CLEAR' => ChannelHistoryAction::Clear,
+            default => null,
+        };
+    }
+
+    private function present(ChanServContext $context, string $channelName, ?string $message, bool $showAll, ManageChannelHistoryResult $result): CommandOutcome
+    {
+        if (ManageChannelHistoryOutcome::ChannelNotRegistered === $result->outcome) {
             $context->reply('history.not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }
 
-        return match ($action) {
-            self::ACTION_ADD => $this->handleAdd($context, $channel->getId(), $channelName),
-            self::ACTION_DEL => $this->handleDel($context, $channel->getId(), $channelName),
-            self::ACTION_VIEW => $this->handleView($context, $channel->getId(), $channelName),
-            self::ACTION_CLEAR => $this->handleClear($context, $channel->getId(), $channelName),
-            default => $this->rejectInvalidAction($context),
-        };
-    }
-
-    private function rejectInvalidAction(ChanServContext $context): CommandOutcome
-    {
-        $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-        return CommandOutcome::rejected();
-    }
-
-    private function handleAdd(ChanServContext $context, int $channelId, string $channelName): CommandOutcome
-    {
-        $sender = $context->sender;
-        assert(null !== $sender);
-
-        if (count($context->args) < 3) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
+        if (ManageChannelHistoryOutcome::EntryNotFound === $result->outcome) {
+            $context->reply('history.del.not_found', ['%id%' => $result->affectedEntryId]);
 
             return CommandOutcome::rejected();
         }
 
-        $messageParts = array_slice($context->args, 2);
-        $message = trim(implode(' ', $messageParts));
-
-        if ('' === $message) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
-
-            return CommandOutcome::rejected();
-        }
-
-        $ip = $this->decodeIp($sender->ipBase64);
-        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
-        $performedByNickId = $context->senderAccount?->id;
-
-        $this->historyService->recordAction(
-            channelId: $channelId,
-            action: 'HISTORY_ADD',
-            performedBy: $sender->nick,
-            performedByNickId: $performedByNickId,
-            performedByIp: $ip,
-            performedByHost: $host,
-            message: $message,
-        );
-
-        $auditData = new IrcopAuditData(
-            target: $channelName,
-            reason: $message,
-        );
-
-        $context->reply('history.add.success', ['%channel%' => $channelName]);
-
-        return CommandOutcome::success($auditData);
-    }
-
-    private function handleDel(ChanServContext $context, int $channelId, string $channelName): CommandOutcome
-    {
-        if (count($context->args) < 3) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('history.del.syntax')]);
-
-            return CommandOutcome::rejected();
-        }
-
-        $entryId = (int) $context->args[2];
-
-        if ($entryId <= 0) {
-            $context->reply('history.del.invalid_id', ['%id%' => $context->args[2]]);
-
-            return CommandOutcome::rejected();
-        }
-
-        $history = $this->historyRepository->findById($entryId);
-
-        if (null === $history || $history->getChannelId() !== $channelId) {
-            $context->reply('history.del.not_found', ['%id%' => $entryId]);
-
-            return CommandOutcome::rejected();
-        }
-
-        $this->historyRepository->deleteById($entryId);
-
-        $auditData = new IrcopAuditData(
-            target: $channelName,
-            extra: ['entry_id' => $entryId],
-        );
-
-        $context->reply('history.del.success', ['%id%' => $entryId]);
-
-        return CommandOutcome::success($auditData);
-    }
-
-    private function handleView(ChanServContext $context, int $channelId, string $channelName): CommandOutcome
-    {
-        $page = 1;
-        $showAll = false;
-
-        if (count($context->args) >= 3) {
-            $pageArg = strtoupper($context->args[2]);
-
-            if ('ALL' === $pageArg) {
-                $showAll = true;
-            } else {
-                $page = (int) $context->args[2];
-
-                if ($page < 1) {
-                    $page = 1;
-                }
-            }
-        }
-
-        $total = $this->historyRepository->countByChannelId($channelId);
-
-        if (0 === $total) {
+        if (ManageChannelHistoryOutcome::NoEntries === $result->outcome) {
             $context->reply('history.view.no_entries', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }
 
-        $limit = $showAll ? null : $this->historyViewLimit;
-        $offset = $showAll ? 0 : ((int) $page - 1) * $this->historyViewLimit;
+        if (ManageChannelHistoryOutcome::Added === $result->outcome) {
+            $context->reply('history.add.success', ['%channel%' => $channelName]);
 
-        $entries = $this->historyRepository->findByChannelId($channelId, $limit, $offset);
-
-        $totalPages = $showAll ? 1 : (int) ceil($total / $this->historyViewLimit);
-
-        $start = $showAll ? 1 : ((int) $page - 1) * $this->historyViewLimit + 1;
-        $end = $showAll ? $total : min((int) $page * $this->historyViewLimit, $total);
-
-        $context->reply('history.view.header', [
-            '%channel%' => $channelName,
-            '%start%' => $start,
-            '%end%' => $end,
-            '%total%' => $total,
-        ]);
-
-        foreach ($entries as $entry) {
-            $operator = $this->formatOperator($entry->getPerformedByNickId(), $entry->getPerformedBy(), $context);
-
-            $message = $this->translateMessage($entry->getMessage(), $entry->getExtraData(), $context);
-
-            $context->reply('history.view.entry', [
-                '%id%' => $entry->getId(),
-                '%date%' => $context->formatDate($entry->getPerformedAt()),
-                '%action%' => $entry->getAction(),
-                '%operator%' => $operator,
-                '%message%' => $message,
-            ]);
-
-            $extraData = $entry->getExtraData();
-
-            if (!empty($extraData)) {
-                $formattedExtra = $this->formatExtraData($extraData, $context);
-
-                if ('' !== $formattedExtra) {
-                    $context->reply('history.view.extra', ['%extra%' => $formattedExtra]);
-                }
-            }
+            return CommandOutcome::success(new IrcopAuditData(target: $channelName, reason: $message));
         }
 
-        if (!$showAll && $page < $totalPages) {
-            $context->reply('history.view.page_hint', [
-                '%channel%' => $channelName,
-                '%next_page%' => $page + 1,
-            ]);
+        if (ManageChannelHistoryOutcome::Deleted === $result->outcome) {
+            $context->reply('history.del.success', ['%id%' => $result->affectedEntryId]);
+
+            return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: ['entry_id' => $result->affectedEntryId]));
         }
+
+        if (ManageChannelHistoryOutcome::Cleared === $result->outcome) {
+            $context->reply('history.clear.success', ['%count%' => $result->total, '%channel%' => $channelName]);
+
+            return CommandOutcome::success(new IrcopAuditData(target: $channelName, extra: ['count' => $result->total]));
+        }
+
+        $this->presentEntries($context, $channelName, $showAll, $result);
 
         return CommandOutcome::rejected();
     }
 
-    private function handleClear(ChanServContext $context, int $channelId, string $channelName): CommandOutcome
+    private function presentEntries(ChanServContext $context, string $channelName, bool $showAll, ManageChannelHistoryResult $result): void
     {
-        $count = $this->historyRepository->deleteByChannelId($channelId);
-
-        $auditData = new IrcopAuditData(
-            target: $channelName,
-            extra: ['count' => $count],
-        );
-
-        $context->reply('history.clear.success', [
-            '%count%' => $count,
+        $context->reply('history.view.header', [
             '%channel%' => $channelName,
+            '%start%' => $result->start,
+            '%end%' => $result->end,
+            '%total%' => $result->total,
         ]);
 
-        return CommandOutcome::success($auditData);
-    }
-
-    private function formatOperator(?int $performedByNickId, string $performedBy, ChanServContext $context): string
-    {
-        if (null !== $performedByNickId) {
-            $operatorAccount = $this->accountPort->findAccountById($performedByNickId);
-
-            if (null === $operatorAccount) {
-                return sprintf('%s %s', $performedBy, $context->trans('history.unknown_operator'));
-            }
+        foreach ($result->entries as $entry) {
+            $this->presentEntry($context, $entry);
         }
 
-        return $performedBy;
+        if (!$showAll && $result->page < $result->totalPages) {
+            $context->reply('history.view.page_hint', [
+                '%channel%' => $channelName,
+                '%next_page%' => $result->page + 1,
+            ]);
+        }
     }
 
-    /**
-     * @param array<string, mixed> $extraData
-     */
+    private function presentEntry(ChanServContext $context, ChannelHistoryEntryView $entry): void
+    {
+        $operator = $entry->operatorAccountMissing
+            ? sprintf('%s %s', $entry->performedBy, $context->trans('history.unknown_operator'))
+            : $entry->performedBy;
+        $context->reply('history.view.entry', [
+            '%id%' => $entry->id,
+            '%date%' => $context->formatDate($entry->performedAt),
+            '%action%' => $entry->action,
+            '%operator%' => $operator,
+            '%message%' => $this->translateMessage($entry->message, $entry->extraData, $context),
+        ]);
+
+        $formattedExtra = $this->formatExtraData($entry->extraData, $context);
+        if ([] !== $entry->extraData && '' !== $formattedExtra) {
+            $context->reply('history.view.extra', ['%extra%' => $formattedExtra]);
+        }
+    }
+
+    /** @param array<string, mixed> $extraData */
     private function translateMessage(string $message, array $extraData, ChanServContext $context): string
     {
         if (!str_starts_with($message, 'history.message.')) {
@@ -356,87 +275,23 @@ final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCo
         }
 
         $params = [];
-
-        if (isset($extraData['old_founder'])) {
-            $params['%old_founder%'] = $this->stringifyExtra($extraData['old_founder']);
-        }
-
-        if (isset($extraData['new_founder'])) {
-            $params['%new_founder%'] = $this->stringifyExtra($extraData['new_founder']);
-        }
-
-        if (isset($extraData['old_successor'])) {
-            $params['%old_successor%'] = $this->stringifyExtra($extraData['old_successor']);
-        }
-
-        if (isset($extraData['new_successor'])) {
-            $params['%new_successor%'] = $this->stringifyExtra($extraData['new_successor']);
-        }
-
-        if (isset($extraData['target_nickname'])) {
-            $params['%target_nickname%'] = $this->stringifyExtra($extraData['target_nickname']);
-        }
-
-        if (isset($extraData['level'])) {
-            $params['%level%'] = $this->stringifyExtra($extraData['level']);
-        }
-
-        if (isset($extraData['mask'])) {
-            $params['%mask%'] = $this->stringifyExtra($extraData['mask']);
+        foreach (['old_founder', 'new_founder', 'old_successor', 'new_successor', 'target_nickname', 'level', 'mask'] as $key) {
+            if (isset($extraData[$key])) {
+                $params['%' . $key . '%'] = $this->stringifyExtra($extraData[$key]);
+            }
         }
 
         return $context->trans($message, $params);
     }
 
-    /**
-     * @param array<string, mixed> $extraData
-     */
+    /** @param array<string, mixed> $extraData */
     private function formatExtraData(array $extraData, ChanServContext $context): string
     {
         $parts = [];
-
-        if (isset($extraData['duration'])) {
-            $parts[] = $context->trans('history.extra.duration', ['%value%' => $this->stringifyExtra($extraData['duration'])]);
-        }
-
-        if (isset($extraData['expires_at'])) {
-            $parts[] = $context->trans('history.extra.expires_at', ['%value%' => $this->stringifyExtra($extraData['expires_at'])]);
-        }
-
-        if (isset($extraData['old_founder'])) {
-            $parts[] = $context->trans('history.extra.old_founder', ['%value%' => $this->stringifyExtra($extraData['old_founder'])]);
-        }
-
-        if (isset($extraData['new_founder'])) {
-            $parts[] = $context->trans('history.extra.new_founder', ['%value%' => $this->stringifyExtra($extraData['new_founder'])]);
-        }
-
-        if (isset($extraData['old_successor'])) {
-            $parts[] = $context->trans('history.extra.old_successor', ['%value%' => $this->stringifyExtra($extraData['old_successor'])]);
-        }
-
-        if (isset($extraData['new_successor'])) {
-            $parts[] = $context->trans('history.extra.new_successor', ['%value%' => $this->stringifyExtra($extraData['new_successor'])]);
-        }
-
-        if (isset($extraData['target_nickname'])) {
-            $parts[] = $context->trans('history.extra.target_nickname', ['%value%' => $this->stringifyExtra($extraData['target_nickname'])]);
-        }
-
-        if (isset($extraData['level'])) {
-            $parts[] = $context->trans('history.extra.level', ['%value%' => $this->stringifyExtra($extraData['level'])]);
-        }
-
-        if (isset($extraData['mask'])) {
-            $parts[] = $context->trans('history.extra.mask', ['%value%' => $this->stringifyExtra($extraData['mask'])]);
-        }
-
-        if (isset($extraData['ip'])) {
-            $parts[] = $context->trans('history.extra.ip', ['%value%' => $this->stringifyExtra($extraData['ip'])]);
-        }
-
-        if (isset($extraData['host'])) {
-            $parts[] = $context->trans('history.extra.host', ['%value%' => $this->stringifyExtra($extraData['host'])]);
+        foreach (['duration', 'expires_at', 'old_founder', 'new_founder', 'old_successor', 'new_successor', 'target_nickname', 'level', 'mask', 'ip', 'host'] as $key) {
+            if (isset($extraData[$key])) {
+                $parts[] = $context->trans('history.extra.' . $key, ['%value%' => $this->stringifyExtra($extraData[$key])]);
+            }
         }
 
         return implode(', ', $parts);
@@ -454,7 +309,6 @@ final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCo
         }
 
         $binary = base64_decode($ipBase64, true);
-
         if (false === $binary) {
             return $ipBase64;
         }

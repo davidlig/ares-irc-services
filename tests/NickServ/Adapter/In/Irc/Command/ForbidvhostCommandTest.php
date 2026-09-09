@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\ForbidvhostCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
@@ -16,21 +18,30 @@ use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\Service\ForbiddenPatternValidator;
 use App\NickServ\Application\Service\ForbiddenVhostService;
+use App\NickServ\Application\UseCase\ForbidVhost\ForbiddenVhostAction;
+use App\NickServ\Application\UseCase\ForbidVhost\ForbiddenVhostView;
+use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhost;
+use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostHandler;
+use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostOutcome;
+use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostResult;
 use App\NickServ\Domain\Entity\ForbiddenVhost;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const DATE_ATOM;
 
 #[CoversClass(ForbidvhostCommand::class)]
+#[CoversClass(ManageForbiddenVhostHandler::class)]
+#[CoversClass(ManageForbiddenVhost::class)]
+#[CoversClass(ManageForbiddenVhostResult::class)]
+#[CoversClass(ManageForbiddenVhostOutcome::class)]
+#[CoversClass(ForbiddenVhostAction::class)]
+#[CoversClass(ForbiddenVhostView::class)]
 final class ForbidvhostCommandTest extends TestCase
 {
     #[Test]
@@ -136,7 +147,7 @@ final class ForbidvhostCommandTest extends TestCase
         ));
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['ADD', 'pirated.com'], $messages);
@@ -153,7 +164,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::never())->method('save');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['ADD', 'invalid pattern!'], $messages);
@@ -173,7 +184,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::never())->method('save');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['ADD', 'pirated.com'], $messages);
@@ -206,7 +217,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('remove')->with($existing);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['DEL', 'pirated.com'], $messages);
@@ -224,7 +235,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::never())->method('remove');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['DEL', 'pirated.com'], $messages);
@@ -257,7 +268,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden1, $forbidden2]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['LIST'], $messages);
@@ -274,7 +285,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('findAll')->willReturn([]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['LIST'], $messages);
@@ -305,7 +316,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::never())->method('save');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContextWithNullSender(['ADD', 'test.com'], $messages);
@@ -350,7 +361,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['LIST'], $messages);
@@ -369,7 +380,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['LIST'], $messages);
@@ -391,7 +402,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContextWithSenderAccount(['LIST'], $messages, 1);
@@ -410,7 +421,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('save');
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['ADD', 'pirated.com'], $messages);
@@ -432,7 +443,7 @@ final class ForbidvhostCommandTest extends TestCase
         $repo->expects(self::once())->method('remove')->with($existing);
 
         $service = new ForbiddenVhostService($repo);
-        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class), $this->clock());
+        $cmd = $this->createCommandFor($repo);
 
         $messages = [];
         $context = $this->createContext(['DEL', 'pirated.com'], $messages);
@@ -449,13 +460,17 @@ final class ForbidvhostCommandTest extends TestCase
         $repo = $this->createStub(ForbiddenVhostRepositoryInterface::class);
         $service = new ForbiddenVhostService($repo);
 
-        return new ForbidvhostCommand(
-            $repo,
-            $service,
+        return $this->createCommandFor($repo);
+    }
+
+    private function createCommandFor(ForbiddenVhostRepositoryInterface $repository): ForbidvhostCommand
+    {
+        return new ForbidvhostCommand(new ManageForbiddenVhostHandler(
+            $repository,
+            new ForbiddenVhostService($repository),
             new ForbiddenPatternValidator(),
-            $this->createStub(LoggerInterface::class),
-            $this->clock()
-        );
+            $this->clock(),
+        ));
     }
 
     /**
@@ -471,7 +486,7 @@ final class ForbidvhostCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(
@@ -502,7 +517,7 @@ final class ForbidvhostCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(
@@ -558,7 +573,7 @@ final class ForbidvhostCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

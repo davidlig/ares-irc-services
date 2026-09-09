@@ -8,31 +8,39 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetTopiclockHandler;
+use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
+use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingResult;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetTopiclockHandler::class)]
+#[CoversClass(UpdateChannelSetting::class)]
+#[CoversClass(UpdateChannelSettingHandler::class)]
+#[CoversClass(UpdateChannelSettingResult::class)]
 final class SetTopiclockHandlerTest extends TestCase
 {
     private function createContext(
         ChanServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         string $value,
+        bool $withoutSender = false,
     ): ChanServContext {
         return new ChanServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             null,
             'SET',
             ['#test', 'TOPICLOCK', $value],
@@ -61,10 +69,10 @@ final class SetTopiclockHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetTopiclockHandler($channelRepo, $eventBus);
+        $handler = $this->createHandler($channelRepo, $eventBus);
         $handler->handle($this->createContext($notifier, $translator, 'maybe'), $channel, 'maybe');
 
         self::assertSame(['error.syntax'], $messages);
@@ -91,10 +99,10 @@ final class SetTopiclockHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetTopiclockHandler($channelRepo, $eventBus);
+        $handler = $this->createHandler($channelRepo, $eventBus);
         $handler->handle($this->createContext($notifier, $translator, 'on'), $channel, ' on ');
 
         self::assertSame(['set.topiclock.on'], $messages);
@@ -122,14 +130,45 @@ final class SetTopiclockHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetTopiclockHandler($channelRepo, $eventBus);
+        $handler = $this->createHandler($channelRepo, $eventBus);
         $handler->handle($this->createContext($notifier, $translator, 'off'), $channel, 'OFF');
 
         self::assertSame(['set.topiclock.off'], $messages);
         self::assertCount(1, $channelNotices);
+    }
+
+    #[Test]
+    public function missingSenderReturnsWithoutUpdating(): void
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::never())->method('configureTopicLock');
+        $repo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $repo->expects(self::never())->method('save');
+
+        $this->createHandler($repo, $this->createStub(EventBusInterface::class))->handle(
+            $this->createContext(
+                $this->createStub(ChanServNotifierInterface::class),
+                $this->createStub(TranslatorInterface::class),
+                'ON',
+                true,
+            ),
+            $channel,
+            'ON',
+        );
+    }
+
+    private function createHandler(
+        RegisteredChannelRepositoryInterface $channels,
+        EventBusInterface $events,
+    ): SetTopiclockHandler {
+        return new SetTopiclockHandler(new UpdateChannelSettingHandler(
+            $channels,
+            $this->createStub(ChanUserAccountPort::class),
+            $events,
+        ));
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

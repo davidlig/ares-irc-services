@@ -6,14 +6,13 @@ namespace App\Irc\Adapter\Protocol\InspIRCd;
 
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
-use App\Irc\Application\Port\In\ServiceIntroductionFormatterInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 /**
- * InspIRCd protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.
+ * InspIRCd protocol module: handler, service actions, mode support, and nick reservation.
  *
  * The channelModeSupport property is mutable: it starts with the factory default
  * (full InspIRCd docs profile) and is updated once the remote CAPAB is parsed,
@@ -28,7 +27,6 @@ final class InspIRCdModule implements ProtocolRuntimeModuleInterface
     public function __construct(
         private readonly InspIRCdProtocolHandler $handler,
         private readonly InspIRCdProtocolServiceActions $serviceActions,
-        private readonly InspIRCdServiceIntroductionFormatter $introductionFormatter,
         InspIRCdChannelModeSupport $channelModeSupport,
         private readonly InspIRCdUserModeSupport $userModeSupport,
         private readonly InspIRCdNickReservation $nickReservation,
@@ -49,11 +47,6 @@ final class InspIRCdModule implements ProtocolRuntimeModuleInterface
     public function getServiceActions(): ProtocolServiceActionsInterface
     {
         return $this->serviceActions;
-    }
-
-    public function getIntroductionFormatter(): ServiceIntroductionFormatterInterface
-    {
-        return $this->introductionFormatter;
     }
 
     public function getChannelModeSupport(): ChannelModeSupportInterface

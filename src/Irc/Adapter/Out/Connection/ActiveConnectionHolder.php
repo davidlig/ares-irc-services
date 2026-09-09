@@ -8,8 +8,8 @@ use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -17,7 +17,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Services obtain the module (handler, formatters, actions) from here; each IRCd
  * type is encapsulated in its own module (Unreal, InspIRCd, etc.).
  */
-final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, EventSubscriberInterface
+final class ActiveConnectionHolder implements ActiveProtocolModuleHolderInterface, EventSubscriberInterface
 {
     private ?ConnectionInterface $connection = null;
 

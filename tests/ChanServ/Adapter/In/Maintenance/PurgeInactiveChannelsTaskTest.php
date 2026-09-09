@@ -100,7 +100,11 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channelRepo->expects(self::never())->method('delete');
 
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, 'inactivity');
+        $dropService->expects(self::once())->method('hardDropChannel')->with(
+            $channel,
+            self::isInstanceOf(DateTimeImmutable::class),
+            'inactivity',
+        );
 
         $logMessages = [];
         $logger = $this->createStub(LoggerInterface::class);

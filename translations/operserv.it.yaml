@@ -274,15 +274,15 @@ raw:
   too_long:         "\x0304✗\x03 Linea troppo lunga. Massimo 510 caratteri."
   not_connected:    "\x0304✗\x03 Non connesso all'IRCd."
   done:             "\x0303✓\x03 Linea raw inviata."
-  udb:
-    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
-    done:          "\x0303✓\x03 Mutazione UDB applicata: memorizzata in modo autorevole e in coda per la propagazione."
-    target:        "\x0304✗\x03 Le mutazioni UDB devono rivolgersi a tutti i server (DB * ...), non a %target%."
-    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT non è supportato tramite RAW."
-    invalid_block: "\x0304✗\x03 Blocco UDB sconosciuto: %block%."
-    invalid_path:  "\x0304✗\x03 Percorso di record UDB non valido: %path%."
-    invalid_value: "\x0304✗\x03 Valore di record UDB non valido per: %path%."
-    error:         "\x0304✗\x03 Scrittura nell'archivio UDB non riuscita; la mutazione non è stata propagata."
+  protocol:
+    syntax: "\x0304✗\x03 Il protocollo attivo ha rifiutato la sintassi del comando RAW."
+    done: "\x0303✓\x03 Comando RAW gestito dal protocollo eseguito."
+    target: "\x0304✗\x03 Il protocollo attivo ha rifiutato la destinazione %target%."
+    unsupported: "\x0304✗\x03 Il protocollo attivo non supporta questo comando RAW."
+    invalid_resource_type: "\x0304✗\x03 Tipo di risorsa di protocollo sconosciuto: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Risorsa di protocollo non valida: %resource%."
+    invalid_value: "\x0304✗\x03 Valore non valido per la risorsa di protocollo: %resource%."
+    error: "\x0304✗\x03 Il protocollo attivo non ha potuto eseguire il comando RAW."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

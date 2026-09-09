@@ -6,14 +6,14 @@ namespace App\MemoServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 use function count;
@@ -35,7 +35,7 @@ final readonly class MemoServService
         private MemoServUserPresentationPreferences $languageResolver,
         private MemoServNotifierInterface $notifier,
         private MemoServUserPresentationPreferences $messageTypeResolver,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private ServiceNicknameRegistry $serviceNicks,
         private MemoAuthorizationContextInterface $authorizationContext,
         private MemoAuthorizationCheckerInterface $authorizationChecker,

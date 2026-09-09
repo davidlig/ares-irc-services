@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\OperServ\Adapter\In\Irc\Command\RoleCommand;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
@@ -17,13 +18,12 @@ use App\OperServ\Application\UseCase\ManageRole\ManageRoleHandlerInterface;
 use App\OperServ\Application\UseCase\ManageRole\ManageRoleResult;
 use App\OperServ\Application\UseCase\ManageRole\RoleAction;
 use App\OperServ\Application\UseCase\ManageRole\RoleOutcome;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RoleCommand::class)]
 #[CoversClass(ManageRole::class)]
@@ -347,7 +347,7 @@ final class RoleCommandTest extends TestCase
     private function context(
         array $arguments,
         OperServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         bool $withoutSender = false,
     ): OperServContext {
         return new OperServContext(
@@ -390,7 +390,7 @@ final class RecordingManageRoleHandler implements ManageRoleHandlerInterface
     }
 }
 
-final class RecordingRoleTranslation implements TranslationInterface
+final class RecordingRoleTranslation implements TranslatorInterface
 {
     /** @var list<string> */
     public array $calls = [];
@@ -398,12 +398,18 @@ final class RecordingRoleTranslation implements TranslationInterface
     /** @var array<string, array<string, mixed>> */
     public array $parameters = [];
 
+    /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         $this->calls[] = $id;
         $this->parameters[$id] = $parameters;
 
         return $id;
+    }
+
+    public function getLocale(): string
+    {
+        return 'en';
     }
 }
 

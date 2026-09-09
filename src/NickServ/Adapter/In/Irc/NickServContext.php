@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\Security\IrcopAuthorizationSubject;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\OperServ\Application\Port\In\IrcopAuthorizationSubject;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Carries all the context a NickServ command needs to execute.
@@ -33,7 +33,7 @@ readonly class NickServContext implements IrcopAuthorizationSubject
         /** @var string[] */
         public array $args,
         private NickServNotifierInterface $notifier,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private string $language,
         /** PHP timezone identifier (e.g. UTC, Europe/Madrid) used when displaying dates. */
         private string $timezone,

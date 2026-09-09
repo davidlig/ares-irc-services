@@ -76,32 +76,34 @@ class RegisteredChannel
     /** Set when a manual DROP starts the recoverable deletion grace period. */
     private ?DateTimeImmutable $pendingDeletionAt = null;
 
-    private function __construct()
+    private function __construct(DateTimeImmutable $createdAt)
     {
         $this->entrymsg = '';
-        $this->createdAt = new DateTimeImmutable();
+        $this->createdAt = $createdAt;
     }
 
     public static function register(
+        DateTimeImmutable $registeredAt,
         string $channelName,
         int $founderNickId,
         string $description,
     ): self {
-        $channel = new self();
+        $channel = new self($registeredAt);
         $channel->name = $channelName;
         $channel->nameLower = strtolower($channelName);
         $channel->founderNickId = $founderNickId;
         $channel->description = $description;
-        $channel->lastUsedAt = new DateTimeImmutable();
+        $channel->lastUsedAt = $registeredAt;
 
         return $channel;
     }
 
     public static function createForbidden(
+        DateTimeImmutable $createdAt,
         string $channelName,
         string $reason,
     ): self {
-        $channel = new self();
+        $channel = new self($createdAt);
         $channel->name = $channelName;
         $channel->nameLower = strtolower($channelName);
         $channel->founderNickId = 0;
@@ -281,16 +283,16 @@ class RegisteredChannel
         $this->secure = $on;
     }
 
-    public function updateTopic(?string $topic, ?string $setByNick = null): void
+    public function updateTopic(?string $topic, DateTimeImmutable $updatedAt, ?string $setByNick = null): void
     {
         $this->topic = $topic;
-        $this->lastTopicSetAt = null !== $topic ? new DateTimeImmutable() : null;
+        $this->lastTopicSetAt = null !== $topic ? $updatedAt : null;
         $this->lastTopicSetByNick = null !== $topic ? $setByNick : null;
     }
 
-    public function touchLastUsed(): void
+    public function touchLastUsed(DateTimeImmutable $usedAt): void
     {
-        $this->lastUsedAt = new DateTimeImmutable();
+        $this->lastUsedAt = $usedAt;
     }
 
     public function isFounder(int $nickId): bool
@@ -323,14 +325,14 @@ class RegisteredChannel
         return ChannelStatus::PendingDeletion === $this->status;
     }
 
-    public function markPendingDeletion(?DateTimeImmutable $at = null): void
+    public function markPendingDeletion(DateTimeImmutable $at): void
     {
         if (ChannelStatus::Active !== $this->status) {
             throw new LogicException('Only active channels can be marked for deletion.');
         }
 
         $this->status = ChannelStatus::PendingDeletion;
-        $this->pendingDeletionAt = $at ?? new DateTimeImmutable();
+        $this->pendingDeletionAt = $at;
     }
 
     public function restoreFromPendingDeletion(): void
@@ -343,7 +345,7 @@ class RegisteredChannel
         $this->pendingDeletionAt = null;
     }
 
-    public function isCurrentlySuspended(): bool
+    public function isCurrentlySuspended(DateTimeImmutable $now): bool
     {
         if (!$this->isSuspended()) {
             return false;
@@ -353,7 +355,7 @@ class RegisteredChannel
             return true;
         }
 
-        return new DateTimeImmutable() < $this->suspendedUntil;
+        return $now < $this->suspendedUntil;
     }
 
     public function suspend(string $reason, ?DateTimeImmutable $until = null): void

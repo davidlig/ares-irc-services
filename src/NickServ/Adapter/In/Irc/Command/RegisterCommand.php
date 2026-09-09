@@ -74,11 +74,11 @@ final readonly class RegisterCommand implements NickServCommandInterface
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): null
     {
         $sender = $context->sender;
         if (null === $sender) {
-            return;
+            return null;
         }
 
         $this->present($context, $this->handler->handle(new RegisterNick(
@@ -88,6 +88,8 @@ final readonly class RegisterCommand implements NickServCommandInterface
             language: $context->getLanguage(),
             clientKey: self::clientKey($sender),
         )));
+
+        return null;
     }
 
     private function present(NickServContext $context, RegisterNickResult $result): void

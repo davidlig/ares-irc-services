@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\OperServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function trim;
 
@@ -32,7 +32,7 @@ final readonly class OperServContext
         public string $command,
         array $args,
         private OperServNotifierInterface $notifier,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private string $language,
         private string $timezone,
         private string $messageType,

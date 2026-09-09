@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc;
 
+use App\Irc\Application\Port\In\UserVhostSetter;
 use App\NickServ\Adapter\In\Irc\Bot\NickServBot;
 
 /**
  * Abstracts the IRC send operations needed by NickServ.
  * Implemented by NickServBot in the Infrastructure layer.
  */
-interface NickServNotifierInterface
+interface NickServNotifierInterface extends UserVhostSetter
 {
     /** Send a NOTICE from NickServ to a target user (by UID or nick). */
     public function sendNotice(string $targetUidOrNick, string $message): void;

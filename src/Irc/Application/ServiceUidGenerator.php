@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Application;
 
+use App\Irc\Application\Port\In\ActiveConnectionHolderInterface;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 
 use function str_pad;
 

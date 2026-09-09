@@ -6,7 +6,7 @@ namespace App\ChanServ\Adapter\In\Maintenance;
 
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

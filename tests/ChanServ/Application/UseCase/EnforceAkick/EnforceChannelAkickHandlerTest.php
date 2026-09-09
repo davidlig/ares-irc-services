@@ -57,9 +57,9 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     public function firstCurrentMatchIsEnforcedWithFallbackAndOperatorsAreExempt(): void
     {
         $channel = $this->channel();
-        $expired = ChannelAkick::create(1, 2, '*!*@example.test', 'expired', new DateTimeImmutable('2026-09-07 11:59:59 UTC'));
-        $first = ChannelAkick::create(1, 2, 'nick!*@example.test');
-        $later = ChannelAkick::create(1, 2, 'nick!*@*', 'later');
+        $expired = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test', 'expired', new DateTimeImmutable('2026-09-07 11:59:59 UTC'));
+        $first = ChannelAkick::create(new DateTimeImmutable(), 1, 2, 'nick!*@example.test');
+        $later = ChannelAkick::create(new DateTimeImmutable(), 1, 2, 'nick!*@*', 'later');
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([$expired, $first, $later]);
         $actions = $this->createMock(AkickActions::class);
@@ -88,7 +88,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     {
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akicks->method('listByChannel')->willReturn([
-            ChannelAkick::create(1, 2, '*!*@example.test', 'reason', $this->now),
+            ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test', 'reason', $this->now),
         ]);
         $actions = $this->createMock(AkickActions::class);
         $actions->expects(self::once())->method('banAndKick')->with('#Test', '001A', '*!*@example.test', 'reason');
@@ -109,7 +109,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         $network = $this->createStub(ChannelEntryNetworkQuery::class);
         $network->method('findMember')->willReturn($this->member('001A', 'nick!ident@example.test'));
         $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
-        $akicks->method('listByChannel')->willReturn([ChannelAkick::create(1, 2, '*!*@example.test')]);
+        $akicks->method('listByChannel')->willReturn([ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test')]);
         $actions = $this->createMock(AkickActions::class);
         $actions->expects(self::once())->method('banAndKick')->with('#Test', '001A', '*!*@example.test', 'AKICK: *!*@example.test');
 

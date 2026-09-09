@@ -274,15 +274,15 @@ raw:
   too_long:         "\x0304✗\x03 Line is too long. Maximum 510 characters."
   not_connected:    "\x0304✗\x03 Not connected to IRCd."
   done:             "\x0303✓\x03 Raw line sent."
-  udb:
-    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
-    done:          "\x0303✓\x03 UDB mutation applied: stored authoritatively and queued for propagation."
-    target:        "\x0304✗\x03 UDB mutations must target every server (DB * ...), not %target%."
-    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT are not supported through RAW."
-    invalid_block: "\x0304✗\x03 Unknown UDB block: %block%."
-    invalid_path:  "\x0304✗\x03 Invalid UDB record path: %path%."
-    invalid_value: "\x0304✗\x03 Invalid UDB record value for: %path%."
-    error:         "\x0304✗\x03 UDB store write failed; the mutation was not propagated."
+  protocol:
+    syntax: "\x0304✗\x03 The active protocol rejected the RAW command syntax."
+    done: "\x0303✓\x03 Protocol-owned RAW command executed."
+    target: "\x0304✗\x03 The active protocol rejected target %target%."
+    unsupported: "\x0304✗\x03 The active protocol does not support this RAW command."
+    invalid_resource_type: "\x0304✗\x03 Unknown protocol resource type: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Invalid protocol resource: %resource%."
+    invalid_value: "\x0304✗\x03 Invalid value for protocol resource: %resource%."
+    error: "\x0304✗\x03 The active protocol could not execute the RAW command."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

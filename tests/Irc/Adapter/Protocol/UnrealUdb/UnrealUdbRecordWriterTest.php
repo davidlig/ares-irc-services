@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use App\Irc\Application\Port\In\ActiveConnectionHolderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

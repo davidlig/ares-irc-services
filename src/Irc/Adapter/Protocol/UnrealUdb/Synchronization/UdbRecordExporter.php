@@ -11,13 +11,13 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
 use App\Irc\Adapter\Protocol\UnrealUdb\UdbChannelModesFormatter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\NickServ\Application\Port\In\NickProjection;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Application\Port\In\GlineProjection;
 use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
 use RuntimeException;
 
 use function array_filter;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
-use App\Shared\Application\Port\ChannelModeSupportInterface;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 
 /**
  * UnrealIRCd channel mode support.

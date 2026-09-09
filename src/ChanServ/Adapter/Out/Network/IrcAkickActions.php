@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\Out\Network;
 
 use App\ChanServ\Application\Port\Out\AkickActions;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

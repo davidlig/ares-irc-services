@@ -13,21 +13,32 @@ use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
 use App\ChanServ\Application\Service\ChanDropService;
+use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\Service\ChannelSuspensionService;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleResult;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(DropCommand::class)]
+#[UsesClass(ManageChannelLifecycleHandler::class)]
+#[UsesClass(ManageChannelLifecycle::class)]
+#[UsesClass(ChannelLifecycleResult::class)]
 final class DropCommandTest extends TestCase
 {
     #[Test]
@@ -124,7 +135,7 @@ final class DropCommandTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::never())->method('findByChannelName');
 
-        $cmd = new DropCommand($channelRepository, $this->createStub(ChanDropService::class));
+        $cmd = $this->createCommandWith($channelRepository, $this->createStub(ChanDropService::class));
 
         $messages = [];
         $context = $this->createContext(null, null, ['#test'], $messages, channelRepository: $channelRepository);
@@ -141,7 +152,7 @@ final class DropCommandTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::never())->method('findByChannelName');
 
-        $cmd = new DropCommand($channelRepository, $this->createStub(ChanDropService::class));
+        $cmd = $this->createCommandWith($channelRepository, $this->createStub(ChanDropService::class));
 
         $messages = [];
         $context = $this->createContext($sender, null, ['notachannel'], $messages);
@@ -158,7 +169,7 @@ final class DropCommandTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn(null);
 
-        $cmd = new DropCommand($channelRepository, $this->createStub(ChanDropService::class));
+        $cmd = $this->createCommandWith($channelRepository, $this->createStub(ChanDropService::class));
 
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
@@ -178,9 +189,9 @@ final class DropCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('softDropChannel')->with($channel, 'OperUser');
+        $dropService->expects(self::once())->method('softDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'OperUser');
 
-        $cmd = new DropCommand($channelRepository, $dropService);
+        $cmd = $this->createCommandWith($channelRepository, $dropService);
 
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
@@ -199,14 +210,14 @@ final class DropCommandTest extends TestCase
     {
         $sender = $this->createSender();
         $channel = $this->createChannelWithId('#test', 42);
-        $channel->markPendingDeletion();
+        $channel->markPendingDeletion(new DateTimeImmutable());
         $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repo->method('findByChannelName')->willReturn($channel);
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::never())->method('softDropChannel');
 
         $messages = [];
-        new DropCommand($repo, $dropService)->execute($this->createContext($sender, null, ['#test'], $messages, channelRepository: $repo));
+        $this->createCommandWith($repo, $dropService)->execute($this->createContext($sender, null, ['#test'], $messages, channelRepository: $repo));
 
         self::assertContains('drop.pending_deletion', $messages);
     }
@@ -216,7 +227,7 @@ final class DropCommandTest extends TestCase
     {
         $sender = $this->createSender();
         $channel = $this->createChannelWithId('#test', 42);
-        $channel->markPendingDeletion();
+        $channel->markPendingDeletion(new DateTimeImmutable());
         $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repo->method('findByChannelName')->willReturn($channel);
         $authorization = $this->createStub(AuthorizationCheckerInterface::class);
@@ -225,7 +236,7 @@ final class DropCommandTest extends TestCase
         $dropService->expects(self::never())->method('hardDropChannel');
 
         $messages = [];
-        new DropCommand($repo, $dropService, $authorization)->execute($this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo));
+        $this->createCommandWith($repo, $dropService, $authorization)->execute($this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo));
 
         self::assertContains('error.permission_denied', $messages);
     }
@@ -235,16 +246,16 @@ final class DropCommandTest extends TestCase
     {
         $sender = $this->createSender();
         $channel = $this->createChannelWithId('#test', 42);
-        $channel->markPendingDeletion();
+        $channel->markPendingDeletion(new DateTimeImmutable());
         $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $repo->method('findByChannelName')->willReturn($channel);
         $authorization = $this->createStub(AuthorizationCheckerInterface::class);
         $authorization->method('isGranted')->willReturn(true);
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, 'manual-force', 'OperUser');
+        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'manual-force', 'OperUser');
 
         $messages = [];
-        $cmd = new DropCommand($repo, $dropService, $authorization);
+        $cmd = $this->createCommandWith($repo, $dropService, $authorization);
         $context = $this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo);
         $outcome = $cmd->execute($context);
 
@@ -270,9 +281,26 @@ final class DropCommandTest extends TestCase
 
     private function createCommand(): DropCommand
     {
-        return new DropCommand(
+        return $this->createCommandWith(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChanDropService::class),
+        );
+    }
+
+    private function createCommandWith(
+        RegisteredChannelRepositoryInterface $channels,
+        ChanDropService $dropService,
+        ?AuthorizationCheckerInterface $authorizationChecker = null,
+    ): DropCommand {
+        return new DropCommand(
+            new ManageChannelLifecycleHandler(
+                $channels,
+                $dropService,
+                $this->createStub(ChannelForbiddenService::class),
+                $this->createStub(ChannelSuspensionService::class),
+                $this->createStub(EventBusInterface::class),
+            ),
+            $authorizationChecker,
         );
     }
 
@@ -283,7 +311,7 @@ final class DropCommandTest extends TestCase
 
     private function createChannelWithId(string $name, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register($name, 1, 'Test description');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), $name, 1, 'Test description');
 
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, $id);
@@ -308,7 +336,7 @@ final class DropCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(

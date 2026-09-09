@@ -13,7 +13,7 @@ use function sprintf;
 use function strlen;
 use function strtolower;
 
-class Gline
+final class Gline
 {
     public const int MAX_MASK_LENGTH = 255;
 
@@ -36,6 +36,7 @@ class Gline
     private ?DateTimeImmutable $expiresAt = null;
 
     private function __construct(
+        DateTimeImmutable $createdAt,
         string $mask,
         ?int $creatorNickId,
         ?string $reason,
@@ -44,17 +45,18 @@ class Gline
         $this->setMask($mask);
         $this->creatorNickId = $creatorNickId;
         $this->setReason($reason);
-        $this->createdAt = new DateTimeImmutable();
+        $this->createdAt = $createdAt;
         $this->expiresAt = $expiresAt;
     }
 
     public static function create(
+        DateTimeImmutable $createdAt,
         string $mask,
         ?int $creatorNickId = null,
         ?string $reason = null,
         ?DateTimeImmutable $expiresAt = null,
     ): self {
-        return new self($mask, $creatorNickId, $reason, $expiresAt);
+        return new self($createdAt, $mask, $creatorNickId, $reason, $expiresAt);
     }
 
     public function getId(): int
@@ -87,9 +89,9 @@ class Gline
         return $this->createdAt;
     }
 
-    public function isExpired(): bool
+    public function isExpired(DateTimeImmutable $at): bool
     {
-        return null !== $this->expiresAt && $this->expiresAt < new DateTimeImmutable();
+        return null !== $this->expiresAt && $this->expiresAt < $at;
     }
 
     public function isPermanent(): bool

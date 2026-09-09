@@ -91,7 +91,7 @@ final readonly class ManageGlineHandler implements ManageGlineHandlerInterface
             return new ManageGlineResult(ManageGlineOutcome::LimitReached, limit: $this->maxGlines);
         }
 
-        $this->glines->save($resolvedMask, $command->actorAccountId, $reason, $expiresAt);
+        $this->glines->save($resolvedMask, $command->actorAccountId, $reason, $command->occurredAt, $expiresAt);
         $this->network->add($resolvedMask, $expiresAt, $reason);
         $this->recordAudit($command, 'GLINE ADD', $resolvedMask, $reason, ['duration' => null === $expiresAt ? 'permanent' : $expiry]);
 

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\OperServ\Application\Security;
 
+use App\OperServ\Application\Port\In\OperatorPermissionCatalog;
+
 use function array_merge;
 use function sort;
 
-final readonly class PermissionRegistry
+final readonly class PermissionRegistry implements OperatorPermissionCatalog
 {
     /**
      * @param iterable<PermissionProviderInterface> $providers

@@ -4,63 +4,166 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\SetCommand;
-use App\NickServ\Adapter\In\Irc\Command\SetEmailHandler;
-use App\NickServ\Adapter\In\Irc\Command\SetLanguageHandler;
-use App\NickServ\Adapter\In\Irc\Command\SetMsgHandler;
-use App\NickServ\Adapter\In\Irc\Command\SetPasswordHandler;
-use App\NickServ\Adapter\In\Irc\Command\SetPrivateHandler;
-use App\NickServ\Adapter\In\Irc\Command\SetTimezoneHandler;
-use App\NickServ\Adapter\In\Irc\Command\SetVhostHandler;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
-use App\NickServ\Adapter\Out\InMemory\PendingEmailChangeRegistry;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
-use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
-use App\NickServ\Application\Port\Out\Clock;
-use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
-use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
-use App\NickServ\Application\Port\Out\PasswordHasher;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Application\Security\NickServPermission;
-use App\NickServ\Application\Service\VhostDisplayResolver;
-use App\NickServ\Application\Service\VhostValidator;
+use App\NickServ\Application\UseCase\Set\SetNickSetting;
+use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
+use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
+use App\NickServ\Application\UseCase\Set\SetNickSettingOutcome;
+use App\NickServ\Application\UseCase\Set\SetNickSettingResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
-use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
-use stdClass;
-use Symfony\Component\Messenger\Envelope;
+use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetCommand::class)]
 final class SetCommandTest extends TestCase
 {
+    #[Test]
+    public function exposesCommandMetadata(): void
+    {
+        $command = new SetCommand($this->createStub(SetNickSettingHandlerInterface::class));
+
+        self::assertSame('SET', $command->getName());
+        self::assertSame([], $command->getAliases());
+        self::assertSame(2, $command->getMinArgs());
+        self::assertSame('set.syntax', $command->getSyntaxKey());
+        self::assertSame('set.help', $command->getHelpKey());
+        self::assertSame(4, $command->getOrder());
+        self::assertSame('set.short', $command->getShortDescKey());
+        self::assertFalse($command->isOperOnly());
+        self::assertSame(NickServPermission::IDENTIFIED_OWNER, $command->getRequiredPermission());
+        self::assertSame([], $command->getHelpParams());
+        self::assertCount(7, $command->getSubCommandHelp());
+        self::assertSame('PASSWORD', $command->getSubCommandHelp()[0]['name']);
+    }
+
+    #[Test]
+    public function rejectsMissingSenderSyntaxAndUnknownOptionWithoutCallingUseCase(): void
+    {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $command = new SetCommand($handler);
+
+        self::assertFalse($command->execute($this->context(null, []))->success);
+        self::assertFalse($command->execute($this->context($this->sender(), ['PASSWORD']))->success);
+
+        $messages = [];
+        self::assertFalse($command->execute($this->context($this->sender(), ['UNKNOWN', 'value'], $messages))->success);
+        self::assertSame(['set.unknown_option'], $messages);
+    }
+
+    #[Test]
+    public function translatesValidCommandIntoTypedInputAndReturnsSuccess(): void
+    {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (SetNickSetting $input): bool => 'Alice' === $input->actor->nickname
+                && 17 === $input->actor->accountId
+                && 'UID1' === $input->actor->uid
+                && 'SID1' === $input->actor->serverSid
+                && 'ident@host.test' === $input->actor->host
+                && '127.0.0.1' === $input->actor->ip
+                && 'Alice' === $input->targetNickname
+                && SetNickSettingOption::Email === $input->option
+                && 'new@example.com TOKEN' === $input->value
+                && !$input->operatorMode
+                && 'en' === $input->locale,
+        ))->willReturn(new SetNickSettingResult(
+            SetNickSettingOutcome::Changed,
+            SetNickSettingOption::Email,
+            'Alice',
+            'new@example.com',
+        ));
+
+        $messages = [];
+        $outcome = new SetCommand($handler)->execute($this->context(
+            $this->sender('fwAAAQ=='),
+            ['EMAIL', 'new@example.com', 'TOKEN'],
+            $messages,
+            $this->account(17),
+        ));
+
+        self::assertTrue($outcome->success);
+        self::assertSame(['set.email.success'], $messages);
+    }
+
+    #[Test]
+    public function returnsRejectedWhenPresentationRejectsAndPreservesInvalidIpText(): void
+    {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (SetNickSetting $input): bool => 'not-base64' === $input->actor->ip,
+        ))->willReturn(new SetNickSettingResult(
+            SetNickSettingOutcome::InvalidFlag,
+            SetNickSettingOption::MessageMode,
+            'Alice',
+        ));
+
+        $messages = [];
+        $outcome = new SetCommand($handler)->execute($this->context(
+            $this->sender('not-base64'),
+            ['MSG', 'MAYBE'],
+            $messages,
+        ));
+
+        self::assertFalse($outcome->success);
+        self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function normalizesMissingEncodedIpToWildcard(): void
+    {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (SetNickSetting $input): bool => '*' === $input->actor->ip,
+        ))->willReturn(new SetNickSettingResult(
+            SetNickSettingOutcome::Changed,
+            SetNickSettingOption::Password,
+            'Alice',
+        ));
+
+        self::assertTrue(new SetCommand($handler)->execute($this->context(
+            $this->sender(''),
+            ['PASSWORD', 'new-secret'],
+        ))->success);
+    }
+
     /**
-     * @param string[] $args
+     * @param list<string> $args
+     * @param list<string> $messages
      */
-    private function createContext(
+    private function context(
         ?SenderView $sender,
-        ?RegisteredNick $senderAccount,
         array $args,
-        NickServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        array &$messages = [],
+        ?RegisteredNick $account = null,
     ): NickServContext {
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('NickServ');
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $provider = $this->createStub(ServiceNicknameProviderInterface::class);
+        $provider->method('getServiceKey')->willReturn('nickserv');
+        $provider->method('getNickname')->willReturn('NickServ');
+
         return new NickServContext(
             $sender,
-            $senderAccount,
+            $account,
             'SET',
             $args,
             $notifier,
@@ -71,1511 +174,28 @@ final class SetCommandTest extends TestCase
             new NickServCommandRegistry([]),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
+            new ServiceNicknameRegistry([$provider]),
         );
     }
 
-    private function createServiceNicks(): ServiceNicknameRegistry
+    private function sender(string $ipBase64 = '*'): SenderView
     {
-        $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-        $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick) {}
-
-            public function getServiceKey(): string
-            {
-                return $this->key;
-            }
-
-            public function getNickname(): string
-            {
-                return $this->nick;
-            }
-        };
-
-        return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
+        return new SenderView('UID1', 'Alice', 'ident', 'host.test', 'cloak.test', $ipBase64, true, false, 'SID1');
     }
 
-    #[Test]
-    public function doesNothingWhenSenderNull(): void
+    private function account(int $id): RegisteredNick
     {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
+        $account = RegisteredNick::createPending(
+            'Alice',
+            'hash',
+            'alice@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable(),
         );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-        $notifier = $this->createMock(NickServNotifierInterface::class);
-        $notifier->expects(self::never())->method('sendMessage');
-        $translator = $this->createStub(TranslationInterface::class);
+        $account->activate();
+        new ReflectionClass($account)->getProperty('id')->setValue($account, $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(null, null, ['PASSWORD', 'newpass'], $notifier, $translator));
-    }
-
-    #[Test]
-    public function replyNotIdentifiedWhenSenderAccountNull(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['PASSWORD', 'x'], $notifier, $translator));
-
-        self::assertSame(['error.not_identified'], $messages);
-    }
-
-    #[Test]
-    public function replyUnknownOptionWhenOptionNotSupported(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['UNKNOWN', 'value'], $notifier, $translator));
-
-        self::assertSame(['set.unknown_option'], $messages);
-    }
-
-    #[Test]
-    public function emptyArgsReturnsError(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, [], $notifier, $translator));
-
-        self::assertSame(['error.syntax'], $messages);
-    }
-
-    #[Test]
-    public function delegatesToLanguageHandlerWhenOptionLanguage(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('changeLanguage')->with('es');
-        $account->method('getLanguage')->willReturn('es');
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['LANGUAGE', 'es'], $notifier, $translator));
-
-        self::assertSame(['set.language.success'], $messages);
-    }
-
-    #[Test]
-    public function delegatesToPasswordHandlerWhenOptionPassword(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('changePassword')->with('newhash');
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $passwordHasher = $this->createStub(PasswordHasher::class);
-        $passwordHasher->method('hash')->willReturn('newhash');
-        $setPassword = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PASSWORD', 'newpass123'], $notifier, $translator));
-
-        self::assertSame(['set.password.success'], $messages);
-    }
-
-    #[Test]
-    public function delegatesToEmailHandlerWhenOptionEmail(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getEmail')->willReturn('old@example.com');
-        $account->method('getNickname')->willReturn('User');
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByEmail')->willReturn(null);
-        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
-        $messageBus->method('dispatch')->willReturn(new Envelope(new stdClass()));
-        $logger = $this->createStub(LoggerInterface::class);
-        $translatorForHandler = $this->createStub(TranslationInterface::class);
-        $translatorForHandler->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $messageBus,
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $translatorForHandler,
-            $logger,
-            $this->createStub(EventBusInterface::class),
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['EMAIL', 'new@example.com'], $notifier, $translator));
-
-        self::assertStringStartsWith('set.email.', $messages[0]);
-    }
-
-    #[Test]
-    public function delegatesToPrivateHandlerWhenOptionPrivate(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('switchPrivate')->with(true);
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PRIVATE', 'ON'], $notifier, $translator));
-
-        self::assertSame(['set.private.on'], $messages);
-    }
-
-    #[Test]
-    public function delegatesToMsgHandlerWhenOptionMsg(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('switchMsg')->with(true);
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['MSG', 'ON'], $notifier, $translator));
-
-        self::assertSame(['set.msg.on'], $messages);
-    }
-
-    #[Test]
-    public function delegatesToTimezoneHandlerWhenOptionTimezone(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('changeTimezone')->with('America/New_York');
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', 'America/New_York'], $notifier, $translator));
-
-        self::assertSame(['set.timezone.success'], $messages);
-    }
-
-    #[Test]
-    public function delegatesToVhostHandlerWhenOptionVhost(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('changeVhost')->with('vhost.example.com');
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['VHOST', 'vhost.example.com'], $notifier, $translator));
-
-        self::assertStringStartsWith('set.vhost.', $messages[0]);
-    }
-
-    #[Test]
-    public function handlesLowercaseOption(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('changeLanguage')->with('es');
-        $account->method('getLanguage')->willReturn('es');
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['language', 'es'], $notifier, $translator));
-
-        self::assertSame(['set.language.success'], $messages);
-    }
-
-    #[Test]
-    public function passwordHandlerReturnsSyntaxErrorOnEmptyValue(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PASSWORD', ''], $notifier, $translator));
-
-        self::assertSame(['error.syntax'], $messages);
-    }
-
-    #[Test]
-    public function emailHandlerReturnsSyntaxErrorOnEmptyValue(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['EMAIL', ''], $notifier, $translator));
-
-        self::assertSame(['error.syntax'], $messages);
-    }
-
-    #[Test]
-    public function emailHandlerReturnsInvalidEmailError(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getEmail')->willReturn('old@example.com');
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['EMAIL', 'not-an-email'], $notifier, $translator));
-
-        self::assertSame(['register.invalid_email'], $messages);
-    }
-
-    #[Test]
-    public function emailHandlerReturnsEmailAlreadyUsedError(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getEmail')->willReturn('old@example.com');
-        $account->method('getNickname')->willReturn('User');
-        $existingAccount = $this->createStub(RegisteredNick::class);
-        $existingAccount->method('getNickname')->willReturn('OtherUser');
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByEmail')->willReturn($existingAccount);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['EMAIL', 'used@example.com'], $notifier, $translator));
-
-        self::assertSame(['register.email_already_used'], $messages);
-    }
-
-    #[Test]
-    public function languageHandlerReturnsSyntaxErrorOnEmptyValue(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['LANGUAGE', ''], $notifier, $translator));
-
-        self::assertSame(['error.syntax'], $messages);
-    }
-
-    #[Test]
-    public function languageHandlerReturnsInvalidLanguageError(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getLanguage')->willReturn('en');
-        $account->method('changeLanguage')->willThrowException(new InvalidArgumentException('Unsupported language'));
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['LANGUAGE', 'invalid-lang'], $notifier, $translator));
-
-        self::assertSame(['set.language.invalid'], $messages);
-    }
-
-    #[Test]
-    public function privateHandlerReturnsSyntaxErrorOnInvalidValue(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PRIVATE', 'MAYBE'], $notifier, $translator));
-
-        self::assertSame(['error.syntax'], $messages);
-    }
-
-    #[Test]
-    public function msgHandlerReturnsSyntaxErrorOnInvalidValue(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['MSG', 'YES'], $notifier, $translator));
-
-        self::assertSame(['error.syntax'], $messages);
-    }
-
-    #[Test]
-    public function timezoneHandlerReturnsSyntaxErrorOnEmptyValue(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', ''], $notifier, $translator));
-
-        self::assertSame(['error.syntax'], $messages);
-    }
-
-    #[Test]
-    public function timezoneHandlerReturnsInvalidTimezoneError(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getTimezone')->willReturn('UTC');
-        $account->method('changeTimezone')->willThrowException(new InvalidArgumentException('Invalid timezone'));
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', 'Not/A/Timezone'], $notifier, $translator));
-
-        self::assertSame(['set.timezone.invalid'], $messages);
-    }
-
-    #[Test]
-    public function vhostHandlerReturnsInvalidErrorOnBadFormat(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['VHOST', '**invalid**'], $notifier, $translator));
-
-        self::assertSame(['set.vhost.invalid'], $messages);
-    }
-
-    #[Test]
-    public function vhostHandlerReturnsTakenErrorWhenVhostInUse(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getId')->willReturn(1);
-        $existingAccount = $this->createStub(RegisteredNick::class);
-        $existingAccount->method('getId')->willReturn(2);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByVhost')->willReturn($existingAccount);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['VHOST', 'taken.vhost'], $notifier, $translator));
-
-        self::assertSame(['set.vhost.taken'], $messages);
-    }
-
-    #[Test]
-    public function privateHandlerTurnsOffPrivate(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('switchPrivate')->with(false);
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PRIVATE', 'OFF'], $notifier, $translator));
-
-        self::assertSame(['set.private.off'], $messages);
-    }
-
-    #[Test]
-    public function msgHandlerTurnsOffMsg(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('switchMsg')->with(false);
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['MSG', 'OFF'], $notifier, $translator));
-
-        self::assertSame(['set.msg.off'], $messages);
-    }
-
-    #[Test]
-    public function timezoneHandlerClearsTimezoneWithOff(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('changeTimezone')->with(null);
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', 'OFF'], $notifier, $translator));
-
-        self::assertSame(['set.timezone.cleared'], $messages);
-    }
-
-    #[Test]
-    public function vhostHandlerClearsVhost(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->expects(self::once())->method('changeVhost')->with(null);
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['VHOST', 'OFF'], $notifier, $translator));
-
-        self::assertSame(['set.vhost.cleared'], $messages);
-    }
-
-    #[Test]
-    public function getNameReturnsSet(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertSame('SET', $cmd->getName());
-    }
-
-    #[Test]
-    public function getAliasesReturnsEmptyArray(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertSame([], $cmd->getAliases());
-    }
-
-    #[Test]
-    public function getMinArgsReturnsTwo(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertSame(2, $cmd->getMinArgs());
-    }
-
-    #[Test]
-    public function getSyntaxKeyReturnsSetSyntax(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertSame('set.syntax', $cmd->getSyntaxKey());
-    }
-
-    #[Test]
-    public function getHelpKeyReturnsSetHelp(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertSame('set.help', $cmd->getHelpKey());
-    }
-
-    #[Test]
-    public function getOrderReturnsFour(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertSame(4, $cmd->getOrder());
-    }
-
-    #[Test]
-    public function getShortDescKeyReturnsSetShort(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertSame('set.short', $cmd->getShortDescKey());
-    }
-
-    #[Test]
-    public function getSubCommandHelpReturnsExpectedOptions(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $subCommands = $cmd->getSubCommandHelp();
-
-        self::assertCount(7, $subCommands);
-        self::assertSame('PASSWORD', $subCommands[0]['name']);
-        self::assertSame('EMAIL', $subCommands[1]['name']);
-        self::assertSame('LANGUAGE', $subCommands[2]['name']);
-        self::assertSame('TIMEZONE', $subCommands[3]['name']);
-        self::assertSame('PRIVATE', $subCommands[4]['name']);
-        self::assertSame('MSG', $subCommands[5]['name']);
-        self::assertSame('VHOST', $subCommands[6]['name']);
-    }
-
-    #[Test]
-    public function isOperOnlyReturnsFalse(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertFalse($cmd->isOperOnly());
-    }
-
-    #[Test]
-    public function getRequiredPermissionReturnsIdentifiedOwner(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertSame(NickServPermission::IDENTIFIED_OWNER, $cmd->getRequiredPermission());
-    }
-
-    #[Test]
-    public function getHelpParamsReturnsEmptyArray(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertSame([], $cmd->getHelpParams());
-    }
-
-    #[Test]
-    public function languageForUnregisteredSetsSessionLanguageAndRepliesSuccess(): void
-    {
-        $sessionRegistry = new SessionLanguageRegistry();
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $sessionRegistry);
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['LANGUAGE', 'es'], $notifier, $translator));
-
-        self::assertSame(['set.language.success'], $messages);
-        self::assertSame('es', $sessionRegistry->find('UID1'));
-    }
-
-    #[Test]
-    public function languageForUnregisteredyptaxErrorWhenEmptyValue(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['LANGUAGE', ''], $notifier, $translator));
-
-        self::assertSame(['error.syntax'], $messages);
-    }
-
-    #[Test]
-    public function languageForUnregisteredRepliesInvalidWhenUnsupportedLanguage(): void
-    {
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasher::class), $this->createStub(EventBusInterface::class), $this->clock());
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(AsyncMessageDispatcherInterface::class),
-            $this->createStub(VerificationTokenGenerator::class),
-            $this->createStub(Clock::class),
-            $this->createStub(TranslationInterface::class),
-            $this->createStub(LoggerInterface::class),
-            $this->createStub(EventBusInterface::class)
-        );
-        $setLanguage = new SetLanguageHandler($nickRepo);
-        $setPrivate = new SetPrivateHandler($nickRepo);
-        $setMsg = new SetMsgHandler($nickRepo);
-        $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(ForcedVhostCheckerInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
-
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['LANGUAGE', 'xx'], $notifier, $translator));
-
-        self::assertSame(['set.language.invalid'], $messages);
-    }
-
-    private function clock(): Clock
-    {
-        $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
-
-        return $clock;
+        return $account;
     }
 }

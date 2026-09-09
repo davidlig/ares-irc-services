@@ -48,7 +48,7 @@ final readonly class ManageIrcopHandler implements ManageIrcopHandlerInterface
         }$old = $this->assignments->findByNickId($account->id);
         if (null !== $old && $old->role->name === $role->name) {
             return new ManageIrcopResult(IrcopOutcome::AlreadyAssigned, $c->nickname, $role->name);
-        }$this->assignments->assign($account->id, $role, $c->actorAccountId);
+        }$this->assignments->assign($account->id, $role, $c->actorAccountId, $c->occurredAt);
         $outcome = null === $old ? IrcopOutcome::Added : IrcopOutcome::RoleChanged;
         $this->recordAudit(
             $c,

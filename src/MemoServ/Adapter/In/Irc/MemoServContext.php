@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\MemoServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\MemoServ\Application\Model\MemoAccountView;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\Security\IrcopAuthorizationSubject;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\OperServ\Application\Port\In\IrcopAuthorizationSubject;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function trim;
 
@@ -27,7 +27,7 @@ final readonly class MemoServContext implements IrcopAuthorizationSubject
         public string $command,
         public array $args,
         private MemoServNotifierInterface $notifier,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private string $language,
         private string $timezone,
         private string $messageType,

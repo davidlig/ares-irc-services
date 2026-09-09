@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Irc;
 
-use App\Shared\Application\Help\HelpableCommandInterface;
-use App\Shared\Application\Help\HelpFormatterContextInterface;
+use App\OperServ\Adapter\In\Irc\Help\HelpableCommandInterface;
+use App\OperServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 
 final readonly class OperServHelpFormatterContextAdapter implements HelpFormatterContextInterface
 {

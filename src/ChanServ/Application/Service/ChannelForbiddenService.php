@@ -12,6 +12,7 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use DateTimeImmutable;
 
 use function count;
 use function sprintf;
@@ -30,6 +31,7 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
         string $channelName,
         string $reason,
         string $operatorNick,
+        DateTimeImmutable $occurredAt,
         string $defaultLanguage = 'en',
     ): RegisteredChannel {
         $existing = $this->channelRepository->findByChannelName($channelName);
@@ -51,20 +53,21 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
                 channelNameLower: $existing->getNameLower(),
                 reason: $reason,
                 performedBy: $operatorNick,
+                occurredAt: $occurredAt,
             ));
 
             return $existing;
         }
 
         if (null !== $existing && !$existing->isForbidden()) {
-            $this->dropService->dropChannel($existing, 'forbid', $operatorNick);
+            $this->dropService->dropChannel($existing, $occurredAt, 'forbid', $operatorNick);
             $this->logger->info(sprintf(
                 'ChannelForbidden: Dropped existing channel %s before creating forbidden entry',
                 $channelName,
             ));
         }
 
-        $forbidden = RegisteredChannel::createForbidden($channelName, $reason);
+        $forbidden = RegisteredChannel::createForbidden($occurredAt, $channelName, $reason);
         $this->channelRepository->save($forbidden);
 
         $this->logger->info(sprintf(
@@ -80,6 +83,7 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
             channelNameLower: $forbidden->getNameLower(),
             reason: $reason,
             performedBy: $operatorNick,
+            occurredAt: $occurredAt,
         ));
 
         $this->enforceForbiddenChannel($forbidden->getName());
@@ -87,7 +91,7 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
         return $forbidden;
     }
 
-    public function unforbid(string $channelName, string $operatorNick): bool
+    public function unforbid(string $channelName, string $operatorNick, DateTimeImmutable $occurredAt): bool
     {
         $channel = $this->channelRepository->findByChannelName($channelName);
 
@@ -107,6 +111,7 @@ readonly class ChannelForbiddenService implements ForbiddenChannelEnforcement
             channelName: $channel->getName(),
             channelNameLower: $channel->getNameLower(),
             performedBy: $operatorNick,
+            occurredAt: $occurredAt,
         ));
 
         return true;

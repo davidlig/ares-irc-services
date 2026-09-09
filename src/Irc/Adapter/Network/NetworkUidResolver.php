@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Network;
 
+use App\Irc\Application\Port\In\UidResolverInterface;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\Uid;
-use App\Shared\Application\Port\UidResolverInterface;
 
 final readonly class NetworkUidResolver implements UidResolverInterface
 {

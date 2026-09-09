@@ -274,15 +274,15 @@ raw:
   too_long:         "\x0304✗\x03 La línea es demasiado larga. Máximo 510 caracteres."
   not_connected:    "\x0304✗\x03 No conectado al IRCd."
   done:             "\x0303✓\x03 Línea cruda enviada."
-  udb:
-    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
-    done:          "\x0303✓\x03 Mutación UDB aplicada: almacenada de forma autoritativa y en cola para propagar."
-    target:        "\x0304✗\x03 Las mutaciones UDB deben dirigirse a todos los servidores (DB * ...), no a %target%."
-    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT no está disponible vía RAW."
-    invalid_block: "\x0304✗\x03 Bloque UDB desconocido: %block%."
-    invalid_path:  "\x0304✗\x03 Ruta de registro UDB no válida: %path%."
-    invalid_value: "\x0304✗\x03 Valor de registro UDB no válido para: %path%."
-    error:         "\x0304✗\x03 Error al escribir en el almacén UDB; la mutación no se ha propagado."
+  protocol:
+    syntax: "\x0304✗\x03 El protocolo activo rechazó la sintaxis del comando RAW."
+    done: "\x0303✓\x03 Comando RAW gestionado por el protocolo ejecutado."
+    target: "\x0304✗\x03 El protocolo activo rechazó el destino %target%."
+    unsupported: "\x0304✗\x03 El protocolo activo no admite este comando RAW."
+    invalid_resource_type: "\x0304✗\x03 Tipo de recurso de protocolo desconocido: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Recurso de protocolo no válido: %resource%."
+    invalid_value: "\x0304✗\x03 Valor no válido para el recurso de protocolo: %resource%."
+    error: "\x0304✗\x03 El protocolo activo no pudo ejecutar el comando RAW."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

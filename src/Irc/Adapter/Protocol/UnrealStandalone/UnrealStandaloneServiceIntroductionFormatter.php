@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
-use App\Irc\Application\Port\In\ServiceIntroductionFormatterInterface;
-
 use function sprintf;
 
 /**
  * UnrealIRCd: introduce a service pseudo-client with a UID line.
  * Format: :serverSid UID nickname hopcount timestamp username hostname uid servicestamp usermodes virtualhost cloakedhost ip :gecos.
  */
-final readonly class UnrealStandaloneServiceIntroductionFormatter implements ServiceIntroductionFormatterInterface
+final readonly class UnrealStandaloneServiceIntroductionFormatter
 {
     private const array SERVICE_UMODES = [
         'nickserv' => '+dIopqS',

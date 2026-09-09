@@ -9,14 +9,12 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
-use App\NickServ\Application\Port\Out\Clock;
-use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
-use App\NickServ\Application\Service\ForbiddenPatternValidator;
-use App\NickServ\Application\Service\ForbiddenVhostService;
-use Psr\Log\LoggerInterface;
+use App\NickServ\Application\UseCase\ForbidVhost\ForbiddenVhostAction;
+use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhost;
+use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostHandler;
+use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostOutcome;
 
-use function assert;
 use function count;
 use function sprintf;
 use function strtoupper;
@@ -25,11 +23,7 @@ use function trim;
 final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
     public function __construct(
-        private readonly ForbiddenVhostRepositoryInterface $forbiddenVhostRepository,
-        private readonly ForbiddenVhostService $forbiddenVhostService,
-        private readonly ForbiddenPatternValidator $patternValidator,
-        private readonly LoggerInterface $logger,
-        private readonly Clock $clock,
+        private readonly ManageForbiddenVhostHandler $handler,
     ) {}
 
     public function getName(): string
@@ -125,40 +119,18 @@ final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditab
             return CommandOutcome::rejected();
         }
 
-        $errorKey = $this->validateAddPattern($pattern);
-        if (null !== $errorKey) {
-            $context->reply($errorKey, ['%pattern%' => $pattern]);
+        $result = $this->handler->handle(new ManageForbiddenVhost(
+            ForbiddenVhostAction::Add,
+            $pattern,
+            $context->senderAccount?->getId(),
+        ));
 
-            return CommandOutcome::rejected();
-        }
-
-        return $this->executeAdd($context, $pattern);
-    }
-
-    private function validateAddPattern(string $pattern): ?string
-    {
-        $result = match (true) {
-            !$this->patternValidator->isValid($pattern) => 'forbidvhost.add.invalid',
-            null !== $this->forbiddenVhostRepository->findByPattern($pattern) => 'forbidvhost.add.already_exists',
-            default => null,
+        return match ($result->outcome) {
+            ManageForbiddenVhostOutcome::Added => $this->replySuccess($context, 'forbidvhost.add.done', $pattern),
+            ManageForbiddenVhostOutcome::InvalidPattern => $this->replyPatternError($context, 'forbidvhost.add.invalid', $pattern),
+            ManageForbiddenVhostOutcome::AlreadyExists => $this->replyPatternError($context, 'forbidvhost.add.already_exists', $pattern),
+            default => CommandOutcome::rejected(),
         };
-
-        return $result;
-    }
-
-    private function executeAdd(NickServContext $context, string $pattern): CommandOutcome
-    {
-        assert(null !== $context->sender);
-        $creatorNickId = $context->senderAccount?->getId();
-        $this->forbiddenVhostService->forbid($pattern, $creatorNickId, $this->clock->now());
-
-        $this->logger->info('Vhost pattern forbidden via FORBIDVHOST ADD', [
-            'operator' => $context->sender->nick,
-            'pattern' => $pattern,
-        ]);
-        $context->reply('forbidvhost.add.done', ['%pattern%' => $pattern]);
-
-        return CommandOutcome::success(new IrcopAuditData(target: $pattern));
     }
 
     private function doDel(NickServContext $context): CommandOutcome
@@ -176,45 +148,35 @@ final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditab
             return CommandOutcome::rejected();
         }
 
-        $removed = $this->forbiddenVhostService->unforbid($pattern);
-
-        if (!$removed) {
+        $result = $this->handler->handle(new ManageForbiddenVhost(ForbiddenVhostAction::Delete, $pattern, null));
+        if (ManageForbiddenVhostOutcome::NotFound === $result->outcome) {
             $context->reply('forbidvhost.del.not_found', ['%pattern%' => $pattern]);
 
             return CommandOutcome::rejected();
         }
 
-        assert(null !== $context->sender);
-        $this->logger->info('Vhost pattern unforbidden via FORBIDVHOST DEL', [
-            'operator' => $context->sender->nick,
-            'pattern' => $pattern,
-        ]);
-
-        $context->reply('forbidvhost.del.done', ['%pattern%' => $pattern]);
-
-        return CommandOutcome::success(new IrcopAuditData(target: $pattern));
+        return $this->replySuccess($context, 'forbidvhost.del.done', $pattern);
     }
 
     private function doList(NickServContext $context): CommandOutcome
     {
-        $forbiddenList = $this->forbiddenVhostService->getAll();
-
-        if ([] === $forbiddenList) {
+        $result = $this->handler->handle(new ManageForbiddenVhost(ForbiddenVhostAction::List, null, null));
+        if (ManageForbiddenVhostOutcome::Empty === $result->outcome) {
             $context->reply('forbidvhost.list.empty');
 
             return CommandOutcome::rejected();
         }
 
-        $context->reply('forbidvhost.list.header', ['%count%' => (string) count($forbiddenList)]);
+        $context->reply('forbidvhost.list.header', ['%count%' => (string) count($result->entries)]);
 
         $num = 1;
-        foreach ($forbiddenList as $forbidden) {
-            $creatorName = $this->resolveCreatorName($forbidden->getCreatedByNickId(), $context);
-            $createdAt = $context->formatDate($forbidden->getCreatedAt());
+        foreach ($result->entries as $forbidden) {
+            $creatorName = $this->resolveCreatorName($forbidden->creatorNickId, $context);
+            $createdAt = $context->formatDate($forbidden->createdAt);
 
             $context->reply('forbidvhost.list.entry', [
                 '%index%' => (string) $num,
-                '%pattern%' => sprintf("\x0304%s\x03", $forbidden->getPattern()),
+                '%pattern%' => sprintf("\x0304%s\x03", $forbidden->pattern),
                 '%nickname%' => $creatorName,
                 '%date%' => $createdAt,
             ]);
@@ -222,6 +184,20 @@ final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditab
         }
 
         return CommandOutcome::rejected();
+    }
+
+    private function replyPatternError(NickServContext $context, string $key, string $pattern): CommandOutcome
+    {
+        $context->reply($key, ['%pattern%' => $pattern]);
+
+        return CommandOutcome::rejected();
+    }
+
+    private function replySuccess(NickServContext $context, string $key, string $pattern): CommandOutcome
+    {
+        $context->reply($key, ['%pattern%' => $pattern]);
+
+        return CommandOutcome::success(new IrcopAuditData(target: $pattern));
     }
 
     private function resolveCreatorName(?int $creatorNickId, NickServContext $context): string

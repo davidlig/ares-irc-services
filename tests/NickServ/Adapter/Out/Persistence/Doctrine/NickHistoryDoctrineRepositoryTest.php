@@ -7,7 +7,7 @@ namespace App\Tests\NickServ\Adapter\Out\Persistence\Doctrine;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\NickHistoryDoctrineRepository;
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
 use App\NickServ\Domain\Entity\NickHistory;
-use App\Tests\Integration\DoctrineIntegrationTestCase;
+use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;

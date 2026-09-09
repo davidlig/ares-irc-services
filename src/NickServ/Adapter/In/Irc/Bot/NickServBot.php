@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Bot;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\LocalUserModeSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\Irc\Application\Port\In\ServiceUidProviderInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceUidProviderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -28,7 +28,7 @@ final class NickServBot implements NickServNotifierInterface, NickNetworkActions
     private string $uid = '';
 
     public function __construct(
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
+        private readonly ActiveProtocolModuleHolderInterface $connectionHolder,
         private readonly NetworkUserLookupPort $userLookup,
         private readonly SendNoticePort $sendNoticePort,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,

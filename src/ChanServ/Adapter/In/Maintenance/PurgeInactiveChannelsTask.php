@@ -49,7 +49,8 @@ final readonly class PurgeInactiveChannelsTask implements MaintenanceTaskInterfa
             return;
         }
 
-        $threshold = new DateTimeImmutable()->modify(sprintf('-%d days', $this->inactivityExpiryDays));
+        $now = new DateTimeImmutable();
+        $threshold = $now->modify(sprintf('-%d days', $this->inactivityExpiryDays));
         $inactive = $this->channelRepository->findRegisteredInactiveSince($threshold);
 
         foreach ($inactive as $channel) {
@@ -58,7 +59,7 @@ final readonly class PurgeInactiveChannelsTask implements MaintenanceTaskInterfa
             $lastActivity = $channel->getLastUsedAt() ?? $channel->getCreatedAt();
             $lastActivityStr = $lastActivity->format('Y-m-d H:i:s');
 
-            $this->dropService->hardDropChannel($channel, 'inactivity');
+            $this->dropService->hardDropChannel($channel, $now, 'inactivity');
 
             $this->logger->info(
                 sprintf(

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\OperServ\Adapter\In\Irc\Command\IrcopCommand;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
@@ -18,13 +19,12 @@ use App\OperServ\Application\UseCase\ManageIrcop\IrcopOutcome;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcop;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopHandlerInterface;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopResult;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(IrcopCommand::class)]
 #[CoversClass(ManageIrcop::class)]
@@ -196,7 +196,7 @@ final class IrcopCommandTest extends TestCase
     }
 
     /** @param list<string> $arguments */
-    private function context(array $arguments, TranslationInterface $translator, bool $withoutSender = false): OperServContext
+    private function context(array $arguments, TranslatorInterface $translator, bool $withoutSender = false): OperServContext
     {
         return new OperServContext(
             $withoutSender ? null : new SenderView('001AAA', 'RootOper', 'ident', 'host', 'cloak', 'ip', true, true),
@@ -215,19 +215,25 @@ final class IrcopCommandTest extends TestCase
     }
 }
 
-final class IrcopCommandTranslation implements TranslationInterface
+final class IrcopCommandTranslation implements TranslatorInterface
 {
     public string $lastKey = '';
 
     /** @var array<string, mixed> */
     public array $lastParameters = [];
 
+    /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         $this->lastKey = $id;
         $this->lastParameters = $parameters;
 
         return $id;
+    }
+
+    public function getLocale(): string
+    {
+        return 'en';
     }
 }
 

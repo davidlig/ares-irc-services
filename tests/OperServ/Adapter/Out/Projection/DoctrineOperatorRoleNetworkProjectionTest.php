@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\Out\Projection;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\OperServ\Adapter\In\Event\ForcedVhostApplier;
 use App\OperServ\Adapter\In\Event\IrcopModeApplier;
@@ -17,7 +18,6 @@ use App\OperServ\Adapter\In\Event\IrcopOperclassApplier;
 use App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleNetworkProjection;
 use App\OperServ\Application\PublishedEvent\OperRoleForcedVhostChangedEvent;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Tests\OperServ\Adapter\In\Event\RecordingOperclassActions;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -33,9 +33,9 @@ final class DoctrineOperatorRoleNetworkProjectionTest extends TestCase
     #[Test]
     public function refreshesEachProjectedRoleSetting(): void
     {
-        $connection = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connection = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $operators = $this->createStub(OperIrcopRepositoryInterface::class);
-        $nicks = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nicks = $this->createStub(NickProjectionQuery::class);
         $sessions = new IdentifiedSessionRegistry();
         $events = $this->createMock(EventBusInterface::class);
         $events->expects(self::once())->method('dispatch')->with(self::callback(
@@ -108,7 +108,7 @@ final class DoctrineOperatorRoleNetworkProjectionTest extends TestCase
     {
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($actions);
-        $connection = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connection = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connection->method('getProtocolModule')->willReturn($module);
 
         $modes = new ReflectionClass(IrcopModeApplier::class)->newInstanceWithoutConstructor();

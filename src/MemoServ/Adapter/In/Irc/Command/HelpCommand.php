@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc\Command;
 
+use App\MemoServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\MemoServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
-use App\Shared\Application\Help\UnifiedHelpFormatter;
 
 use function array_find;
 use function strtoupper;
@@ -72,14 +72,14 @@ final readonly class HelpCommand implements MemoServCommandInterface
         return null;
     }
 
-    public function execute(MemoServContext $context): void
+    public function execute(MemoServContext $context): null
     {
         if (empty($context->args)) {
             $adapter = new HelpFormatterContextAdapter($context);
             $this->formatter->showGeneralHelp($adapter);
             $context->reply('help.footer');
 
-            return;
+            return null;
         }
 
         $targetCmd = strtoupper($context->args[0]);
@@ -88,7 +88,7 @@ final readonly class HelpCommand implements MemoServCommandInterface
         if (null === $handler) {
             $context->reply('help.unknown_command', ['command' => $targetCmd]);
 
-            return;
+            return null;
         }
 
         if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
@@ -99,12 +99,14 @@ final readonly class HelpCommand implements MemoServCommandInterface
                 $adapter = new HelpFormatterContextAdapter($context);
                 $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
-                return;
+                return null;
             }
         }
 
         $adapter = new HelpFormatterContextAdapter($context);
         $this->formatter->showCommandHelp($adapter, $handler);
+
+        return null;
     }
 
     /**

@@ -33,7 +33,6 @@ final class InspIRCdModuleTest extends TestCase
         $handler = new InspIRCdProtocolHandler('A0A');
         $connectionHolder = new ActiveConnectionHolder();
         $serviceActions = new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger());
-        $formatter = new InspIRCdServiceIntroductionFormatter();
         $channelModeSupport = $this->modeSupportFactory->createDefault();
         $userModeSupport = new InspIRCdUserModeSupport();
         $nickReservation = new InspIRCdNickReservation($connectionHolder, new NullLogger());
@@ -41,7 +40,6 @@ final class InspIRCdModuleTest extends TestCase
         return new InspIRCdModule(
             $handler,
             $serviceActions,
-            $formatter,
             $channelModeSupport,
             $userModeSupport,
             $nickReservation,
@@ -65,7 +63,6 @@ final class InspIRCdModuleTest extends TestCase
         $module = new InspIRCdModule(
             $handler,
             new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger()),
-            new InspIRCdServiceIntroductionFormatter(),
             $this->modeSupportFactory->createDefault(),
             new InspIRCdUserModeSupport(),
             new InspIRCdNickReservation($connectionHolder, new NullLogger()),
@@ -75,12 +72,11 @@ final class InspIRCdModuleTest extends TestCase
     }
 
     #[Test]
-    public function getServiceActionsGetIntroductionFormatterGetChannelModeSupport(): void
+    public function getServiceActionsAndChannelModeSupportReturnInjectedCollaborators(): void
     {
         $module = $this->createModule();
 
         self::assertInstanceOf(InspIRCdProtocolServiceActions::class, $module->getServiceActions());
-        self::assertInstanceOf(InspIRCdServiceIntroductionFormatter::class, $module->getIntroductionFormatter());
         self::assertInstanceOf(InspIRCdChannelModeSupport::class, $module->getChannelModeSupport());
     }
 

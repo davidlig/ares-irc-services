@@ -7,7 +7,7 @@ namespace App\Irc\Adapter\In\Event;
 use App\ChanServ\Application\Port\In\RegisteredChannelSetup;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\HelpCommand;
+use App\NickServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
@@ -14,13 +17,10 @@ use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
-use App\Shared\Application\Help\UnifiedHelpFormatter;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
@@ -42,7 +42,7 @@ final class HelpCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         NickServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         NickServCommandRegistry $registry,
     ): NickServContext {
         return new NickServContext(
@@ -67,7 +67,7 @@ final class HelpCommandTest extends TestCase
     {
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $registry = new NickServCommandRegistry([]);
 
         $cmd = $this->createHelpCommand(0);
@@ -83,7 +83,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new class implements NickServCommandInterface {
@@ -142,7 +142,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$handler]);
 
@@ -161,7 +164,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new class implements NickServCommandInterface {
@@ -220,7 +223,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$handler]);
 
@@ -239,7 +245,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new class implements NickServCommandInterface {
@@ -298,7 +304,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$handler]);
 
@@ -317,7 +326,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $operOnlyHandler = new class implements NickServCommandInterface {
@@ -376,7 +385,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$operOnlyHandler]);
 
@@ -395,7 +407,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new class implements NickServCommandInterface {
@@ -454,7 +466,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$handler]);
 
@@ -473,7 +488,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handlerWithSub = new class implements NickServCommandInterface {
@@ -539,7 +554,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
@@ -558,7 +576,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handlerWithSub = new class implements NickServCommandInterface {
@@ -624,7 +642,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
@@ -643,7 +664,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handlerWithSub = new class implements NickServCommandInterface {
@@ -709,7 +730,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
@@ -728,7 +752,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handlerWithSub = new class implements NickServCommandInterface {
@@ -794,7 +818,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
@@ -813,7 +840,7 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handlerWithSub = new class implements NickServCommandInterface {
@@ -879,7 +906,10 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $c): void {}
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 

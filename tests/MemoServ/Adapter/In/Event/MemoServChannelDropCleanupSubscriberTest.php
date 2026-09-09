@@ -10,6 +10,7 @@ use App\MemoServ\Application\Port\Out\MemoIgnoreRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoRepositoryInterface;
 use App\MemoServ\Application\Port\Out\MemoSettingsRepositoryInterface;
 use App\MemoServ\Application\UseCase\CleanupChannel\CleanupChannelMemoDataHandler;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,6 +41,6 @@ final class MemoServChannelDropCleanupSubscriberTest extends TestCase
             new CleanupChannelMemoDataHandler($memoRepository, $ignoreRepository, $settingsRepository),
         );
 
-        $subscriber->onChannelDrop(new ChannelDropCleanupEvent(456));
+        $subscriber->onChannelDrop(new ChannelDropCleanupEvent(456, new DateTimeImmutable('2026-09-09 08:00:00')));
     }
 }

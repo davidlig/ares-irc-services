@@ -15,7 +15,6 @@ use DateTimeImmutable;
 use function count;
 use function ctype_digit;
 use function preg_match;
-use function strtoupper;
 
 final readonly class ManageMotdHandler implements ManageMotdHandlerInterface
 {
@@ -38,13 +37,12 @@ final readonly class ManageMotdHandler implements ManageMotdHandlerInterface
     private function add(ManageMotd $command): ManageMotdResult
     {
         $botNickname = $command->botNickname ?? '';
-        $messageType = strtoupper($command->messageType ?? '');
         $duration = $command->expiry ?? '';
         $text = $command->text ?? '';
-        if ('' === $botNickname || '' === $messageType || '' === $duration || '' === $text) {
+        if ('' === $botNickname || '' === $duration || '' === $text) {
             return new ManageMotdResult(ManageMotdOutcome::InvalidAddRequest);
         }
-        if ('NOTICE' !== $messageType && 'PRIVMSG' !== $messageType) {
+        if (null === $command->delivery) {
             return new ManageMotdResult(ManageMotdOutcome::InvalidMessageType);
         }
 
@@ -56,7 +54,7 @@ final readonly class ManageMotdHandler implements ManageMotdHandlerInterface
         $entry = $this->motds->add(
             $text,
             $botNickname,
-            $messageType,
+            $command->delivery,
             $command->actorAccountId,
             $command->occurredAt,
             $expiresAt,
@@ -139,7 +137,7 @@ final readonly class ManageMotdHandler implements ManageMotdHandlerInterface
             $entry->id,
             $entry->text,
             $entry->botNickname,
-            $entry->messageType,
+            $entry->delivery,
             $entry->enabled,
             $entry->isExpiredAt($occurredAt),
             $entry->expiresAt,

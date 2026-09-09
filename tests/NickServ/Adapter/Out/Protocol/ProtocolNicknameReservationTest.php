@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Protocol;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\NickServ\Adapter\Out\Protocol\ProtocolNicknameReservation;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +23,7 @@ final class ProtocolNicknameReservationTest extends TestCase
         $reservation->expects(self::once())->method('releaseNick')->with('Alice');
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getNickReservation')->willReturn($reservation);
-        $holder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $holder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $holder->method('getProtocolModule')->willReturn($module);
 
         $adapter = new ProtocolNicknameReservation($holder);
@@ -34,7 +34,7 @@ final class ProtocolNicknameReservationTest extends TestCase
     #[Test]
     public function silentlySkipsOperationsWithoutAnActiveProtocol(): void
     {
-        $adapter = new ProtocolNicknameReservation($this->createStub(ActiveConnectionHolderInterface::class));
+        $adapter = new ProtocolNicknameReservation($this->createStub(ActiveProtocolModuleHolderInterface::class));
 
         $adapter->reserve('Alice', 'reason');
         $adapter->release('Alice');

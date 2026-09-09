@@ -6,21 +6,20 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
-use App\ChanServ\Application\Service\ChanDropService;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleAction;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleOutcome;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandlerInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 
-use function assert;
-
 final class RestoreCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use BuildsChannelLifecycleRequest;
+
     public function __construct(
-        private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly ChanDropService $dropService,
+        private readonly ManageChannelLifecycleHandlerInterface $handler,
     ) {}
 
     public function getName(): string
@@ -94,52 +93,25 @@ final class RestoreCommand implements ChanServCommandInterface, IrcopAuditableCo
             return CommandOutcome::rejected();
         }
 
-        $validation = $this->validateRestore($context);
-        if (null === $validation) {
-            return CommandOutcome::rejected();
-        }
-
-        return $this->performRestore($context, ...$validation);
-    }
-
-    /** @return array{string, RegisteredChannel}|null */
-    private function validateRestore(ChanServContext $context): ?array
-    {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return null;
+            return CommandOutcome::rejected();
         }
 
-        $channel = $this->channelRepository->findByChannelName($channelName);
-        if (null === $channel) {
+        $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Restore));
+        if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
             $context->reply('restore.not_registered', ['%channel%' => $channelName]);
 
-            return null;
+            return CommandOutcome::rejected();
         }
-
-        return $this->checkRestoreDeletionStatus($context, $channel, $channelName);
-    }
-
-    /** @return array{string, RegisteredChannel}|null */
-    private function checkRestoreDeletionStatus(ChanServContext $context, RegisteredChannel $channel, string $channelName): ?array
-    {
-        if (!$channel->isPendingDeletion()) {
+        if (ChannelLifecycleOutcome::NotPendingDeletion === $result->outcome) {
             $context->reply('restore.not_pending_deletion', ['%channel%' => $channelName]);
 
-            return null;
+            return CommandOutcome::rejected();
         }
 
-        return [$channelName, $channel];
-    }
-
-    private function performRestore(ChanServContext $context, string $channelName, RegisteredChannel $channel): CommandOutcome
-    {
-        $sender = $context->sender;
-        assert(null !== $sender);
-
-        $this->dropService->restoreChannel($channel, $sender->nick);
         $context->reply('restore.success', ['%channel%' => $channelName]);
 
         return CommandOutcome::success(new IrcopAuditData(target: $channelName));

@@ -9,30 +9,19 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
-use App\NickServ\Application\Port\Out\Clock;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
-use App\NickServ\Application\Service\ForbiddenNickService;
-use App\NickServ\Application\Service\NickDropService;
-use App\NickServ\Application\Service\NickProtectabilityResult;
-use App\NickServ\Application\Service\NickProtectabilityStatus;
-use App\NickServ\Application\Service\NickTargetValidator;
-use Psr\Log\LoggerInterface;
+use App\NickServ\Application\UseCase\Forbid\ForbidNick;
+use App\NickServ\Application\UseCase\Forbid\ForbidNickHandler;
+use App\NickServ\Application\UseCase\Forbid\ForbidNickOutcome;
 
 use function array_slice;
-use function assert;
 use function implode;
 use function trim;
 
 final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NickTargetValidator $targetValidator,
-        private readonly ForbiddenNickService $forbiddenService,
-        private readonly NickDropService $dropService,
-        private readonly LoggerInterface $logger,
-        private readonly Clock $clock,
+        private readonly ForbidNickHandler $handler,
     ) {}
 
     public function getName(): string
@@ -105,66 +94,28 @@ final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCom
             return CommandOutcome::rejected();
         }
 
-        return $this->processForbid($context, $targetNick, $reason);
-    }
+        $result = $this->handler->handle(new ForbidNick($context->sender->nick, $targetNick, $reason));
 
-    private function processForbid(NickServContext $context, string $targetNick, string $reason): CommandOutcome
-    {
-        assert(null !== $context->sender);
-
-        $protectability = $this->targetValidator->validate($targetNick);
-
-        if (!$protectability->isAllowed()) {
-            $this->replyProtectabilityError($context, $protectability);
-
-            return CommandOutcome::rejected();
-        }
-
-        $account = $this->nickRepository->findByNick($targetNick);
-
-        if (null !== $account && $account->isForbidden()) {
-            $this->forbiddenService->updateReason($account, $reason);
-            $this->logger->info('Nickname forbidden reason updated', [
-                'operator' => $context->sender->nick,
-                'nickname' => $targetNick,
-                'reason' => $reason,
-            ]);
-            $context->reply('forbid.updated', ['%nickname%' => $targetNick]);
-
-            return CommandOutcome::rejected();
-        }
-
-        if (null !== $account && !$account->isForbidden()) {
-            $this->dropService->dropNick($account, $this->clock->now(), 'forbid', $context->sender->nick);
-        }
-
-        $this->forbiddenService->forbid($targetNick, $reason, $context->sender->nick);
-
-        $auditData = new IrcopAuditData(
-            target: $targetNick,
-            reason: $reason,
-        );
-
-        $this->logger->info('Nickname forbidden via FORBID command', [
-            'operator' => $context->sender->nick,
-            'nickname' => $targetNick,
-            'reason' => $reason,
-        ]);
-
-        $context->reply('forbid.success', ['%nickname%' => $targetNick]);
-
-        return CommandOutcome::success($auditData);
-    }
-
-    private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
-    {
-        $nickname = $result->nickname;
-
-        match ($result->status) {
-            NickProtectabilityStatus::Allowed => null,
-            NickProtectabilityStatus::IsRoot => $context->reply('forbid.cannot_forbid_root', ['%nickname%' => $nickname]),
-            NickProtectabilityStatus::IsIrcop => $context->reply('forbid.cannot_forbid_oper', ['%nickname%' => $nickname]),
-            NickProtectabilityStatus::IsService => $context->reply('forbid.cannot_forbid_service', ['%nickname%' => $nickname]),
+        return match ($result->outcome) {
+            ForbidNickOutcome::Forbidden => $this->replySuccess($context, $result->targetNickname, $result->reason),
+            ForbidNickOutcome::ReasonUpdated => $this->replyRejected($context, 'forbid.updated', $result->targetNickname),
+            ForbidNickOutcome::TargetIsRoot => $this->replyRejected($context, 'forbid.cannot_forbid_root', $result->targetNickname),
+            ForbidNickOutcome::TargetIsIrcop => $this->replyRejected($context, 'forbid.cannot_forbid_oper', $result->targetNickname),
+            ForbidNickOutcome::TargetIsService => $this->replyRejected($context, 'forbid.cannot_forbid_service', $result->targetNickname),
         };
+    }
+
+    private function replyRejected(NickServContext $context, string $key, string $nickname): CommandOutcome
+    {
+        $context->reply($key, ['%nickname%' => $nickname]);
+
+        return CommandOutcome::rejected();
+    }
+
+    private function replySuccess(NickServContext $context, string $nickname, string $reason): CommandOutcome
+    {
+        $context->reply('forbid.success', ['%nickname%' => $nickname]);
+
+        return CommandOutcome::success(new IrcopAuditData(target: $nickname, reason: $reason));
     }
 }

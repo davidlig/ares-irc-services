@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc\Bot;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\Irc\Application\Port\In\ServiceUidProviderInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceUidProviderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -23,7 +23,7 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
     private string $uid = '';
 
     public function __construct(
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
+        private readonly ActiveProtocolModuleHolderInterface $connectionHolder,
         private readonly SendNoticePort $sendNoticePort,
         private readonly ServiceUidGeneratorInterface $uidGenerator,
         private readonly string $servicesVhost,

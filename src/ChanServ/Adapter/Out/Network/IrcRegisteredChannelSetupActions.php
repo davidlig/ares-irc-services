@@ -10,9 +10,9 @@ use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeChange;
 use App\ChanServ\Domain\ValueObject\ModeChangeAction;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
-use App\Shared\Application\ServiceUidRegistry;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
 
 use function in_array;
 

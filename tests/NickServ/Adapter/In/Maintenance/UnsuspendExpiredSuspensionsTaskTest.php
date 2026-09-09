@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Maintenance;
 
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\NickServ\Adapter\In\Maintenance\UnsuspendExpiredSuspensionsTask;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\Shared\Application\Port\ServiceDebugNotifierInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

@@ -41,8 +41,8 @@ class Channel
 
     public function __construct(
         public readonly ChannelName $name,
-        string $modes = '',
-        private DateTimeImmutable $createdAt = new DateTimeImmutable(),
+        string $modes,
+        private DateTimeImmutable $createdAt,
     ) {
         $this->modes = $modes;
     }

@@ -6,10 +6,10 @@ namespace App\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SendCtcpPort;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
 use App\Irc\Application\Port\Out\ServiceUserPreferences;
-use App\Shared\Application\Port\SendCtcpPort;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\ServiceUidRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

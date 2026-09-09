@@ -13,6 +13,7 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use DateTimeImmutable;
 
 use function sprintf;
 
@@ -40,11 +41,12 @@ readonly class ChanDropService
      */
     public function softDropChannel(
         RegisteredChannel $channel,
+        DateTimeImmutable $occurredAt,
         ?string $operatorNick = null,
     ): void {
         $channelName = $channel->getName();
 
-        $channel->markPendingDeletion();
+        $channel->markPendingDeletion($occurredAt);
         $this->channelRepository->save($channel);
 
         $this->channelActions->removeRegistrationForPendingDeletion(
@@ -106,6 +108,7 @@ readonly class ChanDropService
      */
     public function hardDropChannel(
         RegisteredChannel $channel,
+        DateTimeImmutable $occurredAt,
         string $reason = 'manual',
         ?string $operatorNick = null,
     ): void {
@@ -114,10 +117,11 @@ readonly class ChanDropService
         $channelNameLower = $channel->getNameLower();
 
         $cleanupEvent = new ChannelDropCleanupEvent(
-            $channelId,
-            $channelName,
-            $channelNameLower,
-            $reason,
+            channelId: $channelId,
+            occurredAt: $occurredAt,
+            channelName: $channelName,
+            channelNameLower: $channelNameLower,
+            reason: $reason,
         );
 
         $this->transactionBoundary->transactional(function () use ($cleanupEvent, $channel): void {
@@ -151,9 +155,10 @@ readonly class ChanDropService
 
     public function dropChannel(
         RegisteredChannel $channel,
+        DateTimeImmutable $occurredAt,
         string $reason = 'manual',
         ?string $operatorNick = null,
     ): void {
-        $this->hardDropChannel($channel, $reason, $operatorNick);
+        $this->hardDropChannel($channel, $occurredAt, $reason, $operatorNick);
     }
 }

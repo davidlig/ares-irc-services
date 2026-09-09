@@ -72,6 +72,7 @@ final class ChannelHistoryServiceTest extends TestCase
             performedByNickId: null,
             performedByIp: '10.0.0.1',
             performedByHost: 'user@host',
+            performedAt: new DateTimeImmutable('2026-01-02 03:04:05'),
             message: 'history.message.founder_changed',
             extraData: [],
         );
@@ -94,6 +95,7 @@ final class ChannelHistoryServiceTest extends TestCase
             performedByNickId: 1,
             performedByIp: '2001:db8::1',
             performedByHost: 'user@ipv6.example',
+            performedAt: new DateTimeImmutable('2026-01-02 03:04:05'),
             message: 'history.message.access_add',
             extraData: ['target_nickname' => 'Target', 'level' => '100'],
         );
@@ -105,12 +107,12 @@ final class ChannelHistoryServiceTest extends TestCase
     }
 
     #[Test]
-    public function recordActionUsesCurrentTimeWhenNullProvided(): void
+    public function recordActionUsesExplicitTime(): void
     {
         $repo = $this->createStub(ChannelHistoryRepositoryInterface::class);
         $service = new ChannelHistoryService($repo);
 
-        $before = new DateTimeImmutable();
+        $performedAt = new DateTimeImmutable('2026-01-02 03:04:05');
         $history = $service->recordAction(
             channelId: 1,
             action: 'TEST',
@@ -118,13 +120,11 @@ final class ChannelHistoryServiceTest extends TestCase
             performedByNickId: null,
             performedByIp: '127.0.0.1',
             performedByHost: 'user@localhost',
+            performedAt: $performedAt,
             message: 'Test message',
             extraData: [],
-            performedAt: null,
         );
-        $after = new DateTimeImmutable();
 
-        self::assertGreaterThanOrEqual($before, $history->getPerformedAt());
-        self::assertLessThanOrEqual($after, $history->getPerformedAt());
+        self::assertSame($performedAt, $history->getPerformedAt());
     }
 }

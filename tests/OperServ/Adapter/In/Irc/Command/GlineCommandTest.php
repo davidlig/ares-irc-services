@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\OperServ\Adapter\In\Irc\Command\GlineCommand;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
@@ -17,13 +18,12 @@ use App\OperServ\Application\UseCase\ManageGline\ManageGline;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineOutcome;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineResult;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(GlineCommand::class)]
 #[CoversClass(ManageGline::class)]
@@ -181,7 +181,7 @@ final class RecordingGlineCommandHandler implements ManageGlineHandlerInterface
     }
 }
 
-final class RecordingGlineCommandTranslation implements TranslationInterface
+final class RecordingGlineCommandTranslation implements TranslatorInterface
 {
     /** @var array<string, array<string, mixed>> */
     public array $parameters = [];
@@ -189,6 +189,7 @@ final class RecordingGlineCommandTranslation implements TranslationInterface
     /** @var list<array<string, mixed>> */
     public array $entryParameters = [];
 
+    /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         if ('gline.list.entry' === $id) {
@@ -198,6 +199,11 @@ final class RecordingGlineCommandTranslation implements TranslationInterface
         }
 
         return $id;
+    }
+
+    public function getLocale(): string
+    {
+        return 'en';
     }
 }
 

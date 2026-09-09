@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\Out\Network;
 
 use App\ChanServ\Adapter\Out\Network\IrcAkickActions;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

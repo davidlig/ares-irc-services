@@ -6,13 +6,13 @@ namespace App\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;

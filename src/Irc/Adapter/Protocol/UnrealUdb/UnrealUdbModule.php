@@ -5,31 +5,29 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
-use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerInterface;
-use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
+use App\Irc\Adapter\Protocol\RawCommandInterception;
+use App\Irc\Adapter\Protocol\RawCommandInterceptorInterface;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
-use App\Irc\Application\Port\In\ServiceIntroductionFormatterInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 /**
- * UnrealUdb protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.
+ * UnrealUdb protocol module: handler, service actions, mode support, nick reservation, and RAW interception.
  */
-final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, NickChangePreservesIdentificationInterface, UdbRawCommandHandlerInterface
+final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, NickChangePreservesIdentificationInterface, RawCommandInterceptorInterface
 {
     public const string PROTOCOL_NAME = 'unrealudb';
 
     public function __construct(
         private UnrealUdbProtocolHandler $handler,
         private UnrealUdbProtocolServiceActions $serviceActions,
-        private UnrealUdbServiceIntroductionFormatter $introductionFormatter,
         private UnrealUdbChannelModeSupport $channelModeSupport,
         private UnrealUdbUserModeSupport $userModeSupport,
         private UnrealUdbNickReservation $nickReservation,
-        private UdbRawCommandHandlerInterface $rawCommandHandler,
+        private UnrealUdbRawCommandInterceptor $rawCommandInterceptor,
     ) {}
 
     public function getProtocolName(): string
@@ -47,11 +45,6 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, 
         return $this->serviceActions;
     }
 
-    public function getIntroductionFormatter(): ServiceIntroductionFormatterInterface
-    {
-        return $this->introductionFormatter;
-    }
-
     public function getChannelModeSupport(): ChannelModeSupportInterface
     {
         return $this->channelModeSupport;
@@ -67,13 +60,8 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, 
         return $this->userModeSupport;
     }
 
-    public function ins(string $blockPath, string $value): UdbRawCommandResult
+    public function intercept(array $arguments): RawCommandInterception
     {
-        return $this->rawCommandHandler->ins($blockPath, $value);
-    }
-
-    public function del(string $blockPath): UdbRawCommandResult
-    {
-        return $this->rawCommandHandler->del($blockPath);
+        return $this->rawCommandInterceptor->intercept($arguments);
     }
 }

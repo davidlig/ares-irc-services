@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\OperServ\Adapter\In\Irc\Command\KillCommand;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
@@ -23,12 +24,11 @@ use App\OperServ\Application\Security\OperServPermission;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUser;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserResult;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function in_array;
 
@@ -185,7 +185,7 @@ final class KillCommandTest extends TestCase
     }
 
     /** @param list<string> $arguments */
-    private function context(array $arguments, TranslationInterface $translator, OperServNotifierInterface $notifier, bool $withoutSender = false): OperServContext
+    private function context(array $arguments, TranslatorInterface $translator, OperServNotifierInterface $notifier, bool $withoutSender = false): OperServContext
     {
         return new OperServContext(
             $withoutSender ? null : new SenderView('001AAA', 'RootOper', 'ident', 'host', 'cloak', 'ip', true, true),
@@ -210,19 +210,25 @@ final class KillCommandTrace
     public array $events = [];
 }
 
-final class KillCommandTranslation implements TranslationInterface
+final class KillCommandTranslation implements TranslatorInterface
 {
     public string $lastKey = '';
 
     /** @var array<string, mixed> */
     public array $lastParameters = [];
 
+    /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         $this->lastKey = $id;
         $this->lastParameters = $parameters;
 
         return $id;
+    }
+
+    public function getLocale(): string
+    {
+        return 'en';
     }
 }
 

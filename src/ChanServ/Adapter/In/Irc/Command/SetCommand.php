@@ -6,11 +6,8 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\Service\ChanServAccessHelper;
-use App\ChanServ\Domain\Entity\ChannelLevel;
-use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
-use App\ChanServ\Domain\Exception\InsufficientAccessException;
+use App\ChanServ\Application\UseCase\ResolveSetting\ResolveChannelSetting;
+use App\ChanServ\Application\UseCase\ResolveSetting\ResolveChannelSettingHandlerInterface;
 
 use function array_slice;
 use function implode;
@@ -34,8 +31,7 @@ final readonly class SetCommand implements ChanServCommandInterface
     private array $handlers;
 
     public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChanServAccessHelper $accessHelper,
+        private ResolveChannelSettingHandlerInterface $settingResolver,
         SetFounderHandler $setFounderHandler,
         SetSuccessorHandler $setSuccessorHandler,
         SetDescHandler $setDescHandler,
@@ -144,11 +140,6 @@ final readonly class SetCommand implements ChanServCommandInterface
             return;
         }
 
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
-            throw ChannelNotRegisteredException::forChannel($channelName);
-        }
-
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount) {
             $context->reply('error.not_identified');
@@ -168,15 +159,12 @@ final readonly class SetCommand implements ChanServCommandInterface
             return;
         }
 
-        if (!$context->isLevelFounder) {
-            if ('FOUNDER' === $option || 'SUCCESSOR' === $option) {
-                if (!$channel->isFounder($senderAccount->id)) {
-                    throw InsufficientAccessException::forOperation($channelName, 'SET ' . $option);
-                }
-            } else {
-                $this->accessHelper->requireLevel($channel, $senderAccount->id, ChannelLevel::KEY_SET, $channelName, 'SET');
-            }
-        }
+        $channel = $this->settingResolver->handle(new ResolveChannelSetting(
+            channelName: $channelName,
+            actorAccountId: $senderAccount->id,
+            founderEquivalent: $context->isLevelFounder,
+            option: $option,
+        ));
 
         $value = 'FOUNDER' === $option
             ? (trim($context->args[2] ?? ''))

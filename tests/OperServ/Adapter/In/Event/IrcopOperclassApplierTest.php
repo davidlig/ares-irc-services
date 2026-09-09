@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Adapter\In\Event\IrcopOperclassApplier;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,24 +23,24 @@ use ReflectionClass;
 #[CoversClass(IrcopOperclassApplier::class)]
 final class IrcopOperclassApplierTest extends TestCase
 {
-    private function createModule(ProtocolServiceActionsInterface $actions, ?string $serverSid = '001'): ActiveConnectionHolderInterface
+    private function createModule(ProtocolServiceActionsInterface $actions, ?string $serverSid = '001'): ActiveProtocolModuleHolderInterface
     {
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($actions);
 
-        $holder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $holder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $holder->method('getProtocolModule')->willReturn($module);
         $holder->method('getServerSid')->willReturn($serverSid);
 
         return $holder;
     }
 
-    private function createNonOperclassModule(string $serverSid = '001'): ActiveConnectionHolderInterface
+    private function createNonOperclassModule(string $serverSid = '001'): ActiveProtocolModuleHolderInterface
     {
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($this->createStub(ProtocolServiceActionsInterface::class));
 
-        $holder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $holder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $holder->method('getProtocolModule')->willReturn($module);
         $holder->method('getServerSid')->willReturn($serverSid);
 
@@ -49,15 +49,15 @@ final class IrcopOperclassApplierTest extends TestCase
 
     private function createApplier(
         ?IdentifiedSessionRegistry $registry = null,
-        ?ActiveConnectionHolderInterface $holder = null,
+        ?ActiveProtocolModuleHolderInterface $holder = null,
         ?OperIrcopRepositoryInterface $ircopRepo = null,
-        ?RegisteredNickRepositoryInterface $nickRepo = null,
+        ?NickProjectionQuery $nickRepo = null,
     ): IrcopOperclassApplier {
         return new IrcopOperclassApplier(
             $registry ?? new IdentifiedSessionRegistry(),
-            $holder ?? $this->createStub(ActiveConnectionHolderInterface::class),
+            $holder ?? $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
-            $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
+            $nickRepo ?? $this->createStub(NickProjectionQuery::class),
         );
     }
 
@@ -142,28 +142,15 @@ final class IrcopOperclassApplierTest extends TestCase
         $role->changeOperclass('services:admin');
         new ReflectionClass($role)->getProperty('id')->setValue($role, 5);
 
-        $nick = RegisteredNick::createPending(
-            'TestNick',
-            'hash',
-            'test@example.com',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
+        $nick = new NickProjection(7, 'TestNick', 'hash', null);
 
-        $missingNickIrcop = $this->createStub(OperIrcop::class);
-        $missingNickIrcop->method('getNickId')->willReturn(99);
-        $missingNickIrcop->method('getRole')->willReturn($role);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getNickId')->willReturn(7);
-        $ircop->method('getRole')->willReturn($role);
+        $missingNickIrcop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 99, $role);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 7, $role);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$missingNickIrcop, $ircop]);
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findById')->willReturnCallback(static fn (int $id): ?RegisteredNick => 99 === $id ? null : $nick);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
+        $nickRepository->method('findById')->willReturnCallback(static fn (int $id): ?NickProjection => 99 === $id ? null : $nick);
 
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $identifiedRegistry->register('UID123', 'TestNick');
@@ -182,23 +169,13 @@ final class IrcopOperclassApplierTest extends TestCase
         $role = OperRole::create('ADMIN');
         new ReflectionClass($role)->getProperty('id')->setValue($role, 5);
 
-        $nick = RegisteredNick::createPending(
-            'TestNick',
-            'hash',
-            'test@example.com',
-            'en',
-            new DateTimeImmutable('+1 hour'),
-            new DateTimeImmutable()
-        );
-        $nick->activate();
+        $nick = new NickProjection(7, 'TestNick', 'hash', null);
 
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getNickId')->willReturn(7);
-        $ircop->method('getRole')->willReturn($role);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 7, $role);
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn($nick);
 
         $identifiedRegistry = new IdentifiedSessionRegistry();

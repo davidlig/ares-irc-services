@@ -434,7 +434,6 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         return new InspIRCdModule(
             handler: $handler,
             serviceActions: new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger()),
-            introductionFormatter: new InspIRCdServiceIntroductionFormatter(),
             channelModeSupport: $modeSupport,
             userModeSupport: new InspIRCdUserModeSupport(),
             nickReservation: new InspIRCdNickReservation($connectionHolder, new NullLogger()),

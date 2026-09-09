@@ -8,7 +8,7 @@ use App\ChanServ\Adapter\Out\Network\IrcChannelModeActions;
 use App\ChanServ\Domain\ValueObject\ModeChange;
 use App\ChanServ\Domain\ValueObject\ModeChangeAction;
 use App\ChanServ\Domain\ValueObject\ModeName;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

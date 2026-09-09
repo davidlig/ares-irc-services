@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use App\NickServ\Application\Service\VhostDisplayResolver;
-use App\NickServ\Domain\Entity\RegisteredNick;
 use App\OperServ\Adapter\In\Event\ForcedVhostApplier;
 use App\OperServ\Adapter\In\Event\OperRoleForcedVhostSubscriber;
 use App\OperServ\Domain\Entity\OperIrcop;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,16 +41,14 @@ final class OperRoleForcedVhostSubscriberTest extends TestCase
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $role->changeForcedVhostPattern('admin.network');
-        $ircop = OperIrcop::create(123, $role);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
 
-        $nick = $this->createStub(RegisteredNick::class);
-        $nick->method('getId')->willReturn(123);
-        $nick->method('getNickname')->willReturn('davidlig');
+        $nick = new NickProjection(123, 'davidlig', 'hash', null);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
         $nickRepo->method('findById')->willReturn($nick);
 
         $identifiedRegistry = new IdentifiedSessionRegistry();
@@ -62,7 +61,7 @@ final class OperRoleForcedVhostSubscriberTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($user);
 
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
         $applier = new ForcedVhostApplier(
@@ -88,13 +87,13 @@ final class OperRoleForcedVhostSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn(null);
 
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('setUserVhost');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
 
         $applier = new ForcedVhostApplier(
             $ircopRepo,

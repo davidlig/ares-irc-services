@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\Out\Irc;
 
+use App\Irc\Application\Port\In\ServiceDebugNotifierRegistry;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
-use App\Shared\Application\Port\ServiceDebugNotifierRegistry;
 
 final readonly class ActiveConnectionCommandAuditPresenter implements CommandAuditIrcPresenter
 {

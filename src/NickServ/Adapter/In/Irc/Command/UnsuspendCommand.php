@@ -9,21 +9,17 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
-use App\NickServ\Application\Port\Out\Clock;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
+use App\NickServ\Application\Model\NickOperationActor;
 use App\NickServ\Application\Security\NickServPermission;
-use App\Shared\Application\Port\EventBusInterface;
+use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNick;
+use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickHandler;
+use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickOutcome;
 
 use function sprintf;
 
-final class UnsuspendCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
+final readonly class UnsuspendCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly EventBusInterface $eventDispatcher,
-        private readonly Clock $clock,
-    ) {}
+    public function __construct(private UnsuspendNickHandler $handler) {}
 
     public function getName(): string
     {
@@ -87,52 +83,41 @@ final class UnsuspendCommand implements NickServCommandInterface, IrcopAuditable
             return CommandOutcome::rejected();
         }
 
-        $targetNick = $context->args[0];
-
-        $account = $this->nickRepository->findByNick($targetNick);
-
-        if (null === $account) {
-            $context->reply('unsuspend.not_registered', ['%nickname%' => $targetNick]);
-
-            return CommandOutcome::rejected();
-        }
-
-        if (!$account->isSuspended()) {
-            $context->reply('unsuspend.not_suspended', ['%nickname%' => $targetNick]);
-
-            return CommandOutcome::rejected();
-        }
-
-        $account->unsuspend();
-        $this->nickRepository->save($account);
-
-        $ip = $this->decodeIp($sender->ipBase64);
-        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
-        $performedByNickId = $context->senderAccount?->getId();
-
-        $this->eventDispatcher->dispatch(new NickUnsuspendedEvent(
-            nickId: $account->getId(),
-            nickname: $targetNick,
-            performedBy: $sender->nick,
-            performedByNickId: $performedByNickId,
-            performedByIp: $ip,
-            performedByHost: $host,
-            occurredAt: $this->clock->now(),
+        $result = $this->handler->handle(new UnsuspendNick(
+            new NickOperationActor(
+                $sender->nick,
+                $context->senderAccount?->getId(),
+                $sender->uid,
+                $sender->serverSid,
+                sprintf('%s@%s', $sender->ident, $sender->hostname),
+                self::decodeIp($sender->ipBase64),
+            ),
+            $context->args[0],
         ));
 
-        $context->reply('unsuspend.success', ['%nickname%' => $targetNick]);
+        $errorKey = match ($result->outcome) {
+            UnsuspendNickOutcome::NotRegistered => 'unsuspend.not_registered',
+            UnsuspendNickOutcome::NotSuspended => 'unsuspend.not_suspended',
+            UnsuspendNickOutcome::Unsuspended => null,
+        };
+        if (null !== $errorKey) {
+            $context->reply($errorKey, ['%nickname%' => $result->targetNickname]);
 
-        return CommandOutcome::success(new IrcopAuditData(target: $targetNick));
+            return CommandOutcome::rejected();
+        }
+
+        $context->reply('unsuspend.success', ['%nickname%' => $result->targetNickname]);
+
+        return CommandOutcome::success(new IrcopAuditData(target: $result->targetNickname));
     }
 
-    private function decodeIp(string $ipBase64): string
+    private static function decodeIp(string $ipBase64): string
     {
         if ('' === $ipBase64 || '*' === $ipBase64) {
             return '*';
         }
 
         $binary = base64_decode($ipBase64, true);
-
         if (false === $binary) {
             return $ipBase64;
         }

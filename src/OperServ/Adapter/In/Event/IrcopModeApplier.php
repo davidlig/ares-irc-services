@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\OperServ\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\IdentifiedSessionQuery;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use Psr\Log\LoggerInterface;
 
 use function array_diff;
@@ -22,10 +22,10 @@ use function array_intersect;
 final readonly class IrcopModeApplier
 {
     public function __construct(
-        private IdentifiedSessionRegistry $identifiedRegistry,
-        private ActiveConnectionHolderInterface $connectionHolder,
+        private IdentifiedSessionQuery $identifiedSessions,
+        private ActiveProtocolModuleHolderInterface $connectionHolder,
         private OperIrcopRepositoryInterface $ircopRepository,
-        private RegisteredNickRepositoryInterface $nickRepository,
+        private NickProjectionQuery $nicks,
         private NetworkUserLookupPort $userLookup,
         private LoggerInterface $logger,
     ) {}
@@ -45,7 +45,7 @@ final readonly class IrcopModeApplier
             return false;
         }
 
-        $uid = $this->identifiedRegistry->findUidByNick($registeredNick);
+        $uid = $this->identifiedSessions->findUidByNick($registeredNick);
         $module = null !== $uid ? $this->connectionHolder->getProtocolModule() : null;
         $user = null !== $uid ? $this->userLookup->findByUid($uid) : null;
         $result = false;
@@ -93,7 +93,7 @@ final readonly class IrcopModeApplier
             return false;
         }
 
-        $uid = $this->identifiedRegistry->findUidByNick($registeredNick);
+        $uid = $this->identifiedSessions->findUidByNick($registeredNick);
         $module = null !== $uid ? $this->connectionHolder->getProtocolModule() : null;
         $user = null !== $uid ? $this->userLookup->findByUid($uid) : null;
         $result = false;
@@ -152,12 +152,12 @@ final readonly class IrcopModeApplier
         $ircops = $this->ircopRepository->findByRoleId($roleId);
 
         foreach ($ircops as $ircop) {
-            $nick = $this->nickRepository->findById($ircop->getNickId());
+            $nick = $this->nicks->findById($ircop->getNickId());
             if (null === $nick) {
                 continue;
             }
 
-            $uid = $this->identifiedRegistry->findUidByNick($nick->getNickname());
+            $uid = $this->identifiedSessions->findUidByNick($nick->nickname);
             if (null === $uid) {
                 continue;
             }
@@ -176,7 +176,7 @@ final readonly class IrcopModeApplier
             if (!empty($modesToRemove)) {
                 [$modeStr, $params] = $userModeSupport->buildModeParams('-', $modesToRemove);
                 $this->logger->info('IrcopModeApplier: removing modes for role change', [
-                    'nick' => $nick->getNickname(),
+                    'nick' => $nick->nickname,
                     'uid' => $uid,
                     'modes' => $modeStr,
                 ]);
@@ -188,7 +188,7 @@ final readonly class IrcopModeApplier
             if (!empty($modesToAdd)) {
                 [$modeStr, $params] = $userModeSupport->buildModeParams('+', $modesToAdd);
                 $this->logger->info('IrcopModeApplier: applying modes for role change', [
-                    'nick' => $nick->getNickname(),
+                    'nick' => $nick->nickname,
                     'uid' => $uid,
                     'modes' => $modeStr,
                 ]);

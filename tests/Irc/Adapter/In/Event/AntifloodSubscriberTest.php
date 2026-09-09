@@ -13,15 +13,15 @@ use App\Irc\Application\Antiflood\AntifloodRegistry;
 use App\Irc\Application\Antiflood\ClientKeyResolver;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\Irc\Application\Port\Out\ServiceUserPreferences;
 use App\NickServ\Application\Port\In\NickAccountQuery;
-use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceCommandListenerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -43,7 +43,7 @@ final class AntifloodSubscriberTest extends TestCase
 
     private ServiceUserPreferences $messageTypeResolver;
 
-    private OperServNotifierInterface $notifier;
+    private ServiceDebugNotifierInterface $notifier;
 
     private OperatorAuthorizationQuery $authorization;
 
@@ -60,7 +60,7 @@ final class AntifloodSubscriberTest extends TestCase
         $this->userLookup = $this->createStub(NetworkUserLookupPort::class);
         $this->sendNotice = $this->createStub(SendNoticePort::class);
         $this->messageTypeResolver = $this->createStub(ServiceUserPreferences::class);
-        $this->notifier = $this->createStub(OperServNotifierInterface::class);
+        $this->notifier = $this->createStub(ServiceDebugNotifierInterface::class);
         $this->authorization = $this->createStub(OperatorAuthorizationQuery::class);
         $this->authorization->method('root')->willReturn(AuthorizationDecision::denied());
         $this->nickAccounts = $this->createStub(NickAccountQuery::class);
@@ -234,8 +234,8 @@ final class AntifloodSubscriberTest extends TestCase
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::once())->method('sendMessage')->with('002AAAAAA', '002AAAAAB', 'Slow down!', 'NOTICE');
 
-        $notifier = $this->createMock(OperServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage');
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->expects(self::once())->method('notify');
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,
@@ -286,8 +286,8 @@ final class AntifloodSubscriberTest extends TestCase
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::once())->method('sendMessage');
 
-        $notifier = $this->createMock(OperServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage');
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->expects(self::once())->method('notify');
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,
@@ -423,8 +423,8 @@ final class AntifloodSubscriberTest extends TestCase
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::once())->method('sendMessage');
 
-        $notifier = $this->createMock(OperServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage');
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->expects(self::once())->method('notify');
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,
@@ -477,8 +477,8 @@ final class AntifloodSubscriberTest extends TestCase
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::once())->method('sendMessage');
 
-        $notifier = $this->createMock(OperServNotifierInterface::class);
-        $notifier->expects(self::never())->method('sendMessage');
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->expects(self::never())->method('notify');
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -12,24 +14,12 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
-use App\NickServ\Adapter\Out\Security\OperNickServOperatorAccess;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\OperServ\Adapter\Out\Projection\DoctrineOperatorRoleAccess;
-use App\OperServ\Adapter\Out\Security\ConfiguredRootIdentityRegistry;
-use App\OperServ\Application\IrcopAccessQueryService;
-use App\OperServ\Application\Security\OperatorAuthorizationService;
-use App\OperServ\Application\Security\OperatorPermissionPolicy;
-use App\OperServ\Application\Security\RootAuthorizationPolicy;
-use App\OperServ\Domain\Entity\OperIrcop;
-use App\OperServ\Domain\Entity\OperRole;
-use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
-use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HelpFormatterContextAdapter::class)]
 final class HelpFormatterContextAdapterIrcopTest extends TestCase
@@ -97,7 +87,10 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void {}
+            public function execute(NickServContext $context): null
+            {
+                return null;
+            }
         };
     }
 
@@ -160,310 +153,119 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
     }
 
     #[Test]
-    public function getIrcopCommandsReturnsAllIrcopCommandsForRootUser(): void
+    public function getIrcopCommandsReturnsCommandsAllowedByPublicBoundary(): void
     {
         $cmd1 = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
         $cmd2 = $this->createIrcopCommandStub('INFO', 'nickserv.info');
-        $registry = new NickServCommandRegistry([$cmd1, $cmd2]);
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $operatorAccess = $this->operatorAccess('RootAdmin', $ircopRepo, $roleRepo);
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getId')->willReturn(1);
-        $context = new NickServContext(
-            new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', true, true),
-            $account,
-            'HELP',
-            [],
-            $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-            'en',
-            'UTC',
-            'NOTICE',
-            $registry,
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-        );
-        $adapter = new HelpFormatterContextAdapter(
-            $context,
-            $operatorAccess,
-        );
+        $context = $this->context(new NickServCommandRegistry([$cmd1, $cmd2]), identified: true, oper: true, account: true);
+        $access = $this->createStub(NickServOperatorAccess::class);
+        $access->method('hasPermission')->willReturn(true);
 
-        $commands = iterator_to_array($adapter->getIrcopCommands());
+        $commands = iterator_to_array(new HelpFormatterContextAdapter($context, $access)->getIrcopCommands());
 
-        self::assertCount(2, $commands);
-        self::assertSame('USERIP', $commands[0]->getName());
-        self::assertSame('INFO', $commands[1]->getName());
+        self::assertSame([$cmd1, $cmd2], $commands);
     }
 
     #[Test]
-    public function getIrcopCommandsReturnsEmptyWhenNotIdentified(): void
+    public function getIrcopCommandsReturnsEmptyWithoutIdentifiedAccount(): void
     {
         $cmd = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
-        $registry = new NickServCommandRegistry([$cmd]);
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
-        $context = new NickServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true, true),
-            null,
-            'HELP',
-            [],
-            $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-            'en',
-            'UTC',
-            'NOTICE',
-            $registry,
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
+        $access = $this->createMock(NickServOperatorAccess::class);
+        $access->expects(self::never())->method('hasPermission');
+
+        $withoutAccount = new HelpFormatterContextAdapter(
+            $this->context(new NickServCommandRegistry([$cmd]), identified: true, oper: true, account: false),
+            $access,
         );
-        $adapter = new HelpFormatterContextAdapter(
-            $context,
-            $operatorAccess,
+        $notIdentified = new HelpFormatterContextAdapter(
+            $this->context(new NickServCommandRegistry([$cmd]), identified: false, oper: true, account: true),
+            $access,
         );
 
-        $commands = iterator_to_array($adapter->getIrcopCommands());
-
-        self::assertSame([], $commands);
+        self::assertSame([], iterator_to_array($withoutAccount->getIrcopCommands()));
+        self::assertSame([], iterator_to_array($notIdentified->getIrcopCommands()));
     }
 
     #[Test]
-    public function getIrcopCommandsReturnsEmptyWhenNotOper(): void
+    public function getIrcopCommandsFiltersUsingOnlyNickServBoundary(): void
     {
-        $cmd = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
-        $registry = new NickServCommandRegistry([$cmd]);
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getId')->willReturn(1);
-        $context = new NickServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true, false),
-            $account,
-            'HELP',
-            [],
-            $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-            'en',
-            'UTC',
-            'NOTICE',
-            $registry,
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
+        $allowed = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
+        $denied = $this->createIrcopCommandStub('OTHER', 'nickserv.other');
+        $access = $this->createStub(NickServOperatorAccess::class);
+        $access->method('hasPermission')->willReturnCallback(
+            static fn (string $nick, ?int $id, bool $identified, bool $oper, string $permission): bool => 'operuser' === $nick && 1 === $id && $identified && $oper && 'nickserv.userip' === $permission,
         );
         $adapter = new HelpFormatterContextAdapter(
-            $context,
-            $operatorAccess,
+            $this->context(new NickServCommandRegistry([$allowed, $denied]), identified: true, oper: true, account: true),
+            $access,
         );
 
-        $commands = iterator_to_array($adapter->getIrcopCommands());
-
-        self::assertSame([], $commands);
+        self::assertSame([$allowed], iterator_to_array($adapter->getIrcopCommands()));
     }
 
     #[Test]
-    public function getIrcopCommandsReturnsFilteredCommandsForOperWithPermissions(): void
+    public function hasIrcopAccessDelegatesToPublicBoundary(): void
     {
-        $cmd1 = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
-        $cmd2 = $this->createIrcopCommandStub('SOMEOTHER', 'nickserv.other');
-        $registry = new NickServCommandRegistry([$cmd1, $cmd2]);
-        $role = $this->createStub(OperRole::class);
-        $role->method('getId')->willReturn(10);
-        $role->method('hasPermission')->willReturnCallback(static fn (string $perm): bool => 'nickserv.userip' === $perm);
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn($ircop);
-        $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
-        $roleRepo->expects(self::atLeastOnce())
-            ->method('hasPermission')
-            ->willReturnCallback(static fn (int $roleId, string $perm): bool => 10 === $roleId && 'nickserv.userip' === $perm);
-        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getId')->willReturn(1);
-        $context = new NickServContext(
-            new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true),
-            $account,
-            'HELP',
-            [],
-            $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-            'en',
-            'UTC',
-            'NOTICE',
-            $registry,
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-        );
+        $access = $this->createMock(NickServOperatorAccess::class);
+        $access->expects(self::once())->method('hasAnyPermission')->willReturn(true);
         $adapter = new HelpFormatterContextAdapter(
-            $context,
-            $operatorAccess,
-        );
-
-        $commands = iterator_to_array($adapter->getIrcopCommands());
-
-        self::assertCount(1, $commands);
-        self::assertSame('USERIP', $commands[0]->getName());
-    }
-
-    #[Test]
-    public function hasIrcopAccessReturnsTrueForRootUser(): void
-    {
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $operatorAccess = $this->operatorAccess('RootAdmin', $ircopRepo, $roleRepo);
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getId')->willReturn(1);
-        $context = new NickServContext(
-            new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', true, true),
-            $account,
-            'HELP',
-            [],
-            $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-            'en',
-            'UTC',
-            'NOTICE',
-            new NickServCommandRegistry([]),
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-        );
-        $adapter = new HelpFormatterContextAdapter(
-            $context,
-            $operatorAccess,
+            $this->context(new NickServCommandRegistry([]), identified: true, oper: true, account: true),
+            $access,
         );
 
         self::assertTrue($adapter->hasIrcopAccess());
     }
 
     #[Test]
-    public function hasIrcopAccessReturnsTrueForOperWithPermissions(): void
+    public function hasIrcopAccessReturnsFalseWithoutIdentifiedAccount(): void
     {
-        $role = $this->createStub(OperRole::class);
-        $role->method('getId')->willReturn(10);
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn($ircop);
-        $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
-        $roleRepo->expects(self::atLeastOnce())
-            ->method('hasPermission')
-            ->willReturnCallback(static fn (int $roleId, string $perm): bool => 10 === $roleId && 'nickserv.userip' === $perm);
-        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getId')->willReturn(1);
-        $context = new NickServContext(
-            new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true),
-            $account,
-            'HELP',
-            [],
-            $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-            'en',
-            'UTC',
-            'NOTICE',
-            new NickServCommandRegistry([]),
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-        );
-        $adapter = new HelpFormatterContextAdapter(
-            $context,
-            $operatorAccess,
-        );
+        $access = $this->createMock(NickServOperatorAccess::class);
+        $access->expects(self::never())->method('hasAnyPermission');
 
-        self::assertTrue($adapter->hasIrcopAccess());
+        self::assertFalse(new HelpFormatterContextAdapter(
+            $this->context(new NickServCommandRegistry([]), identified: false, oper: true, account: true),
+            $access,
+        )->hasIrcopAccess());
     }
 
     #[Test]
-    public function hasIrcopAccessReturnsFalseForOperWithoutPermissions(): void
-    {
-        $role = $this->createStub(OperRole::class);
-        $role->method('getId')->willReturn(10);
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn($ircop);
-        $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
-        $roleRepo->expects(self::atLeastOnce())
-            ->method('hasPermission')
-            ->willReturn(false);
-        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('getId')->willReturn(1);
-        $context = new NickServContext(
-            new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true),
-            $account,
-            'HELP',
-            [],
-            $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-            'en',
-            'UTC',
-            'NOTICE',
-            new NickServCommandRegistry([]),
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-        );
-        $adapter = new HelpFormatterContextAdapter(
-            $context,
-            $operatorAccess,
-        );
-
-        self::assertFalse($adapter->hasIrcopAccess());
-    }
-
-    #[Test]
-    public function shouldShowCommandInGeneralHelpReturnsFalseForIrcopPermission(): void
+    public function shouldHideNickServOperatorCommandFromGeneralHelp(): void
     {
         $command = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
-        $context = new NickServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false),
-            null,
-            'HELP',
-            [],
-            $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-            'en',
-            'UTC',
-            'NOTICE',
-            new NickServCommandRegistry([]),
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-        );
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
-        $operatorAccess = $this->operatorAccess('', $ircopRepo, $roleRepo);
         $adapter = new HelpFormatterContextAdapter(
-            $context,
-            $operatorAccess,
+            $this->context(new NickServCommandRegistry([]), identified: false, oper: false, account: false),
+            $this->createStub(NickServOperatorAccess::class),
         );
 
         self::assertFalse($adapter->shouldShowCommandInGeneralHelp($command));
     }
 
-    private function operatorAccess(
-        string $rootUsers,
-        OperIrcopRepositoryInterface $ircopRepository,
-        OperRoleRepositoryInterface $roleRepository,
-    ): OperNickServOperatorAccess {
-        $rootPolicy = new RootAuthorizationPolicy(new ConfiguredRootIdentityRegistry($rootUsers));
-        $roleAccess = new DoctrineOperatorRoleAccess($ircopRepository, $roleRepository);
+    private function context(
+        NickServCommandRegistry $registry,
+        bool $identified,
+        bool $oper,
+        bool $account,
+    ): NickServContext {
+        $registeredNick = null;
+        if ($account) {
+            $registeredNick = $this->createStub(RegisteredNick::class);
+            $registeredNick->method('getId')->willReturn(1);
+        }
 
-        return new OperNickServOperatorAccess(new IrcopAccessQueryService(
-            new OperatorAuthorizationService(
-                $rootPolicy,
-                new OperatorPermissionPolicy($rootPolicy, $roleAccess),
-                $roleAccess,
-            ),
-        ));
+        return new NickServContext(
+            new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', $identified, $oper),
+            $registeredNick,
+            'HELP',
+            [],
+            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
     }
 }

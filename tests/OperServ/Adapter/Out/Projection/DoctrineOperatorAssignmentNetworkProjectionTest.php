@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\Out\Projection;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
 use App\OperServ\Adapter\In\Event\IrcopModeApplier;
 use App\OperServ\Adapter\In\Event\IrcopOperclassApplier;
 use App\OperServ\Adapter\Out\Projection\DoctrineOperatorAssignmentNetworkProjection;
@@ -15,7 +16,6 @@ use App\OperServ\Application\PublishedEvent\OperIrcopChangedEvent;
 use App\OperServ\Domain\Entity\OperRole;
 use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
 use App\OperServ\Domain\Repository\OperRoleRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -74,9 +74,9 @@ final class DoctrineOperatorAssignmentNetworkProjectionTest extends TestCase
 
     private function projection(OperRoleRepositoryInterface $roles, EventBusInterface $events): DoctrineOperatorAssignmentNetworkProjection
     {
-        $connection = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connection = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $operators = $this->createStub(OperIrcopRepositoryInterface::class);
-        $nicks = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nicks = $this->createStub(NickProjectionQuery::class);
         $sessions = new IdentifiedSessionRegistry();
 
         return new DoctrineOperatorAssignmentNetworkProjection(

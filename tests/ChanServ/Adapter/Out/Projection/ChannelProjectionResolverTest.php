@@ -11,6 +11,7 @@ use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,9 +25,9 @@ final class ChannelProjectionResolverTest extends TestCase
     #[Test]
     public function projectsChannelsAndAccessEntriesWithoutExposingDomainEntities(): void
     {
-        $channel = RegisteredChannel::register('#Ares', 7, 'description');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Ares', 7, 'description');
         new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 11);
-        $channel->updateTopic('Welcome');
+        $channel->updateTopic('Welcome', new DateTimeImmutable('2026-01-01 00:00:00'));
         $channel->configureMlock(true, '+ntkl', ['k' => 'secret', 'l' => '10']);
         $channel->configureTopicLock(true);
         $entry = new ChannelAccess(11, 9, 300);

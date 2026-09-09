@@ -6,6 +6,8 @@ namespace App\Tests\MemoServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\MemoServ\Adapter\In\Irc\MemoAuthorizationCheckerInterface;
 use App\MemoServ\Adapter\In\Irc\MemoAuthorizationContextInterface;
@@ -18,14 +20,12 @@ use App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
 use App\Shared\Application\Port\EventBusInterface;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
 
@@ -112,7 +112,7 @@ final class MemoServServiceTest extends TestCase
 
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $logger = $this->createStub(LoggerInterface::class);
 
         $contextHolder = new MemoServContextHolder();
@@ -170,9 +170,11 @@ final class MemoServServiceTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void
+            public function execute(MemoServContext $context): null
             {
                 $this->holder->context = $context;
+
+                return null;
             }
         };
 
@@ -210,7 +212,7 @@ final class MemoServServiceTest extends TestCase
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
         $notifier = $this->createMock(MemoServNotifierInterface::class);
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $notifier->method('getNick')->willReturn('MemoServ');
         $translator->expects(self::once())->method('trans')
             ->with('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'MemoServ'], 'memoserv', 'en')
@@ -241,7 +243,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(MemoUserAccountPort::class),
             $notifier,
             $this->createMessageTypeResolver(),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $this->createServiceNicks(),
         );
 
@@ -309,9 +311,11 @@ final class MemoServServiceTest extends TestCase
                 return 'MEMOSERV_OP_TEST';
             }
 
-            public function execute(MemoServContext $context): void
+            public function execute(MemoServContext $context): null
             {
                 $this->holder->context = $context;
+
+                return null;
             }
         };
 
@@ -321,7 +325,7 @@ final class MemoServServiceTest extends TestCase
             ->with('MEMOSERV_OP_TEST', self::anything())
             ->willReturn(false);
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id
         );
@@ -415,9 +419,11 @@ final class MemoServServiceTest extends TestCase
                 return 'IDENTIFIED';
             }
 
-            public function execute(MemoServContext $context): void
+            public function execute(MemoServContext $context): null
             {
                 $this->holder->context = $context;
+
+                return null;
             }
         };
 
@@ -427,7 +433,7 @@ final class MemoServServiceTest extends TestCase
             ->with('IDENTIFIED', self::anything())
             ->willReturn(false);
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
         );
@@ -513,13 +519,15 @@ final class MemoServServiceTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void
+            public function execute(MemoServContext $context): null
             {
                 $this->holder->context = $context;
+
+                return null;
             }
         };
 
-        $translator = $this->createMock(TranslationInterface::class);
+        $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static function (string $id, array $params = []): string {
                 $syntax = $params['syntax'] ?? null;
@@ -613,7 +621,7 @@ final class MemoServServiceTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void
+            public function execute(MemoServContext $context): null
             {
                 throw MemoDisabledException::forTarget('TargetNick');
             }
@@ -623,7 +631,7 @@ final class MemoServServiceTest extends TestCase
         $notifier->expects(self::once())->method('sendMessage')
             ->with($sender->uid, self::stringContains('service_disabled'), 'NOTICE');
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
         $service = $this->createMemoServService(
@@ -694,7 +702,7 @@ final class MemoServServiceTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void
+            public function execute(MemoServContext $context): null
             {
                 throw new RuntimeException('Unexpected crash');
             }
@@ -713,7 +721,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(MemoUserAccountPort::class),
             $this->createStub(MemoServNotifierInterface::class),
             $this->createMessageTypeResolver(),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $this->createServiceNicks(),
             'en',
             'UTC',
@@ -809,7 +817,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(MemoUserAccountPort::class),
             $notifier,
             $this->createMessageTypeResolver(),
-            $this->createStub(TranslationInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $this->createServiceNicks(),
             'en',
             'UTC',
@@ -827,7 +835,7 @@ final class MemoServServiceTest extends TestCase
         MemoUserAccountPort $userAccountPort,
         MemoServNotifierInterface $notifier,
         MemoServUserPresentationPreferences $messageTypeResolver,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
         ServiceNicknameRegistry $serviceNicks,
         string $defaultLanguage = 'en',
         string $defaultTimezone = 'UTC',

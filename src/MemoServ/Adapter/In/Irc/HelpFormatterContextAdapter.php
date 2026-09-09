@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\MemoServ\Adapter\In\Irc;
 
-use App\Shared\Application\Help\HelpableCommandInterface;
-use App\Shared\Application\Help\HelpFormatterContextInterface;
+use App\MemoServ\Adapter\In\Irc\Help\HelpableCommandInterface;
+use App\MemoServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 
 /**
  * Adapter from MemoServContext to HelpFormatterContextInterface for UnifiedHelpFormatter.

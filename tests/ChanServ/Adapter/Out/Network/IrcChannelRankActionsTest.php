@@ -10,7 +10,7 @@ use App\ChanServ\Application\Model\MemberRankChange;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
 use App\ChanServ\Domain\ValueObject\RankChange;
 use App\ChanServ\Domain\ValueObject\RankChangeAction;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

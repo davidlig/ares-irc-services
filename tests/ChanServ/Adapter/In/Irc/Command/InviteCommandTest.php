@@ -13,6 +13,9 @@ use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
+use App\ChanServ\Application\UseCase\PrepareInvite\PrepareChannelInvite;
+use App\ChanServ\Application\UseCase\PrepareInvite\PrepareChannelInviteHandler;
+use App\ChanServ\Application\UseCase\PrepareInvite\PrepareChannelInviteResult;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
@@ -22,23 +25,33 @@ use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(InviteCommand::class)]
+#[CoversClass(PrepareChannelInvite::class)]
+#[CoversClass(PrepareChannelInviteHandler::class)]
+#[CoversClass(PrepareChannelInviteResult::class)]
 final class InviteCommandTest extends TestCase
 {
+    private function createCommand(
+        RegisteredChannelRepositoryInterface $channels,
+        ChanServAccessHelper $access,
+    ): InviteCommand {
+        return new InviteCommand(new PrepareChannelInviteHandler($channels, $access));
+    }
+
     /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?ChanAccountView $senderAccount,
         array $args,
         ChanServNotifierInterface $notifier,
-        TranslationInterface $translator,
+        TranslatorInterface $translator,
     ): ChanServContext {
         return new ChanServContext(
             $sender,
@@ -70,10 +83,10 @@ final class InviteCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), new ChanAccountView(1, 'User', 'en'), ['x'], $notifier, $translator));
 
         self::assertSame(['error.invalid_channel'], $messages);
@@ -94,10 +107,10 @@ final class InviteCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['#test'], $notifier, $translator));
 
         self::assertSame(['error.not_identified'], $messages);
@@ -113,10 +126,10 @@ final class InviteCommandTest extends TestCase
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $account = new ChanAccountView(2, 'User', 'en');
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         $this->expectException(ChannelNotRegisteredException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
     }
@@ -149,10 +162,10 @@ final class InviteCommandTest extends TestCase
         $notifier->method('inviteToChannel')->willReturnCallback(static function (string $ch, string $uid) use (&$invites): void {
             $invites[] = [$ch, $uid];
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
 
         self::assertSame(['invite.done'], $messages);
@@ -183,10 +196,10 @@ final class InviteCommandTest extends TestCase
         $notifier->method('inviteToChannel')->willReturnCallback(static function (string $ch, string $uid) use (&$invites): void {
             $invites[] = [$ch, $uid];
         });
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         $cmd->execute($this->createContext(null, $account, ['#test'], $notifier, $translator));
 
         self::assertCount(0, $invites);
@@ -211,10 +224,10 @@ final class InviteCommandTest extends TestCase
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
     }
@@ -227,7 +240,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame('INVITE', $cmd->getName());
     }
 
@@ -239,7 +252,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame([], $cmd->getAliases());
     }
 
@@ -251,7 +264,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame(1, $cmd->getMinArgs());
     }
 
@@ -263,7 +276,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame('invite.syntax', $cmd->getSyntaxKey());
     }
 
@@ -275,7 +288,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame('invite.help', $cmd->getHelpKey());
     }
 
@@ -287,7 +300,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame(10, $cmd->getOrder());
     }
 
@@ -299,7 +312,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame('invite.short', $cmd->getShortDescKey());
     }
 
@@ -311,7 +324,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame([], $cmd->getSubCommandHelp());
     }
 
@@ -323,7 +336,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertFalse($cmd->isOperOnly());
     }
 
@@ -335,7 +348,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
     }
 
@@ -347,7 +360,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertFalse($cmd->allowsSuspendedChannel());
     }
 
@@ -359,7 +372,7 @@ final class InviteCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertFalse($cmd->allowsForbiddenChannel());
     }
 

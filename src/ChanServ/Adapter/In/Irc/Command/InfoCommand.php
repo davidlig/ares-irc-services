@@ -6,14 +6,12 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Application\UseCase\ShowInfo\ChannelInfoView;
+use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfo;
+use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandlerInterface;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
-use App\ChanServ\Domain\ValueObject\ChannelStatus;
 
 use function str_contains;
-use function strtolower;
 
 /**
  * INFO <#channel>.
@@ -23,11 +21,7 @@ use function strtolower;
  */
 final readonly class InfoCommand implements ChanServCommandInterface
 {
-    public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChanUserAccountPort $accountPort,
-        private int $dropGraceDays = 7,
-    ) {}
+    public function __construct(private ShowChannelInfoHandlerInterface $handler) {}
 
     public function getName(): string
     {
@@ -104,30 +98,30 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return;
         }
 
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
+        $info = $this->handler->handle(new ShowChannelInfo($channelName));
+        if (null === $info) {
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
 
-        if ($channel->isForbidden()) {
+        if ($info->forbidden) {
             $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
             $context->replyRaw($context->trans('info.forbidden_status'));
-            if (null !== $channel->getForbiddenReason()) {
-                $context->replyRaw($context->trans('info.forbidden_reason', ['%reason%' => $channel->getForbiddenReason()]));
+            if (null !== $info->forbiddenReason) {
+                $context->replyRaw($context->trans('info.forbidden_reason', ['%reason%' => $info->forbiddenReason]));
             }
             $context->replyRaw($context->trans('info.footer'));
 
             return;
         }
 
-        if ($channel->isPendingDeletion()) {
+        if ($info->pendingDeletion) {
             $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
             $context->replyRaw($context->trans('info.pending_deletion_status'));
-            $pendingDeletionAt = $channel->getPendingDeletionAt();
+            $pendingDeletionAt = $info->pendingDeletionAt;
             if (null !== $pendingDeletionAt) {
                 $context->replyRaw($context->trans('info.pending_deletion_at', ['%date%' => $context->formatDate($pendingDeletionAt)]));
             }
-            $expiresAt = $channel->getPendingDeletionExpiresAt($this->dropGraceDays);
+            $expiresAt = $info->pendingDeletionUntil;
             if (null !== $expiresAt) {
                 $context->replyRaw($context->trans('info.pending_deletion_until', ['%date%' => $context->formatDate($expiresAt)]));
             }
@@ -137,24 +131,16 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return;
         }
 
-        $founderAccount = $this->accountPort->findAccountById($channel->getFounderNickId());
-        $founderName = null !== $founderAccount ? $founderAccount->nickname : (string) $channel->getFounderNickId();
-        $successorName = null;
-        if (null !== $channel->getSuccessorNickId()) {
-            $successorAccount = $this->accountPort->findAccountById($channel->getSuccessorNickId());
-            $successorName = null !== $successorAccount ? $successorAccount->nickname : (string) $channel->getSuccessorNickId();
-        }
-
-        $canShowTopic = $this->canShowTopic($context, $channel);
+        $canShowTopic = $this->canShowTopic($context, $info);
 
         $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
 
-        if (ChannelStatus::Suspended === $channel->getStatus()) {
+        if ($info->suspended) {
             $context->replyRaw($context->trans('info.suspended_status'));
-            if (null !== $channel->getSuspendedReason()) {
-                $context->replyRaw($context->trans('info.suspended_reason', ['%reason%' => $channel->getSuspendedReason()]));
+            if (null !== $info->suspendedReason) {
+                $context->replyRaw($context->trans('info.suspended_reason', ['%reason%' => $info->suspendedReason]));
             }
-            $suspendedUntil = $channel->getSuspendedUntil();
+            $suspendedUntil = $info->suspendedUntil;
             if (null !== $suspendedUntil) {
                 $context->replyRaw($context->trans('info.suspended_until', ['%date%' => $context->formatDate($suspendedUntil)]));
             } else {
@@ -162,67 +148,67 @@ final readonly class InfoCommand implements ChanServCommandInterface
             }
         }
 
-        $context->replyRaw($context->trans('info.founder', ['%nickname%' => $founderName]));
-        if (null !== $successorName) {
-            $context->replyRaw($context->trans('info.successor', ['%nickname%' => $successorName]));
+        $context->replyRaw($context->trans('info.founder', ['%nickname%' => $info->founderName]));
+        if (null !== $info->successorName) {
+            $context->replyRaw($context->trans('info.successor', ['%nickname%' => $info->successorName]));
         }
-        if ('' !== $channel->getDescription()) {
-            $context->replyRaw($context->trans('info.description', ['%desc%' => $channel->getDescription()]));
+        if ('' !== $info->description) {
+            $context->replyRaw($context->trans('info.description', ['%desc%' => $info->description]));
         }
-        $context->replyRaw($context->trans('info.registered', ['%date%' => $context->formatDate($channel->getCreatedAt())]));
+        $context->replyRaw($context->trans('info.registered', ['%date%' => $context->formatDate($info->createdAt)]));
         $context->replyRaw($context->trans('info.last_used', [
-            '%date%' => $context->formatDate($channel->getLastUsedAt()),
+            '%date%' => $context->formatDate($info->lastUsedAt),
         ]));
-        if (null !== $channel->getUrl()) {
-            $context->replyRaw($context->trans('info.url', ['%url%' => $channel->getUrl()]));
+        if (null !== $info->url) {
+            $context->replyRaw($context->trans('info.url', ['%url%' => $info->url]));
         }
-        if (null !== $channel->getEmail()) {
-            $context->replyRaw($context->trans('info.email', ['%email%' => $channel->getEmail()]));
+        if (null !== $info->email) {
+            $context->replyRaw($context->trans('info.email', ['%email%' => $info->email]));
         }
-        if ($canShowTopic && null !== $channel->getTopic()) {
+        if ($canShowTopic && null !== $info->topic) {
             $context->replyRaw($context->trans('info.topic', [
-                '%topic%' => $channel->getTopic(),
+                '%topic%' => $info->topic,
             ]));
-            if (null !== $channel->getLastTopicSetByNick()) {
-                $context->replyRaw($context->trans('info.topic_set_by', ['%nickname%' => $channel->getLastTopicSetByNick()]));
+            if (null !== $info->lastTopicSetByNick) {
+                $context->replyRaw($context->trans('info.topic_set_by', ['%nickname%' => $info->lastTopicSetByNick]));
             }
         }
-        if ($channel->isMlockActive()) {
-            $modesDisplay = $channel->getMlock();
+        if ($info->mlockActive) {
+            $modesDisplay = $info->mlock;
             if ('' === $modesDisplay) {
                 $modesDisplay = $context->trans('set.mlock.no_modes');
             }
             $context->replyRaw($context->trans('info.mlock_modes', ['%modes%' => $modesDisplay]));
         }
         $context->replyRaw($context->trans('info.options', [
-            '%topiclock%' => $channel->isTopicLock() ? 'ON' : 'OFF',
-            '%mlock%' => $channel->isMlockActive() ? 'ON' : 'OFF',
-            '%secure%' => $channel->isSecure() ? 'ON' : 'OFF',
+            '%topiclock%' => $info->topicLock ? 'ON' : 'OFF',
+            '%mlock%' => $info->mlockActive ? 'ON' : 'OFF',
+            '%secure%' => $info->secure ? 'ON' : 'OFF',
         ]));
-        if ($channel->isNoExpire()) {
+        if ($info->noExpire) {
             $context->replyRaw($context->trans('info.no_expire'));
         }
         $context->replyRaw($context->trans('info.footer'));
     }
 
-    private function canShowTopic(ChanServContext $context, RegisteredChannel $channel): bool
+    private function canShowTopic(ChanServContext $context, ChannelInfoView $info): bool
     {
-        if ($this->isSenderFounderOrOper($context, $channel)) {
+        if ($this->isSenderFounderOrOper($context, $info)) {
             return true;
         }
 
-        return !$this->isChannelPrivate($context, $channel);
+        return !$this->isChannelPrivate($context, $info);
     }
 
-    private function isChannelPrivate(ChanServContext $context, RegisteredChannel $channel): bool
+    private function isChannelPrivate(ChanServContext $context, ChannelInfoView $info): bool
     {
-        $view = $context->getChannelView($channel->getName());
+        $view = $context->getChannelView($context->getChannelNameArg(0) ?? '');
         if (null !== $view && (str_contains($view->modes, 's') || str_contains($view->modes, 'p'))) {
             return true;
         }
 
-        if ($channel->isMlockActive() && (
-            str_contains($channel->getMlock(), 's') || str_contains($channel->getMlock(), 'p')
+        if ($info->mlockActive && (
+            str_contains($info->mlock, 's') || str_contains($info->mlock, 'p')
         )) {
             return true;
         }
@@ -230,25 +216,24 @@ final readonly class InfoCommand implements ChanServCommandInterface
         return false;
     }
 
-    private function isSenderFounderOrOper(ChanServContext $context, RegisteredChannel $channel): bool
+    private function isSenderFounderOrOper(ChanServContext $context, ChannelInfoView $info): bool
     {
         $sender = $context->sender;
         if (null === $sender) {
             return false;
         }
 
-        return $sender->isOper || $this->isSenderChannelFounder($context, $channel);
+        return $sender->isOper || $this->isSenderChannelFounder($context, $info);
     }
 
-    private function isSenderChannelFounder(ChanServContext $context, RegisteredChannel $channel): bool
+    private function isSenderChannelFounder(ChanServContext $context, ChannelInfoView $info): bool
     {
         if (null === $context->sender || !$context->sender->isIdentified) {
             return false;
         }
 
-        $founderNickId = $channel->getFounderNickId();
         $senderAccount = $context->getSenderAccount();
-        if (null !== $senderAccount && $senderAccount->id === $founderNickId) {
+        if (null !== $senderAccount && $senderAccount->id === $info->founderAccountId) {
             return true;
         }
 

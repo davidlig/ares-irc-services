@@ -70,11 +70,11 @@ final readonly class VerifyCommand implements NickServCommandInterface
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): null
     {
         $sender = $context->sender;
         if (null === $sender) {
-            return;
+            return null;
         }
 
         $token = $context->args[0];
@@ -86,6 +86,8 @@ final readonly class VerifyCommand implements NickServCommandInterface
         ));
 
         $this->present($context, $result);
+
+        return null;
     }
 
     private function present(NickServContext $context, VerifyNickResult $result): void

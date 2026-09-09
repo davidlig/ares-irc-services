@@ -4,58 +4,24 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
+use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
-use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
+use App\NickServ\Application\Model\NickOperationActor;
 use App\NickServ\Application\Security\NickServPermission;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\UseCase\Set\SetNickSetting;
+use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
+use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
 
 use function array_slice;
-use function assert;
 use function count;
-use function implode;
-use function in_array;
-use function strtolower;
-use function strtoupper;
+use function sprintf;
 
-/**
- * SET <option> <value>.
- *
- * Allows a registered and identified user to change their own NickServ settings.
- * Delegates each option to a dedicated Set*Handler.
- *
- * The LANGUAGE option is also available to unregistered users: it sets a
- * temporary session language that lasts until they disconnect.
- *
- * For modifying other users' settings, use SASET.
- */
-final class SetCommand implements NickServCommandInterface
+final readonly class SetCommand implements NickServCommandInterface
 {
     private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'VHOST'];
 
-    /** @var array<string, SetOptionHandlerInterface> */
-    private array $handlers;
-
-    public function __construct(
-        SetPasswordHandler $setPasswordHandler,
-        SetEmailHandler $setEmailHandler,
-        SetLanguageHandler $setLanguageHandler,
-        SetPrivateHandler $setPrivateHandler,
-        SetMsgHandler $setMsgHandler,
-        SetTimezoneHandler $setTimezoneHandler,
-        SetVhostHandler $setVhostHandler,
-        private readonly SessionLanguageRegistry $sessionLanguageRegistry,
-    ) {
-        $this->handlers = [
-            'PASSWORD' => $setPasswordHandler,
-            'EMAIL' => $setEmailHandler,
-            'LANGUAGE' => $setLanguageHandler,
-            'PRIVATE' => $setPrivateHandler,
-            'MSG' => $setMsgHandler,
-            'TIMEZONE' => $setTimezoneHandler,
-            'VHOST' => $setVhostHandler,
-        ];
-    }
+    public function __construct(private SetNickSettingHandlerInterface $handler) {}
 
     public function getName(): string
     {
@@ -94,50 +60,12 @@ final class SetCommand implements NickServCommandInterface
 
     public function getSubCommandHelp(): array
     {
-        return [
-            [
-                'name' => 'PASSWORD',
-                'desc_key' => 'set.password.short',
-                'help_key' => 'set.password.help',
-                'syntax_key' => 'set.password.syntax',
-            ],
-            [
-                'name' => 'EMAIL',
-                'desc_key' => 'set.email.short',
-                'help_key' => 'set.email.help',
-                'syntax_key' => 'set.email.syntax',
-            ],
-            [
-                'name' => 'LANGUAGE',
-                'desc_key' => 'set.language.short',
-                'help_key' => 'set.language.help',
-                'syntax_key' => 'set.language.syntax',
-            ],
-            [
-                'name' => 'TIMEZONE',
-                'desc_key' => 'set.timezone.short',
-                'help_key' => 'set.timezone.help',
-                'syntax_key' => 'set.timezone.syntax',
-            ],
-            [
-                'name' => 'PRIVATE',
-                'desc_key' => 'set.private.short',
-                'help_key' => 'set.private.help',
-                'syntax_key' => 'set.private.syntax',
-            ],
-            [
-                'name' => 'MSG',
-                'desc_key' => 'set.msg.short',
-                'help_key' => 'set.msg.help',
-                'syntax_key' => 'set.msg.syntax',
-            ],
-            [
-                'name' => 'VHOST',
-                'desc_key' => 'set.vhost.short',
-                'help_key' => 'set.vhost.help',
-                'syntax_key' => 'set.vhost.syntax',
-            ],
-        ];
+        return array_map(static fn (string $option): array => [
+            'name' => $option,
+            'desc_key' => 'set.' . strtolower($option) . '.short',
+            'help_key' => 'set.' . strtolower($option) . '.help',
+            'syntax_key' => 'set.' . strtolower($option) . '.syntax',
+        ], self::SUPPORTED_OPTIONS);
     }
 
     public function isOperOnly(): bool
@@ -155,97 +83,64 @@ final class SetCommand implements NickServCommandInterface
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
-        if (null === $context->sender) {
-            return;
+        $sender = $context->sender;
+        if (null === $sender) {
+            return CommandOutcome::rejected();
         }
 
         if (count($context->args) < 2) {
-            $context->reply('error.syntax', [
-                'syntax' => $context->trans($this->getSyntaxKey()),
-            ]);
+            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->routeSet($context);
-    }
-
-    private function routeSet(NickServContext $context): void
-    {
-        $option = strtoupper($context->args[0]);
-        $value = implode(' ', array_slice($context->args, 1));
-
-        if (!in_array($option, self::SUPPORTED_OPTIONS, true)) {
+        $rawOption = strtoupper($context->args[0]);
+        $option = SetNickSettingOption::tryFrom($rawOption);
+        if (null === $option) {
             $context->reply('set.unknown_option', [
-                'option' => $option,
+                'option' => $rawOption,
                 'options' => implode(', ', self::SUPPORTED_OPTIONS),
             ]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $account = $context->senderAccount;
+        $result = $this->handler->handle(new SetNickSetting(
+            new NickOperationActor(
+                $sender->nick,
+                $context->senderAccount?->getId(),
+                $sender->uid,
+                $sender->serverSid,
+                sprintf('%s@%s', $sender->ident, $sender->hostname),
+                self::decodeIp($sender->ipBase64),
+            ),
+            $context->senderAccount?->getNickname() ?? $sender->nick,
+            $option,
+            implode(' ', array_slice($context->args, 1)),
+            false,
+            $context->getLanguage(),
+        ));
 
-        if ('LANGUAGE' === $option && null === $account) {
-            $this->handleLanguageForUnregistered($context, $value);
-
-            return;
-        }
-
-        $this->dispatchHandler($context, $account, $option, $value);
+        return SetNickSettingPresentation::present($context, $result)
+            ? CommandOutcome::success()
+            : CommandOutcome::rejected();
     }
 
-    private function dispatchHandler(
-        NickServContext $context,
-        ?RegisteredNick $account,
-        string $option,
-        string $value,
-    ): void {
-        if (null === $account) {
-            $context->reply('error.not_identified');
-
-            return;
-        }
-
-        $handler = $this->handlers[$option] ?? null;
-        // @codeCoverageIgnoreStart
-        if (null === $handler) {
-            $context->reply('set.unknown_option', [
-                'option' => $option,
-                'options' => implode(', ', self::SUPPORTED_OPTIONS),
-            ]);
-
-            return;
-        }
-        // @codeCoverageIgnoreEnd
-
-        $handler->handle($context, $account, $value, false);
-    }
-
-    private function handleLanguageForUnregistered(NickServContext $context, string $value): void
+    private static function decodeIp(string $ipBase64): string
     {
-        $lang = strtolower($value);
-
-        if ('' === $lang) {
-            $context->reply('error.syntax', [
-                'syntax' => $context->trans('set.language.syntax'),
-            ]);
-
-            return;
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
         }
 
-        if (!in_array($lang, RegisteredNick::SUPPORTED_LANGUAGES, true)) {
-            $context->reply('set.language.invalid', [
-                'languages' => implode(', ', RegisteredNick::SUPPORTED_LANGUAGES),
-            ]);
-
-            return;
+        $binary = base64_decode($ipBase64, true);
+        if (false === $binary) {
+            return $ipBase64;
         }
 
-        assert(null !== $context->sender);
-        $this->sessionLanguageRegistry->register($context->sender->uid, $lang);
-        $context->reply('set.language.success', ['language' => $lang]);
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }

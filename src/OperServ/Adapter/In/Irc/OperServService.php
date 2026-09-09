@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\OperServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\In\UserLanguageQuery;
 use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
 use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_shift;
 use function count;
@@ -31,7 +31,7 @@ final readonly class OperServService
         private UserLanguageQuery $languageResolver,
         private UserMessagePreferenceQuery $messageTypeResolver,
         private OperServNotifierInterface $notifier,
-        private TranslationInterface $translator,
+        private TranslatorInterface $translator,
         private ServiceNicknameRegistry $serviceNicks,
         private OperatorAuthorizationQuery $authorization,
         private string $defaultLanguage = 'en',

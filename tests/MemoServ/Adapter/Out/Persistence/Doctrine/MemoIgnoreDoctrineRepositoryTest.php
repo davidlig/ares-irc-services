@@ -7,7 +7,7 @@ namespace App\Tests\MemoServ\Adapter\Out\Persistence\Doctrine;
 use App\MemoServ\Adapter\Out\Persistence\Doctrine\MemoIgnoreDoctrineRepository;
 use App\MemoServ\Application\Port\Out\MemoIgnoreRepositoryInterface;
 use App\MemoServ\Domain\Entity\MemoIgnore;
-use App\Tests\Integration\DoctrineIntegrationTestCase;
+use App\Tests\Shared\DoctrineIntegrationTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;

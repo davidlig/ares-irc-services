@@ -6,6 +6,7 @@ namespace App\OperServ\Adapter\In\Irc\Command;
 
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServContext;
+use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotd;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotdHandlerInterface;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotdOutcome;
@@ -102,7 +103,11 @@ final readonly class MotdCommand implements OperServCommandInterface
             $context->senderAccountId(),
             new DateTimeImmutable(),
             MotdAction::Add === $action ? trim($context->args[1] ?? '') : null,
-            MotdAction::Add === $action ? strtoupper(trim($context->args[2] ?? '')) : null,
+            MotdAction::Add === $action ? match (strtoupper(trim($context->args[2] ?? ''))) {
+                'NOTICE' => MessageDelivery::NonInteractive,
+                'PRIVMSG' => MessageDelivery::Interactive,
+                default => null,
+            } : null,
             MotdAction::Add === $action ? trim($context->args[3] ?? '') : null,
             MotdAction::Add === $action ? trim(implode(' ', array_slice($context->args, 4))) : null,
             MotdAction::Delete === $action ? trim($context->args[1] ?? '') : null,
@@ -163,7 +168,10 @@ final readonly class MotdCommand implements OperServCommandInterface
         $context->replyRaw(sprintf(
             '#%d [%s] %s → %s | %s | %s | %s',
             $entry->id,
-            $entry->messageType,
+            match ($entry->delivery) {
+                MessageDelivery::NonInteractive => 'NOTICE',
+                MessageDelivery::Interactive => 'PRIVMSG',
+            },
             $botNickname,
             $entry->text,
             $status,

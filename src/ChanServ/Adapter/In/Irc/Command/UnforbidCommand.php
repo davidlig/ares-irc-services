@@ -7,15 +7,19 @@ namespace App\ChanServ\Adapter\In\Irc\Command;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\Security\ChanServPermission;
-use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleAction;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleOutcome;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandlerInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 
 final class UnforbidCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use BuildsChannelLifecycleRequest;
+
     public function __construct(
-        private readonly ChannelForbiddenService $forbiddenService,
+        private readonly ManageChannelLifecycleHandlerInterface $handler,
     ) {}
 
     public function getName(): string
@@ -98,9 +102,8 @@ final class UnforbidCommand implements ChanServCommandInterface, IrcopAuditableC
             return CommandOutcome::rejected();
         }
 
-        $success = $this->forbiddenService->unforbid($channelName, $context->sender->nick);
-
-        if (!$success) {
+        $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Unforbid));
+        if (ChannelLifecycleOutcome::NotForbidden === $result->outcome) {
             $context->reply('unforbid.not_forbidden', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();

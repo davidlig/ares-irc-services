@@ -8,12 +8,12 @@ use App\ChanServ\Application\Model\ChannelMember;
 use App\ChanServ\Application\Model\ChannelRankNetworkState;
 use App\ChanServ\Application\Port\Out\ChannelRankNetworkQuery;
 use App\ChanServ\Domain\ValueObject\ChannelRank;
+use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Application\Port\In\NickAccountQuery;
-use App\Shared\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Shared\Application\Port\ChannelModeSupportInterface;
 
 use function in_array;
 

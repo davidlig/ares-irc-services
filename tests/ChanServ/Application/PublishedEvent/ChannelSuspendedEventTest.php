@@ -16,8 +16,8 @@ final class ChannelSuspendedEventTest extends TestCase
     #[Test]
     public function constructionWithAllProperties(): void
     {
-        $before = new DateTimeImmutable();
         $expiresAt = new DateTimeImmutable('+7 days');
+        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
         $event = new ChannelSuspendedEvent(
             channelId: 1,
             channelName: '#Test',
@@ -29,8 +29,8 @@ final class ChannelSuspendedEventTest extends TestCase
             performedByNickId: 10,
             performedByIp: '192.168.1.1',
             performedByHost: 'user@host',
+            occurredAt: $occurredAt,
         );
-        $after = new DateTimeImmutable();
 
         self::assertSame(1, $event->channelId);
         self::assertSame('#Test', $event->channelName);
@@ -42,8 +42,7 @@ final class ChannelSuspendedEventTest extends TestCase
         self::assertSame(10, $event->performedByNickId);
         self::assertSame('192.168.1.1', $event->performedByIp);
         self::assertSame('user@host', $event->performedByHost);
-        self::assertGreaterThanOrEqual($before, $event->occurredAt);
-        self::assertLessThanOrEqual($after, $event->occurredAt);
+        self::assertSame($occurredAt, $event->occurredAt);
     }
 
     #[Test]
@@ -60,6 +59,7 @@ final class ChannelSuspendedEventTest extends TestCase
             performedByNickId: null,
             performedByIp: '*',
             performedByHost: 'admin@*',
+            occurredAt: new DateTimeImmutable('2026-01-02 03:04:05'),
         );
 
         self::assertNull($event->duration);
@@ -68,9 +68,9 @@ final class ChannelSuspendedEventTest extends TestCase
     }
 
     #[Test]
-    public function occurredAtDefaultsToNow(): void
+    public function occurredAtIsProvidedByTheCaller(): void
     {
-        $before = new DateTimeImmutable('-1 second');
+        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
         $event = new ChannelSuspendedEvent(
             channelId: 1,
             channelName: '#Test',
@@ -82,11 +82,10 @@ final class ChannelSuspendedEventTest extends TestCase
             performedByNickId: 1,
             performedByIp: '*',
             performedByHost: '*',
+            occurredAt: $occurredAt,
         );
-        $after = new DateTimeImmutable('+1 second');
 
-        self::assertGreaterThanOrEqual($before, $event->occurredAt);
-        self::assertLessThanOrEqual($after, $event->occurredAt);
+        self::assertSame($occurredAt, $event->occurredAt);
     }
 
     #[Test]

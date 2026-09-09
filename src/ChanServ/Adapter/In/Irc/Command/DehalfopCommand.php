@@ -5,29 +5,13 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
-use App\ChanServ\Adapter\In\Irc\ChanServContext;
-use App\ChanServ\Application\Model\ChanAccountView;
-use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
-use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Application\Service\ChanServAccessHelper;
-use App\ChanServ\Domain\Entity\ChannelAccess;
-use App\ChanServ\Domain\Entity\ChannelLevel;
-use App\ChanServ\Domain\Entity\RegisteredChannel;
-use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
-use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Application\Port\In\SenderView;
 
 /**
  * DEHALFOP <#channel> <nickname>. ChanServ removes +h. Only if IRCd supports halfop mode.
  */
 final readonly class DehalfopCommand implements ChanServCommandInterface
 {
-    public function __construct(
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChanUserAccountPort $accountPort,
-        private NetworkUserLookupPort $userLookup,
-        private ChanServAccessHelper $accessHelper,
-    ) {}
+    use ManualRankCommandPresentation;
 
     public function getName(): string
     {
@@ -93,104 +77,5 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
     public function usesLevelFounder(): bool
     {
         return true;
-    }
-
-    public function execute(ChanServContext $context): void
-    {
-        $sender = $context->sender;
-        if (null === $sender) {
-            return;
-        }
-
-        if (!$context->getChannelModeSupport()->hasHalfOp()) {
-            $context->reply('halfop.not_supported');
-
-            return;
-        }
-
-        $validation = $this->validateDehalfopExecute($context);
-        if (null === $validation) {
-            return;
-        }
-
-        [$channelName, $targetNick, $channel, $targetSender] = $validation;
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'h', false, $channel->getCreatedAt()->getTimestamp());
-        $context->getNotifier()->sendNoticeToChannel(
-            $channelName,
-            $context->trans('halfop.notice_grant', [
-                '%from%' => $sender->nick,
-                '%to%' => $targetNick,
-                '%mode%' => '-h',
-            ])
-        );
-        $context->reply('dehalfop.done', ['%nickname%' => $targetNick]);
-    }
-
-    /** @return array{string, string, RegisteredChannel, SenderView}|null */
-    private function validateDehalfopExecute(ChanServContext $context): ?array
-    {
-        $channelName = $context->getChannelNameArg(0);
-        if (null === $channelName) {
-            $context->reply('error.invalid_channel');
-
-            return null;
-        }
-
-        $targetNick = $context->args[1] ?? '';
-        if ('' === $targetNick) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-            return null;
-        }
-
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
-            throw ChannelNotRegisteredException::forChannel($channelName);
-        }
-
-        return $this->validateDehalfopSender($context, $channel, $channelName, $targetNick);
-    }
-
-    /** @return array{string, string, RegisteredChannel, SenderView}|null */
-    private function validateDehalfopSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
-    {
-        $senderAccount = $context->senderAccount;
-        if (null === $senderAccount) {
-            $context->reply('error.not_identified');
-
-            return null;
-        }
-
-        if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $senderAccount->id, ChannelLevel::KEY_HALFOPDEHALFOP, $channelName, 'DEHALFOP');
-        }
-
-        return $this->validateDehalfopTarget($context, $channel, $channelName, $targetNick, $senderAccount);
-    }
-
-    /** @return array{string, string, RegisteredChannel, SenderView}|null */
-    private function validateDehalfopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, ChanAccountView $senderAccount): ?array
-    {
-        $targetSender = $this->userLookup->findByNick($targetNick);
-        if (null === $targetSender) {
-            $context->reply('halfop.user_not_on_channel', ['%nickname%' => $targetNick]);
-
-            return null;
-        }
-        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $senderAccount->id, true);
-        $targetAccount = $this->accountPort->findAccountByNick($targetNick);
-        if (null === $targetAccount) {
-            $targetLevel = ChannelAccess::LEVEL_UNREGISTERED;
-        } else {
-            $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->id, $targetSender->isIdentified);
-        }
-        $isSelfTarget = null !== $targetAccount && $targetAccount->id === $senderAccount->id;
-        if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
-            $context->reply('error.insufficient_access', ['%operation%' => 'DEHALFOP', '%channel%' => $channelName]);
-
-            return null;
-        }
-
-        return [$channelName, $targetNick, $channel, $targetSender];
     }
 }

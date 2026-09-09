@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\Out\Service;
 
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Adapter\Out\Service\OperServDebugNotifier;
@@ -13,7 +13,6 @@ use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -369,20 +368,10 @@ final class OperServDebugNotifierTest extends TestCase
         self::assertSame($userLookup, $debug->getUserLookup());
     }
 
-    #[Test]
-    public function getIdentifiedRegistryReturnsConfiguredRegistry(): void
-    {
-        $identifiedRegistry = new IdentifiedSessionRegistry();
-        $debug = $this->createDebugNotifier(identifiedRegistry: $identifiedRegistry);
-
-        self::assertSame($identifiedRegistry, $debug->getIdentifiedRegistry());
-    }
-
     private function createDebugNotifier(
         ?ChannelServiceActionsPort $channelActions = null,
         ?NetworkUserLookupPort $userLookup = null,
         ?OperServNotifierInterface $notifier = null,
-        ?IdentifiedSessionRegistry $identifiedRegistry = null,
         ?NickAccountQuery $nickAccounts = null,
         ?OperatorAuthorizationQuery $authorization = null,
         ?TranslatorInterface $translator = null,
@@ -392,7 +381,6 @@ final class OperServDebugNotifierTest extends TestCase
             channelActions: $channelActions ?? $this->createStub(ChannelServiceActionsPort::class),
             userLookup: $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             notifier: $notifier ?? $this->createStub(OperServNotifierInterface::class),
-            identifiedRegistry: $identifiedRegistry ?? new IdentifiedSessionRegistry(),
             nickAccounts: $nickAccounts ?? $this->createStub(NickAccountQuery::class),
             authorization: $authorization ?? $this->deniedAuthorization(),
             translator: $translator ?? $this->createStub(TranslatorInterface::class),

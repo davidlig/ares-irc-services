@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Irc\Application\Port\In;
 
-use App\Shared\Application\Port\ChannelModeSupportInterface;
-
 /**
  * Bundles all protocol-specific pieces for one IRCd type (Unreal, InspIRCd, P10, etc.).
- * Each IRCd module lives in its own namespace and provides handler, formatters and actions.
+ * Each IRCd module lives in its own namespace and provides its handler and capabilities.
  * No generic "protocol" class holds a switch over IRCd types.
  */
 interface ProtocolModuleInterface
@@ -16,8 +14,6 @@ interface ProtocolModuleInterface
     public function getProtocolName(): string;
 
     public function getServiceActions(): ProtocolServiceActionsInterface;
-
-    public function getIntroductionFormatter(): ServiceIntroductionFormatterInterface;
 
     /** Which channel prefix modes (v, h, o, a, q) this IRCd supports. Used by ChanServ. */
     public function getChannelModeSupport(): ChannelModeSupportInterface;

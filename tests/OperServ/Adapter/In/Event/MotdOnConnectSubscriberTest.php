@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\In\Event;
 
-use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceChannelRegistrationPort;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
+use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkDTO;
-use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Application\Service\NickForceService;
-use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Application\Port\In\NickAccountQuery;
+use App\NickServ\Application\Port\In\NickCollisionResolver;
 use App\OperServ\Adapter\In\Event\MotdOnConnectSubscriber;
-use App\OperServ\Application\Service\PseudoClientUidGenerator;
-use App\OperServ\Domain\Entity\Motd;
-use App\OperServ\Domain\Repository\MotdRepositoryInterface;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceChannelRegistrationPort;
-use App\Shared\Application\ServiceUidRegistry;
+use App\OperServ\Adapter\Out\Irc\PseudoClientUidGenerator;
+use App\OperServ\Application\Model\MessageDelivery;
+use App\OperServ\Application\Port\Out\MotdEntry;
+use App\OperServ\Application\Port\Out\MotdRepository;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,6 +33,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(MotdOnConnectSubscriber::class)]
 final class MotdOnConnectSubscriberTest extends TestCase
 {
+    private int $nextMotdId = 1;
+
     private function dto(string $uid = '001ABC'): UserJoinedNetworkDTO
     {
         return new UserJoinedNetworkDTO(
@@ -46,30 +48,49 @@ final class MotdOnConnectSubscriberTest extends TestCase
         );
     }
 
+    private function motd(
+        string $text,
+        string $botNickname,
+        string $messageType,
+        ?int $creatorAccountId = null,
+        ?DateTimeImmutable $expiresAt = null,
+    ): MotdEntry {
+        return new MotdEntry(
+            $this->nextMotdId++,
+            $text,
+            $botNickname,
+            'PRIVMSG' === $messageType ? MessageDelivery::Interactive : MessageDelivery::NonInteractive,
+            true,
+            new DateTimeImmutable('2026-09-08T00:00:00+00:00'),
+            $expiresAt,
+            0,
+        );
+    }
+
     private function sub(
-        ?MotdRepositoryInterface $r = null,
+        ?MotdRepository $r = null,
         ?ServiceUidRegistry $u = null,
-        ?ActiveConnectionHolderInterface $c = null,
+        ?ActiveProtocolModuleHolderInterface $c = null,
         ?ChannelLookupPort $cl = null,
         ?ServiceChannelRegistrationPort $cr = null,
         ?PseudoClientUidGenerator $p = null,
         ?NetworkUserLookupPort $l = null,
-        ?RegisteredNickRepositoryInterface $n = null,
+        ?NickAccountQuery $n = null,
         ?SendNoticePort $s = null,
-        ?NickForceService $f = null,
+        ?NickCollisionResolver $f = null,
         ?string $debugChannel = null,
     ): MotdOnConnectSubscriber {
         return new MotdOnConnectSubscriber(
-            $r ?? $this->createStub(MotdRepositoryInterface::class),
+            $r ?? $this->createStub(MotdRepository::class),
             $u ?? $this->createStub(ServiceUidRegistry::class),
-            $c ?? $this->createStub(ActiveConnectionHolderInterface::class),
+            $c ?? $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $cl ?? $this->createStub(ChannelLookupPort::class),
             $cr ?? $this->createStub(ServiceChannelRegistrationPort::class),
             $p ?? $this->createStub(PseudoClientUidGenerator::class),
             $l ?? $this->createStub(NetworkUserLookupPort::class),
-            $n ?? $this->createStub(RegisteredNickRepositoryInterface::class),
+            $n ?? $this->createStub(NickAccountQuery::class),
             $s ?? $this->createStub(SendNoticePort::class),
-            $f ?? $this->createStub(NickForceService::class),
+            $f ?? $this->createStub(NickCollisionResolver::class),
             $debugChannel,
         );
     }
@@ -87,7 +108,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
     public function events(): void
     {
         $ev = MotdOnConnectSubscriber::getSubscribedEvents();
-        self::assertArrayHasKey(NetworkSyncCompleteEvent::class, $ev);
+        self::assertArrayHasKey(NetworkSynchronizationCompletedEvent::class, $ev);
         self::assertArrayHasKey(UserJoinedNetworkAppEvent::class, $ev);
     }
 
@@ -97,9 +118,9 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $s = $this->createMock(SendNoticePort::class);
         $s->expects(self::never())->method('sendMessage');
 
-        $m = Motd::create('Hi', 'NickServ', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Hi', 'NickServ', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn('001NS');
@@ -111,9 +132,9 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function serviceNickSends(): void
     {
-        $m = Motd::create('Hi', 'NickServ', 'PRIVMSG');
-        $r = $this->createMock(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Hi', 'NickServ', 'PRIVMSG');
+        $r = $this->createMock(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn('001NS');
@@ -121,25 +142,23 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $s = $this->createMock(SendNoticePort::class);
         $s->expects(self::once())->method('sendMessage')->with('001NS', '001ABC', 'Hi', 'PRIVMSG');
 
-        $r->expects(self::once())->method('save')->with($m);
+        $r->expects(self::once())->method('recordShown')->with($m->id);
 
         $x = $this->sub(r: $r, u: $u, s: $s);
         $x->onSyncComplete();
         $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
-
-        self::assertSame(1, $m->getShownCount());
     }
 
     #[Test]
     public function pseudoClientIntroducedAndSends(): void
     {
-        $m = Motd::create('Hi', 'test!bot@h.com', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
+        $m = $this->motd('Hi', 'test!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
         $r->method('findAll')->willReturn([$m]);
 
         $activeCalls = [[$m], [$m], [$m]];
         $ai = 0;
-        $r->method('findActive')->willReturnCallback(
+        $r->method('findActiveAt')->willReturnCallback(
             static function () use (&$activeCalls, &$ai): array {
                 return $activeCalls[$ai++];
             },
@@ -151,14 +170,14 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
 
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::once())->method('introducePseudoClient');
         $sa->expects(self::never())->method('quitPseudoClient');
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -176,14 +195,14 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function twoMotdsSameNameSharePseudoClient(): void
     {
-        $a = Motd::create('First', 'test!bot@h.com', 'PRIVMSG');
-        $b = Motd::create('Second', 'test!bot@h.com', 'NOTICE');
-        $r = $this->createStub(MotdRepositoryInterface::class);
+        $a = $this->motd('First', 'test!bot@h.com', 'PRIVMSG');
+        $b = $this->motd('Second', 'test!bot@h.com', 'NOTICE');
+        $r = $this->createStub(MotdRepository::class);
         $r->method('findAll')->willReturn([$a, $b]);
 
         $activeCalls = [[$a, $b], [$a, $b], [$a, $b]];
         $ai = 0;
-        $r->method('findActive')->willReturnCallback(
+        $r->method('findActiveAt')->willReturnCallback(
             static function () use (&$activeCalls, &$ai): array {
                 return $activeCalls[$ai++];
             },
@@ -193,14 +212,14 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $u->method('getUidByNickname')->willReturn(null);
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::once())->method('introducePseudoClient');
         $sa->expects(self::never())->method('quitPseudoClient');
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -224,13 +243,13 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function delOneKeepsClientIfOthersRemain(): void
     {
-        $a = Motd::create('A', 'test!bot@h.com', 'PRIVMSG');
-        $b = Motd::create('B', 'test!bot@h.com', 'NOTICE');
-        $r = $this->createStub(MotdRepositoryInterface::class);
+        $a = $this->motd('A', 'test!bot@h.com', 'PRIVMSG');
+        $b = $this->motd('B', 'test!bot@h.com', 'NOTICE');
+        $r = $this->createStub(MotdRepository::class);
 
         $activeCalls = [[$a, $b], [$a], [$a]];
         $ai = 0;
-        $r->method('findActive')->willReturnCallback(
+        $r->method('findActiveAt')->willReturnCallback(
             static function () use (&$activeCalls, &$ai): array {
                 return $activeCalls[$ai++];
             },
@@ -248,14 +267,14 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $u->method('getUidByNickname')->willReturn(null);
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::once())->method('introducePseudoClient');
         $sa->expects(self::never())->method('quitPseudoClient');
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -271,12 +290,12 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function delLastQuitsPseudoClient(): void
     {
-        $a = Motd::create('A', 'test!bot@h.com', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
+        $a = $this->motd('A', 'test!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
 
         $activeCalls = [[$a], [$a], []];
         $ai = 0;
-        $r->method('findActive')->willReturnCallback(
+        $r->method('findActiveAt')->willReturnCallback(
             static function () use (&$activeCalls, &$ai): array {
                 return $activeCalls[$ai++];
             },
@@ -288,15 +307,15 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $u->method('getUidByNickname')->willReturn(null);
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::once())->method('introducePseudoClient');
         $sa->expects(self::once())->method('quitPseudoClient')
             ->with('0A0', '0A0Z00001', 'MOTD expired');
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -311,23 +330,23 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function lateAddIntroducedOnNextJoin(): void
     {
-        $m = Motd::create('Late', 'late!bot@h.com', 'NOTICE');
-        $r = $this->createStub(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Late', 'late!bot@h.com', 'NOTICE');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
         $r->method('findAll')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::once())->method('introducePseudoClient');
         $sa->expects(self::never())->method('quitPseudoClient');
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -345,10 +364,10 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function renameConnectedUserAndIntroducePseudoClient(): void
     {
-        $m = Motd::create('Hi', 'test!bot@h.example', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
+        $m = $this->motd('Hi', 'test!bot@h.example', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
         $r->method('findAll')->willReturn([$m]);
-        $r->method('findActive')->willReturn([$m]);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
@@ -367,17 +386,17 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn($existingUser);
 
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
-        $f = $this->createMock(NickForceService::class);
+        $f = $this->createMock(NickCollisionResolver::class);
         $f->expects(self::once())->method('forceGuestNick')
             ->with('X', null, 'motd-collision');
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::once())->method('introducePseudoClient');
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -391,21 +410,21 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function skipWhenNickRegistered(): void
     {
-        $m = Motd::create('Hi', 'test!bot@h.com', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Hi', 'test!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn($this->createStub(RegisteredNick::class));
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(1);
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::never())->method('introducePseudoClient');
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -416,21 +435,21 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function skipWhenGenerateReturnsNull(): void
     {
-        $m = Motd::create('Hi', 'test!bot@h.com', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Hi', 'test!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::never())->method('introducePseudoClient');
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -444,9 +463,9 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function skipServiceNickInEnsure(): void
     {
-        $m = Motd::create('Hi', 'NickServ', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Hi', 'NickServ', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn('001NS');
@@ -454,7 +473,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::never())->method('introducePseudoClient');
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -465,16 +484,16 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function futureExpiryReserveDuration(): void
     {
-        $m = Motd::create('Timed', 'timer!bot@h.example', 'NOTICE', null, new DateTimeImmutable('+1 hour'));
-        $r = $this->createStub(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Timed', 'timer!bot@h.example', 'NOTICE', null, new DateTimeImmutable('+1 hour'));
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
         $nr = $this->createMock(ServiceNickReservationInterface::class);
         $nr->expects(self::once())->method('reserveNickWithDuration');
@@ -486,7 +505,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $mod->method('getServiceActions')->willReturn($sa);
         $mod->method('getNickReservation')->willReturn($nr);
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($mod);
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -500,14 +519,14 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function invalidMaskInSendMotdsIsSkipped(): void
     {
-        $m = Motd::create('Bad', 'not_a_mask', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Bad', 'not_a_mask', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($this->createStub(ProtocolServiceActionsInterface::class)));
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -522,9 +541,9 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function noModuleReturnsEarlyInEnsure(): void
     {
-        $m = Motd::create('Test', 'test!bot@h.com', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Test', 'test!bot@h.com', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
@@ -532,10 +551,10 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
 
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
-        $c = $this->createMock(ActiveConnectionHolderInterface::class);
+        $c = $this->createMock(ActiveProtocolModuleHolderInterface::class);
         $c->expects(self::once())->method('getProtocolModule')->willReturn(null);
         $c->expects(self::once())->method('getServerSid')->willReturn(null);
 
@@ -546,10 +565,10 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function customMotdBotJoinsDebugChannelWhenConfigured(): void
     {
-        $m = Motd::create('Hi', 'custom!bot@h.example', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
+        $m = $this->motd('Hi', 'custom!bot@h.example', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
         $r->method('findAll')->willReturn([$m]);
-        $r->method('findActive')->willReturn([$m]);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
@@ -557,8 +576,8 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
 
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::once())->method('introducePseudoClient');
@@ -569,7 +588,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $mod->method('getServiceActions')->willReturn($sa);
         $mod->method('getNickReservation')->willReturn($this->createStub(ServiceNickReservationInterface::class));
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($mod);
         $c->method('getServerSid')->willReturn('0A0');
 
@@ -590,9 +609,9 @@ final class MotdOnConnectSubscriberTest extends TestCase
     #[Test]
     public function customMotdBotSkipsDebugJoinWhenConnectionDisappearsAfterIntroduction(): void
     {
-        $m = Motd::create('Hi', 'custom!bot@h.example', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
-        $r->method('findActive')->willReturn([$m]);
+        $m = $this->motd('Hi', 'custom!bot@h.example', 'PRIVMSG');
+        $r = $this->createStub(MotdRepository::class);
+        $r->method('findActiveAt')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
@@ -600,8 +619,8 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
 
-        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn(null);
+        $n = $this->createStub(NickAccountQuery::class);
+        $n->method('findIdByNick')->willReturn(null);
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::once())->method('introducePseudoClient');
@@ -611,7 +630,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $mod->method('getServiceActions')->willReturn($sa);
         $mod->method('getNickReservation')->willReturn($this->createStub(ServiceNickReservationInterface::class));
 
-        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $c->method('getProtocolModule')->willReturnOnConsecutiveCalls($mod, null);
         $c->method('getServerSid')->willReturn('0A0');
 

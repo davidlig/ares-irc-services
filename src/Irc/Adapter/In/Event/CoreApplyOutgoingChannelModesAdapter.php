@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Network\ApplyOutgoingChannelModesApplicatorInterface;
-use App\Shared\Application\Port\ApplyOutgoingChannelModesPort;
+use App\Irc\Application\Port\In\ApplyOutgoingChannelModesPort;
 
 /**
  * Core implements ApplyOutgoingChannelModesPort: applies MODE sent by services

@@ -6,6 +6,7 @@ namespace App\OperServ\Adapter\In\Irc\Command;
 
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServContext;
+use App\OperServ\Application\Model\MessageDelivery;
 use App\OperServ\Application\Security\OperServPermission;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessage;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageHandler;
@@ -86,7 +87,11 @@ final readonly class GlobalCommand implements OperServCommandInterface
         $this->present($context, $this->handler->handle(new SendGlobalMessage(
             actorNickname: $context->sender->nick,
             senderMaskOrServiceNickname: $context->args[0],
-            messageType: $context->args[1],
+            delivery: match (strtoupper($context->args[1])) {
+                'NOTICE' => MessageDelivery::NonInteractive,
+                'PRIVMSG' => MessageDelivery::Interactive,
+                default => null,
+            },
             message: implode(' ', array_slice($context->args, 2)),
             occurredAt: new DateTimeImmutable(),
         )));

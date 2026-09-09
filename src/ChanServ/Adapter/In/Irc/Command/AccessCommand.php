@@ -12,6 +12,7 @@ use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessHandlerInte
 use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessOutcome;
 use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessResult;
 use App\ChanServ\Domain\Entity\ChannelAccess;
+use DateTimeImmutable;
 
 use function sprintf;
 use function strtoupper;
@@ -121,6 +122,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
             performedBy: $performedBy,
             performedByIp: null === $sender ? '*' : $this->decodeIp($sender->ipBase64),
             performedByHost: null === $sender ? '' : sprintf('%s@%s', $sender->ident, $sender->hostname),
+            occurredAt: new DateTimeImmutable(),
             targetNickname: '' === $targetNickname ? null : $targetNickname,
             level: '' === $levelArgument ? null : (int) $levelArgument,
         ));

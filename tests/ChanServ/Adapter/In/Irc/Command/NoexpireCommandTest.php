@@ -11,21 +11,33 @@ use App\ChanServ\Adapter\In\Irc\Command\NoexpireCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\Service\ChanDropService;
+use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\Service\ChannelSuspensionService;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleResult;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
-use App\Shared\Application\Port\TranslationInterface;
-use App\Shared\Application\ServiceNicknameRegistry;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NoexpireCommand::class)]
+#[UsesClass(ManageChannelLifecycleHandler::class)]
+#[UsesClass(ManageChannelLifecycle::class)]
+#[UsesClass(ChannelLifecycleResult::class)]
 final class NoexpireCommandTest extends TestCase
 {
     #[Test]
@@ -146,7 +158,7 @@ final class NoexpireCommandTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::never())->method('findByChannelName');
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
 
         $messages = [];
         $context = $this->createContext(null, null, ['#test', 'ON'], $messages, channelRepository: $channelRepository);
@@ -163,7 +175,7 @@ final class NoexpireCommandTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::never())->method('findByChannelName');
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
 
         $messages = [];
         $context = $this->createContext($this->createSender(), null, ['notachannel', 'ON'], $messages, channelRepository: $channelRepository);
@@ -182,7 +194,7 @@ final class NoexpireCommandTest extends TestCase
 
         $context = $this->createContext($this->createSender(), null, ['#test', 'INVALID'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
         self::assertContains('error.syntax', $messages);
@@ -198,7 +210,7 @@ final class NoexpireCommandTest extends TestCase
 
         $context = $this->createContext($this->createSender(), null, ['#test', 'ON'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
         self::assertContains('noexpire.not_registered', $messages);
@@ -208,7 +220,7 @@ final class NoexpireCommandTest extends TestCase
     #[Test]
     public function executeWithForbiddenChannelRepliesForbidden(): void
     {
-        $channel = RegisteredChannel::createForbidden('#forbidden', 'Banned');
+        $channel = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden', 'Banned');
 
         $messages = [];
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -216,7 +228,7 @@ final class NoexpireCommandTest extends TestCase
 
         $context = $this->createContext($this->createSender(), null, ['#forbidden', 'ON'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
         self::assertContains('noexpire.forbidden', $messages);
@@ -235,7 +247,7 @@ final class NoexpireCommandTest extends TestCase
 
         $context = $this->createContext($this->createSender(), null, ['#test', 'ON'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
         self::assertContains('noexpire.suspended', $messages);
@@ -256,7 +268,7 @@ final class NoexpireCommandTest extends TestCase
 
         $context = $this->createContext($this->createSender(), null, ['#test', 'ON'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
         self::assertTrue($channel->isNoExpire(), 'noExpire should be true after ON');
@@ -283,7 +295,7 @@ final class NoexpireCommandTest extends TestCase
 
         $context = $this->createContext($this->createSender(), null, ['#test', 'OFF'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
         self::assertFalse($channel->isNoExpire(), 'noExpire should be false after OFF');
@@ -307,7 +319,7 @@ final class NoexpireCommandTest extends TestCase
 
         $context = $this->createContext($this->createSender(), null, ['#test', 'on'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
         $cmd->execute($context);
 
         self::assertTrue($channel->isNoExpire());
@@ -327,7 +339,7 @@ final class NoexpireCommandTest extends TestCase
 
         $context = $this->createContext($this->createSender(), null, ['#test', 'off'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new NoexpireCommand($channelRepository);
+        $cmd = $this->createCommandWith($channelRepository);
         $cmd->execute($context);
 
         self::assertFalse($channel->isNoExpire());
@@ -336,9 +348,20 @@ final class NoexpireCommandTest extends TestCase
 
     private function createCommand(): NoexpireCommand
     {
-        return new NoexpireCommand(
+        return $this->createCommandWith(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
         );
+    }
+
+    private function createCommandWith(RegisteredChannelRepositoryInterface $channels): NoexpireCommand
+    {
+        return new NoexpireCommand(new ManageChannelLifecycleHandler(
+            $channels,
+            $this->createStub(ChanDropService::class),
+            $this->createStub(ChannelForbiddenService::class),
+            $this->createStub(ChannelSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+        ));
     }
 
     private function createSender(): SenderView
@@ -348,7 +371,7 @@ final class NoexpireCommandTest extends TestCase
 
     private function createChannelWithId(string $name, int $id): RegisteredChannel
     {
-        $channel = RegisteredChannel::register($name, 1, 'Test description');
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), $name, 1, 'Test description');
 
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
         $ref->setValue($channel, $id);
@@ -373,7 +396,7 @@ final class NoexpireCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslationInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(

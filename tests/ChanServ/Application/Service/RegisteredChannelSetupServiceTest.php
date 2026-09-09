@@ -14,6 +14,7 @@ use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
 use App\ChanServ\Domain\ValueObject\ChannelSetting;
 use App\ChanServ\Domain\ValueObject\ModeName;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +25,7 @@ final class RegisteredChannelSetupServiceTest extends TestCase
     #[Test]
     public function ignoresUnavailableAndBlockedChannels(): void
     {
-        $blocked = RegisteredChannel::register('#opers', 1, 'Debug');
+        $blocked = RegisteredChannel::register(new DateTimeImmutable(), '#opers', 1, 'Debug');
         $blocked->suspend('maintenance');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturnOnConsecutiveCalls(null, $blocked);
@@ -48,7 +49,7 @@ final class RegisteredChannelSetupServiceTest extends TestCase
     {
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->with('#opers')->willReturn(
-            RegisteredChannel::register('#opers', 1, 'Debug'),
+            RegisteredChannel::register(new DateTimeImmutable(), '#opers', 1, 'Debug'),
         );
         $modeLocks = $this->createMock(ChannelMlockPolicyRepository::class);
         $modeLocks->expects(self::never())->method('findByName');
@@ -66,8 +67,8 @@ final class RegisteredChannelSetupServiceTest extends TestCase
     #[Test]
     public function missingNetworkChannelRestoresItsCompleteRegisteredSetup(): void
     {
-        $registered = RegisteredChannel::register('#opers', 1, 'Debug');
-        $registered->updateTopic('Official ops channel');
+        $registered = RegisteredChannel::register(new DateTimeImmutable(), '#opers', 1, 'Debug');
+        $registered->updateTopic('Official ops channel', new DateTimeImmutable('2026-01-01 00:00:00'));
         $modeLock = ChannelModeLock::active([
             new ChannelSetting(new ModeName('n')),
             new ChannelSetting(new ModeName('t')),
@@ -92,7 +93,7 @@ final class RegisteredChannelSetupServiceTest extends TestCase
     public function missingNetworkChannelSkipsInactiveModeLockAndAbsentTopic(): void
     {
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('findByChannelName')->willReturn(RegisteredChannel::register('#opers', 1, 'Debug'));
+        $channels->method('findByChannelName')->willReturn(RegisteredChannel::register(new DateTimeImmutable(), '#opers', 1, 'Debug'));
         $modeLocks = $this->createStub(ChannelMlockPolicyRepository::class);
         $modeLocks->method('findByName')->willReturn(new ChannelMlockPolicy(
             '#opers',
@@ -114,7 +115,7 @@ final class RegisteredChannelSetupServiceTest extends TestCase
     public function missingModeLockPolicyStillRestoresOtherSetup(): void
     {
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('findByChannelName')->willReturn(RegisteredChannel::register('#opers', 1, 'Debug'));
+        $channels->method('findByChannelName')->willReturn(RegisteredChannel::register(new DateTimeImmutable(), '#opers', 1, 'Debug'));
         $modeLocks = $this->createStub(ChannelMlockPolicyRepository::class);
         $modeLocks->method('findByName')->willReturn(null);
         $network = $this->createStub(ChanNetworkActions::class);

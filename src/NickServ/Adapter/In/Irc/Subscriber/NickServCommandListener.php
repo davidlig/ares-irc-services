@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc\Subscriber;
 
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
 use App\NickServ\Adapter\In\Irc\Bot\NickServBot;
 use App\NickServ\Adapter\In\Irc\NickServService;
 use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
 use App\NickServ\Domain\Exception\InvalidCredentialsException;
 use App\NickServ\Domain\Exception\NickAlreadyRegisteredException;
-use App\Shared\Application\Port\SendNoticePort;
-use App\Shared\Application\Port\ServiceCommandListenerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;

@@ -14,12 +14,12 @@ use App\ChanServ\Application\UseCase\ApplyStoredTopic\ApplyStoredChannelTopicHan
 use App\ChanServ\Application\UseCase\ApplyStoredTopic\StoredTopicApplicationTrigger;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelServiceActionsPort;
+use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Irc\Application\Port\In\UidResolverInterface;
 use App\Irc\Application\PublishedEvent\ChannelSynchronizedEvent;
 use App\Irc\Application\PublishedEvent\NetworkSynchronizationCompletedEvent;
-use App\Shared\Application\Port\ChannelServiceActionsPort;
-use App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface;
-use App\Shared\Application\Port\UidResolverInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

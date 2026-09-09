@@ -37,7 +37,9 @@ use function trim;
 
 use const PATHINFO_EXTENSION;
 use const T_ABSTRACT;
+use const T_COMMENT;
 use const T_CONSTANT_ENCAPSED_STRING;
+use const T_DOC_COMMENT;
 use const T_NAME_FULLY_QUALIFIED;
 use const T_NAME_QUALIFIED;
 use const T_NAME_RELATIVE;
@@ -97,6 +99,29 @@ final class LayerDependencyTest extends TestCase
     }
 
     #[Test]
+    public function innerLayersReceiveTimeExplicitly(): void
+    {
+        $violations = [];
+        $paths = ['src/Shared/Application', 'src/Shared/Domain'];
+        foreach (self::BOUNDED_CONTEXTS as $context) {
+            $paths[] = 'src/' . $context . '/Application';
+            $paths[] = 'src/' . $context . '/Domain';
+        }
+
+        foreach ($paths as $path) {
+            foreach (self::phpFiles($path) as $file) {
+                if (self::containsAmbientTimeAccess($file)) {
+                    $violations[] = $file;
+                }
+            }
+        }
+
+        sort($violations);
+
+        self::assertSame([], $violations, "Inner layers read environmental time instead of receiving it explicitly:\n" . implode("\n", $violations));
+    }
+
+    #[Test]
     public function sharedCodeDoesNotReferenceConcreteProtocolNames(): void
     {
         $protocolNames = self::protocolNames();
@@ -143,11 +168,14 @@ final class LayerDependencyTest extends TestCase
         }
 
         self::assertFileExists(self::ROOT . '/src/Kernel.php');
+        self::assertDirectoryExists(self::ROOT . '/src/Bootstrap');
+        self::assertDirectoryExists(self::ROOT . '/src/Shared');
         foreach (['Application', 'Domain', 'Infrastructure', 'UI'] as $forbiddenRoot) {
             self::assertDirectoryDoesNotExist(self::ROOT . '/src/' . $forbiddenRoot);
         }
 
         foreach (self::BOUNDED_CONTEXTS as $context) {
+            self::assertDirectoryExists(self::ROOT . '/src/' . $context);
             self::assertOnlyContainsDirectories($context, ['Adapter', 'Application', 'Domain']);
         }
 
@@ -164,6 +192,62 @@ final class LayerDependencyTest extends TestCase
     }
 
     #[Test]
+    public function testsUseOnlyFinalBoundedContextOwnership(): void
+    {
+        $allowedRoots = [...self::BOUNDED_CONTEXTS, 'Architecture', 'Bootstrap', 'Shared', 'bootstrap.php'];
+        $entries = scandir(self::ROOT . '/tests');
+        self::assertIsArray($entries);
+
+        foreach ($entries as $entry) {
+            if ('.' === $entry || '..' === $entry) {
+                continue;
+            }
+
+            self::assertContains($entry, $allowedRoots, 'tests/' . $entry . ' is not owned by the final topology');
+        }
+
+        self::assertDirectoryDoesNotExist(self::ROOT . '/tests/Integration');
+        self::assertDirectoryDoesNotExist(self::ROOT . '/tests/Infrastructure');
+        self::assertDirectoryDoesNotExist(self::ROOT . '/tests/UI');
+    }
+
+    #[Test]
+    public function migrationDebtArtifactsDoNotReturn(): void
+    {
+        self::assertFileDoesNotExist(self::ROOT . '/architecture-debt.json');
+        self::assertFileDoesNotExist(self::ROOT . '/architecture-debt.schema.json');
+        self::assertDirectoryDoesNotExist(self::ROOT . '/deptrac-baseline');
+    }
+
+    #[Test]
+    public function bootstrapDoesNotOwnMaintenanceOrchestration(): void
+    {
+        self::assertDirectoryDoesNotExist(self::ROOT . '/src/Bootstrap/Maintenance');
+        self::assertFileExists(self::ROOT . '/src/Irc/Adapter/In/Maintenance/MaintenanceScheduler.php');
+        self::assertFileExists(self::ROOT . '/src/Irc/Adapter/In/Maintenance/RunMaintenanceCycleHandler.php');
+    }
+
+    #[Test]
+    public function sharedKernelContainsOnlyApprovedGenericContracts(): void
+    {
+        $expected = [
+            'src/Shared/Application/Audit/SafeAuditMetadata.php',
+            'src/Shared/Application/Mail/MailerInterface.php',
+            'src/Shared/Application/Mail/Message/SendEmail.php',
+            'src/Shared/Application/Mail/Message/SendEmailHandler.php',
+            'src/Shared/Application/Port/AsyncMessageDispatcherInterface.php',
+            'src/Shared/Application/Port/EventBusInterface.php',
+            'src/Shared/Application/Port/TransactionManagerInterface.php',
+            'src/Shared/Application/Time/RelativeExpiryParser.php',
+        ];
+        $actual = self::phpFiles('src/Shared');
+
+        sort($expected);
+
+        self::assertSame($expected, $actual, 'Shared must remain a deliberately tiny generic kernel');
+    }
+
+    #[Test]
     public function phpNamespacesFollowTheirPsr4Paths(): void
     {
         foreach (self::phpFiles('src') as $file) {
@@ -177,6 +261,25 @@ final class LayerDependencyTest extends TestCase
 
             self::assertSame(1, preg_match('/^namespace\s+([^;{]+)[;{]/m', $contents, $matches), $file . ' must declare its namespace');
             self::assertSame($expectedNamespace, trim($matches[1]), $file . ' must follow the App\\ PSR-4 path');
+        }
+    }
+
+    #[Test]
+    public function testNamespacesFollowTheirBoundedContextPaths(): void
+    {
+        foreach (self::phpFiles('tests') as $file) {
+            if ('tests/bootstrap.php' === $file) {
+                continue;
+            }
+
+            $relativeDirectory = dirname(substr($file, strlen('tests/')));
+            $expectedNamespace = 'App\\Tests\\' . str_replace('/', '\\', $relativeDirectory);
+            $contents = file_get_contents(self::ROOT . '/' . $file);
+            self::assertIsString($contents);
+            $matches = [];
+
+            self::assertSame(1, preg_match('/^namespace\s+([^;{]+)[;{]/m', $contents, $matches), $file . ' must declare its namespace');
+            self::assertSame($expectedNamespace, trim($matches[1]), $file . ' must follow its bounded-context test path');
         }
     }
 
@@ -419,6 +522,23 @@ final class LayerDependencyTest extends TestCase
         }
 
         return false;
+    }
+
+    private static function containsAmbientTimeAccess(string $file): bool
+    {
+        $code = '';
+        foreach (token_get_all((string) file_get_contents(self::ROOT . '/' . $file)) as $token) {
+            if (is_array($token)) {
+                $code .= in_array($token[0], [T_COMMENT, T_DOC_COMMENT], true) ? ' ' : $token[1];
+
+                continue;
+            }
+
+            $code .= $token;
+        }
+
+        return 1 === preg_match('/(?<![A-Za-z0-9_>:\\\\])\\\\?(?:time|microtime|hrtime)\s*\(/', $code)
+            || 1 === preg_match('/\bnew\s+\\\\?(?:DateTime|DateTimeImmutable)\s*\(\s*(?:[\'\"]now[\'\"]\s*)?\)/i', $code);
     }
 
     /** @return list<string> */

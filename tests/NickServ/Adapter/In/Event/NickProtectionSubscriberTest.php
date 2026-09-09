@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Event;
 
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
@@ -36,7 +37,6 @@ use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Domain\Entity\RegisteredNick;
-use App\Shared\Application\Port\ActiveConnectionHolderInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -103,7 +103,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $vhostSync,
             $this->burstState,
             $this->networkUserLookup,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
         );
     }
@@ -395,7 +395,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $pendingRegistry->expects(self::once())->method('schedule')->with('001ABC', $this->now);
 
         $module = $this->createStub(NickProtectionTestProtocolModule::class);
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
 
         $subscriber = new NickProtectionSubscriber(
@@ -437,7 +437,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $pendingRegistry->expects(self::once())->method('schedule')->with('001ABC', $this->now);
 
         $module = $this->createStub(NickProtectionTestProtocolModule::class);
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
 
         $burstState = new BurstState();
@@ -488,7 +488,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createVhostSyncService(),
             $burstState,
             $this->networkUserLookup,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
             $pendingRegistry,
         );
@@ -528,7 +528,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createVhostSyncService(),
             $burstState,
             $this->networkUserLookup,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
             $pendingRegistry,
         );
@@ -562,7 +562,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $pendingRegistry->expects(self::never())->method('schedule');
 
         $module = $this->createStub(NickProtectionTestProtocolModule::class);
-        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
 
         $burstState = new BurstState();
@@ -627,7 +627,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createVhostSyncService(),
             $this->burstState,
             $this->networkUserLookup,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
             $pendingRegistry,
         );
@@ -649,7 +649,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createVhostSyncService(),
             $this->burstState,
             $this->networkUserLookup,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
             $pendingRegistry,
         );
@@ -707,7 +707,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createVhostSyncService(),
             $this->burstState,
             $this->networkUserLookup,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
             $pendingRegistry,
         );
@@ -726,7 +726,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createVhostSyncService(),
             $this->burstState,
             $this->networkUserLookup,
-            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
         );
 

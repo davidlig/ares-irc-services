@@ -7,8 +7,8 @@ namespace App\ChanServ\Adapter\Out\Network;
 use App\ChanServ\Application\Model\ChannelTopicNetworkState;
 use App\ChanServ\Application\Port\Out\ChannelTopicNetworkQuery;
 use App\Irc\Application\Port\In\ChannelLookupPort;
-use App\Shared\Application\Port\ChannelSyncCompletedRegistryInterface;
-use App\Shared\Application\Port\UidResolverInterface;
+use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
+use App\Irc\Application\Port\In\UidResolverInterface;
 
 final readonly class IrcChannelTopicNetworkQuery implements ChannelTopicNetworkQuery
 {
