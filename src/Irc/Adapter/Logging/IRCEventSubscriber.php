@@ -6,7 +6,7 @@ namespace App\Irc\Adapter\Logging;
 
 use App\Irc\Adapter\Event\ConnectionEstablishedEvent;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
-use App\Irc\Adapter\Event\MessageReceivedEvent;
+use App\Irc\Adapter\Event\IncomingIrcMessageEvent;
 use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use DateTimeInterface;
 use Psr\Log\LoggerInterface;
@@ -38,7 +38,7 @@ final readonly class IRCEventSubscriber implements EventSubscriberInterface
         return [
             ConnectionEstablishedEvent::class => ['onConnectionEstablished', 0],
             ConnectionLostEvent::class => ['onConnectionLost', 0],
-            MessageReceivedEvent::class => ['onMessageReceived', 0],
+            IncomingIrcMessageEvent::class => ['onIncomingMessage', 0],
         ];
     }
 
@@ -62,7 +62,7 @@ final readonly class IRCEventSubscriber implements EventSubscriberInterface
         ]);
     }
 
-    public function onMessageReceived(MessageReceivedEvent $event): void
+    public function onIncomingMessage(IncomingIrcMessageEvent $event): void
     {
         $message = $event->message;
         $trailing = $message->trailing;

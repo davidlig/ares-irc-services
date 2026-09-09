@@ -6,6 +6,7 @@ namespace App\Tests\Irc\Adapter\Runtime;
 
 use App\Irc\Adapter\Event\ConnectionEstablishedEvent;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
+use App\Irc\Adapter\Event\IncomingIrcMessageEvent;
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
@@ -197,6 +198,7 @@ final class IRCClientTest extends TestCase
         $msg1 = new IRCMessage('PING', 'server', ['12345']);
         $msg2 = new IRCMessage('PONG', 'server', ['12345']);
         $dispatched = [];
+        $sequence = [];
 
         $this->connection = $this->createMock(ConnectionInterface::class);
         $this->connection->expects(self::atLeastOnce())->method('isConnected')->willReturn(true);
@@ -210,12 +212,16 @@ final class IRCClientTest extends TestCase
                 $line2 => $msg2,
                 default => new IRCMessage('UNKNOWN'),
             });
-        $this->protocol->expects(self::exactly(2))->method('handleIncoming');
+        $this->protocol->expects(self::exactly(2))->method('handleIncoming')
+            ->willReturnCallback(static function () use (&$sequence): void {
+                $sequence[] = 'handle';
+            });
 
         $this->eventDispatcher = $this->createMock(EventBusInterface::class);
         $this->eventDispatcher->expects(self::atLeastOnce())->method('dispatch')->willReturnCallback(
-            static function (object $event) use (&$dispatched): object {
+            static function (object $event) use (&$dispatched, &$sequence): object {
                 $dispatched[] = $event;
+                $sequence[] = $event::class;
 
                 return $event;
             }
@@ -224,13 +230,25 @@ final class IRCClientTest extends TestCase
         $this->client = $this->createClient();
         $this->client->run();
 
-        self::assertCount(4, $dispatched);
-        self::assertInstanceOf(MessageReceivedEvent::class, $dispatched[0]);
+        self::assertCount(6, $dispatched);
+        self::assertInstanceOf(IncomingIrcMessageEvent::class, $dispatched[0]);
         self::assertSame($msg1, $dispatched[0]->message);
-        self::assertInstanceOf(IrcMessageProcessedEvent::class, $dispatched[1]);
-        self::assertInstanceOf(MessageReceivedEvent::class, $dispatched[2]);
-        self::assertSame($msg2, $dispatched[2]->message);
-        self::assertInstanceOf(IrcMessageProcessedEvent::class, $dispatched[3]);
+        self::assertInstanceOf(MessageReceivedEvent::class, $dispatched[1]);
+        self::assertInstanceOf(IrcMessageProcessedEvent::class, $dispatched[2]);
+        self::assertInstanceOf(IncomingIrcMessageEvent::class, $dispatched[3]);
+        self::assertSame($msg2, $dispatched[3]->message);
+        self::assertInstanceOf(MessageReceivedEvent::class, $dispatched[4]);
+        self::assertInstanceOf(IrcMessageProcessedEvent::class, $dispatched[5]);
+        self::assertSame([
+            IncomingIrcMessageEvent::class,
+            'handle',
+            MessageReceivedEvent::class,
+            IrcMessageProcessedEvent::class,
+            IncomingIrcMessageEvent::class,
+            'handle',
+            MessageReceivedEvent::class,
+            IrcMessageProcessedEvent::class,
+        ], $sequence);
     }
 
     #[Test]
@@ -264,7 +282,7 @@ final class IRCClientTest extends TestCase
         $this->protocol->expects(self::once())->method('handleIncoming');
 
         $this->eventDispatcher = $this->createMock(EventBusInterface::class);
-        $this->eventDispatcher->expects(self::exactly(2))->method('dispatch')->willReturnArgument(0);
+        $this->eventDispatcher->expects(self::exactly(3))->method('dispatch')->willReturnArgument(0);
 
         $this->client = $this->createClient();
         $this->client->run();
@@ -333,7 +351,7 @@ final class IRCClientTest extends TestCase
         });
 
         $this->eventDispatcher = $this->createMock(EventBusInterface::class);
-        $this->eventDispatcher->expects(self::exactly(4))->method('dispatch')->willReturnCallback(
+        $this->eventDispatcher->expects(self::exactly(5))->method('dispatch')->willReturnCallback(
             static function (object $event) use (&$dispatchedEvents): object {
                 $dispatchedEvents[] = $event;
 

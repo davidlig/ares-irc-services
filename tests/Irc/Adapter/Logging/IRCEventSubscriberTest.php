@@ -6,6 +6,7 @@ namespace App\Tests\Irc\Adapter\Logging;
 
 use App\Irc\Adapter\Event\ConnectionEstablishedEvent;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
+use App\Irc\Adapter\Event\IncomingIrcMessageEvent;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Logging\IRCEventSubscriber;
 use App\Irc\Adapter\Protocol\IRCMessage;
@@ -45,7 +46,8 @@ final class IRCEventSubscriberTest extends TestCase
 
         self::assertArrayHasKey(ConnectionEstablishedEvent::class, $events);
         self::assertArrayHasKey(ConnectionLostEvent::class, $events);
-        self::assertArrayHasKey(MessageReceivedEvent::class, $events);
+        self::assertSame(['onIncomingMessage', 0], $events[IncomingIrcMessageEvent::class]);
+        self::assertArrayNotHasKey(MessageReceivedEvent::class, $events);
     }
 
     #[Test]
@@ -92,7 +94,7 @@ final class IRCEventSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onMessageReceivedLogsDebug(): void
+    public function onIncomingMessageLogsDebug(): void
     {
         $message = new IRCMessage(
             prefix: 'irc.example.com',
@@ -100,9 +102,9 @@ final class IRCEventSubscriberTest extends TestCase
             params: ['irc.example.com'],
             trailing: null,
         );
-        $event = new MessageReceivedEvent($message);
+        $event = new IncomingIrcMessageEvent($message);
 
-        $this->subscriber->onMessageReceived($event);
+        $this->subscriber->onIncomingMessage($event);
 
         $record = $this->record();
         self::assertSame('< PING', $record->message);
@@ -112,7 +114,7 @@ final class IRCEventSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onMessageReceivedRedactsSensitiveNickServCommands(): void
+    public function onIncomingMessageRedactsSensitiveNickServCommands(): void
     {
         $message = new IRCMessage(
             prefix: 'nick!user@host',
@@ -120,9 +122,9 @@ final class IRCEventSubscriberTest extends TestCase
             params: ['NickServ'],
             trailing: 'IDENTIFY mysecretpassword',
         );
-        $event = new MessageReceivedEvent($message);
+        $event = new IncomingIrcMessageEvent($message);
 
-        $this->subscriber->onMessageReceived($event);
+        $this->subscriber->onIncomingMessage($event);
 
         $record = $this->record();
         self::assertSame('IDENTIFY ******', $record->context['trailing']);
@@ -132,7 +134,7 @@ final class IRCEventSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onMessageReceivedRedactsSensitiveSqueryCommands(): void
+    public function onIncomingMessageRedactsSensitiveSqueryCommands(): void
     {
         $message = new IRCMessage(
             prefix: 'nick!user@host',
@@ -140,9 +142,9 @@ final class IRCEventSubscriberTest extends TestCase
             params: ['NickServ'],
             trailing: 'VERIFY verification-token',
         );
-        $event = new MessageReceivedEvent($message);
+        $event = new IncomingIrcMessageEvent($message);
 
-        $this->subscriber->onMessageReceived($event);
+        $this->subscriber->onIncomingMessage($event);
 
         $record = $this->record();
         self::assertSame('VERIFY ******', $record->context['trailing']);

@@ -7,6 +7,7 @@ namespace App\Irc\Adapter\Runtime;
 use Amp\Future;
 use App\Irc\Adapter\Event\ConnectionEstablishedEvent;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
+use App\Irc\Adapter\Event\IncomingIrcMessageEvent;
 use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
@@ -186,6 +187,8 @@ class IRCClient implements IrcSessionInterface
     private function processIncomingLine(string $rawLine): void
     {
         $message = $this->protocol->parseRawLine($rawLine);
+
+        $this->eventDispatcher->dispatch(new IncomingIrcMessageEvent($message));
 
         $this->protocol->handleIncoming($message, $this->connection);
 
