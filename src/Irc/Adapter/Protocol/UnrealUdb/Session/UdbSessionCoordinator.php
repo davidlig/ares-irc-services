@@ -23,6 +23,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use App\Irc\Adapter\Runtime\LoopSchedulerInterface;
 use App\Irc\Adapter\Runtime\RevoltLoopScheduler;
@@ -37,6 +38,7 @@ use function array_keys;
 use function array_map;
 use function bin2hex;
 use function in_array;
+use function is_int;
 use function max;
 use function min;
 use function random_bytes;
@@ -73,15 +75,21 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private ?bool $storeReady = null;
 
-    private int $roundSequence = 0;
+    private UdbUnsignedDecimal $roundSequence;
 
     private int $txidSequence = 0;
 
-    private int $errorCorrelation = 0;
+    private UdbUnsignedDecimal $errorCorrelation;
 
     private int $errReofferCount = 0;
 
     private ?bool $approved = null;
+
+    /** True when queue loss is not yet covered by an in-flight full snapshot round. */
+    private bool $resyncPending = false;
+
+    /** The full reconciliation round currently covering a queue-overflow debt. */
+    private ?UdbUnsignedDecimal $recoveryRoundId = null;
 
     private readonly string $epoch;
 
@@ -123,6 +131,8 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->reconciliation = $reconciliation ?? new UdbReconciliationRound();
         $this->transfers = $transfers ?? new UdbOutboundTransferTracker();
         $this->mutationQueue = $mutationQueue ?? new UdbMutationQueue();
+        $this->roundSequence = UdbUnsignedDecimal::fromInt(0);
+        $this->errorCorrelation = UdbUnsignedDecimal::fromInt(0);
     }
 
     private ?SessionEventPump $eventPump = null;
@@ -158,7 +168,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     public function activeRoundId(): ?int
     {
-        return $this->reconciliation->id();
+        return $this->reconciliation->id()?->toInt();
     }
 
     public function epoch(): string
@@ -245,6 +255,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     /** Drops all volatile state. Called on connection loss. */
     public function reset(): void
     {
+        $this->restoreRecoveryDebt();
         $this->cancelDeadlineTimer();
         $this->peer->reset();
         $this->helloBarrier->reset();
@@ -258,6 +269,11 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->connection = null;
         // $this->mutationQueue is preserved: the store already holds every
         // queued change and the next reconciliation round recovers delivery.
+    }
+
+    public function isResyncPending(): bool
+    {
+        return $this->resyncPending || null !== $this->recoveryRoundId;
     }
 
     public function scheduleNextDeadlineTimer(): void
@@ -328,6 +344,9 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             UdbFrameKind::OclgEnd => $this->handleOclgEnd($frame),
         };
 
+        $this->settleRecoveryRound();
+        $this->maybeOfferPendingReconciliation();
+
         if ($this->isAuthorityReady()) {
             $this->flushMutations();
         }
@@ -350,7 +369,8 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             $this->logger->warning('UDB mutation queue overflow; recovering divergence via reconciliation.', [
                 'block' => $mutation->block,
             ]);
-            $this->offerReconciliation();
+            $this->resyncPending = true;
+            $this->maybeOfferPendingReconciliation();
         }
 
         if ($this->isAuthorityReady() && null !== $this->eventPump) {
@@ -481,15 +501,26 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         }
 
         $remoteSid = $this->peer->remoteSid();
-        if (null === $remoteSid || null === $this->connection || !$this->isStoreReady()) {
+        if (null === $remoteSid
+            || null === $this->connection
+            || !$this->isStoreReady()
+            || !$this->transfers->isEmpty()
+            || $this->reconciliation->isActive()
+            || $this->helloBarrier->hasPending()
+        ) {
             return;
         }
 
-        $this->transfers->reset();
         $now = $this->clock->now();
-        $roundId = max($now, $this->roundSequence + 1);
+        $nextSequence = $this->roundSequence->incrementNonZero();
+        $clockSequence = UdbUnsignedDecimal::fromInt($now);
+        $roundId = 0 <= $clockSequence->compare($nextSequence) ? $clockSequence : $nextSequence;
         $this->roundSequence = $roundId;
         $this->reconciliation->start($roundId, $now);
+        if ($this->resyncPending) {
+            $this->recoveryRoundId = $roundId;
+            $this->resyncPending = false;
+        }
 
         foreach (UdbBlock::all() as $block) {
             $this->write(UdbWireCodec::inf(
@@ -574,8 +605,9 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     }
 
     /** Serves one block as a staged snapshot (BEGIN / PUT ... / END). */
-    private function serveBlock(UdbBlock $block, int $roundId): void
+    private function serveBlock(UdbBlock $block, int|UdbUnsignedDecimal $roundId): void
     {
+        $roundId = is_int($roundId) ? UdbUnsignedDecimal::fromInt($roundId) : $roundId;
         $remoteSid = $this->peer->remoteSid();
         if (null === $remoteSid) {
             return;
@@ -645,7 +677,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             $frame->sourceSid,
             $frame->kind->value,
             6,
-            $frame->roundId ?? 0,
+            $frame->roundId ?? UdbUnsignedDecimal::fromInt(0),
             $frame->block,
         ));
     }
@@ -762,15 +794,17 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
      */
     private function reofferWithinBudget(): void
     {
+        $this->restoreRecoveryDebt();
         $this->reconciliation->reset();
         $this->transfers->reset();
+        $this->helloBarrier->abandonPending();
         if (++$this->errReofferCount > self::ERR_REOFFER_BUDGET) {
             $this->logger->error('UDB reconciliation re-offer budget exhausted; waiting for a new peer HEL.');
 
             return;
         }
 
-        $this->offerReconciliation();
+        $this->maybeOfferReconciliation();
     }
 
     private function handleErr(UdbFrame $frame): void
@@ -788,7 +822,8 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
         $affectsRound = in_array($frame->subcommand, ['INF', 'RES', 'BEGIN', 'PUT', 'END'], true)
             && null !== $this->reconciliation->id()
-            && $frame->roundId === $this->reconciliation->id();
+            && null !== $frame->roundId
+            && $frame->roundId->equals($this->reconciliation->id());
 
         if (!$affectsRound) {
             return;
@@ -799,7 +834,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private function handleForbiddenMutation(UdbFrame $frame): void
     {
-        if (!$this->isDirectPeerFrame($frame)) {
+        if (!$this->peer->isBroadcastFromPeer($frame)) {
             return;
         }
 
@@ -809,7 +844,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             'block' => $frame->block?->letter(),
         ]);
 
-        ++$this->errorCorrelation;
+        $this->errorCorrelation = $this->errorCorrelation->incrementNonZero();
 
         $letter = $frame->block?->letter();
         if (null === $letter && null !== $frame->path && '' !== $frame->path) {
@@ -892,7 +927,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private function isDirectPeerFrame(UdbFrame $frame): bool
     {
-        return $this->peer->isDirect($frame, $this->sid);
+        return $this->peer->isDirectFromPeer($frame, $this->sid);
     }
 
     private function flushMutations(): void
@@ -913,6 +948,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     /** Remote epoch changes invalidate every instance-scoped state machine. */
     private function resetPeerInstanceState(): void
     {
+        $this->restoreRecoveryDebt();
         $this->cancelDeadlineTimer();
         $this->helloBarrier->reset();
         $this->reconciliation->reset();
@@ -920,6 +956,30 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->errReofferCount = 0;
         $this->oclgView->reset();
         $this->wireTakeover?->reset();
+    }
+
+    private function maybeOfferPendingReconciliation(): void
+    {
+        if ($this->resyncPending) {
+            $this->maybeOfferReconciliation();
+        }
+    }
+
+    private function settleRecoveryRound(): void
+    {
+        if (null === $this->recoveryRoundId || $this->reconciliation->isActive()) {
+            return;
+        }
+
+        $this->recoveryRoundId = null;
+    }
+
+    private function restoreRecoveryDebt(): void
+    {
+        if (null !== $this->recoveryRoundId) {
+            $this->resyncPending = true;
+            $this->recoveryRoundId = null;
+        }
     }
 
     /**

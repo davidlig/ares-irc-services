@@ -6,6 +6,8 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 
+use function is_int;
+
 /**
  * Kind of a parsed UDB DB wire frame.
  */
@@ -20,15 +22,18 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
  */
 final readonly class UdbFrame
 {
+    public ?UdbUnsignedDecimal $roundId;
+
     public function __construct(
         public UdbFrameKind $kind,
         public string $sourceSid,
         public string $target,
-        public ?int $roundId = null,
+        int|UdbUnsignedDecimal|null $roundId = null,
         public ?UdbBlock $block = null,
         public ?string $txid = null,
         public ?string $checksum = null,
         public ?int $timestamp = null,
+        public ?string $modifiedAt = null,
         public ?string $path = null,
         public ?string $value = null,
         public ?string $propagator = null,
@@ -39,5 +44,7 @@ final readonly class UdbFrame
         public ?int $errorCode = null,
         public ?string $status = null,
         public ?int $count = null,
-    ) {}
+    ) {
+        $this->roundId = is_int($roundId) ? UdbUnsignedDecimal::fromInt($roundId) : $roundId;
+    }
 }

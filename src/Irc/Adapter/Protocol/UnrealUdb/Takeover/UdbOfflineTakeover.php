@@ -12,6 +12,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 
@@ -121,7 +122,7 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
         }
     }
 
-    /** @return array{0: int, 1: array<string, array<string, string>>} */
+    /** @return array{0: UdbUnsignedDecimal, 1: array<string, array<string, string>>} */
     private function loadSnapshots(string $directory): array
     {
         $generation = $this->loadReadyGeneration($directory . '/.udb_state');
@@ -133,7 +134,7 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
         return [$generation, $snapshots];
     }
 
-    private function loadReadyGeneration(string $path): int
+    private function loadReadyGeneration(string $path): UdbUnsignedDecimal
     {
         if (is_link($path) || !is_file($path)) {
             throw new RuntimeException('The UDB directory does not contain .udb_state.');
@@ -161,16 +162,17 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
             || '1' !== $state['FORMAT']
             || 'READY' !== $state['STATE']
             || !in_array($state['ORIGIN'], ['FRESH', 'RECOVERY'], true)
-            || 1 !== preg_match('/^[1-9][0-9]*$/', $state['GENERATION'])
+            || null === ($generation = UdbUnsignedDecimal::parse($state['GENERATION']))
+            || $generation->isZero()
             || 1 !== preg_match('/^[0-9]+$/', $state['LAST_SYNC'])) {
             throw new RuntimeException('The .udb_state file is not a valid READY UDB generation.');
         }
 
-        return (int) $state['GENERATION'];
+        return $generation;
     }
 
     /** @return array<string, string> */
-    private function loadBlock(string $directory, UdbBlock $block, int $generation): array
+    private function loadBlock(string $directory, UdbBlock $block, UdbUnsignedDecimal $generation): array
     {
         $path = sprintf('%s/udb_%s.db', $directory, $block->letter());
         if (is_link($path) || !is_file($path)) {
@@ -193,7 +195,10 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
                 if (null !== $headerGeneration || 1 !== preg_match('/^; Generation: ([0-9]+)$/', $line, $matches)) {
                     throw new RuntimeException(sprintf('Invalid generation header in %s.', $path));
                 }
-                $headerGeneration = (int) $matches[1];
+                $headerGeneration = UdbUnsignedDecimal::parse($matches[1]);
+                if (null === $headerGeneration) {
+                    throw new RuntimeException(sprintf('Invalid generation header in %s.', $path));
+                }
 
                 continue;
             }
@@ -221,7 +226,7 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
             $records[$identity] = [$recordPath, $value];
         }
 
-        if (!$headerBlock || $generation !== $headerGeneration) {
+        if (!$headerBlock || null === $headerGeneration || !$generation->equals($headerGeneration)) {
             throw new RuntimeException(sprintf('The snapshot generation does not match .udb_state for %s.', $path));
         }
 
@@ -265,7 +270,7 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
     }
 
     /** @param array<string, array<string, string>> $candidate */
-    private function fingerprint(array $candidate, int $generation): string
+    private function fingerprint(array $candidate, UdbUnsignedDecimal $generation): string
     {
         $payload = 'generation=' . $generation . "\n";
         foreach (UdbBlock::all() as $block) {

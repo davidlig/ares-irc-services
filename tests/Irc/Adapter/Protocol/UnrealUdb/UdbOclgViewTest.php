@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealUdb\Projection\Oclg\UdbOclgView;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbOclgViewDigest;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -270,6 +272,31 @@ final class UdbOclgViewTest extends TestCase
                 generation: $generation,
             ));
         }
+
+        self::assertSame(['netadmin'], $this->view->getAvailableOperclasses());
+        self::assertNull($this->view->nextDeadline());
+    }
+
+    #[Test]
+    public function generationOrderingSupportsValuesAbovePhpIntMaxFromRawWire(): void
+    {
+        $entries = ['netadmin' => str_repeat('a', 64)];
+        $digest = UdbOclgViewDigest::fromEntries(true, $entries);
+        $this->view->expectEpoch(self::EPOCH);
+
+        $begin = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG BEGIN ' . self::EPOCH . ' 18446744073709551615 READY 1 ' . $digest));
+        $item = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG ITEM ' . self::EPOCH . ' 18446744073709551615 netadmin ' . $entries['netadmin']));
+        $end = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG END ' . self::EPOCH . ' 18446744073709551615'));
+        self::assertNotNull($begin);
+        self::assertNotNull($item);
+        self::assertNotNull($end);
+        $this->view->begin($begin);
+        $this->view->item($item);
+        $this->view->end($end);
+
+        $older = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG BEGIN ' . self::EPOCH . ' 9223372036854775808 INCOMPLETE 0 ' . UdbOclgViewDigest::fromEntries(false, [])));
+        self::assertNotNull($older);
+        $this->view->begin($older);
 
         self::assertSame(['netadmin'], $this->view->getAvailableOperclasses());
         self::assertNull($this->view->nextDeadline());

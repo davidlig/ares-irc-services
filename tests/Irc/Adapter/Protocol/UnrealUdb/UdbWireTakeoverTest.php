@@ -454,14 +454,14 @@ final class UdbWireTakeoverTest extends TestCase
     {
         self::assertSame(UdbWireTakeoverOutcomeKind::Request, $outcome->kind);
         self::assertSame($block, $outcome->block);
-        self::assertSame($roundId, $outcome->roundId);
+        self::assertSame((string) $roundId, (string) $outcome->roundId);
     }
 
     private function assertAcknowledgement(UdbWireTakeoverOutcome $outcome, UdbBlock $block, int $roundId, string $txid, string $digest): void
     {
         self::assertSame(UdbWireTakeoverOutcomeKind::Acknowledge, $outcome->kind);
         self::assertSame($block, $outcome->block);
-        self::assertSame($roundId, $outcome->roundId);
+        self::assertSame((string) $roundId, (string) $outcome->roundId);
         self::assertSame($txid, $outcome->txid);
         self::assertSame($digest, $outcome->digest);
     }
@@ -470,7 +470,7 @@ final class UdbWireTakeoverTest extends TestCase
     {
         self::assertSame(UdbWireTakeoverOutcomeKind::Error, $outcome->kind);
         self::assertSame($block, $outcome->block);
-        self::assertSame($roundId, $outcome->roundId);
+        self::assertSame((string) $roundId, (string) $outcome->roundId);
         self::assertSame($subcommand, $outcome->subcommand);
         self::assertSame($errorCode, $outcome->errorCode);
     }

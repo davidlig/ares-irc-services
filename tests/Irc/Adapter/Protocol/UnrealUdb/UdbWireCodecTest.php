@@ -13,6 +13,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use const PHP_INT_MAX;
+
 #[CoversClass(UdbWireCodec::class)]
 #[CoversClass(UdbOclgViewDigest::class)]
 final class UdbWireCodecTest extends TestCase
@@ -149,10 +151,37 @@ final class UdbWireCodecTest extends TestCase
 
         self::assertNotNull($frame);
         self::assertSame(UdbFrameKind::Inf, $frame->kind);
-        self::assertSame(999, $frame->roundId);
+        self::assertSame('999', (string) $frame->roundId);
         self::assertSame(UdbBlock::Channels, $frame->block);
         self::assertSame('ABCDEF12', $frame->checksum);
         self::assertSame(1700000000, $frame->timestamp);
+    }
+
+    #[Test]
+    public function parsesFullUnsignedLongRoundIdsWithoutLosingIdentity(): void
+    {
+        foreach (['4294967296', '9223372036854775808', '18446744073709551615'] as $roundId) {
+            $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 RES ' . $roundId . ' K'));
+
+            self::assertNotNull($frame);
+            self::assertNotNull($frame->roundId);
+            self::assertSame($roundId, (string) $frame->roundId);
+            self::assertSame(':002 DB 001 RES ' . $roundId . ' K', UdbWireCodec::res('002', '001', $frame->roundId, UdbBlock::Lines));
+        }
+
+        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 RES 18446744073709551616 K')));
+    }
+
+    #[Test]
+    public function appliesFieldSpecificNumericContracts(): void
+    {
+        $digest = str_repeat('a', 64);
+        self::assertNotNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 INF 1 N 00 ' . PHP_INT_MAX)));
+        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 INF 1 N 00 9223372036854775808')));
+        self::assertNotNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG BEGIN 0123456789abcdef 1 READY 1024 ' . $digest)));
+        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG BEGIN 0123456789abcdef 1 READY 1025 ' . $digest)));
+        self::assertNotNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 ERR PUT 255 1 N')));
+        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 ERR PUT 256 1 N')));
     }
 
     #[Test]
@@ -162,7 +191,7 @@ final class UdbWireCodecTest extends TestCase
 
         self::assertNotNull($frame);
         self::assertSame(UdbFrameKind::Res, $frame->kind);
-        self::assertSame(999, $frame->roundId);
+        self::assertSame('999', (string) $frame->roundId);
         self::assertSame(UdbBlock::Lines, $frame->block);
     }
 
@@ -221,7 +250,7 @@ final class UdbWireCodecTest extends TestCase
         self::assertSame(UdbFrameKind::Err, $frame->kind);
         self::assertSame('PUT', $frame->subcommand);
         self::assertSame(3, $frame->errorCode);
-        self::assertSame(999, $frame->roundId);
+        self::assertSame('999', (string) $frame->roundId);
         self::assertSame(UdbBlock::Channels, $frame->block);
 
         $blockless = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 ERR INS 2 42 0'));
@@ -252,6 +281,10 @@ final class UdbWireCodecTest extends TestCase
         self::assertNotNull($opt);
         self::assertSame(UdbFrameKind::Opt, $opt->kind);
         self::assertSame(UdbBlock::Settings, $opt->block);
+
+        $opaqueOpt = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB * OPT S runtime-token'));
+        self::assertNotNull($opaqueOpt);
+        self::assertSame('runtime-token', $opaqueOpt->modifiedAt);
     }
 
     #[Test]
@@ -292,6 +325,7 @@ final class UdbWireCodecTest extends TestCase
             ':001 DB 002 OCLG END 0123456789abcdef 7 extra',
             ':001 DB 002 OCLG FOO 0123456789abcdef 7',
             ':001 DB 002 OCLG BEGIN NOTHEX16 7 READY 1 ' . str_repeat('a', 64),
+            ':001 DB 002 OCLG BEGIN 0123456789abcdef 0 READY 1 ' . str_repeat('a', 64),
             ':UNKNOWN 002 001 HEL 4 x',
         ];
 

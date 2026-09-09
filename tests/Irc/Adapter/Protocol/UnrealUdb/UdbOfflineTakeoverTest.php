@@ -112,6 +112,14 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function acceptsAnOfflineGenerationAtUnsignedLongMaxWithoutCastingIt(): void
+    {
+        $this->writeValidGeneration('18446744073709551615');
+
+        self::assertSame(64, strlen($this->takeover()->takeover($this->directory, false)));
+    }
+
+    #[Test]
     public function rejectsMissingMalformedAndInconsistentInputs(): void
     {
         $takeover = $this->takeover();
@@ -204,6 +212,9 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
                 file_put_contents($directory . '/.udb_state', "FORMAT=1\nSTATE=READY\nORIGIN=FRESH\nGENERATION=7\nLAST_SYNC=x\n");
             },
             static function (string $directory): void {
+                file_put_contents($directory . '/.udb_state', "FORMAT=1\nSTATE=READY\nORIGIN=FRESH\nGENERATION=18446744073709551616\nLAST_SYNC=1\n");
+            },
+            static function (string $directory): void {
                 unlink($directory . '/udb_L.db');
             },
             static function (string $directory): void {
@@ -211,6 +222,9 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
             },
             static function (string $directory): void {
                 file_put_contents($directory . '/udb_C.db', "; UDB Block C - Version 1\n; Generation: x\n");
+            },
+            static function (string $directory): void {
+                file_put_contents($directory . '/udb_C.db', "; UDB Block C - Version 1\n; Generation: 18446744073709551616\n");
             },
             static function (string $directory): void {
                 file_put_contents($directory . '/udb_C.db', "; UDB Block C - Version 1\n; Generation: 7\ninvalid\n");
@@ -294,11 +308,11 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
         ));
     }
 
-    private function writeValidGeneration(): void
+    private function writeValidGeneration(string $generation = '7'): void
     {
-        file_put_contents($this->directory . '/.udb_state', "FORMAT=1\nSTATE=READY\nORIGIN=FRESH\nGENERATION=7\nLAST_SYNC=1\n");
+        file_put_contents($this->directory . '/.udb_state', "FORMAT=1\nSTATE=READY\nORIGIN=FRESH\nGENERATION={$generation}\nLAST_SYNC=1\n");
         foreach (['N' => '', 'C' => '', 'I' => "1.2.3.4::clones *5\n", 'S' => "propagator hub1.example, hub2.example\n", 'L' => "hub1.example::options *1\n", 'K' => ''] as $block => $records) {
-            file_put_contents($this->directory . '/udb_' . $block . '.db', '; UDB Block ' . $block . " - Version 1\n; Generation: 7\n" . $records);
+            file_put_contents($this->directory . '/udb_' . $block . '.db', '; UDB Block ' . $block . " - Version 1\n; Generation: {$generation}\n" . $records);
         }
     }
 

@@ -125,6 +125,28 @@ final class UdbSchemaTest extends TestCase
         self::assertFalse(UdbSchema::validate(UdbBlock::Nicks, ['david', 'pass', 'extra'], 'value'));
     }
 
+    #[Test]
+    public function closedRuntimeModeProfileAcceptsOnlyTheDeclaredCatalog(): void
+    {
+        self::assertTrue(UdbSchema::validate(UdbBlock::Nicks, ['david', 'modes'], '+' . implode('', UdbSchema::USER_MODES)));
+        self::assertFalse(UdbSchema::validate(UdbBlock::Nicks, ['david', 'modes'], '+X'));
+
+        foreach (['q', 'a', 'o', 'h', 'v', 'k', 'l', 'f', 'L', 'F', 'H', 'b', 'e', 'I'] as $mode) {
+            self::assertTrue(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'modes'], '+' . $mode . ' value'), $mode);
+        }
+        foreach (['i', 's', 'p', 'm', 'n', 't', 'c', 'C', 'D', 'G', 'K', 'M', 'N', 'O', 'Q', 'R', 'S', 'T', 'V', 'z', 'Z', 'r', 'P'] as $mode) {
+            self::assertTrue(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'modes'], '+' . $mode), $mode);
+        }
+        self::assertFalse(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'modes'], '+x'));
+    }
+
+    #[Test]
+    public function numericRecordsAcceptTheFullUnsignedLongRange(): void
+    {
+        self::assertTrue(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'options'], '*18446744073709551615'));
+        self::assertFalse(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'options'], '*18446744073709551616'));
+    }
+
     // ---------- Block C ----------
 
     #[Test]

@@ -17,6 +17,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Transfer\UdbOutboundTransferTracker;
 use App\Irc\Adapter\Protocol\UnrealUdb\Transfer\UdbTransferAcknowledgement;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -54,6 +55,21 @@ final class UdbProtocolStateMachinesTest extends TestCase
     }
 
     #[Test]
+    public function helBarrierCanAbandonRoundTicketsWithoutLosingPeerConfirmation(): void
+    {
+        $barrier = new UdbHelloBarrier();
+        $barrier->sent(100, 60);
+        $barrier->acknowledge();
+        $barrier->sent(200, 60);
+
+        $barrier->abandonPending();
+
+        self::assertTrue($barrier->isConfirmed());
+        self::assertFalse($barrier->hasPending());
+        self::assertNull($barrier->deadline());
+    }
+
+    #[Test]
     public function peerSessionRejectsIncompleteAdvertisementsAndDetectsEpochChanges(): void
     {
         $peer = new UdbPeerSession();
@@ -67,7 +83,10 @@ final class UdbProtocolStateMachinesTest extends TestCase
 
         self::assertSame(UdbPeerAdvertisementChange::SameInstance, $peer->observeAdvertisement($this->hel(), false));
         self::assertTrue($peer->isAuthorized());
-        self::assertTrue($peer->isDirect($this->hel(), '002'));
+        self::assertTrue($peer->isFromPeer($this->hel()));
+        self::assertTrue($peer->isDirectFromPeer($this->hel(), '002'));
+        self::assertTrue($peer->isBroadcastFromPeer(new UdbFrame(UdbFrameKind::Ins, '001', '*')));
+        self::assertFalse($peer->isBroadcastFromPeer(new UdbFrame(UdbFrameKind::Ins, '999', '*')));
 
         self::assertSame(
             UdbPeerAdvertisementChange::NewInstance,
@@ -93,7 +112,7 @@ final class UdbProtocolStateMachinesTest extends TestCase
 
         $round->start(7, 100);
 
-        self::assertSame(7, $round->id());
+        self::assertSame('7', (string) $round->id());
         self::assertFalse($round->acknowledgeBarrier(1, 101));
         self::assertFalse($round->acknowledgeTransfer(7, UdbBlock::Ips, 101));
         self::assertFalse($round->acceptRes(6, UdbBlock::Ips, 105));
@@ -129,7 +148,10 @@ final class UdbProtocolStateMachinesTest extends TestCase
         self::assertTrue($tracker->has(UdbBlock::Ips));
         self::assertSame(110, $tracker->nextDeadline());
         self::assertNull($tracker->firstExpired(109));
-        self::assertSame(['block' => 'I', 'timeout' => 'inactivity', 'roundId' => 7], $tracker->firstExpired(110));
+        $expired = $tracker->firstExpired(110);
+        self::assertNotNull($expired);
+        self::assertSame(['block' => 'I', 'timeout' => 'inactivity'], ['block' => $expired['block'], 'timeout' => $expired['timeout']]);
+        self::assertSame('7', (string) $expired['roundId']);
         self::assertFalse($tracker->track(UdbBlock::Ips, 7, 'tx-2', 'ABCDEF12', 101));
 
         self::assertSame(
@@ -140,10 +162,38 @@ final class UdbProtocolStateMachinesTest extends TestCase
         self::assertSame(UdbTransferAcknowledgement::Unknown, $tracker->acknowledge($this->ack()));
 
         self::assertTrue($tracker->track(UdbBlock::Ips, 9, 'tx-1', 'ABCDEF12', 200));
-        self::assertSame(['block' => 'I', 'timeout' => 'absolute', 'roundId' => 9], $tracker->firstExpired(230));
+        $expired = $tracker->firstExpired(230);
+        self::assertNotNull($expired);
+        self::assertSame('absolute', $expired['timeout']);
+        self::assertSame('9', (string) $expired['roundId']);
         $tracker->reset();
         self::assertTrue($tracker->isEmpty());
         self::assertNull($tracker->nextDeadline());
+    }
+
+    #[Test]
+    public function roundAndTransferCorrelationPreserveUnsignedValuesAbovePhpIntMax(): void
+    {
+        $roundId = UdbUnsignedDecimal::parse('18446744073709551615');
+        $sameRoundId = UdbUnsignedDecimal::parse('18446744073709551615');
+        self::assertNotNull($roundId);
+        self::assertNotNull($sameRoundId);
+
+        $round = new UdbReconciliationRound();
+        $round->start($roundId, 100);
+        self::assertTrue($round->acceptRes($sameRoundId, UdbBlock::Ips, 101));
+
+        $tracker = new UdbOutboundTransferTracker();
+        self::assertTrue($tracker->track(UdbBlock::Ips, $roundId, 'tx-1', 'ABCDEF12', 100));
+        self::assertSame(UdbTransferAcknowledgement::Accepted, $tracker->acknowledge(new UdbFrame(
+            UdbFrameKind::Ack,
+            '001',
+            '002',
+            roundId: $sameRoundId,
+            block: UdbBlock::Ips,
+            txid: 'tx-1',
+            checksum: 'ABCDEF12',
+        )));
     }
 
     #[Test]

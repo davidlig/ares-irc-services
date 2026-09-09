@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 
+use function is_int;
 use function min;
 
 /** Owns one authority-side reconciliation round and both deadline classes. */
 final class UdbReconciliationRound
 {
-    private ?int $id = null;
+    private ?UdbUnsignedDecimal $id = null;
 
     private ?int $inactivityDeadline = null;
 
@@ -31,9 +33,9 @@ final class UdbReconciliationRound
         private readonly int $absoluteTimeout = 300,
     ) {}
 
-    public function start(int $id, int $now): void
+    public function start(int|UdbUnsignedDecimal $id, int $now): void
     {
-        $this->id = $id;
+        $this->id = self::unsigned($id);
         $this->inactivityDeadline = $now + $this->inactivityTimeout;
         $this->absoluteDeadline = $now + $this->absoluteTimeout;
         $this->barrierPending = false;
@@ -42,9 +44,9 @@ final class UdbReconciliationRound
         $this->requestedBlocks = [];
     }
 
-    public function acceptRes(int $roundId, UdbBlock $block, int $now): bool
+    public function acceptRes(int|UdbUnsignedDecimal $roundId, UdbBlock $block, int $now): bool
     {
-        if ($this->id !== $roundId || UdbRoundTimeout::None !== $this->timeoutAt($now)) {
+        if (null === $this->id || !$this->id->equals(self::unsigned($roundId)) || UdbRoundTimeout::None !== $this->timeoutAt($now)) {
             return false;
         }
 
@@ -86,9 +88,9 @@ final class UdbReconciliationRound
         return true;
     }
 
-    public function acknowledgeTransfer(int $roundId, UdbBlock $block, int $now): bool
+    public function acknowledgeTransfer(int|UdbUnsignedDecimal $roundId, UdbBlock $block, int $now): bool
     {
-        if ($this->id !== $roundId || !isset($this->requestedBlocks[$block->letter()]) || UdbRoundTimeout::None !== $this->timeoutAt($now)) {
+        if (null === $this->id || !$this->id->equals(self::unsigned($roundId)) || !isset($this->requestedBlocks[$block->letter()]) || UdbRoundTimeout::None !== $this->timeoutAt($now)) {
             return false;
         }
 
@@ -114,7 +116,7 @@ final class UdbReconciliationRound
         return true;
     }
 
-    public function id(): ?int
+    public function id(): ?UdbUnsignedDecimal
     {
         return $this->id;
     }
@@ -165,5 +167,10 @@ final class UdbReconciliationRound
     private function touch(int $now): void
     {
         $this->inactivityDeadline = $now + $this->inactivityTimeout;
+    }
+
+    private static function unsigned(int|UdbUnsignedDecimal $value): UdbUnsignedDecimal
+    {
+        return is_int($value) ? UdbUnsignedDecimal::fromInt($value) : $value;
     }
 }

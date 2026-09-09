@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 use function str_repeat;
 use function strlen;
 
+use const PHP_INT_MAX;
+
 #[CoversClass(UdbPathCodec::class)]
 final class UdbPathCodecTest extends TestCase
 {
@@ -183,17 +185,24 @@ final class UdbPathCodecTest extends TestCase
     #[Test]
     public function parseUnsignedIsStrict(): void
     {
-        self::assertSame(0, UdbPathCodec::parseUnsigned('0'));
-        self::assertSame(7, UdbPathCodec::parseUnsigned('007'));
-        self::assertSame(4294967295, UdbPathCodec::parseUnsigned('4294967295'));
+        self::assertSame('0', (string) UdbPathCodec::parseUnsigned('0'));
+        self::assertSame('7', (string) UdbPathCodec::parseUnsigned('007'));
+        self::assertSame('4294967295', (string) UdbPathCodec::parseUnsigned('4294967295'));
+        self::assertSame('4294967296', (string) UdbPathCodec::parseUnsigned('4294967296'));
+        self::assertSame((string) PHP_INT_MAX, (string) UdbPathCodec::parseUnsigned((string) PHP_INT_MAX));
+        self::assertSame('9223372036854775808', (string) UdbPathCodec::parseUnsigned('9223372036854775808'));
+        self::assertSame('18446744073709551615', (string) UdbPathCodec::parseUnsigned('18446744073709551615'));
         self::assertNull(UdbPathCodec::parseUnsigned(''));
         self::assertNull(UdbPathCodec::parseUnsigned('abc'));
         self::assertNull(UdbPathCodec::parseUnsigned('12a'));
         self::assertNull(UdbPathCodec::parseUnsigned('-1'));
         self::assertNull(UdbPathCodec::parseUnsigned('+1'));
         self::assertNull(UdbPathCodec::parseUnsigned(' 1'));
-        self::assertNull(UdbPathCodec::parseUnsigned('4294967296'));
-        self::assertNull(UdbPathCodec::parseUnsigned('12345678901234567890'));
+        self::assertNull(UdbPathCodec::parseUnsigned('18446744073709551616'));
+        self::assertSame(1024, UdbPathCodec::parseUnsignedInt('1024', 1024));
+        self::assertNull(UdbPathCodec::parseUnsignedInt('invalid', 1024));
+        self::assertNull(UdbPathCodec::parseUnsignedInt('1025', 1024));
+        self::assertNull(UdbPathCodec::parseUnsignedInt('9223372036854775808', PHP_INT_MAX));
     }
 
     #[Test]

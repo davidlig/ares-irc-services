@@ -14,6 +14,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbHelloBarrier;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbPeerSession;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutationQueue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeover;
 use App\Irc\Adapter\Protocol\UnrealUdb\Transfer\UdbOutboundTransferTracker;
@@ -38,6 +39,7 @@ use RuntimeException;
 
 use function array_slice;
 use function count;
+use function substr_count;
 
 #[CoversClass(UdbSessionCoordinator::class)]
 #[CoversClass(UdbPeerSession::class)]
@@ -136,6 +138,15 @@ final class UdbSessionCoordinatorTest extends TestCase
         new ReflectionMethod(UdbSessionCoordinator::class, 'completeWireBootstrap')->invoke($this->coordinator);
 
         self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function reconciliationOfferDoesNothingBeforeThePeerIsAuthorized(): void
+    {
+        new ReflectionMethod(UdbSessionCoordinator::class, 'offerReconciliation')->invoke($this->coordinator);
+
+        self::assertSame([], $this->written);
+        self::assertNull($this->coordinator->activeRoundId());
     }
 
     #[Test]
@@ -696,9 +707,9 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->makeReady();
 
         $this->written = [];
-        $this->handle(new UdbFrame(UdbFrameKind::Ins, '001', '002', path: 'S::nickserv', value: 'mask'));
-        $this->handle(new UdbFrame(UdbFrameKind::Del, '001', '002', path: 'K::G::x'));
-        $this->handle(new UdbFrame(UdbFrameKind::Del, '001', '002', path: 'K::Z::5.6.7.8'));
+        $this->handle(new UdbFrame(UdbFrameKind::Ins, '001', '*', path: 'S::nickserv', value: 'mask'));
+        $this->handle(new UdbFrame(UdbFrameKind::Del, '001', '*', path: 'K::G::x'));
+        $this->handle(new UdbFrame(UdbFrameKind::Del, '001', '*', path: 'K::Z::5.6.7.8'));
 
         self::assertSame([
             ':002 DB 001 ERR INS 6 1 S',
@@ -896,18 +907,92 @@ final class UdbSessionCoordinatorTest extends TestCase
     }
 
     #[Test]
-    public function mutationQueueOverflowWithAnAuthorizedLinkTriggersReconciliation(): void
+    public function mutationQueueOverflowDuringActiveTransferDefersOneRecoveryRound(): void
     {
+        $this->useSmallMutationQueue();
         $this->startRound();
         // Mid-transfer: outstanding blocks the flush path, so mutations queue.
         $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 20, block: UdbBlock::Ips));
+        $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
 
         $this->written = [];
-        for ($i = 0; 1025 > $i; ++$i) {
+        for ($i = 0; 3 > $i; ++$i) {
             $this->coordinator->enqueueMutation(new UdbMutation('N', 'nick' . $i, 'v'));
         }
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->firstWrittenLine());
+        self::assertSame([], $this->written);
+        self::assertSame(20, $this->coordinator->activeRoundId());
+        self::assertTrue($this->coordinator->isResyncPending());
+
+        // The original transfer and barrier still correlate and settle first.
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest));
+        self::assertSame(20, $this->coordinator->activeRoundId());
+        $this->handle($this->peerHelAck());
+
+        self::assertSame(21, $this->coordinator->activeRoundId());
+        self::assertSame(6, substr_count(implode("\n", $this->written), ' INF 21 '));
+        self::assertTrue($this->coordinator->isResyncPending());
+    }
+
+    #[Test]
+    public function mutationQueueOverflowInReadyStartsExactlyOneRecoveryRound(): void
+    {
+        $this->useSmallMutationQueue();
+        $this->makeReady();
+        $this->written = [];
+
+        for ($i = 0; 3 > $i; ++$i) {
+            $this->coordinator->enqueueMutation(new UdbMutation('N', 'nick' . $i, 'v'));
+        }
+
+        self::assertSame(21, $this->coordinator->activeRoundId());
+        self::assertSame(6, substr_count(implode("\n", $this->written), ' INF 21 '));
+        self::assertSame(0, substr_count(implode("\n", $this->written), ' INF 22 '));
+
+        $this->handle($this->peerHelAck());
+        self::assertFalse($this->coordinator->isResyncPending());
+        self::assertNull($this->coordinator->activeRoundId());
+        self::assertSame(0, $this->coordinator->queuedMutationCount());
+    }
+
+    #[Test]
+    public function overflowDebtSurvivesReconnectAndIsCoveredByTheFreshRound(): void
+    {
+        $this->useSmallMutationQueue();
+        $this->startRound();
+        for ($i = 0; 3 > $i; ++$i) {
+            $this->coordinator->enqueueMutation(new UdbMutation('N', 'nick' . $i, 'v'));
+        }
+        self::assertTrue($this->coordinator->isResyncPending());
+
+        $this->coordinator->reset();
+        self::assertTrue($this->coordinator->isResyncPending());
+        $this->written = [];
+        $this->prepareLink();
+        $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
+
+        self::assertSame(21, $this->coordinator->activeRoundId());
+        self::assertSame(6, substr_count(implode("\n", $this->written), ' INF 21 '));
+    }
+
+    #[Test]
+    public function inFlightRecoveryDebtSurvivesReset(): void
+    {
+        $this->useSmallMutationQueue();
+        $this->makeReady();
+
+        for ($i = 0; 3 > $i; ++$i) {
+            $this->coordinator->enqueueMutation(new UdbMutation('N', 'nick' . $i, 'v'));
+        }
+
+        self::assertSame(21, $this->coordinator->activeRoundId());
+        self::assertTrue($this->coordinator->isResyncPending());
+
+        $this->coordinator->reset();
+
+        self::assertTrue($this->coordinator->isResyncPending());
+        self::assertNull($this->coordinator->activeRoundId());
     }
 
     // ---------- Lifecycle ----------
@@ -1667,6 +1752,18 @@ final class UdbSessionCoordinatorTest extends TestCase
         self::assertIsInt($roundId);
 
         return $roundId;
+    }
+
+    private function useSmallMutationQueue(): void
+    {
+        $this->coordinator = new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            scheduler: $this->scheduler,
+            clock: $this->clock,
+            mutationQueue: new UdbMutationQueue(2),
+        );
     }
 
     private function expireOutstanding(): void

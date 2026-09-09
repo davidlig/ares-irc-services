@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Model;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
+
 use function array_map;
 use function array_slice;
 use function base64_decode;
@@ -306,11 +308,10 @@ final class UdbSchema
         return '' !== $value && !str_starts_with($value, '*');
     }
 
-    /** UDB_VAL_NUMERIC: '*' followed by strict digits within the unsigned 64-bit range. */
+    /** UDB_VAL_NUMERIC: '*' followed by a strict unsigned-long decimal. */
     private static function numericRecord(string $value): bool
     {
-        // 19 digits always fit an unsigned 64-bit integer (< 1.84e19).
-        return 1 === preg_match('/^\*[0-9]{1,19}\z/', $value);
+        return str_starts_with($value, '*') && null !== UdbUnsignedDecimal::parse(substr($value, 1));
     }
 
     private static function cloneLimit(string $value): bool

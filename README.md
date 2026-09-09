@@ -45,6 +45,13 @@ The port you configure in `.env.local` (`IRC_IRCD_PORT`) must match whatever you
 
 With the `unrealudb` driver, services are the **sole UDB authority**: all six blocks (`N/C/I/S/L/K`) live in the authoritative services store and are served to the IRCd.
 
+The driver supports a closed UnrealIRCd mode profile: the core and bundled
+`modules.default.conf` handlers encoded by `UdbSchema`. Custom mode modules,
+or blacklisting one of those handlers, are unsupported because the UDB module
+validates modes against the live UnrealIRCd registry while Ares validates them
+statically. Extending the profile requires an explicit discovery/configuration
+design rather than adding mode letters ad hoc.
+
 ---
 
 ## Test Server

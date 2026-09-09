@@ -15,6 +15,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use Psr\Log\LoggerInterface;
@@ -48,13 +49,13 @@ final class UdbWireTakeover
 
     public int $maxStageBytes = self::MAX_STAGE_BYTES;
 
-    /** @var array<string, array{txid: string, roundId: int, digest: string, entries: array<string, string>, bytes: int, inactivityDeadline: int, absoluteDeadline: int}> */
+    /** @var array<string, array{txid: string, roundId: UdbUnsignedDecimal, digest: string, entries: array<string, string>, bytes: int, inactivityDeadline: int, absoluteDeadline: int}> */
     private array $stages = [];
 
     /** @var list<string> */
     private array $completed = [];
 
-    /** @var array<string, array{txid: string, roundId: int, digest: string}> */
+    /** @var array<string, array{txid: string, roundId: UdbUnsignedDecimal, digest: string}> */
     private array $completedTransfers = [];
 
     /** @var array<string, true> */
@@ -63,7 +64,7 @@ final class UdbWireTakeover
     /** @var array<string, array<string, string>> */
     private array $imported = [];
 
-    private ?int $roundId = null;
+    private ?UdbUnsignedDecimal $roundId = null;
 
     private ?int $roundInactivityDeadline = null;
 
@@ -186,7 +187,7 @@ final class UdbWireTakeover
             $this->roundId = $frame->roundId;
             $this->roundInactivityDeadline = $now + self::INACTIVITY_TIMEOUT;
             $this->roundAbsoluteDeadline = $now + self::ABSOLUTE_TIMEOUT;
-        } elseif ($this->roundId !== $frame->roundId) {
+        } elseif (!$this->roundId->equals($frame->roundId)) {
             return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 5);
         }
 
@@ -207,7 +208,7 @@ final class UdbWireTakeover
         if (null === $frame->txid) {
             return UdbWireTakeoverOutcome::ignored();
         }
-        if ($this->roundId !== $frame->roundId || !isset($this->requestedBlocks[$block->letter()])) {
+        if (null === $this->roundId || !$this->roundId->equals($frame->roundId) || !isset($this->requestedBlocks[$block->letter()])) {
             return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'BEGIN', 5);
         }
         if (isset($this->completedTransfers[$block->letter()]) || isset($this->stages[$block->letter()])) {
@@ -276,7 +277,7 @@ final class UdbWireTakeover
         }
         $completed = $this->completedTransfers[$block->letter()] ?? null;
         if (null !== $completed) {
-            if ($completed['roundId'] === $frame->roundId && $completed['txid'] === $frame->txid && $completed['digest'] === $frame->checksum) {
+            if ($completed['roundId']->equals($frame->roundId) && $completed['txid'] === $frame->txid && $completed['digest'] === $frame->checksum) {
                 return UdbWireTakeoverOutcome::acknowledge($block, $frame->roundId, $frame->txid, $completed['digest']);
             }
 
@@ -304,11 +305,11 @@ final class UdbWireTakeover
         return UdbWireTakeoverOutcome::acknowledge($block, $frame->roundId, $frame->txid, $digest);
     }
 
-    /** @return array{txid: string, roundId: int, digest: string, entries: array<string, string>, bytes: int, inactivityDeadline: int, absoluteDeadline: int}|null */
+    /** @return array{txid: string, roundId: UdbUnsignedDecimal, digest: string, entries: array<string, string>, bytes: int, inactivityDeadline: int, absoluteDeadline: int}|null */
     private function stageFor(UdbFrame $frame, UdbBlock $block): ?array
     {
         $stage = $this->stages[$block->letter()] ?? null;
-        if (null === $stage || $stage['txid'] !== $frame->txid || $stage['roundId'] !== $frame->roundId) {
+        if (null === $stage || null === $frame->roundId || $stage['txid'] !== $frame->txid || !$stage['roundId']->equals($frame->roundId)) {
             return null;
         }
         $now = $this->clock->now();
@@ -321,7 +322,7 @@ final class UdbWireTakeover
         return $stage;
     }
 
-    private function abortWithError(UdbBlock $block, int $roundId, string $subcommand, string $reason): UdbWireTakeoverOutcome
+    private function abortWithError(UdbBlock $block, UdbUnsignedDecimal $roundId, string $subcommand, string $reason): UdbWireTakeoverOutcome
     {
         unset($this->stages[$block->letter()]);
         $this->logger->warning('UDB wire bootstrap: staged transfer discarded.', ['block' => $block->letter(), 'reason' => $reason]);

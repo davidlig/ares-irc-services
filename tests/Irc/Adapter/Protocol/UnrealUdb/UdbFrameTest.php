@@ -37,7 +37,7 @@ final class UdbFrameTest extends TestCase
         self::assertSame(UdbFrameKind::Put, $frame->kind);
         self::assertSame('001', $frame->sourceSid);
         self::assertSame('002', $frame->target);
-        self::assertSame(10, $frame->roundId);
+        self::assertSame('10', (string) $frame->roundId);
         self::assertSame('tx1', $frame->txid);
         self::assertSame('ABCDEF12', $frame->checksum);
         self::assertSame('a::b', $frame->path);

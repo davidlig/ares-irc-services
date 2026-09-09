@@ -203,15 +203,22 @@ final class UdbPathCodec
         return strtoupper(str_pad($checksum, 8, '0', STR_PAD_LEFT));
     }
 
-    /** Parses a strict unsigned decimal integer (C udb_strtoul_strict equivalent). */
-    public static function parseUnsigned(string $value): ?int
+    /** Parses a strict unsigned-long decimal (C udb_strtoul_strict equivalent). */
+    public static function parseUnsigned(string $value): ?UdbUnsignedDecimal
     {
-        if ('' === $value || 1 !== preg_match('/^\d{1,19}$/', $value)) {
+        return UdbUnsignedDecimal::parse($value);
+    }
+
+    /** Parses a bounded unsigned value that is intentionally represented as a PHP int. */
+    public static function parseUnsignedInt(string $value, int $maximum): ?int
+    {
+        $unsigned = UdbUnsignedDecimal::parse($value);
+        if (null === $unsigned) {
             return null;
         }
 
-        $number = (int) $value;
-        if ($number > 4294967295) {
+        $number = $unsigned->toInt();
+        if (null === $number || $number > $maximum) {
             return null;
         }
 

@@ -7,12 +7,16 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionController;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutationQueue;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Domain\Server\ServerLink;
 use App\Irc\Domain\ValueObject\Hostname;
@@ -32,6 +36,7 @@ use function fopen;
 use function mkdir;
 use function rmdir;
 use function sprintf;
+use function substr_count;
 use function sys_get_temp_dir;
 use function uniqid;
 use function unlink;
@@ -341,6 +346,106 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
 
         self::assertNotEmpty($this->written);
         self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/', $this->writtenLine(0));
+    }
+
+    #[Test]
+    public function realBroadcastMutationLinesReachTheAuthorityRejectionPolicy(): void
+    {
+        $handler = $this->createHandler();
+        $connection = $this->createConnection();
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming($handler->parseRawLine('PROTOCTL SID=001'), $connection);
+        $handler->handleIncoming($handler->parseRawLine('SERVER ircd.example.net 1 :IRCd'), $connection);
+        $this->written = [];
+
+        foreach ([
+            ':001 DB * INS S::nickserv :mask value',
+            ':001 DB * DEL K::G::user@host',
+            ':001 DB * DRP I',
+            ':001 DB * OPT S opaque-modified-at',
+        ] as $line) {
+            $handler->handleIncoming($handler->parseRawLine($line), $connection);
+        }
+
+        self::assertSame([
+            ':002 DB 001 ERR INS 6 1 S',
+            ':002 DB 001 ERR DEL 6 2 K',
+            ':002 DB 001 ERR DRP 6 3 I',
+            ':002 DB 001 ERR OPT 6 4 S',
+        ], $this->written);
+    }
+
+    #[Test]
+    public function broadcastMutationRejectionStillRequiresTheExactPeerAndBroadcastTarget(): void
+    {
+        $handler = $this->createHandler();
+        $connection = $this->createConnection();
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming($handler->parseRawLine('PROTOCTL SID=001'), $connection);
+        $handler->handleIncoming($handler->parseRawLine('SERVER ircd.example.net 1 :IRCd'), $connection);
+        $this->written = [];
+
+        $handler->handleIncoming($handler->parseRawLine(':999 DB * INS S::nickserv :bad'), $connection);
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 INS S::nickserv :bad'), $connection);
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function realRoundTrafficDefersOverflowRecoveryUntilTheActiveBarrierCompletes(): void
+    {
+        $states = new FakeBlockStates();
+        foreach (UdbBlock::all() as $block) {
+            $states->upsert($block->letter(), '00000000');
+        }
+        $snapshots = $this->createStub(UdbSnapshotProviderInterface::class);
+        $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
+        $snapshots->method('checksumForBlock')->willReturnCallback(
+            static fn (UdbBlock $block): string => UdbBlock::Ips === $block ? $digest : UdbChecksum::EMPTY,
+        );
+        $snapshots->method('recordsForBlock')->willReturnCallback(
+            static fn (UdbBlock $block): array => UdbBlock::Ips === $block ? ['1.2.3.4::clones' => '*5'] : [],
+        );
+        $coordinator = new UdbSessionCoordinator('002', $states, $snapshots, mutationQueue: new UdbMutationQueue(2));
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $connection = $this->createConnection();
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming($handler->parseRawLine('PROTOCTL SID=001'), $connection);
+        $handler->handleIncoming($handler->parseRawLine('SERVER ircd.example.net 1 :IRCd'), $connection);
+        $handler->handleIncoming($handler->parseRawLine(':001 EOS'), $connection);
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 services.test.local 0123456789abcdef OCL OCLG'), $connection);
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 ACK services.test.local 0123456789abcdef OCL OCLG'), $connection);
+        self::assertSame(1, preg_match('/^:002 DB 001 INF ([0-9]+) I /m', implode("\n", $this->written), $inventoryMatch));
+        $roundId = $inventoryMatch[1];
+        self::assertSame((int) $roundId, $coordinator->activeRoundId());
+        $this->written = [];
+
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 RES ' . $roundId . ' I'), $connection);
+        self::assertSame(1, preg_match('/^:002 DB 001 BEGIN ' . $roundId . ' I ([A-Za-z0-9_-]+) ' . $digest . '$/m', implode("\n", $this->written), $beginMatch));
+        $txid = $beginMatch[1];
+        self::assertSame([
+            ':002 DB 001 BEGIN ' . $roundId . ' I ' . $txid . ' ' . $digest,
+            ':002 DB 001 PUT ' . $roundId . ' I ' . $txid . ' 1.2.3.4::clones :*5',
+            ':002 DB 001 END ' . $roundId . ' I ' . $txid . ' ' . $digest,
+        ], $this->written);
+        $this->written = [];
+
+        for ($index = 0; 3 > $index; ++$index) {
+            $coordinator->enqueueMutation(new UdbMutation('N', 'nick' . $index, 'value'));
+        }
+        self::assertSame([], $this->written);
+        self::assertSame((int) $roundId, $coordinator->activeRoundId());
+
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 ACK ' . $roundId . ' I ' . $txid . ' ' . $digest), $connection);
+        self::assertSame([], $this->written);
+        self::assertSame((int) $roundId, $coordinator->activeRoundId());
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 ACK services.test.local 0123456789abcdef OCL OCLG'), $connection);
+
+        self::assertSame(6, substr_count(implode("\n", $this->written), ' INF '));
+        self::assertSame(0, substr_count(implode("\n", $this->written), ' INF ' . $roundId . ' '));
+        self::assertNotSame((int) $roundId, $coordinator->activeRoundId());
+        self::assertTrue($coordinator->isResyncPending());
     }
 
     #[Test]

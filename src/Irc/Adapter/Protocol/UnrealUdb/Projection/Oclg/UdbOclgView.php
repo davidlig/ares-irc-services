@@ -8,6 +8,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\SystemUdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbOclgViewDigest;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -25,22 +26,24 @@ final class UdbOclgView
     /** @var array<string, string> */
     private array $available = [];
 
-    /** @var array{epoch: string, generation: int, ready: bool, count: int, digest: string, entries: array<string, string>, deadline: int}|null */
+    /** @var array{epoch: string, generation: UdbUnsignedDecimal, ready: bool, count: int, digest: string, entries: array<string, string>, deadline: int}|null */
     private ?array $stage = null;
 
-    /** @var array{epoch: string, generation: int, ready: bool, count: int, digest: string}|null */
+    /** @var array{epoch: string, generation: UdbUnsignedDecimal, ready: bool, count: int, digest: string}|null */
     private ?array $highWaterDescriptor = null;
 
     private ?string $expectedEpoch = null;
 
-    private int $generationHighWater = 0;
+    private UdbUnsignedDecimal $generationHighWater;
 
-    private ?int $committedGeneration = null;
+    private ?UdbUnsignedDecimal $committedGeneration = null;
 
     public function __construct(
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly UdbClock $clock = new SystemUdbClock(),
-    ) {}
+    ) {
+        $this->generationHighWater = UdbUnsignedDecimal::fromInt(0);
+    }
 
     public function expectEpoch(string $epoch): void
     {
@@ -51,7 +54,7 @@ final class UdbOclgView
         $this->available = [];
         $this->stage = null;
         $this->highWaterDescriptor = null;
-        $this->generationHighWater = 0;
+        $this->generationHighWater = UdbUnsignedDecimal::fromInt(0);
         $this->committedGeneration = null;
         $this->expectedEpoch = $epoch;
     }
@@ -89,16 +92,16 @@ final class UdbOclgView
             'count' => $frame->count,
             'digest' => $frame->checksum,
         ];
-        if ($frame->roundId < $this->generationHighWater) {
+        if (0 > $frame->roundId->compare($this->generationHighWater)) {
             return;
         }
-        if ($frame->roundId === $this->generationHighWater) {
-            if ($descriptor !== $this->highWaterDescriptor) {
+        if ($frame->roundId->equals($this->generationHighWater) && null !== $this->highWaterDescriptor) {
+            if (!self::sameDescriptor($descriptor, $this->highWaterDescriptor)) {
                 $this->logger->warning('Ignored conflicting OCLG high-water descriptor.');
 
                 return;
             }
-            if (null !== $this->stage || $this->committedGeneration === $frame->roundId) {
+            if (null !== $this->stage || $this->committedGeneration?->equals($frame->roundId)) {
                 return;
             }
         } else {
@@ -173,7 +176,7 @@ final class UdbOclgView
         $this->available = [];
         $this->highWaterDescriptor = null;
         $this->expectedEpoch = null;
-        $this->generationHighWater = 0;
+        $this->generationHighWater = UdbUnsignedDecimal::fromInt(0);
         $this->committedGeneration = null;
     }
 
@@ -184,7 +187,7 @@ final class UdbOclgView
             && null !== $frame->roundId
             && $frame->epoch === $this->expectedEpoch
             && $frame->epoch === $this->stage['epoch']
-            && $frame->roundId === $this->stage['generation'];
+            && $frame->roundId->equals($this->stage['generation']);
     }
 
     private function discard(string $reason): void
@@ -192,5 +195,18 @@ final class UdbOclgView
         $this->stage = null;
         $this->available = [];
         $this->logger->warning('Discarded OCLG snapshot: ' . $reason);
+    }
+
+    /**
+     * @param array{epoch: string, generation: UdbUnsignedDecimal, ready: bool, count: int, digest: string} $left
+     * @param array{epoch: string, generation: UdbUnsignedDecimal, ready: bool, count: int, digest: string} $right
+     */
+    private static function sameDescriptor(array $left, array $right): bool
+    {
+        return $left['epoch'] === $right['epoch']
+            && $left['generation']->equals($right['generation'])
+            && $left['ready'] === $right['ready']
+            && $left['count'] === $right['count']
+            && $left['digest'] === $right['digest'];
     }
 }

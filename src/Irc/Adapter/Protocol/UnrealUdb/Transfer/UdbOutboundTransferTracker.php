@@ -6,13 +6,15 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Transfer;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 
+use function is_int;
 use function min;
 
 /** Owns pending txid correlation and timeout state for outbound snapshots. */
 final class UdbOutboundTransferTracker
 {
-    /** @var array<string, array{txid: string, roundId: int, digest: string, inactivityDeadline: int, absoluteDeadline: int}> */
+    /** @var array<string, array{txid: string, roundId: UdbUnsignedDecimal, digest: string, inactivityDeadline: int, absoluteDeadline: int}> */
     private array $pending = [];
 
     public function __construct(
@@ -20,7 +22,7 @@ final class UdbOutboundTransferTracker
         private readonly int $absoluteTimeout = 300,
     ) {}
 
-    public function track(UdbBlock $block, int $roundId, string $txid, string $digest, int $now): bool
+    public function track(UdbBlock $block, int|UdbUnsignedDecimal $roundId, string $txid, string $digest, int $now): bool
     {
         $letter = $block->letter();
         if (isset($this->pending[$letter])) {
@@ -29,7 +31,7 @@ final class UdbOutboundTransferTracker
 
         $this->pending[$letter] = [
             'txid' => $txid,
-            'roundId' => $roundId,
+            'roundId' => is_int($roundId) ? UdbUnsignedDecimal::fromInt($roundId) : $roundId,
             'digest' => $digest,
             'inactivityDeadline' => $now + $this->inactivityTimeout,
             'absoluteDeadline' => $now + $this->absoluteTimeout,
@@ -46,7 +48,7 @@ final class UdbOutboundTransferTracker
             return UdbTransferAcknowledgement::Unknown;
         }
 
-        if ($expected['roundId'] !== $frame->roundId
+        if (null === $frame->roundId || !$expected['roundId']->equals($frame->roundId)
             || $expected['txid'] !== $frame->txid
             || $expected['digest'] !== $frame->checksum
         ) {
@@ -68,7 +70,7 @@ final class UdbOutboundTransferTracker
         return [] === $this->pending;
     }
 
-    /** @return array{block: string, timeout: string, roundId: int}|null */
+    /** @return array{block: string, timeout: string, roundId: UdbUnsignedDecimal}|null */
     public function firstExpired(int $now): ?array
     {
         foreach ($this->pending as $block => $transfer) {

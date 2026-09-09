@@ -18,6 +18,8 @@ use function strpos;
 use function strtoupper;
 use function substr;
 
+use const PHP_INT_MAX;
+
 /**
  * Wire codec for the current UDB 4 DB command grammar.
  *
@@ -56,39 +58,39 @@ final class UdbWireCodec
         return sprintf(':%s DB %s HEL 4 ACK %s %s %s', $sid, $targetSid, $propagator, $epoch, implode(' ', $capabilities));
     }
 
-    public static function inf(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $checksum, int $modifiedAt): string
+    public static function inf(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $checksum, int $modifiedAt): string
     {
-        return sprintf(':%s DB %s INF %d %s %s %d', $sid, $targetSid, $roundId, $block->letter(), self::checksumOrEmpty($checksum), $modifiedAt);
+        return sprintf(':%s DB %s INF %s %s %s %d', $sid, $targetSid, $roundId, $block->letter(), self::checksumOrEmpty($checksum), $modifiedAt);
     }
 
-    public static function res(string $sid, string $targetSid, int $roundId, UdbBlock $block): string
+    public static function res(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block): string
     {
-        return sprintf(':%s DB %s RES %d %s', $sid, $targetSid, $roundId, $block->letter());
+        return sprintf(':%s DB %s RES %s %s', $sid, $targetSid, $roundId, $block->letter());
     }
 
-    public static function begin(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $txid, string $checksum): string
+    public static function begin(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $checksum): string
     {
-        return sprintf(':%s DB %s BEGIN %d %s %s %s', $sid, $targetSid, $roundId, $block->letter(), $txid, self::checksumOrEmpty($checksum));
+        return sprintf(':%s DB %s BEGIN %s %s %s %s', $sid, $targetSid, $roundId, $block->letter(), $txid, self::checksumOrEmpty($checksum));
     }
 
-    public static function put(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $txid, string $encodedPath, string $value): string
+    public static function put(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $encodedPath, string $value): string
     {
-        return sprintf(':%s DB %s PUT %d %s %s %s :%s', $sid, $targetSid, $roundId, $block->letter(), $txid, $encodedPath, $value);
+        return sprintf(':%s DB %s PUT %s %s %s %s :%s', $sid, $targetSid, $roundId, $block->letter(), $txid, $encodedPath, $value);
     }
 
-    public static function end(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $txid, string $checksum): string
+    public static function end(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $checksum): string
     {
-        return sprintf(':%s DB %s END %d %s %s %s', $sid, $targetSid, $roundId, $block->letter(), $txid, self::checksumOrEmpty($checksum));
+        return sprintf(':%s DB %s END %s %s %s %s', $sid, $targetSid, $roundId, $block->letter(), $txid, self::checksumOrEmpty($checksum));
     }
 
-    public static function ack(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $txid, string $checksum): string
+    public static function ack(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $checksum): string
     {
-        return sprintf(':%s DB %s ACK %d %s %s %s', $sid, $targetSid, $roundId, $block->letter(), $txid, self::checksumOrEmpty($checksum));
+        return sprintf(':%s DB %s ACK %s %s %s %s', $sid, $targetSid, $roundId, $block->letter(), $txid, self::checksumOrEmpty($checksum));
     }
 
-    public static function err(string $sid, string $targetSid, string $subcommand, int $errorCode, int $roundId, ?UdbBlock $block): string
+    public static function err(string $sid, string $targetSid, string $subcommand, int $errorCode, int|UdbUnsignedDecimal $roundId, ?UdbBlock $block): string
     {
-        return sprintf(':%s DB %s ERR %s %d %d %s', $sid, $targetSid, $subcommand, $errorCode, $roundId, null !== $block ? $block->letter() : '0');
+        return sprintf(':%s DB %s ERR %s %d %s %s', $sid, $targetSid, $subcommand, $errorCode, $roundId, null !== $block ? $block->letter() : '0');
     }
 
     public static function ins(string $sid, string $blockLetter, string $encodedPath, string $value): string
@@ -139,13 +141,13 @@ final class UdbWireCodec
         $operation = strtoupper($message->params[2] ?? '');
         $epoch = $message->params[3] ?? '';
         $generation = UdbPathCodec::parseUnsigned($message->params[4] ?? '');
-        if (1 !== preg_match('/^[0-9a-f]{16}$/D', $epoch) || null === $generation) {
+        if (1 !== preg_match('/^[0-9a-f]{16}$/D', $epoch) || null === $generation || $generation->isZero()) {
             return null;
         }
 
         if ('BEGIN' === $operation && 8 === count($message->params)) {
             $status = strtoupper($message->params[5]);
-            $count = UdbPathCodec::parseUnsigned($message->params[6]);
+            $count = UdbPathCodec::parseUnsignedInt($message->params[6], 1024);
             $digest = $message->params[7];
             if (!in_array($status, ['READY', 'INCOMPLETE'], true) || null === $count || !UdbOclgViewDigest::isValid($digest)) {
                 return null;
@@ -211,8 +213,8 @@ final class UdbWireCodec
         $roundId = UdbPathCodec::parseUnsigned($message->params[2]);
         $block = UdbBlock::fromLetter(strtoupper($message->params[3]));
         $checksum = UdbChecksum::parse($message->params[4]);
-        $timestamp = UdbPathCodec::parseUnsigned($message->params[5]);
-        if (null === $roundId || 0 === $roundId || null === $checksum || null === $timestamp || null === $block) {
+        $timestamp = UdbPathCodec::parseUnsignedInt($message->params[5], PHP_INT_MAX);
+        if (null === $roundId || $roundId->isZero() || null === $checksum || null === $timestamp || null === $block) {
             return null;
         }
 
@@ -226,7 +228,7 @@ final class UdbWireCodec
         }
 
         $roundId = UdbPathCodec::parseUnsigned($message->params[2]);
-        if (null === $roundId || 0 === $roundId) {
+        if (null === $roundId || $roundId->isZero()) {
             return null;
         }
 
@@ -332,7 +334,7 @@ final class UdbWireCodec
         $roundId = UdbPathCodec::parseUnsigned($message->params[2] ?? '');
         $block = UdbBlock::fromLetter(strtoupper($message->params[3] ?? ''));
         $txid = $message->params[4] ?? '';
-        if (null === $roundId || 0 === $roundId || null === $block || !UdbPathCodec::isValidTxid($txid)) {
+        if (null === $roundId || $roundId->isZero() || null === $block || !UdbPathCodec::isValidTxid($txid)) {
             return null;
         }
 
@@ -346,9 +348,9 @@ final class UdbWireCodec
             return null;
         }
 
-        $errorCode = UdbPathCodec::parseUnsigned($message->params[3]);
+        $errorCode = UdbPathCodec::parseUnsignedInt($message->params[3], 255);
         $roundId = UdbPathCodec::parseUnsigned($message->params[4]);
-        if (null === $errorCode || $errorCode > 255 || null === $roundId || 0 === $roundId) {
+        if (null === $errorCode || null === $roundId || $roundId->isZero()) {
             return null;
         }
 
@@ -427,9 +429,7 @@ final class UdbWireCodec
             return null;
         }
 
-        $timestamp = isset($message->params[3]) ? UdbPathCodec::parseUnsigned($message->params[3]) : null;
-
-        return new UdbFrame(UdbFrameKind::Opt, $sourceSid, $target, block: $block, timestamp: $timestamp);
+        return new UdbFrame(UdbFrameKind::Opt, $sourceSid, $target, block: $block, modifiedAt: $message->params[3] ?? null);
     }
 
     /** Mutation paths must be "<block>::<canonical encoded remainder>". */

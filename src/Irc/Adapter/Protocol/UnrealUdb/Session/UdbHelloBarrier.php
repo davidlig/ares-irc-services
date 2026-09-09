@@ -57,6 +57,13 @@ final class UdbHelloBarrier
         return $this->deadline;
     }
 
+    /** Abandons round-scoped tickets while retaining the established peer confirmation. */
+    public function abandonPending(): void
+    {
+        $this->pending = [];
+        $this->deadline = null;
+    }
+
     public function reset(): void
     {
         $this->pending = [];

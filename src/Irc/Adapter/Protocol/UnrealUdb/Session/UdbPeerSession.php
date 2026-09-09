@@ -10,7 +10,7 @@ use function in_array;
 use function preg_match;
 use function strcasecmp;
 
-/** Owns direct-peer identity and the remote UDB instance advertisement. */
+/** Owns peer identity, direct/broadcast targeting and the remote UDB advertisement. */
 final class UdbPeerSession
 {
     private ?string $ownName = null;
@@ -54,11 +54,19 @@ final class UdbPeerSession
         return $this->remoteEpoch;
     }
 
-    public function isDirect(UdbFrame $frame, string $localSid): bool
+    public function isFromPeer(UdbFrame $frame): bool
     {
-        return null !== $this->remoteSid
-            && $frame->sourceSid === $this->remoteSid
-            && $frame->target === $localSid;
+        return null !== $this->remoteSid && $frame->sourceSid === $this->remoteSid;
+    }
+
+    public function isDirectFromPeer(UdbFrame $frame, string $localSid): bool
+    {
+        return $this->isFromPeer($frame) && $frame->target === $localSid;
+    }
+
+    public function isBroadcastFromPeer(UdbFrame $frame): bool
+    {
+        return $this->isFromPeer($frame) && '*' === $frame->target;
     }
 
     public function observeAdvertisement(UdbFrame $frame, bool $bootstrap): UdbPeerAdvertisementChange
