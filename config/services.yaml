@@ -519,7 +519,29 @@ services:
             $maintenanceDispatchIntervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
 
+    # --- Messenger consumer process (started/stopped with irc:connect) ---
+
+    App\Irc\Adapter\In\Cli\ConsumerProcessManagerInterface:
+        alias: App\Irc\Adapter\Out\Messenger\ConsumerProcessManager
+
+    App\Irc\Adapter\Out\Messenger\ConsumerProcessManager:
+        arguments:
+            $consolePath: '%kernel.project_dir%/bin/console'
+            $transportNames: ['async', 'async_emails']
+
+    # --- CLI command — inject .env defaults so the command runs without arguments ---
+
     App\Irc\Application\Connect\ConnectToServerHandlerInterface: '@App\Irc\Application\Connect\ConnectToServerHandler'
+
+    App\Irc\Adapter\In\Cli\ConnectCommand:
+        arguments:
+            $defaultServerName: '%irc.server_name%'
+            $defaultHost: '%irc.ircd_host%'
+            $defaultPort: '%irc.ircd_port%'
+            $defaultPassword: '%irc.link_password%'
+            $defaultDescription: '%irc.description%'
+            $defaultUseTls: '%irc.use_tls%'
+            $defaultTlsVerifyPeer: '%irc.tls_verify_peer%'
 
     App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight:
         arguments:

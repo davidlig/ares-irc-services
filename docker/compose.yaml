@@ -26,4 +26,9 @@ services:
     environment:
       - APP_ENV=prod
 
-    # Healthcheck is deferred until an application-level command (e.g. irc:health) is implemented.
+    healthcheck:
+      test: ["CMD-SHELL", "grep -Fq 'irc:connect' /proc/1/cmdline"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

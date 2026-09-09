@@ -81,7 +81,12 @@ config-show: ## Show current configuration
 	$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares php bin/console debug:dotenv
 
 health: ## Check container health
-	@$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares pgrep -f "php bin/console irc:connect" > /dev/null 2>&1 && echo "✅ Healthy" || echo "❌ Unhealthy"
+	@container_id="$$($(DOCKER_COMPOSE) -f docker/compose.yaml ps -q ares)"; \
+		if [ -n "$$container_id" ] && [ "$$(docker inspect --format '{{.State.Health.Status}}' "$$container_id" 2>/dev/null)" = "healthy" ]; then \
+			echo "✅ Healthy"; \
+		else \
+			echo "❌ Unhealthy"; \
+		fi
 
 # Multi-arch build
 build-multiarch: ## Build multi-arch image (amd64 + arm64)
