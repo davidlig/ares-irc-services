@@ -376,6 +376,7 @@ final class UdbSessionCoordinatorTest extends TestCase
     public function resIsRejectedWhileAuthorityIsNotEstablished(): void
     {
         $this->prepareLink();
+        $this->handle($this->peerHelAck());
 
         $this->written = [];
         $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 20, block: UdbBlock::Ips));
@@ -587,6 +588,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, $logger, new UdbOclgView($logger));
         $this->prepareLink();
         $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
 
         $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'BROKEN', count: 1, checksum: str_repeat('a', 64)));
 
@@ -601,6 +603,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, $logger, new UdbOclgView($logger));
         $this->prepareLink();
         $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
 
         $entries = ['netadmin' => str_repeat('a', 64)];
         $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
@@ -616,6 +619,7 @@ final class UdbSessionCoordinatorTest extends TestCase
     {
         $this->prepareLink();
         $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
 
         $entries = ['netadmin' => str_repeat('a', 64)];
         $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
@@ -631,6 +635,7 @@ final class UdbSessionCoordinatorTest extends TestCase
     {
         $this->prepareLink();
         $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
         $entries = ['netadmin' => str_repeat('a', 64)];
         $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
         self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
@@ -647,6 +652,7 @@ final class UdbSessionCoordinatorTest extends TestCase
     {
         $this->prepareLink();
         $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
         $entries = ['netadmin' => str_repeat('a', 64)];
         $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
         $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: $entries['netadmin']));
@@ -680,6 +686,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         );
         $this->prepareLink();
         $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
 
         $entries = ['netadmin' => str_repeat('a', 64)];
         $this->handle(new UdbFrame(
@@ -716,6 +723,122 @@ final class UdbSessionCoordinatorTest extends TestCase
             ':002 DB 001 ERR DEL 6 2 K',
             ':002 DB 001 ERR DEL 6 3 K',
         ], $this->written);
+    }
+
+    // ---------- HEL capability gate ----------
+
+    #[Test]
+    public function preHelloBroadcastMutationsAreIgnored(): void
+    {
+        $this->prepareLink();
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Ins, '001', '*', path: 'S::nickserv', value: 'mask'));
+        $this->handle(new UdbFrame(UdbFrameKind::Del, '001', '*', path: 'K::G::x'));
+        $this->handle(new UdbFrame(UdbFrameKind::Drp, '001', '*', block: UdbBlock::Ips));
+        $this->handle(new UdbFrame(UdbFrameKind::Opt, '001', '*', block: UdbBlock::Settings, modifiedAt: '1'));
+
+        self::assertSame([], $this->written);
+        self::assertFalse($this->coordinator->isAuthorityReady());
+    }
+
+    #[Test]
+    public function preHelloDirectFramesDoNotAdvanceState(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: UdbBlock::Ips, checksum: '00000000', timestamp: 1));
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 1, block: UdbBlock::Ips));
+        $this->handle(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: '00000000'));
+        $this->handle(new UdbFrame(UdbFrameKind::Put, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', path: 'p', value: 'v'));
+        $this->handle(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: '00000000'));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: '00000000'));
+        $this->handle(new UdbFrame(UdbFrameKind::Err, '001', '002', roundId: 1, block: UdbBlock::Ips, subcommand: 'PUT', errorCode: 3));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 1, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: str_repeat('a', 64)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 1, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: str_repeat('a', 64)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 1, epoch: self::PEER_EPOCH));
+
+        self::assertSame([], $this->written);
+        self::assertNull($this->coordinator->activeRoundId());
+        self::assertFalse($this->coordinator->isAuthorityReady());
+    }
+
+    #[Test]
+    public function helAndHelAckAreProcessedBeforeConfirmation(): void
+    {
+        $this->prepareLink();
+        $this->written = [];
+
+        $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
+
+        self::assertSame([$this->helAck()], $this->written);
+    }
+
+    #[Test]
+    public function foreignSidMutationIsIgnoredBeforeAndAfterHello(): void
+    {
+        $this->prepareLink();
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::Ins, '999', '*', path: 'S::nickserv', value: 'mask'));
+        self::assertSame([], $this->written);
+
+        $this->makeReady();
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::Ins, '999', '*', path: 'S::nickserv', value: 'mask'));
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function epochChangeClosesTheGateUntilTheNewHelIsConfirmed(): void
+    {
+        $this->makeReady();
+        $newEpoch = '2222222222222222';
+        $this->handle($this->peerHel(epoch: $newEpoch));
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Ins, '001', '*', path: 'S::nickserv', value: 'mask'));
+        self::assertSame([], $this->written);
+
+        $this->handle($this->peerHelAck(epoch: $newEpoch));
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::Ins, '001', '*', path: 'S::nickserv', value: 'mask'));
+
+        self::assertSame([':002 DB 001 ERR INS 6 1 S'], $this->written);
+    }
+
+    #[Test]
+    public function pendingReconciliationBarrierDoesNotBlockConfirmedTraffic(): void
+    {
+        $this->startRound();
+        $roundId = $this->activeRoundId();
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: $roundId, block: UdbBlock::Ips));
+
+        $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
+        self::assertSame([
+            ':002 DB 001 BEGIN ' . $roundId . ' I 00000001 ' . $digest,
+            ':002 DB 001 PUT ' . $roundId . ' I 00000001 1.2.3.4::clones :*5',
+            ':002 DB 001 END ' . $roundId . ' I 00000001 ' . $digest,
+        ], $this->written);
+    }
+
+    #[Test]
+    public function nonDirectPeerResAndOclgFramesAreIgnoredAfterHello(): void
+    {
+        $this->makeReady();
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '999', '002', roundId: 20, block: UdbBlock::Ips));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '999', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: str_repeat('a', 64)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '999', '002', roundId: 7, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: str_repeat('a', 64)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '999', '002', roundId: 7, epoch: self::PEER_EPOCH));
+
+        self::assertSame([], $this->written);
+        self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
     }
 
     // ---------- Error handling and retries ----------
@@ -1422,6 +1545,10 @@ final class UdbSessionCoordinatorTest extends TestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
 
         $connection = $this->captureConnection($coordinator);
+        $coordinator->handleFrame($this->peerHel(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $this->written = [];
+
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: str_repeat('0', 8)), $connection);
 
         self::assertSame([':002 DB 001 ERR BEGIN 6 1 I'], $this->written);
@@ -1536,6 +1663,8 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
+        $coordinator->handleFrame($this->peerHel(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(), $connection);
         $this->written = [];
 
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);

@@ -330,6 +330,12 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     {
         $this->connection = $connection;
 
+        if (!$this->mayProcessBeforeHello($frame) && !$this->helloBarrier->isConfirmed()) {
+            $this->logger->debug('Ignoring UDB frame before HEL confirmation.', ['kind' => $frame->kind->value]);
+
+            return;
+        }
+
         match ($frame->kind) {
             UdbFrameKind::HelAck => $this->handleHelAck($frame),
             UdbFrameKind::Hel => $this->handleHel($frame),
@@ -555,9 +561,6 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
                 'block' => $frame->block?->letter(),
             ]);
 
-            return;
-        }
-        if (!$this->helloBarrier->isConfirmed()) {
             return;
         }
 
@@ -928,6 +931,13 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     private function isDirectPeerFrame(UdbFrame $frame): bool
     {
         return $this->peer->isDirectFromPeer($frame, $this->sid);
+    }
+
+    /** HEL and HEL ACK are the only DB frames accepted before the capability gate. */
+    private function mayProcessBeforeHello(UdbFrame $frame): bool
+    {
+        return UdbFrameKind::Hel === $frame->kind
+            || UdbFrameKind::HelAck === $frame->kind;
     }
 
     private function flushMutations(): void

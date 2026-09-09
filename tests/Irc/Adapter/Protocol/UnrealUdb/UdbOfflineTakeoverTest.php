@@ -120,6 +120,43 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function lastSyncUsesBoundedTimeTSemantics(): void
+    {
+        foreach (['0', '1700000000', '9223372036854775807', '0001'] as $valid) {
+            $this->writeValidGenerationWithLastSync($valid);
+            self::assertSame(64, strlen($this->takeover()->takeover($this->directory, false)));
+        }
+    }
+
+    #[Test]
+    public function lastSyncRejectsValuesAboveTheSignedTimeTMaximum(): void
+    {
+        foreach (['9223372036854775808', '18446744073709551615'] as $invalid) {
+            $this->writeValidGenerationWithLastSync($invalid);
+            try {
+                $this->takeover()->takeover($this->directory, false);
+                self::fail('LAST_SYNC above the signed time_t maximum was accepted.');
+            } catch (RuntimeException) {
+                self::addToAssertionCount(1);
+            }
+        }
+    }
+
+    #[Test]
+    public function lastSyncRejectsMalformedValues(): void
+    {
+        foreach (['', '-1', '+1', ' 1', '1 ', '1a'] as $invalid) {
+            $this->writeValidGenerationWithLastSync($invalid);
+            try {
+                $this->takeover()->takeover($this->directory, false);
+                self::fail('Malformed LAST_SYNC was accepted.');
+            } catch (RuntimeException) {
+                self::addToAssertionCount(1);
+            }
+        }
+    }
+
+    #[Test]
     public function rejectsMissingMalformedAndInconsistentInputs(): void
     {
         $takeover = $this->takeover();
@@ -311,6 +348,14 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     private function writeValidGeneration(string $generation = '7'): void
     {
         file_put_contents($this->directory . '/.udb_state', "FORMAT=1\nSTATE=READY\nORIGIN=FRESH\nGENERATION={$generation}\nLAST_SYNC=1\n");
+        foreach (['N' => '', 'C' => '', 'I' => "1.2.3.4::clones *5\n", 'S' => "propagator hub1.example, hub2.example\n", 'L' => "hub1.example::options *1\n", 'K' => ''] as $block => $records) {
+            file_put_contents($this->directory . '/udb_' . $block . '.db', '; UDB Block ' . $block . " - Version 1\n; Generation: {$generation}\n" . $records);
+        }
+    }
+
+    private function writeValidGenerationWithLastSync(string $lastSync, string $generation = '7'): void
+    {
+        file_put_contents($this->directory . '/.udb_state', "FORMAT=1\nSTATE=READY\nORIGIN=FRESH\nGENERATION={$generation}\nLAST_SYNC={$lastSync}\n");
         foreach (['N' => '', 'C' => '', 'I' => "1.2.3.4::clones *5\n", 'S' => "propagator hub1.example, hub2.example\n", 'L' => "hub1.example::options *1\n", 'K' => ''] as $block => $records) {
             file_put_contents($this->directory . '/udb_' . $block . '.db', '; UDB Block ' . $block . " - Version 1\n; Generation: {$generation}\n" . $records);
         }

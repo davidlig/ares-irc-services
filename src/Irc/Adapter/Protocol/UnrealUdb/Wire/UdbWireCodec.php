@@ -18,8 +18,6 @@ use function strpos;
 use function strtoupper;
 use function substr;
 
-use const PHP_INT_MAX;
-
 /**
  * Wire codec for the current UDB 4 DB command grammar.
  *
@@ -213,7 +211,7 @@ final class UdbWireCodec
         $roundId = UdbPathCodec::parseUnsigned($message->params[2]);
         $block = UdbBlock::fromLetter(strtoupper($message->params[3]));
         $checksum = UdbChecksum::parse($message->params[4]);
-        $timestamp = UdbPathCodec::parseUnsignedInt($message->params[5], PHP_INT_MAX);
+        $timestamp = UdbPathCodec::parseTimeT($message->params[5]);
         if (null === $roundId || $roundId->isZero() || null === $checksum || null === $timestamp || null === $block) {
             return null;
         }

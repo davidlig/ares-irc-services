@@ -164,7 +164,7 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
             || !in_array($state['ORIGIN'], ['FRESH', 'RECOVERY'], true)
             || null === ($generation = UdbUnsignedDecimal::parse($state['GENERATION']))
             || $generation->isZero()
-            || 1 !== preg_match('/^[0-9]+$/', $state['LAST_SYNC'])) {
+            || null === UdbPathCodec::parseTimeT($state['LAST_SYNC'])) {
             throw new RuntimeException('The .udb_state file is not a valid READY UDB generation.');
         }
 

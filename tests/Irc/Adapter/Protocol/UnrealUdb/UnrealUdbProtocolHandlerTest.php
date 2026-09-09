@@ -356,6 +356,8 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->performHandshake($connection, $this->createServerLink());
         $handler->handleIncoming($handler->parseRawLine('PROTOCTL SID=001'), $connection);
         $handler->handleIncoming($handler->parseRawLine('SERVER ircd.example.net 1 :IRCd'), $connection);
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 services.test.local 0123456789abcdef OCL OCLG'), $connection);
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 ACK services.test.local 0123456789abcdef OCL OCLG'), $connection);
         $this->written = [];
 
         foreach ([
@@ -383,10 +385,27 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->performHandshake($connection, $this->createServerLink());
         $handler->handleIncoming($handler->parseRawLine('PROTOCTL SID=001'), $connection);
         $handler->handleIncoming($handler->parseRawLine('SERVER ircd.example.net 1 :IRCd'), $connection);
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 services.test.local 0123456789abcdef OCL OCLG'), $connection);
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 ACK services.test.local 0123456789abcdef OCL OCLG'), $connection);
         $this->written = [];
 
         $handler->handleIncoming($handler->parseRawLine(':999 DB * INS S::nickserv :bad'), $connection);
         $handler->handleIncoming($handler->parseRawLine(':001 DB 002 INS S::nickserv :bad'), $connection);
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function preHelloMutationLinesAreIgnoredWithoutAnyResponse(): void
+    {
+        $handler = $this->createHandler();
+        $connection = $this->createConnection();
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming($handler->parseRawLine('PROTOCTL SID=001'), $connection);
+        $handler->handleIncoming($handler->parseRawLine('SERVER ircd.example.net 1 :IRCd'), $connection);
+        $this->written = [];
+
+        $handler->handleIncoming($handler->parseRawLine(':001 DB * INS S::nickserv :mask value'), $connection);
 
         self::assertSame([], $this->written);
     }

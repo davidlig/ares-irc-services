@@ -206,6 +206,23 @@ final class UdbPathCodecTest extends TestCase
     }
 
     #[Test]
+    public function parseTimeTRespectsTheSignedTimeTBounds(): void
+    {
+        self::assertSame(0, UdbPathCodec::parseTimeT('0'));
+        self::assertSame(1700000000, UdbPathCodec::parseTimeT('1700000000'));
+        self::assertSame(PHP_INT_MAX, UdbPathCodec::parseTimeT((string) PHP_INT_MAX));
+        self::assertSame(1, UdbPathCodec::parseTimeT('0001'));
+        self::assertNull(UdbPathCodec::parseTimeT('9223372036854775808'));
+        self::assertNull(UdbPathCodec::parseTimeT('18446744073709551615'));
+        self::assertNull(UdbPathCodec::parseTimeT(''));
+        self::assertNull(UdbPathCodec::parseTimeT('-1'));
+        self::assertNull(UdbPathCodec::parseTimeT('+1'));
+        self::assertNull(UdbPathCodec::parseTimeT(' 1'));
+        self::assertNull(UdbPathCodec::parseTimeT('1 '));
+        self::assertNull(UdbPathCodec::parseTimeT('1a'));
+    }
+
+    #[Test]
     public function normalizeChecksumPadsAndUppercases(): void
     {
         self::assertSame('0000000F', UdbPathCodec::normalizeChecksum('f'));

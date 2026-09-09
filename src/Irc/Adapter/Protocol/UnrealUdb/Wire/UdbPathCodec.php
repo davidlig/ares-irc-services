@@ -19,6 +19,7 @@ use function strpbrk;
 use function strtoupper;
 use function substr;
 
+use const PHP_INT_MAX;
 use const STR_PAD_LEFT;
 
 /**
@@ -223,5 +224,11 @@ final class UdbPathCodec
         }
 
         return $number;
+    }
+
+    /** Parses a durable or wire timestamp with the bounded time_t semantics of udb_parse_time_t(). */
+    public static function parseTimeT(string $value): ?int
+    {
+        return self::parseUnsignedInt($value, PHP_INT_MAX);
     }
 }
