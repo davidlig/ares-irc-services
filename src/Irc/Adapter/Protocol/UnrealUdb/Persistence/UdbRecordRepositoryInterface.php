@@ -13,14 +13,20 @@ interface UdbRecordRepositoryInterface
      */
     public function recordsByBlock(string $block): array;
 
-    /** Inserts the record or updates the value of the existing (block, identity) row. */
-    public function upsert(string $block, string $path, string $value): void;
+    /**
+     * Inserts the record or updates the value of the existing (block, identity) row.
+     *
+     * @return bool true when the authoritative store changed
+     */
+    public function upsert(string $block, string $path, string $value): bool;
 
     /**
      * Deletes the record at the path and all of its descendants
      * (case-insensitive, mirroring the UDB tree cascade).
+     *
+     * @return bool true when at least one record was removed
      */
-    public function deleteCascade(string $block, string $path): void;
+    public function deleteCascade(string $block, string $path): bool;
 
     /**
      * Seeds one block from a path => value map inside a single transaction,

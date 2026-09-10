@@ -69,6 +69,19 @@ final class UnrealUdbRecordWriterTest extends TestCase
     }
 
     #[Test]
+    public function echoedChannelTopicPersistsSuccessfullyWithoutSendingOrQueueingAnotherMutation(): void
+    {
+        $this->sessionState->ready = true;
+
+        self::assertTrue($this->writer->insert('C', '#ares::topic', 'Canal oficial'));
+        self::assertTrue($this->writer->insert('C', '#ARES::TOPIC', 'Canal oficial'));
+
+        self::assertSame([':001 DB * INS C::#ares::topic :Canal oficial'], $this->written);
+        self::assertSame([], $this->sessionState->queue);
+        self::assertSame(['#ares::topic' => 'Canal oficial'], $this->records->blocks['C']);
+    }
+
+    #[Test]
     public function insertEncodesSpecialCharactersCanonically(): void
     {
         $this->sessionState->ready = true;
@@ -163,11 +176,25 @@ final class UnrealUdbRecordWriterTest extends TestCase
     #[Test]
     public function deleteQueuesWhenNotReady(): void
     {
+        $this->records->blocks['N'] = ['davidlig::vhost' => 'v'];
+
         $result = $this->writer->delete('N', 'davidlig');
 
         self::assertTrue($result);
         self::assertSame([], $this->written);
         self::assertCount(1, $this->sessionState->queue);
+    }
+
+    #[Test]
+    public function deletingAnUnknownPathSucceedsWithoutSendingOrQueueingAMutation(): void
+    {
+        $this->sessionState->ready = true;
+
+        self::assertTrue($this->writer->delete('N', 'davidlig'));
+
+        self::assertSame([], $this->written);
+        self::assertSame([], $this->sessionState->queue);
+        self::assertSame([], $this->records->blocks);
     }
 
     #[Test]

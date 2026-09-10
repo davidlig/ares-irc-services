@@ -39,8 +39,9 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function upsertInsertsAndUpdatesCaseInsensitively(): void
     {
-        $this->records->upsert('N', 'DavidLig::vhost', 'first.example.net');
-        $this->records->upsert('N', 'davidlig::VHOST', 'second.example.net');
+        self::assertTrue($this->records->upsert('N', 'DavidLig::vhost', 'first.example.net'));
+        self::assertTrue($this->records->upsert('N', 'davidlig::VHOST', 'second.example.net'));
+        self::assertFalse($this->records->upsert('N', 'DAVIDLIG::vhost', 'second.example.net'));
         $this->flushAndClear();
 
         self::assertSame(['DavidLig::vhost' => 'second.example.net'], $this->records->recordsByBlock('N'));
@@ -68,7 +69,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->records->upsert('C', '#chan::founder', 'DavidLig');
         $this->flushAndClear();
 
-        $this->records->deleteCascade('N', 'DAVIDLIG');
+        self::assertTrue($this->records->deleteCascade('N', 'DAVIDLIG'));
         $this->flushAndClear();
 
         self::assertSame(['other::vhost' => 'v'], $this->records->recordsByBlock('N'));
@@ -81,7 +82,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->records->upsert('N', 'nick::vhost', 'v');
         $this->flushAndClear();
 
-        $this->records->deleteCascade('N', 'missing');
+        self::assertFalse($this->records->deleteCascade('N', 'missing'));
         $this->flushAndClear();
 
         self::assertSame(['nick::vhost' => 'v'], $this->records->recordsByBlock('N'));

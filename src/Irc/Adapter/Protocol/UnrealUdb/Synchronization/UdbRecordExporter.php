@@ -243,10 +243,7 @@ final readonly class UdbRecordExporter
         return $records;
     }
 
-    /**
-     * Channel option bitmask: LOCK_MODES (2) = MLOCK active, LOCK_TOPIC (4) =
-     * TOPICLOCK, PERSISTENT (8) = active registered channel (+P).
-     */
+    /** Channel option bitmask: LOCK_MODES (2) = MLOCK active, LOCK_TOPIC (4) = TOPICLOCK. */
     public function channelOptions(ChannelProjection $channel): int
     {
         $options = 0;
@@ -255,9 +252,6 @@ final readonly class UdbRecordExporter
         }
         if ($channel->topicLock) {
             $options |= 4;
-        }
-        if (!$channel->forbidden && !$channel->suspended && !$channel->pendingDeletion) {
-            $options |= 8;
         }
 
         return $options;

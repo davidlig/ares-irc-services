@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
-use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
@@ -43,7 +42,7 @@ trait CreatesUdbRecordWriter
         return new UnrealUdbRecordWriter(
             $holder,
             $this->createReadySessionState(),
-            $this->createStub(UdbRecordRepositoryInterface::class),
+            new FakeUdbRecords(),
             '001',
         );
     }

@@ -347,6 +347,8 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     public function setChannelTopicClearsTopicWhenNull(): void
     {
         $actions = $this->createActions();
+        $actions->setChannelTopic('001', '#test', 'Existing topic', '001CSRV');
+        $this->written = [];
 
         $actions->setChannelTopic('001', '#test', null, '001CSRV');
 
@@ -357,6 +359,8 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     public function setChannelTopicClearsTopicWhenEmptyString(): void
     {
         $actions = $this->createActions();
+        $actions->setChannelTopic('001', '#test', 'Existing topic', '001CSRV');
+        $this->written = [];
 
         $actions->setChannelTopic('001', '#test', '', '001CSRV');
 
@@ -433,6 +437,8 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     public function removeGlineDeletesPattern(): void
     {
         $actions = $this->createActions();
+        $actions->addGline('001', 'testuser', 'test.host', 3600, 'Test ban');
+        $this->written = [];
 
         $actions->removeGline('001', 'testuser', 'test.host');
 
@@ -443,6 +449,8 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     public function removeGlineWithWildcards(): void
     {
         $actions = $this->createActions();
+        $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
+        $this->written = [];
 
         $actions->removeGline('001', '*', '192.168.*');
 

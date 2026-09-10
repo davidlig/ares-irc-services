@@ -116,6 +116,10 @@ final class UnrealUdbNickReservationTest extends TestCase
     #[Test]
     public function releaseNickDeletesSettings(): void
     {
+        $this->reservation->reserveNick('NickServ', 'Reserved for network services');
+        $this->reservation->reserveNick('ChanServ', 'Reserved for network services');
+        $this->written = [];
+
         $this->reservation->releaseNick('NickServ');
         $this->reservation->releaseNick('ChanServ');
 

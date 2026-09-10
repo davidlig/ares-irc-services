@@ -16,6 +16,7 @@ use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Domain\Event\ChannelTopicChangedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -29,7 +30,7 @@ use function strtolower;
  * protocol driver is active); only wire propagation is gated by the session
  * coordinator. Channel flags are expressed with the current UDB schema:
  * founder/topic/modes plus the numeric C::<channel>::options bitmask
- * (2 = LOCK_MODES / MLOCK, 4 = LOCK_TOPIC / TOPICLOCK, 8 = PERSISTENT).
+ * (2 = LOCK_MODES / MLOCK, 4 = LOCK_TOPIC / TOPICLOCK).
  */
 final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 {
@@ -55,6 +56,7 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
             ChannelMlockUpdatedEvent::class => 'onChannelMlockUpdated',
             ChannelTopiclockUpdatedEvent::class => 'onChannelTopiclockUpdated',
             ChannelTopicChangedEvent::class => 'onChannelTopicChanged',
+            NetworkSyncCompleteEvent::class => ['onNetworkSyncComplete', -5],
         ];
     }
 
@@ -168,6 +170,17 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
         }
 
         $this->recordWriter->delete(self::BLOCK, sprintf('%s::topic', $channelName));
+    }
+
+    /**
+     * Reconciles every options record after the UDB store initializer has run.
+     * This removes legacy PERSISTENT/+P (*8) bits from existing stores.
+     */
+    public function onNetworkSyncComplete(NetworkSyncCompleteEvent $event): void
+    {
+        foreach ($this->channels->all() as $channel) {
+            $this->writeOptions($channel);
+        }
     }
 
     /** Recomputes the numeric options record after any flag change. */

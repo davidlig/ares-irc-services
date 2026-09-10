@@ -172,7 +172,7 @@ final class UdbRecordExporterTest extends TestCase
             '#chan::founder' => 'founder',
             '#chan::topic' => 'Welcome',
             '#chan::modes' => '+nt',
-            '#chan::options' => '*14',
+            '#chan::options' => '*6',
             '#chan::access::founder' => '300',
         ], $records);
     }
@@ -188,7 +188,7 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
-    public function suspendedChannelExportsSuspendedRecordWithoutPersistentBit(): void
+    public function suspendedChannelExportsSuspendedRecordWithoutOptions(): void
     {
         $channel = $this->createChannel('#suspended', suspended: true);
 
@@ -217,10 +217,10 @@ final class UdbRecordExporterTest extends TestCase
     #[Test]
     public function channelOptionsBitsMatchUdbSemantics(): void
     {
-        self::assertSame(8, $this->exporter->channelOptions($this->createChannel('#plain')));
-        self::assertSame(10, $this->exporter->channelOptions($this->createChannel('#m', mlockActive: true)));
-        self::assertSame(12, $this->exporter->channelOptions($this->createChannel('#t', topicLock: true)));
-        self::assertSame(14, $this->exporter->channelOptions($this->createChannel('#mt', mlockActive: true, topicLock: true)));
+        self::assertSame(0, $this->exporter->channelOptions($this->createChannel('#plain')));
+        self::assertSame(2, $this->exporter->channelOptions($this->createChannel('#m', mlockActive: true)));
+        self::assertSame(4, $this->exporter->channelOptions($this->createChannel('#t', topicLock: true)));
+        self::assertSame(6, $this->exporter->channelOptions($this->createChannel('#mt', mlockActive: true, topicLock: true)));
         self::assertSame(6, $this->exporter->channelOptions($this->createChannel('#pd', pendingDeletion: true, mlockActive: true, topicLock: true)));
     }
 
@@ -231,8 +231,7 @@ final class UdbRecordExporterTest extends TestCase
         $channel = $this->createChannel('#chan', access: [$access]);
 
         self::assertSame([], $this->exporter->accessRecord($channel, $access));
-        // The channel profile still exports everything else (options), just without the access entry.
-        self::assertSame(['#chan::options' => '*8'], $this->exporter->channelRecords($channel));
+        self::assertSame([], $this->exporter->channelRecords($channel));
     }
 
     #[Test]
@@ -315,13 +314,10 @@ final class UdbRecordExporterTest extends TestCase
             $this->createChannel('#first'),
             $this->createChannel('#second', suspended: true),
         ]);
-        $firstOptions = UdbPathCodec::encodePath(['#first', 'options']);
         $secondSuspended = UdbPathCodec::encodePath(['#second', 'suspended']);
 
-        self::assertNotNull($firstOptions);
         self::assertNotNull($secondSuspended);
         self::assertSame([
-            $firstOptions => '*8',
             $secondSuspended => '1',
         ], $this->exporter->encodedBlockRecords(UdbBlock::Channels));
     }

@@ -30,11 +30,15 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
         return $records;
     }
 
-    public function upsert(string $block, string $path, string $value): void
+    public function upsert(string $block, string $path, string $value): bool
     {
         $existing = $this->findRecord($block, $path);
 
         if ($existing instanceof UdbRecord) {
+            if ($existing->getValue() === $value) {
+                return false;
+            }
+
             $existing->updateValue($value);
         } else {
             $this->em->persist(new UdbRecord($block, $path, $value));
@@ -42,15 +46,17 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
 
         $this->em->flush();
         $this->em->clear();
+
+        return true;
     }
 
-    public function deleteCascade(string $block, string $path): void
+    public function deleteCascade(string $block, string $path): bool
     {
         $identity = UdbRecord::identity($path);
         $ids = $this->descendantIds($block, $identity);
 
         if ([] === $ids) {
-            return;
+            return false;
         }
 
         $this->em
@@ -59,6 +65,8 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
             ->execute();
 
         $this->em->clear();
+
+        return true;
     }
 
     public function seedBlock(string $block, array $records): void

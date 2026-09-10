@@ -27,8 +27,9 @@ interface UdbRecordWriterInterface
      *                      joined with "::" (e.g. "davidlig::vhost")
      * @param string $value Record value (may contain spaces)
      *
-     * @return bool true when the mutation was validated, persisted and handed
-     *              to the wire (or queued); false when it was rejected
+     * @return bool true when the mutation was validated and persisted; an
+     *              unchanged record is a successful no-op and is not sent or
+     *              queued; false when it was rejected
      */
     public function insert(string $block, string $path, string $value): bool;
 
@@ -39,8 +40,9 @@ interface UdbRecordWriterInterface
      * @param string $path  Record path WITHOUT the block prefix, raw components
      *                      joined with "::" (e.g. "davidlig::vhost")
      *
-     * @return bool true when the deletion was persisted and handed to the
-     *              wire (or queued); false when it was rejected
+     * @return bool true when the deletion was persisted; an already absent
+     *              path is a successful no-op and is not sent or queued;
+     *              false when it was rejected
      */
     public function delete(string $block, string $path): bool;
 }
