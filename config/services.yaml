@@ -667,6 +667,11 @@ services:
         arguments:
             $sessionState: '@App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface'
 
+    App\Irc\Adapter\Protocol\UnrealUdb\UdbInboundFrameLogSubscriber:
+        arguments:
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
     App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolServiceActions:
         arguments:
             $introductionFormatter: '@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
