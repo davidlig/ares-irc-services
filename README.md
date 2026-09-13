@@ -353,7 +353,7 @@ Ensure the `spanningtree` module is loaded.
 | `SET TIMEZONE` | `<tz>` | Set your timezone |
 | `SET PRIVATE` | `<on\|off>` | Hide registration in STATUS |
 | `SET MSG` | `<on\|off>` | Set NOTICE vs PRIVMSG delivery |
-| `SET VHOST` | `<vhost>` | Set a custom virtual host |
+| `SET VHOST` | `[vhost]` | Set or clear a custom virtual host |
 | `SASET` | `<nick> <option> <value>` | Admin SET on any nick |
 | `DROP` | `<nick>` | Drop a nickname registration |
 | `FORBID` | `<nick>` | Forbid a nickname from registration |

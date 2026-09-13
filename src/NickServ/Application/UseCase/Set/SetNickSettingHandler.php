@@ -321,7 +321,7 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
         }
 
         $normalizedInput = trim($input->value);
-        if ('' === $normalizedInput || 'OFF' === strtoupper($normalizedInput)) {
+        if ('' === $normalizedInput) {
             $account->changeVhost(null);
             $this->nickRepository->save($account);
             $this->applyVhostToNetwork($input, $account, '');

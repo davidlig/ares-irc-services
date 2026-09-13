@@ -35,7 +35,7 @@ final readonly class SetCommand implements NickServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 2;
+        return 1;
     }
 
     public function getSyntaxKey(): string
@@ -90,7 +90,7 @@ final readonly class SetCommand implements NickServCommandInterface
             return CommandOutcome::rejected();
         }
 
-        if (count($context->args) < 2) {
+        if (count($context->args) < 2 && !$this->isBareVhostClear($context->args)) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
             return CommandOutcome::rejected();
@@ -126,6 +126,12 @@ final readonly class SetCommand implements NickServCommandInterface
         return SetNickSettingPresentation::present($context, $result)
             ? CommandOutcome::success()
             : CommandOutcome::rejected();
+    }
+
+    /** @param array<string> $args */
+    private function isBareVhostClear(array $args): bool
+    {
+        return 1 === count($args) && SetNickSettingOption::Vhost->value === strtoupper($args[0]);
     }
 
     private static function decodeIp(string $ipBase64): string

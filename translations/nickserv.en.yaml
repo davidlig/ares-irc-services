@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 Service messages will now be sent as \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Set or clear your custom virtual host (displayed hostname)."
-    help:           "Sets a custom hostname that others see when you are identified.\nUse \x02SET VHOST OFF\x02 to clear it. Only letters (a-z, A-Z), digits, hyphen and dot;\nno hyphen or dot at start/end of any block; max 48 characters. Unique per nickname."
+    help:           "Sets a custom hostname that others see when you are identified.\nRun \x02SET VHOST\x02 with no value to clear it. Only letters (a-z, A-Z), digits, hyphen and dot;\nno hyphen or dot at start/end of any block; max 48 characters. Unique per nickname."
     success:        "\x0303✔\x03 Your virtual host has been set to \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Your virtual host has been cleared."
     invalid:        "\x0304✗\x03 Invalid vhost. Only letters, digits, hyphen and dot (not at start/end of block); max 48 characters."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 will now receive messages as \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <nickname> VHOST <vhost|OFF>"
+    syntax:         "SASET <nickname> VHOST [vhost]"
     short:          "Change a nickname's virtual host."
-    help:           "Sets or clears another nickname's virtual host.\nUse OFF to clear it.\n\nSyntax: SASET <nickname> VHOST <vhost>\nExample: SASET User VHOST users.example.com"
+    help:           "Sets or clears another nickname's virtual host.\nRun \x02SASET <nickname> VHOST\x02 with no value to clear it.\n\nSyntax: SASET <nickname> VHOST [vhost]\nExample: SASET User VHOST users.example.com"
     success:        "\x0303✔\x03 \x02%nickname%\x02's VHost has been set to \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 \x02%nickname%\x02's VHost has been cleared."
     invalid:        "\x0304✗\x03 Invalid VHost for \x02%nickname%\x02."

@@ -207,9 +207,9 @@ set:
     off:            "\x0303✔\x03 As mensaxes do servizo enviaranse agora como \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Establecer ou limpar o seu nome de servidor virtual (hostname mostrado)."
-    help:           "Establece un nome de servidor personalizado que outros ven cando está identificado.\nUse \x02SET VHOST OFF\x02 para limpar. Só letras (a-z, A-Z), díxitos, guión e punto;\nsen guión nin punto ao inicio/final de cada bloque; máx. 48 caracteres. Único por alcume."
+    help:           "Establece un nome de servidor personalizado que outros ven cando está identificado.\nUse \x02SET VHOST\x02 sen valor para limpalo. Só letras (a-z, A-Z), díxitos, guión e punto;\nsen guión nin punto ao inicio/final de cada bloque; máx. 48 caracteres. Único por alcume."
     success:        "\x0303✔\x03 O seu host virtual foi establecido como \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 O seu host virtual foi limpado."
     invalid:        "\x0304✗\x03 Vhost non válido. Só letras, díxitos, guión e punto (non ao inicio/final de bloque); máx. 48 caracteres."
@@ -278,9 +278,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 recibirá agora as mensaxes como \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <alcume> VHOST <vhost|OFF>"
+    syntax:         "SASET <alcume> VHOST [vhost]"
     short:          "Cambiar o host virtual dun alcume."
-    help:           "Establece ou limpa o host virtual doutro alcume.\nUse OFF para limpalo.\n\nSintaxe: SASET <alcume> VHOST <vhost>\nExemplo: SASET Usuario VHOST usuarios.exemplo.com"
+    help:           "Establece ou limpa o host virtual doutro alcume.\nUse \x02SASET <alcume> VHOST\x02 sen valor para limpalo.\n\nSintaxe: SASET <alcume> VHOST [vhost]\nExemplo: SASET Usuario VHOST usuarios.exemplo.com"
     success:        "\x0303✔\x03 O VHost de \x02%nickname%\x02 foi establecido como \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 O VHost de \x02%nickname%\x02 foi limpado."
     invalid:        "\x0304✗\x03 VHost non válido para \x02%nickname%\x02."

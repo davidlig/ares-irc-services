@@ -199,9 +199,9 @@ set:
     off:             "\x0303✔\x03 Los mensajes de los servicios se enviarán ahora como \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Establece o quita tu host virtual (hostname visible)."
-    help:           "Establece un hostname personalizado que otros ven cuando estás identificado.\nUsa \x02SET VHOST OFF\x02 para quitarlo. Solo letras (a-z, A-Z), dígitos, guión y punto;\nni guión ni punto al inicio/final de cada bloque; máximo 48 caracteres. Es único por apodo."
+    help:           "Establece un hostname personalizado que otros ven cuando estás identificado.\nEjecuta \x02SET VHOST\x02 sin valor para quitarlo. Solo letras (a-z, A-Z), dígitos, guión y punto;\nni guión ni punto al inicio/final de cada bloque; máximo 48 caracteres. Es único por apodo."
     success:        "\x0303✔\x03 Tu host virtual se ha establecido a \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Tu host virtual ha sido eliminado."
     invalid:        "\x0304✗\x03 Vhost no válido. Solo letras, dígitos, guión y punto (no al inicio/fin de bloque); máx. 48 caracteres."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 recibirá mensajes como \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <apodo> VHOST <vhost|OFF>"
+    syntax:         "SASET <apodo> VHOST [vhost]"
     short:          "Cambia el host virtual de un apodo."
-    help:           "Establece o quita el host virtual de otro apodo.\nUsa OFF para quitarlo.\n\nSintaxis: SASET <apodo> VHOST <vhost>\nEjemplo: SASET Usuario VHOST usuarios.ejemplo.com"
+    help:           "Establece o quita el host virtual de otro apodo.\nEjecuta \x02SASET <apodo> VHOST\x02 sin valor para quitarlo.\n\nSintaxis: SASET <apodo> VHOST [vhost]\nEjemplo: SASET Usuario VHOST usuarios.ejemplo.com"
     success:        "\x0303✔\x03 VHost de \x02%nickname%\x02 establecido a \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 VHost de \x02%nickname%\x02 eliminado."
     invalid:        "\x0304✗\x03 VHost no válido para \x02%nickname%\x02."

@@ -267,7 +267,7 @@ final class SetNickSettingHandlerTest extends TestCase
 
         $set = $handler->handle($this->input(SetNickSettingOption::Vhost, 'cool'));
         self::assertSame('cool.users', $set->value);
-        $clear = $handler->handle($this->input(SetNickSettingOption::Vhost, 'OFF'));
+        $clear = $handler->handle($this->input(SetNickSettingOption::Vhost, ''));
         self::assertSame(SetNickSettingOutcome::Changed, $clear->outcome);
         self::assertNull($clear->value);
     }
@@ -288,7 +288,23 @@ final class SetNickSettingHandlerTest extends TestCase
         $handler = $this->handler($repository, lookup: $lookup, network: $network);
 
         self::assertSame(SetNickSettingOutcome::Changed, $handler->handle($this->input(SetNickSettingOption::Vhost, 'oper-vhost', true))->outcome);
-        self::assertSame(SetNickSettingOutcome::Changed, $handler->handle($this->input(SetNickSettingOption::Vhost, 'OFF', true))->outcome);
+        self::assertSame(SetNickSettingOutcome::Changed, $handler->handle($this->input(SetNickSettingOption::Vhost, '', true))->outcome);
+    }
+
+    #[Test]
+    public function treatsOffAsLiteralVhost(): void
+    {
+        $account = $this->account();
+        $repository = $this->repositoryReturning($account);
+        $repository->method('findByVhost')->willReturn(null);
+        $network = $this->createMock(NickNetworkActions::class);
+        $network->expects(self::once())->method('setUserVhost')->with('UID1', 'OFF', 'SID1');
+        $handler = $this->handler($repository, network: $network);
+
+        $result = $handler->handle($this->input(SetNickSettingOption::Vhost, 'OFF'));
+
+        self::assertSame(SetNickSettingOutcome::Changed, $result->outcome);
+        self::assertSame('OFF', $result->value);
     }
 
     private function handler(

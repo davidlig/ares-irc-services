@@ -37,7 +37,7 @@ final class SetCommandTest extends TestCase
 
         self::assertSame('SET', $command->getName());
         self::assertSame([], $command->getAliases());
-        self::assertSame(2, $command->getMinArgs());
+        self::assertSame(1, $command->getMinArgs());
         self::assertSame('set.syntax', $command->getSyntaxKey());
         self::assertSame('set.help', $command->getHelpKey());
         self::assertSame(4, $command->getOrder());
@@ -62,6 +62,27 @@ final class SetCommandTest extends TestCase
         $messages = [];
         self::assertFalse($command->execute($this->context($this->sender(), ['UNKNOWN', 'value'], $messages))->success);
         self::assertSame(['set.unknown_option'], $messages);
+    }
+
+    #[Test]
+    public function clearsVhostWhenValueIsOmitted(): void
+    {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (SetNickSetting $input): bool => SetNickSettingOption::Vhost === $input->option
+                && '' === $input->value
+                && !$input->operatorMode,
+        ))->willReturn(new SetNickSettingResult(
+            SetNickSettingOutcome::Changed,
+            SetNickSettingOption::Vhost,
+            'Alice',
+        ));
+
+        $messages = [];
+        $outcome = new SetCommand($handler)->execute($this->context($this->sender(), ['VHOST'], $messages));
+
+        self::assertTrue($outcome->success);
+        self::assertSame(['set.vhost.cleared'], $messages);
     }
 
     #[Test]

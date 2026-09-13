@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 Els missatges del servei s'enviaran ara com a \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Establir o esborrar el vostre amfitrió virtual personalitzat (nom d'amfitrió mostrat)."
-    help:           "Estableix un nom d'amfitrió personalitzat que els altres veuen quan esteu identificat.\nUtilitzeu \x02SET VHOST OFF\x02 per esborrar-lo. Només lletres (a-z, A-Z), dígits, guionet i punt;\nsense guionet ni punt al principi/final de cap bloc; màx. 48 caràcters. Únic per sobrenom."
+    help:           "Estableix un nom d'amfitrió personalitzat que els altres veuen quan esteu identificat.\nExecuteu \x02SET VHOST\x02 sense cap valor per esborrar-lo. Només lletres (a-z, A-Z), dígits, guionet i punt;\nsense guionet ni punt al principi/final de cap bloc; màx. 48 caràcters. Únic per sobrenom."
     success:        "\x0303✔\x03 El vostre amfitrió virtual s'ha establert a \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 El vostre amfitrió virtual s'ha esborrat."
     invalid:        "\x0304✗\x03 Vhost no vàlid. Només lletres, dígits, guionet i punt (no al principi/final de bloc); màx. 48 caràcters."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 rebrà missatges com a \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <sobrenom> VHOST <vhost|OFF>"
+    syntax:         "SASET <sobrenom> VHOST [vhost]"
     short:          "Canviar l'amfitrió virtual d'un sobrenom."
-    help:           "Estableix o esborra l'amfitrió virtual d'un altre sobrenom.\nUtilitzeu OFF per esborrar-lo.\n\nSintaxi: SASET <sobrenom> VHOST <vhost>\nExemple: SASET Usuari VHOST usuaris.exemple.com"
+    help:           "Estableix o esborra l'amfitrió virtual d'un altre sobrenom.\nExecuteu \x02SASET <sobrenom> VHOST\x02 sense cap valor per esborrar-lo.\n\nSintaxi: SASET <sobrenom> VHOST [vhost]\nExemple: SASET Usuari VHOST usuaris.exemple.com"
     success:        "\x0303✔\x03 L'amfitrió virtual de \x02%nickname%\x02 ha estat establert a \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 L'amfitrió virtual de \x02%nickname%\x02 ha estat esborrat."
     invalid:        "\x0304✗\x03 Amfitrió virtual no vàlid per a \x02%nickname%\x02."

@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 Serviceberichten worden nu verzonden als \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Stel uw aangepaste virtuele host in of wis deze (weergegeven hostnaam)."
-    help:           "Stelt een aangepaste hostnaam in die anderen zien wanneer u geïdentificeerd bent.\nGebruik \x02SET VHOST OFF\x02 om te wissen. Alleen letters (a-z, A-Z), cijfers, koppelteken en punt;\ngeen koppelteken of punt aan begin/einde van een blok; max 48 tekens. Uniek per bijnaam."
+    help:           "Stelt een aangepaste hostnaam in die anderen zien wanneer u geïdentificeerd bent.\nGebruik \x02SET VHOST\x02 zonder waarde om te wissen. Alleen letters (a-z, A-Z), cijfers, koppelteken en punt;\ngeen koppelteken of punt aan begin/einde van een blok; max 48 tekens. Uniek per bijnaam."
     success:        "\x0303✔\x03 Uw virtuele host is ingesteld op \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Uw virtuele host is gewist."
     invalid:        "\x0304✗\x03 Ongeldige vhost. Alleen letters, cijfers, koppelteken en punt (niet aan begin/einde van blok); max 48 tekens."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 ontvangt nu berichten als \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <bijnaam> VHOST <vhost|OFF>"
+    syntax:         "SASET <bijnaam> VHOST [vhost]"
     short:          "Virtuele host van een bijnaam wijzigen."
-    help:           "Stelt de virtuele host van een andere bijnaam in of wist deze.\nGebruik OFF om te wissen.\n\nSyntax: SASET <bijnaam> VHOST <vhost>\nVoorbeeld: SASET Gebruiker VHOST gebruikers.voorbeeld.com"
+    help:           "Stelt de virtuele host van een andere bijnaam in of wist deze.\nGebruik \x02SASET <bijnaam> VHOST\x02 zonder waarde om te wissen.\n\nSyntax: SASET <bijnaam> VHOST [vhost]\nVoorbeeld: SASET Gebruiker VHOST gebruikers.voorbeeld.com"
     success:        "\x0303✔\x03 De VHost van \x02%nickname%\x02 is ingesteld op \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 De VHost van \x02%nickname%\x02 is gewist."
     invalid:        "\x0304✗\x03 Ongeldige VHost voor \x02%nickname%\x02."

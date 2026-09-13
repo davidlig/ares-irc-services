@@ -34,7 +34,7 @@ final class SasetCommandTest extends TestCase
 
         self::assertSame('SASET', $command->getName());
         self::assertSame([], $command->getAliases());
-        self::assertSame(3, $command->getMinArgs());
+        self::assertSame(2, $command->getMinArgs());
         self::assertSame('saset.syntax', $command->getSyntaxKey());
         self::assertSame('saset.help', $command->getHelpKey());
         self::assertSame(5, $command->getOrder());
@@ -59,6 +59,29 @@ final class SasetCommandTest extends TestCase
         $messages = [];
         self::assertFalse($command->execute($this->context($this->sender(), ['Target', 'UNKNOWN', 'value'], $messages))->success);
         self::assertSame(['saset.unknown_option'], $messages);
+    }
+
+    #[Test]
+    public function clearsVhostWhenValueIsOmitted(): void
+    {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (SetNickSetting $input): bool => 'Target' === $input->targetNickname
+                && SetNickSettingOption::Vhost === $input->option
+                && '' === $input->value
+                && $input->operatorMode,
+        ))->willReturn(new SetNickSettingResult(
+            SetNickSettingOutcome::Changed,
+            SetNickSettingOption::Vhost,
+            'Target',
+        ));
+
+        $messages = [];
+        $outcome = new SasetCommand($handler)->execute($this->context($this->sender(), ['Target', 'VHOST'], $messages));
+
+        self::assertTrue($outcome->success);
+        self::assertSame(['set.vhost.cleared'], $messages);
+        self::assertSame(['option' => 'VHOST', 'value' => ''], $outcome->auditData?->extra);
     }
 
     #[Test]

@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 Service-Nachrichten werden jetzt als \x02NOTICE\x02 gesendet."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Ihren eigenen virtuellen Host (angezeigter Hostname) setzen oder löschen."
-    help:           "Legt einen benutzerdefinierten Hostnamen fest, den andere sehen, wenn Sie\nidentifiziert sind.\nVerwenden Sie \x02SET VHOST OFF\x02 zum Löschen. Nur Buchstaben (a-z, A-Z), Ziffern,\nBindestrich und Punkt; kein Bindestrich oder Punkt am Anfang/Ende eines Blocks;\nmax. 48 Zeichen. Eindeutig pro Nickname."
+    help:           "Legt einen benutzerdefinierten Hostnamen fest, den andere sehen, wenn Sie\nidentifiziert sind.\nVerwenden Sie \x02SET VHOST\x02 ohne Wert zum Löschen. Nur Buchstaben (a-z, A-Z), Ziffern,\nBindestrich und Punkt; kein Bindestrich oder Punkt am Anfang/Ende eines Blocks;\nmax. 48 Zeichen. Eindeutig pro Nickname."
     success:        "\x0303✔\x03 Ihr virtueller Host wurde auf \x02%vhost%\x02 gesetzt."
     cleared:        "\x0303✔\x03 Ihr virtueller Host wurde gelöscht."
     invalid:        "\x0304✗\x03 Ungültiger VHost. Nur Buchstaben, Ziffern, Bindestrich und Punkt (nicht am\nAnfang/Ende eines Blocks); max. 48 Zeichen."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 erhält Nachrichten jetzt als \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <Nickname> VHOST <VHost|OFF>"
+    syntax:         "SASET <Nickname> VHOST [VHost]"
     short:          "Virtuellen Host eines Nicknames ändern."
-    help:           "Setzt oder löscht den virtuellen Host eines anderen Nicknames.\nVerwenden Sie OFF zum Löschen.\n\nSyntax: SASET <Nickname> VHOST <VHost>\nBeispiel: SASET Benutzer VHOST benutzer.beispiel.com"
+    help:           "Setzt oder löscht den virtuellen Host eines anderen Nicknames.\nVerwenden Sie \x02SASET <Nickname> VHOST\x02 ohne Wert zum Löschen.\n\nSyntax: SASET <Nickname> VHOST [VHost]\nBeispiel: SASET Benutzer VHOST benutzer.beispiel.com"
     success:        "\x0303✔\x03 Der VHost von \x02%nickname%\x02 wurde auf \x02%vhost%\x02 gesetzt."
     cleared:        "\x0303✔\x03 Der VHost von \x02%nickname%\x02 wurde gelöscht."
     invalid:        "\x0304✗\x03 Ungültiger VHost für \x02%nickname%\x02."

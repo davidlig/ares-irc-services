@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 Hizmet mesajları artık \x02NOTICE\x02 olarak gönderilecek."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Özel sanal ana makinenizi (görüntülenen host adı) ayarlayın veya temizleyin."
-    help:           "Kimlik doğrulandığınızda başkalarının gördüğü özel bir host adı ayarlar.\nTemizlemek için \x02SET VHOST OFF\x02 kullanın. Yalnızca harfler (a-z, A-Z), rakamlar, tire ve nokta;\nher bloğun başında/sonunda tire veya nokta olmaz; maks 48 karakter. Her rumuz için benzersiz."
+    help:           "Kimlik doğrulandığınızda başkalarının gördüğü özel bir host adı ayarlar.\nTemizlemek için \x02SET VHOST\x02 komutunu değer olmadan kullanın. Yalnızca harfler (a-z, A-Z), rakamlar, tire ve nokta;\nher bloğun başında/sonunda tire veya nokta olmaz; maks 48 karakter. Her rumuz için benzersiz."
     success:        "\x0303✔\x03 Sanal host'unuz \x02%vhost%\x02 olarak ayarlandı."
     cleared:        "\x0303✔\x03 Sanal host'unuz temizlendi."
     invalid:        "\x0304✗\x03 Geçersiz vhost. Yalnızca harfler, rakamlar, tire ve nokta (blok başında/sonunda olamaz); maks 48 karakter."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 artık mesajları \x02NOTICE\x02 olarak alacak."
 
   vhost:
-    syntax:         "SASET <rumuz> VHOST <vhost|OFF>"
+    syntax:         "SASET <rumuz> VHOST [vhost]"
     short:          "Bir rumuzun sanal host'unu değiştir."
-    help:           "Başka bir rumuzun sanal host'unu ayarlar veya temizler.\nTemizlemek için OFF kullanın.\n\nSözdizimi: SASET <rumuz> VHOST <vhost>\nÖrnek: SASET Kullanıcı VHOST kullanıcılar.örnek.com"
+    help:           "Başka bir rumuzun sanal host'unu ayarlar veya temizler.\nTemizlemek için \x02SASET <rumuz> VHOST\x02 komutunu değer olmadan kullanın.\n\nSözdizimi: SASET <rumuz> VHOST [vhost]\nÖrnek: SASET Kullanıcı VHOST kullanıcılar.örnek.com"
     success:        "\x0303✔\x03 \x02%nickname%\x02 rumuzunun VHost'u \x02%vhost%\x02 olarak ayarlandı."
     cleared:        "\x0303✔\x03 \x02%nickname%\x02 rumuzunun VHost'u temizlendi."
     invalid:        "\x0304✗\x03 \x02%nickname%\x02 için geçersiz VHost."

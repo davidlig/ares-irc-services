@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 As mensagens dos serviços serão agora enviadas como \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Definir ou remover o seu host virtual personalizado (hostname exibido)."
-    help:           "Define um hostname personalizado que outros veem quando está identificado.\nUse \x02SET VHOST OFF\x02 para o limpar. Apenas letras (a-z, A-Z), dígitos, hífen e ponto;\nnenhum hífen ou ponto no início/fim de qualquer bloco; máx. 48 caracteres. Único por nickname."
+    help:           "Define um hostname personalizado que outros veem quando está identificado.\nUse \x02SET VHOST\x02 sem valor para o limpar. Apenas letras (a-z, A-Z), dígitos, hífen e ponto;\nnenhum hífen ou ponto no início/fim de qualquer bloco; máx. 48 caracteres. Único por nickname."
     success:        "\x0303✔\x03 O seu host virtual foi definido como \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 O seu host virtual foi removido."
     invalid:        "\x0304✗\x03 Vhost inválido. Apenas letras, dígitos, hífen e ponto (não no início/fim de bloco); máx. 48 caracteres."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 receberá agora mensagens como \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <nickname> VHOST <vhost|OFF>"
+    syntax:         "SASET <nickname> VHOST [vhost]"
     short:          "Alterar o host virtual de um nickname."
-    help:           "Define ou remove o host virtual de outro nickname.\nUse OFF para remover.\n\nSintaxe: SASET <nickname> VHOST <vhost>\nExemplo: SASET Utilizador VHOST utilizadores.exemplo.com"
+    help:           "Define ou remove o host virtual de outro nickname.\nUse \x02SASET <nickname> VHOST\x02 sem valor para remover.\n\nSintaxe: SASET <nickname> VHOST [vhost]\nExemplo: SASET Utilizador VHOST utilizadores.exemplo.com"
     success:        "\x0303✔\x03 O VHost de \x02%nickname%\x02 foi definido como \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 O VHost de \x02%nickname%\x02 foi removido."
     invalid:        "\x0304✗\x03 VHost inválido para \x02%nickname%\x02."

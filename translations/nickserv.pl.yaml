@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 Wiadomości serwisów będą teraz wysyłane jako \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Ustaw lub wyczyść swój niestandardowy host wirtualny (wyświetlany hostname)."
-    help:           "Ustawia niestandardową nazwę hosta, którą inni widzą gdy jesteś zidentyfikowany.\nUżyj \x02SET VHOST OFF\x02 aby wyczyścić. Tylko litery (a-z, A-Z), cyfry, myślnik i kropka;\nbez myślnika lub kropki na początku/końcu bloku; maks. 48 znaków. Unikalny na nick."
+    help:           "Ustawia niestandardową nazwę hosta, którą inni widzą gdy jesteś zidentyfikowany.\nUżyj \x02SET VHOST\x02 bez wartości aby wyczyścić. Tylko litery (a-z, A-Z), cyfry, myślnik i kropka;\nbez myślnika lub kropki na początku/końcu bloku; maks. 48 znaków. Unikalny na nick."
     success:        "\x0303✔\x03 Twój host wirtualny został ustawiony na \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Twój host wirtualny został wyczyszczony."
     invalid:        "\x0304✗\x03 Nieprawidłowy vhost. Tylko litery, cyfry, myślnik i kropka (nie na początku/końcu bloku); maks. 48 znaków."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 będzie teraz otrzymywać wiadomości jako \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <nick> VHOST <vhost|OFF>"
+    syntax:         "SASET <nick> VHOST [vhost]"
     short:          "Zmień host wirtualny nicka."
-    help:           "Ustawia lub czyści host wirtualny innego nicka.\nUżyj OFF, aby wyczyścić.\n\nSkładnia: SASET <nick> VHOST <vhost>\nPrzykład: SASET Użytkownik VHOST użytkownicy.przykład.com"
+    help:           "Ustawia lub czyści host wirtualny innego nicka.\nUżyj \x02SASET <nick> VHOST\x02 bez wartości, aby wyczyścić.\n\nSkładnia: SASET <nick> VHOST [vhost]\nPrzykład: SASET Użytkownik VHOST użytkownicy.przykład.com"
     success:        "\x0303✔\x03 Host wirtualny \x02%nickname%\x02 został ustawiony na \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Host wirtualny \x02%nickname%\x02 został wyczyszczony."
     invalid:        "\x0304✗\x03 Nieprawidłowy vhost dla \x02%nickname%\x02."

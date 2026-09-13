@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 I messaggi dei servizi ora saranno inviati come \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Imposta o azzera il suo host virtuale personalizzato (hostname visualizzato)."
-    help:           "Imposta un hostname personalizzato che gli altri vedono quando è identificato.\nUsi \x02SET VHOST OFF\x02 per azzerarlo. Solo lettere (a-z, A-Z), cifre, trattino e punto;\nnessun trattino o punto all'inizio/fine di ogni blocco; max 48 caratteri. Unico per nickname."
+    help:           "Imposta un hostname personalizzato che gli altri vedono quando è identificato.\nUsi \x02SET VHOST\x02 senza valore per azzerarlo. Solo lettere (a-z, A-Z), cifre, trattino e punto;\nnessun trattino o punto all'inizio/fine di ogni blocco; max 48 caratteri. Unico per nickname."
     success:        "\x0303✔\x03 Il suo host virtuale è stato impostato su \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Il suo host virtuale è stato azzerato."
     invalid:        "\x0304✗\x03 Vhost non valido. Solo lettere, cifre, trattino e punto (non all'inizio/fine del blocco); max 48 caratteri."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 riceverà ora i messaggi come \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <nickname> VHOST <vhost|OFF>"
+    syntax:         "SASET <nickname> VHOST [vhost]"
     short:          "Cambiare l'host virtuale di un nickname."
-    help:           "Imposta o azzera l'host virtuale di un altro nickname.\nUsi OFF per azzerarlo.\n\nSintassi: SASET <nickname> VHOST <vhost>\nEsempio: SASET Utente VHOST utenti.esempio.com"
+    help:           "Imposta o azzera l'host virtuale di un altro nickname.\nUsi \x02SASET <nickname> VHOST\x02 senza valore per azzerarlo.\n\nSintassi: SASET <nickname> VHOST [vhost]\nEsempio: SASET Utente VHOST utenti.esempio.com"
     success:        "\x0303✔\x03 Il VHost di \x02%nickname%\x02 è stato impostato su \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Il VHost di \x02%nickname%\x02 è stato azzerato."
     invalid:        "\x0304✗\x03 VHost non valido per \x02%nickname%\x02."

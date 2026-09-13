@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 Mesajele serviciilor vor fi trimise acum ca \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Setați sau ștergeți gazda virtuală personalizată (hostname afișat)."
-    help:           "Setează un hostname personalizat pe care ceilalți îl văd când sunteți identificat.\nFolosiți \x02SET VHOST OFF\x02 pentru a șterge. Doar litere (a-z, A-Z), cifre, cratimă și punct;\nfără cratimă sau punct la începutul/sfârșitul niciunui bloc; max 48 de caractere. Unic per poreclă."
+    help:           "Setează un hostname personalizat pe care ceilalți îl văd când sunteți identificat.\nFolosiți \x02SET VHOST\x02 fără valoare pentru a șterge. Doar litere (a-z, A-Z), cifre, cratimă și punct;\nfără cratimă sau punct la începutul/sfârșitul niciunui bloc; max 48 de caractere. Unic per poreclă."
     success:        "\x0303✔\x03 Gazda dumneavoastră virtuală a fost setată la \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Gazda dumneavoastră virtuală a fost ștearsă."
     invalid:        "\x0304✗\x03 Vhost invalid. Doar litere, cifre, cratimă și punct (nu la începutul/sfârșitul blocului); max 48 de caractere."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 va primi acum mesajele ca \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <poreclă> VHOST <vhost|OFF>"
+    syntax:         "SASET <poreclă> VHOST [vhost]"
     short:          "Schimbă gazda virtuală a unei porecle."
-    help:           "Setează sau șterge gazda virtuală a altei porecle.\nFolosiți OFF pentru a o șterge.\n\nSintaxă: SASET <poreclă> VHOST <vhost>\nExemplu: SASET Utilizator VHOST utilizatori.exemplu.com"
+    help:           "Setează sau șterge gazda virtuală a altei porecle.\nFolosiți \x02SASET <poreclă> VHOST\x02 fără valoare pentru a o șterge.\n\nSintaxă: SASET <poreclă> VHOST [vhost]\nExemplu: SASET Utilizator VHOST utilizatori.exemplu.com"
     success:        "\x0303✔\x03 VHostul \x02%nickname%\x02 a fost setat la \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 VHostul \x02%nickname%\x02 a fost șters."
     invalid:        "\x0304✗\x03 VHost invalid pentru \x02%nickname%\x02."

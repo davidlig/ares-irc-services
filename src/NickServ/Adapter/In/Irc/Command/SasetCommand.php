@@ -37,7 +37,7 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
 
     public function getMinArgs(): int
     {
-        return 3;
+        return 2;
     }
 
     public function getSyntaxKey(): string
@@ -92,7 +92,7 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
             return CommandOutcome::rejected();
         }
 
-        if (count($context->args) < 3) {
+        if (count($context->args) < 3 && !$this->isBareVhostClear($context->args)) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
             return CommandOutcome::rejected();
@@ -135,6 +135,12 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
             target: $targetNickname,
             extra: ['option' => $rawOption, 'value' => SetNickSettingOption::Password === $option ? null : $value],
         ));
+    }
+
+    /** @param array<string> $args */
+    private function isBareVhostClear(array $args): bool
+    {
+        return 2 === count($args) && SetNickSettingOption::Vhost->value === strtoupper($args[1]);
     }
 
     private static function decodeIp(string $ipBase64): string

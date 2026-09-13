@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 Les messages des services seront maintenant envoyés en \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Définir ou effacer votre hôte virtuel personnalisé (hostname affiché)."
-    help:           "Définit un nom d'hôte personnalisé que les autres voient lorsque vous êtes identifié.\nUtilisez \x02SET VHOST OFF\x02 pour effacer. Uniquement lettres (a-z, A-Z), chiffres,\ntrait d'union et point ; pas de tiret/point au début/fin d'un bloc ; max 48 caractères. Unique par surnom."
+    help:           "Définit un nom d'hôte personnalisé que les autres voient lorsque vous êtes identifié.\nUtilisez \x02SET VHOST\x02 sans valeur pour l'effacer. Uniquement lettres (a-z, A-Z), chiffres,\ntrait d'union et point ; pas de tiret/point au début/fin d'un bloc ; max 48 caractères. Unique par surnom."
     success:        "\x0303✔\x03 Votre hôte virtuel a été défini sur \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Votre hôte virtuel a été effacé."
     invalid:        "\x0304✗\x03 Vhost invalide. Uniquement lettres, chiffres, trait d'union et point (pas au début/fin de bloc) ; max 48 caractères."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02 recevra maintenant les messages en \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <surnom> VHOST <vhost|OFF>"
+    syntax:         "SASET <surnom> VHOST [vhost]"
     short:          "Changer l'hôte virtuel d'un surnom."
-    help:           "Définit ou efface l'hôte virtuel d'un autre surnom.\nUtilisez OFF pour l'effacer.\n\nSyntaxe : SASET <surnom> VHOST <vhost>\nExemple : SASET Utilisateur VHOST utilisateurs.exemple.com"
+    help:           "Définit ou efface l'hôte virtuel d'un autre surnom.\nUtilisez \x02SASET <surnom> VHOST\x02 sans valeur pour l'effacer.\n\nSyntaxe : SASET <surnom> VHOST [vhost]\nExemple : SASET Utilisateur VHOST utilisateurs.exemple.com"
     success:        "\x0303✔\x03 Le VHost de \x02%nickname%\x02 a été défini sur \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Le VHost de \x02%nickname%\x02 a été effacé."
     invalid:        "\x0304✗\x03 VHost invalide pour \x02%nickname%\x02."

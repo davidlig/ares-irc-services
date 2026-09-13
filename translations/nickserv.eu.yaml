@@ -199,9 +199,9 @@ set:
     off:            "\x0303✔\x03 Zerbitzuen mezuak orain \x02NOTICE\x02 gisa bidaliko dira."
 
   vhost:
-    syntax:         "SET VHOST <vhost-a>"
+    syntax:         "SET VHOST [vhost-a]"
     short:          "Ezarri edo garbitu zure ostalari birtual pertsonalizatua (erakutsitako ostalari izena)."
-    help:           "Identifikatuta zaudenean besteek ikusten duten ostalari izen pertsonalizatu bat ezartzen du.\nErabili \x02SET VHOST OFF\x02 garbitzeko. Letrak (a-z, A-Z), digituak, marra eta puntua soilik;\nbloke baten hasieran/amaieran marra edo punturik ez; gehienez 48 karaktere. Ezizen bakoitzeko bakarra."
+    help:           "Identifikatuta zaudenean besteek ikusten duten ostalari izen pertsonalizatu bat ezartzen du.\nErabili \x02SET VHOST\x02 baliorik gabe garbitzeko. Letrak (a-z, A-Z), digituak, marra eta puntua soilik;\nbloke baten hasieran/amaieran marra edo punturik ez; gehienez 48 karaktere. Ezizen bakoitzeko bakarra."
     success:        "\x0303✔\x03 Zure ostalari birtuala \x02%vhost%\x02 gisa ezarri da."
     cleared:        "\x0303✔\x03 Zure ostalari birtuala garbitu da."
     invalid:        "\x0304✗\x03 Vhost baliogabea. Letrak, digituak, marra eta puntua soilik (ez blokearen hasieran/amaieran); gehienez 48 karaktere."
@@ -270,9 +270,9 @@ saset:
     off:            "\x0303✔\x03 \x02%nickname%\x02-k orain mezuak \x02NOTICE\x02 gisa jasoko ditu."
 
   vhost:
-    syntax:         "SASET <ezizen> VHOST <vhost|OFF>"
+    syntax:         "SASET <ezizen> VHOST [vhost]"
     short:          "Ezizen baten ostalari birtuala aldatu."
-    help:           "Beste ezizen baten ostalari birtuala ezartzen edo garbitzen du.\nErabili OFF garbitzeko.\n\nSintaxia: SASET <ezizen> VHOST <vhost>\nAdibidea: SASET Erabiltzaile VHOST erabiltzaileak.adibidea.com"
+    help:           "Beste ezizen baten ostalari birtuala ezartzen edo garbitzen du.\nErabili \x02SASET <ezizen> VHOST\x02 baliorik gabe garbitzeko.\n\nSintaxia: SASET <ezizen> VHOST [vhost]\nAdibidea: SASET Erabiltzaile VHOST erabiltzaileak.adibidea.com"
     success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ostalari birtuala \x02%vhost%\x02 gisa ezarri da."
     cleared:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ostalari birtuala garbitu da."
     invalid:        "\x0304✗\x03 Vhost baliogabea \x02%nickname%\x02-(r)entzat."
