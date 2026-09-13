@@ -41,6 +41,7 @@ use function implode;
 use function mkdir;
 use function rmdir;
 use function sprintf;
+use function strpos;
 use function substr_count;
 use function sys_get_temp_dir;
 use function uniqid;
@@ -359,8 +360,15 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', 'services.test.local', '0123456789abcdef', 'OCL', 'OCLG']), $connection);
         $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '001'), $connection);
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/m', implode("\n", $this->written));
-        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.test\.local [0-9a-f]{16} OCL OCLG$/m', implode("\n", $this->written));
+        $lines = implode("\n", $this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/m', $lines);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.test\.local [0-9a-f]{16} OCL OCLG$/m', $lines);
+
+        $requestPosition = strpos($lines, ':002 DB 001 HEL 4 services.test.local');
+        $ackPosition = strpos($lines, ':002 DB 001 HEL 4 ACK services.test.local');
+        self::assertNotFalse($requestPosition);
+        self::assertNotFalse($ackPosition);
+        self::assertLessThan($ackPosition, $requestPosition);
     }
 
     #[Test]
@@ -377,7 +385,8 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', 'ircd.example.net', '0123456789abcdef', 'OCL']), $connection);
 
         self::assertNotEmpty($this->written);
-        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/', $this->writtenLine(0));
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.test\.local [0-9a-f]{16} OCL OCLG$/', $this->writtenLine(0));
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/', $this->writtenLine(1));
     }
 
     #[Test]

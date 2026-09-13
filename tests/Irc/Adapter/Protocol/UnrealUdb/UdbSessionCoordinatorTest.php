@@ -1377,7 +1377,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $newEpoch = '2222222222222222';
         $this->handle($this->peerHel(epoch: $newEpoch));
 
-        self::assertSame([$this->helAck(), $this->helRequest()], $this->written);
+        self::assertSame([$this->helRequest(), $this->helAck()], $this->written);
         self::assertFalse($this->coordinator->isAuthorityReady());
         self::assertNull($this->coordinator->activeRoundId());
 
@@ -1546,10 +1546,23 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         $this->handle($this->peerHel());
 
+        // Our HEL request goes out before the ACK, so the peer emits its ACK
+        // to it (which opens our gate) before replaying the OCLG snapshot.
         self::assertSame([
-            $this->helAck(),
             $this->helRequest(),
+            $this->helAck(),
         ], $this->written);
+
+        $this->written = [];
+        $this->handle($this->peerHelAck());
+
+        $entries = ['netadmin' => str_repeat('a', 64)];
+        $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: $entries['netadmin']));
+        $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 7, epoch: self::PEER_EPOCH));
+
+        self::assertTrue($this->coordinator->isOperclassGloballyAvailable('netadmin'));
+        self::assertSame(['netadmin'], $this->coordinator->getAvailableOperclasses());
     }
 
     #[Test]

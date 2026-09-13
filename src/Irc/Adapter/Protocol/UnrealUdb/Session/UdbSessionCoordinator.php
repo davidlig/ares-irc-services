@@ -498,14 +498,18 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             'authorizes_us' => $this->peer->isAuthorized(),
         ]);
 
+        // Upstream sends its own HEL request before the ACK. The peer replays
+        // its OCLG view while processing our ACK and only afterwards emits the
+        // ACK for our request, so this order keeps the peer ACK (which opens
+        // our capability gate) ahead of its first OCLG burst.
+        if (!$this->helloBarrier->hasPending() && !$this->helloBarrier->isConfirmed()) {
+            $this->sendHel();
+        }
+
         $ownName = $this->peer->ownName();
         if (null !== $ownName && '' !== $ownName) {
             $advertised = $this->isWireBootstrapActive() ? '?' : $ownName;
             $this->write(UdbWireCodec::helAck($this->sid, $frame->sourceSid, $advertised, $this->epoch, self::HEL_CAPABILITIES));
-        }
-
-        if (!$this->helloBarrier->hasPending() && !$this->helloBarrier->isConfirmed()) {
-            $this->sendHel();
         }
 
         // Bootstrap requests the peer inventory with our HEL; approved sessions
