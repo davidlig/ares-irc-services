@@ -24,6 +24,10 @@ final readonly class UdbFrame
 {
     public ?UdbUnsignedDecimal $roundId;
 
+    public ?UdbUnsignedDecimal $sequence;
+
+    public ?UdbUnsignedDecimal $watermark;
+
     public function __construct(
         public UdbFrameKind $kind,
         public string $sourceSid,
@@ -33,7 +37,6 @@ final readonly class UdbFrame
         public ?string $txid = null,
         public ?string $checksum = null,
         public ?int $timestamp = null,
-        public ?string $modifiedAt = null,
         public ?string $path = null,
         public ?string $value = null,
         public ?string $propagator = null,
@@ -44,7 +47,12 @@ final readonly class UdbFrame
         public ?int $errorCode = null,
         public ?string $status = null,
         public ?int $count = null,
+        int|UdbUnsignedDecimal|null $sequence = null,
+        int|UdbUnsignedDecimal|null $watermark = null,
+        public ?int $expectedExpires = null,
     ) {
         $this->roundId = is_int($roundId) ? UdbUnsignedDecimal::fromInt($roundId) : $roundId;
+        $this->sequence = is_int($sequence) ? UdbUnsignedDecimal::fromInt($sequence) : $sequence;
+        $this->watermark = is_int($watermark) ? UdbUnsignedDecimal::fromInt($watermark) : $watermark;
     }
 }

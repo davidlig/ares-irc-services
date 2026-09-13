@@ -82,7 +82,8 @@ final class UdbSchemaTest extends TestCase
         yield 'access string' => ['access', '1.2.3.4', true];
         yield 'access star rejected' => ['access', '*1', false];
         yield 'forbid string' => ['forbid', 'bad nick', true];
-        yield 'suspended string' => ['suspended', 'reason', true];
+        yield 'suspend string' => ['suspend', 'reason', true];
+        yield 'legacy suspended rejected' => ['suspended', 'reason', false];
         yield 'swhois string' => ['swhois', 'line', true];
         yield 'case insensitive key' => ['VHOST', 'vhost.example.net', true];
         yield 'argon2 password' => ['pass', 'argon2id:$argon2id$hash', true];
@@ -101,10 +102,7 @@ final class UdbSchemaTest extends TestCase
         yield 'oper mixed' => ['oper', 'Net-Admin_2', true];
         yield 'oper with space' => ['oper', 'net admin', false];
         yield 'oper too long' => ['oper', str_repeat('a', 65), false];
-        yield 'challenge argon2id' => ['challenge', 'argon2id', true];
-        yield 'challenge case insensitive' => ['challenge', 'SHA256', true];
-        yield 'challenge crypt' => ['challenge', 'crypt', true];
-        yield 'challenge unknown' => ['challenge', 'bcrypt', false];
+        yield 'challenge removed' => ['challenge', 'sha256', false];
         yield 'modes set' => ['modes', '+BD', true];
         yield 'modes single' => ['modes', 'i', true];
         yield 'modes snomask letter' => ['modes', 's', true];
@@ -145,6 +143,10 @@ final class UdbSchemaTest extends TestCase
     {
         self::assertTrue(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'options'], '*18446744073709551615'));
         self::assertFalse(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'options'], '*18446744073709551616'));
+        self::assertSame('*20', UdbSchema::canonicalizeValue('*00020'));
+        self::assertSame('*0', UdbSchema::canonicalizeValue('*000'));
+        self::assertSame('reason', UdbSchema::canonicalizeValue('reason'));
+        self::assertSame('*invalid', UdbSchema::canonicalizeValue('*invalid'));
     }
 
     // ---------- Block C ----------
@@ -202,11 +204,10 @@ final class UdbSchemaTest extends TestCase
         yield 'topic string' => [[$chan, 'topic'], 'Welcome here', true];
         yield 'topic star rejected' => [[$chan, 'topic'], '*topic', false];
         yield 'forbid string' => [[$chan, 'forbid'], 'reason', true];
-        yield 'suspended string' => [[$chan, 'suspended'], '1', true];
-        yield 'pass hash' => [[$chan, 'pass'], 'crypt:secret', true];
-        yield 'pass invalid' => [[$chan, 'pass'], 'plain', false];
-        yield 'challenge ok' => [[$chan, 'challenge'], 'argon2id', true];
-        yield 'challenge bad' => [[$chan, 'challenge'], 'bcrypt', false];
+        yield 'suspend string' => [[$chan, 'suspend'], '1', true];
+        yield 'legacy suspended rejected' => [[$chan, 'suspended'], '1', false];
+        yield 'pass removed' => [[$chan, 'pass'], 'crypt:secret', false];
+        yield 'challenge removed' => [[$chan, 'challenge'], 'argon2id', false];
         yield 'options numeric' => [[$chan, 'options'], '*10', true];
         yield 'options missing star' => [[$chan, 'options'], '10', false];
         yield 'options non numeric' => [[$chan, 'options'], '*x', false];
@@ -353,14 +354,14 @@ final class UdbSchemaTest extends TestCase
     #[DataProvider('lineMaskProvider')]
     public function lineMasksAreValidated(string $type, string $mask, bool $expected): void
     {
-        self::assertSame($expected, UdbSchema::validate(UdbBlock::Lines, [$type, $mask], 'reason'));
+        self::assertSame($expected, UdbSchema::validate(UdbBlock::Lines, [$type, $mask, 'reason'], 'reason'));
     }
 
     /** @return iterable<string, array{0: string, 1: string, 2: bool}> */
     public static function lineMaskProvider(): iterable
     {
         yield 'gline user host' => ['G', 'user@host', true];
-        yield 'gline host only' => ['G', 'bad.example.net', true];
+        yield 'gline host only' => ['G', 'bad.example.net', false];
         yield 'gline empty user' => ['G', '@host', false];
         yield 'gline empty host' => ['G', 'user@', false];
         yield 'gline double at' => ['G', 'user@ho@st', false];
@@ -368,9 +369,17 @@ final class UdbSchemaTest extends TestCase
         yield 'gline long host' => ['G', 'user@' . str_repeat('h', 128), false];
         yield 'gline max user' => ['G', str_repeat('u', 127) . '@host', true];
         yield 'zline mask' => ['Z', '10.0.0.0/8', true];
+        yield 'zline canonical address without prefix' => ['Z', '192.0.2.1', true];
+        yield 'zline empty address' => ['Z', '/24', false];
+        yield 'zline multiple slashes' => ['Z', '192.0.2.0/24/1', false];
+        yield 'zline invalid address' => ['Z', '999.0.0.1', false];
+        yield 'zline noncanonical address' => ['Z', '2001:0db8::/32', false];
+        yield 'zline invalid prefix syntax' => ['Z', '192.0.2.0/01', false];
+        yield 'zline prefix too large' => ['Z', '192.0.2.0/33', false];
+        yield 'zline host bits set after prefix' => ['Z', '192.0.2.1/24', false];
         yield 'shun mask' => ['S', 'user@host', true];
         yield 'qline nick pattern' => ['Q', 'bad*nick', true];
-        yield 'qline ignores mask rules' => ['Q', str_repeat('n', 128), true];
+        yield 'qline length bounded' => ['Q', str_repeat('n', 128), false];
     }
 
     #[Test]
@@ -384,8 +393,9 @@ final class UdbSchemaTest extends TestCase
     {
         self::assertTrue(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'reason'], 'spam'));
         self::assertFalse(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'reason'], '*spam'));
-        self::assertTrue(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'duration'], '*60'));
-        self::assertFalse(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'duration'], '60'));
+        self::assertTrue(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'expires'], '*1700000000'));
+        self::assertFalse(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'expires'], '*0'));
+        self::assertFalse(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'duration'], '*60'));
         self::assertFalse(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'unknown'], 'x'));
         self::assertFalse(UdbSchema::validate(UdbBlock::Lines, ['Q', 'badnick', 'unknown'], 'x'));
         self::assertTrue(UdbSchema::validate(UdbBlock::Lines, ['Q', 'badnick', 'reason'], 'nick ban'));
@@ -409,26 +419,75 @@ final class UdbSchemaTest extends TestCase
     {
         $b64 = 'b64:' . base64_encode('hello world');
 
-        yield 'plain pattern type' => ['bad.*word', 'type', 'channel', true];
-        yield 'b64 pattern type' => [$b64, 'type', 'private-notice', true];
-        yield 'type case sensitive' => ['bad.*word', 'type', 'Channel', false];
-        yield 'type unknown' => ['bad.*word', 'type', 'chan', false];
-        yield 'action lowercase' => ['bad.*word', 'action', 'kill', true];
-        yield 'action uppercase' => ['bad.*word', 'action', 'GLINE', true];
-        yield 'action config only accepted' => ['bad.*word', 'action', 'set', true];
-        yield 'action unknown' => ['bad.*word', 'action', 'explode', false];
-        yield 'duration numeric' => ['bad.*word', 'duration', '*3600', true];
-        yield 'duration plain rejected' => ['bad.*word', 'duration', '3600', false];
-        yield 'reason ok' => ['bad.*word', 'reason', 'spam bot', true];
-        yield 'reason star rejected' => ['bad.*word', 'reason', '*spam', false];
-        yield 'unknown subkey' => ['bad.*word', 'unknown', 'x', false];
-        yield 'b64 invalid chars' => ['b64:!!==', 'type', 'channel', false];
-        yield 'b64 bad padding length' => ['b64:YQ', 'type', 'channel', false];
-        yield 'b64 empty' => ['b64:', 'type', 'channel', false];
-        yield 'b64 canonical mismatch' => ['b64:!!!', 'type', 'channel', false];
-        yield 'b64 decoded nul rejected' => ['b64:' . base64_encode("a\0b"), 'type', 'channel', false];
-        yield 'plain pattern too long' => [str_repeat('a', 3073), 'type', 'channel', false];
-        yield 'plain pattern max' => [str_repeat('a', 3072), 'type', 'channel', true];
+        yield 'match regex' => [$b64, 'match-type', 'regex', true];
+        yield 'match simple' => [$b64, 'match-type', 'simple', true];
+        yield 'match case sensitive' => [$b64, 'match-type', 'Regex', false];
+        yield 'targets canonical and ASCII ascending' => [$b64, 'targets', 'cp', true];
+        yield 'targets native order but ASCII descending' => [$b64, 'targets', 'pn', false];
+        yield 'targets previously accepted mixed case' => [$b64, 'targets', 'cpNqR', false];
+        yield 'targets empty' => [$b64, 'targets', '', false];
+        yield 'targets out of order' => [$b64, 'targets', 'pc', false];
+        yield 'targets duplicate' => [$b64, 'targets', 'cc', false];
+        yield 'action dynamic' => [$b64, 'action', 'GLINE', true];
+        yield 'action config only' => [$b64, 'action', 'set', false];
+        yield 'ban time positive' => [$b64, 'ban-time', '*3600', true];
+        yield 'expires positive' => [$b64, 'expires', '*1700000000', true];
+        yield 'zero expiry' => [$b64, 'expires', '*0', false];
+        yield 'reason' => [$b64, 'reason', 'spam bot', true];
+        yield 'legacy type key' => [$b64, 'type', 'c', false];
+        yield 'legacy duration key' => [$b64, 'duration', '*60', false];
+        yield 'raw pattern rejected' => ['bad.*word', 'reason', 'raw', false];
+        yield 'empty encoded pattern rejected' => ['b64:', 'reason', 'bad', false];
+        yield 'misaligned encoded pattern rejected' => ['b64:YQ', 'reason', 'bad', false];
+        yield 'invalid base64' => ['b64:!!==', 'reason', 'bad', false];
+        yield 'decoded nul rejected' => ['b64:' . base64_encode("a\0b"), 'reason', 'bad', false];
+    }
+
+    #[Test]
+    public function aggregateValidationCompilesOnlyCompleteRegexSpamfilters(): void
+    {
+        self::assertTrue(UdbSchema::validateAggregate(UdbBlock::Channels, []));
+        self::assertFalse(UdbSchema::validateAggregate(UdbBlock::Lines, ['%41::mask::reason' => 'invalid path']));
+        self::assertFalse(UdbSchema::validateAggregate(UdbBlock::Lines, ['G::user@host::duration' => '*60']));
+
+        $invalidRegex = 'b64%3A' . base64_encode('(');
+        self::assertTrue(UdbSchema::validateAggregate(UdbBlock::Lines, [
+            'F::' . $invalidRegex . '::match-type' => 'regex',
+        ]));
+        self::assertTrue(UdbSchema::validateAggregate(UdbBlock::Lines, $this->spamfilterProfile($invalidRegex, 'simple')));
+        self::assertFalse(UdbSchema::validateAggregate(UdbBlock::Lines, $this->spamfilterProfile($invalidRegex, 'regex')));
+
+        $validRegex = 'b64%3A' . base64_encode('^foo~\\d+$');
+        self::assertTrue(UdbSchema::validateAggregate(UdbBlock::Lines, $this->spamfilterProfile($validRegex, 'regex')));
+    }
+
+    #[Test]
+    public function nickForbidMustBeTheProfilesOnlyLeaf(): void
+    {
+        self::assertTrue(UdbSchema::validateAggregate(UdbBlock::Nicks, [
+            'ForbiddenNick::forbid' => 'reserved',
+        ]));
+        self::assertFalse(UdbSchema::validateAggregate(UdbBlock::Nicks, [
+            'ForbiddenNick::forbid' => 'reserved',
+            'forbiddennick::pass' => 'sha256:' . str_repeat('a', 64),
+        ]));
+        self::assertTrue(UdbSchema::validateAggregate(UdbBlock::Nicks, [
+            'NormalNick::pass' => 'sha256:' . str_repeat('a', 64),
+            'normalnick::vhost' => 'users.example',
+        ]));
+    }
+
+    /** @return array<string, string> */
+    private function spamfilterProfile(string $pattern, string $matchType): array
+    {
+        $prefix = 'F::' . $pattern . '::';
+
+        return [
+            $prefix . 'match-type' => $matchType,
+            $prefix . 'targets' => 'c',
+            $prefix . 'action' => 'kill',
+            $prefix . 'reason' => 'blocked',
+        ];
     }
 
     // ---------- Secrets ----------
@@ -449,8 +508,8 @@ final class UdbSchemaTest extends TestCase
         yield 'nick pass' => ['N', ['nick', 'pass'], true];
         yield 'nick vhost' => ['N', ['nick', 'vhost'], false];
         yield 'nick root' => ['N', ['nick'], false];
-        yield 'channel pass' => ['C', ['#chan', 'pass'], true];
-        yield 'channel challenge' => ['C', ['#chan', 'challenge'], true];
+        yield 'channel pass removed' => ['C', ['#chan', 'pass'], false];
+        yield 'channel challenge removed' => ['C', ['#chan', 'challenge'], false];
         yield 'channel founder' => ['C', ['#chan', 'founder'], false];
         yield 'encryption key' => ['S', ['encryption_key'], true];
         yield 'nickserv mask' => ['S', ['nickserv'], false];

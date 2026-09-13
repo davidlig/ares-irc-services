@@ -6,7 +6,7 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
-use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbChannelModeSupport;
@@ -33,10 +33,8 @@ final class UnrealUdbModuleTest extends TestCase
     {
         $connectionHolder = new ActiveConnectionHolder();
         $recordWriter = new UnrealUdbRecordWriter(
-            $connectionHolder,
             $this->createReadySessionState(),
-            $this->createStub(UdbRecordRepositoryInterface::class),
-            '001',
+            $this->createStub(UdbRecordMutationStoreInterface::class),
         );
         $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator());
         $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter);
@@ -77,10 +75,8 @@ final class UnrealUdbModuleTest extends TestCase
     {
         $connectionHolder = new ActiveConnectionHolder();
         $recordWriter = new UnrealUdbRecordWriter(
-            $connectionHolder,
             $this->createReadySessionState(),
-            $this->createStub(UdbRecordRepositoryInterface::class),
-            '001',
+            $this->createStub(UdbRecordMutationStoreInterface::class),
         );
         $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator());
         $module = new UnrealUdbModule(
@@ -147,10 +143,8 @@ final class UnrealUdbModuleTest extends TestCase
 
         $connectionHolder = new ActiveConnectionHolder();
         $recordWriter = new UnrealUdbRecordWriter(
-            $connectionHolder,
             $this->createReadySessionState(),
-            $this->createStub(UdbRecordRepositoryInterface::class),
-            '001',
+            $this->createStub(UdbRecordMutationStoreInterface::class),
         );
         $module = new UnrealUdbModule(
             new UnrealUdbProtocolHandler('001', $this->createCoordinator()),

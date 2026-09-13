@@ -210,20 +210,20 @@ final class UdbNickSyncSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onNickSuspendedWritesTheSuspendedRecord(): void
+    public function onNickSuspendedWritesTheSuspendRecord(): void
     {
         $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::suspended', 'bad conduct');
+        $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::suspend', 'bad conduct');
 
         $sub = $this->createSubscriber(writer: $writer);
         $sub->onNickSuspended(new NickSuspendedEvent(7, 'nick', 'bad conduct', '30d', null, 'root', null, '127.0.0.1', 'host', new DateTimeImmutable()));
     }
 
     #[Test]
-    public function onNickUnsuspendedDeletesTheSuspendedRecord(): void
+    public function onNickUnsuspendedDeletesTheSuspendRecord(): void
     {
         $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects($this->once())->method('delete')->willReturn(true)->with('N', 'nick::suspended');
+        $writer->expects($this->once())->method('delete')->willReturn(true)->with('N', 'nick::suspend');
 
         $sub = $this->createSubscriber(writer: $writer);
         $sub->onNickUnsuspended(new NickUnsuspendedEvent(7, 'nick', 'root', null, '127.0.0.1', 'host', new DateTimeImmutable()));

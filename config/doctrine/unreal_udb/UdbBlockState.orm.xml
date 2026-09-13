@@ -11,7 +11,12 @@
             <generator strategy="IDENTITY"/>
         </id>
         <field name="block" type="string" length="1" column="block"/>
-        <field name="checksum" type="string" length="8" column="checksum"/>
-        <field name="syncedAt" type="datetimetz_immutable" column="synced_at"/>
+        <field name="checksum" type="string" length="64" column="checksum"/>
+        <field name="recordCount" type="integer" column="record_count">
+            <options>
+                <option name="default">0</option>
+            </options>
+        </field>
+        <field name="modifiedAt" type="datetimetz_immutable" column="modified_at"/>
     </entity>
 </doctrine-mapping>

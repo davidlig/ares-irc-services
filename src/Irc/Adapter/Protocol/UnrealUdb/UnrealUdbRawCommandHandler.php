@@ -26,8 +26,8 @@ use function sprintf;
  * Paths arrive exactly as the operator typed them on the wire: the block
  * letter followed by canonically percent-encoded components. Every step is
  * validated here so the writer never silently rejects an intercepted
- * mutation, and secret values (N::pass, C::pass/challenge,
- * S::encryption_key) are redacted from the returned audit line.
+ * mutation, and secret values (N::pass and S::encryption_key) are redacted
+ * from the returned audit line.
  */
 final readonly class UnrealUdbRawCommandHandler implements UdbRawCommandHandlerInterface
 {

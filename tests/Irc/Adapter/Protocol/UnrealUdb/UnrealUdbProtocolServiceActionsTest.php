@@ -47,6 +47,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         return new UnrealUdbProtocolServiceActions(
             $this->connectionHolder,
             $this->createUdbRecordWriter($this->connectionHolder),
+            clock: new MutableUdbClock(1_800_000_000),
         );
     }
 
@@ -340,7 +341,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         $actions->setChannelTopic('001', '#test', 'New topic', '001CSRV');
 
-        self::assertSame([':001 DB * INS C::#test::topic :New topic'], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
@@ -352,7 +353,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         $actions->setChannelTopic('001', '#test', null, '001CSRV');
 
-        self::assertSame([':001 DB * DEL C::#test::topic'], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
@@ -364,7 +365,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         $actions->setChannelTopic('001', '#test', '', '001CSRV');
 
-        self::assertSame([':001 DB * DEL C::#test::topic'], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
@@ -407,30 +408,39 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function addGlineWritesPatternReasonAndDuration(): void
+    public function addGlineWritesAbsoluteExpiryBeforeReason(): void
     {
-        $actions = $this->createActions();
+        $writes = [];
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::exactly(2))->method('insert')->willReturnCallback(
+            static function (string $block, string $path, string $value) use (&$writes): bool {
+                $writes[] = [$block, $path, $value];
+
+                return true;
+            },
+        );
+        $actions = new UnrealUdbProtocolServiceActions(
+            $this->connectionHolder,
+            $writer,
+            clock: new MutableUdbClock(1_800_000_000),
+        );
 
         $actions->addGline('001', 'testuser', 'test.host', 3600, 'Test ban');
 
         self::assertSame([
-            ':001 DB * INS K::G::testuser@test.host :Test ban',
-            ':001 DB * INS K::G::testuser@test.host::reason :Test ban',
-            ':001 DB * INS K::G::testuser@test.host::duration :*3600',
-        ], $this->written);
+            ['K', 'G::testuser@test.host::expires', '*1800003600'],
+            ['K', 'G::testuser@test.host::reason', 'Test ban'],
+        ], $writes);
     }
 
     #[Test]
-    public function addGlinePermanentBanSkipsDuration(): void
+    public function addGlinePermanentBanWritesOnlyReason(): void
     {
-        $actions = $this->createActions();
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::once())->method('insert')->with('K', 'G::*@192.168.*::reason', 'Permanent ban');
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer);
 
         $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
-
-        self::assertSame([
-            ':001 DB * INS K::G::*@192.168.* :Permanent ban',
-            ':001 DB * INS K::G::*@192.168.*::reason :Permanent ban',
-        ], $this->written);
     }
 
     #[Test]
@@ -442,7 +452,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         $actions->removeGline('001', 'testuser', 'test.host');
 
-        self::assertSame([':001 DB * DEL K::G::testuser@test.host'], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
@@ -454,7 +464,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         $actions->removeGline('001', '*', '192.168.*');
 
-        self::assertSame([':001 DB * DEL K::G::*@192.168.*'], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]

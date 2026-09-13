@@ -10,5 +10,6 @@
         <field name="approved" type="boolean" column="approved"/>
         <field name="approvedAt" type="datetimetz_immutable" column="approved_at" nullable="true"/>
         <field name="fingerprint" type="string" length="64" column="fingerprint" nullable="true"/>
+        <field name="protocolRevision" type="string" length="40" column="protocol_revision" nullable="true"/>
     </entity>
 </doctrine-mapping>

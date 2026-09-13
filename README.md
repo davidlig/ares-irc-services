@@ -38,12 +38,12 @@ A modular, protocol-agnostic IRC services daemon built with **PHP 8.5**, **Symfo
 | IRCd | Driver | S2S protocol | SID format | Auth | Plain/TLS ports (typical) |
 |------|--------|-------------|------------|------|---------------------------|
 | [UnrealIRCd](https://www.unrealircd.org/) 6.2.x | `unreal` | 6.2.x | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
-| [UnrealIRCd-UDB](https://github.com/davidlig/unrealircd-udb) 6.2.x | `unrealudb` | 6.2.x with UDB | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
+| [UnrealIRCd-UDB](https://github.com/davidlig/unrealircd-udb) 4.0.0 / UnrealIRCd 6.2.x | `unrealudb` | UDB 4 at pinned revision `ac3b915` | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
 | [InspIRCd](https://www.inspircd.org/) 4.10.x | `inspircd` | SpanTree v4 (1206) | 3-char alphanum (`0A0`) | Plaintext (no CHALLENGE) | 7000 / 7001 |
 
 The port you configure in `.env.local` (`IRC_IRCD_PORT`) must match whatever you set in your IRCd's `link` / `<link>` block.
 
-With the `unrealudb` driver, services are the **sole UDB authority**: all six blocks (`N/C/I/S/L/K`) live in the authoritative services store and are served to the IRCd.
+With the `unrealudb` driver, services are the **sole UDB authority**: all six blocks (`N/C/I/S/L/K`) live in the authoritative services store and are served to the IRCd. The driver targets only the pinned current contract: SHA-256 manifests, snapshot watermarks, epoch-scoped sequenced mutations, `MANIFEST` anti-entropy and `EXP` compare-and-delete. See [the UnrealUdb operations guide](docs/unrealudb/UNREALUDB.md).
 
 The driver supports a closed UnrealIRCd mode profile: the core and bundled
 `modules.default.conf` handlers encoded by `UdbSchema`. Custom mode modules,

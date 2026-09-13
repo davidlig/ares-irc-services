@@ -27,6 +27,7 @@ use Psr\Log\LoggerInterface;
 
 use function array_keys;
 use function array_map;
+use function count;
 use function strlen;
 
 #[CoversClass(UdbWireTakeover::class)]
@@ -77,6 +78,42 @@ final class UdbWireTakeoverTest extends TestCase
     }
 
     #[Test]
+    public function inconsistentInventoryWatermarksAbortTheWholeRound(): void
+    {
+        $this->assertRequest($this->inventory(UdbBlock::Ips, watermark: 5), UdbBlock::Ips, 1);
+
+        $outcome = $this->takeover->accept($this->frame(
+            UdbFrameKind::Inf,
+            UdbBlock::Settings,
+            checksum: UdbChecksum::EMPTY,
+            count: 0,
+            watermark: 6,
+        ));
+
+        $this->assertError($outcome, UdbBlock::Settings, 1, 'INF', 3);
+        self::assertNull($this->takeover->nextDeadline());
+    }
+
+    #[Test]
+    public function inventoryWithoutADigestReturnsProtocolError(): void
+    {
+        $outcome = $this->takeover->accept($this->frame(UdbFrameKind::Inf, UdbBlock::Ips));
+
+        $this->assertError($outcome, UdbBlock::Ips, 1, 'INF', 2);
+    }
+
+    #[Test]
+    public function endRejectsAStageWhoseRecordCountDiffersFromTheInventory(): void
+    {
+        $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
+        $this->assertRequest($this->inventory(UdbBlock::Ips, digest: $digest, count: 2), UdbBlock::Ips, 1);
+        $this->assertIgnored($this->begin(UdbBlock::Ips, 'tx1', $digest));
+        $this->assertIgnored($this->put(UdbBlock::Ips, 'tx1', '1.2.3.4::clones', '*5'));
+
+        $this->assertError($this->end(UdbBlock::Ips, 'tx1', $digest), UdbBlock::Ips, 1, 'END', 3);
+    }
+
+    #[Test]
     public function beginRequiresTheBlockResHandshakeAndAllowsOnlyOneActiveTransfer(): void
     {
         $this->assertError($this->begin(UdbBlock::Ips, 'tx1'), UdbBlock::Ips, 1, 'BEGIN', 5);
@@ -84,6 +121,30 @@ final class UdbWireTakeoverTest extends TestCase
         $this->assertRequest($this->inventory(UdbBlock::Ips), UdbBlock::Ips, 1);
         $this->assertIgnored($this->begin(UdbBlock::Ips, 'tx1'));
         $this->assertError($this->begin(UdbBlock::Ips, 'tx2'), UdbBlock::Ips, 1, 'BEGIN', 4);
+    }
+
+    #[Test]
+    public function beginMustMatchTheInventoryDigestAndWatermark(): void
+    {
+        $this->assertRequest($this->inventory(UdbBlock::Ips, watermark: 5), UdbBlock::Ips, 1);
+
+        $digestMismatch = $this->takeover->accept($this->frame(
+            UdbFrameKind::Begin,
+            UdbBlock::Ips,
+            'tx1',
+            str_repeat('a', 64),
+            watermark: 5,
+        ));
+        $this->assertError($digestMismatch, UdbBlock::Ips, 1, 'BEGIN', 3);
+
+        $watermarkMismatch = $this->takeover->accept($this->frame(
+            UdbFrameKind::Begin,
+            UdbBlock::Ips,
+            'tx1',
+            UdbChecksum::EMPTY,
+            watermark: 6,
+        ));
+        $this->assertError($watermarkMismatch, UdbBlock::Ips, 1, 'BEGIN', 3);
     }
 
     #[Test]
@@ -102,6 +163,21 @@ final class UdbWireTakeoverTest extends TestCase
         self::assertSame(64, strlen($fingerprint));
         self::assertSame(['1.2.3.4::clones' => '*5'], $this->records->recordsByBlock('I'));
         self::assertSame($digest, $this->states->states['I']->getChecksum());
+    }
+
+    #[Test]
+    public function stagedPutCanonicalizesNumericValuesBeforeDigestAndPersistence(): void
+    {
+        $canonicalDigest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
+        $this->assertRequest($this->inventory(UdbBlock::Ips, digest: $canonicalDigest, count: 1), UdbBlock::Ips, 1);
+        $this->assertIgnored($this->begin(UdbBlock::Ips, 'tx1', $canonicalDigest));
+        $this->assertIgnored($this->put(UdbBlock::Ips, 'tx1', '1.2.3.4::clones', '*0005'));
+        $this->assertAcknowledgement($this->end(UdbBlock::Ips, 'tx1', $canonicalDigest), UdbBlock::Ips, 1, 'tx1', $canonicalDigest);
+
+        $this->completeOtherBlocks(UdbBlock::Ips);
+        $this->takeover->finalize();
+
+        self::assertSame(['1.2.3.4::clones' => '*5'], $this->records->recordsByBlock('I'));
     }
 
     #[Test]
@@ -151,6 +227,27 @@ final class UdbWireTakeoverTest extends TestCase
     }
 
     #[Test]
+    public function aggregateInvalidSpamfilterReturnsErrAtEnd(): void
+    {
+        $pattern = 'b64%3A' . base64_encode('(');
+        $records = [
+            "F::{$pattern}::match-type" => 'regex',
+            "F::{$pattern}::targets" => 'c',
+            "F::{$pattern}::action" => 'kill',
+            "F::{$pattern}::reason" => 'blocked',
+        ];
+
+        $this->assertError(
+            $this->stagedTransferFor(UdbBlock::Lines, 'tx1', $records),
+            UdbBlock::Lines,
+            1,
+            'END',
+            2,
+        );
+        self::assertSame([], $this->takeover->completedBlocks());
+    }
+
+    #[Test]
     public function putAndEndWithoutAnOpenStageReturnErr(): void
     {
         $this->inventory(UdbBlock::Ips);
@@ -180,7 +277,7 @@ final class UdbWireTakeoverTest extends TestCase
     public function mismatchedTxidAndRoundReturnErrWithoutAdvancingTheStage(): void
     {
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
-        $this->inventory(UdbBlock::Ips);
+        $this->inventory(UdbBlock::Ips, digest: $digest, count: 1);
         $this->begin(UdbBlock::Ips, 'tx1', $digest);
 
         $this->assertError($this->put(UdbBlock::Ips, 'wrong', '1.2.3.4::clones', '*5'), UdbBlock::Ips, 1, 'PUT', 5);
@@ -241,7 +338,7 @@ final class UdbWireTakeoverTest extends TestCase
         $this->assertError($this->inventory(UdbBlock::Lines, 2), UdbBlock::Lines, 2, 'INF', 5);
         self::assertFalse($this->takeover->isComplete());
 
-        $this->stagedTransfer(UdbBlock::Lines, ['G::1.2.3.4' => 'reason']);
+        $this->stagedTransfer(UdbBlock::Lines, ['G::*@bad.example::reason' => 'reason']);
         self::assertTrue($this->takeover->isComplete());
     }
 
@@ -253,7 +350,7 @@ final class UdbWireTakeoverTest extends TestCase
         $this->stagedTransfer(UdbBlock::Links, ['hub1.example::options' => '*1']);
         $this->stagedTransfer(UdbBlock::Nicks, ['alice::vhost' => 'alice.tld']);
         $this->stagedTransfer(UdbBlock::Channels, ['#chan::topic' => 'welcome']);
-        $this->stagedTransfer(UdbBlock::Lines, ['G::1.2.3.4' => 'reason']);
+        $this->stagedTransfer(UdbBlock::Lines, ['G::*@bad.example::reason' => 'reason']);
 
         $this->takeover->finalize();
 
@@ -407,7 +504,7 @@ final class UdbWireTakeoverTest extends TestCase
         );
         $digest = UdbChecksum::fromRecords($tuples);
 
-        $this->assertRequest($this->inventory($block, $roundId), $block, $roundId);
+        $this->assertRequest($this->inventory($block, $roundId, $digest, count($records)), $block, $roundId);
         $this->assertIgnored($this->begin($block, $txid, $digest, $roundId));
         foreach ($records as $path => $value) {
             $this->assertIgnored($this->put($block, $txid, $path, $value, $roundId));
@@ -425,14 +522,14 @@ final class UdbWireTakeoverTest extends TestCase
         }
     }
 
-    private function inventory(UdbBlock $block, int $roundId = 1): UdbWireTakeoverOutcome
+    private function inventory(UdbBlock $block, int $roundId = 1, string $digest = UdbChecksum::EMPTY, int $count = 0, int $watermark = 0): UdbWireTakeoverOutcome
     {
-        return $this->takeover->accept($this->frame(UdbFrameKind::Inf, $block, roundId: $roundId));
+        return $this->takeover->accept($this->frame(UdbFrameKind::Inf, $block, checksum: $digest, roundId: $roundId, count: $count, watermark: $watermark));
     }
 
     private function begin(UdbBlock $block, ?string $txid, ?string $checksum = null, int $roundId = 1): UdbWireTakeoverOutcome
     {
-        return $this->takeover->accept($this->frame(UdbFrameKind::Begin, $block, $txid, $checksum ?? str_repeat('0', 8), roundId: $roundId));
+        return $this->takeover->accept($this->frame(UdbFrameKind::Begin, $block, $txid, $checksum ?? UdbChecksum::EMPTY, roundId: $roundId, watermark: 0));
     }
 
     private function put(UdbBlock $block, string $txid, string $path, string $value, int $roundId = 1): UdbWireTakeoverOutcome
@@ -442,7 +539,7 @@ final class UdbWireTakeoverTest extends TestCase
 
     private function end(UdbBlock $block, ?string $txid, ?string $checksum = null, int $roundId = 1): UdbWireTakeoverOutcome
     {
-        return $this->takeover->accept($this->frame(UdbFrameKind::End, $block, $txid, $checksum, roundId: $roundId));
+        return $this->takeover->accept($this->frame(UdbFrameKind::End, $block, $txid, $checksum, roundId: $roundId, watermark: 0));
     }
 
     private function assertIgnored(UdbWireTakeoverOutcome $outcome): void
@@ -500,7 +597,9 @@ final class UdbWireTakeoverTest extends TestCase
         ?string $path = null,
         ?string $value = null,
         int $roundId = 1,
+        ?int $count = null,
+        ?int $watermark = null,
     ): UdbFrame {
-        return new UdbFrame($kind, '001', '002', roundId: $roundId, block: $block, txid: $txid, checksum: $checksum, path: $path, value: $value);
+        return new UdbFrame($kind, '001', '002', roundId: $roundId, block: $block, txid: $txid, checksum: $checksum, path: $path, value: $value, count: $count, watermark: $watermark);
     }
 }

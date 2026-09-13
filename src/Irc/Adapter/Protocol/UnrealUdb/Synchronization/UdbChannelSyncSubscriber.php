@@ -103,13 +103,13 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 
     public function onChannelSuspended(ChannelSuspendedEvent $event): void
     {
-        $this->recordWriter->insert(self::BLOCK, sprintf('%s::suspended', $event->channelName), '1');
+        $this->recordWriter->insert(self::BLOCK, sprintf('%s::suspend', $event->channelName), '1');
         $this->refreshOptions($event->channelNameLower);
     }
 
     public function onChannelUnsuspended(ChannelUnsuspendedEvent $event): void
     {
-        $this->recordWriter->delete(self::BLOCK, sprintf('%s::suspended', $event->channelName));
+        $this->recordWriter->delete(self::BLOCK, sprintf('%s::suspend', $event->channelName));
         $this->refreshOptions($event->channelNameLower);
     }
 

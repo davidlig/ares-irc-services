@@ -46,10 +46,7 @@ final class UnrealUdbNickReservationTest extends TestCase
     {
         $this->reservation->reserveNick('NickServ', 'Reserved for network services');
 
-        self::assertSame([
-            ':001 DB * INS S::nickserv :NickServ!NickServ@services.davidlig.net',
-            ':001 DB * INS S::ipserv :NickServ!NickServ@services.davidlig.net',
-        ], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
@@ -57,9 +54,7 @@ final class UnrealUdbNickReservationTest extends TestCase
     {
         $this->reservation->reserveNick('ChanServ', 'Reserved for network services');
 
-        self::assertSame([
-            ':001 DB * INS S::chanserv :ChanServ!ChanServ@services.davidlig.net',
-        ], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
@@ -89,11 +84,7 @@ final class UnrealUdbNickReservationTest extends TestCase
         $res->reserveNick('customnickserv', 'reason');
         $res->reserveNick('customchanserv', 'reason');
 
-        self::assertSame([
-            ':001 DB * INS S::nickserv :customnickserv!CustomIdent@irc.custom.org',
-            ':001 DB * INS S::ipserv :customnickserv!CustomIdent@irc.custom.org',
-            ':001 DB * INS S::chanserv :customchanserv!CustomChanIdent@irc.custom.org',
-        ], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
@@ -123,11 +114,7 @@ final class UnrealUdbNickReservationTest extends TestCase
         $this->reservation->releaseNick('NickServ');
         $this->reservation->releaseNick('ChanServ');
 
-        self::assertSame([
-            ':001 DB * DEL S::nickserv',
-            ':001 DB * DEL S::ipserv',
-            ':001 DB * DEL S::chanserv',
-        ], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]

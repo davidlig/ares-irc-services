@@ -9,6 +9,8 @@ use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\SystemUdbClock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\UdbChannelModesFormatter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
@@ -44,6 +46,7 @@ final readonly class UdbRecordExporter
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private UdbChannelModesFormatter $modesFormatter = new UdbChannelModesFormatter(),
+        private UdbClock $clock = new SystemUdbClock(),
     ) {}
 
     public function getChannelLookup(): ChannelLookupPort
@@ -210,7 +213,7 @@ final readonly class UdbRecordExporter
         $records = [];
 
         if ($channel->suspended) {
-            $records[sprintf('%s::suspended', $channel->name)] = '1';
+            $records[sprintf('%s::suspend', $channel->name)] = '1';
         }
 
         $founder = $this->nicks->findById($channel->founderNickId);
@@ -271,9 +274,9 @@ final readonly class UdbRecordExporter
     }
 
     /**
-     * K-block GLINE records: root reason, ::reason child and ::duration child.
-     * Duration is the original ban length (expiresAt - createdAt) so snapshots
-     * stay deterministic; the IRCd re-arms the ban with it on apply.
+     * K-block GLINE profile leaves. The pattern node is only a container;
+     * temporary lines carry their original absolute expiry so reconciliation
+     * cannot renew them after a restart or reconnect.
      *
      * @return array<string, string>
      */
@@ -284,18 +287,16 @@ final readonly class UdbRecordExporter
             return [];
         }
 
-        $records = [
-            sprintf('G::%s', $gline->mask) => $reason,
-            sprintf('G::%s::reason', $gline->mask) => $reason,
-        ];
-
         $expiresAt = $gline->expiresAt;
-        if (null !== $expiresAt) {
-            $duration = $expiresAt->getTimestamp() - $gline->createdAt->getTimestamp();
-            if ($duration > 0) {
-                $records[sprintf('G::%s::duration', $gline->mask)] = '*' . $duration;
-            }
+        if (null !== $expiresAt && $expiresAt->getTimestamp() <= $this->clock->now()) {
+            return [];
         }
+
+        $records = [];
+        if (null !== $expiresAt) {
+            $records[sprintf('G::%s::expires', $gline->mask)] = '*' . $expiresAt->getTimestamp();
+        }
+        $records[sprintf('G::%s::reason', $gline->mask)] = $reason;
 
         return $records;
     }

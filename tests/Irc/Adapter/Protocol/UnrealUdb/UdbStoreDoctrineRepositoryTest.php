@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbAuthorityStateDoctrineRepository;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbBlockStateDoctrineRepository;
@@ -12,9 +13,12 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryIn
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+
+use const DATE_ATOM;
 
 #[CoversClass(UdbRecordDoctrineRepository::class)]
 #[CoversClass(UdbBlockStateDoctrineRepository::class)]
@@ -45,6 +49,27 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->flushAndClear();
 
         self::assertSame(['DavidLig::vhost' => 'second.example.net'], $this->records->recordsByBlock('N'));
+    }
+
+    #[Test]
+    public function kFilterPatternIdentityIsCaseSensitiveButItsLeafIsNot(): void
+    {
+        self::assertTrue($this->records->upsert('K', 'F::b64:QWJj::reason', 'first'));
+        self::assertTrue($this->records->upsert('K', 'F::b64:qwjj::reason', 'second'));
+        self::assertTrue($this->records->upsert('K', 'f::b64:QWJj::REASON', 'updated'));
+        self::assertFalse($this->records->upsert('K', 'F::b64:QWJj::reason', 'updated'));
+        $this->flushAndClear();
+
+        self::assertSame([
+            'F::b64:QWJj::reason' => 'updated',
+            'F::b64:qwjj::reason' => 'second',
+        ], $this->records->recordsByBlock('K'));
+
+        self::assertTrue($this->records->deleteCascade('K', 'f::b64:QWJj'));
+        self::assertSame(
+            ['F::b64:qwjj::reason' => 'second'],
+            $this->records->recordsByBlock('K'),
+        );
     }
 
     #[Test]
@@ -132,17 +157,40 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function seedBlockPreservesDistinctKFilterPatterns(): void
+    {
+        $this->records->upsert('K', 'F::b64:QWJj::reason', 'old');
+        $this->flushAndClear();
+
+        $this->records->seedBlock('K', [
+            'f::b64:QWJj::REASON' => 'updated',
+            'F::b64:qwjj::reason' => 'distinct',
+        ]);
+        $this->flushAndClear();
+
+        self::assertSame([
+            'F::b64:QWJj::reason' => 'updated',
+            'F::b64:qwjj::reason' => 'distinct',
+        ], $this->records->recordsByBlock('K'));
+    }
+
+    #[Test]
     public function blockStatesAreUpsertedPerBlock(): void
     {
-        $this->states->upsert('S', 'AAAA1111');
-        $this->states->upsert('S', 'BBBB2222');
-        $this->states->upsert('L', '00000000');
+        $firstModifiedAt = new DateTimeImmutable('2026-09-13 10:00:00');
+        $secondModifiedAt = new DateTimeImmutable('2026-09-13 11:00:00');
+        $this->states->upsert('S', str_repeat('a', 64), 1, $firstModifiedAt);
+        $this->states->upsert('S', str_repeat('b', 64), 2, $secondModifiedAt);
+        $this->states->upsert('L', str_repeat('0', 64), 0, $firstModifiedAt);
         $this->flushAndClear();
 
         $all = $this->states->all();
         self::assertCount(2, $all);
-        self::assertSame('BBBB2222', $all['S']->getChecksum());
-        self::assertSame('00000000', $all['L']->getChecksum());
+        self::assertSame(str_repeat('b', 64), $all['S']->getChecksum());
+        self::assertSame(2, $all['S']->getRecordCount());
+        self::assertSame($secondModifiedAt->format(DATE_ATOM), $all['S']->getModifiedAt()->format(DATE_ATOM));
+        self::assertSame(str_repeat('0', 64), $all['L']->getChecksum());
+        self::assertSame(0, $all['L']->getRecordCount());
     }
 
     #[Test]
@@ -172,6 +220,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
         self::assertTrue($this->authority->isApproved());
         self::assertSame(str_repeat('b', 64), $this->authority->state()->getFingerprint());
+        self::assertSame(UdbAuthorityState::CURRENT_PROTOCOL_REVISION, $this->authority->state()->getProtocolRevision());
 
         $this->authority->revoke();
         self::assertFalse($this->authority->isApproved());

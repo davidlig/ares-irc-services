@@ -14,7 +14,7 @@ use function min;
 /** Owns pending txid correlation and timeout state for outbound snapshots. */
 final class UdbOutboundTransferTracker
 {
-    /** @var array<string, array{txid: string, roundId: UdbUnsignedDecimal, digest: string, inactivityDeadline: int, absoluteDeadline: int}> */
+    /** @var array<string, array{txid: string, roundId: UdbUnsignedDecimal, digest: string, watermark: UdbUnsignedDecimal, inactivityDeadline: int, absoluteDeadline: int}> */
     private array $pending = [];
 
     public function __construct(
@@ -22,7 +22,7 @@ final class UdbOutboundTransferTracker
         private readonly int $absoluteTimeout = 300,
     ) {}
 
-    public function track(UdbBlock $block, int|UdbUnsignedDecimal $roundId, string $txid, string $digest, int $now): bool
+    public function track(UdbBlock $block, int|UdbUnsignedDecimal $roundId, string $txid, string $digest, UdbUnsignedDecimal $watermark, int $now): bool
     {
         $letter = $block->letter();
         if (isset($this->pending[$letter])) {
@@ -33,6 +33,7 @@ final class UdbOutboundTransferTracker
             'txid' => $txid,
             'roundId' => is_int($roundId) ? UdbUnsignedDecimal::fromInt($roundId) : $roundId,
             'digest' => $digest,
+            'watermark' => $watermark,
             'inactivityDeadline' => $now + $this->inactivityTimeout,
             'absoluteDeadline' => $now + $this->absoluteTimeout,
         ];
@@ -51,6 +52,8 @@ final class UdbOutboundTransferTracker
         if (null === $frame->roundId || !$expected['roundId']->equals($frame->roundId)
             || $expected['txid'] !== $frame->txid
             || $expected['digest'] !== $frame->checksum
+            || null === $frame->watermark
+            || !$expected['watermark']->equals($frame->watermark)
         ) {
             return UdbTransferAcknowledgement::Mismatched;
         }

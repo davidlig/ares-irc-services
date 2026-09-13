@@ -7,25 +7,19 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 use function hash;
 use function preg_match;
 use function sprintf;
-use function str_pad;
 use function strcmp;
 use function strlen;
-use function strtoupper;
 use function usort;
-
-use const STR_PAD_LEFT;
 
 /**
  * UDB 4 block checksum (digest).
  *
- * Identical to udb_compute_tree_checksum(): CRC-32 (IEEE, reflected,
- * init/xorout 0xFFFFFFFF) over the lexically sorted "path value\n" lines of
- * the block's logical records, rendered as 8 uppercase hex digits. An empty
- * block hashes to 00000000.
+ * Identical to udb_compute_tree_digest(): lowercase SHA-256 over the bytewise
+ * lexically sorted "path value\n" lines of the block's logical records.
  */
 final class UdbChecksum
 {
-    public const string EMPTY = '00000000';
+    public const string EMPTY = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 
     /**
      * @param iterable<array{0: string, 1: string}> $records Tuples of [encodedPath, value]
@@ -45,10 +39,6 @@ final class UdbChecksum
      */
     public static function fromLines(array $lines): string
     {
-        if ([] === $lines) {
-            return self::EMPTY;
-        }
-
         usort($lines, strcmp(...));
 
         $payload = '';
@@ -56,16 +46,16 @@ final class UdbChecksum
             $payload .= $line . "\n";
         }
 
-        return strtoupper(hash('crc32b', $payload));
+        return hash('sha256', $payload);
     }
 
-    /** Normalizes a wire checksum to the 8-digit uppercase comparison form, or null when invalid. */
+    /** Accepts only the canonical 64-character lowercase wire digest. */
     public static function parse(string $checksum): ?string
     {
-        if (strlen($checksum) > 8 || 1 !== preg_match('/^[0-9A-Fa-f]{1,8}$/', $checksum)) {
+        if (64 !== strlen($checksum) || 1 !== preg_match('/^[0-9a-f]{64}$/D', $checksum)) {
             return null;
         }
 
-        return strtoupper(str_pad($checksum, 8, '0', STR_PAD_LEFT));
+        return $checksum;
     }
 }

@@ -214,7 +214,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         );
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::suspended', '1');
+        $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::suspend', '1');
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#chan::options');
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
@@ -268,7 +268,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->exactly(2))->method('insert')->willReturnCallback(static function (string $block, string $path, string $value): bool {
-            if ('C::#chan::suspended' === 'C::' . $path) {
+            if ('C::#chan::suspend' === 'C::' . $path) {
                 self::assertSame('1', $value);
             } else {
                 self::assertSame('*6', $value);
@@ -299,7 +299,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
         $sub->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#chan', '#chan', 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
 
-        self::assertSame([['C', '#chan::suspended'], ['C', '#chan::options']], $deletes);
+        self::assertSame([['C', '#chan::suspend'], ['C', '#chan::options']], $deletes);
     }
 
     #[Test]

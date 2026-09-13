@@ -600,10 +600,8 @@ services:
 
     App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter:
         arguments:
-            $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $sessionState:     '@App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface'
-            $records:          '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface'
-            $sid:              '%irc.server_sid%'
+            $mutations:        '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface'
             $logger:           '@monolog.logger.irc'
 
     App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface:
@@ -618,6 +616,7 @@ services:
             $oclgView:         '@App\Irc\Adapter\Protocol\UnrealUdb\Projection\Oclg\UdbOclgView'
             $wireTakeover:     '@App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeover'
             $authority:        '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface'
+            $mutations:        '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface'
 
     App\Irc\Adapter\Protocol\UnrealUdb\Projection\Oclg\UdbOclgView:
         arguments:
@@ -973,6 +972,9 @@ services:
 
     App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface:
         class: App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbBlockStateDoctrineRepository
+
+    App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface:
+        class: App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbRecordMutationDoctrineStore
 
     App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface:
         class: App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbAuthorityStateDoctrineRepository

@@ -8,6 +8,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
 use DateTimeImmutable;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,15 +37,20 @@ final class UdbEntitiesTest extends TestCase
     {
         self::assertSame('nick::pass', UdbRecord::identity('NICK::PASS'));
         self::assertSame('nick::pass', new UdbRecord('N', 'Nick::Pass', 'v')->getIdentityPath());
+        self::assertSame('f::b64:QWJj::reason', new UdbRecord('K', 'F::b64:QWJj::REASON', 'v')->getIdentityPath());
+        self::assertSame('f::b64:QWJj::reason', UdbRecord::identity('F::b64:QWJj::REASON', 'K'));
+        self::assertSame('g::*@host::reason', UdbRecord::identity('G::*@HOST::REASON', 'K'));
+        self::assertSame('f::b64:qwjj::reason', UdbRecord::identity('F::b64:QWJj::REASON'));
     }
 
     #[Test]
     public function recordValueUpdateChangesValueAndTimestamp(): void
     {
-        $record = new UdbRecord('I', '1.2.3.4::clones', '*5');
+        $record = new UdbRecord('I', '1.2.3.4::clones', '*0005');
         $before = $record->getUpdatedAt();
 
-        $record->updateValue('*10');
+        self::assertSame('*5', $record->getValue());
+        $record->updateValue('*00010');
 
         self::assertSame('*10', $record->getValue());
         self::assertSame($record->getIdentityPath(), '1.2.3.4::clones');
@@ -52,37 +58,59 @@ final class UdbEntitiesTest extends TestCase
     }
 
     #[Test]
-    public function blockStateHoldsChecksumAndSyncTime(): void
+    public function blockStateHoldsManifestAndModificationTime(): void
     {
-        $syncedAt = new DateTimeImmutable('2026-08-30 12:00:00');
-        $state = new UdbBlockState('S', 'AAAA1111', $syncedAt);
+        $modifiedAt = new DateTimeImmutable('2026-08-30 12:00:00');
+        $digest = str_repeat('a', 64);
+        $state = new UdbBlockState('S', $digest, $modifiedAt, 17);
         new ReflectionClass(UdbBlockState::class)->getProperty('id')->setValue($state, 3);
 
         self::assertSame(3, $state->getId());
         self::assertSame('S', $state->getBlock());
-        self::assertSame('AAAA1111', $state->getChecksum());
-        self::assertSame($syncedAt, $state->getSyncedAt());
+        self::assertSame($digest, $state->getChecksum());
+        self::assertSame($digest, $state->getDigest());
+        self::assertSame(17, $state->getRecordCount());
+        self::assertSame($modifiedAt, $state->getModifiedAt());
     }
 
     #[Test]
     public function blockStateDefaultsSyncTimeToNow(): void
     {
         $before = new DateTimeImmutable();
-        $state = new UdbBlockState('L', '00000000');
+        $state = new UdbBlockState('L', str_repeat('0', 64));
 
-        self::assertSame('00000000', $state->getChecksum());
-        self::assertGreaterThanOrEqual($before->getTimestamp(), $state->getSyncedAt()->getTimestamp());
+        self::assertSame(str_repeat('0', 64), $state->getChecksum());
+        self::assertSame(0, $state->getRecordCount());
+        self::assertGreaterThanOrEqual($before->getTimestamp(), $state->getModifiedAt()->getTimestamp());
     }
 
     #[Test]
-    public function blockStateUpdateRefreshesChecksumAndTime(): void
+    public function blockStateUpdateRefreshesTheCompleteManifest(): void
     {
-        $state = new UdbBlockState('L', '00000000', new DateTimeImmutable('2026-08-30 12:00:00'));
+        $state = new UdbBlockState('L', str_repeat('0', 64), new DateTimeImmutable('2026-08-30 12:00:00'));
+        $modifiedAt = new DateTimeImmutable('2026-09-13 16:00:00');
 
-        $state->update('BBBB2222');
+        $state->update(str_repeat('b', 64), 2, $modifiedAt);
 
-        self::assertSame('BBBB2222', $state->getChecksum());
-        self::assertGreaterThan(new DateTimeImmutable('2026-08-30 12:00:00')->getTimestamp(), $state->getSyncedAt()->getTimestamp());
+        self::assertSame(str_repeat('b', 64), $state->getChecksum());
+        self::assertSame(2, $state->getRecordCount());
+        self::assertSame($modifiedAt, $state->getModifiedAt());
+    }
+
+    #[Test]
+    public function blockStateRejectsNonCanonicalDigests(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new UdbBlockState('S', str_repeat('A', 64));
+    }
+
+    #[Test]
+    public function blockStateRejectsNegativeRecordCounts(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new UdbBlockState('S', str_repeat('a', 64), recordCount: -1);
     }
 
     #[Test]
@@ -93,17 +121,31 @@ final class UdbEntitiesTest extends TestCase
         self::assertFalse($state->isApproved());
         self::assertNull($state->getApprovedAt());
         self::assertNull($state->getFingerprint());
+        self::assertNull($state->getProtocolRevision());
 
         $state->approve(str_repeat('a', 64));
 
         self::assertTrue($state->isApproved());
         self::assertNotNull($state->getApprovedAt());
         self::assertSame(str_repeat('a', 64), $state->getFingerprint());
+        self::assertSame(UdbAuthorityState::CURRENT_PROTOCOL_REVISION, $state->getProtocolRevision());
 
         $state->revoke();
 
         self::assertFalse($state->isApproved());
         self::assertNull($state->getApprovedAt());
         self::assertNull($state->getFingerprint());
+        self::assertNull($state->getProtocolRevision());
+    }
+
+    #[Test]
+    public function authorityApprovalIsInvalidWhenItsPersistedRevisionIsStale(): void
+    {
+        $state = new UdbAuthorityState();
+        $state->approve(str_repeat('a', 64));
+        new ReflectionClass(UdbAuthorityState::class)->getProperty('protocolRevision')->setValue($state, str_repeat('b', 40));
+
+        self::assertFalse($state->isApproved());
+        self::assertSame(str_repeat('b', 40), $state->getProtocolRevision());
     }
 }

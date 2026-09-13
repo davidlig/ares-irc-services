@@ -40,10 +40,8 @@ trait CreatesUdbRecordWriter
     private function createUdbRecordWriter(ActiveConnectionHolder $holder): UnrealUdbRecordWriter
     {
         return new UnrealUdbRecordWriter(
-            $holder,
             $this->createReadySessionState(),
             new FakeUdbRecords(),
-            '001',
         );
     }
 }

@@ -121,7 +121,14 @@ final class UnrealUdbRawCommandInterceptorTest extends TestCase
     public static function unsupportedMutations(): iterable
     {
         yield 'drop' => ['DRP'];
-        yield 'options' => ['OPT'];
+    }
+
+    #[Test]
+    public function removedOptSubcommandIsNotPartOfTheUdbInterceptionGrammar(): void
+    {
+        $result = $this->interceptor()->intercept(['DB', '*', 'OPT']);
+
+        self::assertSame(RawCommandInterceptionOutcome::NotHandled, $result->outcome);
     }
 
     #[Test]

@@ -95,12 +95,12 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
 
     public function onNickSuspended(NickSuspendedEvent $event): void
     {
-        $this->recordWriter->insert(self::BLOCK, sprintf('%s::suspended', $event->nickname), $event->reason);
+        $this->recordWriter->insert(self::BLOCK, sprintf('%s::suspend', $event->nickname), $event->reason);
     }
 
     public function onNickUnsuspended(NickUnsuspendedEvent $event): void
     {
-        $this->recordWriter->delete(self::BLOCK, sprintf('%s::suspended', $event->nickname));
+        $this->recordWriter->delete(self::BLOCK, sprintf('%s::suspend', $event->nickname));
     }
 
     public function onOperRoleForcedVhostChanged(OperRoleForcedVhostChangedEvent $event): void

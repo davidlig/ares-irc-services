@@ -144,7 +144,7 @@ final class UdbProtocolStateMachinesTest extends TestCase
     public function transfersRequireExactRoundTxidAndDigestAndExpireAbsolutely(): void
     {
         $tracker = new UdbOutboundTransferTracker(inactivityTimeout: 10, absoluteTimeout: 30);
-        self::assertTrue($tracker->track(UdbBlock::Ips, 7, 'tx-1', 'ABCDEF12', 100));
+        self::assertTrue($tracker->track(UdbBlock::Ips, 7, 'tx-1', 'ABCDEF12', UdbUnsignedDecimal::fromInt(0), 100));
         self::assertTrue($tracker->has(UdbBlock::Ips));
         self::assertSame(110, $tracker->nextDeadline());
         self::assertNull($tracker->firstExpired(109));
@@ -152,16 +152,28 @@ final class UdbProtocolStateMachinesTest extends TestCase
         self::assertNotNull($expired);
         self::assertSame(['block' => 'I', 'timeout' => 'inactivity'], ['block' => $expired['block'], 'timeout' => $expired['timeout']]);
         self::assertSame('7', (string) $expired['roundId']);
-        self::assertFalse($tracker->track(UdbBlock::Ips, 7, 'tx-2', 'ABCDEF12', 101));
+        self::assertFalse($tracker->track(UdbBlock::Ips, 7, 'tx-2', 'ABCDEF12', UdbUnsignedDecimal::fromInt(0), 101));
 
         self::assertSame(
             UdbTransferAcknowledgement::Mismatched,
             $tracker->acknowledge($this->ack(roundId: 8)),
         );
+        self::assertSame(
+            UdbTransferAcknowledgement::Mismatched,
+            $tracker->acknowledge(new UdbFrame(
+                UdbFrameKind::Ack,
+                '001',
+                '002',
+                roundId: 7,
+                block: UdbBlock::Ips,
+                txid: 'tx-1',
+                checksum: 'ABCDEF12',
+            )),
+        );
         self::assertSame(UdbTransferAcknowledgement::Accepted, $tracker->acknowledge($this->ack()));
         self::assertSame(UdbTransferAcknowledgement::Unknown, $tracker->acknowledge($this->ack()));
 
-        self::assertTrue($tracker->track(UdbBlock::Ips, 9, 'tx-1', 'ABCDEF12', 200));
+        self::assertTrue($tracker->track(UdbBlock::Ips, 9, 'tx-1', 'ABCDEF12', UdbUnsignedDecimal::fromInt(0), 200));
         $expired = $tracker->firstExpired(230);
         self::assertNotNull($expired);
         self::assertSame('absolute', $expired['timeout']);
@@ -184,7 +196,7 @@ final class UdbProtocolStateMachinesTest extends TestCase
         self::assertTrue($round->acceptRes($sameRoundId, UdbBlock::Ips, 101));
 
         $tracker = new UdbOutboundTransferTracker();
-        self::assertTrue($tracker->track(UdbBlock::Ips, $roundId, 'tx-1', 'ABCDEF12', 100));
+        self::assertTrue($tracker->track(UdbBlock::Ips, $roundId, 'tx-1', 'ABCDEF12', UdbUnsignedDecimal::fromInt(42), 100));
         self::assertSame(UdbTransferAcknowledgement::Accepted, $tracker->acknowledge(new UdbFrame(
             UdbFrameKind::Ack,
             '001',
@@ -193,6 +205,7 @@ final class UdbProtocolStateMachinesTest extends TestCase
             block: UdbBlock::Ips,
             txid: 'tx-1',
             checksum: 'ABCDEF12',
+            watermark: 42,
         )));
     }
 
@@ -209,6 +222,23 @@ final class UdbProtocolStateMachinesTest extends TestCase
             $queue->drain(),
         ));
         self::assertSame(0, $queue->count());
+    }
+
+    #[Test]
+    public function mutationQueueDiscardsOnlySequencedMutationsThroughTheSnapshotWatermark(): void
+    {
+        $queue = new UdbMutationQueue();
+        $queue->enqueue(new UdbMutation('N', 'unsequenced', '0'));
+        $queue->enqueue(new UdbMutation('N', 'before', '1', UdbUnsignedDecimal::fromInt(4)));
+        $queue->enqueue(new UdbMutation('N', 'at-watermark', '2', UdbUnsignedDecimal::fromInt(5)));
+        $queue->enqueue(new UdbMutation('N', 'after', '3', UdbUnsignedDecimal::fromInt(6)));
+
+        $queue->discardThrough(UdbUnsignedDecimal::fromInt(5));
+
+        self::assertSame(['unsequenced', 'after'], array_map(
+            static fn (UdbMutation $mutation): string => $mutation->encodedPath,
+            $queue->drain(),
+        ));
     }
 
     private function hel(string $epoch = '1111111111111111'): UdbFrame
@@ -233,6 +263,7 @@ final class UdbProtocolStateMachinesTest extends TestCase
             block: UdbBlock::Ips,
             txid: 'tx-1',
             checksum: 'ABCDEF12',
+            watermark: 0,
         );
     }
 }

@@ -18,7 +18,9 @@ enum UdbFrameKind: string
     case Ins = 'INS';
     case Del = 'DEL';
     case Drp = 'DRP';
-    case Opt = 'OPT';
+    case Exp = 'EXP';
+    case ManifestReq = 'MANIFEST_REQ';
+    case ManifestAck = 'MANIFEST_ACK';
     case OclgBegin = 'OCLG_BEGIN';
     case OclgItem = 'OCLG_ITEM';
     case OclgEnd = 'OCLG_END';

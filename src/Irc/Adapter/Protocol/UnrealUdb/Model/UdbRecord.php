@@ -6,13 +6,18 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Model;
 
 use DateTimeImmutable;
 
+use function count;
+use function explode;
+use function implode;
+use function strtolower;
+use function strtoupper;
+
 /**
  * One authoritative UDB 4 record of the services-owned store.
  *
  * Paths are stored in canonical percent-encoded wire form WITHOUT the block
- * prefix. The identity path is the ASCII-lowercased path: UDB compares record
- * keys case-insensitively (strcasecmp), so the lowercased identity is the
- * unique per-block key used for upserts and cascade deletes.
+ * prefix. UDB compares keys case-insensitively except for the pattern component
+ * of K::F profiles, whose decoded bytes are an exact, case-sensitive identity.
  */
 class UdbRecord
 {
@@ -22,19 +27,36 @@ class UdbRecord
 
     private DateTimeImmutable $updatedAt;
 
+    private string $value;
+
     public function __construct(
         private readonly string $block,
         private readonly string $path,
-        private string $value,
+        string $value,
     ) {
-        $this->identityPath = self::identity($path);
+        $this->identityPath = self::identity($path, $block);
+        $this->value = UdbSchema::canonicalizeValue($value);
         $this->updatedAt = new DateTimeImmutable();
     }
 
-    /** ASCII-lowercased canonical path (UDB record lookup semantics). */
-    public static function identity(string $path): string
+    /** Canonical path identity matching udb_record_key_equal(). */
+    public static function identity(string $path, ?string $block = null): string
     {
-        return strtolower($path);
+        if ('K' !== strtoupper($block ?? '')) {
+            return strtolower($path);
+        }
+
+        $components = explode('::', $path);
+        if (count($components) < 2 || 'F' !== strtoupper($components[0])) {
+            return strtolower($path);
+        }
+
+        $components[0] = 'f';
+        for ($index = 2; $index < count($components); ++$index) {
+            $components[$index] = strtolower($components[$index]);
+        }
+
+        return implode('::', $components);
     }
 
     public function getId(): int
@@ -69,7 +91,7 @@ class UdbRecord
 
     public function updateValue(string $value): void
     {
-        $this->value = $value;
+        $this->value = UdbSchema::canonicalizeValue($value);
         $this->updatedAt = new DateTimeImmutable();
     }
 }

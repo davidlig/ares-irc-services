@@ -6,6 +6,7 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class UdbBlockStateDoctrineRepository implements UdbBlockStateRepositoryInterface
@@ -34,17 +35,21 @@ final readonly class UdbBlockStateDoctrineRepository implements UdbBlockStateRep
         return $byBlock;
     }
 
-    public function upsert(string $block, string $checksum): void
-    {
+    public function upsert(
+        string $block,
+        string $checksum,
+        int $recordCount,
+        ?DateTimeImmutable $modifiedAt = null,
+    ): void {
         $existing = $this->em
             ->createQuery('SELECT s FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState s WHERE s.block = :block')
             ->setParameter('block', $block)
             ->getOneOrNullResult();
 
         if ($existing instanceof UdbBlockState) {
-            $existing->update($checksum);
+            $existing->update($checksum, $recordCount, $modifiedAt);
         } else {
-            $this->em->persist(new UdbBlockState($block, $checksum));
+            $this->em->persist(new UdbBlockState($block, $checksum, $modifiedAt, $recordCount));
         }
 
         $this->em->flush();

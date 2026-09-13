@@ -15,6 +15,7 @@ final readonly class UdbWireTakeoverOutcome
         public ?UdbUnsignedDecimal $roundId = null,
         public ?string $txid = null,
         public ?string $digest = null,
+        public ?UdbUnsignedDecimal $watermark = null,
         public ?string $subcommand = null,
         public ?int $errorCode = null,
     ) {}
@@ -29,9 +30,9 @@ final readonly class UdbWireTakeoverOutcome
         return new self(UdbWireTakeoverOutcomeKind::Request, $block, $roundId);
     }
 
-    public static function acknowledge(UdbBlock $block, UdbUnsignedDecimal $roundId, string $txid, string $digest): self
+    public static function acknowledge(UdbBlock $block, UdbUnsignedDecimal $roundId, string $txid, string $digest, UdbUnsignedDecimal $watermark): self
     {
-        return new self(UdbWireTakeoverOutcomeKind::Acknowledge, $block, $roundId, $txid, $digest);
+        return new self(UdbWireTakeoverOutcomeKind::Acknowledge, $block, $roundId, $txid, $digest, $watermark);
     }
 
     public static function error(UdbBlock $block, UdbUnsignedDecimal $roundId, string $subcommand, int $errorCode): self

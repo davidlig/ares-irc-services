@@ -22,6 +22,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbOclgViewDigest;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
@@ -34,6 +35,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use ReflectionClass;
 use ReflectionMethod;
 use RuntimeException;
 
@@ -51,6 +53,8 @@ final class UdbSessionCoordinatorTest extends TestCase
 
     private FakeBlockStates $blockStates;
 
+    private FakeUdbRecords $records;
+
     private UdbSnapshotProviderInterface $snapshots;
 
     /** @var list<string> */
@@ -67,6 +71,7 @@ final class UdbSessionCoordinatorTest extends TestCase
     protected function setUp(): void
     {
         $this->blockStates = new FakeBlockStates();
+        $this->records = new FakeUdbRecords();
         $this->snapshots = $this->createStub(UdbSnapshotProviderInterface::class);
         $this->snapshots->method('recordsForBlock')->willReturnCallback(
             static fn (UdbBlock $block): array => UdbBlock::Ips === $block ? ['1.2.3.4::clones' => '*5'] : [],
@@ -91,6 +96,7 @@ final class UdbSessionCoordinatorTest extends TestCase
             $this->snapshots,
             scheduler: $this->scheduler,
             clock: $this->clock,
+            mutations: $this->records,
         );
     }
 
@@ -173,7 +179,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->handle($this->peerHelAck());
 
         self::assertSame($this->helAck(), $this->written[0]);
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N [0-9A-F]{8} \d+$/', $this->written[1]);
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N [0-9a-f]{64} \d+ \d+ \d+$/', $this->written[1]);
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ C /', $this->written[2]);
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ I /', $this->written[3]);
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ S /', $this->written[4]);
@@ -361,14 +367,14 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
         self::assertSame([
-            ':002 DB 001 BEGIN 20 I 00000001 ' . $digest,
+            ':002 DB 001 BEGIN 20 I 00000001 ' . $digest . ' 0',
             ':002 DB 001 PUT 20 I 00000001 1.2.3.4::clones :*5',
-            ':002 DB 001 END 20 I 00000001 ' . $digest,
+            ':002 DB 001 END 20 I 00000001 ' . $digest . ' 0',
         ], $this->written);
         self::assertFalse($this->coordinator->isAuthorityReady());
 
         $this->handle($this->peerHelAck());
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest, watermark: 0));
         self::assertTrue($this->coordinator->isAuthorityReady());
     }
 
@@ -446,7 +452,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->startRound();
         $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 20, block: UdbBlock::Ips));
 
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: 'wrong', checksum: '00000000'));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: 'wrong', checksum: UdbChecksum::EMPTY));
 
         self::assertFalse($this->coordinator->isAuthorityReady());
     }
@@ -506,7 +512,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->written = [];
         $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 20, block: UdbBlock::Ips));
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
-        self::assertSame(':002 DB 001 BEGIN 20 I 00000001 ' . $digest, $this->written[0]);
+        self::assertSame(':002 DB 001 BEGIN 20 I 00000001 ' . $digest . ' 0', $this->written[0]);
 
         $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 20, block: UdbBlock::Ips));
         self::assertSame(':002 DB 001 ERR RES 4 20 I', $this->written[3]);
@@ -516,7 +522,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         ));
 
         $this->handle($this->peerHelAck());
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest, watermark: 0));
         self::assertTrue($this->coordinator->isAuthorityReady());
     }
 
@@ -736,7 +742,6 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->handle(new UdbFrame(UdbFrameKind::Ins, '001', '*', path: 'S::nickserv', value: 'mask'));
         $this->handle(new UdbFrame(UdbFrameKind::Del, '001', '*', path: 'K::G::x'));
         $this->handle(new UdbFrame(UdbFrameKind::Drp, '001', '*', block: UdbBlock::Ips));
-        $this->handle(new UdbFrame(UdbFrameKind::Opt, '001', '*', block: UdbBlock::Settings, modifiedAt: '1'));
 
         self::assertSame([], $this->written);
         self::assertFalse($this->coordinator->isAuthorityReady());
@@ -749,12 +754,12 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->prepareLink();
         $this->written = [];
 
-        $this->handle(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: UdbBlock::Ips, checksum: '00000000', timestamp: 1));
+        $this->handle(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: UdbBlock::Ips, checksum: UdbChecksum::EMPTY, timestamp: 1));
         $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 1, block: UdbBlock::Ips));
-        $this->handle(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: '00000000'));
+        $this->handle(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: UdbChecksum::EMPTY));
         $this->handle(new UdbFrame(UdbFrameKind::Put, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', path: 'p', value: 'v'));
-        $this->handle(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: '00000000'));
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: '00000000'));
+        $this->handle(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: UdbChecksum::EMPTY));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: UdbChecksum::EMPTY));
         $this->handle(new UdbFrame(UdbFrameKind::Err, '001', '002', roundId: 1, block: UdbBlock::Ips, subcommand: 'PUT', errorCode: 3));
         $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 1, epoch: self::PEER_EPOCH, status: 'READY', count: 1, checksum: str_repeat('a', 64)));
         $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 1, epoch: self::PEER_EPOCH, path: 'netadmin', checksum: str_repeat('a', 64)));
@@ -820,9 +825,9 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
         self::assertSame([
-            ':002 DB 001 BEGIN ' . $roundId . ' I 00000001 ' . $digest,
+            ':002 DB 001 BEGIN ' . $roundId . ' I 00000001 ' . $digest . ' 0',
             ':002 DB 001 PUT ' . $roundId . ' I 00000001 1.2.3.4::clones :*5',
-            ':002 DB 001 END ' . $roundId . ' I 00000001 ' . $digest,
+            ':002 DB 001 END ' . $roundId . ' I 00000001 ' . $digest . ' 0',
         ], $this->written);
     }
 
@@ -876,9 +881,9 @@ final class UdbSessionCoordinatorTest extends TestCase
     {
         $this->startRound();
 
-        // Three consecutive ERR-triggered rounds are allowed; the fourth
+        // Six consecutive ERR-triggered rounds are allowed; the seventh
         // would mean persistently rejected data and must stop the loop.
-        for ($i = 0; 3 > $i; ++$i) {
+        for ($i = 0; 6 > $i; ++$i) {
             $this->written = [];
             $this->handle(new UdbFrame(UdbFrameKind::Err, '001', '002', roundId: $this->activeRoundId(), block: UdbBlock::Ips, subcommand: 'PUT', errorCode: 2));
             self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0] ?? '');
@@ -897,7 +902,7 @@ final class UdbSessionCoordinatorTest extends TestCase
     public function successfulStagedAckResetsTheReofferBudget(): void
     {
         $this->startRound();
-        for ($i = 0; 3 > $i; ++$i) {
+        for ($i = 0; 6 > $i; ++$i) {
             $this->handle(new UdbFrame(UdbFrameKind::Err, '001', '002', roundId: $this->activeRoundId(), block: UdbBlock::Ips, subcommand: 'PUT', errorCode: 2));
             $this->written = [];
         }
@@ -910,12 +915,11 @@ final class UdbSessionCoordinatorTest extends TestCase
         $txid = $this->extractTxid($this->firstWrittenLine());
         // The abandoned initial barrier plus three re-offer barriers are
         // confirmed in TCP order; only the last belongs to the current round.
-        $this->handle($this->peerHelAck());
-        $this->handle($this->peerHelAck());
-        $this->handle($this->peerHelAck());
-        $this->handle($this->peerHelAck());
+        for ($i = 0; 7 > $i; ++$i) {
+            $this->handle($this->peerHelAck());
+        }
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: $roundId, block: UdbBlock::Ips, txid: $txid, checksum: $digest));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: $roundId, block: UdbBlock::Ips, txid: $txid, checksum: $digest, watermark: 0));
         self::assertTrue($this->coordinator->isAuthorityReady());
 
         $this->handle($this->peerHel());
@@ -990,6 +994,201 @@ final class UdbSessionCoordinatorTest extends TestCase
     // ---------- Mutations ----------
 
     #[Test]
+    public function liveMutationsShareOneEpochScopedSequenceAcrossBlocks(): void
+    {
+        $this->makeReady();
+        $this->written = [];
+
+        $this->coordinator->enqueueMutation(new UdbMutation('N', 'alice::vhost', 'a.example'));
+        $this->coordinator->enqueueMutation(new UdbMutation('S', 'nickserv', 'services.example'));
+        $this->coordinator->tick($this->connection);
+
+        self::assertSame([
+            ':002 DB * INS ' . $this->coordinator->epoch() . ' 1 N::alice::vhost :a.example',
+            ':002 DB * INS ' . $this->coordinator->epoch() . ' 2 S::nickserv :services.example',
+        ], $this->written);
+    }
+
+    #[Test]
+    public function exhaustedMutationSequenceFailsClosedAndRequestsRecovery(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())
+            ->method('error')
+            ->with('UDB mutation sequence exhausted for the current epoch; a daemon restart is required.');
+        $coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, $logger);
+        new ReflectionClass(UdbSessionCoordinator::class)
+            ->getProperty('mutationSequence')
+            ->setValue($coordinator, UdbUnsignedDecimal::parse(UdbUnsignedDecimal::MAX));
+
+        $coordinator->enqueueMutation(new UdbMutation('N', 'nick::vhost', 'host.example'));
+
+        self::assertSame(0, $coordinator->queuedMutationCount());
+        self::assertTrue($coordinator->isResyncPending());
+    }
+
+    #[Test]
+    public function manifestRequestReturnsSixCountedDigestsAtOneWatermark(): void
+    {
+        $this->makeReady();
+        $this->written = [];
+        $this->coordinator->enqueueMutation(new UdbMutation('N', 'alice::vhost', 'a.example'));
+
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '001', '002', roundId: 77));
+
+        $manifestLines = array_values(array_filter($this->written, static fn (string $line): bool => str_contains($line, ' MANIFEST ACK ')));
+        self::assertCount(6, $manifestLines);
+        foreach ($manifestLines as $line) {
+            self::assertMatchesRegularExpression('/^:002 DB 001 MANIFEST ACK 77 [NCISLK] \d+ [0-9a-f]{64} 1$/', $line);
+        }
+    }
+
+    #[Test]
+    public function malformedOrNonDirectManifestRequestsAreIgnored(): void
+    {
+        $this->makeReady();
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '999', '002', roundId: 77));
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '001', '002'));
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function manifestRequestBeforeAuthoritySelectionIsRejected(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->handle($this->peerHel('-'));
+        $this->handle($this->peerHelAck('-'));
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '001', '002', roundId: 77));
+
+        self::assertSame([':002 DB 001 ERR MANIFEST 6 77 0'], $this->written);
+    }
+
+    #[Test]
+    public function reconciliationInventoryUsesOneWatermarkForAllSixBlocks(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->coordinator->enqueueMutation(new UdbMutation('N', 'alice::vhost', 'a.example'));
+        $this->coordinator->enqueueMutation(new UdbMutation('C', '#chat::topic', 'welcome'));
+
+        $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
+
+        $inventory = array_values(array_filter($this->written, static fn (string $line): bool => str_contains($line, ' INF ')));
+        self::assertCount(6, $inventory);
+        foreach ($inventory as $line) {
+            self::assertStringEndsWith(' 2', $line);
+        }
+    }
+
+    #[Test]
+    public function expiryRequestDeletesOnlyTheMatchingExpiredLineProfile(): void
+    {
+        $this->makeReady();
+        $this->records->blocks['K'] = [
+            'G::*@bad.example::expires' => '*20',
+            'G::*@bad.example::reason' => 'abuse',
+        ];
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Exp, '001', '002', path: 'K::G::*@bad.example', expectedExpires: 20));
+
+        self::assertSame([], $this->records->blocks['K']);
+        self::assertContains(':002 DB * DEL ' . $this->coordinator->epoch() . ' 1 K::G::*@bad.example', $this->written);
+    }
+
+    #[Test]
+    public function staleExpiryRequestDoesNotDeleteTheProfile(): void
+    {
+        $this->makeReady();
+        $this->records->blocks['K'] = [
+            'G::*@bad.example::expires' => '*21',
+            'G::*@bad.example::reason' => 'abuse',
+        ];
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Exp, '001', '002', path: 'K::G::*@bad.example', expectedExpires: 20));
+
+        self::assertCount(2, $this->records->blocks['K']);
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function malformedOrNonDirectExpiryRequestsAreIgnored(): void
+    {
+        $this->makeReady();
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Exp, '999', '002', path: 'K::G::*@bad.example', expectedExpires: 20));
+        $this->handle(new UdbFrame(UdbFrameKind::Exp, '001', '002', expectedExpires: 20));
+        $this->handle(new UdbFrame(UdbFrameKind::Exp, '001', '002', path: 'K::G::*@bad.example'));
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function expiryRequestWithoutMutationStoreIsRejected(): void
+    {
+        $this->coordinator = new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            scheduler: $this->scheduler,
+            clock: $this->clock,
+        );
+        $this->makeReady();
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Exp, '001', '002', path: 'K::G::*@bad.example', expectedExpires: 20));
+
+        self::assertSame([':002 DB 001 ERR EXP 6 1 K'], $this->written);
+    }
+
+    #[Test]
+    public function expiryPersistenceFailureReturnsFatalWithoutPublishingDelete(): void
+    {
+        $this->makeReady();
+        $this->records->blocks['K'] = [
+            'G::*@bad.example::expires' => '*20',
+            'G::*@bad.example::reason' => 'abuse',
+        ];
+        $this->records->fail = true;
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::Exp, '001', '002', path: 'K::G::*@bad.example', expectedExpires: 20));
+
+        self::assertSame([':002 DB 001 ERR EXP 3 1 K'], $this->written);
+        self::assertCount(2, $this->records->blocks['K']);
+    }
+
+    #[Test]
+    public function legacyUnsequencedQueueEntryIsNeverWritten(): void
+    {
+        $queue = new UdbMutationQueue();
+        $queue->enqueue(new UdbMutation('N', 'legacy::vhost', 'host.example'));
+        $this->coordinator = new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            scheduler: $this->scheduler,
+            clock: $this->clock,
+            mutationQueue: $queue,
+            mutations: $this->records,
+        );
+
+        $this->makeReady();
+
+        self::assertSame(0, $this->coordinator->queuedMutationCount());
+        self::assertStringNotContainsString('legacy::vhost', implode("\n", $this->written));
+    }
+
+    #[Test]
     public function queuedMutationsAreFlushedOnceAuthorityIsReady(): void
     {
         $this->seedStore();
@@ -1004,8 +1203,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->handle($this->peerHelAck());
         $this->handle($this->peerHelAck());
 
-        self::assertContains(':002 DB * INS S::nickserv :NickServ!NickServ@services', $this->written);
-        self::assertContains(':002 DB * DEL S::nickserv', $this->written);
+        self::assertSame(0, $this->coordinator->queuedMutationCount());
     }
 
     #[Test]
@@ -1025,8 +1223,9 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->handle($this->peerHelAck());
         $lines = implode("\n", $this->written);
         self::assertStringNotContainsString('N::nick0 ', $lines);
-        self::assertStringContainsString('N::nick1 ', $lines);
-        self::assertStringContainsString('N::nick1024 ', $lines);
+        self::assertStringNotContainsString('N::nick1 ', $lines);
+        self::assertStringNotContainsString('N::nick1024 ', $lines);
+        self::assertSame(0, $this->coordinator->queuedMutationCount());
     }
 
     #[Test]
@@ -1048,7 +1247,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         self::assertTrue($this->coordinator->isResyncPending());
 
         // The original transfer and barrier still correlate and settle first.
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest, watermark: 0));
         self::assertSame(20, $this->coordinator->activeRoundId());
         $this->handle($this->peerHelAck());
 
@@ -1187,7 +1386,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $barrier->sent(20, 60);
         $barrier->acknowledge();
         $transfers = new UdbOutboundTransferTracker();
-        $transfers->track(UdbBlock::Ips, 20, 'occupied', UdbChecksum::EMPTY, 20);
+        $transfers->track(UdbBlock::Ips, 20, 'occupied', UdbChecksum::EMPTY, UdbUnsignedDecimal::fromInt(0), 20);
         $this->seedStore();
 
         $coordinator = new UdbSessionCoordinator(
@@ -1246,12 +1445,12 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         $this->written = [];
         $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 21, block: UdbBlock::Ips));
-        self::assertSame(':002 DB 001 BEGIN 21 I 00000002 ' . $digest, $this->written[0]);
+        self::assertSame(':002 DB 001 BEGIN 21 I 00000002 ' . $digest . ' 0', $this->written[0]);
         $this->handle($this->peerHelAck());
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest, watermark: 0));
         self::assertFalse($this->coordinator->isAuthorityReady());
 
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 21, block: UdbBlock::Ips, txid: '00000002', checksum: $digest));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 21, block: UdbBlock::Ips, txid: '00000002', checksum: $digest, watermark: 0));
         self::assertTrue($this->coordinator->isAuthorityReady());
     }
 
@@ -1264,7 +1463,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->written = [];
 
         $this->handle($this->peerHelAck(sourceSid: '999'));
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '999', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '999', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest, watermark: 0));
         $this->handle(new UdbFrame(UdbFrameKind::Err, '999', '002', roundId: 20, block: UdbBlock::Ips, subcommand: 'PUT', errorCode: 3));
 
         self::assertSame([], $this->written);
@@ -1272,7 +1471,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         self::assertFalse($this->coordinator->isAuthorityReady());
 
         $this->handle($this->peerHelAck());
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: '00000001', checksum: $digest, watermark: 0));
         self::assertTrue($this->coordinator->isAuthorityReady());
     }
 
@@ -1399,7 +1598,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Put, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', path: '1.2.3.4::clones', value: '*5'), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: $digest), $connection);
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 ACK 1 I tx1 ' . $digest . '$/', $this->firstWrittenLine());
+        self::assertMatchesRegularExpression('/^:002 DB 001 ACK 1 I tx1 ' . $digest . ' 0$/', $this->firstWrittenLine());
     }
 
     #[Test]
@@ -1613,7 +1812,7 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         $coordinator->handleFrame($this->peerHelAck(), $connection);
         $lines = implode("\n", $this->written);
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N [0-9A-F]{8} \d+$/m', $lines);
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N [0-9a-f]{64} \d+ \d+ \d+$/m', $lines);
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ K /m', $lines);
     }
 
@@ -1717,7 +1916,7 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         // Seed store so reconciliation can proceed
         foreach (UdbBlock::all() as $block) {
-            $this->blockStates->upsert($block->letter(), '00000000');
+            $this->blockStates->upsert($block->letter(), UdbChecksum::EMPTY, 0);
         }
 
         // 4. Peer ACKs our HEL: reconciliation round starts, TCP barrier HEL announces our FQDN (never '?')
@@ -1823,7 +2022,7 @@ final class UdbSessionCoordinatorTest extends TestCase
             [UdbBlock::Ips, '1.2.3.4::clones', '*5'],
             [UdbBlock::Settings, 'propagator', 'hub1.example'],
             [UdbBlock::Links, 'hub1.example::options', '*1'],
-            [UdbBlock::Lines, 'G::1.2.3.4', 'reason'],
+            [UdbBlock::Lines, 'G::*@bad.example::reason', 'reason'],
         ];
     }
 
@@ -1852,7 +2051,7 @@ final class UdbSessionCoordinatorTest extends TestCase
     private function seedStore(): void
     {
         foreach (UdbBlock::all() as $block) {
-            $this->blockStates->upsert($block->letter(), '00000000');
+            $this->blockStates->upsert($block->letter(), UdbChecksum::EMPTY, 0);
         }
     }
 
@@ -2024,7 +2223,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         });
         $pump->drain();
 
-        self::assertContains(':002 DB * INS S::nickserv :NickServ!NickServ@services', $this->written);
+        self::assertContains(':002 DB * INS ' . $this->coordinator->epoch() . ' 1 S::nickserv :NickServ!NickServ@services', $this->written);
     }
 
     #[Test]

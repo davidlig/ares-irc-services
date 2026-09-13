@@ -361,10 +361,9 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $this->written = [];
 
         foreach ([
-            ':001 DB * INS S::nickserv :mask value',
-            ':001 DB * DEL K::G::user@host',
-            ':001 DB * DRP I',
-            ':001 DB * OPT S opaque-modified-at',
+            ':001 DB * INS 0123456789abcdef 1 S::nickserv :mask value',
+            ':001 DB * DEL 0123456789abcdef 2 K::G::user@host',
+            ':001 DB * DRP 0123456789abcdef 3 I',
         ] as $line) {
             $handler->handleIncoming($handler->parseRawLine($line), $connection);
         }
@@ -373,7 +372,6 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
             ':002 DB 001 ERR INS 6 1 S',
             ':002 DB 001 ERR DEL 6 2 K',
             ':002 DB 001 ERR DRP 6 3 I',
-            ':002 DB 001 ERR OPT 6 4 S',
         ], $this->written);
     }
 
@@ -415,7 +413,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     {
         $states = new FakeBlockStates();
         foreach (UdbBlock::all() as $block) {
-            $states->upsert($block->letter(), '00000000');
+            $states->upsert($block->letter(), UdbChecksum::EMPTY, 0);
         }
         $snapshots = $this->createStub(UdbSnapshotProviderInterface::class);
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
@@ -441,12 +439,12 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $this->written = [];
 
         $handler->handleIncoming($handler->parseRawLine(':001 DB 002 RES ' . $roundId . ' I'), $connection);
-        self::assertSame(1, preg_match('/^:002 DB 001 BEGIN ' . $roundId . ' I ([A-Za-z0-9_-]+) ' . $digest . '$/m', implode("\n", $this->written), $beginMatch));
+        self::assertSame(1, preg_match('/^:002 DB 001 BEGIN ' . $roundId . ' I ([A-Za-z0-9_-]+) ' . $digest . ' 0$/m', implode("\n", $this->written), $beginMatch));
         $txid = $beginMatch[1];
         self::assertSame([
-            ':002 DB 001 BEGIN ' . $roundId . ' I ' . $txid . ' ' . $digest,
+            ':002 DB 001 BEGIN ' . $roundId . ' I ' . $txid . ' ' . $digest . ' 0',
             ':002 DB 001 PUT ' . $roundId . ' I ' . $txid . ' 1.2.3.4::clones :*5',
-            ':002 DB 001 END ' . $roundId . ' I ' . $txid . ' ' . $digest,
+            ':002 DB 001 END ' . $roundId . ' I ' . $txid . ' ' . $digest . ' 0',
         ], $this->written);
         $this->written = [];
 
@@ -456,7 +454,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         self::assertSame([], $this->written);
         self::assertSame((int) $roundId, $coordinator->activeRoundId());
 
-        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 ACK ' . $roundId . ' I ' . $txid . ' ' . $digest), $connection);
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 ACK ' . $roundId . ' I ' . $txid . ' ' . $digest . ' 0'), $connection);
         self::assertSame([], $this->written);
         self::assertSame((int) $roundId, $coordinator->activeRoundId());
         $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 ACK services.test.local 0123456789abcdef OCL OCLG'), $connection);
@@ -470,7 +468,10 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     #[Test]
     public function malformedDbFramesAreIgnored(): void
     {
-        $logger = $this->createStub(LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::exactly(3))
+            ->method('debug')
+            ->with('Ignored malformed or unsupported UDB DB frame.', ['prefix' => '001']);
         $coordinator = new UdbSessionCoordinator(
             '002',
             $this->createStub(UdbBlockStateRepositoryInterface::class),
@@ -482,6 +483,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $this->written = [];
         $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'BOGUS']), $this->createConnection());
         $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'INF', '0', 'N', '00', '1']), $this->createConnection());
+        $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'INS', 'bad-epoch', '1', 'N::nick::pass'], trailing: 'plaintext-secret'), $this->createConnection());
 
         self::assertSame([], $this->written);
     }

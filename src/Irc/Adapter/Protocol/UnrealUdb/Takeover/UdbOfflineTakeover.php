@@ -35,7 +35,6 @@ use function rtrim;
 use function sprintf;
 use function str_starts_with;
 use function strlen;
-use function strtolower;
 use function trim;
 
 use const LOCK_EX;
@@ -103,7 +102,7 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
                     foreach ($records as $path => $value) {
                         $this->em->persist(new UdbRecord($block->letter(), $path, $value));
                     }
-                    $this->em->persist(new UdbBlockState($block->letter(), $this->checksum($records)));
+                    $this->em->persist(new UdbBlockState($block->letter(), $this->checksum($records), recordCount: count($records)));
                 }
 
                 $authority = $this->em->find(UdbAuthorityState::class, 1);
@@ -219,7 +218,8 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
             if (!UdbSchema::validate($block, $components, $value)) {
                 throw new RuntimeException(sprintf('Invalid UDB schema record in %s at line %d.', $path, $lineNumber + 1));
             }
-            $identity = strtolower($recordPath);
+            $value = UdbSchema::canonicalizeValue($value);
+            $identity = UdbRecord::identity($recordPath, $block->letter());
             if (array_key_exists($identity, $records)) {
                 throw new RuntimeException(sprintf('Duplicate UDB record in %s at line %d.', $path, $lineNumber + 1));
             }
@@ -233,6 +233,9 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
         $canonical = [];
         foreach ($records as [$recordPath, $value]) {
             $canonical[$recordPath] = $value;
+        }
+        if (!UdbSchema::validateAggregate($block, $canonical)) {
+            throw new RuntimeException(sprintf('The UDB snapshot contains an invalid aggregate in %s.', $path));
         }
 
         return $canonical;

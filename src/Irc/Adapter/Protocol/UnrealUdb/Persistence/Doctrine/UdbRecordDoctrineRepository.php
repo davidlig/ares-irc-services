@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryInterface
@@ -32,6 +34,7 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
 
     public function upsert(string $block, string $path, string $value): bool
     {
+        $value = UdbSchema::canonicalizeValue($value);
         $existing = $this->findRecord($block, $path);
 
         if ($existing instanceof UdbRecord) {
@@ -52,7 +55,7 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
 
     public function deleteCascade(string $block, string $path): bool
     {
-        $identity = UdbRecord::identity($path);
+        $identity = UdbRecord::identity($path, $block);
         $ids = $this->descendantIds($block, $identity);
 
         if ([] === $ids) {
@@ -78,7 +81,7 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
             }
 
             foreach ($records as $path => $value) {
-                $identity = UdbRecord::identity($path);
+                $identity = UdbRecord::identity($path, $block);
                 $id = $existing[$identity] ?? null;
 
                 if (null !== $id) {
@@ -120,7 +123,7 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
         $record = $this->em
             ->createQuery('SELECT r FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord r WHERE r.block = :block AND r.identityPath = :identity')
             ->setParameter('block', $block)
-            ->setParameter('identity', UdbRecord::identity($path))
+            ->setParameter('identity', UdbRecord::identity($path, $block), Types::BINARY)
             ->getOneOrNullResult();
 
         return $record instanceof UdbRecord ? $record : null;

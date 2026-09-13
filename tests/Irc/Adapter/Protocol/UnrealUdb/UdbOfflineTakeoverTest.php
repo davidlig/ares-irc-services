@@ -301,6 +301,53 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function canonicalizesSnapshotNumericValuesLikeUpstreamBeforePersisting(): void
+    {
+        $this->writeValidGeneration();
+        file_put_contents($this->directory . '/udb_I.db', "; UDB Block I - Version 1\n; Generation: 7\n1.2.3.4::clones *0005\n");
+
+        $this->takeover()->takeover($this->directory);
+
+        self::assertSame(['1.2.3.4::clones' => '*5'], $this->records('I'));
+    }
+
+    #[Test]
+    public function acceptsDistinctCaseSensitiveSpamfilterPatternIdentities(): void
+    {
+        $this->writeValidGeneration();
+        file_put_contents(
+            $this->directory . '/udb_K.db',
+            "; UDB Block K - Version 1\n; Generation: 7\nF::b64%3AQWJj::reason first\nF::b64%3AqWJj::reason second\n",
+        );
+
+        $fingerprint = $this->takeover()->takeover($this->directory);
+
+        self::assertSame(64, strlen($fingerprint));
+        $authority = $this->entityManager->find(UdbAuthorityState::class, 1);
+        self::assertInstanceOf(UdbAuthorityState::class, $authority);
+        self::assertTrue($authority->isApproved());
+    }
+
+    #[Test]
+    public function rejectsACompleteSpamfilterWithAnInvalidRegex(): void
+    {
+        $this->writeValidGeneration();
+        $pattern = 'b64%3A' . base64_encode('(');
+        file_put_contents(
+            $this->directory . '/udb_K.db',
+            "; UDB Block K - Version 1\n; Generation: 7\n"
+            . "F::{$pattern}::match-type regex\n"
+            . "F::{$pattern}::targets c\n"
+            . "F::{$pattern}::action kill\n"
+            . "F::{$pattern}::reason blocked\n",
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('invalid aggregate');
+        $this->takeover()->takeover($this->directory, false);
+    }
+
+    #[Test]
     public function rejectsCanonicalPathsThatDoNotMatchTheBlockSchema(): void
     {
         $this->writeValidGeneration();

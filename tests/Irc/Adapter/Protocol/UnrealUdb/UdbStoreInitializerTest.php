@@ -12,6 +12,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbStoreInitializer;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbStoreInitializationListener;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\NickServ\Application\Port\In\NickProjection;
@@ -95,7 +96,7 @@ final class UdbStoreInitializerTest extends TestCase
             $this->records->blocks['N'],
         );
         self::assertSame(['#chan::founder' => 'david'], $this->records->recordsByBlock('C'));
-        self::assertSame(['G::*@bad.example' => 'abuse', 'G::*@bad.example::reason' => 'abuse'], $this->records->recordsByBlock('K'));
+        self::assertSame(['G::*@bad.example::reason' => 'abuse'], $this->records->recordsByBlock('K'));
         // I/S/L start empty and are never seeded from SQL.
         self::assertArrayNotHasKey('I', $this->records->blocks);
         self::assertArrayNotHasKey('S', $this->records->blocks);
@@ -107,7 +108,7 @@ final class UdbStoreInitializerTest extends TestCase
     public function alreadyInitializedStoreIsLeftUntouched(): void
     {
         foreach (UdbBlock::all() as $block) {
-            $this->states->upsert($block->letter(), '00000000');
+            $this->states->upsert($block->letter(), UdbChecksum::EMPTY, 0);
         }
         $coordinator = $this->createMock(UdbStoreInitializationListener::class);
         $coordinator->expects($this->never())->method('onStoreInitialized');
@@ -136,7 +137,7 @@ final class UdbStoreInitializerTest extends TestCase
     #[Test]
     public function partiallyInitializedStoreSeedsOnlyMissingBlocks(): void
     {
-        $this->states->upsert('N', '00000000');
+        $this->states->upsert('N', UdbChecksum::EMPTY, 0);
 
         $initializer = new UdbStoreInitializer($this->records, $this->states, $this->createExporter(), $this->coordinator);
         $initializer->ensureInitialized();

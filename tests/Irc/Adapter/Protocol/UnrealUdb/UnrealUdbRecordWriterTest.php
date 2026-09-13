@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
-use App\Irc\Application\Port\In\ActiveConnectionHolderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,8 +19,6 @@ final class UnrealUdbRecordWriterTest extends TestCase
     /** @var list<string> */
     private array $written = [];
 
-    private ActiveConnectionHolderInterface $holder;
-
     private UnrealUdbRecordWriter $writer;
 
     protected function setUp(): void
@@ -30,18 +27,12 @@ final class UnrealUdbRecordWriterTest extends TestCase
         $this->sessionState = new RecordingSessionState(false);
         $this->written = [];
 
-        $this->holder = $this->createStub(ActiveConnectionHolderInterface::class);
-        $this->holder->method('isConnected')->willReturn(true);
-        $this->holder->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-
         $this->writer = $this->createWriter();
     }
 
     private function createWriter(): UnrealUdbRecordWriter
     {
-        return new UnrealUdbRecordWriter($this->holder, $this->sessionState, $this->records, '001');
+        return new UnrealUdbRecordWriter($this->sessionState, $this->records);
     }
 
     #[Test]
@@ -53,7 +44,8 @@ final class UnrealUdbRecordWriterTest extends TestCase
 
         self::assertTrue($result);
         self::assertSame(['davidlig::vhost' => 'cloaked.example.net'], $this->records->blocks['N']);
-        self::assertSame([':001 DB * INS N::davidlig::vhost :cloaked.example.net'], $this->written);
+        self::assertSame([], $this->written);
+        self::assertCount(1, $this->sessionState->queue);
     }
 
     #[Test]
@@ -69,6 +61,16 @@ final class UnrealUdbRecordWriterTest extends TestCase
     }
 
     #[Test]
+    public function insertCanonicalizesNumericValuesBeforePersistenceAndDispatch(): void
+    {
+        self::assertTrue($this->writer->insert('K', 'G::*@host::expires', '*00020'));
+
+        self::assertSame(['G::*@host::expires' => '*20'], $this->records->blocks['K']);
+        self::assertCount(1, $this->sessionState->queue);
+        self::assertSame('*20', $this->sessionState->queue[0]->value);
+    }
+
+    #[Test]
     public function echoedChannelTopicPersistsSuccessfullyWithoutSendingOrQueueingAnotherMutation(): void
     {
         $this->sessionState->ready = true;
@@ -76,8 +78,8 @@ final class UnrealUdbRecordWriterTest extends TestCase
         self::assertTrue($this->writer->insert('C', '#ares::topic', 'Canal oficial'));
         self::assertTrue($this->writer->insert('C', '#ARES::TOPIC', 'Canal oficial'));
 
-        self::assertSame([':001 DB * INS C::#ares::topic :Canal oficial'], $this->written);
-        self::assertSame([], $this->sessionState->queue);
+        self::assertSame([], $this->written);
+        self::assertCount(1, $this->sessionState->queue);
         self::assertSame(['#ares::topic' => 'Canal oficial'], $this->records->blocks['C']);
     }
 
@@ -89,9 +91,10 @@ final class UnrealUdbRecordWriterTest extends TestCase
         $this->writer->insert('K', 'G::bad@host::reason', 'no colon allowed: here');
 
         self::assertSame(
-            [':001 DB * INS K::G::bad@host::reason :no colon allowed: here'],
+            [],
             $this->written,
         );
+        self::assertCount(1, $this->sessionState->queue);
     }
 
     #[Test]
@@ -170,7 +173,8 @@ final class UnrealUdbRecordWriterTest extends TestCase
 
         self::assertTrue($result);
         self::assertSame(['other::vhost' => 'v'], $this->records->blocks['N']);
-        self::assertSame([':001 DB * DEL N::davidlig'], $this->written);
+        self::assertSame([], $this->written);
+        self::assertCount(1, $this->sessionState->queue);
     }
 
     #[Test]
@@ -227,12 +231,7 @@ final class UnrealUdbRecordWriterTest extends TestCase
     #[Test]
     public function sendQueuesWhenTheConnectionIsLost(): void
     {
-        $holder = $this->createStub(ActiveConnectionHolderInterface::class);
-        $holder->method('isConnected')->willReturn(false);
-        $holder->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-        $writer = new UnrealUdbRecordWriter($holder, $this->sessionState, $this->records, '001');
+        $writer = new UnrealUdbRecordWriter($this->sessionState, $this->records);
         $this->sessionState->ready = true;
 
         $writer->insert('N', 'davidlig::vhost', 'v');

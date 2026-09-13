@@ -56,6 +56,7 @@ final class UdbRecordExporterTest extends TestCase
             $this->glines,
             $this->channelLookup,
             $this->createModeSupportProvider(),
+            clock: new MutableUdbClock(new DateTimeImmutable('2026-08-30 10:30:00')->getTimestamp()),
         );
     }
 
@@ -188,13 +189,13 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
-    public function suspendedChannelExportsSuspendedRecordWithoutOptions(): void
+    public function suspendedChannelExportsSuspendRecordWithoutOptions(): void
     {
         $channel = $this->createChannel('#suspended', suspended: true);
 
         $records = $this->exporter->channelRecords($channel);
 
-        self::assertSame(['#suspended::suspended' => '1'], $records);
+        self::assertSame(['#suspended::suspend' => '1'], $records);
         self::assertSame(0, $this->exporter->channelOptions($channel));
     }
 
@@ -235,25 +236,34 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
-    public function glineRecordsIncludeRootReasonAndDuration(): void
+    public function temporaryGlineRecordsContainExpiresBeforeReason(): void
     {
         $createdAt = new DateTimeImmutable('2026-08-30 10:00:00');
         $gline = new GlineProjection('*@bad.example', 'abuse', $createdAt, new DateTimeImmutable('2026-08-30 11:00:00'));
 
         self::assertSame([
-            'G::*@bad.example' => 'abuse',
+            'G::*@bad.example::expires' => '*' . new DateTimeImmutable('2026-08-30 11:00:00')->getTimestamp(),
             'G::*@bad.example::reason' => 'abuse',
-            'G::*@bad.example::duration' => '*3600',
         ], $this->exporter->glineRecords($gline));
     }
 
     #[Test]
-    public function permanentGlineHasNoDurationRecord(): void
+    public function permanentGlineContainsOnlyReasonLeaf(): void
     {
         self::assertSame([
-            'G::*@bad.example' => 'abuse',
             'G::*@bad.example::reason' => 'abuse',
         ], $this->exporter->glineRecords(new GlineProjection('*@bad.example', 'abuse', new DateTimeImmutable('2026-08-30 10:00:00'), null)));
+    }
+
+    #[Test]
+    public function expiredGlineIsNotExported(): void
+    {
+        self::assertSame([], $this->exporter->glineRecords(new GlineProjection(
+            '*@bad.example',
+            'abuse',
+            new DateTimeImmutable('2026-08-30 09:00:00'),
+            new DateTimeImmutable('2026-08-30 10:30:00'),
+        )));
     }
 
     #[Test]
@@ -314,7 +324,7 @@ final class UdbRecordExporterTest extends TestCase
             $this->createChannel('#first'),
             $this->createChannel('#second', suspended: true),
         ]);
-        $secondSuspended = UdbPathCodec::encodePath(['#second', 'suspended']);
+        $secondSuspended = UdbPathCodec::encodePath(['#second', 'suspend']);
 
         self::assertNotNull($secondSuspended);
         self::assertSame([
@@ -330,19 +340,13 @@ final class UdbRecordExporterTest extends TestCase
             new GlineProjection('*@first.example', 'first reason', $createdAt, null),
             new GlineProjection('*@second.example', 'second reason', $createdAt, null),
         ]);
-        $firstRoot = UdbPathCodec::encodePath(['G', '*@first.example']);
         $firstReason = UdbPathCodec::encodePath(['G', '*@first.example', 'reason']);
-        $secondRoot = UdbPathCodec::encodePath(['G', '*@second.example']);
         $secondReason = UdbPathCodec::encodePath(['G', '*@second.example', 'reason']);
 
-        self::assertNotNull($firstRoot);
         self::assertNotNull($firstReason);
-        self::assertNotNull($secondRoot);
         self::assertNotNull($secondReason);
         self::assertSame([
-            $firstRoot => 'first reason',
             $firstReason => 'first reason',
-            $secondRoot => 'second reason',
             $secondReason => 'second reason',
         ], $this->exporter->encodedBlockRecords(UdbBlock::Lines));
     }

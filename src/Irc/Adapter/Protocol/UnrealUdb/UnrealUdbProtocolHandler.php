@@ -260,9 +260,10 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
     {
         $frame = UdbWireCodec::parse($message);
         if (null === $frame) {
+            // Malformed INS/PUT input is untrusted and may still contain
+            // secrets, so never mirror its params into application logs.
             $this->logger->debug('Ignored malformed or unsupported UDB DB frame.', [
                 'prefix' => $message->prefix,
-                'params' => $message->params,
             ]);
 
             return;

@@ -4,18 +4,25 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Model;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 
+use function array_key_exists;
 use function array_map;
 use function array_slice;
+use function assert;
 use function base64_decode;
 use function base64_encode;
 use function count;
 use function explode;
 use function in_array;
+use function inet_ntop;
+use function inet_pton;
 use function ltrim;
 use function ord;
 use function preg_match;
+use function restore_error_handler;
+use function set_error_handler;
 use function str_contains;
 use function str_split;
 use function str_starts_with;
@@ -25,6 +32,8 @@ use function strlen;
 use function strpos;
 use function strtolower;
 use function substr;
+
+use const PHP_INT_MAX;
 
 /**
  * Complete UDB 4 record schema validation for all six blocks.
@@ -60,11 +69,11 @@ final class UdbSchema
     public const array USER_MODES = ['i', 's', 'w', 'B', 'S', 'T', 'G', 'W', 'p', 'q', 'R', 'Z', 'D'];
 
     private const array NICK_KEYS = [
-        'access', 'pass', 'vhost', 'forbid', 'suspended', 'oper', 'challenge', 'modes', 'snomasks', 'swhois',
+        'access', 'pass', 'vhost', 'forbid', 'suspend', 'oper', 'modes', 'snomasks', 'swhois',
     ];
 
     private const array CHANNEL_KEYS = [
-        'founder', 'modes', 'topic', 'access', 'forbid', 'suspended', 'pass', 'challenge', 'options',
+        'founder', 'modes', 'topic', 'access', 'forbid', 'suspend', 'options',
     ];
 
     private const array IP_KEYS = ['clones', 'nolines', 'host'];
@@ -78,17 +87,14 @@ final class UdbSchema
 
     private const array TKL_TYPES = ['G', 'Z', 'S', 'Q', 'F'];
 
-    /** Spamfilter targets (spamfiltertargettable, strcmp = case-sensitive). */
-    private const array SPAMFILTER_TARGETS = [
-        'channel', 'private', 'private-notice', 'channel-notice', 'part', 'quit',
-        'dcc', 'user', 'away', 'topic', 'message-tag', 'raw',
-    ];
+    /** Native spamfiltertargettable order. */
+    private const string SPAMFILTER_TARGETS = 'cpnNPqduatTR';
 
-    /** Ban actions (banacttable, strcasecmp = case-insensitive, config-only included). */
+    /** Dynamic ban actions (the config-only set/report/stop actions are excluded). */
     private const array BAN_ACTIONS = [
         'kill', 'soft-kill', 'tempshun', 'soft-tempshun', 'shun', 'soft-shun', 'kline', 'soft-kline',
         'zline', 'gline', 'soft-gline', 'gzline', 'block', 'soft-block', 'dccblock', 'soft-dccblock',
-        'viruschan', 'soft-viruschan', 'warn', 'soft-warn', 'set', 'report', 'stop',
+        'viruschan', 'soft-viruschan', 'warn', 'soft-warn',
     ];
 
     /** Channel modes carrying their rank parameter (CMODE_MEMBER). */
@@ -132,6 +138,84 @@ final class UdbSchema
     }
 
     /**
+     * Mirrors UdbRecord's numeric union: every accepted *digits value is stored
+     * and serialized through its parsed unsigned-long representation.
+     */
+    public static function canonicalizeValue(string $value): string
+    {
+        if (!str_starts_with($value, '*')) {
+            return $value;
+        }
+
+        $number = UdbUnsignedDecimal::parse(substr($value, 1));
+
+        return null === $number ? $value : '*' . $number;
+    }
+
+    /**
+     * Validates invariants that only become observable from a complete block.
+     *
+     * A partial spamfilter profile is deliberately valid and inert. Once its
+     * four required leaves exist, however, the decoded pattern must compile
+     * for the selected match type before the candidate may be committed.
+     *
+     * @param array<string, string> $records Canonically encoded paths and their values
+     */
+    public static function validateAggregate(UdbBlock $block, array $records): bool
+    {
+        if (!in_array($block, [UdbBlock::Nicks, UdbBlock::Lines], true)) {
+            return true;
+        }
+
+        /** @var array<string, array<string, string>> $nickProfiles */
+        $nickProfiles = [];
+        /** @var array<string, array<string, string>> $lineProfiles */
+        $lineProfiles = [];
+        foreach ($records as $path => $value) {
+            $decoded = [];
+            foreach (explode('::', $path) as $encodedComponent) {
+                $component = UdbPathCodec::decodeComponent($encodedComponent);
+                if (null === $component) {
+                    return false;
+                }
+                $decoded[] = $component;
+            }
+
+            if (!self::validate($block, $decoded, $value)) {
+                return false;
+            }
+
+            if (UdbBlock::Nicks === $block && 2 === count($decoded)) {
+                $nickProfiles[strtolower($decoded[0])][strtolower($decoded[1])] = $value;
+            } elseif (UdbBlock::Lines === $block && 'F' === $decoded[0]) {
+                $lineProfiles[$decoded[1]][$decoded[2]] = $value;
+            }
+        }
+
+        foreach ($nickProfiles as $profile) {
+            if (array_key_exists('forbid', $profile) && 1 !== count($profile)) {
+                return false;
+            }
+        }
+
+        foreach ($lineProfiles as $pattern => $profile) {
+            if (!array_key_exists('match-type', $profile)
+                || !array_key_exists('targets', $profile)
+                || !array_key_exists('action', $profile)
+                || !array_key_exists('reason', $profile)
+            ) {
+                continue;
+            }
+
+            if ('regex' === $profile['match-type'] && !self::spamfilterRegexCompiles($pattern)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * True when the record value must be redacted in logs and audit trails
      * (mirrors udb_mutation_value_is_secret).
      *
@@ -143,7 +227,7 @@ final class UdbSchema
 
         return match ($block) {
             UdbBlock::Nicks => 2 === count($components) && 'pass' === $key,
-            UdbBlock::Channels => 2 === count($components) && ('pass' === $key || 'challenge' === $key),
+            UdbBlock::Channels => false,
             UdbBlock::Settings => 1 === count($components) && 'encryption_key' === $key,
             default => false,
         };
@@ -162,11 +246,10 @@ final class UdbSchema
         }
 
         return match (strtolower($components[1])) {
-            'access', 'forbid', 'suspended', 'swhois' => self::stringRecord($value),
+            'access', 'forbid', 'suspend', 'swhois' => self::stringRecord($value),
             'pass' => self::passwordHash($value),
             'vhost' => self::vhost($value),
             'oper' => self::operName($value),
-            'challenge' => self::challenge($value),
             'modes' => self::userModes($value),
             default => self::snomasks($value),
         };
@@ -188,9 +271,7 @@ final class UdbSchema
             return match (strtolower($components[1])) {
                 'founder' => self::nickName($value),
                 'modes' => self::channelModes($value),
-                'topic', 'forbid', 'suspended' => self::stringRecord($value),
-                'pass' => self::passwordHash($value),
-                'challenge' => self::challenge($value),
+                'topic', 'forbid', 'suspend' => self::stringRecord($value),
                 'options' => self::numericRecord($value),
                 default => false,
             };
@@ -267,28 +348,27 @@ final class UdbSchema
             return 3 === $depth && self::spamfilterPattern($components[1]) && self::spamfilterSubkey($components[2], $value);
         }
 
-        // G, Z, S require a user@host mask; Q bans a nick pattern.
-        if ('Q' !== $type && !self::lineMask($components[1])) {
+        $patternValid = 'Z' === $type
+            ? self::zlineMask($components[1])
+            : ('Q' === $type ? self::qlineMask($components[1]) : self::lineMask($components[1]));
+        if (!$patternValid || 3 !== $depth) {
             return false;
         }
 
-        if (2 === $depth) {
-            return self::nonEmptyNoStar($value);
-        }
-
-        return match (strtolower($components[2])) {
+        return match ($components[2]) {
             'reason' => self::nonEmptyNoStar($value),
-            'duration' => self::numericRecord($value),
+            'expires' => self::positiveNumericRecord($value),
             default => false,
         };
     }
 
     private static function spamfilterSubkey(string $subkey, string $value): bool
     {
-        return match (strtolower($subkey)) {
-            'type' => in_array($value, self::SPAMFILTER_TARGETS, true),
+        return match ($subkey) {
+            'match-type' => in_array($value, ['regex', 'simple'], true),
+            'targets' => self::spamfilterTargets($value),
             'action' => self::inArrayCaseInsensitive($value, self::BAN_ACTIONS),
-            'duration' => self::numericRecord($value),
+            'ban-time', 'expires' => self::positiveNumericRecord($value),
             'reason' => self::nonEmptyNoStar($value),
             default => false,
         };
@@ -312,6 +392,14 @@ final class UdbSchema
     private static function numericRecord(string $value): bool
     {
         return str_starts_with($value, '*') && null !== UdbUnsignedDecimal::parse(substr($value, 1));
+    }
+
+    private static function positiveNumericRecord(string $value): bool
+    {
+        $number = str_starts_with($value, '*') ? UdbUnsignedDecimal::parse(substr($value, 1)) : null;
+
+        return null !== $number && !$number->isZero() && strlen((string) $number) <= strlen((string) PHP_INT_MAX)
+            && (strlen((string) $number) < strlen((string) PHP_INT_MAX) || strcmp((string) $number, (string) PHP_INT_MAX) <= 0);
     }
 
     private static function cloneLimit(string $value): bool
@@ -346,11 +434,6 @@ final class UdbSchema
     private static function operName(string $value): bool
     {
         return 1 === preg_match('/^[A-Za-z0-9_-]{1,64}\z/', $value);
-    }
-
-    private static function challenge(string $value): bool
-    {
-        return self::inArrayCaseInsensitive($value, ['argon2id', 'sha256', 'crypt']);
     }
 
     private static function userModes(string $value): bool
@@ -568,15 +651,11 @@ final class UdbSchema
         return true;
     }
 
-    /** RFC 4648 canonical base64 (optionally "b64:"-prefixed) spamfilter pattern. */
+    /** RFC 4648 canonical base64 with the mandatory "b64:" prefix. */
     private static function spamfilterPattern(string $stored): bool
     {
-        if ('' === $stored || strlen($stored) > self::SPAMFILTER_PATTERN_MAX) {
-            return false;
-        }
-
         if (!str_starts_with($stored, 'b64:')) {
-            return true;
+            return false;
         }
 
         $encoded = substr($stored, 4);
@@ -596,6 +675,48 @@ final class UdbSchema
         }
 
         return base64_encode($decoded) === $encoded;
+    }
+
+    private static function spamfilterRegexCompiles(string $stored): bool
+    {
+        $pattern = base64_decode(substr($stored, 4), true);
+        // validateAggregate() reaches this only after spamfilterPattern()
+        // proved that the component is canonical Base64.
+        assert(false !== $pattern);
+
+        $delimiter = '~';
+        $escaped = '';
+        $backslashes = 0;
+        foreach (str_split($pattern) as $character) {
+            if ($delimiter === $character && 0 === $backslashes % 2) {
+                $escaped .= '\\';
+            }
+            $escaped .= $character;
+            $backslashes = '\\' === $character ? $backslashes + 1 : 0;
+        }
+
+        set_error_handler(static fn (): bool => true);
+        try {
+            return false !== preg_match($delimiter . $escaped . $delimiter, '');
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    private static function spamfilterTargets(string $value): bool
+    {
+        $offset = -1;
+        $previous = null;
+        foreach (str_split($value) as $target) {
+            $next = strpos(self::SPAMFILTER_TARGETS, $target);
+            if (false === $next || $next <= $offset || (null !== $previous && ord($previous) >= ord($target))) {
+                return false;
+            }
+            $offset = $next;
+            $previous = $target;
+        }
+
+        return true;
     }
 
     // === Name / path component validators ===================================
@@ -634,13 +755,13 @@ final class UdbSchema
         return true;
     }
 
-    /** user@host (each component 1..127, single @) or a bare host/pattern (<= 127). */
+    /** user@host with both components 1..127 and exactly one @. */
     private static function lineMask(string $mask): bool
     {
         $at = strpos($mask, '@');
 
         if (false === $at) {
-            return '' !== $mask && strlen($mask) <= self::TKL_MASK_COMPONENT_MAX;
+            return false;
         }
 
         $userLength = $at;
@@ -651,6 +772,41 @@ final class UdbSchema
             && '' !== $host
             && strlen($host) <= self::TKL_MASK_COMPONENT_MAX
             && !str_contains($host, '@');
+    }
+
+    private static function qlineMask(string $mask): bool
+    {
+        return '' !== $mask && strlen($mask) <= self::NICK_MAX && 1 !== preg_match('/[\x00-\x1F\x7F:@]/', $mask);
+    }
+
+    private static function zlineMask(string $mask): bool
+    {
+        $parts = explode('/', $mask);
+        if (count($parts) > 2 || '' === $parts[0]) {
+            return false;
+        }
+        $binary = inet_pton($parts[0]);
+        if (false === $binary || inet_ntop($binary) !== $parts[0]) {
+            return false;
+        }
+        if (1 === count($parts)) {
+            return true;
+        }
+        if (1 !== preg_match('/^(0|[1-9][0-9]{0,2})$/D', $parts[1])) {
+            return false;
+        }
+        $prefix = (int) $parts[1];
+        $bits = 4 === strlen($binary) ? 32 : 128;
+        if ($prefix > $bits) {
+            return false;
+        }
+        for ($bit = $prefix; $bit < $bits; ++$bit) {
+            if (0 !== (ord($binary[intdiv($bit, 8)]) & (0x80 >> ($bit % 8)))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** Hostname: dot-separated labels of alphanumerics/hyphen, no leading hyphen. */

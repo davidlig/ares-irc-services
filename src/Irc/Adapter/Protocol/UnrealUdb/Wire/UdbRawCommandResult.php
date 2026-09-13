@@ -7,8 +7,8 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 /**
  * Result of an intercepted OperServ RAW UDB mutation.
  *
- * auditLine carries the operator's line with secret values (passwords,
- * challenges, encryption keys) already redacted for logs and audit trails.
+ * auditLine carries the operator's line with secret values (passwords and
+ * encryption keys) already redacted for logs and audit trails.
  */
 final readonly class UdbRawCommandResult
 {

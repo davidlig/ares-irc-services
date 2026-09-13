@@ -6,13 +6,11 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
-use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
-use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
-use App\Irc\Application\Port\In\ActiveConnectionHolderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -29,18 +27,27 @@ use function explode;
  *   percent-encoded here.
  * - A failed store write never reaches the wire (the store is the authority:
  *   the snapshot must always match what was announced).
- * - While the session coordinator is not authority-ready the wire mutation
- *   is queued in order and flushed on the next ready barrier.
+ * - Every changed mutation is handed to the session coordinator. It owns the
+ *   single epoch-scoped sequence across all six blocks and either publishes
+ *   it immediately or retains it until the next ready barrier.
  */
 final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
 {
+    private UdbSessionStateInterface $sessionState;
+
+    private UdbRecordMutationStoreInterface $mutations;
+
+    private LoggerInterface $logger;
+
     public function __construct(
-        private ActiveConnectionHolderInterface $connectionHolder,
-        private UdbSessionStateInterface $sessionState,
-        private UdbRecordRepositoryInterface $records,
-        private string $sid,
-        private LoggerInterface $logger = new NullLogger(),
-    ) {}
+        UdbSessionStateInterface $sessionState,
+        UdbRecordMutationStoreInterface $mutations,
+        LoggerInterface $logger = new NullLogger(),
+    ) {
+        $this->sessionState = $sessionState;
+        $this->mutations = $mutations;
+        $this->logger = $logger;
+    }
 
     public function insert(string $block, string $path, string $value): bool
     {
@@ -68,6 +75,7 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
         // canonical encoding cannot fail here.
         $encodedPath = UdbPathCodec::encodePath($components);
         assert(null !== $encodedPath);
+        $value = UdbSchema::canonicalizeValue($value);
 
         $changed = $this->persistInsert($blockEnum->letter(), $encodedPath, $value);
         if (null === $changed) {
@@ -115,42 +123,16 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
         return true;
     }
 
-    /**
-     * Sends the mutation when authority-ready; otherwise queues it for the
-     * next ready flush (the store already holds the change).
-     */
     private function dispatch(UdbMutation $mutation): void
     {
-        if (!$this->sessionState->isAuthorityReady()) {
-            $this->sessionState->enqueueMutation($mutation);
-
-            return;
-        }
-
-        $this->send($mutation);
-    }
-
-    private function send(UdbMutation $mutation): void
-    {
-        if (!$this->connectionHolder->isConnected()) {
-            $this->sessionState->enqueueMutation($mutation);
-
-            return;
-        }
-
-        $line = null === $mutation->value
-            ? UdbWireCodec::del($this->sid, $mutation->block, $mutation->encodedPath)
-            : UdbWireCodec::ins($this->sid, $mutation->block, $mutation->encodedPath, $mutation->value);
-
-        $this->connectionHolder->writeLine($line);
-        $this->logger->debug('> ' . $line);
+        $this->sessionState->enqueueMutation($mutation);
     }
 
     /** @return ?bool null when persistence failed, otherwise whether it changed */
     private function persistInsert(string $block, string $encodedPath, string $value): ?bool
     {
         try {
-            return $this->records->upsert($block, $encodedPath, $value);
+            return $this->mutations->upsertWithManifest($block, $encodedPath, $value);
         } catch (Throwable $exception) {
             $this->logger->error('UDB store insert failed; mutation not propagated.', [
                 'block' => $block,
@@ -166,7 +148,7 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
     private function persistDelete(string $block, string $encodedPath): ?bool
     {
         try {
-            return $this->records->deleteCascade($block, $encodedPath);
+            return $this->mutations->deleteCascadeWithManifest($block, $encodedPath);
         } catch (Throwable $exception) {
             $this->logger->error('UDB store delete failed; mutation not propagated.', [
                 'block' => $block,

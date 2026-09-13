@@ -34,7 +34,7 @@ final readonly class UnrealUdbRawCommandInterceptor implements RawCommandInterce
         }
 
         $subcommand = strtoupper($arguments[2]);
-        if (!in_array($subcommand, ['INS', 'DEL', 'DRP', 'OPT'], true)) {
+        if (!in_array($subcommand, ['INS', 'DEL', 'DRP'], true)) {
             return RawCommandInterception::notHandled();
         }
         if ('*' !== $arguments[1]) {

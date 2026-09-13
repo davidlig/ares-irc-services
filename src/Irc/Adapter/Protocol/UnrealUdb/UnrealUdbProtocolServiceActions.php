@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\SystemUdbClock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Application\Port\In\OperclassServiceActionsInterface;
@@ -29,7 +31,7 @@ use function str_split;
  *   C::<#chan>::persistent; only ban/prefix operations still emit MODE.
  * - setChannelMemberMode: founder +q is UDB-owned; other ranks keep MODE.
  * - setChannelTopic: persisted as C::<#chan>::topic.
- * - addGline/removeGline: K::G records with duration/reason children.
+ * - addGline/removeGline: K::G profiles with expires/reason leaves.
  * Commands that UDB cannot perform (KILL, INVITE, JOIN/PART, KICK, UID/QUIT)
  * are kept unchanged.
  */
@@ -41,6 +43,7 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
         private ?UdbSessionStateInterface $sessionState = null,
         private UnrealUdbServiceIntroductionFormatter $introductionFormatter = new UnrealUdbServiceIntroductionFormatter(),
         private LoggerInterface $logger = new NullLogger(),
+        private UdbClock $clock = new SystemUdbClock(),
     ) {}
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void
@@ -166,16 +169,15 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
     }
 
     /**
-     * UnrealUdb DB INS K::G with duration/reason children.
+     * UnrealUdb DB INS K::G with expires/reason leaves.
      */
     public function addGline(string $serverSid, string $userMask, string $hostMask, int $duration, string $reason): void
     {
         $mask = $userMask . '@' . $hostMask;
-        $this->recordWriter->insert('K', 'G::' . $mask, $reason);
-        $this->recordWriter->insert('K', 'G::' . $mask . '::reason', $reason);
         if ($duration > 0) {
-            $this->recordWriter->insert('K', 'G::' . $mask . '::duration', '*' . $duration);
+            $this->recordWriter->insert('K', 'G::' . $mask . '::expires', '*' . ($this->clock->now() + $duration));
         }
+        $this->recordWriter->insert('K', 'G::' . $mask . '::reason', $reason);
     }
 
     /**

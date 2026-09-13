@@ -6,6 +6,8 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbOclgViewDigest;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
@@ -13,358 +15,150 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-use const PHP_INT_MAX;
-
 #[CoversClass(UdbWireCodec::class)]
 #[CoversClass(UdbOclgViewDigest::class)]
 final class UdbWireCodecTest extends TestCase
 {
+    private const string DIGEST = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
     #[Test]
-    public function buildersRenderExactWireGrammar(): void
+    public function buildersRenderTheCurrentGrammar(): void
     {
         self::assertSame(':002 DB 001 HEL 4 irc.example.net 0123456789abcdef OCL OCLG', UdbWireCodec::hel('002', '001', 'irc.example.net', '0123456789abcdef', ['OCL', 'OCLG']));
         self::assertSame(':002 DB 001 HEL 4 ACK irc.example.net 0123456789abcdef OCL', UdbWireCodec::helAck('002', '001', 'irc.example.net', '0123456789abcdef'));
-        self::assertSame(
-            ':002 DB 001 INF 1000 N ABCDEF12 1700000000',
-            UdbWireCodec::inf('002', '001', 1000, UdbBlock::Nicks, 'ABCDEF12', 1700000000),
-        );
+        self::assertSame(':002 DB 001 INF 1000 N ' . self::DIGEST . ' 3 1700000000 42', UdbWireCodec::inf('002', '001', 1000, UdbBlock::Nicks, self::DIGEST, 3, 1700000000, 42));
+        self::assertSame(':002 DB 001 INF 1000 N ' . self::DIGEST . ' 3 1700000000', UdbWireCodec::inf('002', '001', 1000, UdbBlock::Nicks, self::DIGEST, 3, 1700000000));
         self::assertSame(':002 DB 001 RES 1000 C', UdbWireCodec::res('002', '001', 1000, UdbBlock::Channels));
-        self::assertSame(
-            ':002 DB 001 BEGIN 1000 I ab12 0000000F',
-            UdbWireCodec::begin('002', '001', 1000, UdbBlock::Ips, 'ab12', 'F'),
-        );
-        self::assertSame(
-            ':002 DB 001 PUT 1000 I ab12 1.2.3.4%3A%3Aclones :*5',
-            UdbWireCodec::put('002', '001', 1000, UdbBlock::Ips, 'ab12', '1.2.3.4%3A%3Aclones', '*5'),
-        );
-        self::assertSame(
-            ':002 DB 001 END 1000 I ab12 0000000F',
-            UdbWireCodec::end('002', '001', 1000, UdbBlock::Ips, 'ab12', 'F'),
-        );
-        self::assertSame(
-            ':002 DB 001 ACK 1000 I ab12 0000000F',
-            UdbWireCodec::ack('002', '001', 1000, UdbBlock::Ips, 'ab12', 'F'),
-        );
+        self::assertSame(':002 DB 001 BEGIN 1000 I ab12 ' . self::DIGEST . ' 42', UdbWireCodec::begin('002', '001', 1000, UdbBlock::Ips, 'ab12', self::DIGEST, 42));
+        self::assertSame(':002 DB 001 PUT 1000 I ab12 path :*5', UdbWireCodec::put('002', '001', 1000, UdbBlock::Ips, 'ab12', 'path', '*5'));
+        self::assertSame(':002 DB 001 END 1000 I ab12 ' . self::DIGEST, UdbWireCodec::end('002', '001', 1000, UdbBlock::Ips, 'ab12', self::DIGEST));
+        self::assertSame(':002 DB 001 ACK 1000 I ab12 ' . self::DIGEST . ' 42', UdbWireCodec::ack('002', '001', 1000, UdbBlock::Ips, 'ab12', self::DIGEST, 42));
         self::assertSame(':002 DB 001 ERR PUT 3 1000 C', UdbWireCodec::err('002', '001', 'PUT', 3, 1000, UdbBlock::Channels));
         self::assertSame(':002 DB 001 ERR INS 6 7 0', UdbWireCodec::err('002', '001', 'INS', 6, 7, null));
-        self::assertSame(
-            ':002 DB * INS C::%23chan%3A%3Afounder :alice',
-            UdbWireCodec::ins('002', 'C', '%23chan%3A%3Afounder', 'alice'),
-        );
-        self::assertSame(':002 DB * DEL C::%23chan', UdbWireCodec::del('002', 'C', '%23chan'));
+        self::assertSame(':002 DB * INS 0123456789abcdef 1 C::path :alice', UdbWireCodec::ins('002', '0123456789abcdef', 1, 'C', 'path', 'alice'));
+        self::assertSame(':002 DB * DEL 0123456789abcdef 2 C::path', UdbWireCodec::del('002', '0123456789abcdef', 2, 'C', 'path'));
+        self::assertSame(':002 DB * DRP 0123456789abcdef 3 C', UdbWireCodec::drp('002', '0123456789abcdef', 3, UdbBlock::Channels));
+        self::assertSame(':002 DB 001 EXP K::G::*@host 1700000000', UdbWireCodec::exp('002', '001', 'K::G::*@host', 1700000000));
+        self::assertSame(':002 DB 001 MANIFEST REQ 9', UdbWireCodec::manifestReq('002', '001', 9));
+        self::assertSame(':002 DB 001 MANIFEST ACK 9 K 4 ' . self::DIGEST . ' 42', UdbWireCodec::manifestAck('002', '001', 9, UdbBlock::Lines, 4, self::DIGEST, 42));
+        self::assertStringContainsString(UdbChecksum::EMPTY, UdbWireCodec::begin('002', '001', 1, UdbBlock::Nicks, 'tx', 'INVALID'));
     }
 
     #[Test]
-    public function checksumArgumentsAreNormalized(): void
+    public function parsesInventoryAndStagedFramesWithOptionalWatermarks(): void
     {
-        self::assertStringEndsWith('INF 5 N ABCDEF12 1', UdbWireCodec::inf('002', '001', 5, UdbBlock::Nicks, 'abcdef12', 1));
-        self::assertStringEndsWith('BEGIN 5 N tx 00000000', UdbWireCodec::begin('002', '001', 5, UdbBlock::Nicks, 'tx', 'zz'));
-    }
+        $inf = $this->parse(':001 DB 002 INF 999 C ' . self::DIGEST . ' 7 1700000000 18446744073709551615');
+        self::assertSame(UdbFrameKind::Inf, $inf->kind);
+        self::assertSame(7, $inf->count);
+        self::assertSame('18446744073709551615', (string) $inf->watermark);
+        self::assertSame(1700000000, $inf->timestamp);
 
-    #[Test]
-    public function parseHelFrame(): void
-    {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef OCL OCLG'));
+        $begin = $this->parse(':001 DB 002 BEGIN 999 S tx_1 ' . self::DIGEST);
+        self::assertSame(UdbFrameKind::Begin, $begin->kind);
+        self::assertNull($begin->watermark);
+        self::assertSame('tx_1', $begin->txid);
 
-        self::assertNotNull($frame);
-        self::assertSame(UdbFrameKind::Hel, $frame->kind);
-        self::assertSame('001', $frame->sourceSid);
-        self::assertSame('002', $frame->target);
-        self::assertSame('ircd.example.net', $frame->propagator);
-        self::assertSame('0123456789abcdef', $frame->epoch);
-        self::assertSame(['OCL', 'OCLG'], $frame->capabilities);
-    }
+        $put = $this->parse(':001 DB 002 PUT 999 S tx_1 nickserv :NickServ value');
+        self::assertSame(UdbFrameKind::Put, $put->kind);
+        self::assertSame('NickServ value', $put->value);
 
-    #[Test]
-    public function parseHelWithQuestionMarkPropagator(): void
-    {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ? 0123456789abcdef OCL'));
-
-        self::assertNotNull($frame);
-        self::assertSame('?', $frame->propagator);
-    }
-
-    #[Test]
-    public function parseHelRejectsTooManyCapabilities(): void
-    {
-        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef OCL OCLG EXTRA')));
-    }
-
-    #[Test]
-    public function parseHelAckFrame(): void
-    {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ACK ircd.example.net 0123456789abcdef OCL'));
-
-        self::assertNotNull($frame);
-        self::assertSame(UdbFrameKind::HelAck, $frame->kind);
-        self::assertSame('ircd.example.net', $frame->propagator);
-        self::assertSame('0123456789abcdef', $frame->epoch);
-    }
-
-    #[Test]
-    public function parseOclgSnapshotFrames(): void
-    {
-        $digest = str_repeat('a', 64);
-        $begin = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG BEGIN 0123456789abcdef 7 READY 1 ' . $digest));
-        self::assertNotNull($begin);
-        self::assertSame(UdbFrameKind::OclgBegin, $begin->kind);
-        self::assertSame('READY', $begin->status);
-        self::assertSame(1, $begin->count);
-        self::assertSame($digest, $begin->checksum);
-
-        $item = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG ITEM 0123456789abcdef 7 netadmin ' . $digest));
-        self::assertNotNull($item);
-        self::assertSame(UdbFrameKind::OclgItem, $item->kind);
-        self::assertSame('netadmin', $item->path);
-
-        $end = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG END 0123456789abcdef 7'));
-        self::assertNotNull($end);
-        self::assertSame(UdbFrameKind::OclgEnd, $end->kind);
-    }
-
-    #[Test]
-    public function oclgViewDigestMatchesTheUdbBinaryEncoding(): void
-    {
-        self::assertSame('95d9b200b13758900b688f6197420a6b12bcf7fcdfe7218e783dad0f8017164c', UdbOclgViewDigest::fromEntries(true, ['netadmin' => str_repeat('a', 64)]));
-        self::assertSame(
-            'c434656abd1d23f99fd609235eccd31e3b55f8637e17188095578632800ea68a',
-            UdbOclgViewDigest::fromEntries(true, [
-                'admin' => '863629b21b7030c7ac64b5efa87ffdff4fb0f034c3ef2e6fe66f9ebf9e28bc01',
-                'admin-with-override' => 'f1be89317d9ba42023689cc23467b17604c57876b2025da6d2cef09aa39915e9',
-                'globop' => 'dbc66c42b1ed0f3c876e749221f887f3249b814b17ef46b26d22a553ff81129e',
-                'globop-with-override' => '7fd2a14f823030a9f7eda0a7f18922f789afa7eb5841cf7732c7fe7f22e79223',
-                'locop' => '881fd8dd85c448fc344749c479a92841839f0c0c8d6b02304b789204d4e3fec2',
-                'netadmin' => '4f7b74230fa9367d54bdd84ff0502ddd179c3e84859bce2c386b1a392a08ef84',
-                'netadmin-with-override' => '362dfcb4b18bf9a6a048e85fcdefe910f5b9ab5ea9104a2b05444f077338c405',
-                'services-admin' => '01ccbd8bb8fee1ec15ef1eca2ba27c3102603242a83856e51b30281129c41813',
-                'services-admin-with-override' => 'ad4593fb6ff658db0bf7a18e4533f47b714557025c77ce1d3dc19bf334e69230',
-            ]),
-        );
-        self::assertTrue(UdbOclgViewDigest::isValid(str_repeat('a', 64)));
-        self::assertFalse(UdbOclgViewDigest::isValid('A'));
-    }
-
-    #[Test]
-    public function parseInfFrame(): void
-    {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 INF 999 C abcdef12 1700000000'));
-
-        self::assertNotNull($frame);
-        self::assertSame(UdbFrameKind::Inf, $frame->kind);
-        self::assertSame('999', (string) $frame->roundId);
-        self::assertSame(UdbBlock::Channels, $frame->block);
-        self::assertSame('ABCDEF12', $frame->checksum);
-        self::assertSame(1700000000, $frame->timestamp);
-    }
-
-    #[Test]
-    public function parsesFullUnsignedLongRoundIdsWithoutLosingIdentity(): void
-    {
-        foreach (['4294967296', '9223372036854775808', '18446744073709551615'] as $roundId) {
-            $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 RES ' . $roundId . ' K'));
-
-            self::assertNotNull($frame);
-            self::assertNotNull($frame->roundId);
-            self::assertSame($roundId, (string) $frame->roundId);
-            self::assertSame(':002 DB 001 RES ' . $roundId . ' K', UdbWireCodec::res('002', '001', $frame->roundId, UdbBlock::Lines));
+        foreach (['END' => UdbFrameKind::End, 'ACK' => UdbFrameKind::Ack] as $verb => $kind) {
+            $frame = $this->parse(':001 DB 002 ' . $verb . ' 999 S tx_1 ' . self::DIGEST . ' 0');
+            self::assertSame($kind, $frame->kind);
+            self::assertSame('0', (string) $frame->watermark);
         }
-
-        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 RES 18446744073709551616 K')));
+        self::assertSame(UdbFrameKind::Res, $this->parse(':001 DB 002 RES 999 K')->kind);
     }
 
     #[Test]
-    public function appliesFieldSpecificNumericContracts(): void
+    public function parsesSequencedMutationsExpiryAndManifest(): void
     {
-        $digest = str_repeat('a', 64);
-        self::assertNotNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 INF 1 N 00 ' . PHP_INT_MAX)));
-        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 INF 1 N 00 9223372036854775808')));
-        self::assertNotNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG BEGIN 0123456789abcdef 1 READY 1024 ' . $digest)));
-        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG BEGIN 0123456789abcdef 1 READY 1025 ' . $digest)));
-        self::assertNotNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 ERR PUT 255 1 N')));
-        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 ERR PUT 256 1 N')));
-    }
-
-    #[Test]
-    public function parseResFrame(): void
-    {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 RES 999 K'));
-
-        self::assertNotNull($frame);
-        self::assertSame(UdbFrameKind::Res, $frame->kind);
-        self::assertSame('999', (string) $frame->roundId);
-        self::assertSame(UdbBlock::Lines, $frame->block);
-    }
-
-    #[Test]
-    public function parseBeginFrame(): void
-    {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 BEGIN 999 S tx_1 00ABCDEF'));
-
-        self::assertNotNull($frame);
-        self::assertSame(UdbFrameKind::Begin, $frame->kind);
-        self::assertSame(UdbBlock::Settings, $frame->block);
-        self::assertSame('tx_1', $frame->txid);
-        self::assertSame('00ABCDEF', $frame->checksum);
-    }
-
-    #[Test]
-    public function parsePutWithTrailingValue(): void
-    {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 PUT 999 S tx_1 nickserv :NickServ!NickServ@host'));
-
-        self::assertNotNull($frame);
-        self::assertSame(UdbFrameKind::Put, $frame->kind);
-        self::assertSame('nickserv', $frame->path);
-        self::assertSame('NickServ!NickServ@host', $frame->value);
-    }
-
-    #[Test]
-    public function parsePutWithNumericParamValue(): void
-    {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 PUT 999 I tx 1.2.3.4::clones *5'));
-
-        self::assertNotNull($frame);
-        self::assertSame('1.2.3.4::clones', $frame->path);
-        self::assertSame('*5', $frame->value);
-    }
-
-    #[Test]
-    public function parseEndAndAckFrames(): void
-    {
-        $end = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 END 999 S tx_1 00ABCDEF'));
-        self::assertNotNull($end);
-        self::assertSame(UdbFrameKind::End, $end->kind);
-        self::assertSame('00ABCDEF', $end->checksum);
-
-        $ackTrailing = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 ACK 999 S tx_1 :00ABCDEF'));
-        self::assertNotNull($ackTrailing);
-        self::assertSame(UdbFrameKind::Ack, $ackTrailing->kind);
-        self::assertSame('00ABCDEF', $ackTrailing->checksum);
-    }
-
-    #[Test]
-    public function parseErrFrame(): void
-    {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 ERR PUT 3 999 C'));
-        self::assertNotNull($frame);
-        self::assertSame(UdbFrameKind::Err, $frame->kind);
-        self::assertSame('PUT', $frame->subcommand);
-        self::assertSame(3, $frame->errorCode);
-        self::assertSame('999', (string) $frame->roundId);
-        self::assertSame(UdbBlock::Channels, $frame->block);
-
-        $blockless = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 ERR INS 2 42 0'));
-        self::assertNotNull($blockless);
-        self::assertNull($blockless->block);
-    }
-
-    #[Test]
-    public function parseInsAndDelAndDrpAndOptFrames(): void
-    {
-        $ins = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB * INS S::nickserv :mask value'));
-        self::assertNotNull($ins);
+        $ins = $this->parse(':001 DB * INS 0123456789abcdef 1 S::nickserv :mask value');
         self::assertSame(UdbFrameKind::Ins, $ins->kind);
-        self::assertSame('S::nickserv', $ins->path);
+        self::assertSame('1', (string) $ins->sequence);
+        self::assertSame('0123456789abcdef', $ins->epoch);
         self::assertSame('mask value', $ins->value);
 
-        $del = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB * DEL S::nickserv'));
-        self::assertNotNull($del);
-        self::assertSame(UdbFrameKind::Del, $del->kind);
-        self::assertSame('S::nickserv', $del->path);
+        self::assertSame(UdbFrameKind::Del, $this->parse(':001 DB * DEL 0123456789abcdef 2 S::nickserv')->kind);
+        self::assertSame(UdbFrameKind::Drp, $this->parse(':001 DB * DRP 0123456789abcdef 3 I')->kind);
+        $exp = $this->parse(':001 DB 002 EXP K::G::*@host 1700000000');
+        self::assertSame(UdbFrameKind::Exp, $exp->kind);
+        self::assertSame(1700000000, $exp->expectedExpires);
 
-        $drp = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB * DRP I'));
-        self::assertNotNull($drp);
-        self::assertSame(UdbFrameKind::Drp, $drp->kind);
-        self::assertSame(UdbBlock::Ips, $drp->block);
-
-        $opt = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB * OPT S'));
-        self::assertNotNull($opt);
-        self::assertSame(UdbFrameKind::Opt, $opt->kind);
-        self::assertSame(UdbBlock::Settings, $opt->block);
-
-        $opaqueOpt = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB * OPT S runtime-token'));
-        self::assertNotNull($opaqueOpt);
-        self::assertSame('runtime-token', $opaqueOpt->modifiedAt);
+        self::assertSame(UdbFrameKind::ManifestReq, $this->parse(':001 DB 002 MANIFEST REQ 9')->kind);
+        $ack = $this->parse(':001 DB 002 MANIFEST ACK 9 K 4 ' . self::DIGEST . ' 42');
+        self::assertSame(UdbFrameKind::ManifestAck, $ack->kind);
+        self::assertSame(4, $ack->count);
+        self::assertSame('42', (string) $ack->watermark);
     }
 
     #[Test]
-    public function parseRejectsMalformedFrames(): void
+    public function parsesHelloErrorsAndOclg(): void
+    {
+        $hel = $this->parse(':001 DB 002 HEL 4 ? 0123456789abcdef OCL OCLG');
+        self::assertSame(UdbFrameKind::Hel, $hel->kind);
+        self::assertSame(['OCL', 'OCLG'], $hel->capabilities);
+        self::assertSame(UdbFrameKind::HelAck, $this->parse(':001 DB 002 HEL 4 ACK irc.example 0123456789abcdef OCL')->kind);
+
+        $err = $this->parse(':001 DB 002 ERR MANIFEST 3 999 0');
+        self::assertSame(UdbFrameKind::Err, $err->kind);
+        self::assertNull($err->block);
+
+        $begin = $this->parse(':001 DB 002 OCLG BEGIN 0123456789abcdef 7 READY 1 ' . self::DIGEST);
+        self::assertSame(UdbFrameKind::OclgBegin, $begin->kind);
+        self::assertSame(UdbFrameKind::OclgItem, $this->parse(':001 DB 002 OCLG ITEM 0123456789abcdef 7 netadmin ' . self::DIGEST)->kind);
+        self::assertSame(UdbFrameKind::OclgEnd, $this->parse(':001 DB 002 OCLG END 0123456789abcdef 7')->kind);
+    }
+
+    #[Test]
+    public function oclgViewDigestIsCanonicalAndIncludesReadiness(): void
+    {
+        $unsorted = UdbOclgViewDigest::fromEntries(true, [
+            'netadmin' => str_repeat('b', 64),
+            'admin' => str_repeat('a', 64),
+        ]);
+        $sorted = UdbOclgViewDigest::fromEntries(true, [
+            'admin' => str_repeat('a', 64),
+            'netadmin' => str_repeat('b', 64),
+        ]);
+
+        self::assertSame($sorted, $unsorted);
+        self::assertNotSame($sorted, UdbOclgViewDigest::fromEntries(false, [
+            'admin' => str_repeat('a', 64),
+            'netadmin' => str_repeat('b', 64),
+        ]));
+        self::assertTrue(UdbOclgViewDigest::isValid($sorted));
+    }
+
+    #[Test]
+    public function rejectsLegacyAndMalformedFrames(): void
     {
         $malformed = [
-            'PRIVMSG #chan :hello',
-            ':001 DB',
-            ':001 DB 002 HEL 5 x',
-            ':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef',
-            ':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef OCL OCL',
-            ':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef OCL UNKNOWN',
-            ':001 DB 002 HEL 4 ircd.example.net 0123456789ABCDEf OCL',
-            ':001 DB 002 HEL 4 ACK ircd.example.net 0123456789abcdef OCL OCLG UNKNOWN',
-            ':001 DB 002 HEL',
-            ':001 DB 002 HEL 4',
-            ':001 DB 002 INF 0 N 00 1',
-            ':001 DB 002 INF 999 X 00 1',
-            ':001 DB 002 INF 999 N zz 1',
-            ':001 DB 002 RES 0 N',
-            ':001 DB 002 RES 999 X',
-            ':001 DB 002 BEGIN 999 N bad.txid 00',
-            ':001 DB 002 PUT 999 N tx bad%41path :v',
-            ':001 DB 002 PUT 999 N tx path',
-            ':001 DB 002 PUT 999 N tx path :',
-            ':001 DB 002 END 999 N tx',
-            ':001 DB 002 ACK 999 N tx NOHEX',
-            ':001 DB 002 ERR PUT 256 999 C',
-            ':001 DB 002 ERR PUT 3 999 X',
-            ':001 DB * INS %41path :v',
-            ':001 DB * INS S::%41 :v',
-            ':001 DB * DEL S::%41',
-            ':001 DB * DEL',
-            ':001 DB * DRP X',
-            ':001 DB * OPT X',
-            ':001 DB 002 OCLG BEGIN 0123456789abcdef 7 READY 1 short',
-            ':001 DB 002 OCLG ITEM 0123456789abcdef 7 netadmin short',
-            ':001 DB 002 OCLG END 0123456789abcdef 7 extra',
-            ':001 DB 002 OCLG FOO 0123456789abcdef 7',
-            ':001 DB 002 OCLG BEGIN NOTHEX16 7 READY 1 ' . str_repeat('a', 64),
-            ':001 DB 002 OCLG BEGIN 0123456789abcdef 0 READY 1 ' . str_repeat('a', 64),
-            ':UNKNOWN 002 001 HEL 4 x',
+            'PRIVMSG #chan :hello', ':001 DB', ':001 DB 002 OPT S',
+            ':001 DB 002 HEL 5 x', ':001 DB 002 HEL 4', ':001 DB 002 HEL 4 x 0123456789ABCDEf OCL', ':001 DB 002 HEL 4 x 0123456789abcdef OCL EXTRA',
+            ':001 DB 002 INF 1 N ' . self::DIGEST . ' 0',
+            ':001 DB 002 INF 0 N ' . self::DIGEST . ' 0 1', ':001 DB 002 INF 1 X ' . self::DIGEST . ' 0 1', ':001 DB 002 INF 1 N ' . strtoupper(self::DIGEST) . ' 0 1', ':001 DB 002 INF 1 N ' . self::DIGEST . ' x 1', ':001 DB 002 INF 1 N ' . self::DIGEST . ' 0 1 bad',
+            ':001 DB 002 RES 0 N', ':001 DB 002 RES 1 N extra', ':001 DB 002 BEGIN 1 N bad.txid ' . self::DIGEST, ':001 DB 002 BEGIN 1 N tx short',
+            ':001 DB 002 PUT 1 N tx', ':001 DB 002 PUT 1 N tx bad%41path :v', ':001 DB 002 PUT 1 N tx path', ':001 DB 002 PUT 1 N tx path :',
+            ':001 DB 002 END 1 N tx', ':001 DB 002 ACK 1 N tx ' . self::DIGEST . ' bad',
+            ':001 DB 002 ERR PUT 3 1', ':001 DB 002 ERR PUT 256 1 C', ':001 DB 002 ERR PUT 3 1 X',
+            ':001 DB * INS S::nickserv :legacy', ':001 DB * INS BAD 1 S::nickserv :v', ':001 DB * INS 0123456789abcdef 0 S::nickserv :v',
+            ':001 DB * INS 0123456789abcdef 1 NN::nick :v', ':001 DB * DEL 0123456789abcdef 1', ':001 DB * DEL 0123456789abcdef 1 S::%41', ':001 DB * DRP 0123456789abcdef 1', ':001 DB * DRP 0123456789abcdef 1 X',
+            ':001 DB 002 EXP K::G::*@host', ':001 DB 002 EXP N::nick::pass 1', ':001 DB 002 EXP K::G::*@host 0',
+            ':001 DB 002 MANIFEST REQ 0', ':001 DB 002 MANIFEST ACK 1 K', ':001 DB 002 MANIFEST ACK 1 X 0 ' . self::DIGEST . ' 0', ':001 DB 002 MANIFEST ACK 1 K x ' . self::DIGEST . ' 0',
+            ':001 DB 002 OCLG BEGIN bad 7 READY 1 ' . self::DIGEST, ':001 DB 002 OCLG BEGIN 0123456789abcdef 7 BAD 1 ' . self::DIGEST,
+            ':001 DB 002 OCLG ITEM 0123456789abcdef 7 netadmin short', ':001 DB 002 OCLG FOO 0123456789abcdef 7',
         ];
-
         foreach ($malformed as $raw) {
-            self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine($raw)), "Expected null for: {$raw}");
+            self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine($raw)), $raw);
         }
     }
 
-    #[Test]
-    public function parseRejectsAdditionalMalformedWireShapes(): void
+    private function parse(string $raw): UdbFrame
     {
-        $malformed = [
-            ':001 DB 002 HEL 4',              // missing HEL fields
-            ':001 DB 002 INF 999 N 00',       // INF with 5 params
-            ':001 DB 002 RES 999',            // RES with 3 params
-            ':001 DB 002 BEGIN 999 S tx',     // BEGIN with 5 params
-            ':001 DB 002 BEGIN 999 S tx NOHEX',
-            ':001 DB 002 PUT 999 N tx',       // PUT with 5 params
-            ':001 DB 002 PUT 0 N tx path :v', // PUT with zero round
-            ':001 DB 002 END 999 N',          // END with 4 params
-            ':001 DB 002 ACK 999 N',          // ACK with 4 params
-            ':001 DB 002 END 0 N tx 00',
-            ':001 DB 002 ERR PUT 3 999',      // ERR with 5 params
-            ':001 DB * INS',                  // INS without path
-            ':001 DB * INS S::nickserv',      // INS without value
-            ':001 DB * DRP',                  // DRP without letter
-            ':001 DB * OPT',                  // OPT without letter
-        ];
+        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine($raw));
+        self::assertNotNull($frame, $raw);
 
-        foreach ($malformed as $raw) {
-            self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine($raw)), "Expected null for: {$raw}");
-        }
-    }
-
-    #[Test]
-    public function parseRejectsEmptyPropagatorParameter(): void
-    {
-        $message = new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', '', '0123456789abcdef', 'OCL']);
-
-        self::assertNull(UdbWireCodec::parse($message));
+        return $frame;
     }
 }

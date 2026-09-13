@@ -16,6 +16,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function array_diff;
 use function array_keys;
+use function count;
 use function explode;
 use function implode;
 use function in_array;
@@ -94,7 +95,8 @@ final class UdbStoreInitializer implements EventSubscriberInterface
         };
 
         $this->records->seedBlock($block->letter(), $seed);
-        $this->states->upsert($block->letter(), $this->blockChecksum($block));
+        $records = $this->records->recordsByBlock($block->letter());
+        $this->states->upsert($block->letter(), UdbChecksum::fromRecords(self::tuples($records)), count($records));
     }
 
     /**
@@ -127,14 +129,18 @@ final class UdbStoreInitializer implements EventSubscriberInterface
         return $encoded;
     }
 
-    private function blockChecksum(UdbBlock $block): string
+    /**
+     * @param array<string, string> $records
+     *
+     * @return list<array{0: string, 1: string}>
+     */
+    private static function tuples(array $records): array
     {
-        $records = $this->records->recordsByBlock($block->letter());
         $tuples = [];
         foreach ($records as $path => $value) {
             $tuples[] = [$path, $value];
         }
 
-        return UdbChecksum::fromRecords($tuples);
+        return $tuples;
     }
 }

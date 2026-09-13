@@ -15,7 +15,7 @@
         </id>
         <field name="block" type="string" length="1" column="block"/>
         <field name="path" type="string" length="8192" column="path"/>
-        <field name="identityPath" type="string" length="8192" column="identity_path"/>
+        <field name="identityPath" type="binary" length="8192" column="identity_path"/>
         <field name="value" type="text" column="value"/>
         <field name="updatedAt" type="datetimetz_immutable" column="updated_at"/>
     </entity>

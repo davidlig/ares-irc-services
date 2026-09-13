@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
+
 /**
  * A single UDB record mutation prepared for the wire.
  *
@@ -16,5 +18,11 @@ final readonly class UdbMutation
         public string $block,
         public string $encodedPath,
         public ?string $value,
+        public ?UdbUnsignedDecimal $sequence = null,
     ) {}
+
+    public function sequenced(UdbUnsignedDecimal $sequence): self
+    {
+        return new self($this->block, $this->encodedPath, $this->value, $sequence);
+    }
 }

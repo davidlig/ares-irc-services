@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
+
 use function array_shift;
 use function count;
 
@@ -35,6 +37,15 @@ final class UdbMutationQueue
         $this->pending = [];
 
         return $pending;
+    }
+
+    /** Discards mutations already represented by a committed snapshot. */
+    public function discardThrough(UdbUnsignedDecimal $watermark): void
+    {
+        $this->pending = array_values(array_filter(
+            $this->pending,
+            static fn (UdbMutation $mutation): bool => null === $mutation->sequence || 0 < $mutation->sequence->compare($watermark),
+        ));
     }
 
     public function count(): int

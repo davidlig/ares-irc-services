@@ -8,7 +8,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\ParsedUdbPath;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawCommandHandler;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
-use App\Irc\Application\Port\In\ActiveConnectionHolderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,13 +32,7 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
         $this->sessionState = new RecordingSessionState(true);
         $this->written = [];
 
-        $holder = $this->createStub(ActiveConnectionHolderInterface::class);
-        $holder->method('isConnected')->willReturn(true);
-        $holder->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-
-        $writer = new UnrealUdbRecordWriter($holder, $this->sessionState, $this->records, '001');
+        $writer = new UnrealUdbRecordWriter($this->sessionState, $this->records);
         $this->handler = new UnrealUdbRawCommandHandler($writer);
     }
 
@@ -52,7 +45,7 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
         self::assertNull($result->errorKey);
         self::assertSame('DB * INS S::propagator hub2.davidlig.net', $result->auditLine);
         self::assertSame(['propagator' => 'hub2.davidlig.net'], $this->records->blocks['S']);
-        self::assertSame([':001 DB * INS S::propagator :hub2.davidlig.net'], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
@@ -137,11 +130,11 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
     }
 
     #[Test]
-    public function insRedactsChannelPassAndEncryptionKey(): void
+    public function insRejectsRemovedChannelSecretsAndRedactsEncryptionKey(): void
     {
         $pass = $this->handler->ins('C::#chan::challenge', 'sha256');
-        self::assertTrue($pass->success);
-        self::assertSame('DB * INS C::#chan::challenge <redacted>', $pass->auditLine);
+        self::assertFalse($pass->success);
+        self::assertSame('raw.udb.invalid_value', $pass->errorKey);
 
         $key = $this->handler->ins('S::encryption_key', str_repeat('a', 64));
         self::assertTrue($key->success);
@@ -170,7 +163,7 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
         self::assertTrue($result->success);
         self::assertSame('DB * DEL N::davidlig', $result->auditLine);
         self::assertSame(['other::vhost' => 'v'], $this->records->blocks['N']);
-        self::assertSame([':001 DB * DEL N::davidlig'], $this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
