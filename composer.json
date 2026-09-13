@@ -51,6 +51,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "App\\Migrations\\": "migrations/",
             "App\\Tests\\": "tests/"
         }
     },
@@ -92,9 +93,9 @@
     },
     "require-dev": {
         "deptrac/deptrac": "^4.7",
-        "friendsofphp/php-cs-fixer": "^3.95.24",
-        "phpstan/phpstan": "^2.2",
+        "friendsofphp/php-cs-fixer": "^3.95.25",
+        "phpstan/phpstan": "^2.2.14",
         "phpstan/phpstan-phpunit": "^2.0",
-        "phpunit/phpunit": "^13.3.2"
+        "phpunit/phpunit": "^13.3.3"
     }
 }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2223e12fae4d0e3cfc77a1e4514ebf8f",
+    "content-hash": "f8e9c5d0e6ef31fb18e930fccabb4b85",
     "packages": [
         {
             "name": "amphp/amp",
@@ -1665,16 +1665,16 @@
         },
         {
             "name": "doctrine/orm",
-            "version": "3.6.8",
+            "version": "3.6.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/orm.git",
-                "reference": "a4d13ed5b11e7f7b4d654b1adf95432031ae3ffc"
+                "reference": "1ee072c5734f1d4e41d67eff6587f29c96db51c8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/orm/zipball/a4d13ed5b11e7f7b4d654b1adf95432031ae3ffc",
-                "reference": "a4d13ed5b11e7f7b4d654b1adf95432031ae3ffc",
+                "url": "https://api.github.com/repos/doctrine/orm/zipball/1ee072c5734f1d4e41d67eff6587f29c96db51c8",
+                "reference": "1ee072c5734f1d4e41d67eff6587f29c96db51c8",
                 "shasum": ""
             },
             "require": {
@@ -1748,9 +1748,9 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/orm/issues",
-                "source": "https://github.com/doctrine/orm/tree/3.6.8"
+                "source": "https://github.com/doctrine/orm/tree/3.6.9"
             },
-            "time": "2026-08-05T19:05:32+00:00"
+            "time": "2026-09-07T18:59:09+00:00"
         },
         {
             "name": "doctrine/persistence",
@@ -2210,16 +2210,16 @@
         },
         {
             "name": "monolog/monolog",
-            "version": "3.11.0",
+            "version": "3.12.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "147f303310f06334f03f409e49d7ad1e275ff05a"
+                "reference": "72c534fc0ab181ef52d92a68382318631e301608"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/147f303310f06334f03f409e49d7ad1e275ff05a",
-                "reference": "147f303310f06334f03f409e49d7ad1e275ff05a",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/72c534fc0ab181ef52d92a68382318631e301608",
+                "reference": "72c534fc0ab181ef52d92a68382318631e301608",
                 "shasum": ""
             },
             "require": {
@@ -2245,6 +2245,7 @@
                 "phpstan/phpstan-strict-rules": "^2",
                 "phpunit/phpunit": "^10.5.17 || ^11.0.7",
                 "predis/predis": "^1.1 || ^2",
+                "psr/clock": "^1.0",
                 "rollbar/rollbar": "^4.0",
                 "ruflin/elastica": "^7 || ^8",
                 "symfony/mailer": "^5.4 || ^6",
@@ -2263,6 +2264,7 @@
                 "graylog2/gelf-php": "Allow sending log messages to a GrayLog2 server",
                 "mongodb/mongodb": "Allow sending log messages to a MongoDB server (via library)",
                 "php-amqplib/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
+                "psr/clock": "Required to pass a clock to the Logger and control the timestamp of log records",
                 "rollbar/rollbar": "Allow sending log messages to Rollbar",
                 "ruflin/elastica": "Allow sending log messages to an Elastic Search server"
             },
@@ -2297,7 +2299,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Seldaek/monolog/issues",
-                "source": "https://github.com/Seldaek/monolog/tree/3.11.0"
+                "source": "https://github.com/Seldaek/monolog/tree/3.12.0"
             },
             "funding": [
                 {
@@ -2309,7 +2311,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-02T12:39:56+00:00"
+            "time": "2026-09-09T08:34:20+00:00"
         },
         {
             "name": "psr/cache",
@@ -7067,16 +7069,16 @@
         },
         {
             "name": "friendsofphp/php-cs-fixer",
-            "version": "v3.95.24",
+            "version": "v3.95.25",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer.git",
-                "reference": "9a4b8050f8768646bf3693ee7416978ceeca6206"
+                "reference": "2cdfc1f3daf173d83a1ebb6177949b58c95de6ff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/9a4b8050f8768646bf3693ee7416978ceeca6206",
-                "reference": "9a4b8050f8768646bf3693ee7416978ceeca6206",
+                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/2cdfc1f3daf173d83a1ebb6177949b58c95de6ff",
+                "reference": "2cdfc1f3daf173d83a1ebb6177949b58c95de6ff",
                 "shasum": ""
             },
             "require": {
@@ -7159,7 +7161,7 @@
             ],
             "support": {
                 "issues": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/issues",
-                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.95.24"
+                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.95.25"
             },
             "funding": [
                 {
@@ -7167,7 +7169,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-08-31T15:31:12+00:00"
+            "time": "2026-09-08T11:11:37+00:00"
         },
         {
             "name": "jetbrains/phpstorm-stubs",
@@ -7661,11 +7663,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.2.13",
+            "version": "2.2.14",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9ba9ac76ee9c5cf5b56d58eb5deec6315b7a0260",
-                "reference": "9ba9ac76ee9c5cf5b56d58eb5deec6315b7a0260",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9c672e7a8e791dfc3d30e55f683e73fc0b63a3ac",
+                "reference": "9c672e7a8e791dfc3d30e55f683e73fc0b63a3ac",
                 "shasum": ""
             },
             "require": {
@@ -7721,7 +7723,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-09-03T20:38:19+00:00"
+            "time": "2026-09-12T21:39:33+00:00"
         },
         {
             "name": "phpstan/phpstan-phpunit",
@@ -7783,16 +7785,16 @@
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "14.3.2",
+            "version": "14.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "93d62632fb675b76c9b941fdcfcfa10ffb9dea75"
+                "reference": "f8640c238e930b914d0098a1edbad6652e61a64a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/93d62632fb675b76c9b941fdcfcfa10ffb9dea75",
-                "reference": "93d62632fb675b76c9b941fdcfcfa10ffb9dea75",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/f8640c238e930b914d0098a1edbad6652e61a64a",
+                "reference": "f8640c238e930b914d0098a1edbad6652e61a64a",
                 "shasum": ""
             },
             "require": {
@@ -7811,7 +7813,7 @@
                 "theseer/tokenizer": "^2.0.1"
             },
             "require-dev": {
-                "phpunit/phpunit": "^13.3.2"
+                "phpunit/phpunit": "^13.3.3"
             },
             "suggest": {
                 "ext-pcov": "PHP extension that provides line coverage",
@@ -7849,7 +7851,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-code-coverage/issues",
                 "security": "https://github.com/sebastianbergmann/php-code-coverage/security/policy",
-                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/14.3.2"
+                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/14.3.3"
             },
             "funding": [
                 {
@@ -7869,7 +7871,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-04T03:46:43+00:00"
+            "time": "2026-09-10T13:08:32+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -8166,16 +8168,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "13.3.2",
+            "version": "13.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "22104a5ceb8d642e6b30ab00211d53d88e2db368"
+                "reference": "0d8711067516c1f6ba1a66f762e16c2fb1a8ccd1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/22104a5ceb8d642e6b30ab00211d53d88e2db368",
-                "reference": "22104a5ceb8d642e6b30ab00211d53d88e2db368",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/0d8711067516c1f6ba1a66f762e16c2fb1a8ccd1",
+                "reference": "0d8711067516c1f6ba1a66f762e16c2fb1a8ccd1",
                 "shasum": ""
             },
             "require": {
@@ -8189,14 +8191,14 @@
                 "phar-io/manifest": "^2.0.4",
                 "phar-io/version": "^3.2.1",
                 "php": ">=8.4.1",
-                "phpunit/php-code-coverage": "^14.3.1",
+                "phpunit/php-code-coverage": "^14.3.2",
                 "phpunit/php-file-iterator": "^7.0.2",
                 "phpunit/php-invoker": "^7.0.0",
                 "phpunit/php-text-template": "^6.0.0",
                 "phpunit/php-timer": "^9.0.0",
                 "sebastian/cli-parser": "^5.0.1",
                 "sebastian/comparator": "^8.4",
-                "sebastian/diff": "^9.0",
+                "sebastian/diff": "^9.0.1",
                 "sebastian/environment": "^9.3.2",
                 "sebastian/exporter": "^8.2.1",
                 "sebastian/file-filter": "^1.0",
@@ -8246,7 +8248,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/13.3.2"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/13.3.3"
             },
             "funding": [
                 {
@@ -8254,7 +8256,7 @@
                     "type": "other"
                 }
             ],
-            "time": "2026-08-27T08:40:49+00:00"
+            "time": "2026-09-09T04:50:32+00:00"
         },
         {
             "name": "react/cache",
