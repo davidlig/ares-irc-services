@@ -5,7 +5,7 @@
                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
     <entity name="App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord" table="udb_records">
         <unique-constraints>
-            <unique-constraint name="uniq_udb_record_block_identity" columns="block,identity_path"/>
+            <unique-constraint name="uniq_udb_record_block_identity" columns="block,identity_hash"/>
         </unique-constraints>
         <indexes>
             <index name="idx_udb_record_block" columns="block"/>
@@ -16,6 +16,7 @@
         <field name="block" type="string" length="1" column="block"/>
         <field name="path" type="string" length="8192" column="path"/>
         <field name="identityPath" type="binary" length="8192" column="identity_path"/>
+        <field name="identityHash" type="binary" length="32" column="identity_hash"/>
         <field name="value" type="text" column="value"/>
         <field name="updatedAt" type="datetimetz_immutable" column="updated_at"/>
     </entity>

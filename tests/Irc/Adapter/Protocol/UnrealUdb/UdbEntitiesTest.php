@@ -14,6 +14,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
+use function hash;
+
 #[CoversClass(UdbRecord::class)]
 #[CoversClass(UdbBlockState::class)]
 #[CoversClass(UdbAuthorityState::class)]
@@ -41,6 +43,10 @@ final class UdbEntitiesTest extends TestCase
         self::assertSame('f::b64:QWJj::reason', UdbRecord::identity('F::b64:QWJj::REASON', 'K'));
         self::assertSame('g::*@host::reason', UdbRecord::identity('G::*@HOST::REASON', 'K'));
         self::assertSame('f::b64:qwjj::reason', UdbRecord::identity('F::b64:QWJj::REASON'));
+        self::assertSame(
+            hash('sha256', 'f::b64:QWJj::reason', true),
+            new UdbRecord('K', 'F::b64:QWJj::REASON', 'v')->getIdentityHash(),
+        );
     }
 
     #[Test]

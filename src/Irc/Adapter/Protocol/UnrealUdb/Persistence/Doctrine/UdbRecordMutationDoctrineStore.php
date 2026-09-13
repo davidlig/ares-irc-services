@@ -148,9 +148,9 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
     private function findRecord(string $block, string $path): ?UdbRecord
     {
         $record = $this->em
-            ->createQuery('SELECT r FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord r WHERE r.block = :block AND r.identityPath = :identity')
+            ->createQuery('SELECT r FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord r WHERE r.block = :block AND r.identityHash = :identity')
             ->setParameter('block', $block)
-            ->setParameter('identity', UdbRecord::identity($path, $block), Types::BINARY)
+            ->setParameter('identity', UdbRecord::identityHash(UdbRecord::identity($path, $block)), Types::BINARY)
             ->getOneOrNullResult();
 
         return $record instanceof UdbRecord ? $record : null;
