@@ -166,6 +166,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
         ]);
 
         $connection->writeLine(sprintf('PASS :%s', $link->password));
+        $this->logger->debug('> PASS :<redacted>');
 
         $eauth = sprintf('PROTOCTL EAUTH=%s SID=%s', $link->serverName, $this->sid);
         $connection->writeLine($eauth);
@@ -191,6 +192,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
 
         $eos = sprintf(':%s EOS', $this->sid);
         $connection->writeLine($eos);
+        $this->logger->debug('> ' . $eos);
         $this->logger->info('Sent EOS — initial burst and sync complete.', ['sid' => $this->sid]);
 
         $this->coordinator->onLinkReady($connection);

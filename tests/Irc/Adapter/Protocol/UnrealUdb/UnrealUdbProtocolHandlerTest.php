@@ -23,6 +23,9 @@ use App\Irc\Domain\ValueObject\Hostname;
 use App\Irc\Domain\ValueObject\LinkPassword;
 use App\Irc\Domain\ValueObject\Port;
 use App\Irc\Domain\ValueObject\ServerName;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
+use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,9 +33,11 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function array_map;
 use function fclose;
 use function flock;
 use function fopen;
+use function implode;
 use function mkdir;
 use function rmdir;
 use function sprintf;
@@ -121,6 +126,33 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         } finally {
             @rmdir($directory);
         }
+    }
+
+    #[Test]
+    public function handshakeAndEosAreLoggedWithoutTheLinkPassword(): void
+    {
+        $records = new TestHandler();
+        $logger = new Logger('test', [$records]);
+        $handler = new UnrealUdbProtocolHandler(
+            '002',
+            new UdbSessionCoordinator(
+                '002',
+                $this->createStub(UdbBlockStateRepositoryInterface::class),
+                $this->createStub(UdbSnapshotProviderInterface::class),
+            ),
+            logger: $logger,
+        );
+        $connection = $this->createConnection();
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '001'), $connection);
+
+        $messages = array_map(static fn (LogRecord $record): string => $record->message, $records->getRecords());
+        self::assertContains('> PASS :<redacted>', $messages);
+        self::assertContains('> PROTOCTL EAUTH=services.test.local SID=002', $messages);
+        self::assertContains('> SERVER services.test.local 1 :Ares IRC Services', $messages);
+        self::assertContains('> :002 EOS', $messages);
+        self::assertStringNotContainsString('link-secret', implode("\n", $messages));
     }
 
     #[Test]
