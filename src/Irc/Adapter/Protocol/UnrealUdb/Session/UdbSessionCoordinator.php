@@ -26,6 +26,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireLogRedactor;
 use App\Irc\Adapter\Runtime\LoopSchedulerInterface;
 use App\Irc\Adapter\Runtime\RevoltLoopScheduler;
 use App\Irc\Adapter\Runtime\SessionEventPump;
@@ -1141,7 +1142,8 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
         $this->connection->writeLine($line);
         // Snapshot PUT and live INS frames may contain password material or
-        // encryption keys. The wire receives the complete frame, logs do not.
-        $this->logger->debug('UDB frame sent.');
+        // encryption keys; the redactor masks those values while the rest of
+        // the frame stays visible in the log.
+        $this->logger->debug('> ' . UdbWireLogRedactor::redact($line));
     }
 }

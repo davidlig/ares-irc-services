@@ -111,6 +111,17 @@ final class UdbSessionCoordinatorTest extends TestCase
     }
 
     #[Test]
+    public function outgoingFramesAreLoggedWithTheWireLine(): void
+    {
+        $logger = new RecordingLogger();
+        $this->coordinator = $this->coordinatorWithLogger($logger);
+
+        $this->prepareLink();
+
+        self::assertSame(['> ' . $this->helRequest()], $logger->messages);
+    }
+
+    #[Test]
     public function helIsDeferredUntilOwnNameIsKnown(): void
     {
         $this->coordinator->onRemoteServer('001', 'ircd.example.net');
@@ -1007,6 +1018,25 @@ final class UdbSessionCoordinatorTest extends TestCase
             ':002 DB * INS ' . $this->coordinator->epoch() . ' 1 N::alice::vhost :a.example',
             ':002 DB * INS ' . $this->coordinator->epoch() . ' 2 S::nickserv :services.example',
         ], $this->written);
+    }
+
+    #[Test]
+    public function liveSecretMutationsAreLoggedRedacted(): void
+    {
+        $logger = new RecordingLogger();
+        $this->coordinator = $this->coordinatorWithLogger($logger);
+
+        $this->makeReady();
+        $logger->messages = [];
+
+        $this->coordinator->enqueueMutation(new UdbMutation('N', 'alice::pass', 'crypt:$2y$10$secret'));
+        $this->coordinator->enqueueMutation(new UdbMutation('N', 'alice::vhost', 'a.example'));
+        $this->coordinator->tick($this->connection);
+
+        self::assertSame([
+            '> :002 DB * INS ' . $this->coordinator->epoch() . ' 1 N::alice::pass :<redacted>',
+            '> :002 DB * INS ' . $this->coordinator->epoch() . ' 2 N::alice::vhost :a.example',
+        ], $logger->messages);
     }
 
     #[Test]
@@ -1964,6 +1994,20 @@ final class UdbSessionCoordinatorTest extends TestCase
         // Second link: reset cleared cache, authority now returns true -> announces FQDN
         $coordinator->onLinkReady($connection);
         self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->firstWrittenLine());
+    }
+
+    private function coordinatorWithLogger(LoggerInterface $logger): UdbSessionCoordinator
+    {
+        return new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            $logger,
+            new UdbOclgView(),
+            scheduler: $this->scheduler,
+            clock: $this->clock,
+            mutations: $this->records,
+        );
     }
 
     private function bootstrapCoordinator(
