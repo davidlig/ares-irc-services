@@ -243,7 +243,7 @@ final class RoleCommandTest extends TestCase
         yield 'added' => [new ManageRoleResult(RoleOutcome::Added, $role), 'role.add.done', ['role' => 'ADMIN']];
         yield 'deleted' => [new ManageRoleResult(RoleOutcome::Deleted, $role), 'role.del.done', ['role' => 'ADMIN']];
         yield 'already exists' => [new ManageRoleResult(RoleOutcome::AlreadyExists, $role), 'role.already_exists', ['role' => 'ADMIN']];
-        yield 'not found' => [new ManageRoleResult(RoleOutcome::NotFound), 'role.not_found', ['role' => 'MISSING']];
+        yield 'not found' => [new ManageRoleResult(RoleOutcome::NotFound), 'role.not_found', ['role' => 'ADMIN']];
         yield 'protected' => [new ManageRoleResult(RoleOutcome::Protected, $role), 'role.protected', ['role' => 'ADMIN']];
         yield 'permission added' => [new ManageRoleResult(RoleOutcome::PermissionAdded, $role, values: ['operserv.kill']), 'role.perms.add.done', ['role' => 'ADMIN', 'perm' => 'operserv.kill']];
         yield 'all permissions added' => [new ManageRoleResult(RoleOutcome::PermissionAddedAll, $role, count: 4), 'role.perms.add.all_done', ['role' => 'ADMIN', 'count' => '4']];
@@ -264,6 +264,23 @@ final class RoleCommandTest extends TestCase
         yield 'operclass cleared' => [new ManageRoleResult(RoleOutcome::OperclassCleared, $role), 'role.operclass.set.cleared', ['role' => 'ADMIN']];
         yield 'operclass unavailable' => [new ManageRoleResult(RoleOutcome::OperclassNotAvailable, availableValues: ['netadmin', 'oper']), 'role.operclass.set.not_available', ['operclass' => 'missing', 'available' => 'netadmin, oper']];
         yield 'operclass unsupported' => [new ManageRoleResult(RoleOutcome::OperclassNotSupported), 'role.operclass.list.not_supported', []];
+    }
+
+    #[Test]
+    public function notFoundMentionsTheRequestedRoleInsteadOfTheProvidedValue(): void
+    {
+        $handler = new RecordingManageRoleHandler(true, new ManageRoleResult(RoleOutcome::NotFound));
+        $notifier = new RecordingRoleNotifier();
+        $translator = new RecordingRoleTranslation();
+
+        new RoleCommand($handler)->execute($this->context(
+            ['VHOST', 'missing', 'SET', 'staff.example'],
+            $notifier,
+            $translator,
+        ));
+
+        self::assertSame(['role.not_found'], $notifier->messages);
+        self::assertSame('MISSING', $translator->parameters['role.not_found']['%role%']);
     }
 
     #[Test]
