@@ -38,7 +38,7 @@ final class NickProjectionResolverTest extends TestCase
         $repository->method('findById')->willReturn($nick);
         $resolver = new NickProjectionResolver($repository);
 
-        $expected = new NickProjection(42, 'Alice', $nick->getPasswordHash(), 'alice.example.test');
+        $expected = new NickProjection(42, 'Alice', $nick->getPasswordHash(), 'alice.example.test', false, null);
         $all = $resolver->all();
         self::assertCount(1, $all);
         self::assertProjection($expected, $all[0]);
@@ -46,6 +46,23 @@ final class NickProjectionResolverTest extends TestCase
         $found = $resolver->findById(42);
         self::assertNotNull($found);
         self::assertProjection($expected, $found);
+    }
+
+    #[Test]
+    public function projectsForbiddenNickWithItsReason(): void
+    {
+        $nick = RegisteredNick::createForbidden('BadNick', 'abuse');
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 7);
+
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findById')->willReturn($nick);
+
+        $found = new NickProjectionResolver($repository)->findById(7);
+
+        self::assertNotNull($found);
+        self::assertTrue($found->forbidden);
+        self::assertSame('abuse', $found->forbiddenReason);
+        self::assertNull($found->passwordHash);
     }
 
     #[Test]
@@ -63,5 +80,7 @@ final class NickProjectionResolverTest extends TestCase
         self::assertSame($expected->nickname, $actual->nickname);
         self::assertSame($expected->passwordHash, $actual->passwordHash);
         self::assertSame($expected->vhost, $actual->vhost);
+        self::assertSame($expected->forbidden, $actual->forbidden);
+        self::assertSame($expected->forbiddenReason, $actual->forbiddenReason);
     }
 }

@@ -142,7 +142,7 @@ final class IrcopOperclassApplierTest extends TestCase
         $role->changeOperclass('services:admin');
         new ReflectionClass($role)->getProperty('id')->setValue($role, 5);
 
-        $nick = new NickProjection(7, 'TestNick', 'hash', null);
+        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null);
 
         $missingNickIrcop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 99, $role);
         $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 7, $role);
@@ -169,7 +169,7 @@ final class IrcopOperclassApplierTest extends TestCase
         $role = OperRole::create('ADMIN');
         new ReflectionClass($role)->getProperty('id')->setValue($role, 5);
 
-        $nick = new NickProjection(7, 'TestNick', 'hash', null);
+        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null);
 
         $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 7, $role);
 

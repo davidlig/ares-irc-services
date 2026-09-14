@@ -136,7 +136,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelRegisteredExportsFounderTopicModesAndOptions(): void
     {
-        $founder = new NickProjection(7, 'founder', null, null);
+        $founder = new NickProjection(7, 'founder', null, null, false, null);
         $nickRepo = $this->createStub(NickProjectionQuery::class);
         $nickRepo->method('findById')->willReturnCallback(static fn (int $id): ?NickProjection => 7 === $id ? $founder : null);
 
@@ -234,7 +234,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     #[Test]
     public function onChannelFounderChangedWritesFounderFromTheUpdatedEntity(): void
     {
-        $founder = new NickProjection(9, 'newfounder', null, null);
+        $founder = new NickProjection(9, 'newfounder', null, null, false, null);
         $channelRepo = $this->createStub(ChannelProjectionQuery::class);
         $channelRepo->method('findByName')->willReturn($this->createChannel('#chan', founderNickId: 9));
 

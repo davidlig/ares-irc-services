@@ -168,11 +168,21 @@ final readonly class UdbRecordExporter
 
     /**
      * Full N-block profile of one nick (pass/vhost/oper).
+     * Forbidden nicks export only their forbid record.
      *
      * @return array<string, string>
      */
     public function nickRecords(NickProjection $nick): array
     {
+        if ($nick->forbidden) {
+            $reason = $nick->forbiddenReason;
+            if (null === $reason || '' === $reason) {
+                return [];
+            }
+
+            return [sprintf('%s::forbid', $nick->nickname) => $reason];
+        }
+
         $records = [];
 
         $udbHash = $this->toUdbPasswordHash($nick->passwordHash);

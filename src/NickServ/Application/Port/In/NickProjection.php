@@ -11,5 +11,7 @@ final readonly class NickProjection
         public string $nickname,
         public ?string $passwordHash,
         public ?string $vhost,
+        public bool $forbidden,
+        public ?string $forbiddenReason,
     ) {}
 }

@@ -68,7 +68,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
 
     private function createNick(string $nickname, ?string $vhost = null): NickProjection
     {
-        return new NickProjection(7, $nickname, 'argon2id:$argon2id$hash', $vhost);
+        return new NickProjection(7, $nickname, 'argon2id:$argon2id$hash', $vhost, false, null);
     }
 
     #[Test]

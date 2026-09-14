@@ -213,11 +213,11 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
 
     private function createNick(string $nickname, string $passwordHash = self::BCRYPT_HASH): NickProjection
     {
-        return new NickProjection(7, $nickname, $passwordHash, null);
+        return new NickProjection(7, $nickname, $passwordHash, null, false, null);
     }
 
     private function createForbidden(string $nickname): NickProjection
     {
-        return new NickProjection(7, $nickname, null, null);
+        return new NickProjection(7, $nickname, null, null, false, null);
     }
 }

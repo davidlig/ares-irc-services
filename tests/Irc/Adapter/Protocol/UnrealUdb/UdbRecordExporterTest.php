@@ -144,6 +144,22 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
+    public function forbiddenNickExportsOnlyForbidRecord(): void
+    {
+        $nick = $this->createNick('BadNick', vhost: 'still.tld', forbidden: true, forbiddenReason: 'abuse');
+
+        self::assertSame(['BadNick::forbid' => 'abuse'], $this->exporter->nickRecords($nick));
+    }
+
+    #[Test]
+    public function forbiddenNickWithoutReasonExportsNothing(): void
+    {
+        $nick = $this->createNick('BadNick', passwordHash: null, forbidden: true);
+
+        self::assertSame([], $this->exporter->nickRecords($nick));
+    }
+
+    #[Test]
     public function channelRecordsBuildFullActiveProfile(): void
     {
         $founder = $this->createNick('founder');
@@ -318,6 +334,18 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
+    public function encodedBlockRecordsIncludeForbiddenNickForbidRecord(): void
+    {
+        $this->nicks->method('all')->willReturn([
+            $this->createNick('BadNick', passwordHash: null, forbidden: true, forbiddenReason: 'abuse'),
+        ]);
+        $encoded = UdbPathCodec::encodePath(['BadNick', 'forbid']);
+
+        self::assertNotNull($encoded);
+        self::assertSame([$encoded => 'abuse'], $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
+    }
+
+    #[Test]
     public function encodedBlockRecordsAggregatesAllChannels(): void
     {
         $this->channels->method('all')->willReturn([
@@ -363,9 +391,14 @@ final class UdbRecordExporterTest extends TestCase
         $this->exporter->encodedBlockRecords(UdbBlock::Nicks);
     }
 
-    private function createNick(string $nickname, ?string $vhost = null, ?string $passwordHash = null): NickProjection
-    {
-        return new NickProjection(42, $nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $vhost);
+    private function createNick(
+        string $nickname,
+        ?string $vhost = null,
+        ?string $passwordHash = null,
+        bool $forbidden = false,
+        ?string $forbiddenReason = null,
+    ): NickProjection {
+        return new NickProjection(42, $nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $vhost, $forbidden, $forbiddenReason);
     }
 
     /**

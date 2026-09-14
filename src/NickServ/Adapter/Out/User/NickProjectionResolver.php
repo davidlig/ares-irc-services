@@ -27,6 +27,15 @@ final readonly class NickProjectionResolver implements NickProjectionQuery
 
     private static function project(RegisteredNick $nick): NickProjection
     {
-        return new NickProjection($nick->getId(), $nick->getNickname(), $nick->getPasswordHash(), $nick->getVhost());
+        $forbidden = $nick->isForbidden();
+
+        return new NickProjection(
+            $nick->getId(),
+            $nick->getNickname(),
+            $nick->getPasswordHash(),
+            $nick->getVhost(),
+            $forbidden,
+            $forbidden ? $nick->getReason() : null,
+        );
     }
 }

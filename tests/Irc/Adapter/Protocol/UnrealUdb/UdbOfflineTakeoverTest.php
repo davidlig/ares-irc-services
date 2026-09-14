@@ -360,7 +360,7 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     #[Test]
     public function rebuildsNickRecordsFromSqlDuringDryRun(): void
     {
-        $nick = new NickProjection(1, 'alice', '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe', null);
+        $nick = new NickProjection(1, 'alice', '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe', null, false, null);
         $repository = $this->createStub(NickProjectionQuery::class);
         $repository->method('all')->willReturn([$nick]);
 
@@ -371,7 +371,7 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     #[Test]
     public function rejectsInvalidRecordsProducedByTheSqlExporter(): void
     {
-        $nick = new NickProjection(1, "invalid\0nick", '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe', null);
+        $nick = new NickProjection(1, "invalid\0nick", '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe', null, false, null);
         $repository = $this->createStub(NickProjectionQuery::class);
         $repository->method('all')->willReturn([$nick]);
         $this->writeValidGeneration();
