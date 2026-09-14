@@ -7,9 +7,11 @@ namespace App\Irc\Application\Port\In;
 /**
  * Reserve service nicknames before pseudo-clients are introduced.
  *
- * Implementations send IRCd-specific commands (SQLINE for UnrealIRCd,
- * ADDLINE Q for InspIRCd v4) to prevent regular users from taking service
- * nicknames. U-lined servers can still introduce the reserved nicks.
+ * Implementations prevent regular users from taking service nicknames through
+ * protocol-native mechanisms: SQLINE/TKL Q-lines (UnrealStandalone), ADDLINE Q
+ * (InspIRCd v4) or authoritative UDB N-block forbid records (UnrealUdb, which
+ * emits no wire command). U-lined servers can still introduce the reserved
+ * nicks.
  */
 interface ServiceNickReservationInterface
 {
@@ -35,7 +37,8 @@ interface ServiceNickReservationInterface
     /**
      * Release a previously reserved nickname.
      *
-     * Removes the SQLINE/ADDLINE reservation, allowing regular users to use the nick.
+     * Removes the protocol reservation (SQLINE/TKL or ADDLINE Q command, or
+     * the UDB forbid record), allowing regular users to use the nick.
      *
      * @param string $nick The nickname to release
      */

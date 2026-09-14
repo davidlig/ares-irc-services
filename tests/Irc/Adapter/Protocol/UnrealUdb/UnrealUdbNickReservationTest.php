@@ -4,76 +4,65 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
-use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNickReservation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
 
 #[CoversClass(UnrealUdbNickReservation::class)]
 final class UnrealUdbNickReservationTest extends TestCase
 {
-    use CreatesUdbRecordWriter;
-
-    /** @var list<string> */
-    private array $written = [];
-
-    private UnrealUdbNickReservation $reservation;
-
-    protected function setUp(): void
+    #[Test]
+    public function reserveNickWritesForbidAndNickservMasksForNickServ(): void
     {
-        $this->written = [];
-        $connection = $this->createStub(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-        $connection->method('isConnected')->willReturn(true);
+        $calls = [];
+        $reservation = new UnrealUdbNickReservation($this->writingWriter($calls, 3, 0));
 
-        $holder = new ActiveConnectionHolder();
-        $reflection = new ReflectionClass($holder);
-        $property = $reflection->getProperty('connection');
-        $property->setValue($holder, $connection);
-        $sidProperty = $reflection->getProperty('serverSid');
-        $sidProperty->setValue($holder, '001');
+        $reservation->reserveNick('NickServ', 'Reserved for network services');
 
-        $this->reservation = new UnrealUdbNickReservation($this->createUdbRecordWriter($holder));
+        self::assertSame([
+            ['insert', 'N', 'NickServ::forbid', 'Reserved for network services'],
+            ['insert', 'S', 'nickserv', 'NickServ!NickServ@services.davidlig.net'],
+            ['insert', 'S', 'ipserv', 'NickServ!NickServ@services.davidlig.net'],
+        ], $calls);
     }
 
     #[Test]
-    public function reserveNickPublishesNickservAndIpservMasksForNickServ(): void
+    public function reserveNickWritesForbidAndChanservMaskForChanServ(): void
     {
-        $this->reservation->reserveNick('NickServ', 'Reserved for network services');
+        $calls = [];
+        $reservation = new UnrealUdbNickReservation($this->writingWriter($calls, 2, 0));
 
-        self::assertSame([], $this->written);
+        $reservation->reserveNick('ChanServ', 'Reserved for network services');
+
+        self::assertSame([
+            ['insert', 'N', 'ChanServ::forbid', 'Reserved for network services'],
+            ['insert', 'S', 'chanserv', 'ChanServ!ChanServ@services.davidlig.net'],
+        ], $calls);
     }
 
     #[Test]
-    public function reserveNickPublishesChanservMaskForChanServ(): void
+    public function reserveNickWritesOnlyForbidForNicksWithoutServiceSetting(): void
     {
-        $this->reservation->reserveNick('ChanServ', 'Reserved for network services');
+        $calls = [];
+        $reservation = new UnrealUdbNickReservation($this->writingWriter($calls, 2, 0));
 
-        self::assertSame([], $this->written);
+        $reservation->reserveNick('MemoServ', 'Reserved for network services');
+        $reservation->reserveNick('OperServ', 'Reserved for network services');
+
+        self::assertSame([
+            ['insert', 'N', 'MemoServ::forbid', 'Reserved for network services'],
+            ['insert', 'N', 'OperServ::forbid', 'Reserved for network services'],
+        ], $calls);
     }
 
     #[Test]
-    public function reserveNickWithCustomConfig(): void
+    public function reserveNickHonoursCustomServiceConfiguration(): void
     {
-        $holder = new ActiveConnectionHolder();
-        $reflection = new ReflectionClass($holder);
-        $property = $reflection->getProperty('connection');
-        $connection = $this->createStub(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-        $connection->method('isConnected')->willReturn(true);
-        $property->setValue($holder, $connection);
-        $sidProperty = $reflection->getProperty('serverSid');
-        $sidProperty->setValue($holder, '001');
-
-        $res = new UnrealUdbNickReservation(
-            $this->createUdbRecordWriter($holder),
+        $calls = [];
+        $reservation = new UnrealUdbNickReservation(
+            $this->writingWriter($calls, 5, 0),
             'CustomNickServ',
             'CustomIdent',
             'CustomChanServ',
@@ -81,47 +70,81 @@ final class UnrealUdbNickReservationTest extends TestCase
             'irc.custom.org',
         );
 
-        $res->reserveNick('customnickserv', 'reason');
-        $res->reserveNick('customchanserv', 'reason');
+        $reservation->reserveNick('customnickserv', 'reason');
+        $reservation->reserveNick('customchanserv', 'reason');
 
-        self::assertSame([], $this->written);
+        self::assertSame([
+            ['insert', 'N', 'customnickserv::forbid', 'reason'],
+            ['insert', 'S', 'nickserv', 'customnickserv!CustomIdent@irc.custom.org'],
+            ['insert', 'S', 'ipserv', 'customnickserv!CustomIdent@irc.custom.org'],
+            ['insert', 'N', 'customchanserv::forbid', 'reason'],
+            ['insert', 'S', 'chanserv', 'customchanserv!CustomChanIdent@irc.custom.org'],
+        ], $calls);
     }
 
     #[Test]
-    public function reserveNickIsNoOpForServicesWithoutSetting(): void
+    public function reserveNickWithDurationWritesNothing(): void
     {
-        $this->reservation->reserveNick('MemoServ', 'Reserved for network services');
-        $this->reservation->reserveNick('OperServ', 'Reserved for network services');
+        $calls = [];
+        $reservation = new UnrealUdbNickReservation($this->writingWriter($calls, 0, 0));
 
-        self::assertSame([], $this->written);
+        $reservation->reserveNickWithDuration('GlobalBot', 86400, 'Temporary pseudo-client');
+
+        self::assertSame([], $calls);
     }
 
     #[Test]
-    public function reserveNickWithDurationIsNoOp(): void
+    public function releaseNickDeletesForbidAndServiceSettings(): void
     {
-        $this->reservation->reserveNickWithDuration('GlobalBot', 86400, 'Temporary pseudo-client');
+        $calls = [];
+        $reservation = new UnrealUdbNickReservation($this->writingWriter($calls, 0, 5));
 
-        self::assertSame([], $this->written);
+        $reservation->releaseNick('NickServ');
+        $reservation->releaseNick('ChanServ');
+
+        self::assertSame([
+            ['delete', 'N', 'NickServ::forbid', ''],
+            ['delete', 'S', 'nickserv', ''],
+            ['delete', 'S', 'ipserv', ''],
+            ['delete', 'N', 'ChanServ::forbid', ''],
+            ['delete', 'S', 'chanserv', ''],
+        ], $calls);
     }
 
     #[Test]
-    public function releaseNickDeletesSettings(): void
+    public function releaseNickDeletesOnlyForbidForNicksWithoutServiceSetting(): void
     {
-        $this->reservation->reserveNick('NickServ', 'Reserved for network services');
-        $this->reservation->reserveNick('ChanServ', 'Reserved for network services');
-        $this->written = [];
+        $calls = [];
+        $reservation = new UnrealUdbNickReservation($this->writingWriter($calls, 0, 1));
 
-        $this->reservation->releaseNick('NickServ');
-        $this->reservation->releaseNick('ChanServ');
+        $reservation->releaseNick('MemoServ');
 
-        self::assertSame([], $this->written);
+        self::assertSame([
+            ['delete', 'N', 'MemoServ::forbid', ''],
+        ], $calls);
     }
 
-    #[Test]
-    public function releaseNickIsNoOpForServicesWithoutSetting(): void
+    /**
+     * @param list<array{string, string, string, string}> $calls
+     */
+    private function writingWriter(array &$calls, int $insertCalls, int $deleteCalls): UdbRecordWriterInterface
     {
-        $this->reservation->releaseNick('MemoServ');
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::exactly($insertCalls))->method('insert')->willReturnCallback(
+            static function (string $block, string $path, string $value) use (&$calls): bool {
+                $calls[] = ['insert', $block, $path, $value];
 
-        self::assertSame([], $this->written);
+                return true;
+            },
+        );
+        $writer->expects(self::exactly($deleteCalls))->method('delete')->willReturnCallback(
+            static function (string $block, string $path) use (&$calls): bool {
+                $calls[] = ['delete', $block, $path, ''];
+
+                return true;
+            },
+        );
+
+        return $writer;
     }
 }
