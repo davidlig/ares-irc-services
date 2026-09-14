@@ -43,7 +43,7 @@ A modular, protocol-agnostic IRC services daemon built with **PHP 8.5**, **Symfo
 
 The port you configure in `.env.local` (`IRC_IRCD_PORT`) must match whatever you set in your IRCd's `link` / `<link>` block.
 
-With the `unrealudb` driver, services are the **sole UDB authority**: all six blocks (`N/C/I/S/L/K`) live in the authoritative services store and are served to the IRCd. The driver targets only the pinned current contract: SHA-256 manifests, snapshot watermarks, epoch-scoped sequenced mutations, `MANIFEST` anti-entropy and `EXP` compare-and-delete. See [the UnrealUdb operations guide](docs/unrealudb/UNREALUDB.md).
+With the `unrealudb` driver, services are the **sole UDB authority**: all six blocks (`N/C/I/S/L/K`) live in the authoritative services store and are served to the IRCd. The driver targets only the pinned current contract: SHA-256 manifests, snapshot watermarks, epoch-scoped sequenced mutations, `MANIFEST` anti-entropy and `EXP` compare-and-delete. `N/C/K` blocks are always rebuilt from the services SQL projections while `I/S/L` remain adapter-owned data; administrative `RAW DB *` rejects `DRP`, and stale `EXP` requests are no-ops.
 
 The driver supports a closed UnrealIRCd mode profile: the core and bundled
 `modules.default.conf` handlers encoded by `UdbSchema`. Custom mode modules,
