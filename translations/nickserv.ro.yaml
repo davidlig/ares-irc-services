@@ -41,6 +41,7 @@ verify:
   short:            "Confirmați adresa de e-mail și activați-vă porecla."
   help:             "Finalizează înregistrarea prin verificarea tokenului trimis la e-mailul dumneavoastră.\nTokenul este valabil timp de 1 oră din momentul înregistrării."
   success:          "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes și acum sunteți identificat."
+  success_native:   "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes. Folosiți autentificarea nativă afișată mai jos."
   invalid_token:    "\x0304✗\x03 Tokenul este invalid sau a expirat. Folosiți \x0303/msg %bot% REGISTER\x03 pentru a o lua de la capăt."
   no_pending:       "\x0304✗\x03 Nu aveți nicio înregistrare în așteptare de verificat."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <poreclă> <parolă>"
   short:            "Identificați-vă ca proprietar al unei porecle."
   help:             "Autentifică sesiunea dumneavoastră cu %nickserv% folosind porecla și parola.\nDupă o identificare reușită veți primi modul înregistrat \x02+r\x02\nși, dacă foloseați o poreclă de oaspete, porecla dumneavoastră înregistrată va fi restaurată."
+  native_syntax:    "/NICK <poreclă>:<parolă> | /NICK <poreclă>!<parolă>"
+  native_short:     "Afișează sintaxa nativă de autentificare a pseudonimului."
+  native_help:      "Acest protocol autentifică conturile prin schimbarea pseudonimului.\nFolosește /NICK <poreclă>:<parolă> sau, dacă pseudonimul este ocupat, /NICK <poreclă>!<parolă>."
+  native_authentication: "\x0307ℹ\x03 Acest protocol gestionează autentificarea prin schimbarea pseudonimului. Folosește \x0303/NICK <poreclă>:<parolă>\x03 sau, dacă pseudonimul este ocupat, \x0303/NICK <poreclă>!<parolă>\x03."
   success:          "\x0303✔\x03 Sunteți acum identificat ca \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Sunteți deja identificat ca \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."

@@ -14,6 +14,8 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Identify\IdentifyNick;
@@ -36,6 +38,7 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             new NickServClientKeyResolver(),
+            $this->authenticationMode(),
         );
 
         self::assertSame('IDENTIFY', $command->getName());
@@ -52,6 +55,57 @@ final class IdentifyCommandTest extends TestCase
     }
 
     #[Test]
+    public function exposesNativeAuthenticationMetadata(): void
+    {
+        $command = new IdentifyCommand(
+            $this->createStub(IdentifyNickHandlerInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            new NickServClientKeyResolver(),
+            $this->authenticationMode(NicknameAuthenticationMode::NativeNick),
+        );
+
+        self::assertSame(0, $command->getMinArgs());
+        self::assertSame('identify.native_syntax', $command->getSyntaxKey());
+        self::assertSame('identify.native_help', $command->getHelpKey());
+        self::assertSame('identify.native_short', $command->getShortDescKey());
+    }
+
+    /** @param list<string> $args */
+    #[Test]
+    #[DataProvider('nativeAuthenticationArguments')]
+    public function redirectsNativeAuthenticationWithoutExecutingTheIdentifyUseCase(array $args): void
+    {
+        $handler = $this->createMock(IdentifyNickHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::never())->method('findByNick');
+        $pendingRegistry = $this->createMock(PendingNickRestoreRegistryInterface::class);
+        $pendingRegistry->expects(self::never())->method('peek');
+
+        $command = new IdentifyCommand(
+            $handler,
+            $userLookup,
+            $pendingRegistry,
+            new NickServClientKeyResolver(),
+            $this->authenticationMode(NicknameAuthenticationMode::NativeNick),
+        );
+
+        $messages = [];
+        $sender = new SenderView('UID1', 'OtherNick', 'ident', 'host', 'cloak', 'ip');
+        $command->execute($this->createContext($sender, $messages, $args));
+
+        self::assertSame(['identify.native_authentication'], $messages);
+    }
+
+    /** @return iterable<string, array{list<string>}> */
+    public static function nativeAuthenticationArguments(): iterable
+    {
+        yield 'without arguments' => [[]];
+        yield 'with legacy credentials' => [['TargetNick', 'secretpass']];
+    }
+
+    #[Test]
     public function ignoresMissingSender(): void
     {
         $handler = $this->createMock(IdentifyNickHandlerInterface::class);
@@ -62,6 +116,7 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             new NickServClientKeyResolver(),
+            $this->authenticationMode(),
         );
 
         $messages = [];
@@ -91,6 +146,7 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             new NickServClientKeyResolver(),
+            $this->authenticationMode(),
         );
 
         $messages = [];
@@ -112,6 +168,7 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             new NickServClientKeyResolver(),
+            $this->authenticationMode(),
         );
 
         /** @var list<array{0: string, 1: array<string, mixed>}> $calls */
@@ -164,7 +221,7 @@ final class IdentifyCommandTest extends TestCase
         $handler = $this->createStub(IdentifyNickHandlerInterface::class);
         $handler->method('handle')->willReturn(IdentifyNickResult::success('Alice', 'custom.vhost', 'en'));
 
-        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver());
+        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver(), $this->authenticationMode());
 
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Alice', 'pass'], notifier: $notifier));
@@ -192,7 +249,7 @@ final class IdentifyCommandTest extends TestCase
         $handler = $this->createStub(IdentifyNickHandlerInterface::class);
         $handler->method('handle')->willReturn(IdentifyNickResult::success('Alice', null, 'es'));
 
-        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver());
+        $command = new IdentifyCommand($handler, $userLookup, $pendingRegistry, new NickServClientKeyResolver(), $this->authenticationMode());
 
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Alice', 'pass'], notifier: $notifier));
@@ -248,5 +305,14 @@ final class IdentifyCommandTest extends TestCase
                 return 'NickServ';
             }
         };
+    }
+
+    private function authenticationMode(
+        NicknameAuthenticationMode $mode = NicknameAuthenticationMode::ServiceCommand,
+    ): NicknameAuthenticationModeQuery {
+        $query = $this->createStub(NicknameAuthenticationModeQuery::class);
+        $query->method('current')->willReturn($mode);
+
+        return $query;
     }
 }

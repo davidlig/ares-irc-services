@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Verify;
 
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\VerificationTokenConsumer;
 
@@ -16,6 +18,7 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
         private VerificationTokenConsumer $tokenConsumer,
         private IdentifiedSessionTracker $identifiedRegistry,
         private Clock $clock,
+        private NicknameAuthenticationModeQuery $authenticationMode,
     ) {}
 
     public function handle(VerifyNick $command): VerifyNickResult
@@ -32,6 +35,10 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
 
         $account->activate();
         $this->nickRepository->save($account);
+
+        if (NicknameAuthenticationMode::NativeNick === $this->authenticationMode->current()) {
+            return VerifyNickResult::successNativeAuthenticationRequired($account->getNickname());
+        }
 
         $this->identifiedRegistry->register($command->senderUid, $account->getNickname());
 

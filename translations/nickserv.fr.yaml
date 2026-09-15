@@ -41,6 +41,7 @@ verify:
   short:            "Confirmer votre adresse e-mail et activer votre surnom."
   help:             "Termine l'enregistrement en vérifiant le jeton envoyé à votre e-mail.\nLe jeton est valable 1 heure à partir du moment de l'enregistrement."
   success:          "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été enregistré avec succès et vous êtes maintenant identifié."
+  success_native:   "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été enregistré avec succès. Utilisez l’authentification native indiquée ci-dessous."
   invalid_token:    "\x0304✗\x03 Le jeton est invalide ou a expiré. Utilisez \x0303/msg %bot% REGISTER\x03 pour recommencer."
   no_pending:       "\x0304✗\x03 Vous n'avez aucun enregistrement en attente à vérifier."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <surnom> <motdepasse>"
   short:            "S'identifier comme le propriétaire d'un surnom."
   help:             "Authentifie votre session auprès de %nickserv% avec votre surnom et mot de passe.\nAprès une identification réussie, vous recevrez le mode enregistré \x02+r\x02\net, si vous utilisiez un surnom invité, votre surnom enregistré sera restauré."
+  native_syntax:    "/NICK <surnom>:<motdepasse> | /NICK <surnom>!<motdepasse>"
+  native_short:     "Affiche la syntaxe native d’authentification du pseudonyme."
+  native_help:      "Ce protocole authentifie les comptes par changement de pseudonyme.\nUtilisez /NICK <surnom>:<motdepasse> ou, si le pseudonyme est occupé, /NICK <surnom>!<motdepasse>."
+  native_authentication: "\x0307ℹ\x03 Ce protocole gère l’authentification par changement de pseudonyme. Utilisez \x0303/NICK <surnom>:<motdepasse>\x03 ou, si le pseudonyme est occupé, \x0303/NICK <surnom>!<motdepasse>\x03."
   success:          "\x0303✔\x03 Vous êtes maintenant identifié en tant que \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Vous êtes déjà identifié en tant que \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."

@@ -41,6 +41,7 @@ verify:
   short:            "Confirmar la vostra adreça de correu i activar el vostre sobrenom."
   help:             "Completa el registre verificant el token enviat al vostre correu.\nEl token és vàlid durant 1 hora des del moment del registre."
   success:          "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat amb èxit i ara esteu identificat."
+  success_native:   "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat correctament. Utilitzeu l'autenticació nativa que es mostra a continuació."
   invalid_token:    "\x0304✗\x03 El token no és vàlid o ha expirat. Utilitzeu \x0303/msg %bot% REGISTER\x03 per començar de nou."
   no_pending:       "\x0304✗\x03 No teniu cap registre pendent per verificar."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <nickname> <password>"
   short:            "Identificar-vos com a propietari d'un sobrenom."
   help:             "Autentica la vostra sessió amb %nickserv% utilitzant el vostre sobrenom i contrasenya.\nDesprés d'una identificació amb èxit rebreu el mode registrat \x02+r\x02\ni, si estàveu utilitzant un sobrenom de convidat, es restaurarà el vostre sobrenom registrat."
+  native_syntax:    "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
+  native_short:     "Mostra la sintaxi d’autenticació nativa per canvi de sobrenom."
+  native_help:      "Aquest protocol autentica els comptes mitjançant canvis de sobrenom.\nUtilitzeu /NICK <nickname>:<password> o, si el sobrenom està ocupat, /NICK <nickname>!<password>."
+  native_authentication: "\x0307ℹ\x03 Aquest protocol gestiona l’autenticació mitjançant canvis de sobrenom. Utilitzeu \x0303/NICK <nickname>:<password>\x03 o, si el sobrenom està ocupat, \x0303/NICK <nickname>!<password>\x03."
   success:          "\x0303✔\x03 Ara esteu identificat com a \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Ja esteu identificat com a \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."

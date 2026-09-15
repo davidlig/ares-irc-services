@@ -41,6 +41,7 @@ verify:
   short:            "Berretsi zure posta elektronikoko helbidea eta aktibatu zure ezizena."
   help:             "Zure posta elektronikora bidalitako tokena egiaztatuz erregistroa osatzen du.\nTokenak ordubeteko balioa du erregistro momentutik."
   success:          "\x0303✔\x03 \x02%nickname%\x02 ezizena arrakastaz erregistratu da eta orain identifikatuta zaude."
+  success_native:   "\x0303✔\x03 \x02%nickname%\x02 ezizena behar bezala erregistratu da. Erabili behean agertzen den jatorrizko autentifikazioa."
   invalid_token:    "\x0304✗\x03 Tokena baliogabea da edo iraungi da. Erabili \x0303/msg %bot% REGISTER\x03 berriro hasteko."
   no_pending:       "\x0304✗\x03 Ez duzu egiaztatzeko zain dagoen erregistrorik."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <ezizena> <pasahitza>"
   short:            "Identifikatu zeure burua ezizen baten jabe gisa."
   help:             "Zure saioa %nickserv% zerbitzuarekin autentikatzen du zure ezizena eta pasahitza erabiliz.\nIdentifikazio arrakastatsu baten ondoren \x02+r\x02 modu erregistratua jasoko duzu\neta, gonbidatu ezizen bat erabiltzen ari bazinen, zure ezizen erregistratua berreskuratuko da."
+  native_syntax:    "/NICK <ezizena>:<pasahitza> | /NICK <ezizena>!<pasahitza>"
+  native_short:     "Erakutsi ezizenaren jatorrizko autentifikazio-sintaxia."
+  native_help:      "Protokolo honek kontuak ezizen-aldaketen bidez autentifikatzen ditu.\nErabili /NICK <ezizena>:<pasahitza> edo, ezizena hartuta badago, /NICK <ezizena>!<pasahitza>."
+  native_authentication: "\x0307ℹ\x03 Protokolo honek autentifikazioa ezizen-aldaketen bidez kudeatzen du. Erabili \x0303/NICK <ezizena>:<pasahitza>\x03 edo, ezizena hartuta badago, \x0303/NICK <ezizena>!<pasahitza>\x03."
   success:          "\x0303✔\x03 Orain \x02%nickname%\x02 gisa identifikatuta zaude."
   already_identified: "\x0307ℹ\x03 Jada \x02%nickname%\x02 gisa identifikatuta zaude."
   not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."

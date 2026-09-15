@@ -9,6 +9,7 @@ use App\Irc\Adapter\Protocol\RawCommandInterception;
 use App\Irc\Adapter\Protocol\RawCommandInterceptorInterface;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
+use App\Irc\Application\Port\In\NativeNicknameAuthenticationInterface;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
@@ -17,7 +18,7 @@ use App\Irc\Application\Port\In\UserModeSupportInterface;
 /**
  * UnrealUdb protocol module: handler, service actions, mode support, nick reservation, and RAW interception.
  */
-final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, NickChangePreservesIdentificationInterface, RawCommandInterceptorInterface
+final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, NativeNicknameAuthenticationInterface, NickChangePreservesIdentificationInterface, RawCommandInterceptorInterface
 {
     public const string PROTOCOL_NAME = 'unrealudb';
 

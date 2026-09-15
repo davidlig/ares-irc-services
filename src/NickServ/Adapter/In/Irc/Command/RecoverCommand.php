@@ -7,6 +7,8 @@ namespace App\NickServ\Adapter\In\Irc\Command;
 use App\NickServ\Adapter\In\Irc\EmailMasker;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\UseCase\Recover\RecoverNick;
 use App\NickServ\Application\UseCase\Recover\RecoverNickHandlerInterface;
 use App\NickServ\Application\UseCase\Recover\RecoverNickOutcome;
@@ -19,7 +21,10 @@ use function sprintf;
 
 final readonly class RecoverCommand implements NickServCommandInterface
 {
-    public function __construct(private RecoverNickHandlerInterface $handler) {}
+    public function __construct(
+        private RecoverNickHandlerInterface $handler,
+        private NicknameAuthenticationModeQuery $authenticationMode,
+    ) {}
 
     public function getName(): string
     {
@@ -141,11 +146,27 @@ final readonly class RecoverCommand implements NickServCommandInterface
                 $context->reply('recover.invalid_token', ['nickname' => $result->nickname ?? '']);
                 break;
             case RecoverNickOutcome::PasswordReset:
-                $identifyCmd = '/msg NickServ IDENTIFY ' . ($result->nickname ?? '') . ' ' . ($result->temporaryPassword ?? '');
+                $identifyCmd = $this->passwordResetAuthenticationCommand($result);
                 $context->reply('recover.success_identify', ['identify_cmd' => $identifyCmd]);
                 $context->reply('recover.success_then_change');
                 break;
         }
+    }
+
+    private function passwordResetAuthenticationCommand(RecoverNickResult $result): string
+    {
+        $nickname = $result->nickname ?? '';
+        $temporaryPassword = $result->temporaryPassword ?? '';
+
+        if (NicknameAuthenticationMode::NativeNick === $this->authenticationMode->current()) {
+            return sprintf(
+                '/NICK %1$s:%2$s | /NICK %1$s!%2$s',
+                $nickname,
+                $temporaryPassword,
+            );
+        }
+
+        return sprintf('/msg NickServ IDENTIFY %s %s', $nickname, $temporaryPassword);
     }
 
     private function decodeIp(string $ipBase64): string

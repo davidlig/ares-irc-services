@@ -13,6 +13,8 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\UseCase\Recover\RecoverNick;
 use App\NickServ\Application\UseCase\Recover\RecoverNickHandlerInterface;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
@@ -33,7 +35,10 @@ final class RecoverCommandTest extends TestCase
     #[Test]
     public function exposesRecoverMetadata(): void
     {
-        $command = new RecoverCommand($this->createStub(RecoverNickHandlerInterface::class));
+        $command = new RecoverCommand(
+            $this->createStub(RecoverNickHandlerInterface::class),
+            $this->authenticationMode(),
+        );
 
         self::assertSame('RECOVER', $command->getName());
         self::assertSame([], $command->getAliases());
@@ -54,7 +59,7 @@ final class RecoverCommandTest extends TestCase
         $handler = $this->createMock(RecoverNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new RecoverCommand($handler);
+        $command = new RecoverCommand($handler, $this->authenticationMode());
         $messages = [];
         $command->execute($this->createContext(null, $messages, ['Target']));
 
@@ -74,7 +79,7 @@ final class RecoverCommandTest extends TestCase
                 && 'ident@host.net' === $dto->senderHost,
         ))->willReturn(RecoverNickResult::tokenSent('user@example.com'));
 
-        $command = new RecoverCommand($handler);
+        $command = new RecoverCommand($handler, $this->authenticationMode());
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
@@ -92,12 +97,32 @@ final class RecoverCommandTest extends TestCase
                 && '*' === $dto->senderIp,
         ))->willReturn(RecoverNickResult::passwordReset('TargetNick', 'new-secret-12'));
 
-        $command = new RecoverCommand($handler);
+        $command = new RecoverCommand($handler, $this->authenticationMode());
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['TargetNick', 'my-token']));
 
         self::assertSame([
             'recover.success_identify [%identify_cmd%: /msg NickServ IDENTIFY TargetNick new-secret-12]',
+            'recover.success_then_change',
+        ], $messages);
+    }
+
+    #[Test]
+    public function presentsNativeNicknameAuthenticationAfterPasswordReset(): void
+    {
+        $sender = new SenderView('UID1', 'SenderNick', 'ident', 'host.net', 'cloak', '*');
+        $handler = $this->createStub(RecoverNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(RecoverNickResult::passwordReset('TargetNick', 'new-secret-12'));
+
+        $command = new RecoverCommand(
+            $handler,
+            $this->authenticationMode(NicknameAuthenticationMode::NativeNick),
+        );
+        $messages = [];
+        $command->execute($this->createContext($sender, $messages, ['TargetNick', 'my-token']));
+
+        self::assertSame([
+            'recover.success_identify [%identify_cmd%: /NICK TargetNick:new-secret-12 | /NICK TargetNick!new-secret-12]',
             'recover.success_then_change',
         ], $messages);
     }
@@ -113,7 +138,7 @@ final class RecoverCommandTest extends TestCase
         $handler = $this->createMock(RecoverNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->willReturn($result);
 
-        $command = new RecoverCommand($handler);
+        $command = new RecoverCommand($handler, $this->authenticationMode());
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
@@ -170,7 +195,7 @@ final class RecoverCommandTest extends TestCase
             static fn (RecoverNick $dto): bool => '???notbase64???' === $dto->senderIp,
         ))->willReturn(RecoverNickResult::mailDeliveryFailed());
 
-        $command = new RecoverCommand($handler);
+        $command = new RecoverCommand($handler, $this->authenticationMode());
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Target']));
 
@@ -235,5 +260,14 @@ final class RecoverCommandTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private function authenticationMode(
+        NicknameAuthenticationMode $mode = NicknameAuthenticationMode::ServiceCommand,
+    ): NicknameAuthenticationModeQuery {
+        $query = $this->createStub(NicknameAuthenticationModeQuery::class);
+        $query->method('current')->willReturn($mode);
+
+        return $query;
     }
 }

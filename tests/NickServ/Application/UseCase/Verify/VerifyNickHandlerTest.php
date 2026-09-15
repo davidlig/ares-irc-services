@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Verify;
 
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\VerificationTokenConsumer;
 use App\NickServ\Application\UseCase\Verify\VerifyNick;
@@ -34,6 +36,7 @@ final class VerifyNickHandlerTest extends TestCase
             $this->createStub(VerificationTokenConsumer::class),
             $this->createStub(IdentifiedSessionTracker::class),
             $this->fixedClock(),
+            $this->authenticationMode(),
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'token123', senderUid: 'UID1'));
@@ -56,6 +59,7 @@ final class VerifyNickHandlerTest extends TestCase
             $this->createStub(VerificationTokenConsumer::class),
             $this->createStub(IdentifiedSessionTracker::class),
             $this->fixedClock(),
+            $this->authenticationMode(),
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'token123', senderUid: 'UID1'));
@@ -80,6 +84,7 @@ final class VerifyNickHandlerTest extends TestCase
             $tokenConsumer,
             $this->createStub(IdentifiedSessionTracker::class),
             $this->fixedClock(),
+            $this->authenticationMode(),
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'bad-token', senderUid: 'UID1'));
@@ -110,11 +115,44 @@ final class VerifyNickHandlerTest extends TestCase
             $tokenConsumer,
             $sessionTracker,
             $this->fixedClock(),
+            $this->authenticationMode(),
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'Alice', token: 'good-token', senderUid: 'UID1'));
 
         self::assertSame(VerifyNickOutcome::Success, $result->outcome);
+        self::assertSame('Alice', $result->nickname);
+    }
+
+    #[Test]
+    public function activatesAccountWithoutRegisteringSessionWhenNativeAuthenticationIsRequired(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('isPending')->willReturn(true);
+        $account->method('getNickname')->willReturn('Alice');
+        $account->expects(self::once())->method('activate');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findByNick')->with('Alice')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $tokenConsumer = $this->createMock(VerificationTokenConsumer::class);
+        $tokenConsumer->expects(self::once())->method('consume')->with('Alice', 'good-token', $this->now())->willReturn(true);
+
+        $sessionTracker = $this->createMock(IdentifiedSessionTracker::class);
+        $sessionTracker->expects(self::never())->method('register');
+
+        $handler = new VerifyNickHandler(
+            $nickRepo,
+            $tokenConsumer,
+            $sessionTracker,
+            $this->fixedClock(),
+            $this->authenticationMode(NicknameAuthenticationMode::NativeNick),
+        );
+
+        $result = $handler->handle(new VerifyNick(nickname: 'Alice', token: 'good-token', senderUid: 'UID1'));
+
+        self::assertSame(VerifyNickOutcome::SuccessNativeAuthenticationRequired, $result->outcome);
         self::assertSame('Alice', $result->nickname);
     }
 
@@ -129,5 +167,14 @@ final class VerifyNickHandlerTest extends TestCase
     private function now(): DateTimeImmutable
     {
         return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+    }
+
+    private function authenticationMode(
+        NicknameAuthenticationMode $mode = NicknameAuthenticationMode::ServiceCommand,
+    ): NicknameAuthenticationModeQuery {
+        $query = $this->createStub(NicknameAuthenticationModeQuery::class);
+        $query->method('current')->willReturn($mode);
+
+        return $query;
     }
 }

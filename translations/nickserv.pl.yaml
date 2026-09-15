@@ -41,6 +41,7 @@ verify:
   short:            "Potwierdź swój adres e-mail i aktywuj nicka."
   help:             "Kończy rejestrację poprzez weryfikację tokenu wysłanego na Twój e-mail.\nToken jest ważny przez 1 godzinę od momentu rejestracji."
   success:          "\x0303✔\x03 Nick \x02%nickname%\x02 został pomyślnie zarejestrowany i jesteś teraz zidentyfikowany."
+  success_native:   "\x0303✔\x03 Nick \x02%nickname%\x02 został pomyślnie zarejestrowany. Użyj natywnego uwierzytelniania pokazanego poniżej."
   invalid_token:    "\x0304✗\x03 Token jest nieprawidłowy lub wygasł. Użyj \x0303/msg %bot% REGISTER\x03 aby zacząć od nowa."
   no_pending:       "\x0304✗\x03 Nie masz oczekującej rejestracji do zweryfikowania."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <nick> <hasło>"
   short:            "Zidentyfikuj się jako właściciel nicka."
   help:             "Uwierzytelnia Twoją sesję z %nickserv% używając Twojego nicka i hasła.\nPo udanej identyfikacji otrzymasz tryb zarejestrowanego \x02+r\x02\ni, jeśli używałeś nicka gościa, Twój zarejestrowany nick zostanie przywrócony."
+  native_syntax:    "/NICK <nick>:<hasło> | /NICK <nick>!<hasło>"
+  native_short:     "Wyświetla natywną składnię uwierzytelniania pseudonimu."
+  native_help:      "Ten protokół uwierzytelnia konta przez zmianę pseudonimu.\nUżyj /NICK <nick>:<hasło> albo, jeśli pseudonim jest zajęty, /NICK <nick>!<hasło>."
+  native_authentication: "\x0307ℹ\x03 Ten protokół obsługuje uwierzytelnianie przez zmianę pseudonimu. Użyj \x0303/NICK <nick>:<hasło>\x03 albo, jeśli pseudonim jest zajęty, \x0303/NICK <nick>!<hasło>\x03."
   success:          "\x0303✔\x03 Jesteś teraz zidentyfikowany jako \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Jesteś już zidentyfikowany jako \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."

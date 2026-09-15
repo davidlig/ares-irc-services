@@ -41,6 +41,7 @@ verify:
   short:            "E-posta adresinizi onaylayın ve rumuzunuzu etkinleştirin."
   help:             "E-postanıza gönderilen tokenı doğrulayarak kaydı tamamlar.\nToken, kayıt anından itibaren 1 saat geçerlidir."
   success:          "\x0303✔\x03 \x02%nickname%\x02 rumuzu başarıyla kaydedildi ve artık kimliğiniz doğrulandı."
+  success_native:   "\x0303✔\x03 \x02%nickname%\x02 rumuzu başarıyla kaydedildi. Aşağıda gösterilen yerel kimlik doğrulamayı kullanın."
   invalid_token:    "\x0304✗\x03 Token geçersiz veya süresi dolmuş. Yeniden başlamak için \x0303/msg %bot% REGISTER\x03 kullanın."
   no_pending:       "\x0304✗\x03 Doğrulayacak bekleyen bir kaydınız yok."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <nickname> <şifre>"
   short:            "Kendinizi bir rumuzun sahibi olarak tanımlayın."
   help:             "Rumuz ve şifrenizi kullanarak oturumunuzu %nickserv% ile doğrular.\nBaşarılı bir kimlik doğrulamadan sonra \x02+r\x02 kayıtlı modunu alacaksınız\nve, misafir rumuzu kullanıyorsanız, kayıtlı rumuzunuz geri yüklenecektir."
+  native_syntax:    "/NICK <nickname>:<şifre> | /NICK <nickname>!<şifre>"
+  native_short:     "Yerel rumuz kimlik doğrulama sözdizimini gösterir."
+  native_help:      "Bu protokol hesapları rumuz değişiklikleriyle doğrular.\n/NICK <nickname>:<şifre> kullanın veya rumuz kullanımdaysa /NICK <nickname>!<şifre> kullanın."
+  native_authentication: "\x0307ℹ\x03 Bu protokol kimlik doğrulamayı rumuz değişiklikleriyle yönetir. \x0303/NICK <nickname>:<şifre>\x03 kullanın veya rumuz kullanımdaysa \x0303/NICK <nickname>!<şifre>\x03 kullanın."
   success:          "\x0303✔\x03 Artık \x02%nickname%\x02 olarak tanımlandınız."
   already_identified: "\x0307ℹ\x03 Zaten \x02%nickname%\x02 olarak tanımlısınız."
   not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."

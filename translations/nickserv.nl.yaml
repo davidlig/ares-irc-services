@@ -41,6 +41,7 @@ verify:
   short:            "Bevestig uw e-mailadres en activeer uw bijnaam."
   help:             "Voltooit de registratie door de token te verifiëren die naar uw e-mail is verzonden.\nDe token is 1 uur geldig vanaf het moment van registratie."
   success:          "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is succesvol geregistreerd en u bent nu geïdentificeerd."
+  success_native:   "\x0303✔\x03 De bijnaam \x02%nickname%\x02 is succesvol geregistreerd. Gebruik de hieronder weergegeven native authenticatie."
   invalid_token:    "\x0304✗\x03 De token is ongeldig of verlopen. Gebruik \x0303/msg %bot% REGISTER\x03 om opnieuw te beginnen."
   no_pending:       "\x0304✗\x03 U heeft geen lopende registratie om te verifiëren."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <bijnaam> <wachtwoord>"
   short:            "Identificeer uzelf als de eigenaar van een bijnaam."
   help:             "Authenticeert uw sessie bij %nickserv% met uw bijnaam en wachtwoord.\nNa succesvolle identificatie ontvangt u de geregistreerde modus \x02+r\x02\nen, als u een gastbijnaam gebruikte, wordt uw geregistreerde bijnaam hersteld."
+  native_syntax:    "/NICK <bijnaam>:<wachtwoord> | /NICK <bijnaam>!<wachtwoord>"
+  native_short:     "Toont de native syntaxis voor nickname-authenticatie."
+  native_help:      "Dit protocol authenticeert accounts via nicknamewijzigingen.\nGebruik /NICK <bijnaam>:<wachtwoord> of, als de nickname bezet is, /NICK <bijnaam>!<wachtwoord>."
+  native_authentication: "\x0307ℹ\x03 Dit protocol beheert authenticatie via nicknamewijzigingen. Gebruik \x0303/NICK <bijnaam>:<wachtwoord>\x03 of, als de nickname bezet is, \x0303/NICK <bijnaam>!<wachtwoord>\x03."
   success:          "\x0303✔\x03 U bent nu geïdentificeerd als \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 U bent al geïdentificeerd als \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."

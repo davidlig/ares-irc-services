@@ -116,6 +116,22 @@ final class VerifyCommandTest extends TestCase
         yield 'invalid token' => [VerifyNickResult::invalidToken(), 'verify.invalid_token', []];
     }
 
+    #[Test]
+    public function presentsNativeAuthenticationWithoutSettingTheUserAccount(): void
+    {
+        $sender = new SenderView('UID1', 'Alice', 'ident', 'host', 'cloak', 'ip');
+        $handler = $this->createStub(VerifyNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(VerifyNickResult::successNativeAuthenticationRequired('Alice'));
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserAccount');
+
+        $command = new VerifyCommand($handler);
+        $calls = [];
+        $command->execute($this->createContext($sender, $calls, ['tok123'], notifier: $notifier));
+
+        self::assertSame(['verify.success_native', 'identify.native_authentication'], $calls);
+    }
+
     /**
      * @param list<mixed>  $messages
      * @param list<string> $args

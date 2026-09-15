@@ -41,6 +41,7 @@ verify:
   short:            "Conferma il suo indirizzo email e attiva il suo nickname."
   help:             "Completa la registrazione verificando il token inviato alla sua email.\nIl token è valido per 1 ora dal momento della registrazione."
   success:          "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato registrato con successo e ora è identificato."
+  success_native:   "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato registrato correttamente. Utilizzi l’autenticazione nativa mostrata di seguito."
   invalid_token:    "\x0304✗\x03 Il token non è valido o è scaduto. Usi \x0303/msg %bot% REGISTER\x03 per ricominciare."
   no_pending:       "\x0304✗\x03 Non ha nessuna registrazione in sospeso da verificare."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <nickname> <password>"
   short:            "Si identifichi come proprietario di un nickname."
   help:             "Autentica la sua sessione con %nickserv% usando nickname e password.\nDopo un'identificazione riuscita riceverà la modalità registrata \x02+r\x02\ne, se stava usando un nick ospite, il suo nick registrato sarà ripristinato."
+  native_syntax:    "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
+  native_short:     "Mostra la sintassi nativa per l’autenticazione del nickname."
+  native_help:      "Questo protocollo autentica gli account tramite cambi di nickname.\nUsa /NICK <nickname>:<password> oppure, se il nickname è occupato, /NICK <nickname>!<password>."
+  native_authentication: "\x0307ℹ\x03 Questo protocollo gestisce l’autenticazione tramite cambi di nickname. Usa \x0303/NICK <nickname>:<password>\x03 oppure, se il nickname è occupato, \x0303/NICK <nickname>!<password>\x03."
   success:          "\x0303✔\x03 Ora è identificato come \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 È già identificato come \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è registrato."

@@ -99,6 +99,12 @@ final readonly class VerifyCommand implements NickServCommandInterface
                     $context->reply('verify.success', ['nickname' => $result->nickname]);
                 }
                 break;
+            case VerifyNickOutcome::SuccessNativeAuthenticationRequired:
+                if (null !== $result->nickname) {
+                    $context->reply('verify.success_native', ['nickname' => $result->nickname]);
+                    $context->reply('identify.native_authentication');
+                }
+                break;
             case VerifyNickOutcome::NoPending:
                 $context->reply('verify.no_pending');
                 break;

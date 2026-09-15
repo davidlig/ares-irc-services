@@ -16,6 +16,11 @@ final readonly class VerifyNickResult
         return new self(VerifyNickOutcome::Success, nickname: $nickname);
     }
 
+    public static function successNativeAuthenticationRequired(string $nickname): self
+    {
+        return new self(VerifyNickOutcome::SuccessNativeAuthenticationRequired, nickname: $nickname);
+    }
+
     public static function noPending(): self
     {
         return new self(VerifyNickOutcome::NoPending);

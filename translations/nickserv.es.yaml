@@ -41,6 +41,7 @@ verify:
   short:            "Confirma tu dirección de email y activa tu apodo."
   help:             "Completa el registro verificando el token enviado a tu correo.\nEl token tiene una validez de 1 hora desde el momento del registro."
   success:          "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido registrado y ya estás identificado."
+  success_native:   "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido registrado correctamente. Usa la autenticación nativa que se muestra a continuación."
   invalid_token:    "\x0304✗\x03 El token no es válido o ha expirado. Usa \x0303/msg %bot% REGISTER\x03 para iniciar el proceso de nuevo."
   no_pending:       "\x0304✗\x03 No tienes ningún registro pendiente de verificación."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <apodo> <contraseña>"
   short:            "Acredita tu identidad como dueño de un apodo."
   help:             "Autentica tu sesión con %nickserv% indicando tu apodo y contraseña.\nTras identificarte recibirás el modo registrado \x02+r\x02 y, si estabas usando\nun apodo de invitado, recuperarás tu apodo registrado automáticamente."
+  native_syntax:    "/NICK <apodo>:<contraseña> | /NICK <apodo>!<contraseña>"
+  native_short:     "Muestra la sintaxis de autenticación nativa por cambio de apodo."
+  native_help:      "Este protocolo autentica las cuentas mediante cambios de apodo.\nUsa /NICK <apodo>:<contraseña> o, si el apodo está ocupado, /NICK <apodo>!<contraseña>."
+  native_authentication: "\x0307ℹ\x03 Este protocolo gestiona la autenticación mediante cambios de apodo. Usa \x0303/NICK <apodo>:<contraseña>\x03 o, si el apodo está ocupado, \x0303/NICK <apodo>!<contraseña>\x03."
   success:          "\x0303✔\x03 Ahora estás identificado como \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Ya estás identificado como \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."

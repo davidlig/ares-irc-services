@@ -41,6 +41,7 @@ verify:
   short:            "Confirm your email address and activate your nickname."
   help:             "Completes the registration by verifying the token sent to your email.\nThe token is valid for 1 hour from the moment of registration."
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 has been successfully registered and you are now identified."
+  success_native:   "\x0303✔\x03 Nickname \x02%nickname%\x02 has been successfully registered. Use the native authentication shown below."
   invalid_token:    "\x0304✗\x03 The token is invalid or has expired. Use \x0303/msg %bot% REGISTER\x03 to start over."
   no_pending:       "\x0304✗\x03 You have no pending registration to verify."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <nickname> <password>"
   short:            "Identify yourself as the owner of a nickname."
   help:             "Authenticates your session with %nickserv% using your nickname and password.\nAfter a successful identification you will receive the registered mode \x02+r\x02\nand, if you were using a guest nick, your registered nick will be restored."
+  native_syntax:    "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
+  native_short:     "Show the native nickname authentication syntax."
+  native_help:      "This protocol authenticates accounts through nickname changes.\nUse /NICK <nickname>:<password> or, if the nickname is in use, /NICK <nickname>!<password>."
+  native_authentication: "\x0307ℹ\x03 This protocol handles authentication through nickname changes. Use \x0303/NICK <nickname>:<password>\x03 or, if the nickname is in use, \x0303/NICK <nickname>!<password>\x03."
   success:          "\x0303✔\x03 You are now identified as \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 You are already identified as \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."

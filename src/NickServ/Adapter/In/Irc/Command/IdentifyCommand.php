@@ -8,6 +8,8 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\Out\User\IrcNetworkUserMapper;
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Identify\IdentifyNick;
@@ -26,6 +28,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private NetworkUserLookupPort $userLookup,
         private PendingNickRestoreRegistryInterface $pendingRegistry,
         private NickServClientKeyResolver $clientKeyResolver,
+        private NicknameAuthenticationModeQuery $authenticationMode,
     ) {}
 
     public function getName(): string
@@ -40,17 +43,17 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 2;
+        return $this->usesNativeAuthentication() ? 0 : 2;
     }
 
     public function getSyntaxKey(): string
     {
-        return 'identify.syntax';
+        return $this->usesNativeAuthentication() ? 'identify.native_syntax' : 'identify.syntax';
     }
 
     public function getHelpKey(): string
     {
-        return 'identify.help';
+        return $this->usesNativeAuthentication() ? 'identify.native_help' : 'identify.help';
     }
 
     public function getOrder(): int
@@ -60,7 +63,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
     public function getShortDescKey(): string
     {
-        return 'identify.short';
+        return $this->usesNativeAuthentication() ? 'identify.native_short' : 'identify.short';
     }
 
     public function getSubCommandHelp(): array
@@ -90,6 +93,12 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             return null;
         }
 
+        if ($this->usesNativeAuthentication()) {
+            $context->reply('identify.native_authentication');
+
+            return null;
+        }
+
         $targetNick = $context->args[0];
         $password = $context->args[1];
         $clientKey = $this->clientKeyResolver->getClientKey(IrcNetworkUserMapper::map($sender));
@@ -106,6 +115,11 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         $this->present($context, $result);
 
         return null;
+    }
+
+    private function usesNativeAuthentication(): bool
+    {
+        return NicknameAuthenticationMode::NativeNick === $this->authenticationMode->current();
     }
 
     private function present(NickServContext $context, IdentifyNickResult $result): void

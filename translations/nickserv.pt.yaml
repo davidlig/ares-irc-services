@@ -41,6 +41,7 @@ verify:
   short:            "Confirme o seu endereço de email e ative o seu nickname."
   help:             "Conclui o registo verificando o token enviado para o seu email.\nO token é válido por 1 hora a partir do momento do registo."
   success:          "\x0303✔\x03 O nickname \x02%nickname%\x02 foi registado com sucesso e agora está identificado."
+  success_native:   "\x0303✔\x03 O nickname \x02%nickname%\x02 foi registado com sucesso. Use a autenticação nativa indicada abaixo."
   invalid_token:    "\x0304✗\x03 O token é inválido ou expirou. Use \x0303/msg %bot% REGISTER\x03 para recomeçar."
   no_pending:       "\x0304✗\x03 Não tem nenhum registo pendente para verificar."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <nickname> <palavra-passe>"
   short:            "Identifique-se como proprietário de um nickname."
   help:             "Autentica a sua sessão com %nickserv% usando o seu nickname e palavra-passe.\nApós uma identificação bem-sucedida receberá o modo registado \x02+r\x02\ne, se estava a usar um nick de convidado, o seu nick registado será restaurado."
+  native_syntax:    "/NICK <nickname>:<palavra-passe> | /NICK <nickname>!<palavra-passe>"
+  native_short:     "Mostra a sintaxe nativa de autenticação do apelido."
+  native_help:      "Este protocolo autentica contas através de mudanças de apelido.\nUse /NICK <nickname>:<palavra-passe> ou, se o apelido estiver ocupado, /NICK <nickname>!<palavra-passe>."
+  native_authentication: "\x0307ℹ\x03 Este protocolo gere a autenticação através de mudanças de apelido. Use \x0303/NICK <nickname>:<palavra-passe>\x03 ou, se o apelido estiver ocupado, \x0303/NICK <nickname>!<palavra-passe>\x03."
   success:          "\x0303✔\x03 Está agora identificado como \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Já está identificado como \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."

@@ -183,6 +183,9 @@ services:
     App\NickServ\Application\Port\Out\NickChangeIdentificationPolicy:
         alias: App\NickServ\Adapter\Out\Protocol\ProtocolNickChangeIdentificationPolicy
 
+    App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery:
+        alias: App\NickServ\Adapter\Out\Protocol\ProtocolNicknameAuthenticationModeQuery
+
     App\NickServ\Application\Port\Out\NicknameReservation:
         alias: App\NickServ\Adapter\Out\Protocol\ProtocolNicknameReservation
 

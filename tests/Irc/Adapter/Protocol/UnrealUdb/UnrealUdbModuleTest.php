@@ -19,6 +19,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbUserModeSupport;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandHandlerInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
+use App\Irc\Application\Port\In\NativeNicknameAuthenticationInterface;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -130,6 +131,15 @@ final class UnrealUdbModuleTest extends TestCase
 
         $implementedInterfaces = class_implements($module);
         self::assertArrayHasKey(NickChangePreservesIdentificationInterface::class, $implementedInterfaces);
+    }
+
+    #[Test]
+    public function implementsNativeNicknameAuthenticationInterface(): void
+    {
+        $module = $this->createModule();
+
+        $implementedInterfaces = class_implements($module);
+        self::assertArrayHasKey(NativeNicknameAuthenticationInterface::class, $implementedInterfaces);
     }
 
     #[Test]

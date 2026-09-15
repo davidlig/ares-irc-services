@@ -41,6 +41,7 @@ verify:
   short:            "Ihre E-Mail-Adresse bestätigen und Ihren Nickname aktivieren."
   help:             "Schließt die Registrierung ab, indem das an Ihre E-Mail gesendete Token verifiziert wird.\nDas Token ist ab dem Zeitpunkt der Registrierung 1 Stunde lang gültig."
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 wurde erfolgreich registriert und Sie sind jetzt identifiziert."
+  success_native:   "\x0303✔\x03 Nickname \x02%nickname%\x02 wurde erfolgreich registriert. Verwenden Sie die unten gezeigte native Authentifizierung."
   invalid_token:    "\x0304✗\x03 Das Token ist ungültig oder abgelaufen. Verwenden Sie \x0303/msg %bot% REGISTER\x03, um neu zu beginnen."
   no_pending:       "\x0304✗\x03 Sie haben keine ausstehende Registrierung zur Verifizierung."
 
@@ -75,6 +76,10 @@ identify:
   syntax:           "IDENTIFY <nickname> <Passwort>"
   short:            "Sich als Besitzer eines Nicknames identifizieren."
   help:             "Authentifiziert Ihre Sitzung bei %nickserv% mit Ihrem Nickname und Passwort.\nNach erfolgreicher Identifizierung erhalten Sie den registrierten Modus \x02+r\x02\nund, falls Sie einen Gast-Nick verwendet haben, wird Ihr registrierter Nick wiederhergestellt."
+  native_syntax:    "/NICK <nickname>:<Passwort> | /NICK <nickname>!<Passwort>"
+  native_short:     "Zeigt die native Syntax zur Nickname-Authentifizierung."
+  native_help:      "Dieses Protokoll authentifiziert Konten durch Nickname-Wechsel.\nVerwende /NICK <nickname>:<Passwort> oder, wenn der Nickname belegt ist, /NICK <nickname>!<Passwort>."
+  native_authentication: "\x0307ℹ\x03 Dieses Protokoll verwaltet die Authentifizierung durch Nickname-Wechsel. Verwende \x0303/NICK <nickname>:<Passwort>\x03 oder, wenn der Nickname belegt ist, \x0303/NICK <nickname>!<Passwort>\x03."
   success:          "\x0303✔\x03 Sie sind jetzt identifiziert als \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Sie sind bereits identifiziert als \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."

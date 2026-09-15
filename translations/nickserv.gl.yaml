@@ -49,6 +49,7 @@ verify:
   short:            "Confirmar o seu enderezo de correo electrónico e activar o seu alcume."
   help:             "Completa o rexistro verificando o token enviado ao seu correo electrónico.\nO token é válido durante 1 hora desde o momento do rexistro."
   success:          "\x0303✔\x03 O alcume \x02%nickname%\x02 foi rexistrado con éxito e agora está identificado."
+  success_native:   "\x0303✔\x03 O alcume \x02%nickname%\x02 rexistrouse correctamente. Usa a autenticación nativa que se mostra a continuación."
   invalid_token:    "\x0304✗\x03 O token non é válido ou caducou. Use \x0303/msg %bot% REGISTER\x03 para comezar de novo."
   no_pending:       "\x0304✗\x03 Non ten ningún rexistro pendente que verificar."
 
@@ -83,6 +84,10 @@ identify:
   syntax:           "IDENTIFY <alcume> <contrasinal>"
   short:            "Identificarse como o propietario dun alcume."
   help:             "Autentica a súa sesión con %nickserv% usando o seu alcume e contrasinal.\nDespois dunha identificación exitosa recibirá o modo rexistrado \x02+r\x02\ne, se estaba usando un alcume de convidado, restauraráselle o seu alcume rexistrado."
+  native_syntax:    "/NICK <alcume>:<contrasinal> | /NICK <alcume>!<contrasinal>"
+  native_short:     "Mostra a sintaxe de autenticación nativa por cambio de alcume."
+  native_help:      "Este protocolo autentica as contas mediante cambios de alcume.\nUsa /NICK <alcume>:<contrasinal> ou, se o alcume está ocupado, /NICK <alcume>!<contrasinal>."
+  native_authentication: "\x0307ℹ\x03 Este protocolo xestiona a autenticación mediante cambios de alcume. Usa \x0303/NICK <alcume>:<contrasinal>\x03 ou, se o alcume está ocupado, \x0303/NICK <alcume>!<contrasinal>\x03."
   success:          "\x0303✔\x03 Agora está identificado como \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Xa está identificado como \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
