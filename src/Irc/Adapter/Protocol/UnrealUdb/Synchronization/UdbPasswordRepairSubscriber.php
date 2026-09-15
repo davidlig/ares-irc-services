@@ -18,7 +18,7 @@ use function strtolower;
 
 /**
  * Repairs N-block pass records so the authoritative store always projects the
- * SQL password hash of every account.
+ * SQL password hash of every verified account.
  *
  * History: legacy code seeded and synced UDB passwords as unsalted `sha256:`
  * digests while PHP-only hashes (bcrypt `$2y$`) were silently skipped by the
@@ -28,8 +28,9 @@ use function strtolower;
  *
  * - inserts the normalized SQL hash when the pass record is missing,
  * - replaces legacy `sha256:` records and any raw UDB-incompatible value,
- * - never touches explicit `crypt:` / `argon2id:` records (OperServ RAW
- *   mutations own those), only when they already match the SQL projection,
+ * - for verified accounts, never overwrites explicit `crypt:` / `argon2id:`
+ *   records because OperServ RAW mutations own those,
+ * - deletes every pass record for accounts still awaiting verification,
  * - deletes the pass record when SQL holds no hash for the account.
  *
  * The repair is idempotent and safe to run on every sync.
@@ -73,6 +74,15 @@ final readonly class UdbPasswordRepairSubscriber implements EventSubscriberInter
             }
 
             $current = $storeHashes[strtolower($encodedPath)] ?? null;
+
+            if ($nick->pendingVerification) {
+                if (null !== $current && $this->recordWriter->delete(self::BLOCK, sprintf('%s::pass', $nick->nickname))) {
+                    ++$repaired;
+                }
+
+                continue;
+            }
+
             $sqlHash = $nick->passwordHash;
 
             if (null === $sqlHash || '' === $sqlHash) {

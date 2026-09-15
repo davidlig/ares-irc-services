@@ -548,7 +548,7 @@ final class IrcopModeApplierTest extends TestCase
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null);
+        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null, false);
 
         $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn($nick);
@@ -632,7 +632,7 @@ final class IrcopModeApplierTest extends TestCase
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null);
+        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null, false);
 
         $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn($nick);
@@ -695,7 +695,7 @@ final class IrcopModeApplierTest extends TestCase
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null);
+        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null, false);
 
         $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn($nick);
@@ -740,7 +740,7 @@ final class IrcopModeApplierTest extends TestCase
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null);
+        $nick = new NickProjection(7, 'TestNick', 'hash', null, false, null, false);
 
         $nickRepository = $this->createStub(NickProjectionQuery::class);
         $nickRepository->method('findById')->willReturn($nick);

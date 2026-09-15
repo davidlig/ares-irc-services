@@ -46,7 +46,7 @@ final class UdbStoreInitializerTest extends TestCase
 
     private function createExporter(bool $withChannelAndGline = false): UdbRecordExporter
     {
-        $nick = new NickProjection(7, 'david', self::BCRYPT_HASH, 'david.example.net', false, null);
+        $nick = new NickProjection(7, 'david', self::BCRYPT_HASH, 'david.example.net', false, null, false);
         $nicks = $this->createStub(NickProjectionQuery::class);
         $nicks->method('all')->willReturn([$nick]);
         $nicks->method('findById')->willReturn($nick);

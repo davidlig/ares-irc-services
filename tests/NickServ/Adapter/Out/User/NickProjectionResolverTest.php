@@ -38,7 +38,7 @@ final class NickProjectionResolverTest extends TestCase
         $repository->method('findById')->willReturn($nick);
         $resolver = new NickProjectionResolver($repository);
 
-        $expected = new NickProjection(42, 'Alice', $nick->getPasswordHash(), 'alice.example.test', false, null);
+        $expected = new NickProjection(42, 'Alice', $nick->getPasswordHash(), 'alice.example.test', false, null, false);
         $all = $resolver->all();
         self::assertCount(1, $all);
         self::assertProjection($expected, $all[0]);
@@ -63,6 +63,29 @@ final class NickProjectionResolverTest extends TestCase
         self::assertTrue($found->forbidden);
         self::assertSame('abuse', $found->forbiddenReason);
         self::assertNull($found->passwordHash);
+        self::assertFalse($found->pendingVerification);
+    }
+
+    #[Test]
+    public function projectsPendingVerificationState(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'PendingNick',
+            '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe',
+            'pending@example.test',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable(),
+        );
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 8);
+
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findById')->willReturn($nick);
+
+        $found = new NickProjectionResolver($repository)->findById(8);
+
+        self::assertNotNull($found);
+        self::assertTrue($found->pendingVerification);
     }
 
     #[Test]
@@ -82,5 +105,6 @@ final class NickProjectionResolverTest extends TestCase
         self::assertSame($expected->vhost, $actual->vhost);
         self::assertSame($expected->forbidden, $actual->forbidden);
         self::assertSame($expected->forbiddenReason, $actual->forbiddenReason);
+        self::assertSame($expected->pendingVerification, $actual->pendingVerification);
     }
 }

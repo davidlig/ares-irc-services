@@ -36,6 +36,7 @@ final readonly class NickProjectionResolver implements NickProjectionQuery
             $nick->getVhost(),
             $forbidden,
             $forbidden ? $nick->getReason() : null,
+            $nick->isPending(),
         );
     }
 }

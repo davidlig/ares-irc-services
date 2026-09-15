@@ -174,6 +174,10 @@ final readonly class UdbRecordExporter
      */
     public function nickRecords(NickProjection $nick): array
     {
+        if ($nick->pendingVerification) {
+            return [];
+        }
+
         if ($nick->forbidden) {
             $reason = $nick->forbiddenReason;
             if (null === $reason || '' === $reason) {

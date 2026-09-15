@@ -222,7 +222,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null);
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
 
         $nickRepo = $this->createStub(NickProjectionQuery::class);
         $nickRepo->method('findById')->willReturn($nick);
@@ -263,7 +263,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null);
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
 
         $nickRepo = $this->createStub(NickProjectionQuery::class);
         $nickRepo->method('findById')->willReturn($nick);
@@ -304,7 +304,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null);
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
 
         $nickRepo = $this->createStub(NickProjectionQuery::class);
         $nickRepo->method('findById')->willReturn($nick);
@@ -456,7 +456,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null);
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
 
         $nickRepo = $this->createStub(NickProjectionQuery::class);
         $nickRepo->method('findById')->willReturn($nick);
@@ -495,7 +495,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null);
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
 
         $nickRepo = $this->createStub(NickProjectionQuery::class);
         $nickRepo->method('findById')->willReturn($nick);
@@ -556,7 +556,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = new NickProjection(123, 'davidlig', 'hash', 'personal.vhost', false, null);
+        $nick = new NickProjection(123, 'davidlig', 'hash', 'personal.vhost', false, null, false);
 
         $nickRepo = $this->createStub(NickProjectionQuery::class);
         $nickRepo->method('findById')->willReturn($nick);

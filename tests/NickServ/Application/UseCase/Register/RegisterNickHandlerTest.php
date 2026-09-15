@@ -7,12 +7,10 @@ namespace App\Tests\NickServ\Application\UseCase\Register;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
-use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
 use App\NickServ\Application\Port\Out\RegistrationThrottle;
 use App\NickServ\Application\Port\Out\RegistrationVerificationStore;
 use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
-use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Application\UseCase\Register\RegisterNickHandler;
 use App\NickServ\Application\UseCase\Register\RegisterNickOutcome;
@@ -141,12 +139,6 @@ final class RegisterNickHandlerTest extends TestCase
             'deterministic-token',
             self::callback(fn (DateTimeImmutable $expiresAt): bool => $this->now->modify('+1800 seconds') == $expiresAt),
         );
-        $publisher = $this->createMock(RegistrationEventPublisher::class);
-        $publisher->expects(self::once())->method('publish')->with(self::callback(
-            static fn (NickPasswordHashAvailable $event): bool => null === $event->nickId
-                && 'NewNick' === $event->nickname
-                && 'hashed-password' === $event->passwordHash,
-        ));
         $mail = $this->createMock(RegistrationMailSender::class);
         $mail->expects(self::once())->method('sendVerification')->with(
             'NewNick',
@@ -163,7 +155,6 @@ final class RegisterNickHandlerTest extends TestCase
             passwordHasher: $hasher,
             tokenGenerator: $tokenGenerator,
             verificationStore: $verificationStore,
-            publisher: $publisher,
             mail: $mail,
             throttle: $throttle,
             tokenTtl: 1800,
@@ -182,8 +173,6 @@ final class RegisterNickHandlerTest extends TestCase
         $repository->expects(self::once())->method('save');
         $verificationStore = $this->createMock(RegistrationVerificationStore::class);
         $verificationStore->expects(self::once())->method('store');
-        $publisher = $this->createMock(RegistrationEventPublisher::class);
-        $publisher->expects(self::once())->method('publish');
         $mail = $this->createMock(RegistrationMailSender::class);
         $mail->expects(self::once())->method('sendVerification')->willThrowException(new RuntimeException('transport failed'));
         $throttle = $this->createMock(RegistrationThrottle::class);
@@ -195,7 +184,6 @@ final class RegisterNickHandlerTest extends TestCase
             passwordHasher: $this->passwordHasher(),
             tokenGenerator: $this->tokenGenerator(),
             verificationStore: $verificationStore,
-            publisher: $publisher,
             mail: $mail,
             throttle: $throttle,
         )->handle($this->input());
@@ -217,7 +205,6 @@ final class RegisterNickHandlerTest extends TestCase
         ?RegistrationVerificationStore $verificationStore = null,
         ?RegistrationThrottle $throttle = null,
         ?RegistrationMailSender $mail = null,
-        ?RegistrationEventPublisher $publisher = null,
         int $tokenTtl = 3600,
         string $guestPrefix = 'Guest-',
     ): RegisterNickHandler {
@@ -240,7 +227,6 @@ final class RegisterNickHandlerTest extends TestCase
             $verificationStore ?? $this->createStub(RegistrationVerificationStore::class),
             $throttle,
             $mail ?? $this->createStub(RegistrationMailSender::class),
-            $publisher ?? $this->createStub(RegistrationEventPublisher::class),
             300,
             $tokenTtl,
             $guestPrefix,

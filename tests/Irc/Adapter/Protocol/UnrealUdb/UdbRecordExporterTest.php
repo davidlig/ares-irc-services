@@ -144,6 +144,18 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
+    public function pendingVerificationNickExportsNoRecords(): void
+    {
+        $hash = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';
+        $nick = $this->createNick('pending', vhost: 'pending.example', passwordHash: $hash, pendingVerification: true);
+        $operators = $this->createStub(OperatorNetworkProjectionQuery::class);
+        $operators->method('findForNick')->willReturn(new OperatorNetworkProjection($nick->id, null, 'services:netadmin'));
+        $exporter = $this->createExporterWithOperators($operators);
+
+        self::assertSame([], $exporter->nickRecords($nick));
+    }
+
+    #[Test]
     public function forbiddenNickExportsOnlyForbidRecord(): void
     {
         $nick = $this->createNick('BadNick', vhost: 'still.tld', forbidden: true, forbiddenReason: 'abuse');
@@ -397,8 +409,9 @@ final class UdbRecordExporterTest extends TestCase
         ?string $passwordHash = null,
         bool $forbidden = false,
         ?string $forbiddenReason = null,
+        bool $pendingVerification = false,
     ): NickProjection {
-        return new NickProjection(42, $nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $vhost, $forbidden, $forbiddenReason);
+        return new NickProjection(42, $nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $vhost, $forbidden, $forbiddenReason, $pendingVerification);
     }
 
     /**

@@ -113,6 +113,35 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function deletesProtectedPassRecordsForPendingVerificationAccounts(): void
+    {
+        $deleted = [];
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::exactly(2))->method('delete')->willReturnCallback(
+            static function (string $block, string $path) use (&$deleted): bool {
+                $deleted[$path] = $block;
+
+                return true;
+            },
+        );
+        $writer->expects(self::never())->method('insert');
+
+        $subscriber = $this->createSubscriber(writer: $writer, nicks: [
+            $this->createNick('PendingCrypt', pendingVerification: true),
+            $this->createNick('PendingArgon', pendingVerification: true),
+        ], store: [
+            'pendingcrypt::pass' => 'crypt:$6$other',
+            'pendingargon::pass' => 'argon2id:$argon2id$othervalue',
+        ]);
+
+        self::assertSame(2, $subscriber->repair());
+        self::assertSame([
+            'PendingCrypt::pass' => 'N',
+            'PendingArgon::pass' => 'N',
+        ], $deleted);
+    }
+
+    #[Test]
     public function keepsTheRecordWhenTheStoreAlreadyMatchesTheProjection(): void
     {
         $writer = $this->createMock(UdbRecordWriterInterface::class);
@@ -211,13 +240,16 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
         );
     }
 
-    private function createNick(string $nickname, string $passwordHash = self::BCRYPT_HASH): NickProjection
-    {
-        return new NickProjection(7, $nickname, $passwordHash, null, false, null);
+    private function createNick(
+        string $nickname,
+        string $passwordHash = self::BCRYPT_HASH,
+        bool $pendingVerification = false,
+    ): NickProjection {
+        return new NickProjection(7, $nickname, $passwordHash, null, false, null, $pendingVerification);
     }
 
     private function createForbidden(string $nickname): NickProjection
     {
-        return new NickProjection(7, $nickname, null, null, false, null);
+        return new NickProjection(7, $nickname, null, null, false, null, false);
     }
 }

@@ -7,12 +7,10 @@ namespace App\NickServ\Application\UseCase\Register;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
-use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
 use App\NickServ\Application\Port\Out\RegistrationThrottle;
 use App\NickServ\Application\Port\Out\RegistrationVerificationStore;
 use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
-use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use Throwable;
@@ -32,7 +30,6 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         private RegistrationVerificationStore $verificationStore,
         private RegistrationThrottle $throttle,
         private RegistrationMailSender $mailSender,
-        private RegistrationEventPublisher $eventPublisher,
         private int $minimumIntervalSeconds,
         private int $verificationTokenTtlSeconds = 3600,
         private string $guestPrefix = 'Guest-',
@@ -87,12 +84,6 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
 
         $this->nickRepository->save($nick);
         $this->verificationStore->store($command->nickname, $token, $expiresAt);
-        $this->eventPublisher->publish(new NickPasswordHashAvailable(
-            nickId: null,
-            nickname: $command->nickname,
-            passwordHash: $passwordHash,
-        ));
-
         try {
             $this->mailSender->sendVerification(
                 $command->nickname,

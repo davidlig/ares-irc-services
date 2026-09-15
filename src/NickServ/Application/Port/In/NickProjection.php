@@ -13,5 +13,6 @@ final readonly class NickProjection
         public ?string $vhost,
         public bool $forbidden,
         public ?string $forbiddenReason,
+        public bool $pendingVerification,
     ) {}
 }

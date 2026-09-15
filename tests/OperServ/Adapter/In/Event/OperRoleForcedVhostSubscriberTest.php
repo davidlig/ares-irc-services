@@ -46,7 +46,7 @@ final class OperRoleForcedVhostSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
 
-        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null);
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
 
         $nickRepo = $this->createStub(NickProjectionQuery::class);
         $nickRepo->method('findById')->willReturn($nick);

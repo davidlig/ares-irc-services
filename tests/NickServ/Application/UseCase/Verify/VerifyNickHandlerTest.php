@@ -9,7 +9,9 @@ use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
 use App\NickServ\Application\Port\Out\VerificationTokenConsumer;
+use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\UseCase\Verify\VerifyNick;
 use App\NickServ\Application\UseCase\Verify\VerifyNickHandler;
 use App\NickServ\Application\UseCase\Verify\VerifyNickOutcome;
@@ -30,6 +32,8 @@ final class VerifyNickHandlerTest extends TestCase
     {
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('findByNick')->with('alice')->willReturn(null);
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::never())->method('publish');
 
         $handler = new VerifyNickHandler(
             $nickRepo,
@@ -37,6 +41,7 @@ final class VerifyNickHandlerTest extends TestCase
             $this->createStub(IdentifiedSessionTracker::class),
             $this->fixedClock(),
             $this->authenticationMode(),
+            $publisher,
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'token123', senderUid: 'UID1'));
@@ -53,6 +58,8 @@ final class VerifyNickHandlerTest extends TestCase
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('findByNick')->with('alice')->willReturn($account);
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::never())->method('publish');
 
         $handler = new VerifyNickHandler(
             $nickRepo,
@@ -60,6 +67,7 @@ final class VerifyNickHandlerTest extends TestCase
             $this->createStub(IdentifiedSessionTracker::class),
             $this->fixedClock(),
             $this->authenticationMode(),
+            $publisher,
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'token123', senderUid: 'UID1'));
@@ -78,6 +86,8 @@ final class VerifyNickHandlerTest extends TestCase
 
         $tokenConsumer = $this->createMock(VerificationTokenConsumer::class);
         $tokenConsumer->expects(self::once())->method('consume')->with('alice', 'bad-token', $this->now())->willReturn(false);
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::never())->method('publish');
 
         $handler = new VerifyNickHandler(
             $nickRepo,
@@ -85,6 +95,7 @@ final class VerifyNickHandlerTest extends TestCase
             $this->createStub(IdentifiedSessionTracker::class),
             $this->fixedClock(),
             $this->authenticationMode(),
+            $publisher,
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'bad-token', senderUid: 'UID1'));
@@ -97,7 +108,9 @@ final class VerifyNickHandlerTest extends TestCase
     {
         $account = $this->createMock(RegisteredNick::class);
         $account->method('isPending')->willReturn(true);
+        $account->method('getId')->willReturn(42);
         $account->method('getNickname')->willReturn('Alice');
+        $account->method('getPasswordHash')->willReturn('hashed-password');
         $account->expects(self::once())->method('activate');
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
@@ -109,6 +122,12 @@ final class VerifyNickHandlerTest extends TestCase
 
         $sessionTracker = $this->createMock(IdentifiedSessionTracker::class);
         $sessionTracker->expects(self::once())->method('register')->with('UID1', 'Alice');
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::once())->method('publish')->with(self::callback(
+            static fn (NickPasswordHashAvailable $event): bool => 42 === $event->nickId
+                && 'Alice' === $event->nickname
+                && 'hashed-password' === $event->passwordHash,
+        ));
 
         $handler = new VerifyNickHandler(
             $nickRepo,
@@ -116,6 +135,7 @@ final class VerifyNickHandlerTest extends TestCase
             $sessionTracker,
             $this->fixedClock(),
             $this->authenticationMode(),
+            $publisher,
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'Alice', token: 'good-token', senderUid: 'UID1'));
@@ -129,7 +149,9 @@ final class VerifyNickHandlerTest extends TestCase
     {
         $account = $this->createMock(RegisteredNick::class);
         $account->method('isPending')->willReturn(true);
+        $account->method('getId')->willReturn(42);
         $account->method('getNickname')->willReturn('Alice');
+        $account->method('getPasswordHash')->willReturn('hashed-password');
         $account->expects(self::once())->method('activate');
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
@@ -141,6 +163,12 @@ final class VerifyNickHandlerTest extends TestCase
 
         $sessionTracker = $this->createMock(IdentifiedSessionTracker::class);
         $sessionTracker->expects(self::never())->method('register');
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::once())->method('publish')->with(self::callback(
+            static fn (NickPasswordHashAvailable $event): bool => 42 === $event->nickId
+                && 'Alice' === $event->nickname
+                && 'hashed-password' === $event->passwordHash,
+        ));
 
         $handler = new VerifyNickHandler(
             $nickRepo,
@@ -148,6 +176,7 @@ final class VerifyNickHandlerTest extends TestCase
             $sessionTracker,
             $this->fixedClock(),
             $this->authenticationMode(NicknameAuthenticationMode::NativeNick),
+            $publisher,
         );
 
         $result = $handler->handle(new VerifyNick(nickname: 'Alice', token: 'good-token', senderUid: 'UID1'));
