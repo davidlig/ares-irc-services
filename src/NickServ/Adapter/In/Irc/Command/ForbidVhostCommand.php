@@ -20,7 +20,7 @@ use function sprintf;
 use function strtoupper;
 use function trim;
 
-final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
+final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
     public function __construct(
         private readonly ManageForbiddenVhostHandler $handler,

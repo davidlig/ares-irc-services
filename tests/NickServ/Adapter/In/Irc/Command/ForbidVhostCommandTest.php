@@ -7,7 +7,7 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
-use App\NickServ\Adapter\In\Irc\Command\ForbidvhostCommand;
+use App\NickServ\Adapter\In\Irc\Command\ForbidVhostCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
@@ -35,14 +35,14 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const DATE_ATOM;
 
-#[CoversClass(ForbidvhostCommand::class)]
+#[CoversClass(ForbidVhostCommand::class)]
 #[CoversClass(ManageForbiddenVhostHandler::class)]
 #[CoversClass(ManageForbiddenVhost::class)]
 #[CoversClass(ManageForbiddenVhostResult::class)]
 #[CoversClass(ManageForbiddenVhostOutcome::class)]
 #[CoversClass(ForbiddenVhostAction::class)]
 #[CoversClass(ForbiddenVhostView::class)]
-final class ForbidvhostCommandTest extends TestCase
+final class ForbidVhostCommandTest extends TestCase
 {
     #[Test]
     public function getNameReturnsForbidvhost(): void
@@ -455,7 +455,7 @@ final class ForbidvhostCommandTest extends TestCase
         self::assertSame('pirated.com', $auditData->target);
     }
 
-    private function createCommand(): ForbidvhostCommand
+    private function createCommand(): ForbidVhostCommand
     {
         $repo = $this->createStub(ForbiddenVhostRepositoryInterface::class);
         $service = new ForbiddenVhostService($repo);
@@ -463,9 +463,9 @@ final class ForbidvhostCommandTest extends TestCase
         return $this->createCommandFor($repo);
     }
 
-    private function createCommandFor(ForbiddenVhostRepositoryInterface $repository): ForbidvhostCommand
+    private function createCommandFor(ForbiddenVhostRepositoryInterface $repository): ForbidVhostCommand
     {
-        return new ForbidvhostCommand(new ManageForbiddenVhostHandler(
+        return new ForbidVhostCommand(new ManageForbiddenVhostHandler(
             $repository,
             new ForbiddenVhostService($repository),
             new ForbiddenPatternValidator(),

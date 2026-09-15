@@ -1667,7 +1667,7 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['nickserv.command']
 
-    App\NickServ\Adapter\In\Irc\Command\ForbidvhostCommand:
+    App\NickServ\Adapter\In\Irc\Command\ForbidVhostCommand:
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandler: ~
