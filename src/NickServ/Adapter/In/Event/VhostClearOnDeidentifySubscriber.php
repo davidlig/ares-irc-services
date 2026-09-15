@@ -7,8 +7,9 @@ namespace App\NickServ\Adapter\In\Event;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\PublishedEvent\UserModesChangedEvent;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
-use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+use function str_contains;
 
 /**
  * When a user loses the +r (identified) mode, clear their vhost so the displayed
@@ -32,12 +33,12 @@ final readonly class VhostClearOnDeidentifySubscriber implements EventSubscriber
 
     public function onUserModeChanged(UserModesChangedEvent $event): void
     {
-        if ('-r' !== $event->modeDelta) {
+        if (!str_contains($event->modeDelta, 'r')) {
             return;
         }
 
         $sender = $this->userLookup->findByUid($event->uid);
-        if (null === $sender) {
+        if (null === $sender || $sender->isIdentified) {
             return;
         }
 

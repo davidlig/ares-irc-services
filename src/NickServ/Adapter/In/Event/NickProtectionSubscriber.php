@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\NativeNicknameAuthenticationInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\PublishedEvent\IrcMessageHandledEvent;
@@ -19,6 +20,8 @@ use App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
+use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
+use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function str_contains;
@@ -38,6 +41,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private NetworkUserLookupPort $networkUserLookup,
         private ActiveProtocolModuleHolderInterface $connectionHolder,
         private Clock $clock,
+        private SyncNetworkIdentificationHandlerInterface $syncNetworkIdentification,
         private ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
     ) {}
 
@@ -142,7 +146,34 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
     public function onUserModeChanged(UserModesChangedEvent $event): void
     {
-        if (!str_contains($event->modeDelta, 'r') || str_contains($event->modeDelta, '-r')) {
+        if (!str_contains($event->modeDelta, 'r')) {
+            return;
+        }
+
+        if (!$this->usesNativeAuthentication()) {
+            $this->handleServiceAuthenticationModeChange($event);
+
+            return;
+        }
+
+        $this->pendingProtectionRegistry?->cancel($event->uid);
+
+        $senderView = $this->networkUserLookup->findByUid($event->uid);
+        if (null === $senderView) {
+            return;
+        }
+
+        $user = IrcNetworkUserMapper::map($senderView);
+        if ($user->isIdentified) {
+            $this->identifiedUserVhostSync->syncVhostForUser($user);
+        }
+
+        $this->syncNetworkIdentification->handle(new SyncNetworkIdentification($user, $this->clock->now()));
+    }
+
+    private function handleServiceAuthenticationModeChange(UserModesChangedEvent $event): void
+    {
+        if (str_contains($event->modeDelta, '-r')) {
             return;
         }
 
@@ -200,5 +231,10 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         $module = $this->connectionHolder->getProtocolModule();
 
         return $module instanceof NickChangePreservesIdentificationInterface;
+    }
+
+    private function usesNativeAuthentication(): bool
+    {
+        return $this->connectionHolder->getProtocolModule() instanceof NativeNicknameAuthenticationInterface;
     }
 }

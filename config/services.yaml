@@ -226,6 +226,9 @@ services:
     App\NickServ\Application\Port\Out\IdentifiedSessionTracker:
         alias: App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry
 
+    App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface:
+        alias: App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandler
+
     App\NickServ\Application\Port\In\IdentifiedSessionQuery:
         alias: App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry
 
@@ -1837,8 +1840,9 @@ services:
             $identifiedUserVhostSync:   '@App\NickServ\Application\Service\IdentifiedUserVhostSyncService'
             $burstState:                '@App\NickServ\Application\Service\BurstState'
             $networkUserLookup:        '@App\Irc\Application\Port\In\NetworkUserLookupPort'
+            $syncNetworkIdentification: '@App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface'
             $pendingProtectionRegistry: '@App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface'
-            $connectionHolder:          '@App\Irc\Application\Port\In\ActiveConnectionHolderInterface'
+            $connectionHolder:          '@App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface'
         tags: ['kernel.event_subscriber']
 
     App\NickServ\Adapter\In\Event\ForbiddenNickEnforceSubscriber:

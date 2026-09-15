@@ -51,7 +51,7 @@ final class VhostClearOnDeidentifySubscriberTest extends TestCase
     {
         $event = new UserModesChangedEvent(
             uid: '001ABCD',
-            modeDelta: '-r',
+            modeDelta: '-ir',
         );
 
         $sender = new SenderView(
@@ -80,16 +80,29 @@ final class VhostClearOnDeidentifySubscriberTest extends TestCase
     }
 
     #[Test]
-    public function doesNothingWhenModeIsNotMinusR(): void
+    public function doesNothingWhenTheFinalNetworkStateIsStillIdentified(): void
     {
         $event = new UserModesChangedEvent(
             uid: '001ABCD',
             modeDelta: '+r',
         );
 
+        $sender = new SenderView(
+            uid: '001ABCD',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'test.local',
+            cloakedHost: 'test.local',
+            ipBase64: 'dGVzdA==',
+            isIdentified: true,
+            serverSid: '001',
+        );
+
         $this->userLookup
-            ->expects(self::never())
-            ->method('findByUid');
+            ->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABCD')
+            ->willReturn($sender);
 
         $this->notifier
             ->expects(self::never())

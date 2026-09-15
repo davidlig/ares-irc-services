@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Adapter\In\Event;
 
 use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\NativeNicknameAuthenticationInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\NickChangePreservesIdentificationInterface;
 use App\Irc\Application\Port\In\ProtocolModuleInterface;
@@ -36,6 +37,8 @@ use App\NickServ\Application\Service\ForbiddenNickService;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
 use App\NickServ\Application\Service\VhostDisplayResolver;
+use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
+use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -56,6 +59,8 @@ final class NickProtectionSubscriberTest extends TestCase
 
     private Clock $clock;
 
+    private RecordingSyncNetworkIdentificationHandler $syncNetworkIdentification;
+
     private DateTimeImmutable $now;
 
     protected function setUp(): void
@@ -66,6 +71,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $this->now = new DateTimeImmutable('2026-01-02 03:04:05');
         $this->clock = $this->createStub(Clock::class);
         $this->clock->method('now')->willReturn($this->now);
+        $this->syncNetworkIdentification = new RecordingSyncNetworkIdentificationHandler();
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $userLookup = $this->createStub(NickNetworkUserLookup::class);
@@ -98,13 +104,18 @@ final class NickProtectionSubscriberTest extends TestCase
             $nickChangePolicy,
         );
 
+        $nativeModule = $this->createStub(NativeAuthenticationTestProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($nativeModule);
+
         $this->subscriber = new NickProtectionSubscriber(
             $nickProtectionService,
             $vhostSync,
             $this->burstState,
             $this->networkUserLookup,
-            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $connectionHolder,
             $this->clock,
+            $this->syncNetworkIdentification,
         );
     }
 
@@ -279,16 +290,14 @@ final class NickProtectionSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onUserModeChangedIgnoresNonIdentifiedModeDeltas(): void
+    public function onUserModeChangedIgnoresDeltasWithoutTheIdentifiedMode(): void
     {
         $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
-
         $event = new UserModesChangedEvent('001ABC', '+i');
         $this->subscriber->onUserModeChanged($event);
 
-        $eventMinus = new UserModesChangedEvent('001ABC', '-r');
-        $this->subscriber->onUserModeChanged($eventMinus);
+        self::assertNull($this->syncNetworkIdentification->handled);
     }
 
     #[Test]
@@ -300,13 +309,14 @@ final class NickProtectionSubscriberTest extends TestCase
             ->willReturn(null);
 
         $this->notifier->expects(self::never())->method('setUserVhost');
-
         $event = new UserModesChangedEvent('001ABC', '+r');
         $this->subscriber->onUserModeChanged($event);
+
+        self::assertNull($this->syncNetworkIdentification->handled);
     }
 
     #[Test]
-    public function onUserModeChangedDoesNothingWhenUserNotIdentified(): void
+    public function onUserModeChangedDelegatesTheFinalDeidentifiedStateFromACombinedDelta(): void
     {
         $senderView = new SenderView(
             uid: '001ABC',
@@ -326,8 +336,14 @@ final class NickProtectionSubscriberTest extends TestCase
 
         $this->notifier->expects(self::never())->method('setUserVhost');
 
-        $event = new UserModesChangedEvent('001ABC', '+r');
+        $event = new UserModesChangedEvent('001ABC', '+R-r');
         $this->subscriber->onUserModeChanged($event);
+
+        $input = $this->syncNetworkIdentification->handled;
+        self::assertNotNull($input);
+        self::assertFalse($input->user->isIdentified);
+        self::assertSame('001ABC', $input->user->uid);
+        self::assertSame($this->now, $input->occurredAt);
     }
 
     #[Test]
@@ -351,8 +367,181 @@ final class NickProtectionSubscriberTest extends TestCase
 
         $this->notifier->expects(self::never())->method('setUserVhost');
 
-        $event = new UserModesChangedEvent('001ABC', '+r');
+        $event = new UserModesChangedEvent('001ABC', '-r+ir');
         $this->subscriber->onUserModeChanged($event);
+
+        $input = $this->syncNetworkIdentification->handled;
+        self::assertNotNull($input);
+        self::assertTrue($input->user->isIdentified);
+        self::assertSame('001ABC', $input->user->uid);
+        self::assertSame($this->now, $input->occurredAt);
+    }
+
+    #[Test]
+    public function syntheticMinusRWaitsForTheStandardProtocolNicknameChangeCleanup(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $identifiedSessions = new IdentifiedSessionRegistry();
+        $identifiedSessions->register('001ABC', 'OldNick');
+        $networkUser = new NetworkUser(
+            '001ABC',
+            'NewNick',
+            'ident',
+            'host',
+            'cloak',
+            'ip',
+            isIdentified: false,
+            serverSid: '001',
+        );
+        $senderView = new SenderView(
+            '001ABC',
+            'NewNick',
+            'ident',
+            'host',
+            'cloak',
+            'ip',
+            isIdentified: false,
+            serverSid: '001',
+        );
+        $networkUserLookup = $this->createStub(NetworkUserLookupPort::class);
+        $networkUserLookup->method('findByUid')->willReturn($senderView);
+        $applicationUserLookup = $this->createStub(NickNetworkUserLookup::class);
+        $applicationUserLookup->method('findByUid')->willReturn($networkUser);
+        $networkActions = $this->createMock(NickNetworkActions::class);
+        $networkActions->expects(self::once())->method('setUserAccount')->with('001ABC', '0');
+        $networkActions->expects(self::exactly(2))->method('setUserVhost')->with('001ABC', '', '001');
+        $nickChangePolicy = $this->createStub(NickChangeIdentificationPolicy::class);
+        $nickChangePolicy->method('preservesIdentification')->willReturn(false);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $syncNetworkIdentification = $this->createMock(SyncNetworkIdentificationHandlerInterface::class);
+        $syncNetworkIdentification->expects(self::never())->method('handle');
+
+        $nickProtection = new NickProtectionService(
+            $nickRepository,
+            $applicationUserLookup,
+            $networkActions,
+            $this->burstState,
+            $identifiedSessions,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(NickProtectionNotifier::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(ForbiddenNickService::class),
+            $nickChangePolicy,
+            $this->guestNicknameGenerator(),
+        );
+        $vhostSync = new IdentifiedUserVhostSyncService(
+            $nickRepository,
+            $networkActions,
+            new VhostDisplayResolver(),
+            $this->createStub(ForcedVhostCheckerInterface::class),
+            $nickChangePolicy,
+        );
+        $subscriber = new NickProtectionSubscriber(
+            $nickProtection,
+            $vhostSync,
+            $this->burstState,
+            $networkUserLookup,
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $this->clock,
+            $syncNetworkIdentification,
+        );
+        $this->burstState->markComplete();
+
+        $subscriber->onUserModeChanged(new UserModesChangedEvent('001ABC', '-r'));
+        self::assertSame('OldNick', $identifiedSessions->findNick('001ABC'));
+
+        $subscriber->onNickChanged(new UserNicknameChangedEvent('001ABC', 'OldNick', 'NewNick'));
+        self::assertNull($identifiedSessions->findNick('001ABC'));
+    }
+
+    #[Test]
+    public function standardProtocolPlusRRetainsTheExistingVhostAndProtectionFlow(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $senderView = new SenderView(
+            '001ABC',
+            'Test',
+            'ident',
+            'host',
+            'cloak',
+            'ip',
+            isIdentified: true,
+            serverSid: '001',
+        );
+        $networkUserLookup = $this->createMock(NetworkUserLookupPort::class);
+        $networkUserLookup->expects(self::once())->method('findByUid')->with('001ABC')->willReturn($senderView);
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->expects(self::exactly(2))->method('findByNick')->with('Test')->willReturn(null);
+        $pendingProtection = $this->createMock(PendingNickProtectionRegistryInterface::class);
+        $pendingProtection->expects(self::once())->method('cancel')->with('001ABC');
+        $syncNetworkIdentification = $this->createMock(SyncNetworkIdentificationHandlerInterface::class);
+        $syncNetworkIdentification->expects(self::never())->method('handle');
+        $nickChangePolicy = $this->createStub(NickChangeIdentificationPolicy::class);
+        $networkActions = $this->createStub(NickNetworkActions::class);
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $nickProtection = new NickProtectionService(
+            $nickRepository,
+            $this->createStub(NickNetworkUserLookup::class),
+            $networkActions,
+            $burstState,
+            new IdentifiedSessionRegistry(),
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(NickProtectionNotifier::class),
+            $this->createStub(NickServEventPublisher::class),
+            $this->createStub(ForbiddenNickService::class),
+            $nickChangePolicy,
+            $this->guestNicknameGenerator(),
+        );
+        $vhostSync = new IdentifiedUserVhostSyncService(
+            $nickRepository,
+            $networkActions,
+            new VhostDisplayResolver(),
+            $this->createStub(ForcedVhostCheckerInterface::class),
+            $nickChangePolicy,
+        );
+        $subscriber = new NickProtectionSubscriber(
+            $nickProtection,
+            $vhostSync,
+            $burstState,
+            $networkUserLookup,
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $this->clock,
+            $syncNetworkIdentification,
+            $pendingProtection,
+        );
+
+        $subscriber->onUserModeChanged(new UserModesChangedEvent('001ABC', '+r'));
+    }
+
+    #[Test]
+    public function standardProtocolPlusRStopsWhenTheNetworkUserIsUnavailable(): void
+    {
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn(null);
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $pendingProtection = $this->createMock(PendingNickProtectionRegistryInterface::class);
+        $pendingProtection->expects(self::once())->method('cancel')->with('001ABC');
+        $syncNetworkIdentification = $this->createMock(SyncNetworkIdentificationHandlerInterface::class);
+        $syncNetworkIdentification->expects(self::never())->method('handle');
+        $subscriber = new NickProtectionSubscriber(
+            $this->createNickProtectionService(),
+            $this->createVhostSyncService(),
+            $this->burstState,
+            $this->networkUserLookup,
+            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $this->clock,
+            $syncNetworkIdentification,
+            $pendingProtection,
+        );
+
+        $subscriber->onUserModeChanged(new UserModesChangedEvent('001ABC', '+r'));
     }
 
     #[Test]
@@ -405,6 +594,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->networkUserLookup,
             $connectionHolder,
             $this->clock,
+            $this->createStub(SyncNetworkIdentificationHandlerInterface::class),
             $pendingRegistry,
         );
 
@@ -450,6 +640,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->networkUserLookup,
             $connectionHolder,
             $this->clock,
+            $this->createStub(SyncNetworkIdentificationHandlerInterface::class),
             $pendingRegistry,
         );
 
@@ -490,6 +681,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->networkUserLookup,
             $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
+            $this->createStub(SyncNetworkIdentificationHandlerInterface::class),
             $pendingRegistry,
         );
 
@@ -530,6 +722,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->networkUserLookup,
             $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
+            $this->createStub(SyncNetworkIdentificationHandlerInterface::class),
             $pendingRegistry,
         );
 
@@ -602,6 +795,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->networkUserLookup,
             $connectionHolder,
             $this->clock,
+            $this->createStub(SyncNetworkIdentificationHandlerInterface::class),
             $pendingRegistry,
         );
 
@@ -622,13 +816,18 @@ final class NickProtectionSubscriberTest extends TestCase
             ->with('001ABC')
             ->willReturn(null);
 
+        $nativeModule = $this->createStub(NativeAuthenticationTestProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($nativeModule);
+
         $subscriber = new NickProtectionSubscriber(
             $this->createNickProtectionService(),
             $this->createVhostSyncService(),
             $this->burstState,
             $this->networkUserLookup,
-            $this->createStub(ActiveProtocolModuleHolderInterface::class),
+            $connectionHolder,
             $this->clock,
+            $this->createStub(SyncNetworkIdentificationHandlerInterface::class),
             $pendingRegistry,
         );
 
@@ -651,6 +850,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->networkUserLookup,
             $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
+            $this->createStub(SyncNetworkIdentificationHandlerInterface::class),
             $pendingRegistry,
         );
 
@@ -709,6 +909,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->networkUserLookup,
             $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
+            $this->createStub(SyncNetworkIdentificationHandlerInterface::class),
             $pendingRegistry,
         );
 
@@ -728,6 +929,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->networkUserLookup,
             $this->createStub(ActiveProtocolModuleHolderInterface::class),
             $this->clock,
+            $this->createStub(SyncNetworkIdentificationHandlerInterface::class),
         );
 
         $subscriber->onIrcMessageProcessed(new IrcMessageHandledEvent());
@@ -795,3 +997,15 @@ final class NickProtectionSubscriberTest extends TestCase
 }
 
 interface NickProtectionTestProtocolModule extends ProtocolModuleInterface, NickChangePreservesIdentificationInterface {}
+
+interface NativeAuthenticationTestProtocolModule extends ProtocolModuleInterface, NativeNicknameAuthenticationInterface {}
+
+final class RecordingSyncNetworkIdentificationHandler implements SyncNetworkIdentificationHandlerInterface
+{
+    public ?SyncNetworkIdentification $handled = null;
+
+    public function handle(SyncNetworkIdentification $command): void
+    {
+        $this->handled = $command;
+    }
+}
