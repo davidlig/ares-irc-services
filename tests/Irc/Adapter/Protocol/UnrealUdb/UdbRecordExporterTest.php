@@ -172,6 +172,44 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
+    public function permanentAndCurrentNickSuspensionsExportTheirReason(): void
+    {
+        $permanent = $this->createNick('Permanent', suspended: true, suspensionReason: 'permanent reason');
+        $temporary = $this->createNick('Temporary', suspended: true, suspensionReason: 'temporary reason', suspendedUntil: new DateTimeImmutable('2026-08-30 10:30:01'));
+
+        self::assertSame(['Permanent::suspend' => 'permanent reason'], $this->exporter->nickRecords($permanent));
+        self::assertSame(['Temporary::suspend' => 'temporary reason'], $this->exporter->nickRecords($temporary));
+    }
+
+    #[Test]
+    public function expiredNickSuspensionsAreNotExportedAtOrAfterExpiry(): void
+    {
+        $atExpiry = $this->createNick('AtExpiry', suspended: true, suspensionReason: 'expired', suspendedUntil: new DateTimeImmutable('2026-08-30 10:30:00'));
+        $pastExpiry = $this->createNick('PastExpiry', suspended: true, suspensionReason: 'expired', suspendedUntil: new DateTimeImmutable('2026-08-30 10:29:59'));
+
+        self::assertSame([], $this->exporter->nickRecords($atExpiry));
+        self::assertSame([], $this->exporter->nickRecords($pastExpiry));
+    }
+
+    #[Test]
+    public function suspensionExportRequiresSuspendedStateAndNonemptyReason(): void
+    {
+        self::assertSame([], $this->exporter->nickRecords($this->createNick('Active', suspensionReason: 'stale')));
+        self::assertSame([], $this->exporter->nickRecords($this->createNick('NoReason', suspended: true)));
+        self::assertSame([], $this->exporter->nickRecords($this->createNick('EmptyReason', suspended: true, suspensionReason: '')));
+    }
+
+    #[Test]
+    public function pendingAndForbiddenNickPrecedenceExcludesSuspension(): void
+    {
+        $pending = $this->createNick('Pending', pendingVerification: true, suspended: true, suspensionReason: 'suspended');
+        $forbidden = $this->createNick('Forbidden', forbidden: true, forbiddenReason: 'forbidden', suspended: true, suspensionReason: 'suspended');
+
+        self::assertSame([], $this->exporter->nickRecords($pending));
+        self::assertSame(['Forbidden::forbid' => 'forbidden'], $this->exporter->nickRecords($forbidden));
+    }
+
+    #[Test]
     public function channelRecordsBuildFullActiveProfile(): void
     {
         $founder = $this->createNick('founder');
@@ -358,6 +396,18 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
+    public function encodedBlockRecordsIncludeCurrentNickSuspension(): void
+    {
+        $this->nicks->method('all')->willReturn([
+            $this->createNick('Suspended', suspended: true, suspensionReason: 'abuse'),
+        ]);
+        $encoded = UdbPathCodec::encodePath(['Suspended', 'suspend']);
+
+        self::assertNotNull($encoded);
+        self::assertSame([$encoded => 'abuse'], $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
+    }
+
+    #[Test]
     public function encodedBlockRecordsAggregatesAllChannels(): void
     {
         $this->channels->method('all')->willReturn([
@@ -410,8 +460,11 @@ final class UdbRecordExporterTest extends TestCase
         bool $forbidden = false,
         ?string $forbiddenReason = null,
         bool $pendingVerification = false,
+        bool $suspended = false,
+        ?string $suspensionReason = null,
+        ?DateTimeImmutable $suspendedUntil = null,
     ): NickProjection {
-        return new NickProjection(42, $nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $vhost, $forbidden, $forbiddenReason, $pendingVerification);
+        return new NickProjection(42, $nickname, $passwordHash ?? 'argon2id:$argon2id$hash', $vhost, $forbidden, $forbiddenReason, $pendingVerification, $suspended, $suspensionReason, $suspendedUntil);
     }
 
     /**

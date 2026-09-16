@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Port\In;
 
+use DateTimeImmutable;
+
 final readonly class NickProjection
 {
     public function __construct(
@@ -14,5 +16,8 @@ final readonly class NickProjection
         public bool $forbidden,
         public ?string $forbiddenReason,
         public bool $pendingVerification,
+        public bool $suspended = false,
+        public ?string $suspensionReason = null,
+        public ?DateTimeImmutable $suspendedUntil = null,
     ) {}
 }

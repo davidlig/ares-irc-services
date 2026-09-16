@@ -167,7 +167,7 @@ final readonly class UdbRecordExporter
     }
 
     /**
-     * Full N-block profile of one nick (pass/vhost/oper).
+     * Full N-block profile of one nick (pass/vhost/oper/suspend).
      * Forbidden nicks export only their forbid record.
      *
      * @return array<string, string>
@@ -202,6 +202,12 @@ final readonly class UdbRecordExporter
         $operclass = $this->operators->findForNick($nick->id, $nick->nickname)?->operclass;
         if (null !== $operclass && '' !== $operclass) {
             $records[sprintf('%s::oper', $nick->nickname)] = $operclass;
+        }
+
+        if ($nick->suspended && null !== $nick->suspensionReason && '' !== $nick->suspensionReason
+            && (null === $nick->suspendedUntil || $this->clock->now() < $nick->suspendedUntil->getTimestamp())
+        ) {
+            $records[sprintf('%s::suspend', $nick->nickname)] = $nick->suspensionReason;
         }
 
         return $records;

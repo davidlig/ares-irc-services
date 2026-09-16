@@ -89,6 +89,41 @@ final class NickProjectionResolverTest extends TestCase
     }
 
     #[Test]
+    public function projectsTemporarySuspensionStateReasonAndExpiry(): void
+    {
+        $nick = RegisteredNick::createPending('Suspended', 'hash', 'suspended@example.test', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick->activate();
+        $until = new DateTimeImmutable('2026-10-01 12:00:00 UTC');
+        $nick->suspend('abuse', $until);
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 9);
+
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findById')->willReturn($nick);
+
+        $found = new NickProjectionResolver($repository)->findById(9);
+
+        self::assertNotNull($found);
+        self::assertProjection(new NickProjection(9, 'Suspended', 'hash', null, false, null, false, true, 'abuse', $until), $found);
+    }
+
+    #[Test]
+    public function projectsPermanentSuspensionWithoutExpiry(): void
+    {
+        $nick = RegisteredNick::createPending('Permanent', 'hash', 'permanent@example.test', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick->activate();
+        $nick->suspend('serious abuse');
+        new ReflectionProperty(RegisteredNick::class, 'id')->setValue($nick, 10);
+
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findById')->willReturn($nick);
+
+        $found = new NickProjectionResolver($repository)->findById(10);
+
+        self::assertNotNull($found);
+        self::assertProjection(new NickProjection(10, 'Permanent', 'hash', null, false, null, false, true, 'serious abuse'), $found);
+    }
+
+    #[Test]
     public function returnsNullWhenTheNickDoesNotExist(): void
     {
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -106,5 +141,8 @@ final class NickProjectionResolverTest extends TestCase
         self::assertSame($expected->forbidden, $actual->forbidden);
         self::assertSame($expected->forbiddenReason, $actual->forbiddenReason);
         self::assertSame($expected->pendingVerification, $actual->pendingVerification);
+        self::assertSame($expected->suspended, $actual->suspended);
+        self::assertSame($expected->suspensionReason, $actual->suspensionReason);
+        self::assertSame($expected->suspendedUntil, $actual->suspendedUntil);
     }
 }

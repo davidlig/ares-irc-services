@@ -7,7 +7,9 @@ namespace App\NickServ\Adapter\In\Maintenance;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;
@@ -19,6 +21,7 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
         private ServiceDebugNotifierInterface $debugNotifier,
         private LoggerInterface $logger,
         private Clock $clock,
+        private NickServEventPublisher $eventPublisher,
         private string $serverName,
         private int $intervalSeconds,
     ) {}
@@ -48,6 +51,15 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
 
             $nick->unsuspend();
             $this->nickRepository->save($nick);
+            $this->eventPublisher->publish(new NickUnsuspendedEvent(
+                nickId: $nickId,
+                nickname: $nickname,
+                performedBy: $this->serverName,
+                performedByNickId: null,
+                performedByIp: '*',
+                performedByHost: '*',
+                occurredAt: $this->clock->now(),
+            ));
 
             $this->debugNotifier->log(
                 operator: $this->serverName,

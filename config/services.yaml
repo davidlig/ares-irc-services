@@ -1876,6 +1876,7 @@ services:
     App\NickServ\Adapter\In\Maintenance\UnsuspendExpiredSuspensionsTask:
         arguments:
             $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $eventPublisher: '@App\NickServ\Application\Port\Out\NickServEventPublisher'
             $debugNotifier: '@App\NickServ\Adapter\Out\Service\NickServDebugNotifier'
             $serverName: '%irc.server_name%'
             $logger: '@monolog.logger.maintenance'

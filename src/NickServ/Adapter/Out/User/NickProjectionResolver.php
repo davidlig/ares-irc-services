@@ -28,6 +28,7 @@ final readonly class NickProjectionResolver implements NickProjectionQuery
     private static function project(RegisteredNick $nick): NickProjection
     {
         $forbidden = $nick->isForbidden();
+        $suspended = $nick->isSuspended();
 
         return new NickProjection(
             $nick->getId(),
@@ -37,6 +38,9 @@ final readonly class NickProjectionResolver implements NickProjectionQuery
             $forbidden,
             $forbidden ? $nick->getReason() : null,
             $nick->isPending(),
+            $suspended,
+            $suspended ? $nick->getReason() : null,
+            $suspended ? $nick->getSuspendedUntil() : null,
         );
     }
 }
