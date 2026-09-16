@@ -691,6 +691,7 @@ services:
     App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNickReservation:
         arguments:
             $recordWriter: '@App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter'
+            $records: '@App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface'
             $nickservNick: '%nickserv.nick%'
             $nickservIdent: '%nickserv.ident%'
             $chanservNick: '%chanserv.nick%'
@@ -793,15 +794,19 @@ services:
     App\Irc\Adapter\Network\ProtocolNetworkStateRouter:
         tags: ['kernel.event_subscriber']
 
-    # --- Service Nick Reservation: SQLINE/QLINE before bot introduction ---------------------
+    # --- Service Nick Reservation: protocol-native reservations before bot introduction ------
 
     App\Irc\Adapter\ServiceBridge\ServiceNickReservationSubscriber:
         arguments:
             $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $serviceListeners: !tagged_iterator service_command_listener
+            $inventory: '@App\Irc\Adapter\ServiceBridge\ServiceNickReservationInventory'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
+
+    App\Irc\Adapter\ServiceBridge\ServiceNickReservationInventory:
+        alias: App\Irc\Adapter\Out\Persistence\DbalServiceNickReservationInventory
 
     # --- Service Command Gateway: PRIVMSG → registered service listeners ---
 

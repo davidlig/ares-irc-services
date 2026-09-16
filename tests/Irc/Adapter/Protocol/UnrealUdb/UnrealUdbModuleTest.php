@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbChannelModeSupport;
@@ -41,7 +42,7 @@ final class UnrealUdbModuleTest extends TestCase
         $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter);
         $channelModeSupport = new UnrealUdbChannelModeSupport();
         $userModeSupport = new UnrealUdbUserModeSupport();
-        $nickReservation = new UnrealUdbNickReservation($recordWriter);
+        $nickReservation = new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class));
 
         return new UnrealUdbModule(
             $handler,
@@ -85,7 +86,7 @@ final class UnrealUdbModuleTest extends TestCase
             new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
-            new UnrealUdbNickReservation($recordWriter),
+            new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class)),
             new UnrealUdbRawCommandInterceptor($this->createStub(UdbRawCommandHandlerInterface::class)),
         );
 
@@ -161,7 +162,7 @@ final class UnrealUdbModuleTest extends TestCase
             new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
-            new UnrealUdbNickReservation($recordWriter),
+            new UnrealUdbNickReservation($recordWriter, $this->createStub(UdbRecordRepositoryInterface::class)),
             new UnrealUdbRawCommandInterceptor($rawCommands),
         );
 

@@ -6,18 +6,24 @@ namespace App\Irc\Adapter\ServiceBridge;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Application\Port\In\ManagedServiceNickReservationLookup;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Throwable;
+
+use function array_values;
+use function count;
+use function strtolower;
 
 /**
- * Reserves all service nicknames via SQLINE/QLINE before pseudo-clients are introduced.
+ * Reconciles protocol-native service nickname reservations before pseudo-clients are introduced.
  *
  * This subscriber runs at priority 200, before bots (priority 90-100), ensuring
- * that Q-lines are in place to prevent nick collisions if a malicious user
+ * that reservations are in place to prevent nick collisions if a malicious user
  * tries to take a service nickname during the brief window before bot introduction.
  *
  * Additionally, if a user already holds a service nickname during burst (e.g.,
@@ -28,6 +34,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 final readonly class ServiceNickReservationSubscriber implements EventSubscriberInterface
 {
+    private const string REASON = 'Reserved for network services';
+
     /**
      * @param iterable<ServiceCommandListenerInterface> $serviceListeners
      */
@@ -35,6 +43,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         private ActiveConnectionHolder $connectionHolder,
         private NetworkUserLookupPort $userLookup,
         private iterable $serviceListeners,
+        private ServiceNickReservationInventory $inventory,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -61,20 +70,110 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
             return;
         }
 
-        $serviceActions = $module->getServiceActions();
-
-        $reservedCount = 0;
+        $current = [];
         foreach ($this->serviceListeners as $listener) {
             $nick = $listener->getServiceName();
-
-            $reservation->reserveNick($nick, 'Reserved for network services');
-
-            $this->freeServiceNickname($serviceActions, $event->serverSid, $nick);
-
-            ++$reservedCount;
+            $current[strtolower($nick)] = $nick;
         }
 
-        $this->logger->info('Reserved service nicknames', ['count' => $reservedCount]);
+        $protocol = $module->getProtocolName();
+        $hasLiveLookup = $reservation instanceof ManagedServiceNickReservationLookup;
+        $previous = [];
+        $canPersistInventory = true;
+        try {
+            foreach ($this->inventory->namesForProtocol($protocol) as $nick) {
+                $previous[strtolower($nick)] = $nick;
+            }
+        } catch (Throwable $exception) {
+            $this->logger->error('Could not load service nickname reservation inventory', [
+                'protocol' => $protocol,
+                'exception' => $exception->getMessage(),
+            ]);
+            if (!$hasLiveLookup) {
+                throw $exception;
+            }
+
+            $previous = [];
+            $canPersistInventory = false;
+        }
+
+        if ($hasLiveLookup) {
+            // The live records, not the historical inventory, determine which
+            // reservations still belong to services and may be released.
+            $previous = [];
+            try {
+                foreach ($reservation->findManagedServiceNicks(self::REASON) as $nick) {
+                    $previous[strtolower($nick)] = $nick;
+                }
+            } catch (Throwable $exception) {
+                $this->logger->error('Could not discover managed service nickname reservations', [
+                    'protocol' => $protocol,
+                    'exception' => $exception->getMessage(),
+                ]);
+                $previous = [];
+                $canPersistInventory = false;
+            }
+        } else {
+            // Wire reservations cannot be discovered or attributed later. Keep
+            // every historical name before any permanent network effect.
+            try {
+                $this->inventory->replaceForProtocol($protocol, array_values($previous + $current));
+            } catch (Throwable $exception) {
+                $this->logger->error('Could not prepare service nickname reservation inventory', [
+                    'protocol' => $protocol,
+                    'exception' => $exception->getMessage(),
+                ]);
+
+                throw $exception;
+            }
+        }
+
+        $failedReleases = [];
+        foreach ($previous as $key => $nick) {
+            if (isset($current[$key])) {
+                continue;
+            }
+
+            if (!$hasLiveLookup) {
+                $this->logger->warning('Obsolete wire service nickname reservation requires manual review and removal; current ownership cannot be verified', [
+                    'nick' => $nick,
+                    'protocol' => $protocol,
+                ]);
+
+                continue;
+            }
+
+            try {
+                $reservation->releaseNick($nick);
+            } catch (Throwable $exception) {
+                $this->logger->error('Could not release obsolete service nickname reservation', [
+                    'nick' => $nick,
+                    'protocol' => $protocol,
+                    'exception' => $exception->getMessage(),
+                ]);
+                $failedReleases[$key] = $nick;
+            }
+        }
+
+        $serviceActions = $module->getServiceActions();
+        foreach ($current as $nick) {
+            $reservation->reserveNick($nick, self::REASON);
+
+            $this->freeServiceNickname($serviceActions, $event->serverSid, $nick);
+        }
+
+        if ($canPersistInventory && $hasLiveLookup) {
+            try {
+                $this->inventory->replaceForProtocol($protocol, array_values($failedReleases + $current));
+            } catch (Throwable $exception) {
+                $this->logger->error('Could not save service nickname reservation inventory', [
+                    'protocol' => $protocol,
+                    'exception' => $exception->getMessage(),
+                ]);
+            }
+        }
+
+        $this->logger->info('Reserved service nicknames', ['count' => count($current)]);
     }
 
     private function freeServiceNickname(

@@ -269,6 +269,8 @@ DATABASE_URL="postgresql://user:pass@host:5432/db?serverVersion=16&charset=utf8"
 | `OPERSERV_MAX_GLINES` | `1000` | Max active G-lines |
 | `IRCOPS_DEBUG_CHANNEL` | _(commented out)_ | Channel for IRCop debug messages (e.g. `#opers`) |
 
+When a service bot nickname changes, restart Ares after applying database migrations. Ares reserves the configured names again. The `unrealudb` driver releases obsolete Ares reservations only when its live UDB record still has the exact reason `Reserved for network services`. For `unreal` and `inspircd`, Ares retains historical names in its inventory but cannot verify whether a Q-line or SQLINE still belongs to it; it therefore never removes obsolete wire reservations automatically. Inspect the IRCd's current ban before removing it manually, particularly if an operator may have replaced it. Once a historical line is confirmed absent or operator-owned, its row in `service_nick_reservations` may be removed to stop the warning; do not remove the operator's ban. Reservations created before tracking was added are likewise left untouched.
+
 ### Maintenance
 
 | Variable | Default | Description |
