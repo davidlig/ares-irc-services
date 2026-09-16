@@ -447,7 +447,7 @@ final class SetCommandTest extends TestCase
         $founderHandler = $this->createMock(TransferChannelFounderHandlerInterface::class);
         $founderHandler->expects(self::once())->method('handle')->with(self::callback(
             static fn (TransferChannelFounder $command): bool => 'NewFounder' === $command->targetNickname,
-        ))->willReturn(new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo***@test.com'));
+        ))->willReturn(new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo****@t****.***'));
 
         $cmd = $this->createSetCommand($channelRepo, $accessHelper, $nickRepo, new SetFounderHandler($founderHandler));
         $cmd->execute($this->createContext(

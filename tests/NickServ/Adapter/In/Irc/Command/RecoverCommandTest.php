@@ -83,7 +83,7 @@ final class RecoverCommandTest extends TestCase
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
-        self::assertSame(['recover.email_sent [%email_hint%: us****@example.com]'], $messages);
+        self::assertSame(['recover.email_sent [%email_hint%: us****@e****.***]'], $messages);
     }
 
     #[Test]

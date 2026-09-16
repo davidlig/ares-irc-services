@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\In\Irc\Command;
 
-use App\NickServ\Adapter\In\Irc\EmailMasker;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Model\NicknameAuthenticationMode;
@@ -13,6 +12,7 @@ use App\NickServ\Application\UseCase\Recover\RecoverNick;
 use App\NickServ\Application\UseCase\Recover\RecoverNickHandlerInterface;
 use App\NickServ\Application\UseCase\Recover\RecoverNickOutcome;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
+use App\Shared\Application\EmailHintMasker;
 
 use function base64_decode;
 use function ceil;
@@ -139,7 +139,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
                 break;
             case RecoverNickOutcome::TokenSent:
                 $context->reply('recover.email_sent', [
-                    'email_hint' => EmailMasker::mask($result->email ?? ''),
+                    'email_hint' => EmailHintMasker::mask($result->email ?? ''),
                 ]);
                 break;
             case RecoverNickOutcome::InvalidToken:

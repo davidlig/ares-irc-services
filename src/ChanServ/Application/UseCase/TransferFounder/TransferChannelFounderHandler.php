@@ -15,13 +15,12 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
 use App\ChanServ\Domain\Policy\FounderTransferPolicy;
 use App\ChanServ\Domain\ValueObject\FounderTransferDecision;
+use App\Shared\Application\EmailHintMasker;
 use LogicException;
 use Throwable;
 
 use function count;
 use function sprintf;
-use function strpos;
-use function substr;
 use function trim;
 
 final readonly class TransferChannelFounderHandler implements TransferChannelFounderHandlerInterface
@@ -131,7 +130,7 @@ final readonly class TransferChannelFounderHandler implements TransferChannelFou
 
         return new TransferChannelFounderResult(
             TransferFounderOutcome::TokenSent,
-            emailHint: $this->maskEmail($founderEmail),
+            emailHint: EmailHintMasker::mask($founderEmail),
         );
     }
 
@@ -207,15 +206,5 @@ final readonly class TransferChannelFounderHandler implements TransferChannelFou
             $targetNickname,
             maximumChannelsPerNick: $this->maxChannelsPerNick,
         );
-    }
-
-    private function maskEmail(string $email): string
-    {
-        $at = strpos($email, '@');
-        if (false === $at || 2 > $at) {
-            return '***@***';
-        }
-
-        return substr($email, 0, 2) . '***' . substr($email, $at);
     }
 }

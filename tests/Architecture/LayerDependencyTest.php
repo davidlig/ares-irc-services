@@ -232,6 +232,7 @@ final class LayerDependencyTest extends TestCase
     {
         $expected = [
             'src/Shared/Application/Audit/SafeAuditMetadata.php',
+            'src/Shared/Application/EmailHintMasker.php',
             'src/Shared/Application/Mail/MailerInterface.php',
             'src/Shared/Application/Mail/Message/SendEmail.php',
             'src/Shared/Application/Mail/Message/SendEmailHandler.php',

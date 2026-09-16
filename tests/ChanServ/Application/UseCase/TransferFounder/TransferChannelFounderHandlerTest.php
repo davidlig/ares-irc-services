@@ -132,8 +132,8 @@ final class TransferChannelFounderHandlerTest extends TestCase
     /** @return iterable<string, array{string, string}> */
     public static function maskedEmails(): iterable
     {
-        yield 'normal' => ['founder@example.com', 'fo***@example.com'];
-        yield 'single-character prefix' => ['a@example.com', '***@***'];
+        yield 'normal' => ['founder@example.com', 'fo****@e****.***'];
+        yield 'single-character prefix' => ['a@example.com', 'a****@e****.***'];
         yield 'at at start' => ['@example.com', '***@***'];
         yield 'without at' => ['invalid', '***@***'];
     }

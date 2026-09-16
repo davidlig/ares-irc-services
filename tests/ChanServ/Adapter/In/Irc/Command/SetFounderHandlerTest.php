@@ -97,7 +97,7 @@ final class SetFounderHandlerTest extends TestCase
         yield 'limit' => [new TransferChannelFounderResult(TransferFounderOutcome::ChannelLimitReached, 'Target', maximumChannelsPerNick: 3), 'set.founder.limit_exceeded'];
         yield 'no email' => [new TransferChannelFounderResult(TransferFounderOutcome::CurrentFounderWithoutEmail), 'set.founder.no_email'];
         yield 'throttled' => [new TransferChannelFounderResult(TransferFounderOutcome::Throttled), 'set.founder.throttled'];
-        yield 'sent' => [new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo***@example.com'), 'set.founder.token_sent'];
+        yield 'sent' => [new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo****@e****.***'), 'set.founder.token_sent'];
         yield 'invalid token' => [new TransferChannelFounderResult(TransferFounderOutcome::InvalidToken), 'set.founder.invalid_token'];
         yield 'mail failure' => [new TransferChannelFounderResult(TransferFounderOutcome::MailDeliveryFailed), 'error.mail_failed'];
         yield 'ignored' => [new TransferChannelFounderResult(TransferFounderOutcome::Ignored), null];
@@ -127,7 +127,7 @@ final class SetFounderHandlerTest extends TestCase
     {
         $results = [
             new TransferChannelFounderResult(TransferFounderOutcome::ChannelLimitReached, 'Busy', maximumChannelsPerNick: 7),
-            new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo***@example.com'),
+            new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo****@e****.***'),
         ];
         $application = $this->createStub(TransferChannelFounderHandlerInterface::class);
         $application->method('handle')->willReturnCallback(static function () use (&$results): TransferChannelFounderResult {
@@ -149,7 +149,7 @@ final class SetFounderHandlerTest extends TestCase
 
         self::assertSame('Busy', $translated['set.founder.limit_exceeded']['%nickname%']);
         self::assertSame('7', $translated['set.founder.limit_exceeded']['%max%']);
-        self::assertSame('fo***@example.com', $translated['set.founder.token_sent']['%email_hint%']);
+        self::assertSame('fo****@e****.***', $translated['set.founder.token_sent']['%email_hint%']);
     }
 
     #[Test]
