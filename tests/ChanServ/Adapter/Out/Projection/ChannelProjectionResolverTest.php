@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Adapter\Out\Projection;
 
 use App\ChanServ\Adapter\Out\Projection\ChannelProjectionResolver;
-use App\ChanServ\Application\Port\In\ChannelAccessProjection;
 use App\ChanServ\Application\Port\In\ChannelProjection;
-use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
-use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -19,25 +16,21 @@ use ReflectionProperty;
 
 #[CoversClass(ChannelProjectionResolver::class)]
 #[CoversClass(ChannelProjection::class)]
-#[CoversClass(ChannelAccessProjection::class)]
 final class ChannelProjectionResolverTest extends TestCase
 {
     #[Test]
-    public function projectsChannelsAndAccessEntriesWithoutExposingDomainEntities(): void
+    public function projectsChannelsWithoutExposingDomainEntities(): void
     {
         $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Ares', 7, 'description');
         new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 11);
         $channel->updateTopic('Welcome', new DateTimeImmutable('2026-01-01 00:00:00'));
         $channel->configureMlock(true, '+ntkl', ['k' => 'secret', 'l' => '10']);
         $channel->configureTopicLock(true);
-        $entry = new ChannelAccess(11, 9, 300);
 
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('listAll')->willReturn([$channel]);
         $channels->method('findByChannelName')->willReturn($channel);
-        $access = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access->method('listByChannel')->willReturn([$entry]);
-        $resolver = new ChannelProjectionResolver($channels, $access);
+        $resolver = new ChannelProjectionResolver($channels);
 
         $expected = new ChannelProjection(
             11,
@@ -52,7 +45,6 @@ final class ChannelProjectionResolverTest extends TestCase
             null,
             false,
             false,
-            [new ChannelAccessProjection(9, 300)],
         );
         $all = $resolver->all();
         self::assertCount(1, $all);
@@ -69,10 +61,7 @@ final class ChannelProjectionResolverTest extends TestCase
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn(null);
 
-        self::assertNull(new ChannelProjectionResolver(
-            $channels,
-            $this->createStub(ChannelAccessRepositoryInterface::class),
-        )->findByName('#missing'));
+        self::assertNull(new ChannelProjectionResolver($channels)->findByName('#missing'));
     }
 
     private static function assertProjection(ChannelProjection $expected, ChannelProjection $actual): void
@@ -89,8 +78,5 @@ final class ChannelProjectionResolverTest extends TestCase
         self::assertSame($expected->forbiddenReason, $actual->forbiddenReason);
         self::assertSame($expected->suspended, $actual->suspended);
         self::assertSame($expected->pendingDeletion, $actual->pendingDeletion);
-        self::assertCount(1, $actual->access);
-        self::assertSame($expected->access[0]->nickId, $actual->access[0]->nickId);
-        self::assertSame($expected->access[0]->level, $actual->access[0]->level);
     }
 }

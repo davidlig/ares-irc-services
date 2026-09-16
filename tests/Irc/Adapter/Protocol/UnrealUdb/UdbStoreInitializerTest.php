@@ -56,7 +56,7 @@ final class UdbStoreInitializerTest extends TestCase
 
         if ($withChannelAndGline) {
             $channels->method('all')->willReturn([
-                new ChannelProjection(1, '#chan', 7, null, false, '', [], false, false, null, false, false, []),
+                new ChannelProjection(1, '#chan', 7, null, false, '', [], false, false, null, false, false),
             ]);
             $glines->method('active')->willReturn([
                 new GlineProjection('*@bad.example', 'abuse', new DateTimeImmutable(), null),

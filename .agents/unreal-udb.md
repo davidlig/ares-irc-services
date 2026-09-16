@@ -123,6 +123,10 @@ service semantic changes
   -> UDB wire
 ```
 
+Record ownership: `C::<channel>::access::<nick>` is the UDB join-authorization allowlist
+(key presence plus `+r`); its value is not a rank. Ares never writes or projects that
+container: ChanServ ACCESS levels remain SQL-only and are enforced by ChanServ policy.
+
 ## 7. Persistence
 
 Protocol persistence belongs beneath:

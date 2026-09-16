@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
-use App\ChanServ\Application\Port\In\ChannelAccessProjection;
 use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
@@ -214,7 +213,7 @@ final readonly class UdbRecordExporter
     }
 
     /**
-     * Full C-block profile of one channel (founder/topic/modes/options/access).
+     * Full C-block profile of one channel (founder/topic/modes/options).
      * Forbidden channels export only their forbid record.
      *
      * @return array<string, string>
@@ -259,10 +258,6 @@ final readonly class UdbRecordExporter
             $records[sprintf('%s::options', $channel->name)] = '*' . $options;
         }
 
-        foreach ($channel->access as $access) {
-            $records += $this->accessRecord($channel, $access);
-        }
-
         return $records;
     }
 
@@ -278,19 +273,6 @@ final readonly class UdbRecordExporter
         }
 
         return $options;
-    }
-
-    /** @return array<string, string> Single-element map, or [] when the entry is not exportable. */
-    public function accessRecord(ChannelProjection $channel, ChannelAccessProjection $access): array
-    {
-        $targetNick = $this->nicks->findById($access->nickId);
-        if (null === $targetNick) {
-            return [];
-        }
-
-        $path = sprintf('%s::access::%s', $channel->name, $targetNick->nickname);
-
-        return [$path => (string) $access->level];
     }
 
     /**

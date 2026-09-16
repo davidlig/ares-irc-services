@@ -7,8 +7,7 @@ namespace App\ChanServ\Application\Port\In;
 final readonly class ChannelProjection
 {
     /**
-     * @param array<string, string>         $mlockParams
-     * @param list<ChannelAccessProjection> $access
+     * @param array<string, string> $mlockParams
      */
     public function __construct(
         public int $id,
@@ -23,6 +22,5 @@ final readonly class ChannelProjection
         public ?string $forbiddenReason,
         public bool $suspended,
         public bool $pendingDeletion,
-        public array $access,
     ) {}
 }

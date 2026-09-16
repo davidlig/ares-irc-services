@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
-use App\ChanServ\Application\Port\In\ChannelAccessProjection;
 use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
@@ -221,7 +220,6 @@ final class UdbRecordExporterTest extends TestCase
             topic: 'Welcome',
             mlockActive: true,
             topicLock: true,
-            access: [new ChannelAccessProjection(7, 300)],
         );
 
         $exporter = new UdbRecordExporter(
@@ -240,7 +238,6 @@ final class UdbRecordExporterTest extends TestCase
             '#chan::topic' => 'Welcome',
             '#chan::modes' => '+nt',
             '#chan::options' => '*6',
-            '#chan::access::founder' => '300',
         ], $records);
     }
 
@@ -289,16 +286,6 @@ final class UdbRecordExporterTest extends TestCase
         self::assertSame(4, $this->exporter->channelOptions($this->createChannel('#t', topicLock: true)));
         self::assertSame(6, $this->exporter->channelOptions($this->createChannel('#mt', mlockActive: true, topicLock: true)));
         self::assertSame(6, $this->exporter->channelOptions($this->createChannel('#pd', pendingDeletion: true, mlockActive: true, topicLock: true)));
-    }
-
-    #[Test]
-    public function accessEntriesWithUnknownNicksAreSkipped(): void
-    {
-        $access = new ChannelAccessProjection(999, 100);
-        $channel = $this->createChannel('#chan', access: [$access]);
-
-        self::assertSame([], $this->exporter->accessRecord($channel, $access));
-        self::assertSame([], $this->exporter->channelRecords($channel));
     }
 
     #[Test]
@@ -468,8 +455,7 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     /**
-     * @param array<string, string>         $mlockParams
-     * @param list<ChannelAccessProjection> $access
+     * @param array<string, string> $mlockParams
      */
     private function createChannel(
         string $name,
@@ -483,7 +469,6 @@ final class UdbRecordExporterTest extends TestCase
         bool $pendingDeletion = false,
         string $mlock = '+nt',
         array $mlockParams = [],
-        array $access = [],
     ): ChannelProjection {
         return new ChannelProjection(
             id: 1,
@@ -498,7 +483,6 @@ final class UdbRecordExporterTest extends TestCase
             forbiddenReason: $forbiddenReason,
             suspended: $suspended,
             pendingDeletion: $pendingDeletion,
-            access: $access,
         );
     }
 }

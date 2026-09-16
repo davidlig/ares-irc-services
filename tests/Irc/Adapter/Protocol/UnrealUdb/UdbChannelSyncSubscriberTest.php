@@ -6,7 +6,6 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
-use App\ChanServ\Application\PublishedEvent\ChannelAccessChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
@@ -108,7 +107,6 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             forbiddenReason: $forbidden ? 'forbidden' : null,
             suspended: $suspended,
             pendingDeletion: $pendingDeletion,
-            access: [],
         );
     }
 
@@ -125,7 +123,6 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             ChannelUnforbiddenEvent::class => 'onChannelUnforbidden',
             ChannelSuspendedEvent::class => 'onChannelSuspended',
             ChannelUnsuspendedEvent::class => 'onChannelUnsuspended',
-            ChannelAccessChangedEvent::class => 'onChannelAccessChanged',
             ChannelMlockUpdatedEvent::class => 'onChannelMlockUpdated',
             ChannelTopiclockUpdatedEvent::class => 'onChannelTopiclockUpdated',
             ChannelTopicChangedEvent::class => 'onChannelTopicChanged',
@@ -300,18 +297,6 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $sub->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#chan', '#chan', 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
 
         self::assertSame([['C', '#chan::suspend'], ['C', '#chan::options']], $deletes);
-    }
-
-    #[Test]
-    public function onChannelAccessChangedInsertsAndDeletesEntries(): void
-    {
-        $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::access::alice', '300');
-        $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#chan::access::bob');
-
-        $sub = $this->createSubscriber(writer: $writer);
-        $sub->onChannelAccessChanged(new ChannelAccessChangedEvent(1, '#chan', 'ADD', 9, 'alice', 300, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
-        $sub->onChannelAccessChanged(new ChannelAccessChangedEvent(1, '#chan', 'DEL', 8, 'bob', null, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]

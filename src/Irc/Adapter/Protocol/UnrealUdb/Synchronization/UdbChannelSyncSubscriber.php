@@ -6,7 +6,6 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
 use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
-use App\ChanServ\Application\PublishedEvent\ChannelAccessChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
@@ -52,7 +51,6 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
             ChannelUnforbiddenEvent::class => 'onChannelUnforbidden',
             ChannelSuspendedEvent::class => 'onChannelSuspended',
             ChannelUnsuspendedEvent::class => 'onChannelUnsuspended',
-            ChannelAccessChangedEvent::class => 'onChannelAccessChanged',
             ChannelMlockUpdatedEvent::class => 'onChannelMlockUpdated',
             ChannelTopiclockUpdatedEvent::class => 'onChannelTopiclockUpdated',
             ChannelTopicChangedEvent::class => 'onChannelTopicChanged',
@@ -111,18 +109,6 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
     {
         $this->recordWriter->delete(self::BLOCK, sprintf('%s::suspend', $event->channelName));
         $this->refreshOptions($event->channelNameLower);
-    }
-
-    public function onChannelAccessChanged(ChannelAccessChangedEvent $event): void
-    {
-        $path = sprintf('%s::access::%s', $event->channelName, $event->targetNickname);
-        if ('DEL' === $event->action) {
-            $this->recordWriter->delete(self::BLOCK, $path);
-
-            return;
-        }
-
-        $this->recordWriter->insert(self::BLOCK, $path, (string) ($event->level ?? 0));
     }
 
     public function onChannelMlockUpdated(ChannelMlockUpdatedEvent $event): void

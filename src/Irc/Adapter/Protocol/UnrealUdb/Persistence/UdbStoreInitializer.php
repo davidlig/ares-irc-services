@@ -26,7 +26,7 @@ use function in_array;
  *
  * On the first completed network sync each uninitialized block is seeded:
  * N/C/K are merged from the services SQL export (nick passwords, vhosts,
- * opers, channel founder/topic/modes/options/access, active GLINEs) while
+ * opers, channel founder/topic/modes/options, active GLINEs) while
  * I/S/L start empty. A UdbBlockState row per block marks completion so the
  * seed never runs again: afterwards the store is the sole authority and RAW
  * or SQL mutations win over any stale snapshot.
