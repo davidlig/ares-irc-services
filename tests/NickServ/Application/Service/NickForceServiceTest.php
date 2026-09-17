@@ -56,7 +56,9 @@ final class NickForceServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->forceGuestNick('UID123');
+        $nick = $service->forceGuestNick('UID123');
+
+        self::assertSame('Guest-ABC1234', $nick);
     }
 
     #[Test]
@@ -84,7 +86,9 @@ final class NickForceServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->forceGuestNick('UID123', 'CustomPrefix-ABC123');
+        $nick = $service->forceGuestNick('UID123', 'CustomPrefix-ABC123');
+
+        self::assertSame('CustomPrefix-ABC123', $nick);
     }
 
     #[Test]
@@ -114,7 +118,9 @@ final class NickForceServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->forceGuestNick('UID123');
+        $nick = $service->forceGuestNick('UID123');
+
+        self::assertNull($nick);
     }
 
     #[Test]
@@ -150,8 +156,9 @@ final class NickForceServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->forceGuestNick('UID123');
+        $nick = $service->forceGuestNick('UID123');
 
+        self::assertSame('Guest-ABC1234', $nick);
         self::assertNull($identifiedRegistry->findNick('UID123'));
     }
 
@@ -180,8 +187,9 @@ final class NickForceServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->forceGuestNick('UID123');
+        $nick = $service->forceGuestNick('UID123');
 
+        self::assertSame('Guest-ABC1234', $nick);
         self::assertNull($identifiedRegistry->findNick('UID123'));
     }
 
@@ -211,7 +219,9 @@ final class NickForceServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->forceGuestNick('UID123');
+        $nick = $service->forceGuestNick('UID123');
+
+        self::assertSame('Guest-ABC1234', $nick);
     }
 
     #[Test]
@@ -240,7 +250,9 @@ final class NickForceServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->forceGuestNick('UID123');
+        $nick = $service->forceGuestNick('UID123');
+
+        self::assertSame('Guest-ABC1234', $nick);
     }
 
     #[Test]
@@ -269,7 +281,9 @@ final class NickForceServiceTest extends TestCase
             'Guest-',
         );
 
-        $service->forceGuestNick('UID123', null, 'suspension');
+        $nick = $service->forceGuestNick('UID123', null, 'suspension');
+
+        self::assertSame('Guest-ABC1234', $nick);
     }
 
     #[Test]
@@ -299,7 +313,9 @@ final class NickForceServiceTest extends TestCase
             'Renamed-',
         );
 
-        $service->forceGuestNick('UID123');
+        $nick = $service->forceGuestNick('UID123');
+
+        self::assertSame('Renamed-ABC1234', $nick);
     }
 
     private function createOnlineUser(): NetworkUser

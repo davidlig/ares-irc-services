@@ -105,9 +105,10 @@ final class RenameNickHandlerTest extends TestCase
         $forceService = $this->createMock(NickForceService::class);
         $forceService->expects(self::once())
             ->method('forceGuestNick')
-            ->with('UID99', null, 'ircop-rename');
+            ->with('UID99', null, 'ircop-rename')
+            ->willReturn('Renamed-ABCDEFG');
 
-        $handler = new RenameNickHandler($validator, $forceService, guestPrefix: 'Renamed-');
+        $handler = new RenameNickHandler($validator, $forceService);
         $result = $handler->handle(new RenameNick('troublemaker', 'UID99', 'badguy', 'isp.net', '192.168.1.100'));
 
         self::assertSame(RenameNickOutcome::Success, $result->outcome);
@@ -115,7 +116,7 @@ final class RenameNickHandlerTest extends TestCase
         self::assertSame('UID99', $result->targetUid);
         self::assertSame('badguy@isp.net', $result->targetHost);
         self::assertSame('192.168.1.100', $result->targetIp);
-        self::assertSame('Renamed-XXXXXXX', $result->newNick);
+        self::assertSame('Renamed-ABCDEFG', $result->newNick);
     }
 
     #[Test]
@@ -127,7 +128,8 @@ final class RenameNickHandlerTest extends TestCase
         $forceService = $this->createMock(NickForceService::class);
         $forceService->expects(self::once())
             ->method('forceGuestNick')
-            ->with('UID1', null, 'ircop-rename');
+            ->with('UID1', null, 'ircop-rename')
+            ->willReturn('Guest-ABC1234');
 
         $handler = new RenameNickHandler($validator, $forceService);
         $result = $handler->handle(new RenameNick('user', 'UID1', null, null, null));
@@ -135,6 +137,25 @@ final class RenameNickHandlerTest extends TestCase
         self::assertSame(RenameNickOutcome::Success, $result->outcome);
         self::assertSame('@', $result->targetHost);
         self::assertSame('', $result->targetIp);
-        self::assertSame('Guest-XXXXXXX', $result->newNick);
+        self::assertSame('Guest-ABC1234', $result->newNick);
+    }
+
+    #[Test]
+    public function returnsNotOnlineWhenForceServiceCannotApply(): void
+    {
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('user', null));
+
+        $forceService = $this->createMock(NickForceService::class);
+        $forceService->expects(self::once())
+            ->method('forceGuestNick')
+            ->with('UID1', null, 'ircop-rename')
+            ->willReturn(null);
+
+        $handler = new RenameNickHandler($validator, $forceService);
+        $result = $handler->handle(new RenameNick('user', 'UID1', 'ident', 'host', '127.0.0.1'));
+
+        self::assertSame(RenameNickOutcome::NotOnline, $result->outcome);
+        self::assertSame('user', $result->targetNick);
     }
 }

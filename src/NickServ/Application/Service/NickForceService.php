@@ -50,8 +50,10 @@ readonly class NickForceService implements NickCollisionResolver
      * @param string      $uid       UID of the user to rename
      * @param string|null $guestNick If null, generates automatically with configured prefix
      * @param string      $reason    Reason for the force (for logging): 'suspension', 'protection', 'ircop-rename'
+     *
+     * @return string|null the guest nickname applied, or null when the UID is no longer online
      */
-    public function forceGuestNick(string $uid, ?string $guestNick = null, string $reason = 'enforcement'): void
+    public function forceGuestNick(string $uid, ?string $guestNick = null, string $reason = 'enforcement'): ?string
     {
         if (null === $guestNick) {
             $guestNick = $this->guestNicknameGenerator->generate($this->guestPrefix);
@@ -65,7 +67,7 @@ readonly class NickForceService implements NickCollisionResolver
                 $uid,
             ));
 
-            return;
+            return null;
         }
 
         $identifiedNick = $this->identifiedRegistry->findNick($uid);
@@ -96,5 +98,7 @@ readonly class NickForceService implements NickCollisionResolver
             $guestNick,
             $reason,
         ));
+
+        return $guestNick;
     }
 }

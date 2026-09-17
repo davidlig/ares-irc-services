@@ -1646,10 +1646,6 @@ services:
     App\NickServ\Adapter\In\Irc\Command\UnsuspendCommand:
         tags: ['nickserv.command']
 
-    App\NickServ\Application\UseCase\Rename\RenameNickHandler:
-        arguments:
-            $guestPrefix: '%services.guest_prefix%'
-
     App\NickServ\Adapter\In\Irc\Command\RenameCommand:
         arguments:
             $logger: '@monolog.logger.irc'

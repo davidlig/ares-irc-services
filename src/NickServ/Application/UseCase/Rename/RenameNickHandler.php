@@ -13,7 +13,6 @@ final readonly class RenameNickHandler implements RenameNickHandlerInterface
     public function __construct(
         private NickTargetValidator $targetValidator,
         private NickForceService $forceService,
-        private string $guestPrefix = 'Guest-',
     ) {}
 
     public function handle(RenameNick $command): RenameNickResult
@@ -33,7 +32,11 @@ final readonly class RenameNickHandler implements RenameNickHandlerInterface
             };
         }
 
-        $this->forceService->forceGuestNick($command->targetUid, null, 'ircop-rename');
+        $newNick = $this->forceService->forceGuestNick($command->targetUid, null, 'ircop-rename');
+
+        if (null === $newNick) {
+            return RenameNickResult::notOnline($command->targetNick);
+        }
 
         $targetHost = ($command->targetIdent ?? '') . '@' . ($command->targetHostname ?? '');
 
@@ -42,7 +45,7 @@ final readonly class RenameNickHandler implements RenameNickHandlerInterface
             targetUid: $command->targetUid,
             targetHost: $targetHost,
             targetIp: $command->targetIp ?? '',
-            newNick: $this->guestPrefix . 'XXXXXXX',
+            newNick: $newNick,
         );
     }
 }
