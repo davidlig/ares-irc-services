@@ -24,9 +24,11 @@ use function str_split;
  *
  * UDB applies live effects natively from its DB records, so most traditional
  * SVS, MODE and TOPIC commands are unnecessary:
- * - setUserAccount / setUserMode / setUserVhost / forceNick: no-ops — UDB
- *   identifies via N::<nick>::pass (+r, oper, vhost, modes) and force-renames
- *   unauthorized holders itself.
+ * - setUserAccount / setUserMode / setUserVhost: no-ops — UDB identifies via
+ *   N::<nick>::pass (+r, oper, vhost, modes) and renames unauthorized holders
+ *   of registered nicks itself.
+ * - forceNick: SVSNICK — an IRCop-driven RENAME or an enforcement guest rename
+ *   targets any user, which UDB does not apply natively.
  * - setChannelModes: persisted as C::<#chan>::modes (MLOCK) or
  *   C::<#chan>::persistent; only ban/prefix operations still emit MODE.
  * - setChannelMemberMode: founder +q is UDB-owned; other ranks keep MODE.
@@ -103,7 +105,7 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
 
     public function forceNick(string $serverSid, string $targetUid, string $newNick): void
     {
-        // UDB force-renames unauthorized holders of registered nicks natively.
+        $this->write(sprintf(':%s SVSNICK %s %s %d', $serverSid, $targetUid, $newNick, $this->clock->now()));
     }
 
     public function killUser(string $serverSid, string $targetUid, string $reason): void

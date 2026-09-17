@@ -110,12 +110,12 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function forceNickIsNoOp(): void
+    public function forceNickSendsSvsnickWithTimestamp(): void
     {
         $actions = $this->createActions();
         $actions->forceNick('001', '001ABCD', 'NewNick');
 
-        self::assertSame([], $this->written);
+        self::assertSame([':001 SVSNICK 001ABCD NewNick 1800000000'], $this->written);
     }
 
     #[Test]
