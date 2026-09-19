@@ -93,13 +93,61 @@ A namespace-only change does not require a schema migration unless schema semant
 
 ## 8. Reference cleanup
 
-Every stored nick/channel reference defines:
-- cascade;
-- set null;
-- transfer;
-- immutable historical snapshot.
+**Non-negotiable** — a definitive DROP of a nickname or a channel cleans every dependent
+reference it owns in the same transaction, including cross-context dependents. The owning
+context publishes its cleanup event inside the deletion transaction and subscriber adapters in
+the other contexts perform their local cleanup synchronously. Soft drops (pending deletion)
+never clean; RESTORE keeps all dependent data intact.
 
-Local atomic cleanup belongs in the same transaction.
+A hard drop only happens through `ChanDropService::hardDropChannel`,
+`NickDropService::hardDropNick` or `CleanupDroppedNickDataHandler` (founder without successor).
+Command handlers, `FORBID` flows and purge tasks delegate to those services; only the
+dependency-free forbidden placeholders are deleted directly by the `unforbid` paths.
+
+Channel hard drop (`ChannelDropCleanupEvent`, published inside the deletion transaction):
+
+| Reference | Policy | Owner |
+|---|---|---|
+| `channel_access` | delete | ChanServ |
+| `channel_levels` | delete | ChanServ |
+| `channel_akick` | delete | ChanServ |
+| `channel_history` | delete | ChanServ |
+| `memos` / `memo_settings` / `memo_ignores` targeting the channel | delete | MemoServ |
+| UDB `C` block projection | delete after commit | UnrealUdb |
+
+Nickname hard drop (`NickDropCleanupEvent`, published inside the deletion transaction):
+
+| Reference | Policy | Owner |
+|---|---|---|
+| `channel_access.nick_id` | delete | ChanServ |
+| `channel_akick.creator_nick_id` | set null | ChanServ |
+| `registered_channels.successor_nick_id` | set null | ChanServ |
+| `registered_channels.founder_nick_id` | transfer to successor, else drop the channel | ChanServ |
+| per-channel data of a founder channel without successor | delete (through the channel drop flow) | ChanServ / MemoServ |
+| `memos` (target or sender) / `memo_settings` / `memo_ignores` (target or ignored) | delete | MemoServ |
+| `forbidden_vhosts.created_by_nick_id` | set null | NickServ |
+| `nick_history.nick_id` | delete | NickServ |
+| `oper_ircops.nick_id` | delete | OperServ |
+| `oper_ircops.added_by_id` | set null | OperServ |
+| `gline.creator_nick_id` | set null | OperServ |
+| `motd.creator_nick_id` | delete | OperServ |
+| UDB `N` block projection | delete after commit | UnrealUdb |
+
+Immutable historical snapshots are never rewritten on DROP:
+
+- `nick_history.performed_by_nick_id` and `channel_history.performed_by_nick_id` keep the
+  operator id; presentation must tolerate the missing account (for example NickServ renders
+  `history.unknown_operator`).
+- `registered_channels.last_topic_set_by_nick` and `extra_data` JSON payloads are snapshots.
+
+New references — any new table or column storing a nick or channel id ships with:
+
+1. its lifecycle policy (cascade delete, set null, transfer, immutable snapshot);
+2. the cleanup path in the owning drop flow (subscriber + handler);
+3. unit coverage of the cleanup and an integration check that a hard drop leaves zero orphan
+   rows;
+4. the policy declared in `MappingReferencePolicyTest` and in the tables above.
+
 External protocol/log/mail effects occur after commit.
 
 ## 9. Integration tests
