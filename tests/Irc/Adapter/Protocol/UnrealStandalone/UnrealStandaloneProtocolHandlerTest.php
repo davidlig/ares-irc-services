@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealStandalone;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolHandler;
@@ -21,6 +22,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 #[CoversClass(UnrealStandaloneProtocolHandler::class)]
 final class UnrealStandaloneProtocolHandlerTest extends TestCase
 {
+    /** @var list<string> */
+    private array $effects = [];
+
     private function createHandler(string $sid = '001', ?EventDispatcherInterface $eventDispatcher = null): UnrealStandaloneProtocolHandler
     {
         return new UnrealStandaloneProtocolHandler(sid: $sid, eventDispatcher: $eventDispatcher);
@@ -133,32 +137,61 @@ final class UnrealStandaloneProtocolHandlerTest extends TestCase
     }
 
     #[Test]
-    public function handleIncomingEosWritesEosAndDispatchesBurstComplete(): void
+    public function onlyDirectPeerEosCompletesTheBurstOncePerHandshake(): void
     {
-        $written = [];
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
-            $written[] = $line;
+        $this->effects = [];
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->effects[] = 'write:' . $line;
         });
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::once())
-            ->method('dispatch')
-            ->willReturnCallback(static function (object $event) use ($connection): object {
-                self::assertInstanceOf(NetworkBurstCompleteEvent::class, $event);
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher->method('dispatch')
+            ->willReturnCallback(function (NetworkBurstCompleteEvent|NetworkSyncCompleteEvent $event) use ($connection): object {
                 self::assertSame($connection, $event->connection);
                 self::assertSame('005', $event->serverSid);
+                $this->effects[] = 'event:' . $event::class;
 
                 return $event;
             });
 
         $handler = $this->createHandler('005', $eventDispatcher);
-        $msg = new IRCMessage(command: 'EOS');
+        $handler->performHandshake($connection, $this->createServerLink());
+        $this->effects = [];
 
-        $handler->handleIncoming($msg, $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', prefix: '0A4', params: ['SID=0A4']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '0A4'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['NOQUIT', 'SID=0A1']), $connection);
 
-        self::assertSame(':005 EOS', $written[0]);
-        self::assertCount(1, $written);
+        foreach (['0A4', '0A5', '0A2', '0A3'] as $downstreamSid) {
+            $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: $downstreamSid), $connection);
+        }
+
+        self::assertSame([], $this->effects);
+
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '0A1'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '0A1'), $connection);
+
+        self::assertSame([
+            'event:' . NetworkBurstCompleteEvent::class,
+            'write::005 EOS',
+            'event:' . NetworkSyncCompleteEvent::class,
+        ], $this->effects);
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $this->effects = [];
+
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '0A1'), $connection);
+        self::assertSame([], $this->effects);
+
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=0B1']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '0B1'), $connection);
+
+        self::assertSame([
+            'event:' . NetworkBurstCompleteEvent::class,
+            'write::005 EOS',
+            'event:' . NetworkSyncCompleteEvent::class,
+        ], $this->effects);
     }
 
     #[Test]

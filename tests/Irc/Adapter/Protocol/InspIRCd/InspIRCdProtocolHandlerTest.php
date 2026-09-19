@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\InspIRCd;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupport;
@@ -27,11 +28,12 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-use function count;
-
 #[CoversClass(InspIRCdProtocolHandler::class)]
 final class InspIRCdProtocolHandlerTest extends TestCase
 {
+    /** @var list<string> */
+    private array $effects = [];
+
     private function createHandler(
         string $sid = 'A0A',
         ?ActiveConnectionHolder $connectionHolder = null,
@@ -240,57 +242,76 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     }
 
     #[Test]
-    public function handleIncomingEndburstDispatchesSyncCompleteAndSendsBurstIfNotSent(): void
+    public function directServerStartsBurstAndMatchingEndburstCompletesSyncOncePerHandshake(): void
     {
-        $written = [];
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
-            $written[] = $line;
+        $this->effects = [];
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->effects[] = 'write:' . $line;
         });
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::once())
-            ->method('dispatch')
-            ->willReturnCallback(static function (object $event) use ($connection): object {
-                self::assertInstanceOf(NetworkBurstCompleteEvent::class, $event);
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher->method('dispatch')
+            ->willReturnCallback(function (NetworkBurstCompleteEvent|NetworkSyncCompleteEvent $event) use ($connection): object {
                 self::assertSame($connection, $event->connection);
                 self::assertSame('C2C', $event->serverSid);
+                $this->effects[] = 'event:' . $event::class;
 
                 return $event;
             });
 
-        $handler = $this->createHandler('C2C', eventDispatcher: $eventDispatcher);
-        $msg = new IRCMessage(command: 'ENDBURST');
+        $connectionHolder = new ActiveConnectionHolder();
+        $handler = $this->createHandler('C2C', $connectionHolder, eventDispatcher: $eventDispatcher);
+        $handler->performHandshake($connection, $this->createServerLink());
+        $this->effects = [];
 
-        $handler->handleIncoming($msg, $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['hub.example.net', 'pass', '0A1']), $connection);
+        $this->assertOutgoingBurstEffects();
 
-        self::assertCount(2, $written);
-        self::assertMatchesRegularExpression('/^:C2C BURST \d+$/', $written[0]);
-        self::assertSame(':C2C ENDBURST', $written[1]);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['hub.example.net', 'pass', '0A1']), $connection);
+        $this->assertOutgoingBurstEffects();
+
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', prefix: '0A1', params: ['leaf.example.net', 'pass', '0A4']), $connection);
+
+        foreach (['0A4', '0A5', '0A2', '0A3'] as $downstreamSid) {
+            $handler->handleIncoming(new IRCMessage(command: 'ENDBURST', prefix: $downstreamSid), $connection);
+        }
+
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST', prefix: '0A1'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST', prefix: '0A1'), $connection);
+
+        self::assertSame('0A1', $connectionHolder->getRemoteServerSid());
+        $this->assertCompletedBurstEffects();
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $this->effects = [];
+
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST', prefix: '0A1'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', prefix: '0A1', params: ['leaf.example.net', 'pass', '0B4']), $connection);
+        self::assertSame([], $this->effects);
+
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['new-hub.example.net', 'pass', '0B1']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST', prefix: '0B1'), $connection);
+
+        self::assertSame('0B1', $connectionHolder->getRemoteServerSid());
+        $this->assertCompletedBurstEffects();
     }
 
-    #[Test]
-    public function handleIncomingEndburstDoesNotResendBurstIfAlreadySent(): void
+    private function assertOutgoingBurstEffects(): void
     {
-        $written = [];
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
-            $written[] = $line;
-        });
+        self::assertCount(3, $this->effects);
+        self::assertMatchesRegularExpression('/^write::C2C BURST \d+$/', $this->effects[0]);
+        self::assertSame('event:' . NetworkBurstCompleteEvent::class, $this->effects[1]);
+        self::assertSame('write::C2C ENDBURST', $this->effects[2]);
+    }
 
-        $handler = $this->createHandler('C2C');
-
-        $serverMsg = new IRCMessage(command: 'SERVER', params: ['irc.test.net', 'pass', '994'], trailing: 'Test Server');
-        $handler->handleIncoming($serverMsg, $connection);
-
-        $burstCountBefore = count(array_filter($written, static fn (string $line): bool => str_contains($line, ' BURST ')));
-        self::assertSame(1, $burstCountBefore);
-
-        $endburstMsg = new IRCMessage(command: 'ENDBURST', prefix: '994');
-        $handler->handleIncoming($endburstMsg, $connection);
-
-        $burstCountAfter = count(array_filter($written, static fn (string $line): bool => str_contains($line, ' BURST ')));
-        self::assertSame(1, $burstCountAfter);
+    private function assertCompletedBurstEffects(): void
+    {
+        self::assertCount(4, $this->effects);
+        self::assertMatchesRegularExpression('/^write::C2C BURST \d+$/', $this->effects[0]);
+        self::assertSame('event:' . NetworkBurstCompleteEvent::class, $this->effects[1]);
+        self::assertSame('write::C2C ENDBURST', $this->effects[2]);
+        self::assertSame('event:' . NetworkSyncCompleteEvent::class, $this->effects[3]);
     }
 
     #[Test]

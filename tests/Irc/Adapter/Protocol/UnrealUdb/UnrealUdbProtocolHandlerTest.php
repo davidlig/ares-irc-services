@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
@@ -58,6 +59,9 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
 
     /** @var list<string> */
     private array $written = [];
+
+    /** @var list<string> */
+    private array $effects = [];
 
     private function createConnection(): ConnectionInterface
     {
@@ -146,6 +150,8 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $connection = $this->createConnection();
 
         $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=001']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['ircd.example.net', '1']), $connection);
         $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '001'), $connection);
 
         $messages = array_map(static fn (LogRecord $record): string => $record->message, $records->getRecords());
@@ -218,11 +224,20 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     #[Test]
     public function handleIncomingTicksTheCoordinator(): void
     {
+        $effects = [];
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$effects): void {
+            $effects[] = $line;
+        });
         $coordinator = $this->createMock(UdbSessionController::class);
-        $coordinator->expects(self::once())->method('tick');
+        $coordinator->expects(self::once())->method('tick')->willReturnCallback(static function () use (&$effects): void {
+            $effects[] = 'tick';
+        });
         $handler = new UnrealUdbProtocolHandler('002', $coordinator);
 
-        $handler->handleIncoming(new IRCMessage(command: 'PING', params: ['123']), $this->createConnection());
+        $handler->handleIncoming(new IRCMessage(command: 'PING', params: ['123']), $connection);
+
+        self::assertSame(['PONG :123', 'tick'], $effects);
     }
 
     #[Test]
@@ -297,10 +312,9 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $this->written = [];
         $connection = $this->createConnection();
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::once())
+        $eventDispatcher->expects(self::exactly(2))
             ->method('dispatch')
-            ->willReturnCallback(static function (object $event) use ($connection): object {
-                self::assertInstanceOf(NetworkBurstCompleteEvent::class, $event);
+            ->willReturnCallback(static function (NetworkBurstCompleteEvent|NetworkSyncCompleteEvent $event) use ($connection): object {
                 self::assertSame($connection, $event->connection);
                 self::assertSame('002', $event->serverSid);
 
@@ -310,12 +324,78 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
 
         // The handshake captures our own FQDN (onLinkEstablished).
         $handler->performHandshake($connection, $this->createServerLink());
-        // Remote identity is captured from the SERVER line before EOS.
-        $handler->handleIncoming(new IRCMessage(command: 'SERVER', prefix: '001', params: ['ircd.example.net', '1'], trailing: 'IRCd'), $connection);
+        // The direct peer SID comes from PROTOCTL; its SERVER line is unprefixed.
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=001']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['ircd.example.net', '1'], trailing: 'IRCd'), $connection);
         $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '001'), $connection);
 
         self::assertContains(':002 EOS', $this->written);
         self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.test\.local [0-9a-f]{16} OCL OCLG$/m', implode("\n", $this->written));
+    }
+
+    #[Test]
+    public function onlyDirectPeerEosCompletesTheBurstOncePerHandshakeInLifecycleOrder(): void
+    {
+        $this->effects = [];
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->effects[] = 'write:' . $line;
+        });
+        $coordinator = $this->createStub(UdbSessionController::class);
+        $coordinator->method('onLinkReady')->willReturnCallback(function (ConnectionInterface $readyConnection) use ($connection): void {
+            self::assertSame($connection, $readyConnection);
+            $this->effects[] = 'coordinator:ready';
+        });
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(function (NetworkBurstCompleteEvent|NetworkSyncCompleteEvent $event) use ($connection): object {
+            self::assertSame($connection, $event->connection);
+            self::assertSame('002', $event->serverSid);
+            $this->effects[] = 'event:' . $event::class;
+
+            return $event;
+        });
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, eventDispatcher: $eventDispatcher);
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=0A1']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['hub.example.net', '1']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', prefix: '0A1', params: ['leaf.example.net', '2']), $connection);
+        $this->effects = [];
+
+        foreach (['0A4', '0A5', '0A2', '0A3'] as $downstreamSid) {
+            $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: $downstreamSid), $connection);
+        }
+
+        self::assertSame([], $this->effects);
+
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '0A1'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '0A1'), $connection);
+
+        self::assertSame([
+            'event:' . NetworkBurstCompleteEvent::class,
+            'write::002 EOS',
+            'coordinator:ready',
+            'event:' . NetworkSyncCompleteEvent::class,
+        ], $this->effects);
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $this->effects = [];
+
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '0A1'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', prefix: '0A1', params: ['SID=0A1']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', prefix: '0A1', params: ['old.example.net', '1']), $connection);
+        self::assertSame([], $this->effects);
+
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=0B1']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['new.example.net', '1']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '0B1'), $connection);
+
+        self::assertSame([
+            'event:' . NetworkBurstCompleteEvent::class,
+            'write::002 EOS',
+            'coordinator:ready',
+            'event:' . NetworkSyncCompleteEvent::class,
+        ], $this->effects);
     }
 
     #[Test]

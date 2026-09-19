@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
@@ -67,6 +68,8 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
 
     private ?string $remoteSid = null;
 
+    private bool $remoteBurstComplete = false;
+
     public function __construct(
         private readonly string $sid,
         private readonly UdbSessionController $coordinator,
@@ -94,6 +97,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
     {
         $this->remoteSid = null;
         $this->remoteServerName = null;
+        $this->remoteBurstComplete = false;
     }
 
     public function parseRawLine(string $rawLine): IRCMessage
@@ -132,30 +136,41 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
 
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
     {
-        if ('ERROR' === $message->command) {
-            $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
-            $this->logger->critical('Remote server sent ERROR — closing link.', [
-                'reason' => $reason,
-            ]);
+        $handleBeforeTick = 'PING' === $message->command || 'ERROR' === $message->command;
+        if (!$handleBeforeTick) {
+            $this->coordinator->tick($connection);
         }
-
-        if ('PING' === $message->command) {
-            $target = $message->trailing ?? ($message->params[0] ?? '');
-            $pong = 'PONG :' . $target;
-            $connection->writeLine($pong);
-            $this->logger->debug('> ' . $pong);
-        }
-
-        $this->coordinator->tick($connection);
 
         match ($message->command) {
-            'EOS' => $this->handleEosThenReady($connection),
+            'ERROR' => $this->handleError($message),
+            'PING' => $this->handlePing($message, $connection),
+            'EOS' => $this->handleEosThenReady($message, $connection),
             'NETINFO' => $this->handleNetinfo($message, $connection),
             'PROTOCTL' => $this->handleProtoServerSid($message),
             'SERVER' => $this->handleRemoteServer($message),
             'DB' => $this->handleDb($message, $connection),
             default => null,
         };
+
+        if ($handleBeforeTick) {
+            $this->coordinator->tick($connection);
+        }
+    }
+
+    private function handleError(IRCMessage $message): void
+    {
+        $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
+        $this->logger->critical('Remote server sent ERROR — closing link.', [
+            'reason' => $reason,
+        ]);
+    }
+
+    private function handlePing(IRCMessage $message, ConnectionInterface $connection): void
+    {
+        $target = $message->trailing ?? ($message->params[0] ?? '');
+        $pong = 'PONG :' . $target;
+        $connection->writeLine($pong);
+        $this->logger->debug('> ' . $pong);
     }
 
     private function sendHandshake(ConnectionInterface $connection, ServerLink $link): void
@@ -186,8 +201,13 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
         ]);
     }
 
-    private function handleEosThenReady(ConnectionInterface $connection): void
+    private function handleEosThenReady(IRCMessage $message, ConnectionInterface $connection): void
     {
+        if ($this->remoteBurstComplete || null === $this->remoteSid || $message->prefix !== $this->remoteSid) {
+            return;
+        }
+
+        $this->remoteBurstComplete = true;
         $this->eventDispatcher?->dispatch(new NetworkBurstCompleteEvent($connection, $this->sid));
 
         $eos = sprintf(':%s EOS', $this->sid);
@@ -196,6 +216,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
         $this->logger->info('Sent EOS — initial burst and sync complete.', ['sid' => $this->sid]);
 
         $this->coordinator->onLinkReady($connection);
+        $this->eventDispatcher?->dispatch(new NetworkSyncCompleteEvent($connection, $this->sid));
     }
 
     private function handleNetinfo(IRCMessage $message, ConnectionInterface $connection): void
@@ -214,6 +235,10 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
      */
     private function handleProtoServerSid(IRCMessage $message): void
     {
+        if (null !== $message->prefix) {
+            return;
+        }
+
         foreach ($message->params as $param) {
             if (str_starts_with($param, 'SID=')) {
                 $sid = substr($param, 4);
@@ -230,16 +255,16 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
 
     private function handleRemoteServer(IRCMessage $message): void
     {
+        if (null !== $message->prefix) {
+            return;
+        }
+
         $remoteName = $message->params[0] ?? '';
         if ('' === $remoteName) {
             return;
         }
 
         $this->remoteServerName = $remoteName;
-
-        // Direct peer introductions are unprefixed; fall back to the SID
-        // already captured from PROTOCTL SID=.
-        $this->remoteSid ??= $message->prefix ?? '';
 
         $this->notifyRemoteIdentity();
     }

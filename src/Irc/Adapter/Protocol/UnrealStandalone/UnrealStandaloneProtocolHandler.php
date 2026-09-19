@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealStandalone;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
@@ -15,6 +16,8 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function implode;
 use function sprintf;
+use function str_starts_with;
+use function substr;
 use function time;
 
 /** Implements the standalone UnrealIRCd 4.x / 5.x / 6.x server protocol. */
@@ -44,6 +47,10 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
         'SJSBY',
     ];
 
+    private ?string $remoteSid = null;
+
+    private bool $remoteBurstComplete = false;
+
     public function __construct(
         private readonly string $sid = '001',
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -72,6 +79,9 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
 
     public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
     {
+        $this->remoteSid = null;
+        $this->remoteBurstComplete = false;
+
         $this->logger->debug('Starting standalone UnrealIRCd handshake.', [
             'server' => (string) $link->serverName,
             'sid' => $this->sid,
@@ -99,36 +109,65 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
 
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
     {
-        if ('ERROR' === $message->command) {
-            $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
-            $this->logger->critical('Remote server sent ERROR — closing link.', [
-                'reason' => $reason,
-            ]);
-
-            return;
-        }
-
-        if ('PING' === $message->command) {
-            $target = $message->trailing ?? ($message->params[0] ?? '');
-            $pong = 'PONG :' . $target;
-            $connection->writeLine($pong);
-            $this->logger->debug('> ' . $pong);
-        }
-
         match ($message->command) {
-            'EOS' => $this->handleEos($connection),
+            'ERROR' => $this->handleError($message),
+            'PING' => $this->handlePing($message, $connection),
+            'EOS' => $this->handleEos($message, $connection),
             'NETINFO' => $this->handleNetinfo($message, $connection),
+            'PROTOCTL' => $this->captureRemoteSid($message),
             default => null,
         };
     }
 
-    private function handleEos(ConnectionInterface $connection): void
+    private function handleError(IRCMessage $message): void
     {
+        $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
+        $this->logger->critical('Remote server sent ERROR — closing link.', [
+            'reason' => $reason,
+        ]);
+    }
+
+    private function handlePing(IRCMessage $message, ConnectionInterface $connection): void
+    {
+        $target = $message->trailing ?? ($message->params[0] ?? '');
+        $pong = 'PONG :' . $target;
+        $connection->writeLine($pong);
+        $this->logger->debug('> ' . $pong);
+    }
+
+    private function handleEos(IRCMessage $message, ConnectionInterface $connection): void
+    {
+        if ($this->remoteBurstComplete || null === $this->remoteSid || $message->prefix !== $this->remoteSid) {
+            return;
+        }
+
+        $this->remoteBurstComplete = true;
         $this->eventDispatcher?->dispatch(new NetworkBurstCompleteEvent($connection, $this->sid));
 
         $eos = sprintf(':%s EOS', $this->sid);
         $connection->writeLine($eos);
         $this->logger->info('Sent EOS — initial burst and sync complete.', ['sid' => $this->sid]);
+        $this->eventDispatcher?->dispatch(new NetworkSyncCompleteEvent($connection, $this->sid));
+    }
+
+    private function captureRemoteSid(IRCMessage $message): void
+    {
+        if (null !== $message->prefix) {
+            return;
+        }
+
+        foreach ($message->params as $param) {
+            if (!str_starts_with($param, 'SID=')) {
+                continue;
+            }
+
+            $sid = substr($param, 4);
+            if ('' !== $sid) {
+                $this->remoteSid = $sid;
+            }
+
+            return;
+        }
     }
 
     private function handleNetinfo(IRCMessage $message, ConnectionInterface $connection): void

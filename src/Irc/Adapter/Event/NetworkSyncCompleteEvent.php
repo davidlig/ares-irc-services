@@ -7,9 +7,9 @@ namespace App\Irc\Adapter\Event;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 
 /**
- * Dispatched by the protocol handler AFTER it has sent its own EOS/ENDBURST
- * to the remote server. The link is fully synced; use this for actions that
- * must run after sync (e.g. ChanServ rejoining registered channels).
+ * Dispatched by the protocol handler once the direct peer's initial burst is
+ * complete. The handler has already finished its protocol-specific readiness
+ * work, so consumers may safely run post-sync actions such as channel rejoins.
  */
 final readonly class NetworkSyncCompleteEvent
 {

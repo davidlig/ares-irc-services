@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\InspIRCd;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
@@ -56,6 +57,10 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
     private const int PROTOCOL_VERSION = 1206;
 
     private bool $outgoingBurstSent = false;
+
+    private ?string $remoteSid = null;
+
+    private bool $remoteBurstComplete = false;
 
     /** @var list<string> Accumulated raw CAPAB lines from the remote server */
     private array $remoteCapabLines = [];
@@ -110,6 +115,8 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
         ]);
 
         $this->outgoingBurstSent = false;
+        $this->remoteSid = null;
+        $this->remoteBurstComplete = false;
         $this->remoteCapabLines = [];
         $this->remoteCapabActive = false;
         $this->sendCapabilities($connection);
@@ -123,32 +130,22 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
 
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
     {
-        if ('PING' === $message->command) {
-            $this->handlePing($message, $connection);
-
-            return;
-        }
-
-        if ('ERROR' === $message->command) {
-            $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
-            $this->logger->critical('Remote server sent ERROR — closing link.', [
-                'reason' => $reason,
-            ]);
-
-            return;
-        }
-
-        if ('CAPAB' === $message->command) {
-            $this->handleCapab($message);
-
-            return;
-        }
-
         match ($message->command) {
+            'PING' => $this->handlePing($message, $connection),
+            'ERROR' => $this->handleError($message),
+            'CAPAB' => $this->handleCapab($message),
             'SERVER' => $this->handleRemoteServer($message, $connection),
-            'ENDBURST' => $this->handleEndburst($connection),
+            'ENDBURST' => $this->handleEndburst($message, $connection),
             default => null,
         };
+    }
+
+    private function handleError(IRCMessage $message): void
+    {
+        $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
+        $this->logger->critical('Remote server sent ERROR — closing link.', [
+            'reason' => $reason,
+        ]);
     }
 
     private function handleCapab(IRCMessage $message): void
@@ -234,11 +231,16 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
 
     private function handleRemoteServer(IRCMessage $message, ConnectionInterface $connection): void
     {
+        if (null !== $message->prefix) {
+            return;
+        }
+
         $remoteSid = $message->params[2] ?? null;
         $remoteName = $message->params[0] ?? 'unknown';
         $remoteDescription = $message->trailing ?? '';
 
         if (null !== $remoteSid) {
+            $this->remoteSid = $remoteSid;
             $this->connectionHolder?->setRemoteServerSid($remoteSid);
         }
 
@@ -270,11 +272,15 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
         $this->logger->info('Sent ENDBURST — outgoing burst complete.', ['sid' => $this->sid]);
     }
 
-    private function handleEndburst(ConnectionInterface $connection): void
+    private function handleEndburst(IRCMessage $message, ConnectionInterface $connection): void
     {
-        $this->logger->info('Received ENDBURST — remote burst complete, network synced.', ['sid' => $this->sid]);
+        if ($this->remoteBurstComplete || null === $this->remoteSid || $message->prefix !== $this->remoteSid) {
+            return;
+        }
 
-        $this->sendOutgoingBurst($connection);
+        $this->remoteBurstComplete = true;
+        $this->logger->info('Received ENDBURST — remote burst complete, network synced.', ['sid' => $this->sid]);
+        $this->eventDispatcher?->dispatch(new NetworkSyncCompleteEvent($connection, $this->sid));
     }
 
     private function writeLine(ConnectionInterface $connection, string $line): void
