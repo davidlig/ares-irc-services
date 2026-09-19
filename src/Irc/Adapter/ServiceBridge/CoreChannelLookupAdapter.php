@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\ServiceBridge;
 
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeView;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
@@ -83,5 +84,12 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
         }
 
         return $views;
+    }
+
+    public function iterateModeSnapshots(): iterable
+    {
+        foreach ($this->channelRepository->iterateAll() as $channel) {
+            yield new ChannelModeView($channel->name->value, $channel->getModes());
+        }
     }
 }

@@ -263,7 +263,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered1, $registered2]);
 
         $this->channelLookup
@@ -291,7 +291,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->channelLookup
@@ -317,7 +317,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->channelLookup
@@ -343,7 +343,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->channelLookup
@@ -365,7 +365,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     {
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([]);
 
         $this->channelLookup
@@ -456,7 +456,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
         $this->channelServiceActions
             ->expects(self::never())

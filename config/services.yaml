@@ -534,6 +534,7 @@ services:
         arguments:
             $consolePath: '%kernel.project_dir%/bin/console'
             $transportNames: ['async', 'async_emails']
+            $logger: '@monolog.logger.irc'
 
     # --- CLI command — inject .env defaults so the command runs without arguments ---
 

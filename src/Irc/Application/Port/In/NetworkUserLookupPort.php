@@ -18,6 +18,9 @@ interface NetworkUserLookupPort
     /** @return string[] UIDs of all users currently on the network (for maintenance/pruning). */
     public function listConnectedUids(): array;
 
+    /** Check one UID without copying the network user collection. */
+    public function isConnectedUid(string $uid): bool;
+
     /**
      * Apply a mode change to a user (e.g. "+r", "-oHq").
      * Updates the local NetworkUser state after sending the mode change.

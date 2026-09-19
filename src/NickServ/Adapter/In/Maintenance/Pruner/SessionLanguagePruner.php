@@ -17,8 +17,6 @@ final readonly class SessionLanguagePruner implements InMemoryPrunableInterface
 
     public function prune(): int
     {
-        $validUids = $this->userLookup->listConnectedUids();
-
-        return $this->registry->pruneSessionsNotIn($validUids);
+        return $this->registry->pruneDisconnected($this->userLookup->isConnectedUid(...));
     }
 }

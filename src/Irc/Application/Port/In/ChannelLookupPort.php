@@ -17,4 +17,7 @@ interface ChannelLookupPort
      * @return ChannelView[] All channels currently on the network
      */
     public function listAll(): array;
+
+    /** @return iterable<ChannelModeView> Channel name and modes only, without member projections. */
+    public function iterateModeSnapshots(): iterable;
 }

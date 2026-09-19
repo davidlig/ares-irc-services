@@ -37,14 +37,14 @@ final class SessionLanguageRegistryTest extends TestCase
     }
 
     #[Test]
-    public function pruneSessionsNotInRemovesUidsNotInList(): void
+    public function pruneDisconnectedRemovesUidsNotConnected(): void
     {
         $registry = new SessionLanguageRegistry();
         $registry->register('001A', 'es');
         $registry->register('001B', 'fr');
         $registry->register('001C', 'de');
 
-        $removed = $registry->pruneSessionsNotIn(['001A', '001C']);
+        $removed = $registry->pruneDisconnected(static fn (string $uid): bool => '001B' !== $uid);
 
         self::assertSame(1, $removed);
         self::assertSame('es', $registry->find('001A'));
@@ -53,11 +53,11 @@ final class SessionLanguageRegistryTest extends TestCase
     }
 
     #[Test]
-    public function pruneSessionsNotInReturnsZeroWhenAllValid(): void
+    public function pruneDisconnectedReturnsZeroWhenAllValid(): void
     {
         $registry = new SessionLanguageRegistry();
         $registry->register('001A', 'es');
-        $removed = $registry->pruneSessionsNotIn(['001A']);
+        $removed = $registry->pruneDisconnected(static fn (string $uid): bool => '001A' === $uid);
         self::assertSame(0, $removed);
     }
 }

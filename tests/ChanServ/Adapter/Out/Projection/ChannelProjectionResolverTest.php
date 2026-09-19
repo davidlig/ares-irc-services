@@ -28,7 +28,7 @@ final class ChannelProjectionResolverTest extends TestCase
         $channel->configureTopicLock(true);
 
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('listAll')->willReturn([$channel]);
+        $channels->method('iterateAll')->willReturn([$channel]);
         $channels->method('findByChannelName')->willReturn($channel);
         $resolver = new ChannelProjectionResolver($channels);
 

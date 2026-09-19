@@ -31,8 +31,33 @@ interface RegisteredChannelRepositoryInterface
      */
     public function clearSuccessorNickId(int $successorNickId): void;
 
-    /** @return RegisteredChannel[] All registered channels (e.g. for ChanServ rejoin on burst). */
-    public function listAll(): array;
+    /**
+     * Entities are detached from the identity map as the iterator advances; persist and flush per item when mutating.
+     *
+     * @return iterable<RegisteredChannel> all registered channels ordered by name, in bounded batches
+     */
+    public function iterateAll(): iterable;
+
+    /**
+     * Entities are detached from the identity map as the iterator advances; persist and flush per item when mutating.
+     *
+     * @return iterable<RegisteredChannel>
+     */
+    public function iterateRegisteredInactiveSince(DateTimeImmutable $threshold): iterable;
+
+    /**
+     * Entities are detached from the identity map as the iterator advances; persist and flush per item when mutating.
+     *
+     * @return iterable<RegisteredChannel>
+     */
+    public function iterateExpiredSuspensions(DateTimeImmutable $now): iterable;
+
+    /**
+     * Entities are detached from the identity map as the iterator advances; persist and flush per item when mutating.
+     *
+     * @return iterable<RegisteredChannel>
+     */
+    public function iteratePendingDeletionBefore(DateTimeImmutable $threshold): iterable;
 
     /**
      * @param int[] $ids
@@ -40,21 +65,6 @@ interface RegisteredChannelRepositoryInterface
      * @return RegisteredChannel[]
      */
     public function findByIds(array $ids): array;
-
-    /**
-     * @return RegisteredChannel[] Channels inactive since the given threshold (lastUsedAt or createdAt < threshold)
-     */
-    public function findRegisteredInactiveSince(DateTimeImmutable $threshold): array;
-
-    /**
-     * @return RegisteredChannel[] Channels that are currently suspended and their suspension has expired
-     */
-    public function findExpiredSuspensions(): array;
-
-    /**
-     * @return RegisteredChannel[] Channels manually dropped before the threshold and ready for hard deletion
-     */
-    public function findPendingDeletionBefore(DateTimeImmutable $threshold): array;
 
     /**
      * @return RegisteredChannel[] Channels that are currently forbidden

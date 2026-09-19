@@ -23,9 +23,11 @@ final readonly class DoctrineChannelMlockPolicyRepository implements ChannelMloc
         return null === $channel ? null : $this->snapshot($channel);
     }
 
-    public function all(): array
+    public function all(): iterable
     {
-        return array_values(array_map($this->snapshot(...), $this->channels->listAll()));
+        foreach ($this->channels->iterateAll() as $channel) {
+            yield $this->snapshot($channel);
+        }
     }
 
     private function snapshot(RegisteredChannel $channel): ChannelMlockPolicy

@@ -74,7 +74,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
 
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())
-            ->method('findExpiredSuspensions')
+            ->method('iterateExpiredSuspensions')
             ->willReturn([$channel1, $channel2]);
         $channelRepo->expects(self::exactly(2))->method('save');
 
@@ -97,7 +97,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     {
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())
-            ->method('findExpiredSuspensions')
+            ->method('iterateExpiredSuspensions')
             ->willReturn([]);
         $channelRepo->expects(self::never())->method('save');
 

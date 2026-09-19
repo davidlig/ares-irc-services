@@ -12,6 +12,7 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelLevel as PolicyLevel;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +37,7 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
             new ChannelAccess(7, 22, 100),
         ]);
 
-        $policy = new DoctrineChannelRankPolicyRepository($channels, $access, $levels)->findByName('#CASE');
+        $policy = new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $this->createStub(EntityManagerInterface::class))->findByName('#CASE');
 
         self::assertNotNull($policy);
         self::assertSame(7, $policy->id);
@@ -60,23 +61,25 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
         $levels = $this->createMock(ChannelLevelRepositoryInterface::class);
         $levels->expects(self::never())->method('listByChannel');
 
-        self::assertNull(new DoctrineChannelRankPolicyRepository($channels, $access, $levels)->findByName('#missing'));
+        self::assertNull(new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $this->createStub(EntityManagerInterface::class))->findByName('#missing'));
     }
 
     #[Test]
     public function itMapsAllRankPolicies(): void
     {
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('listAll')->willReturn([
+        $channels->method('iterateAll')->willReturn([
             $this->channel(1, '#one', 10, false, false),
             $this->channel(2, '#two', 20, true, true),
         ]);
         $levels = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $levels->method('listByChannel')->willReturn([]);
+        $levels->method('listByChannel')->willReturn([new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, 250)]);
         $access = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access->method('listByChannel')->willReturn([]);
+        $access->method('listByChannel')->willReturn([new ChannelAccess(1, 21, 300)]);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::exactly(4))->method('detach');
 
-        $policies = new DoctrineChannelRankPolicyRepository($channels, $access, $levels)->all();
+        $policies = iterator_to_array(new DoctrineChannelRankPolicyRepository($channels, $access, $levels, $em)->all());
 
         self::assertCount(2, $policies);
         self::assertSame('#one', $policies[0]->name);
@@ -126,6 +129,7 @@ final class DoctrineChannelRankPolicyRepositoryTest extends TestCase
             $channels,
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(EntityManagerInterface::class),
         );
     }
 }

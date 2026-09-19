@@ -42,7 +42,7 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
     {
         $now = new DateTimeImmutable();
         $threshold = $now->modify(sprintf('-%d days', max(0, $this->dropGraceDays)));
-        $expired = $this->channelRepository->findPendingDeletionBefore($threshold);
+        $expired = $this->channelRepository->iteratePendingDeletionBefore($threshold);
 
         foreach ($expired as $channel) {
             $this->dropService->hardDropChannel($channel, $now, 'manual-grace-expired', null);

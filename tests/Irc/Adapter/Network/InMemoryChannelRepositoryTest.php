@@ -106,6 +106,17 @@ final class InMemoryChannelRepositoryTest extends TestCase
     }
 
     #[Test]
+    public function iterateAllStreamsStoredChannelsWithoutCopyingTheCollection(): void
+    {
+        $channel1 = $this->createChannel('#alpha');
+        $channel2 = $this->createChannel('#beta');
+        $this->repository->save($channel1);
+        $this->repository->save($channel2);
+
+        self::assertSame([$channel1, $channel2], iterator_to_array($this->repository->iterateAll()));
+    }
+
+    #[Test]
     public function countReturnsNumberOfChannels(): void
     {
         self::assertSame(0, $this->repository->count());

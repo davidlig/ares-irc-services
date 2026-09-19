@@ -142,6 +142,26 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
     }
 
     #[Test]
+    public function isConnectedUidChecksOnlyTheRequestedUid(): void
+    {
+        $user = $this->createNetworkUser('001AAA', 'User1', 'u1', 'h1', 'c1', '+r');
+        $this->repository->expects(self::never())->method('all');
+        $this->repository->expects(self::exactly(2))->method('findByUid')
+            ->with(new Uid('001AAA'))
+            ->willReturnOnConsecutiveCalls($user, null);
+
+        self::assertTrue($this->adapter->isConnectedUid('001AAA'));
+        self::assertFalse($this->adapter->isConnectedUid('001AAA'));
+    }
+
+    #[Test]
+    public function isConnectedUidRejectsInvalidUidWithoutQuerying(): void
+    {
+        $this->repository->expects(self::never())->method('findByUid');
+        self::assertFalse($this->adapter->isConnectedUid(''));
+    }
+
+    #[Test]
     public function fromNetworkUserMapsAllFields(): void
     {
         $this->repository->expects(self::never())->method('findByUid');

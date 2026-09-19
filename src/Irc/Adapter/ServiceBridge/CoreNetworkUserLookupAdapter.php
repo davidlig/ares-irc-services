@@ -54,6 +54,15 @@ final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPo
         return array_map(static fn (NetworkUser $u) => $u->uid->value, $users);
     }
 
+    public function isConnectedUid(string $uid): bool
+    {
+        try {
+            return null !== $this->networkUserRepository->findByUid(new Uid($uid));
+        } catch (InvalidArgumentException) {
+            return false;
+        }
+    }
+
     public function applyModeChange(string $uid, string $modeDelta): void
     {
         $user = $this->networkUserRepository->findByUid(new Uid($uid));

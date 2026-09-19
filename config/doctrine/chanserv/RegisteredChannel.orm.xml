@@ -5,9 +5,12 @@
                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
     <entity name="App\ChanServ\Domain\Entity\RegisteredChannel" table="registered_channels">
         <indexes>
+            <index name="idx_registered_channels_name_id" columns="name,id"/>
             <index name="idx_name_lower" columns="name_lower"/>
             <index name="idx_registered_channels_successor_nick_id" columns="successor_nick_id"/>
             <index name="idx_registered_channels_pending_deletion" columns="status,pending_deletion_at"/>
+            <index name="idx_registered_channels_status_suspended_until" columns="status,suspended_until"/>
+            <index name="idx_registered_channels_inactivity" columns="no_expire,last_used_at,created_at"/>
         </indexes>
         <id name="id" type="integer" column="id">
             <generator strategy="IDENTITY"/>

@@ -47,7 +47,7 @@ final readonly class UnsuspendExpiredChannelsTask implements MaintenanceTaskInte
     public function run(): void
     {
         $occurredAt = new DateTimeImmutable();
-        $expired = $this->channelRepository->findExpiredSuspensions();
+        $expired = $this->channelRepository->iterateExpiredSuspensions($occurredAt);
 
         foreach ($expired as $channel) {
             $channelName = $channel->getName();

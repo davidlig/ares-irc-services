@@ -189,7 +189,7 @@ final class EnforceChannelNojoinHandlerTest extends TestCase
         $active = $this->channel(name: '#Active');
         $missing = $this->channel(name: '#Missing');
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('listAll')->willReturn([$this->channel(name: '#Blocked', blocked: true), $missing, $active]);
+        $channels->method('iterateAll')->willReturn([$this->channel(name: '#Blocked', blocked: true), $missing, $active]);
         $state = new ChannelEntryNetworkState('#Active', [$this->member('001A', 'Guest')]);
         $network = $this->createMock(ChannelEntryNetworkQuery::class);
         $network->expects(self::exactly(2))->method('findChannel')->willReturnMap([

@@ -30,6 +30,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireLogRedactor;
 use App\Irc\Adapter\Runtime\LoopSchedulerInterface;
 use App\Irc\Adapter\Runtime\RevoltLoopScheduler;
 use App\Irc\Adapter\Runtime\SessionEventPump;
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -324,6 +325,14 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             }
             $this->deadlineWatcherId = null;
             if (null !== $this->eventPump) {
+                if ($this->eventPump->getQueueSize() >= SessionEventPump::READER_HIGH_WATER) {
+                    $this->scheduleNextDeadlineTimer();
+
+                    return;
+                }
+
+                // A new generation must keep its real FIFO position behind
+                // frames already queued; stale generations are cheap no-ops.
                 $this->eventPump->enqueue(function () use ($generation): void {
                     if ($generation === $this->deadlineGeneration) {
                         $this->tick();
@@ -410,9 +419,12 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         }
 
         if ($this->isAuthorityReady() && null !== $this->eventPump) {
-            $this->eventPump->enqueue(function (): void {
-                $this->flushMutations();
-            });
+            try {
+                $this->eventPump->enqueueCoalesced('udb-mutation-flush', function (): void {
+                    $this->flushMutations();
+                });
+            } catch (LogicException) {
+            }
         }
     }
 

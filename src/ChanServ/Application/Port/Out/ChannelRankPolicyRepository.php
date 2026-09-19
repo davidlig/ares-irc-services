@@ -10,8 +10,8 @@ interface ChannelRankPolicyRepository
 {
     public function findByName(string $channelName): ?ChannelRankPolicy;
 
-    /** @return list<ChannelRankPolicy> */
-    public function all(): array;
+    /** @return iterable<ChannelRankPolicy> */
+    public function all(): iterable;
 
     public function touchLastUsed(int $channelId): void;
 }

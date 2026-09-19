@@ -42,7 +42,7 @@ final class PurgePendingDeletionChannelsTaskTest extends TestCase
 
         $repo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $repo->expects(self::once())
-            ->method('findPendingDeletionBefore')
+            ->method('iteratePendingDeletionBefore')
             ->with(self::callback(static function (DateTimeImmutable $threshold): bool {
                 $expected = new DateTimeImmutable()->modify('-7 days');
 

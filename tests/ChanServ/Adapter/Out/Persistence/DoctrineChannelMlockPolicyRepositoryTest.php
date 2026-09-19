@@ -49,12 +49,12 @@ final class DoctrineChannelMlockPolicyRepositoryTest extends TestCase
     public function itMapsAllChannelsAndKeepsInactiveAndActiveEmptyLocksDistinct(): void
     {
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('listAll')->willReturn([
+        $channels->method('iterateAll')->willReturn([
             $this->channel(1, '#inactive', false, false, '', []),
             $this->channel(2, '#empty', false, true, '', []),
         ]);
 
-        $policies = new DoctrineChannelMlockPolicyRepository($channels)->all();
+        $policies = iterator_to_array(new DoctrineChannelMlockPolicyRepository($channels)->all());
 
         self::assertCount(2, $policies);
         self::assertFalse($policies[0]->modeLock->active);

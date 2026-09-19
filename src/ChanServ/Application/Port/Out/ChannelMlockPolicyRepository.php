@@ -10,6 +10,6 @@ interface ChannelMlockPolicyRepository
 {
     public function findByName(string $channelName): ?ChannelMlockPolicy;
 
-    /** @return list<ChannelMlockPolicy> */
-    public function all(): array;
+    /** @return iterable<ChannelMlockPolicy> */
+    public function all(): iterable;
 }

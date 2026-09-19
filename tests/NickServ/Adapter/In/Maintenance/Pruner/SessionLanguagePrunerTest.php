@@ -15,16 +15,21 @@ use PHPUnit\Framework\TestCase;
 final class SessionLanguagePrunerTest extends TestCase
 {
     #[Test]
-    public function pruneListsConnectedUidsThenPrunesSessionsNotInAndReturnsCount(): void
+    public function pruneChecksTrackedUidsAndRemovesDisconnectedSessions(): void
     {
-        $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $userLookup->method('listConnectedUids')->willReturn(['UID1', 'UID2']);
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::never())->method('listConnectedUids');
+        $userLookup->expects(self::exactly(2))->method('isConnectedUid')->willReturnCallback(
+            static fn (string $uid): bool => 'UID1' === $uid,
+        );
 
         $registry = new SessionLanguageRegistry();
+        $registry->register('UID1', 'es');
+        $registry->register('UID2', 'de');
         $pruner = new SessionLanguagePruner($registry, $userLookup);
 
-        $result = $pruner->prune();
-
-        self::assertGreaterThanOrEqual(0, $result);
+        self::assertSame(1, $pruner->prune());
+        self::assertSame('es', $registry->find('UID1'));
+        self::assertNull($registry->find('UID2'));
     }
 }

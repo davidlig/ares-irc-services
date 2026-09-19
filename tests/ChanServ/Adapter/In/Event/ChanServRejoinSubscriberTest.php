@@ -63,7 +63,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
     public function subscribesToCorrectEvents(): void
     {
         $this->channelRepository->expects(self::never())->method('findByChannelName');
-        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelRepository->expects(self::never())->method('iterateAll');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
         $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
@@ -303,7 +303,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered1, $registered2]);
 
         $this->modeSupportProvider
@@ -326,7 +326,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateModeSnapshots')
             ->willReturn([$view1, $view2]);
 
         $this->channelServiceActions
@@ -352,7 +352,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([]);
 
         $this->channelLookup->expects(self::never())->method('findByChannelName');
@@ -380,7 +380,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->channelLookup
@@ -391,7 +391,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateModeSnapshots')
             ->willReturn([]);
 
         $this->channelServiceActions
@@ -415,7 +415,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->method('getChannelRegisteredModeLetter')
             ->willReturn(null);
 
-        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelRepository->expects(self::never())->method('iterateAll');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
         $this->logger->expects(self::never())->method('warning');
@@ -426,7 +426,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
     #[Test]
     public function registrationNetworkActionsSkipReconciliationWhenRegisteredModeIsNotSupported(): void
     {
-        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelRepository->expects(self::never())->method('iterateAll');
         $this->modeSupportProvider
             ->expects(self::once())
             ->method('getSupport')
@@ -436,7 +436,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->method('getChannelRegisteredModeLetter')
             ->willReturn(null);
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('iterateModeSnapshots');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
         $this->logger->expects(self::never())->method('debug');
 
@@ -458,7 +458,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
@@ -482,7 +482,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateModeSnapshots')
             ->willReturn([$registeredView, $unregisteredView]);
 
         $this->channelServiceActions
@@ -505,7 +505,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
@@ -528,7 +528,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateModeSnapshots')
             ->willReturn([$view]);
 
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
@@ -540,7 +540,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteReconcilePermanentModeDoesNothingWhenModeNotSupported(): void
     {
-        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelRepository->expects(self::never())->method('iterateAll');
         $this->modeSupportProvider
             ->expects(self::once())
             ->method('getSupport')
@@ -549,7 +549,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('getPermanentChannelModeLetter')
             ->willReturn(null);
-        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('iterateModeSnapshots');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
         $this->logger->expects(self::never())->method('debug');
         $event = new NetworkSynchronizationCompletedEvent('001');
@@ -559,7 +559,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
     #[Test]
     public function registrationNetworkActionsSkipReconciliationWhenPermanentModeIsNotSupported(): void
     {
-        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelRepository->expects(self::never())->method('iterateAll');
         $this->modeSupportProvider
             ->expects(self::once())
             ->method('getSupport')
@@ -569,7 +569,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->method('getPermanentChannelModeLetter')
             ->willReturn(null);
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('iterateModeSnapshots');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
         $this->logger->expects(self::never())->method('debug');
 
@@ -591,7 +591,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
@@ -614,7 +614,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateModeSnapshots')
             ->willReturn([$view]);
 
         $this->channelServiceActions
@@ -637,7 +637,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
@@ -660,7 +660,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateModeSnapshots')
             ->willReturn([$view]);
 
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
@@ -677,7 +677,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
@@ -701,7 +701,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateModeSnapshots')
             ->willReturn([$registeredView, $unregisteredView]);
 
         $this->channelServiceActions
@@ -724,7 +724,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelRepository
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateAll')
             ->willReturn([$registered]);
 
         $this->modeSupportProvider
@@ -745,7 +745,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->channelLookup
             ->expects(self::once())
-            ->method('listAll')
+            ->method('iterateModeSnapshots')
             ->willReturn([]);
 
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
@@ -758,9 +758,9 @@ final class ChanServRejoinSubscriberTest extends TestCase
     public function onChannelSyncedSkipsSuspendedChannel(): void
     {
         $this->channelRepository->expects(self::never())->method('findByChannelName');
-        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelRepository->expects(self::never())->method('iterateAll');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('iterateModeSnapshots');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
         $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
         $this->modeSupport->expects(self::never())->method('getPermanentChannelModeLetter');
@@ -797,9 +797,9 @@ final class ChanServRejoinSubscriberTest extends TestCase
     public function onSyncCompleteReconcileRegisteredSkipsSuspendedChannel(): void
     {
         $this->channelRepository->expects(self::never())->method('findByChannelName');
-        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelRepository->expects(self::never())->method('iterateAll');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('iterateModeSnapshots');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
         $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
         $this->modeSupport->expects(self::never())->method('getPermanentChannelModeLetter');
@@ -813,7 +813,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $registered->method('isBlocked')->willReturn(true);
 
         $localChannelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $localChannelRepository->method('listAll')->willReturn([$registered]);
+        $localChannelRepository->method('iterateAll')->willReturn([$registered]);
 
         $localModeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $localModeSupport->method('getChannelRegisteredModeLetter')->willReturn('r');
@@ -824,7 +824,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $view = new ChannelView('#test', '+nt', null, 1);
 
         $localChannelLookup = $this->createStub(ChannelLookupPort::class);
-        $localChannelLookup->method('listAll')->willReturn([$view]);
+        $localChannelLookup->method('iterateModeSnapshots')->willReturn([$view]);
 
         $localChannelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $localChannelServiceActions->expects(self::never())->method('setChannelModes');
@@ -844,9 +844,9 @@ final class ChanServRejoinSubscriberTest extends TestCase
     public function onSyncCompleteReconcilePermanentSkipsSuspendedChannel(): void
     {
         $this->channelRepository->expects(self::never())->method('findByChannelName');
-        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelRepository->expects(self::never())->method('iterateAll');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('iterateModeSnapshots');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
         $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
         $this->modeSupport->expects(self::never())->method('getPermanentChannelModeLetter');
@@ -860,7 +860,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $registered->method('isBlocked')->willReturn(true);
 
         $localChannelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $localChannelRepository->method('listAll')->willReturn([$registered]);
+        $localChannelRepository->method('iterateAll')->willReturn([$registered]);
 
         $localModeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $localModeSupport->method('getPermanentChannelModeLetter')->willReturn('P');
@@ -869,7 +869,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $localModeSupportProvider->method('getSupport')->willReturn($localModeSupport);
 
         $localChannelLookup = $this->createStub(ChannelLookupPort::class);
-        $localChannelLookup->method('listAll')->willReturn([]);
+        $localChannelLookup->method('iterateModeSnapshots')->willReturn([]);
 
         $localChannelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $localChannelServiceActions->expects(self::never())->method('setChannelModes');

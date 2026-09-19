@@ -46,7 +46,7 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
     public function findUidByNick(string $registeredNick): ?string
     {
         $lowerNick = strtolower($registeredNick);
-        $this->logger?->debug('IdentifiedSessionRegistry: searching for nick', ['search' => $registeredNick, 'sessions' => $this->sessions]);
+        $this->logger?->debug('IdentifiedSessionRegistry: searching for nick', ['search' => $registeredNick, 'total' => count($this->sessions)]);
 
         return array_find_key($this->sessions, static fn ($nick) => strtolower($nick) === $lowerNick);
     }
@@ -58,18 +58,17 @@ final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, Identif
     }
 
     /**
-     * Removes sessions whose UID is not in the given list (e.g. users no longer connected).
+     * Removes sessions whose UID is no longer connected.
      * Returns the number of sessions removed. Used by maintenance to free memory.
      *
-     * @param array<string> $validUids List of UID strings that are still valid (e.g. currently connected).
+     * @param callable(string): bool $isConnected
      */
-    public function pruneSessionsNotIn(array $validUids): int
+    public function pruneDisconnected(callable $isConnected): int
     {
-        $validSet = array_fill_keys($validUids, true);
         $removed = 0;
 
-        foreach (array_keys($this->sessions) as $uid) {
-            if (!isset($validSet[$uid])) {
+        foreach ($this->sessions as $uid => $nick) {
+            if (!$isConnected($uid)) {
                 unset($this->sessions[$uid]);
                 ++$removed;
             }

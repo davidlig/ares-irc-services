@@ -37,14 +37,14 @@ final class IdentifiedSessionRegistryTest extends TestCase
     }
 
     #[Test]
-    public function pruneSessionsNotInRemovesUidsNotInList(): void
+    public function pruneDisconnectedRemovesUidsNotConnected(): void
     {
         $registry = new IdentifiedSessionRegistry();
         $registry->register('001A', 'Nick1');
         $registry->register('001B', 'Nick2');
         $registry->register('001C', 'Nick3');
 
-        $removed = $registry->pruneSessionsNotIn(['001A', '001C']);
+        $removed = $registry->pruneDisconnected(static fn (string $uid): bool => '001B' !== $uid);
 
         self::assertSame(1, $removed);
         self::assertSame('Nick1', $registry->findNick('001A'));
@@ -53,11 +53,11 @@ final class IdentifiedSessionRegistryTest extends TestCase
     }
 
     #[Test]
-    public function pruneSessionsNotInReturnsZeroWhenAllValid(): void
+    public function pruneDisconnectedReturnsZeroWhenAllValid(): void
     {
         $registry = new IdentifiedSessionRegistry();
         $registry->register('001A', 'Nick1');
-        $removed = $registry->pruneSessionsNotIn(['001A']);
+        $removed = $registry->pruneDisconnected(static fn (string $uid): bool => '001A' === $uid);
         self::assertSame(0, $removed);
     }
 

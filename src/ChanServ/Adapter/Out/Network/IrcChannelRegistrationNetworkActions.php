@@ -155,7 +155,7 @@ final readonly class IrcChannelRegistrationNetworkActions implements ChannelRegi
     /** @param array<string, true> $registeredNames */
     private function removeModeFromUnregisteredChannels(array $registeredNames, string $modeLetter, string $description): void
     {
-        foreach ($this->channelLookup->listAll() as $view) {
+        foreach ($this->channelLookup->iterateModeSnapshots() as $view) {
             if (isset($registeredNames[strtolower($view->name)]) || !str_contains($view->modes, $modeLetter)) {
                 continue;
             }

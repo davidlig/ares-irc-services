@@ -39,18 +39,17 @@ class SessionLanguageRegistry implements SessionLanguageTracker
     }
 
     /**
-     * Removes sessions whose UID is not in the given list.
+     * Removes sessions whose UID is no longer connected.
      * Returns the number of sessions removed.
      *
-     * @param array<string> $validUids
+     * @param callable(string): bool $isConnected
      */
-    public function pruneSessionsNotIn(array $validUids): int
+    public function pruneDisconnected(callable $isConnected): int
     {
-        $validSet = array_fill_keys($validUids, true);
         $removed = 0;
 
-        foreach (array_keys($this->sessions) as $uid) {
-            if (!isset($validSet[$uid])) {
+        foreach ($this->sessions as $uid => $language) {
+            if (!$isConnected($uid)) {
                 unset($this->sessions[$uid]);
                 ++$removed;
             }

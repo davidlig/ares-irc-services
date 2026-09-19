@@ -63,7 +63,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     public function runDoesNothingWhenInactivityExpiryDaysIsZero(): void
     {
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->expects(self::never())->method('findRegisteredInactiveSince');
+        $channelRepo->expects(self::never())->method('iterateRegisteredInactiveSince');
         $channelRepo->expects(self::never())->method('delete');
         $dropService = $this->createMock(ChanDropService::class);
         $dropService->expects(self::never())->method('hardDropChannel');
@@ -90,7 +90,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
 
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())
-            ->method('findRegisteredInactiveSince')
+            ->method('iterateRegisteredInactiveSince')
             ->with(self::callback(static function (DateTimeImmutable $t): bool {
                 $expected = new DateTimeImmutable()->modify('-90 days');
 

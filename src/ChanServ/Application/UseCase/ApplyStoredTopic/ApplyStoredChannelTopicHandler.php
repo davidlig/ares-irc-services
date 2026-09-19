@@ -51,7 +51,7 @@ final readonly class ApplyStoredChannelTopicHandler implements ApplyStoredChanne
 
     private function synchronizeAll(): void
     {
-        foreach ($this->channels->listAll() as $registered) {
+        foreach ($this->channels->iterateAll() as $registered) {
             $this->synchronize($registered);
         }
     }

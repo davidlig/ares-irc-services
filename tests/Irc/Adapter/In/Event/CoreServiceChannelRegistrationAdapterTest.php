@@ -51,6 +51,13 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
                 return array_values($this->channels);
             }
 
+            public function iterateAll(): iterable
+            {
+                foreach ($this->channels as $channel) {
+                    yield $channel;
+                }
+            }
+
             public function count(): int
             {
                 return count($this->channels);

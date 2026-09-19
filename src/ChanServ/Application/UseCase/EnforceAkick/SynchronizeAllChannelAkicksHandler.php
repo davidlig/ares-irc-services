@@ -18,7 +18,7 @@ final readonly class SynchronizeAllChannelAkicksHandler implements SynchronizeAl
     public function handle(SynchronizeAllChannelAkicks $command): int
     {
         $enforced = 0;
-        foreach ($this->channels->listAll() as $channel) {
+        foreach ($this->channels->iterateAll() as $channel) {
             if ($channel->isBlocked()) {
                 continue;
             }

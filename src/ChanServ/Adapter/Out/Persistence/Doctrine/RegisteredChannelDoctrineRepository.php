@@ -12,10 +12,13 @@ use Doctrine\ORM\EntityManagerInterface;
 
 use function array_filter;
 use function array_values;
+use function count;
 use function strtolower;
 
 final readonly class RegisteredChannelDoctrineRepository implements RegisteredChannelRepositoryInterface
 {
+    private const int PAGE_SIZE = 500;
+
     public function __construct(private EntityManagerInterface $em) {}
 
     public function save(RegisteredChannel $channel): void
@@ -70,17 +73,76 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
         return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
     }
 
-    /**
-     * @return RegisteredChannel[]
-     */
-    public function listAll(): array
+    public function iterateAll(): iterable
     {
-        $result = $this->em
-            ->getRepository(RegisteredChannel::class)
-            ->findBy([], ['name' => 'ASC']);
+        return $this->iterateMatching(null, []);
+    }
 
-        // @phpstan-ignore instanceof.alwaysTrue
-        return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
+    public function iterateRegisteredInactiveSince(DateTimeImmutable $threshold): iterable
+    {
+        return $this->iterateMatching(
+            'COALESCE(c.lastUsedAt, c.createdAt) < :threshold AND c.noExpire = false',
+            ['threshold' => $threshold->format('Y-m-d H:i:s')],
+        );
+    }
+
+    public function iterateExpiredSuspensions(DateTimeImmutable $now): iterable
+    {
+        return $this->iterateMatching(
+            'c.status = :status AND c.suspendedUntil IS NOT NULL AND c.suspendedUntil <= :now',
+            ['status' => ChannelStatus::Suspended, 'now' => $now->format('Y-m-d H:i:s')],
+        );
+    }
+
+    public function iteratePendingDeletionBefore(DateTimeImmutable $threshold): iterable
+    {
+        return $this->iterateMatching(
+            'c.status = :status AND c.pendingDeletionAt IS NOT NULL AND c.pendingDeletionAt <= :threshold',
+            ['status' => ChannelStatus::PendingDeletion, 'threshold' => $threshold->format('Y-m-d H:i:s')],
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     *
+     * @return iterable<RegisteredChannel>
+     */
+    private function iterateMatching(?string $filter, array $parameters): iterable
+    {
+        $lastName = null;
+        $lastId = null;
+
+        do {
+            $qb = $this->em->createQueryBuilder()
+                ->select('c')
+                ->from(RegisteredChannel::class, 'c')
+                ->orderBy('c.name', 'ASC')
+                ->addOrderBy('c.id', 'ASC')
+                ->setMaxResults(self::PAGE_SIZE);
+
+            if (null !== $filter) {
+                $qb->andWhere($filter);
+            }
+            if (null !== $lastName && null !== $lastId) {
+                $qb->andWhere('(c.name > :lastName OR (c.name = :lastName AND c.id > :lastId))')
+                    ->setParameter('lastName', $lastName)
+                    ->setParameter('lastId', $lastId);
+            }
+            foreach ($parameters as $name => $value) {
+                $qb->setParameter($name, $value);
+            }
+
+            /** @var array<RegisteredChannel> $page */
+            $page = $qb->getQuery()->getResult();
+            foreach ($page as $channel) {
+                $lastName = $channel->getName();
+                $lastId = $channel->getId();
+                yield $channel;
+                if ($this->em->contains($channel)) {
+                    $this->em->detach($channel);
+                }
+            }
+        } while (self::PAGE_SIZE === count($page));
     }
 
     public function findByIds(array $ids): array
@@ -94,22 +156,6 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
             ->findBy(['id' => $ids]);
     }
 
-    public function findRegisteredInactiveSince(DateTimeImmutable $threshold): array
-    {
-        $qb = $this->em->createQueryBuilder();
-        $qb->select('c')
-            ->from(RegisteredChannel::class, 'c')
-            ->where('COALESCE(c.lastUsedAt, c.createdAt) < :threshold')
-            ->andWhere('c.noExpire = false')
-            ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredChannel> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
-    }
-
     public function clearSuccessorNickId(int $successorNickId): void
     {
         $this->em
@@ -118,42 +164,6 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
             )
             ->setParameter('successorNickId', $successorNickId)
             ->execute();
-    }
-
-    public function findExpiredSuspensions(): array
-    {
-        $qb = $this->em->createQueryBuilder();
-        $qb->select('c')
-            ->from(RegisteredChannel::class, 'c')
-            ->where('c.status = :status')
-            ->andWhere('c.suspendedUntil IS NOT NULL')
-            ->andWhere('c.suspendedUntil <= :now')
-            ->setParameter('status', ChannelStatus::Suspended)
-            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'));
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredChannel> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
-    }
-
-    public function findPendingDeletionBefore(DateTimeImmutable $threshold): array
-    {
-        $qb = $this->em->createQueryBuilder();
-        $qb->select('c')
-            ->from(RegisteredChannel::class, 'c')
-            ->where('c.status = :status')
-            ->andWhere('c.pendingDeletionAt IS NOT NULL')
-            ->andWhere('c.pendingDeletionAt <= :threshold')
-            ->setParameter('status', ChannelStatus::PendingDeletion)
-            ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
-
-        /** @var array<mixed> $result */
-        $result = $qb->getQuery()->getResult();
-
-        /* @var array<RegisteredChannel> */
-        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
     }
 
     public function findForbiddenChannels(): array

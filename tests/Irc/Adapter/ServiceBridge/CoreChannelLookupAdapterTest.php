@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\ServiceBridge;
 
 use App\Irc\Adapter\ServiceBridge\CoreChannelLookupAdapter;
+use App\Irc\Application\Port\In\ChannelModeView;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\Network\ChannelMemberRole;
@@ -17,6 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(CoreChannelLookupAdapter::class)]
+#[CoversClass(ChannelModeView::class)]
 final class CoreChannelLookupAdapterTest extends TestCase
 {
     #[Test]
@@ -155,5 +157,29 @@ final class CoreChannelLookupAdapterTest extends TestCase
         self::assertContains('a', $letters);
         self::assertContains('q', $letters);
         self::assertContains('', $letters);
+    }
+
+    #[Test]
+    public function iterateModeSnapshotsDoesNotMaterializeChannelMembers(): void
+    {
+        $channel = new class(new ChannelName('#large'), '+ntr', new DateTimeImmutable()) extends Channel {
+            public function getMembers(): array
+            {
+                TestCase::fail('Mode-only channel sweeps must not materialize members.');
+            }
+        };
+        for ($i = 0; $i < 10_000; ++$i) {
+            $channel->syncMember(new Uid('UID' . $i), ChannelMemberRole::None);
+        }
+
+        $repo = $this->createMock(ChannelRepositoryInterface::class);
+        $repo->expects(self::never())->method('all');
+        $repo->expects(self::once())->method('iterateAll')->willReturn([$channel]);
+
+        $snapshots = iterator_to_array(new CoreChannelLookupAdapter($repo)->iterateModeSnapshots());
+
+        self::assertCount(1, $snapshots);
+        self::assertSame('#large', $snapshots[0]->name);
+        self::assertSame('+ntr', $snapshots[0]->modes);
     }
 }

@@ -17,7 +17,12 @@ final readonly class ChannelProjectionResolver implements ChannelProjectionQuery
 
     public function all(): array
     {
-        return array_values(array_map($this->project(...), $this->channels->listAll()));
+        $projections = [];
+        foreach ($this->channels->iterateAll() as $channel) {
+            $projections[] = $this->project($channel);
+        }
+
+        return $projections;
     }
 
     public function findByName(string $channelName): ?ChannelProjection

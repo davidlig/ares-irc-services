@@ -139,7 +139,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         $missing = $this->channel(name: '#Missing');
         $blocked = $this->channel(name: '#Blocked', blocked: true);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channels->method('listAll')->willReturn([$blocked, $missing, $active]);
+        $channels->method('iterateAll')->willReturn([$blocked, $missing, $active]);
         $state = new ChannelEntryNetworkState('#Active', [$this->member('001A', 'nick!ident@example.test')]);
         $network = $this->createMock(ChannelEntryNetworkQuery::class);
         $network->expects(self::exactly(2))->method('findChannel')->willReturnMap([

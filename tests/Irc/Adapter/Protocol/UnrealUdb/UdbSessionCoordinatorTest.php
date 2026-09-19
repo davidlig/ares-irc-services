@@ -2284,6 +2284,49 @@ final class UdbSessionCoordinatorTest extends TestCase
     }
 
     #[Test]
+    public function queuedMutationFlushesAreCoalescedWithoutDroppingMutations(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->makeReady();
+
+        $pump = new SessionEventPump();
+        $this->coordinator->setEventPump($pump);
+        $this->written = [];
+        $this->coordinator->enqueueMutation(new UdbMutation('S', 'first', 'one'));
+        $this->coordinator->enqueueMutation(new UdbMutation('S', 'second', 'two'));
+
+        self::assertSame(1, $pump->getQueueSize());
+        $pump->enqueue(static function () use ($pump): void {
+            $pump->stop();
+        });
+        $pump->drain();
+
+        self::assertContains(':002 DB * INS ' . $this->coordinator->epoch() . ' 1 S::first :one', $this->written);
+        self::assertContains(':002 DB * INS ' . $this->coordinator->epoch() . ' 2 S::second :two', $this->written);
+    }
+
+    #[Test]
+    public function mutationFlushEnqueueIsSkippedWhenTheEventPumpIsAtCapacity(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->makeReady();
+
+        $pump = new SessionEventPump();
+        $this->coordinator->setEventPump($pump);
+        for ($number = 0; $number < SessionEventPump::MAX_QUEUE_SIZE; ++$number) {
+            $pump->enqueue(static function (): void {});
+        }
+
+        $this->coordinator->enqueueMutation(new UdbMutation('S', 'nickserv', 'NickServ!NickServ@services'));
+
+        self::assertSame(SessionEventPump::MAX_QUEUE_SIZE, $pump->getQueueSize());
+
+        $pump->stop();
+    }
+
+    #[Test]
     public function simultaneousDeadlineAndIncomingFrameEvaluatesDeadlineFirst(): void
     {
         $this->seedStore();
@@ -2394,6 +2437,32 @@ final class UdbSessionCoordinatorTest extends TestCase
     }
 
     #[Test]
+    public function deadlineWatcherAtHighWaterRearmsInsteadOfGrowingTheQueue(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->handle($this->peerHel());
+        $this->handle($this->peerHelAck());
+
+        $this->clock->advance(60);
+        $this->written = [];
+
+        $pump = new SessionEventPump();
+        $this->coordinator->setEventPump($pump);
+        for ($number = 0; $number < SessionEventPump::READER_HIGH_WATER; ++$number) {
+            $pump->enqueue(static function (): void {});
+        }
+
+        $this->coordinator->scheduleNextDeadlineTimer();
+        $this->scheduler->runNext();
+
+        self::assertSame(SessionEventPump::READER_HIGH_WATER, $pump->getQueueSize());
+        self::assertNotNull($this->coordinator->getDeadlineWatcherId());
+
+        $pump->stop();
+    }
+
+    #[Test]
     public function queuedCallbackFromThePreviousLinkCannotTouchTheReplacementSession(): void
     {
         $pump = new SessionEventPump();
@@ -2418,6 +2487,43 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         self::assertSame('replacement.example.net', $this->coordinator->getRemoteServerName());
         self::assertSame($replacementWatcher, $this->coordinator->getDeadlineWatcherId());
+    }
+
+    #[Test]
+    public function newerDeadlineGenerationKeepsItsFifoPositionBehindQueuedFrames(): void
+    {
+        $events = [];
+        $this->connection = $this->createStub(ConnectionInterface::class);
+        $this->connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+        $this->connection->method('disconnect')->willReturnCallback(static function () use (&$events): void {
+            $events[] = 'deadline';
+        });
+
+        $pump = new SessionEventPump();
+        $this->coordinator->setEventPump($pump);
+        $this->prepareLink();
+        $this->scheduler->runNext();
+
+        $this->coordinator->reset();
+        $this->coordinator->setOwnName(self::OWN_NAME);
+        $this->coordinator->onRemoteServer('003', 'replacement.example.net');
+        $this->coordinator->onLinkReady($this->connection);
+        $this->clock->advance(60);
+        $pump->enqueue(function () use (&$events): void {
+            $events[] = 'frame';
+            $this->handle($this->peerHelAck(sourceSid: '003'));
+        });
+        $this->scheduler->runNext();
+
+        $pump->enqueue(static function () use ($pump): void {
+            $pump->stop();
+        });
+        $pump->drain();
+
+        self::assertSame(['frame'], $events);
+        self::assertSame('replacement.example.net', $this->coordinator->getRemoteServerName());
     }
 
     #[Test]

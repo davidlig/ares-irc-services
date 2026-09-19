@@ -20,5 +20,13 @@ interface ChannelRepositoryInterface
      */
     public function all(): array;
 
+    /**
+     * Yields channels without materializing the full collection; mutation of the repository
+     * during iteration yields unspecified results.
+     *
+     * @return iterable<Channel>
+     */
+    public function iterateAll(): iterable;
+
     public function count(): int;
 }

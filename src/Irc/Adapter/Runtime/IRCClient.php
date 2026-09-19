@@ -18,6 +18,7 @@ use App\Irc\Application\Port\In\Maintenance\RunMaintenanceCycle;
 use App\Irc\Domain\Server\ServerLink;
 use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
 use App\Shared\Application\Port\EventBusInterface;
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -118,7 +119,16 @@ class IRCClient implements IrcSessionInterface
         $readerFuture = async(function (): void {
             try {
                 while (!$this->finalized && $this->connection->isConnected()) {
+                    $this->eventPump->awaitReaderCapacity();
+                    if ($this->eventPump->isStopped()) {
+                        break;
+                    }
                     $rawLine = $this->connection->readLine();
+
+                    $this->eventPump->awaitReaderCapacity();
+                    if ($this->eventPump->isStopped()) {
+                        break;
+                    }
 
                     if (null === $rawLine) {
                         break;
@@ -128,17 +138,13 @@ class IRCClient implements IrcSessionInterface
                         continue;
                     }
 
-                    // @phpstan-ignore if.alwaysFalse
-                    if ($this->finalized) {
-                        break;
-                    }
-
                     $this->eventPump->enqueue(function () use ($rawLine): void {
                         $this->processIncomingLine($rawLine);
                     });
                 }
             } catch (Throwable $e) {
                 if (!$this->finalized) {
+                    $this->eventPump->awaitReaderCapacity();
                     $this->eventPump->enqueue(static function () use ($e): void {
                         throw $e;
                     });
@@ -148,6 +154,7 @@ class IRCClient implements IrcSessionInterface
             }
 
             if (!$this->finalized) {
+                $this->eventPump->awaitReaderCapacity();
                 $this->eventPump->enqueue(function (): void {
                     $this->finalizeSession('Remote host closed connection');
                 });
@@ -207,20 +214,26 @@ class IRCClient implements IrcSessionInterface
         $this->maintenanceScheduled = true;
 
         // First maintenance cycle runs immediately after burst complete without waiting
-        $this->eventPump->enqueue(function (): void {
-            $this->executeMaintenance();
-        });
+        $this->enqueueMaintenance();
 
         // Subsequent maintenance runs periodically
         $interval = max(1, $this->maintenanceDispatchIntervalSeconds);
         $this->maintenanceWatcherId = $this->loopScheduler->repeat(
             (float) $interval,
             function (): void {
-                $this->eventPump->enqueue(function (): void {
-                    $this->executeMaintenance();
-                });
+                $this->enqueueMaintenance();
             },
         );
+    }
+
+    private function enqueueMaintenance(): void
+    {
+        try {
+            $this->eventPump->enqueueCoalesced('maintenance', function (): void {
+                $this->executeMaintenance();
+            });
+        } catch (LogicException) {
+        }
     }
 
     private function executeMaintenance(): void

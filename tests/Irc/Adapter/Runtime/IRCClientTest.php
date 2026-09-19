@@ -191,6 +191,63 @@ final class IRCClientTest extends TestCase
     }
 
     #[Test]
+    public function readerAppliesBackpressureAndPreservesFifoThroughEof(): void
+    {
+        $read = 0;
+        $handled = [];
+        $this->connection = $this->createStub(ConnectionInterface::class);
+        $this->connection->method('isConnected')->willReturn(true);
+        $this->connection->method('readLine')->willReturnCallback(static function () use (&$read): ?string {
+            if (2050 === $read) {
+                return null;
+            }
+
+            return 'NOTICE NickServ :' . $read++;
+        });
+        $this->protocol = $this->createStub(ProtocolHandlerInterface::class);
+        $this->protocol->method('parseRawLine')->willReturnCallback(IRCMessage::fromRawLine(...));
+        $this->protocol->method('handleIncoming')->willReturnCallback(
+            static function (IRCMessage $message) use (&$handled): void {
+                $handled[] = (int) $message->trailing;
+            },
+        );
+        $pump = new SessionEventPump();
+        $this->client = $this->createClient(eventPump: $pump);
+
+        $this->client->run();
+
+        self::assertSame(range(0, 2049), $handled);
+        self::assertSame(SessionEventPump::READER_HIGH_WATER, $pump->getPeakQueueSize());
+        self::assertSame(0, $pump->getQueueSize());
+    }
+
+    #[Test]
+    public function disconnectDuringReaderBackpressureClearsQueuedLines(): void
+    {
+        $read = 0;
+        $handled = 0;
+        $this->connection = $this->createStub(ConnectionInterface::class);
+        $this->connection->method('isConnected')->willReturn(true);
+        $this->connection->method('readLine')->willReturnCallback(static function () use (&$read): string {
+            return 'NOTICE NickServ :' . $read++;
+        });
+        $this->protocol = $this->createStub(ProtocolHandlerInterface::class);
+        $this->protocol->method('parseRawLine')->willReturnCallback(IRCMessage::fromRawLine(...));
+        $this->protocol->method('handleIncoming')->willReturnCallback(function () use (&$handled): void {
+            ++$handled;
+            $this->client->disconnect('test close');
+        });
+        $pump = new SessionEventPump();
+        $this->client = $this->createClient(eventPump: $pump);
+
+        $this->client->run();
+
+        self::assertSame(1, $handled);
+        self::assertSame(SessionEventPump::READER_HIGH_WATER, $read);
+        self::assertSame(0, $pump->getQueueSize());
+    }
+
+    #[Test]
     public function runProcessesLinesSequentiallyThenExitsOnEof(): void
     {
         $line1 = ':server PING 12345';
@@ -492,6 +549,30 @@ final class IRCClientTest extends TestCase
         $scheduler->expects(self::once())->method('cancel')->with('watcher-repeat');
 
         $this->client = $this->createClient(loopScheduler: $scheduler);
+        $this->client->run();
+    }
+
+    #[Test]
+    public function maintenanceEnqueueIsSkippedWhenTheQueueIsAtCapacity(): void
+    {
+        $this->burstCompleteRegistry->setBurstComplete(true);
+
+        $this->connection = $this->createMock(ConnectionInterface::class);
+        $this->connection->expects(self::atLeastOnce())->method('isConnected')->willReturn(true);
+        $this->connection->expects(self::atLeastOnce())->method('readLine')->willReturn(null);
+
+        $this->protocol = $this->createMock(ProtocolHandlerInterface::class);
+        $this->protocol->expects(self::atLeastOnce())->method('getProtocolName')->willReturn('unreal');
+
+        $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
+        $this->messageBus->expects(self::never())->method('dispatch');
+
+        $pump = new SessionEventPump();
+        for ($i = 0; $i < SessionEventPump::MAX_QUEUE_SIZE; ++$i) {
+            $pump->enqueue(static function (): void {});
+        }
+
+        $this->client = $this->createClient(eventPump: $pump);
         $this->client->run();
     }
 

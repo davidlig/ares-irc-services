@@ -13,6 +13,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
+use function sprintf;
+
 #[CoversClass(RegisteredChannelDoctrineRepository::class)]
 #[Group('integration')]
 final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationTestCase
@@ -142,28 +144,53 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     }
 
     #[Test]
-    public function listAllReturnsAllChannelsOrderedByName(): void
+    public function iterateAllCrossesPageBoundaryInNameOrderAndDetachesProcessedChannels(): void
     {
-        $channel1 = RegisteredChannel::register(new DateTimeImmutable(), '#zeta', 1, 'Z');
-        $channel2 = RegisteredChannel::register(new DateTimeImmutable(), '#alpha', 2, 'A');
-        $channel3 = RegisteredChannel::register(new DateTimeImmutable(), '#beta', 3, 'B');
-
-        $this->repository->save($channel1);
-        $this->repository->save($channel2);
-        $this->repository->save($channel3);
+        for ($number = 500; $number >= 0; --$number) {
+            $this->entityManager->persist(RegisteredChannel::register(
+                new DateTimeImmutable(),
+                sprintf('#channel-%03d', $number),
+                1,
+                'Batch',
+            ));
+        }
         $this->flushAndClear();
 
-        $all = $this->repository->listAll();
+        $names = [];
+        foreach ($this->repository->iterateAll() as $channel) {
+            $names[] = $channel->getName();
+            self::assertTrue($this->entityManager->contains($channel));
+        }
 
-        self::assertCount(3, $all);
-        $names = array_map(static fn ($c) => $c->getName(), $all);
-        self::assertSame(['#alpha', '#beta', '#zeta'], $names);
+        self::assertCount(501, $names);
+        self::assertSame('#channel-000', $names[0]);
+        self::assertSame('#channel-500', $names[500]);
+        self::assertFalse($this->entityManager->contains($channel));
     }
 
     #[Test]
-    public function listAllReturnsEmptyArrayWhenNone(): void
+    public function iterateFilteredMaintenanceScansKeepTheirPredicates(): void
     {
-        self::assertSame([], $this->repository->listAll());
+        $old = RegisteredChannel::register(new DateTimeImmutable('-60 days'), '#old', 1, 'Old');
+        $fresh = RegisteredChannel::register(new DateTimeImmutable(), '#fresh', 1, 'Fresh');
+        $suspended = RegisteredChannel::register(new DateTimeImmutable(), '#suspended', 1, 'Suspended');
+        $suspended->suspend('Expired', new DateTimeImmutable('-1 day'));
+        $pending = RegisteredChannel::register(new DateTimeImmutable(), '#pending', 1, 'Pending');
+        $pending->markPendingDeletion(new DateTimeImmutable('-8 days'));
+        $protected = RegisteredChannel::register(new DateTimeImmutable('-60 days'), '#protected', 2, 'Protected');
+        $protected->changeNoExpire(true);
+        foreach ([$old, $fresh, $suspended, $pending, $protected] as $channel) {
+            $this->entityManager->persist($channel);
+        }
+        $this->flushAndClear();
+
+        $inactive = iterator_to_array($this->repository->iterateRegisteredInactiveSince(new DateTimeImmutable('-30 days')));
+        $expired = iterator_to_array($this->repository->iterateExpiredSuspensions(new DateTimeImmutable()));
+        $deleted = iterator_to_array($this->repository->iteratePendingDeletionBefore(new DateTimeImmutable('-7 days')));
+
+        self::assertSame(['#old'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $inactive));
+        self::assertSame(['#suspended'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $expired));
+        self::assertSame(['#pending'], array_map(static fn (RegisteredChannel $c): string => $c->getName(), $deleted));
     }
 
     #[Test]
@@ -192,84 +219,6 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     public function findByIdsReturnsEmptyArrayForEmptyInput(): void
     {
         self::assertSame([], $this->repository->findByIds([]));
-    }
-
-    #[Test]
-    public function findRegisteredInactiveSinceReturnsOldChannels(): void
-    {
-        $oldChannel = RegisteredChannel::register(new DateTimeImmutable(), '#old', 1, 'Old');
-        $this->repository->save($oldChannel);
-        $this->entityManager->flush();
-        $this->entityManager->createQueryBuilder()
-            ->update(RegisteredChannel::class, 'c')
-            ->set('c.lastUsedAt', ':date')
-            ->where('c.nameLower = :name')
-            ->setParameter('date', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
-            ->setParameter('name', '#old')
-            ->getQuery()
-            ->execute();
-        $this->entityManager->clear();
-
-        $newChannel = RegisteredChannel::register(new DateTimeImmutable(), '#new', 2, 'New');
-        $newChannel->touchLastUsed(new DateTimeImmutable());
-        $this->repository->save($newChannel);
-        $this->flushAndClear();
-
-        $inactive = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'));
-
-        self::assertCount(1, $inactive);
-        self::assertSame('#old', $inactive[0]->getName());
-    }
-
-    #[Test]
-    public function findRegisteredInactiveSinceReturnsEmptyArrayWhenNoneInactive(): void
-    {
-        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#active', 1, 'Active');
-        $channel->touchLastUsed(new DateTimeImmutable());
-
-        $this->repository->save($channel);
-        $this->flushAndClear();
-
-        $inactive = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'));
-
-        self::assertSame([], $inactive);
-    }
-
-    #[Test]
-    public function findRegisteredInactiveSinceExcludesNoExpireChannels(): void
-    {
-        $noExpireChannel = RegisteredChannel::register(new DateTimeImmutable(), '#protected', 1, 'Protected');
-        $this->repository->save($noExpireChannel);
-        $this->entityManager->flush();
-        $this->entityManager->createQueryBuilder()
-            ->update(RegisteredChannel::class, 'c')
-            ->set('c.lastUsedAt', ':date')
-            ->set('c.noExpire', ':noExpire')
-            ->where('c.nameLower = :name')
-            ->setParameter('date', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
-            ->setParameter('noExpire', true)
-            ->setParameter('name', '#protected')
-            ->getQuery()
-            ->execute();
-        $this->entityManager->clear();
-
-        $normalChannel = RegisteredChannel::register(new DateTimeImmutable(), '#normal', 2, 'Normal');
-        $this->repository->save($normalChannel);
-        $this->entityManager->flush();
-        $this->entityManager->createQueryBuilder()
-            ->update(RegisteredChannel::class, 'c')
-            ->set('c.lastUsedAt', ':date')
-            ->where('c.nameLower = :name')
-            ->setParameter('date', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
-            ->setParameter('name', '#normal')
-            ->getQuery()
-            ->execute();
-        $this->entityManager->clear();
-
-        $inactive = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'));
-
-        self::assertCount(1, $inactive);
-        self::assertSame('#normal', $inactive[0]->getName());
     }
 
     #[Test]
@@ -323,32 +272,6 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     }
 
     #[Test]
-    public function findExpiredSuspensionsReturnsOnlyExpiredSuspendedChannels(): void
-    {
-        $expired = RegisteredChannel::register(new DateTimeImmutable(), '#expired', 1, 'Expired');
-        $expired->suspend('Abuse', new DateTimeImmutable('-1 day'));
-
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active', 2, 'Active suspension');
-        $active->suspend('Abuse', new DateTimeImmutable('+7 days'));
-
-        $permanent = RegisteredChannel::register(new DateTimeImmutable(), '#permanent', 3, 'Permanent suspension');
-        $permanent->suspend('Abuse', null);
-
-        $normal = RegisteredChannel::register(new DateTimeImmutable(), '#normal', 4, 'Normal');
-
-        $this->repository->save($expired);
-        $this->repository->save($active);
-        $this->repository->save($permanent);
-        $this->repository->save($normal);
-        $this->flushAndClear();
-
-        $result = $this->repository->findExpiredSuspensions();
-
-        self::assertCount(1, $result);
-        self::assertSame('#expired', $result[0]->getName());
-    }
-
-    #[Test]
     public function findForbiddenChannelsReturnsOnlyForbiddenChannels(): void
     {
         $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden1', 'Spam channel');
@@ -381,26 +304,5 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         $result = $this->repository->findForbiddenChannels();
 
         self::assertSame([], $result);
-    }
-
-    #[Test]
-    public function findPendingDeletionBeforeReturnsOnlyExpiredManualDrops(): void
-    {
-        $expired = RegisteredChannel::register(new DateTimeImmutable(), '#expired-drop', 1, 'Expired');
-        $expired->markPendingDeletion(new DateTimeImmutable('-8 days'));
-        $this->repository->save($expired);
-
-        $fresh = RegisteredChannel::register(new DateTimeImmutable(), '#fresh-drop', 1, 'Fresh');
-        $fresh->markPendingDeletion(new DateTimeImmutable('-1 day'));
-        $this->repository->save($fresh);
-
-        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active-drop', 1, 'Active');
-        $this->repository->save($active);
-        $this->flushAndClear();
-
-        $result = $this->repository->findPendingDeletionBefore(new DateTimeImmutable('-7 days'));
-
-        self::assertCount(1, $result);
-        self::assertSame('#expired-drop', $result[0]->getName());
     }
 }

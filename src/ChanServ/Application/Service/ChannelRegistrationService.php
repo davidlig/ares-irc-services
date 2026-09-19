@@ -65,7 +65,7 @@ final readonly class ChannelRegistrationService implements ChannelRegistrationLi
         $registeredNames = [];
         $eligibleChannelNames = [];
 
-        foreach ($this->channelRepository->listAll() as $channel) {
+        foreach ($this->channelRepository->iterateAll() as $channel) {
             $registeredNames[strtolower($channel->getName())] = true;
             if (!$channel->isBlocked()) {
                 $eligibleChannelNames[] = $channel->getName();
