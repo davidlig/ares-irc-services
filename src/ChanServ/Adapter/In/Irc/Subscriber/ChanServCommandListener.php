@@ -65,7 +65,9 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
             $this->chanServService->dispatch($text, $sender);
         } catch (ChannelAlreadyRegisteredException $e) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
-            $this->chanServNotifier->sendMessage($sender->uid, $e->getMessage(), $messageType);
+            $language = $this->accountPort->findAccountByNick($sender->nick)->language ?? $this->defaultLanguage;
+            $message = $this->translator->trans('register.already_registered', ['%channel%' => $e->getChannelName()], 'chanserv', $language);
+            $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (ChannelNotRegisteredException $e) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $language = $this->accountPort->findAccountByNick($sender->nick)->language ?? $this->defaultLanguage;

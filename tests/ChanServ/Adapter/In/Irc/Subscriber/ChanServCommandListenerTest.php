@@ -414,11 +414,21 @@ final class ChanServCommandListenerTest extends TestCase
     }
 
     #[Test]
-    public function onCommandChannelAlreadyRegisteredSendsExceptionMessageViaNotifier(): void
+    public function onCommandChannelAlreadyRegisteredTranslatesAndSendsViaNotifier(): void
     {
         $sender = self::createSenderView();
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
-        $this->accountPort->expects(self::never())->method('findAccountByNick');
+        $this->accountPort
+            ->expects(self::atLeastOnce())
+            ->method('findAccountByNick')
+            ->with('TestUser')
+            ->willReturn(new ChanAccountView(1, 'TestUser', 'es'));
+
+        $this->translator
+            ->expects(self::once())
+            ->method('trans')
+            ->with('register.already_registered', ['%channel%' => '#test'], 'chanserv', 'es')
+            ->willReturn('El canal #test ya está registrado.');
 
         $exception = ChannelAlreadyRegisteredException::forChannel('#test');
         $command = $this->createThrowCommand('REGISTER', $exception);
@@ -427,8 +437,7 @@ final class ChanServCommandListenerTest extends TestCase
         $this->chanServNotifier
             ->expects(self::once())
             ->method('sendMessage')
-            ->with('001ABC', 'Channel "#test" is already registered.', 'NOTICE');
-        $this->translator->expects(self::never())->method('trans');
+            ->with('001ABC', 'El canal #test ya está registrado.', 'NOTICE');
         $this->logger->expects(self::never())->method('error');
 
         $listener->onCommand('001ABC', 'REGISTER #test');

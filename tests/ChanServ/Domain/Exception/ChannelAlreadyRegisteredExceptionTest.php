@@ -20,4 +20,12 @@ final class ChannelAlreadyRegisteredExceptionTest extends TestCase
         self::assertStringContainsString('#test', $e->getMessage());
         self::assertStringContainsString('already registered', $e->getMessage());
     }
+
+    #[Test]
+    public function forChannelExposesChannelName(): void
+    {
+        $e = ChannelAlreadyRegisteredException::forChannel('#test');
+
+        self::assertSame('#test', $e->getChannelName());
+    }
 }

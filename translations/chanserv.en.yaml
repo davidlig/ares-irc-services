@@ -19,6 +19,7 @@ register:
   short:            "Register a channel."
   help:             "Register and associate a channel to your nickname. You must be identified with %nickserv%."
   success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
+  already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
   pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."
   insufficient_channel_rank: "\x0304✗\x03 You must have at least operator status on \x02%channel%\x02 to register it."

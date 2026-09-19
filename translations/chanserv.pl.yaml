@@ -19,6 +19,7 @@ register:
   short:            "Zarejestruj kanał."
   help:             "Rejestruje i przypisuje kanał do Twojego nicka. Musisz być zidentyfikowany z %nickserv%."
   success:          "\x0303✔\x03 Kanał \x02%channel%\x02 został zarejestrowany."
+  already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
   channel_not_on_network: "\x0304✗\x03 Kanał \x02%channel%\x02 nie istnieje w sieci."
   pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 oczekuje na usunięcie i nie może być zarejestrowany."
   insufficient_channel_rank: "\x0304✗\x03 Musisz mieć co najmniej status operatora na \x02%channel%\x02, aby zarejestrować kanał."

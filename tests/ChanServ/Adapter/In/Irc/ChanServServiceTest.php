@@ -1047,7 +1047,7 @@ final class ChanServServiceTest extends TestCase
 
             public function execute(ChanServContext $context): void
             {
-                throw new ChannelAlreadyRegisteredException('#test');
+                throw ChannelAlreadyRegisteredException::forChannel('#test');
             }
         };
 

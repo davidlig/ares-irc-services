@@ -19,6 +19,7 @@ register:
   short:            "Registrar un canal."
   help:             "Registreu i associeu un canal al vostre sobrenom. Heu d'estar identificat amb %nickserv%."
   success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat."
+  already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat."
   channel_not_on_network: "\x0304✗\x03 El canal \x02%channel%\x02 no existeix a la xarxa."
   pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 està pendent d'eliminació i no pot ser registrat."
   insufficient_channel_rank: "\x0304✗\x03 Heu de tenir com a mínim estat d'operador a \x02%channel%\x02 per registrar-lo."

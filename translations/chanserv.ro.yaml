@@ -19,6 +19,7 @@ register:
   short:            "Înregistrați un canal."
   help:             "Înregistrați și asociați un canal cu porecla dumneavoastră. Trebuie să fiți identificat cu %nickserv%."
   success:          "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."
+  already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
   channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu există în rețea."
   pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este în așteptare de ștergere și nu poate fi înregistrat."
   insufficient_channel_rank: "\x0304✗\x03 Trebuie să ai cel puțin statut de operator pe \x02%channel%\x02 pentru a-l înregistra."
