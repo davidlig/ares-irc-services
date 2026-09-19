@@ -538,6 +538,21 @@ make up             # build + start container
 make logs           # follow logs
 ```
 
+For large networks, Docker defaults PHP's `memory_limit` to 512 MiB for each CLI invocation and
+caps the container at 2 GiB. Total process memory can exceed PHP's limit. Set
+`PHP_MEMORY_LIMIT` and `ARES_CONTAINER_MEMORY_LIMIT` in the host shell or the
+Compose environment before running `make up`, for example:
+
+```bash
+PHP_MEMORY_LIMIT=1G ARES_CONTAINER_MEMORY_LIMIT=3g make up
+```
+
+These are Docker/Compose settings, not `.env.local` settings. Measure memory use under a
+representative load before choosing production limits. CLI OPcache is enabled, while JIT is
+disabled because this daemon spends much of its time on IRC, events, and database I/O.
+For large networks, use MySQL through `DATABASE_URL` instead of the default SQLite database;
+the Doctrine Messenger transport also uses that database.
+
 ### All `make` targets
 
 | Target | Description |

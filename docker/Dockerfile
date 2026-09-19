@@ -27,7 +27,8 @@ RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" && \
     echo "opcache.jit=disable" >> /usr/local/etc/php/conf.d/opcache.ini && \
     echo "opcache.jit_buffer_size=0" >> /usr/local/etc/php/conf.d/opcache.ini && \
     echo "realpath_cache_size=4096K" > /usr/local/etc/php/conf.d/realpath-cache.ini && \
-    echo "realpath_cache_ttl=600" >> /usr/local/etc/php/conf.d/realpath-cache.ini
+    echo "realpath_cache_ttl=600" >> /usr/local/etc/php/conf.d/realpath-cache.ini && \
+    echo 'memory_limit=${PHP_MEMORY_LIMIT:-512M}' > /usr/local/etc/php/conf.d/memory-limit.ini
 
 WORKDIR /app
 

@@ -6,12 +6,9 @@ services:
       args:
         UID: ${UID:-1000}
     container_name: ares-irc-services
-    restart: on-failure:10
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 15s
-        max_attempts: 10
+    restart: unless-stopped
+    mem_limit: ${ARES_CONTAINER_MEMORY_LIMIT:-2G}
+    stop_grace_period: 30s
 
     # Bind mounts for persistence
     volumes:
@@ -25,6 +22,7 @@ services:
 
     environment:
       - APP_ENV=prod
+      - PHP_MEMORY_LIMIT=${PHP_MEMORY_LIMIT:-512M}
 
     healthcheck:
       test: ["CMD-SHELL", "grep -Fq 'irc:connect' /proc/1/cmdline"]
