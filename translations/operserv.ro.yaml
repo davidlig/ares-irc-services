@@ -6,6 +6,7 @@ unknown_command: "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosi�
 error:
   syntax:           "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
   oper_only:        "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
+  not_identified:   "\x0304✗\x03 Nu sunteți identificat. Folosiți \x0303/msg %nickserv% IDENTIFY\x03."
   permission_denied: "\x0304✗\x03 Nu aveți permisiuni suficiente pentru a executa această comandă."
   root_only:        "\x0304✗\x03 Această comandă este rezervată administratorilor root ai rețelei."
   nick_not_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
@@ -27,7 +28,7 @@ help:
   footer:           "\x0314─────────────────────────────\x03"
   intro_expiration: "NOTĂ: Poreclele \x0304\x1Fnefolosite\x0F mai mult de %days% zile sunt eliminate automat."
   unknown_command:  "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
-  suboptions:       "Sub-opțiuni:"
+  ircop_header:     "\x02\x0314Comenzi disponibile pentru IRCOPS:\x03\x0F"
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
@@ -67,7 +68,6 @@ role:
     syntax: "ROLE OPERCLASS {LIST|<rol>} [{VIEW|SET}] [operclass]"
     short: "Gestioneaza operclass Unreal a rolului."
     help: "LIST arata operclasses disponibile in retea.\nVIEW arata operclass a rolului si cele disponibile.\nSET o atribuie la identificare (OFF pentru a o elimina).\nDisponibil doar pe protocoalele UnrealIRCd."
-    unknown_action: "\x0304✗\x03 Actiune necunoscuta \x02%action%\x02. Folositi LIST, VIEW sau SET."
     list:
       header: "\x0307---\x03 \x02Operclasses Disponibile in Retea\x02 \x0307---\x03"
       empty: "Nu exista operclasses disponibile in retea."
@@ -115,42 +115,21 @@ role:
     syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [permisiune|ALL]"
     short:          "Gestionați permisiunile rolului."
     help:            "Gestionează permisiunile atribuite unui rol.\nLIST afișează toate permisiunile rolului.\nADD atribuie o permisiune rolului.\nDEL elimină o permisiune din rol (nu pentru rolurile protejate).\nCLEAR elimină toate permisiunile din rol.\nFolosiți ALL pentru a adăuga toate permisiunile disponibile deodată.\nAceastă comandă este rezervată utilizatorilor Root."
-    unknown_action:  "\x0304✗\x03 Acțiune necunoscută \x02%action%\x02. Folosiți LIST, ADD, DEL sau CLEAR."
     not_found:       "\x0304✗\x03 Permisiunea \x02%perm%\x02 nu există."
     already_has:     "\x0304✗\x03 Rolul \x02%role%\x02 are deja permisiunea \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Rolul \x02%role%\x02 nu are permisiunea \x02%perm%\x02."
-    protected:      "\x0304✗\x03 Nu se pot modifica permisiunile rolului protejat \x02%role%\x02."
 
     list:
-      syntax:       "ROLE PERMS <rol> LIST"
-      short:        "Listați permisiunile unui rol."
-      help:         "Listează toate permisiunile atribuite unui rol.\nAceastă comandă este rezervată utilizatorilor Root."
       header:        "\x0307---\x03 \x02Permisiuni pentru %role%\x02 \x0307---\x03"
-      empty:        "Rolul \x02%role%\x02 nu are permisiuni atribuite."
-      assigned:     "\x0310Atribuite:\x03"
-      none_assigned: "\x0314Nicio permisiune atribuită.\x03"
-      available:    "\x0310Disponibile:\x03"
-      all_assigned: "\x0314Toate permisiunile sunt atribuite acestui rol.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rol> ADD {permisiune|ALL}"
-      short:        "Adăugați o permisiune unui rol."
-      help:         "Adaugă o permisiune unui rol.\nFolosiți ALL pentru a adăuga toate permisiunile disponibile deodată.\nAceastă comandă este rezervată utilizatorilor Root."
       done:         "\x0303✓\x03 Permisiunea \x02%perm%\x02 adăugată rolului \x02%role%\x02."
       all_done:     "\x0303✓\x03 Adăugate \x02%count%\x02 permisiuni rolului \x02%role%\x02."
-      all_skipped:  "\x0304✗\x03 Rolul \x02%role%\x02 are deja toate permisiunile disponibile."
-      all_empty:    "\x0304✗\x03 Nu există permisiuni disponibile de adăugat."
 
     del:
-      syntax:       "ROLE PERMS <rol> DEL <permisiune>"
-      short:        "Eliminați o permisiune dintr-un rol."
-      help:         "Elimină o permisiune dintr-un rol.\nNu se pot modifica rolurile protejate.\nAceastă comandă este rezervată utilizatorilor Root."
       done:         "\x0303✓\x03 Permisiunea \x02%perm%\x02 eliminată din rolul \x02%role%\x02."
 
     clear:
-      syntax:       "ROLE PERMS <rol> CLEAR"
-      short:        "Eliminați toate permisiunile dintr-un rol."
-      help:         "Elimină toate permisiunile dintr-un rol.\nAceastă comandă este rezervată utilizatorilor Root."
       done:         "\x0303✓\x03 Eliminate \x02%count%\x02 permisiuni din rolul \x02%role%\x02."
       empty:        "\x0304✗\x03 Rolul \x02%role%\x02 nu are permisiuni atribuite."
 
@@ -158,46 +137,31 @@ role:
     syntax:         "ROLE MODES <rol> {VIEW|SET} [moduri]"
     short:          "Gestionați modurile de utilizator IRCOP pentru rol."
     help:            "Gestionează modurile de utilizator IRCOP atribuite unui rol.\nVIEW afișează modurile actuale ale rolului.\nSET setează modurile IRCOP (de ex. oH pentru +oH).\nUtilizatorii cu acest rol vor primi aceste moduri la identificare.\nModuri disponibile per IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nAceastă comandă este rezervată utilizatorilor Root."
-    unknown_action:  "\x0304✗\x03 Acțiune necunoscută \x02%action%\x02. Folosiți VIEW sau SET."
 
     view:
-      syntax:       "ROLE MODES <rol> VIEW"
-      short:        "Afișați modurile rolului."
-      help:          "Afișează modurile de utilizator IRCOP atribuite unui rol.\nAceastă comandă este rezervată utilizatorilor Root."
       header:        "\x0307---\x03 \x02Moduri pentru %role%\x02 \x0307---\x03"
       empty:        "Rolul \x02%role%\x02 nu are moduri atribuite."
       line:         "  Moduri: \x0303%modes%\x03"
 
     set:
-      syntax:       "ROLE MODES <rol> SET [moduri]"
-      short:        "Setați modurile de utilizator IRCOP."
-      help:          "Setează modurile de utilizator IRCOP pentru rol.\nFără argumente, elimină toate modurile rolului.\nDoar moduri IRCOP valide pentru IRCd-ul activ.\nUtilizatorii identificați cu acest rol vor primi modificările.\nAceastă comandă este rezervată utilizatorilor Root."
       done:         "\x0303✓\x03 Moduri setate \x02%modes%\x02 pentru rolul \x02%role%\x02."
       cleared:      "\x0303✓\x03 Toate modurile au fost eliminate din rolul \x02%role%\x02."
       invalid_mode: "\x0304✗\x03 Modul \x02%mode%\x02 nu este un mod IRCOP valid."
       invalid_modes: "\x0304✗\x03 Moduri invalide: %invalid%. Moduri valide: %valid%."
       no_irc_user_modes: "\x0304✗\x03 IRCd-ul actual nu are moduri IRCOP configurate."
-      not_supported: "\x0304✗\x03 Protocolul actual nu suportă setarea modurilor de utilizator IRCOP din Servicii."
 
   vhost:
     syntax:         "ROLE VHOST <rol> {VIEW|SET} [model]"
     short:          "Gestionați modelul de vhost forțat pentru un rol."
     help:           "Gestionează vhostul forțat atribuit unui rol.\nVIEW afișează modelul actual de vhost forțat.\nSET atribuie un model de vhost forțat (utilizatorii cu acest rol vor\nprimi acest vhost la identificare, anulând vhostul personal).\nModelul este adăugat după porecla curățată, de ex.:\n  Poreclă: _davidlig_ → Model: admin.ares → VHost: davidlig.admin.ares\nCaractere valide: a-z, A-Z, 0-9, cratimă (-) și punct (.).\nTrebuie să aibă cel puțin un punct, nu poate începe/termina cu - sau . sau să aibă ..\nFolosiți OFF pentru a șterge modelul de vhost forțat.\nAceastă comandă este rezervată utilizatorilor Root."
-    unknown_action:  "\x0304✗\x03 Acțiune necunoscută \x02%action%\x02. Folosiți VIEW sau SET."
 
     view:
-      syntax:       "ROLE VHOST <rol> VIEW"
-      short:         "Afișați modelul de vhost forțat al rolului."
-      help:          "Afișează modelul de vhost forțat atribuit unui rol.\nAceastă comandă este rezervată utilizatorilor Root."
       header:        "\x0307---\x03 \x02Vhost forțat pentru %role%\x02 \x0307---\x03"
       empty:        "Rolul \x02%role%\x02 nu are un model de vhost forțat setat."
       line:         "  Model: \x0303%pattern%\x03"
       example:      "  Exemplu: \x02poreclă\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <rol> SET [model]"
-      short:         "Setați modelul de vhost forțat pentru rol."
-      help:          "Setează modelul de vhost forțat pentru rol.\nUtilizatorii care se identifică cu acest rol vor primi vhostul forțat,\ncare are prioritate față de vhostul personal.\nModelul este adăugat după porecla curățată.\nFolosiți OFF sau omiteți argumentul pentru a șterge vhostul forțat.\nAceastă comandă este rezervată utilizatorilor Root."
       done:         "\x0303✓\x03 Model de vhost forțat setat pentru rolul \x02%role%\x02."
       cleared:      "\x0303✓\x03 Modelul de vhost forțat a fost eliminat din rolul \x02%role%\x02."
       invalid:      "\x0304✗\x03 Model de vhost invalid. Caractere valide: a-z, A-Z, 0-9, - și .. Trebuie să aibă cel puțin un punct, nu poate începe/termina cu - sau . sau să aibă .."
@@ -211,7 +175,6 @@ kill:
   protected_root:   "\x0304✗\x03 Nu se poate da kill utilizatorului Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Nu se poate da kill operatorului IRC \x02%nickname%\x02."
   done:             "\x0303✓\x03 Utilizatorul \x02%nickname%\x02 a primit kill (%reason%)."
-  permission_denied: "\x0304✗\x03 Permisiune refuzată. Aveți nevoie de permisiunea operserv.kill."
 
 # --- GLINE --------------------------------------------------------------------
 gline:
@@ -259,7 +222,6 @@ global:
   short:            "Trimiteți un mesaj global tuturor utilizatorilor conectați."
   help:             "Trimite un mesaj tuturor utilizatorilor conectați.\n\nDacă primul argument este un nume de serviciu, mesajul va fi trimis folosind acel serviciu existent.\n\nDacă nu este un serviciu, se va crea un pseudo-client temporar cu\nmasca specificată. Masca trebuie să fie în format: poreclă!ident@vhost\n- poreclă: poreclă IRC validă (litere, []{}|\\`, cifre, începe cu literă)\n- ident: alfanumerice cu . _ ~ -\n- vhost: hostname valid\n\nPentru pseudo-clienți, porecla nu poate fi conectată sau înregistrată.\nPseudo-clientul va rămâne conectat în timpul trimiterii și se va deconecta\nautomat (porecla va fi blocată timp de 24h prin SQLINE/QLINE).\n\nPRIVMSG trimite ca mesaj privat, NOTICE trimite ca notificare.\nAceastă comandă necesită permisiunea operserv.global."
   mask_invalid:    "\x0304✗\x03 Format de mască invalid: %error%"
-  nick_service:    "\x0304✗\x03 Nu se poate folosi o poreclă de serviciu."
   nick_connected: "\x0304✗\x03 Porecla \x02%nickname%\x02 este conectată în prezent."
   nick_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 este înregistrată."
   type_invalid:    "\x0304✗\x03 Tipul mesajului trebuie să fie PRIVMSG sau NOTICE."
@@ -291,14 +253,6 @@ debug:
   action_global:    "%operator% execută comanda GLOBAL cu porecla %target% via %type% către %count% utilizatori. Mesaj: %message%"
   prefix_reason:    "Motiv: %reason%"
   prefix_message:   "Mesaj: %reason%"
-
-# --- PERMISSIONS --------------------------------------------------------------
-permissions:
-  operserv.kill:    "Deconectare a unei porecle din rețea (KILL)"
-  operserv.gline:   "Gestionare a G-line-urilor la nivel de rețea (GLINE)"
-  operserv.global:  "Trimitere de mesaje globale tuturor utilizatorilor (GLOBAL)"
-  operserv.raw:     "Trimitere de linii de protocol brute către IRCd (RAW)"
-  operserv.motd:    "Gestionare a mesajelor MOTD de conectare (MOTD)"
 
 # --- MOTD ----------------------------------------------------------------------
 motd:

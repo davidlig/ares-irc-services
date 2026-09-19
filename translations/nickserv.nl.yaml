@@ -64,7 +64,6 @@ recover:
   pending:          "\x0304✗\x03 Bijnaam \x02%nickname%\x02 wacht op e-mailverificatie."
   suspended:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Reden: %reason%"
   forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden gebruikt op dit netwerk."
-  pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat op het punt verwijderd te worden en kan niet worden gebruikt."
   no_email:         "\x0304✗\x03 Er is geen e-mail ingesteld voor bijnaam \x02%nickname%\x02. Herstel is niet beschikbaar."
   throttled:        "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een nieuwe herstel-e-mail aanvraagt."
   invalid_token:    "\x0304✗\x03 De token is ongeldig of verlopen. Vraag een nieuwe aan met \x0303RECOVER %nickname%\x03."
@@ -93,7 +92,6 @@ identify:
   pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat op het punt verwijderd te worden en kan niet worden gebruikt."
 
 # --- STATUS -----------------------------------------------------------------
-  udb_migrated:     "\x0307ℹ\x03 De bijnaam is gemigreerd, vanaf nu moet je je identificeren met /NICK %nickname%:<JouwWachtwoord>"
 status:
   syntax:           "STATUS <bijnaam>"
   short:            "Toon de registratiestatus van een bijnaam."
@@ -130,7 +128,6 @@ info:
   status_suspended:   "\x0304Geschorst\x03"
   status_forbidden:   "\x0304Verboden\x03"
   status_pending_deletion: "\x0307Verwijdering in afwachting\x03"
-  status_pending_deletion_at:  "  \x0314Verwijderd\x03         : %date%"
   reason:           "  \x0314Reden\x03                  : %reason%"
   suspended_until:  "  \x0314Eindigt op\x03           : %date%"
   suspended_permanent: "  \x0314Eindigt op\x03           : Permanent"
@@ -231,57 +228,42 @@ saset:
     Syntax: SASET <bijnaam> <optie> <waarde>
     Voorbeeld: SASET Gebruiker PASSWORD nieuwwachtwoord
   unknown_option:   "\x0304✗\x03 Onbekende optie \x02%option%\x02. Beschikbare opties: %options%."
-  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
   cannot_modify_oper: "\x0304✗\x03 Kan de bijnaam van een IRC-operator niet wijzigen."
 
   password:
     syntax:         "SASET <bijnaam> PASSWORD <nieuw_wachtwoord>"
     short:          "Wachtwoord van een bijnaam wijzigen."
     help:           "Wijzigt het wachtwoord van een andere bijnaam.\nDe wijziging is direct.\n\nSyntax: SASET <bijnaam> PASSWORD <nieuw_wachtwoord>\nVoorbeeld: SASET Gebruiker PASSWORD nieuwwachtwoord123"
-    success:        "\x0303✔\x03 Het wachtwoord van \x02%nickname%\x02 is bijgewerkt."
 
   email:
     syntax:         "SASET <bijnaam> EMAIL <nieuwe_e-mail>"
     short:          "E-mail van een bijnaam wijzigen."
     help:           "Wijzigt de e-mail van een andere bijnaam.\nEr wordt geen bevestiging verzonden—de wijziging is direct.\n\nSyntax: SASET <bijnaam> EMAIL <nieuwe_e-mail>\nVoorbeeld: SASET Gebruiker EMAIL gebruiker@voorbeeld.com"
-    success:        "\x0303✔\x03 De e-mail van \x02%nickname%\x02 is bijgewerkt naar \x02%email%\x02."
 
   language:
     syntax:         "SASET <bijnaam> LANGUAGE <code>"
     short:          "Taal van een bijnaam wijzigen."
     help:           "Wijzigt de taal van een andere bijnaam.\nBeschikbare talen: en (Engels), es (Spaans).\n\nSyntax: SASET <bijnaam> LANGUAGE <code>\nVoorbeeld: SASET Gebruiker LANGUAGE nl"
-    success:        "\x0303✔\x03 De taal van \x02%nickname%\x02 is gewijzigd naar \x02%language%\x02."
 
   timezone:
     syntax:         "SASET <bijnaam> TIMEZONE <tijdzone|OFF>"
     short:          "Tijdzone van een bijnaam wijzigen."
     help:           "Stelt de tijdzone van een andere bijnaam in of wist deze.\nGebruik OFF om te wissen.\n\nSyntax: SASET <bijnaam> TIMEZONE <tijdzone>\nVoorbeeld: SASET Gebruiker TIMEZONE Europe/Amsterdam"
-    success:        "\x0303✔\x03 De tijdzone van \x02%nickname%\x02 is ingesteld op \x02%timezone%\x02."
-    cleared:        "\x0303✔\x03 De tijdzone van \x02%nickname%\x02 is gewist."
-    invalid:        "\x0304✗\x03 Ongeldige tijdzone \x02%timezone%\x02."
 
   private:
     syntax:         "SASET <bijnaam> PRIVATE {ON|OFF}"
     short:          "Privacy van een bijnaam wijzigen."
     help:           "Schakelt de privacy van de informatie van een andere bijnaam in of uit.\n\nSyntax: SASET <bijnaam> PRIVATE {ON|OFF}\nVoorbeeld: SASET Gebruiker PRIVATE ON"
-    on:             "\x0303✔\x03 De informatie van \x02%nickname%\x02 is nu \x02privé\x02."
-    off:            "\x0303✔\x03 De informatie van \x02%nickname%\x02 is nu \x02openbaar\x02."
 
   msg:
     syntax:         "SASET <bijnaam> MSG {ON|OFF}"
     short:          "Berichtvoorkeur van een bijnaam wijzigen."
     help:           "Stelt in of een andere bijnaam antwoorden ontvangt als PRIVMSG (ON) of NOTICE (OFF).\n\nSyntax: SASET <bijnaam> MSG {ON|OFF}\nVoorbeeld: SASET Gebruiker MSG ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02 ontvangt nu berichten als \x02PRIVMSG\x02."
-    off:            "\x0303✔\x03 \x02%nickname%\x02 ontvangt nu berichten als \x02NOTICE\x02."
 
   vhost:
     syntax:         "SASET <bijnaam> VHOST [vhost]"
     short:          "Virtuele host van een bijnaam wijzigen."
     help:           "Stelt de virtuele host van een andere bijnaam in of wist deze.\nGebruik \x02SASET <bijnaam> VHOST\x02 zonder waarde om te wissen.\n\nSyntax: SASET <bijnaam> VHOST [vhost]\nVoorbeeld: SASET Gebruiker VHOST gebruikers.voorbeeld.com"
-    success:        "\x0303✔\x03 De VHost van \x02%nickname%\x02 is ingesteld op \x02%vhost%\x02."
-    cleared:        "\x0303✔\x03 De VHost van \x02%nickname%\x02 is gewist."
-    invalid:        "\x0304✗\x03 Ongeldige VHost voor \x02%nickname%\x02."
-    taken:          "\x0304✗\x03 Die vhost is al in gebruik door een andere bijnaam."
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -297,7 +279,6 @@ help:
   options_header:   "\x02\x0314Opties:\x03\x0F"
   general_footer:   "Gebruik \x0303/msg %bot% HELP <commando>\x03 voor meer informatie."
   set_sub_footer:   "Gebruik \x0303/msg %bot% HELP %command% <optie>\x03 voor meer informatie."
-  command_header:   "\x02Hulp voor %command%:\x02"
   syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 Geen hulp beschikbaar voor \x02%command%\x02."
@@ -329,19 +310,6 @@ userip:
     Voorbeeld: USERIP EenGebruiker
   not_online:       "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verbonden."
   result:           "\x0307ℹ\x03 Bijnaam: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
-
-permissions:
-  nickserv.userip: "Bekijk het echte IP-adres/de hostnaam van een bijnaam (USERIP)"
-  nickserv.suspend: "Schors of hef schorsing van een bijnaam op (SUSPEND/UNSUSPEND)"
-  nickserv.rename: "Forceer hernoeming van een verbonden bijnaam naar een willekeurige bijnaam (RENAME)"
-  nickserv.drop: "Laat een geregistreerde bijnaam vallen (DROP)"
-  nickserv.drop.force: "Definitief een herstelbare bijnaam verwijderen (DROP FORCE)"
-  nickserv.restore: "Een bijnaam die op verwijdering wacht herstellen (RESTORE)"
-  nickserv.forbid: "Verbied of hef verbod van een bijnaam op (FORBID/UNFORBID)"
-  nickserv.forbidvhost: "Verbied of sta vhost-patronen toe (FORBIDVHOST)"
-  nickserv.saset: "Wijzig instellingen van een andere bijnaam (SASET)"
-  nickserv.noexpire: "Stel verloopbescherming in of verwijder deze voor een bijnaam (NOEXPIRE)"
-  nickserv.history: "Bekijk en beheer bijnaamactiegeschiedenis (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

@@ -7,6 +7,7 @@ error:
   syntax: "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
   not_identified: "\x0304✗\x03 U bent niet geïdentificeerd. Gebruik \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft geen toegang tot dit commando."
   channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   insufficient_access: "\x0304✗\x03 Onvoldoende toegang voor \x02%operation%\x02 op kanaal \x02%channel%\x02."
 
@@ -116,6 +117,7 @@ help:
   syntax_label: "\x0307Syntax:\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
   unknown_command: "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02\x0314Beschikbare commando's voor IRCOPS:\x03\x0F"
 
 notify:
   nick_pending: "U heeft \x02%count%\x02 ongelezen bericht(en). Om ze te tonen: \x0309/msg %bot% LIST\x03"

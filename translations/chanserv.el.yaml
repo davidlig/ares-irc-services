@@ -7,6 +7,7 @@ error:
   syntax:         "\x0304✗\x03 Λανθασμένη σύνταξη. Χρήση: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 Αυτή η εντολή περιορίζεται σε IRC Operators."
   not_identified: "\x0304✗\x03 Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Άρνηση πρόσβασης. Δεν έχετε πρόσβαση σε αυτήν την εντολή."
   invalid_channel: "\x0304✗\x03 Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε \x02#channel\x02."
   channel_not_registered: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
   generic:        "\x0304✗\x03 Παρουσιάστηκε σφάλμα. Παρακαλώ δοκιμάστε ξανά."
@@ -72,7 +73,6 @@ help:
   intro_expiration: "ΣΗΜΕΙΩΣΗ: Τα κανάλια \x0304\x1Fαχρησιμοποίητα\x0F για περισσότερες από %days% ημέρες αφαιρούνται αυτόματα."
   unknown_command:  "\x0304✗\x03 Άγνωστη εντολή \x02%command%\x02. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03."
   ircop_header:     "\x02\x0314Διαθέσιμες εντολές για IRCOPS:\x03\x0F"
-  suboptions:       "Υπο-επιλογές:"
 
 op:
   syntax:           "OP <#channel> <nickname>"
@@ -89,7 +89,6 @@ deop:
   done:             "\x0303✔\x03 Αφαιρέθηκε το op από τον/την \x02%nickname%\x02."
 
 secure:
-  requires_access: "\x0304✗\x03 Με το SECURE ενεργό, ο/η \x02%nickname%\x02 πρέπει να είναι στη λίστα πρόσβασης για να λάβει βαθμίδα."
   requires_min_level: "\x0304✗\x03 Με το SECURE ενεργό, ο/η \x02%nickname%\x02 πρέπει να έχει τουλάχιστον επίπεδο \x02%level%\x02 για να λάβει \x02%mode%\x02."
 
 set:
@@ -138,6 +137,7 @@ set:
     syntax:         "SET <#channel> EMAIL <email|none>"
     short:          "Ορισμός email καναλιού."
     help:           "Αλλάξτε τη διεύθυνση email του καναλιού. Χρησιμοποιήστε \x02none\x02 για εκκαθάριση."
+    invalid:        "\x0304✗\x03 Μη έγκυρη διεύθυνση email."
     updated:        "\x0303✔\x03 Το email ενημερώθηκε."
     cleared:        "\x0303✔\x03 Το email εκκαθαρίστηκε."
   entrymsg:
@@ -145,7 +145,6 @@ set:
     short:          "Ορισμός μηνύματος εισόδου καναλιού."
     help:           "Ορίστε το μήνυμα που εμφανίζεται όταν χρήστες εισέρχονται στο κανάλι (NOTICE). Χρησιμοποιήστε \x02none\x02 για εκκαθάριση."
     updated:        "\x0303✔\x03 Το μήνυμα εισόδου ενημερώθηκε."
-    cleared:        "\x0303✔\x03 Το μήνυμα εισόδου εκκαθαρίστηκε."
     too_long:       "\x0304✗\x03 Το μήνυμα εισόδου δεν μπορεί να υπερβαίνει τους %max% χαρακτήρες."
   topiclock:
     syntax:         "SET <#channel> TOPICLOCK {ON|OFF}"
@@ -331,10 +330,11 @@ restore:
 drop:
   syntax:           "DROP <#channel> [FORCE]"
   short:            "Διαγραφή καταχωρημένου καναλιού."
-  help:             "Αφαιρεί ένα καταχωρημένο κανάλι από τη βάση δεδομένων."
+  help:             "Αφαιρεί ένα καταχωρημένο κανάλι από τη βάση δεδομένων.\nΑυτή η εντολή απαιτεί άδεια IRCop: chanserv.drop.\nΤο FORCE διαγράφει οριστικά ένα κανάλι σε αναμονή διαγραφής και απαιτεί άδεια IRCop: chanserv.drop.force."
   success:          "03✔ Το κανάλι %channel% έχει επισημανθεί για διαγραφή και μπορεί να αποκατασταθεί κατά την περίοδο χάριτος."
   force_success:    "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει διαγραφεί οριστικά."
   pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη σε αναμονή διαγραφής. Χρησιμοποιήστε DROP <#channel> FORCE για οριστική διαγραφή."
+  invalid_channel:  "\x0304✗\x03 Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε \x02#channel\x02."
   not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
 
 suspend:
@@ -347,7 +347,6 @@ suspend:
   invalid_duration:  "\x0304✗\x03 Μη έγκυρη διάρκεια. Χρησιμοποιήστε: 0 (μόνιμη), 1d, 12h, ή 60m."
   permanent:         "Μόνιμη"
   channel_suspended: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναστολή και δεν μπορεί να χρησιμοποιηθεί."
-  channel_forbidden: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι απαγορευμένο και δεν μπορεί να χρησιμοποιηθεί."
   notice_channel:    "\x0304⚠\x03 Το κανάλι έχει τεθεί σε αναστολή. Αιτία: %reason%"
 
 unsuspend:
@@ -369,17 +368,6 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "Δεν είστε εξουσιοδοτημένοι να εισέλθετε σε αυτό το κανάλι."
-
-permissions:
-  chanserv.drop: "Διαγραφή καταχωρημένου καναλιού (DROP)"
-  chanserv.drop.force: "Μόνιμη διαγραφή ανακτήσιμης εγκατάλειψης καναλιού (DROP FORCE)"
-  chanserv.restore: "Επαναφορά καναλιού σε αναμονή διαγραφής (RESTORE)"
-  chanserv.suspend: "Αναστολή ή άρση αναστολής καναλιού (SUSPEND/UNSUSPEND)"
-  chanserv.forbid: "Απαγόρευση ή άρση απαγόρευσης καναλιού (FORBID/UNFORBID)"
-  chanserv.noexpire: "Ορισμός ή αφαίρεση προστασίας λήξης για κανάλι (NOEXPIRE)"
-  chanserv.history: "Προβολή και διαχείριση ιστορικού ενεργειών καναλιού (HISTORY)"
-  chanserv.clearaccess: "Εκκαθάριση ολόκληρης της λίστας πρόσβασης καναλιού (CLEARACCESS)"
-  chanserv.clearusers: "Kick όλων των χρηστών από ένα κανάλι (CLEARUSERS)"
 
 noexpire:
   syntax:           "NOEXPIRE <#channel> {ON|OFF}"
@@ -459,6 +447,7 @@ history:
   del:
     syntax:     "HISTORY <#channel> DEL <id>"
     short:      "Διαγραφή καταχώρησης ιστορικού μέσω ID."
+    help:       "Διαγράφει μια καταχώρηση ιστορικού με το ID της."
     success:    "\x0303✔\x03 Η καταχώρηση ιστορικού \x02%id%\x02 διαγράφηκε."
     not_found:  "\x0304✗\x03 Η καταχώρηση ιστορικού \x02%id%\x02 δεν βρέθηκε."
     invalid_id: "\x0304✗\x03 Μη έγκυρο ID καταχώρησης: \x02%id%\x02."
@@ -466,6 +455,7 @@ history:
   view:
     syntax:     "HISTORY <#channel> VIEW [PAGE|ALL]"
     short:      "Προβολή ιστορικού ενεργειών καναλιού."
+    help:       "Εμφανίζει τις καταχωρήσεις ιστορικού του καναλιού."
     header:     "\x02Ιστορικό για \x0307%channel%\x03\x02 (εμφάνιση %start%-%end% από %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 από %operator% — %message%"
     extra:       "  Επιπλέον \x0307→\x03 %extra%"
@@ -475,6 +465,7 @@ history:
   clear:
     syntax:     "HISTORY <#channel> CLEAR"
     short:      "Διαγραφή όλων των καταχωρήσεων ιστορικού για ένα κανάλι."
+    help:       "Διαγράφει όλες τις καταχωρήσεις ιστορικού του καναλιού."
     success:    "\x0303✔\x03 Εκκαθαρίστηκαν \x02%count%\x02 καταχωρήσεις ιστορικού για \x02%channel%\x02."
 
 # --- History message translations ---

@@ -7,6 +7,7 @@ error:
   syntax:         "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
   not_identified: "\x0304✗\x03 U bent niet geïdentificeerd. Gebruik \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft geen toegang tot dit commando."
   invalid_channel: "\x0304✗\x03 Ongeldige kanaalnaam. Gebruik \x02#kanaal\x02."
   channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   generic:        "\x0304✗\x03 Er is een fout opgetreden. Probeer het opnieuw."
@@ -72,7 +73,6 @@ help:
   intro_expiration: "LET OP: Kanalen die langer dan %days% dagen \x0304\x1Fniet gebruikt\x0F zijn, worden automatisch verwijderd."
   unknown_command:  "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
   ircop_header:     "\x02\x0314Beschikbare commando's voor IRCOPS:\x03\x0F"
-  suboptions:       "Sub-opties:"
 
 op:
   syntax:           "OP <#kanaal> <bijnaam>"
@@ -89,7 +89,6 @@ deop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 is gedeopt."
 
 secure:
-  requires_access: "\x0304✗\x03 Met SECURE aan moet \x02%nickname%\x02 in de toegangslijst staan om een rang te ontvangen."
   requires_min_level: "\x0304✗\x03 Met SECURE aan moet \x02%nickname%\x02 ten minste niveau \x02%level%\x02 hebben om \x02%mode%\x02 te ontvangen."
 
 set:
@@ -138,6 +137,7 @@ set:
     syntax:         "SET <#kanaal> EMAIL <e-mail|none>"
     short:          "Stel kanaal-e-mail in."
     help:           "Wijzig het e-mailadres van het kanaal. Gebruik \x02none\x02 om te wissen."
+    invalid:        "\x0304✗\x03 Ongeldig e-mailadres."
     updated:        "\x0303✔\x03 E-mail bijgewerkt."
     cleared:        "\x0303✔\x03 E-mail gewist."
   entrymsg:
@@ -145,7 +145,6 @@ set:
     short:          "Stel kanaal-toegangsbericht in."
     help:           "Stel het bericht in dat wordt getoond wanneer gebruikers het kanaal betreden (NOTICE). Gebruik \x02none\x02 om te wissen."
     updated:        "\x0303✔\x03 Toegangsbericht bijgewerkt."
-    cleared:        "\x0303✔\x03 Toegangsbericht gewist."
     too_long:       "\x0304✗\x03 Toegangsbericht mag niet langer zijn dan %max% tekens."
   topiclock:
     syntax:         "SET <#kanaal> TOPICLOCK {ON|OFF}"
@@ -331,10 +330,11 @@ restore:
 drop:
   syntax:           "DROP <#kanaal> [FORCE]"
   short:            "Laat een geregistreerd kanaal vallen."
-  help:             "Verwijdert een geregistreerd kanaal uit de database."
+  help:             "Verwijdert een geregistreerd kanaal uit de database.\nDit commando vereist de IRCop-permissie: chanserv.drop.\nFORCE verwijdert een kanaal dat op verwijdering wacht permanent en vereist de IRCop-permissie: chanserv.drop.force."
   success:          "03✔ Kanaal %channel% is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
   force_success:    "\x0303✔\x03 Kanaal \x02%channel%\x02 is definitief verwijderd."
   pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat al op het punt verwijderd te worden. Gebruik DROP <#kanaal> FORCE om het definitief te verwijderen."
+  invalid_channel:  "\x0304✗\x03 Ongeldige kanaalnaam. Gebruik \x02#kanaal\x02."
   not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
 
 suspend:
@@ -347,7 +347,6 @@ suspend:
   invalid_duration:  "\x0304✗\x03 Ongeldige duur. Gebruik: 0 (permanent), 1d, 12h of 60m."
   permanent:         "Permanent"
   channel_suspended: "\x0304✗\x03 Kanaal \x02%channel%\x02 is geschorst en kan niet worden gebruikt."
-  channel_forbidden: "\x0304✗\x03 Kanaal \x02%channel%\x02 is verboden en kan niet worden gebruikt."
   notice_channel:    "\x0304⚠\x03 Kanaal is geschorst. Reden: %reason%"
 
 unsuspend:
@@ -369,17 +368,6 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "U bent niet geautoriseerd om dit kanaal te betreden."
-
-permissions:
-  chanserv.drop: "Laat een geregistreerd kanaal vallen (DROP)"
-  chanserv.drop.force: "Definitief een herstelbaar kanaal verwijderen (DROP FORCE)"
-  chanserv.restore: "Een kanaal dat op verwijdering wacht herstellen (RESTORE)"
-  chanserv.suspend: "Schors of hef schorsing van een kanaal op (SUSPEND/UNSUSPEND)"
-  chanserv.forbid: "Verbied of hef verbod van een kanaal op (FORBID/UNFORBID)"
-  chanserv.noexpire: "Stel verloopbescherming in of verwijder deze voor een kanaal (NOEXPIRE)"
-  chanserv.history: "Bekijk en beheer kanaalactiegeschiedenis (HISTORY)"
-  chanserv.clearaccess: "Wis de volledige toegangslijst van een kanaal (CLEARACCESS)"
-  chanserv.clearusers: "Kick alle gebruikers uit een kanaal (CLEARUSERS)"
 
 noexpire:
   syntax:           "NOEXPIRE <#kanaal> {ON|OFF}"
@@ -459,6 +447,7 @@ history:
   del:
     syntax:     "HISTORY <#kanaal> DEL <id>"
     short:      "Verwijder een geschiedenisvermelding op ID."
+    help:       "Verwijdert een geschiedenisitem op basis van het ID."
     success:    "\x0303✔\x03 Geschiedenisvermelding \x02%id%\x02 verwijderd."
     not_found:  "\x0304✗\x03 Geschiedenisvermelding \x02%id%\x02 niet gevonden."
     invalid_id: "\x0304✗\x03 Ongeldige vermeldings-ID: \x02%id%\x02."
@@ -466,6 +455,7 @@ history:
   view:
     syntax:     "HISTORY <#kanaal> VIEW [PAGINA|ALL]"
     short:      "Bekijk kanaalactiegeschiedenis."
+    help:       "Toont de geschiedenisitems van het kanaal."
     header:     "\x02Geschiedenis voor \x0307%channel%\x03\x02 (toont %start%-%end% van %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 door %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -475,6 +465,7 @@ history:
   clear:
     syntax:     "HISTORY <#kanaal> CLEAR"
     short:      "Verwijder alle geschiedenisvermeldingen voor een kanaal."
+    help:       "Verwijdert alle geschiedenisitems van het kanaal."
     success:    "\x0303✔\x03 \x02%count%\x02 geschiedenisvermeldingen gewist voor \x02%channel%\x02."
 
 # --- History message translations ---

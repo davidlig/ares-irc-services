@@ -7,6 +7,7 @@ error:
   syntax:         "\x0304✗\x03 Sintassi errata. Uso: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 Questo comando è riservato agli IRC Operator."
   not_identified: "\x0304✗\x03 Non è identificato. Usi \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permesso negato. Non ha accesso a questo comando."
   invalid_channel: "\x0304✗\x03 Nome canale non valido. Usi \x02#canale\x02."
   channel_not_registered: "\x0304✗\x03 Il canale \x02%channel%\x02 non è registrato."
   generic:        "\x0304✗\x03 Si è verificato un errore. Riprovi."
@@ -72,7 +73,6 @@ help:
   intro_expiration: "NOTA: I canali \x0304\x1Fnon utilizzati\x0F per più di %days% giorni vengono rimossi automaticamente."
   unknown_command:  "\x0304✗\x03 Comando sconosciuto \x02%command%\x02. Usi \x0303/msg %bot% HELP\x03."
   ircop_header:     "\x02\x0314Comandi disponibili per IRCOPS:\x03\x0F"
-  suboptions:       "Sotto-opzioni:"
 
 op:
   syntax:           "OP <#canale> <nickname>"
@@ -89,7 +89,6 @@ deop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 è stato deoppato."
 
 secure:
-  requires_access: "\x0304✗\x03 Con SECURE attivo, \x02%nickname%\x02 deve essere nella lista di accesso per ricevere un rango."
   requires_min_level: "\x0304✗\x03 Con SECURE attivo, \x02%nickname%\x02 deve avere almeno il livello \x02%level%\x02 per ricevere \x02%mode%\x02."
 
 set:
@@ -138,6 +137,7 @@ set:
     syntax:         "SET <#canale> EMAIL <email|none>"
     short:          "Imposta l'email del canale."
     help:           "Modifica l'indirizzo email del canale. Usi \x02none\x02 per rimuoverlo."
+    invalid:        "\x0304✗\x03 Indirizzo email non valido."
     updated:        "\x0303✔\x03 Email aggiornata."
     cleared:        "\x0303✔\x03 Email rimossa."
   entrymsg:
@@ -145,7 +145,6 @@ set:
     short:          "Imposta il messaggio di ingresso del canale."
     help:           "Imposta il messaggio mostrato quando gli utenti entrano nel canale (NOTICE). Usi \x02none\x02 per rimuoverlo."
     updated:        "\x0303✔\x03 Messaggio di ingresso aggiornato."
-    cleared:        "\x0303✔\x03 Messaggio di ingresso rimosso."
     too_long:       "\x0304✗\x03 Il messaggio di ingresso non può superare i %max% caratteri."
   topiclock:
     syntax:         "SET <#canale> TOPICLOCK {ON|OFF}"
@@ -331,10 +330,11 @@ restore:
 drop:
   syntax:           "DROP <#canale> [FORCE]"
   short:            "Elimina un canale registrato."
-  help:             "Rimuove un canale registrato dal database."
+  help:             "Rimuove un canale registrato dal database.\nQuesto comando richiede il permesso IRCop: chanserv.drop.\nFORCE elimina definitivamente un canale in attesa di cancellazione e richiede il permesso IRCop: chanserv.drop.force."
   success:          "03✔ Il canale %channel% è stato contrassegnato per l'eliminazione e può essere ripristinato durante il periodo di grazia."
   force_success:    "\x0303✔\x03 Il canale \x02%channel%\x02 è stato eliminato definitivamente."
   pending_deletion: "\x0304✗\x03 Il canale \x02%channel%\x02 è già in attesa di cancellazione. Usa DROP <#canale> FORCE per eliminarlo definitivamente."
+  invalid_channel:  "\x0304✗\x03 Nome canale non valido. Usi \x02#canale\x02."
   not_registered:   "\x0304✗\x03 Il canale \x02%channel%\x02 non è registrato."
 
 suspend:
@@ -347,7 +347,6 @@ suspend:
   invalid_duration:  "\x0304✗\x03 Durata non valida. Usi: 0 (permanente), 1d, 12h o 60m."
   permanent:         "Permanente"
   channel_suspended: "\x0304✗\x03 Il canale \x02%channel%\x02 è sospeso e non può essere utilizzato."
-  channel_forbidden: "\x0304✗\x03 Il canale \x02%channel%\x02 è vietato e non può essere utilizzato."
   notice_channel:    "\x0304⚠\x03 Il canale è stato sospeso. Motivo: %reason%"
 
 unsuspend:
@@ -369,17 +368,6 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "Non è autorizzato ad entrare in questo canale."
-
-permissions:
-  chanserv.drop: "Eliminare un canale registrato (DROP)"
-  chanserv.drop.force: "Forzare l'eliminazione permanente di un canale recuperabile (DROP FORCE)"
-  chanserv.restore: "Ripristinare un canale in attesa di cancellazione (RESTORE)"
-  chanserv.suspend: "Sospendere o riattivare un canale (SUSPEND/UNSUSPEND)"
-  chanserv.forbid: "Vietare o riammettere un canale (FORBID/UNFORBID)"
-  chanserv.noexpire: "Impostare o rimuovere la protezione dalla scadenza per un canale (NOEXPIRE)"
-  chanserv.history: "Visualizzare e gestire la cronologia azioni del canale (HISTORY)"
-  chanserv.clearaccess: "Svuotare l'intera lista di accesso di un canale (CLEARACCESS)"
-  chanserv.clearusers: "Espellere tutti gli utenti da un canale (CLEARUSERS)"
 
 noexpire:
   syntax:           "NOEXPIRE <#canale> {ON|OFF}"
@@ -459,6 +447,7 @@ history:
   del:
     syntax:     "HISTORY <#canale> DEL <id>"
     short:      "Elimina una voce di cronologia per ID."
+    help:       "Elimina una voce della cronologia tramite il suo ID."
     success:    "\x0303✔\x03 Voce di cronologia \x02%id%\x02 eliminata."
     not_found:  "\x0304✗\x03 Voce di cronologia \x02%id%\x02 non trovata."
     invalid_id: "\x0304✗\x03 ID voce non valido: \x02%id%\x02."
@@ -466,6 +455,7 @@ history:
   view:
     syntax:     "HISTORY <#canale> VIEW [PAGINA|ALL]"
     short:      "Visualizza la cronologia azioni del canale."
+    help:       "Mostra le voci della cronologia del canale."
     header:     "\x02Cronologia per \x0307%channel%\x03\x02 (mostra %start%-%end% di %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 di %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -475,6 +465,7 @@ history:
   clear:
     syntax:     "HISTORY <#canale> CLEAR"
     short:      "Elimina tutte le voci di cronologia per un canale."
+    help:       "Elimina tutte le voci della cronologia del canale."
     success:    "\x0303✔\x03 Eliminate \x02%count%\x02 voci di cronologia per \x02%channel%\x02."
 
 # --- Traduzioni messaggi cronologia ---

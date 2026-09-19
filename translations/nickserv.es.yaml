@@ -64,7 +64,6 @@ recover:
   pending:          "\x0304✗\x03 El apodo \x02%nickname%\x02 está pendiente de verificación de email."
   suspended:        "\x0304✗\x03 El apodo \x02%nickname%\x02 está suspendido. Razón: %reason%"
   forbidden:        "\x0304✗\x03 El apodo \x02%nickname%\x02 no puede usarse en esta red."
-  pending_deletion: "\x0304✗\x03 El apodo \x02%nickname%\x02 está pendiente de eliminación y no puede ser usado."
   no_email:         "\x0304✗\x03 No hay email configurado para el apodo \x02%nickname%\x02. La recuperación no está disponible."
   throttled:        "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar otro correo de recuperación."
   invalid_token:    "\x0304✗\x03 El token no es válido o ha expirado. Solicita uno nuevo con \x0303RECOVER %nickname%\x03."
@@ -93,7 +92,6 @@ identify:
   pending_deletion: "\x0304✗\x03 El apodo \x02%nickname%\x02 está pendiente de eliminación y no puede ser usado."
 
 # --- STATUS -----------------------------------------------------------------
-  udb_migrated:     "\x0307ℹ\x03 El apodo ha sido migrado, a partir de ahora tienes que identificarte con /NICK %nickname%:<TuContraseña>"
 status:
   syntax:           "STATUS <apodo>"
   short:            "Muestra el estado de registro de un apodo."
@@ -130,7 +128,6 @@ info:
   status_suspended:   "\x0304Suspendido\x03"
   status_forbidden:   "\x0304Prohibido\x03"
   status_pending_deletion: "\x0307Pendiente de eliminación\x03"
-  status_pending_deletion_at:  "  \x0314Eliminado\x03          : %date%"
   reason:           "  \x0314Razón\x03                  : %reason%"
   suspended_until:  "  \x0314Fecha fin\x03              : %date%"
   suspended_permanent: "  \x0314Fecha fin\x03              : Permanente"
@@ -156,7 +153,7 @@ info:
 # --- SET --------------------------------------------------------------------
 set:
   syntax:           "SET <opción> <valor>"
-  short:            "Modifica la configuración de tu apodo."
+  short:            "Modifica la configuración de tu apodo de %nickserv%."
   help:             "Modifica la configuración de tu apodo de %nickserv%.\nDebes estar identificado para usar este comando."
   unknown_option:   "\x0304✗\x03 Opción desconocida \x02%option%\x02. Opciones disponibles: %options%."
 
@@ -231,57 +228,42 @@ saset:
     Sintaxis: SASET <apodo> <opción> <valor>
     Ejemplo: SASET Usuario PASSWORD nuevopass
   unknown_option:   "\x0304✗\x03 Opción desconocida \x02%option%\x02. Opciones disponibles: %options%."
-  not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
   cannot_modify_oper: "\x0304✗\x03 No puedes modificar un apodo de Operador IRC."
 
   password:
     syntax:         "SASET <apodo> PASSWORD <nueva_contraseña>"
     short:          "Cambia la contraseña de un apodo."
     help:           "Cambia la contraseña de otro apodo.\nEl cambio es inmediato.\n\nSintaxis: SASET <apodo> PASSWORD <nueva_contraseña>\nEjemplo: SASET Usuario PASSWORD nuevopass123"
-    success:        "\x0303✔\x03 La contraseña de \x02%nickname%\x02 ha sido actualizada."
 
   email:
     syntax:         "SASET <apodo> EMAIL <nuevo_email>"
     short:          "Cambia el correo de un apodo."
     help:           "Cambia el correo electrónico de otro apodo.\nNo se envía confirmación—el cambio es inmediato.\n\nSintaxis: SASET <apodo> EMAIL <nuevo_email>\nEjemplo: SASET Usuario EMAIL usuario@ejemplo.com"
-    success:        "\x0303✔\x03 El correo de \x02%nickname%\x02 ha sido actualizado a \x02%email%\x02."
 
   language:
     syntax:         "SASET <apodo> LANGUAGE <código>"
     short:          "Cambia el idioma de un apodo."
     help:           "Cambia el idioma de otro apodo.\nIdiomas disponibles: en (inglés), es (español).\n\nSintaxis: SASET <apodo> LANGUAGE <código>\nEjemplo: SASET Usuario LANGUAGE es"
-    success:        "\x0303✔\x03 Idioma de \x02%nickname%\x02 cambiado a \x02%language%\x02."
 
   timezone:
     syntax:         "SASET <apodo> TIMEZONE <zona|OFF>"
     short:          "Cambia la zona horaria de un apodo."
     help:           "Establece o quita la zona horaria de otro apodo.\nUsa OFF para quitarla.\n\nSintaxis: SASET <apodo> TIMEZONE <zona>\nEjemplo: SASET Usuario TIMEZONE Europe/Madrid"
-    success:        "\x0303✔\x03 Zona horaria de \x02%nickname%\x02 establecida a \x02%timezone%\x02."
-    cleared:        "\x0303✔\x03 Zona horaria de \x02%nickname%\x02 eliminada."
-    invalid:        "\x0304✗\x03 Zona horaria \x02%timezone%\x02 no válida."
 
   private:
     syntax:         "SASET <apodo> PRIVATE {ON|OFF}"
     short:          "Cambia la privacidad de un apodo."
     help:           "Activa o desactiva la privacidad de la información de otro apodo.\n\nSintaxis: SASET <apodo> PRIVATE {ON|OFF}\nEjemplo: SASET Usuario PRIVATE ON"
-    on:             "\x0303✔\x03 La información de \x02%nickname%\x02 es ahora \x02privada\x02."
-    off:            "\x0303✔\x03 La información de \x02%nickname%\x02 es ahora \x02pública\x02."
 
   msg:
     syntax:         "SASET <apodo> MSG {ON|OFF}"
     short:          "Cambia la preferencia de mensajes de un apodo."
     help:           "Establece si otro apodo recibe respuestas como PRIVMSG (ON) o NOTICE (OFF).\n\nSintaxis: SASET <apodo> MSG {ON|OFF}\nEjemplo: SASET Usuario MSG ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02 recibirá mensajes como \x02PRIVMSG\x02."
-    off:            "\x0303✔\x03 \x02%nickname%\x02 recibirá mensajes como \x02NOTICE\x02."
 
   vhost:
     syntax:         "SASET <apodo> VHOST [vhost]"
     short:          "Cambia el host virtual de un apodo."
     help:           "Establece o quita el host virtual de otro apodo.\nEjecuta \x02SASET <apodo> VHOST\x02 sin valor para quitarlo.\n\nSintaxis: SASET <apodo> VHOST [vhost]\nEjemplo: SASET Usuario VHOST usuarios.ejemplo.com"
-    success:        "\x0303✔\x03 VHost de \x02%nickname%\x02 establecido a \x02%vhost%\x02."
-    cleared:        "\x0303✔\x03 VHost de \x02%nickname%\x02 eliminado."
-    invalid:        "\x0304✗\x03 VHost no válido para \x02%nickname%\x02."
-    taken:          "\x0304✗\x03 Ese vhost ya está en uso por otro apodo."
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -297,7 +279,6 @@ help:
   options_header:   "\x02\x0314Opciones:\x03\x0F"
   general_footer:   "Usa \x0303/msg %bot% HELP <comando>\x03 para más información."
   set_sub_footer:   "Usa \x0303/msg %bot% HELP %command% <opción>\x03 para más información."
-  command_header:   "\x02Ayuda para %command%:\x02"
   syntax_label:     "\x0307Sintaxis:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 No hay ayuda disponible para \x02%command%\x02."
@@ -329,19 +310,6 @@ userip:
     Ejemplo: USERIP SomeUser
   not_online:       "\x0304✗\x03 El apodo \x02%nickname%\x02 no está conectado."
   result:           "\x0307ℹ\x03 Apodo: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
-
-permissions:
-  nickserv.userip: "Ver la dirección IP/Host real de un apodo (USERIP)"
-  nickserv.suspend: "Suspender o reactivar un apodo (SUSPEND/UNSUSPEND)"
-  nickserv.rename: "Forzar cambio de apodo de un apodo conectado a uno aleatorio (RENAME)"
-  nickserv.drop: "Eliminar un apodo registrado (DROP)"
-  nickserv.drop.force: "Forzar la eliminación permanente de un apodo en periodo de gracia (DROP FORCE)"
-  nickserv.restore: "Restaurar un apodo pendiente de eliminación (RESTORE)"
-  nickserv.forbid: "Prohibir o deshacer la prohibición de un apodo (FORBID/UNFORBID)"
-  nickserv.forbidvhost: "Prohibir o permitir patrones de vhost (FORBIDVHOST)"
-  nickserv.saset: "Modificar la configuración de otro apodo (SASET)"
-  nickserv.noexpire: "Activar o desactivar la protección de expiración para un apodo (NOEXPIRE)"
-  nickserv.history: "Ver y gestionar el historial de acciones del apodo (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -484,7 +452,7 @@ forbidvhost:
   short:            "Gestiona vhosts prohibidos."
   help:             |
     Gestiona patrones que impiden a los usuarios establecer vhosts
-    coincidentes vía %bot% SET VHOST.
+    coincidentes vía NickServ SET VHOST.
 
     Comodines: * coincide con cualquier secuencia, ? coincide con un caracter.
     Ejemplo: *.pirata.com bloquea cualquier vhost que termine en .pirata.com

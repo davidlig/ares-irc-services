@@ -7,6 +7,7 @@ error:
   syntax: "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
   not_identified: "\x0304✗\x03 Nu sunteți identificat. Folosiți \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permisiune refuzată. Nu aveți acces la această comandă."
   channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
   insufficient_access: "\x0304✗\x03 Acces insuficient pentru \x02%operation%\x02 pe canalul \x02%channel%\x02."
 
@@ -116,6 +117,7 @@ help:
   syntax_label: "\x0307Sintaxă:\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
   unknown_command: "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02\x0314Comenzi disponibile pentru IRCOPS:\x03\x0F"
 
 notify:
   nick_pending: "Aveți \x02%count%\x02 mesaj(e) necitit(e). Pentru a le lista: \x0309/msg %bot% LIST\x03"

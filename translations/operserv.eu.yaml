@@ -6,6 +6,7 @@ unknown_command: "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0
 error:
   syntax:           "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
   oper_only:        "\x0304✗\x03 Komando hau IRC Operadoreentzat mugatuta dago."
+  not_identified:   "\x0304✗\x03 Ez zaude identifikatuta. Erabili \x0303/msg %nickserv% IDENTIFY\x03."
   permission_denied: "\x0304✗\x03 Ez duzu nahikoa baimen komando hau exekutatzeko."
   root_only:        "\x0304✗\x03 Komando hau sareko root administratzaileentzat mugatuta dago."
   nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
@@ -27,7 +28,7 @@ help:
   footer:           "\x0314─────────────────────────────\x03"
   intro_expiration: "OHARRA: %days% egun baino gehiagoz \x0304\x1Ferabili gabeko\x0F ezizenak automatikoki ezabatzen dira."
   unknown_command:  "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
-  suboptions:       "Azpi-aukeraK:"
+  ircop_header:     "\x02\x0314IRC Operadoreentzako komando erabilgarriak:\x03\x0F"
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
@@ -67,7 +68,6 @@ role:
     syntax: "ROLE OPERCLASS {LIST|<rola>} [{VIEW|SET}] [operclass]"
     short: "Unreal operclass kudeatzen du."
     help: "LISTek sarean erabilgarri dauden operclass-ak erakusten ditu.\nVIEW-k rolaren operclass-a eta erabilgarri daudenak erakusten ditu.\nSET-ek identifikatzean ezartzen du (OFF kentzeko).\nUnrealIRCd protokoloetan bakarrik erabilgarri."
-    unknown_action: "\x0304✗\x03 Ekintza ezezaguna \x02%action%\x02. Erabili LIST, VIEW edo SET."
     list:
       header: "\x0307---\x03 \x02Sarean Erabilgarri Dauden Operclass-ak\x02 \x0307---\x03"
       empty: "Ez dago operclass-ik erabilgarri sarean."
@@ -115,42 +115,21 @@ role:
     syntax:         "ROLE PERMS <rola> {LIST|ADD|DEL|CLEAR} [baimena|ALL]"
     short:          "Kudeatu rol baten baimenak."
     help:            "Rol bati esleitutako baimenak kudeatzen ditu.\nLISTek rolaren baimen guztiak erakusten ditu.\nADDek baimen bat esleitzen dio rolari.\nDELek baimen bat kentzen dio rolari (ez babestutako roletarako).\nCLEARek rolaren baimen guztiak kentzen ditu.\nErabili ALL eskuragarri dauden baimen guztiak batera gehitzeko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
-    unknown_action:  "\x0304✗\x03 Ekintza ezezaguna \x02%action%\x02. Erabili LIST, ADD, DEL edo CLEAR."
     not_found:       "\x0304✗\x03 \x02%perm%\x02 baimena ez da existitzen."
     already_has:     "\x0304✗\x03 \x02%role%\x02 rolak jada \x02%perm%\x02 baimena du."
     does_not_have:   "\x0304✗\x03 \x02%role%\x02 rolak ez du \x02%perm%\x02 baimenik."
-    protected:      "\x0304✗\x03 Ezin dira babestutako \x02%role%\x02 rolaren baimenak aldatu."
 
     list:
-      syntax:       "ROLE PERMS <rola> LIST"
-      short:        "Zerrendatu rol baten baimenak."
-      help:         "Rol bati esleitutako baimen guztiak zerrendatzen ditu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       header:        "\x0307---\x03 \x02%role% rolaren baimenak\x02 \x0307---\x03"
-      empty:        "\x02%role%\x02 rolak ez du baimenik esleituta."
-      assigned:     "\x0310Esleituta:\x03"
-      none_assigned: "\x0314Ez dago baimenik esleituta.\x03"
-      available:    "\x0310Erabilgarri:\x03"
-      all_assigned: "\x0314Baimen guztiak rol honi esleituta daude.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rola> ADD {baimena|ALL}"
-      short:        "Gehitu baimen bat rol bati."
-      help:         "Rol bati baimen bat gehitzen dio.\nErabili ALL eskuragarri dauden baimen guztiak batera gehitzeko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       done:         "\x0303✓\x03 \x02%perm%\x02 baimena gehitu zaio \x02%role%\x02 rolari."
       all_done:     "\x0303✓\x03 \x02%count%\x02 baimen gehitu zaizkio \x02%role%\x02 rolari."
-      all_skipped:  "\x0304✗\x03 \x02%role%\x02 rolak jada baimen guztiak ditu."
-      all_empty:    "\x0304✗\x03 Ez dago gehitzeko baimenik erabilgarri."
 
     del:
-      syntax:       "ROLE PERMS <rola> DEL <baimena>"
-      short:        "Kendu baimen bat rol batetik."
-      help:         "Rol bati baimen bat kentzen dio.\nEzin dira babestutako rolak aldatu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       done:         "\x0303✓\x03 \x02%perm%\x02 baimena kendu zaio \x02%role%\x02 rolari."
 
     clear:
-      syntax:       "ROLE PERMS <rola> CLEAR"
-      short:        "Kendu rol baten baimen guztiak."
-      help:         "Rol baten baimen guztiak kentzen ditu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       done:         "\x0303✓\x03 \x02%count%\x02 baimen kendu zaizkio \x02%role%\x02 rolari."
       empty:        "\x0304✗\x03 \x02%role%\x02 rolak ez du baimenik esleituta."
 
@@ -158,46 +137,31 @@ role:
     syntax:         "ROLE MODES <rola> {VIEW|SET} [moduak]"
     short:          "Kudeatu rolerako IRCOP erabiltzaile moduak."
     help:            "Rol bati esleitutako IRCOP erabiltzaile moduak kudeatzen ditu.\nVIEWek rolaren uneko moduak erakusten ditu.\nSETek IRCOP moduak ezartzen ditu (adib., oH +oHrako).\nRol hau duten erabiltzaileek modu hauek jasoko dituzte identifikatzean.\nIRCd bakoitzeko modu erabilgarriak: UnrealIRCd (H, q, s, W), InspIRCd (s).\nKomando hau Root erabiltzaileentzat mugatuta dago."
-    unknown_action:  "\x0304✗\x03 Ekintza ezezaguna \x02%action%\x02. Erabili VIEW edo SET."
 
     view:
-      syntax:       "ROLE MODES <rola> VIEW"
-      short:        "Erakutsi rolaren moduak."
-      help:          "Rol bati esleitutako IRCOP erabiltzaile moduak erakusten ditu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       header:        "\x0307---\x03 \x02%role% rolaren moduak\x02 \x0307---\x03"
       empty:        "\x02%role%\x02 rolak ez du modurik esleituta."
       line:         "  Moduak: \x0303%modes%\x03"
 
     set:
-      syntax:       "ROLE MODES <rola> SET [moduak]"
-      short:        "Ezarri IRCOP erabiltzaile moduak."
-      help:          "Rolarentzako IRCOP erabiltzaile moduak ezartzen ditu.\nArgumenturik gabe, rolaren modu guztiak kentzen ditu.\nIRCd aktiborako IRCOP modu baliozkoak soilik.\nRol honekin identifikatutako erabiltzaileek aldaketak jasoko dituzte.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       done:         "\x0303✓\x03 \x02%modes%\x02 moduak ezarri dira \x02%role%\x02 rolerako."
       cleared:      "\x0303✓\x03 \x02%role%\x02 rolaren modu guztiak kendu dira."
       invalid_mode: "\x0304✗\x03 \x02%mode%\x02 modua ez da IRCOP modu baliozkoa."
       invalid_modes: "\x0304✗\x03 Modu baliogabeak: %invalid%. Modu baliozkoak: %valid%."
       no_irc_user_modes: "\x0304✗\x03 Uneko IRCdk ez du IRCOP modurik konfiguratuta."
-      not_supported: "\x0304✗\x03 Uneko protokoloak ez du onartzen Zerbitzuetatik IRCOP erabiltzaile moduak ezartzea."
 
   vhost:
     syntax:         "ROLE VHOST <rola> {VIEW|SET} [eredua]"
     short:          "Kudeatu rol baten behartutako vhost eredua."
     help:           "Rol bati esleitutako behartutako vhost-a kudeatzen du.\nVIEWek uneko behartutako vhost eredua erakusten du.\nSETek behartutako vhost eredu bat esleitzen du (rol hau duten\nerabiltzaileek vhost hau jasoko dute identifikatzean, vhost pertsonala gainidatziz).\nEredua ezizen garbituaren ondoren eransten da, adib.:\n  Ezizena: _davidlig_ → Eredua: admin.ares → VHost: davidlig.admin.ares\nKaraktere baliozkoak: a-z, A-Z, 0-9, marra (-) eta puntua (.).\nGutxienez puntu bat eduki behar du, ezin da - edo .-z hasi/amaitu ezta .. eduki ere.\nErabili OFF behartutako vhost eredua garbitzeko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
-    unknown_action:  "\x0304✗\x03 Ekintza ezezaguna \x02%action%\x02. Erabili VIEW edo SET."
 
     view:
-      syntax:       "ROLE VHOST <rola> VIEW"
-      short:         "Erakutsi rolaren behartutako vhost eredua."
-      help:          "Rol bati esleitutako behartutako vhost eredua erakusten du.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       header:        "\x0307---\x03 \x02%role% rolaren behartutako vhost-a\x02 \x0307---\x03"
       empty:        "\x02%role%\x02 rolak ez du behartutako vhost eredurik ezarrita."
       line:         "  Eredua: \x0303%pattern%\x03"
       example:      "  Adibidea: \x02ezizena\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <rola> SET [eredua]"
-      short:         "Ezarri rolaren behartutako vhost eredua."
-      help:          "Rolarentzako behartutako vhost eredua ezartzen du.\nRol honekin identifikatzen diren erabiltzaileek behartutako vhost-a jasoko dute,\nvhost pertsonalaren gainetik lehentasuna duena.\nEredua ezizen garbituaren ondoren eransten da.\nErabili OFF edo utzi argumentua hutsik behartutako vhost-a garbitzeko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       done:         "\x0303✓\x03 \x02%role%\x02 rolerako behartutako vhost eredua ezarri da."
       cleared:      "\x0303✓\x03 \x02%role%\x02 rolaren behartutako vhost eredua kendu da."
       invalid:      "\x0304✗\x03 Vhost eredu baliogabea. Karaktere baliozkoak: a-z, A-Z, 0-9, - eta .. Gutxienez puntu bat eduki behar du, ezin da - edo .-z hasi/amaitu ezta .. eduki ere."
@@ -211,7 +175,6 @@ kill:
   protected_root:   "\x0304✗\x03 Ezin da Root erabiltzaile \x02%nickname%\x02 kill bidez deskonektatu."
   protected_ircop:  "\x0304✗\x03 Ezin da IRC operadore \x02%nickname%\x02 kill bidez deskonektatu."
   done:             "\x0303✓\x03 \x02%nickname%\x02 erabiltzailea kill bidez deskonektatu da (%reason%)."
-  permission_denied: "\x0304✗\x03 Baimena ukatuta. operserv.kill baimena behar duzu."
 
 # --- GLINE --------------------------------------------------------------------
 gline:
@@ -259,7 +222,6 @@ global:
   short:            "Bidali mezu global bat konektatutako erabiltzaile guztiei."
   help:             "Konektatutako erabiltzaile guztiei mezu bat bidaltzen die.\n\nLehen argumentua zerbitzu izen bat bada, mezua existitzen den zerbitzu hori\nerabiliz bidaliko da.\n\nZerbitzu bat ez bada, aldi baterako pseudo-bezero bat sortuko da\nzehaztutako maskararekin. Maskarak formatu honetan egon behar du: nick!ident@vhost\n- ezizena: IRC ezizen baliozkoa (letrak, []{}|\\`, digituak, letraz hasten da)\n- ident: alfanumerikoa . _ ~ - karaktereekin\n- vhost: ostalari izen baliozkoa\n\nPseudo-bezeroentzat, ezizena ezin da konektatuta edo erregistratuta egon.\nPseudo-bezeroa konektatuta egongo da bidalketan zehar eta automatikoki\ndeskonektatuko da (ezizena 24 orduz blokeatuko da SQLINE/QLINE bidez).\n\nPRIVMSGek mezu pribatu gisa bidaltzen du, NOTICEk ohar gisa.\nKomando honek operserv.global baimena behar du."
   mask_invalid:    "\x0304✗\x03 Maskara formatu baliogabea: %error%"
-  nick_service:    "\x0304✗\x03 Ezin da zerbitzu ezizenik erabili."
   nick_connected: "\x0304✗\x03 \x02%nickname%\x02 ezizena unean konektatuta dago."
   nick_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena erregistratuta dago."
   type_invalid:    "\x0304✗\x03 Mezu motak PRIVMSG edo NOTICE izan behar du."
@@ -291,14 +253,6 @@ debug:
   action_global:    "%operator%(e)k GLOBAL komandoa exekutatzen du %target% ezizenarekin %type% bidez %count% erabiltzaileri. Mezua: %message%"
   prefix_reason:    "Arrazoia: %reason%"
   prefix_message:   "Mezua: %reason%"
-
-# --- PERMISSIONS --------------------------------------------------------------
-permissions:
-  operserv.kill:    "Deskonektatu ezizen bat saretik (KILL)"
-  operserv.gline:   "Kudeatu sare osoko G-lineak (GLINE)"
-  operserv.global:  "Bidali mezu globalak erabiltzaile guztiei (GLOBAL)"
-  operserv.raw:     "Bidali protokolo lerro gordinak IRCd-ra (RAW)"
-  operserv.motd:    "Kudeatu konexio MOTD mezuak (MOTD)"
 
 # --- MOTD ----------------------------------------------------------------------
 motd:

@@ -64,7 +64,6 @@ recover:
   pending:          "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptarea verificării e-mailului."
   suspended:        "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Motiv: %reason%"
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi folosită în această rețea."
-  pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptare de ștergere și nu poate fi folosită."
   no_email:         "\x0304✗\x03 Nu este setat niciun e-mail pentru porecla \x02%nickname%\x02. Recuperarea nu este disponibilă."
   throttled:        "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a solicita alt e-mail de recuperare."
   invalid_token:    "\x0304✗\x03 Tokenul este invalid sau a expirat. Solicitați unul nou cu \x0303RECOVER %nickname%\x03."
@@ -93,7 +92,6 @@ identify:
   pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptare de ștergere și nu poate fi folosită."
 
 # --- STATUS -----------------------------------------------------------------
-  udb_migrated:     "\x0307ℹ\x03 Pseudonimul a fost migrat, de acum incolo trebuie sa te identifici cu /NICK %nickname%:<ParolaTa>"
 status:
   syntax:           "STATUS <poreclă>"
   short:            "Afișați starea de înregistrare a unei porecle."
@@ -130,7 +128,6 @@ info:
   status_suspended:   "\x0304Suspendat\x03"
   status_forbidden:   "\x0304Interzis\x03"
   status_pending_deletion: "\x0307În așteptare ștergere\x03"
-  status_pending_deletion_at:  "  \x0314Șters\x03              : %date%"
   reason:           "  \x0314Motiv\x03                   : %reason%"
   suspended_until:  "  \x0314Se termină la\x03           : %date%"
   suspended_permanent: "  \x0314Se termină la\x03           : Permanent"
@@ -231,57 +228,42 @@ saset:
     Sintaxă: SASET <poreclă> <opțiune> <valoare>
     Exemplu: SASET Utilizator PASSWORD parolanouă
   unknown_option:   "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Opțiuni disponibile: %options%."
-  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
   cannot_modify_oper: "\x0304✗\x03 Nu se poate modifica o poreclă de operator IRC."
 
   password:
     syntax:         "SASET <poreclă> PASSWORD <parolă_nouă>"
     short:          "Schimbă parola unei porecle."
     help:           "Schimbă parola altei porecle.\nSchimbarea este imediată.\n\nSintaxă: SASET <poreclă> PASSWORD <parolă_nouă>\nExemplu: SASET Utilizator PASSWORD parolanouă123"
-    success:        "\x0303✔\x03 Parola \x02%nickname%\x02 a fost actualizată."
 
   email:
     syntax:         "SASET <poreclă> EMAIL <e-mail_nou>"
     short:          "Schimbă e-mailul unei porecle."
     help:           "Schimbă e-mailul altei porecle.\nNu se trimite nicio confirmare—schimbarea este imediată.\n\nSintaxă: SASET <poreclă> EMAIL <e-mail_nou>\nExemplu: SASET Utilizator EMAIL utilizator@exemplu.com"
-    success:        "\x0303✔\x03 E-mailul \x02%nickname%\x02 a fost actualizat la \x02%email%\x02."
 
   language:
     syntax:         "SASET <poreclă> LANGUAGE <cod>"
     short:          "Schimbă limba unei porecle."
     help:           "Schimbă limba altei porecle.\nLimbi disponibile: en (engleză), es (spaniolă).\n\nSintaxă: SASET <poreclă> LANGUAGE <cod>\nExemplu: SASET Utilizator LANGUAGE ro"
-    success:        "\x0303✔\x03 Limba \x02%nickname%\x02 a fost schimbată în \x02%language%\x02."
 
   timezone:
     syntax:         "SASET <poreclă> TIMEZONE <fus_orar|OFF>"
     short:          "Schimbă fusul orar al unei porecle."
     help:           "Setează sau șterge fusul orar al altei porecle.\nFolosiți OFF pentru a-l șterge.\n\nSintaxă: SASET <poreclă> TIMEZONE <fus_orar>\nExemplu: SASET Utilizator TIMEZONE Europe/București"
-    success:        "\x0303✔\x03 Fusul orar al \x02%nickname%\x02 a fost setat la \x02%timezone%\x02."
-    cleared:        "\x0303✔\x03 Fusul orar al \x02%nickname%\x02 a fost șters."
-    invalid:        "\x0304✗\x03 Fus orar invalid \x02%timezone%\x02."
 
   private:
     syntax:         "SASET <poreclă> PRIVATE {ON|OFF}"
     short:          "Schimbă confidențialitatea unei porecle."
     help:           "Activează sau dezactivează confidențialitatea informațiilor altei porecle.\n\nSintaxă: SASET <poreclă> PRIVATE {ON|OFF}\nExemplu: SASET Utilizator PRIVATE ON"
-    on:             "\x0303✔\x03 Informațiile \x02%nickname%\x02 sunt acum \x02private\x02."
-    off:            "\x0303✔\x03 Informațiile \x02%nickname%\x02 sunt acum \x02publice\x02."
 
   msg:
     syntax:         "SASET <poreclă> MSG {ON|OFF}"
     short:          "Schimbă preferința de mesaje a unei porecle."
     help:           "Setează dacă altă poreclă primește răspunsurile ca PRIVMSG (ON) sau NOTICE (OFF).\n\nSintaxă: SASET <poreclă> MSG {ON|OFF}\nExemplu: SASET Utilizator MSG ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02 va primi acum mesajele ca \x02PRIVMSG\x02."
-    off:            "\x0303✔\x03 \x02%nickname%\x02 va primi acum mesajele ca \x02NOTICE\x02."
 
   vhost:
     syntax:         "SASET <poreclă> VHOST [vhost]"
     short:          "Schimbă gazda virtuală a unei porecle."
     help:           "Setează sau șterge gazda virtuală a altei porecle.\nFolosiți \x02SASET <poreclă> VHOST\x02 fără valoare pentru a o șterge.\n\nSintaxă: SASET <poreclă> VHOST [vhost]\nExemplu: SASET Utilizator VHOST utilizatori.exemplu.com"
-    success:        "\x0303✔\x03 VHostul \x02%nickname%\x02 a fost setat la \x02%vhost%\x02."
-    cleared:        "\x0303✔\x03 VHostul \x02%nickname%\x02 a fost șters."
-    invalid:        "\x0304✗\x03 VHost invalid pentru \x02%nickname%\x02."
-    taken:          "\x0304✗\x03 Acel vhost este deja folosit de o altă poreclă."
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -297,7 +279,6 @@ help:
   options_header:   "\x02\x0314Opțiuni:\x03\x0F"
   general_footer:   "Folosiți \x0303/msg %bot% HELP <comandă>\x03 pentru mai multe informații."
   set_sub_footer:   "Folosiți \x0303/msg %bot% HELP %command% <opțiune>\x03 pentru mai multe informații."
-  command_header:   "\x02Ajutor pentru %command%:\x02"
   syntax_label:     "\x0307Sintaxă:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 Nu există ajutor disponibil pentru \x02%command%\x02."
@@ -329,19 +310,6 @@ userip:
     Exemplu: USERIP UnUtilizator
   not_online:       "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este conectată."
   result:           "\x0307ℹ\x03 Poreclă: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
-
-permissions:
-  nickserv.userip: "Vizualizați adresa IP reală/hostname-ul unei porecle (USERIP)"
-  nickserv.suspend: "Suspendare sau anulare suspendare a unei porecle (SUSPEND/UNSUSPEND)"
-  nickserv.rename: "Forțare redenumire a unei porecle conectate la o poreclă aleatorie (RENAME)"
-  nickserv.drop: "Eliminare a unei porecle înregistrate (DROP)"
-  nickserv.drop.force: "Forțați ștergerea definitivă a unei porecle recuperabile (DROP FORCE)"
-  nickserv.restore: "Restaurați o poreclă în așteptare de ștergere (RESTORE)"
-  nickserv.forbid: "Interzicere sau anulare interzicere a unei porecle (FORBID/UNFORBID)"
-  nickserv.forbidvhost: "Interzicere sau permitere a modelelor de vhost (FORBIDVHOST)"
-  nickserv.saset: "Modificare a setărilor altei porecle (SASET)"
-  nickserv.noexpire: "Setare sau eliminare a protecției împotriva expirării pentru o poreclă (NOEXPIRE)"
-  nickserv.history: "Vizualizare și gestionare a istoricului de acțiuni al poreclei (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

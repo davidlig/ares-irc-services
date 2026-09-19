@@ -7,6 +7,7 @@ error:
   syntax:         "\x0304✗\x03 Syntaxe incorrecte. Usage : \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 Cette commande est réservée aux opérateurs IRC."
   not_identified: "\x0304✗\x03 Vous n'êtes pas identifié. Utilisez \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permission refusée. Vous n'avez pas accès à cette commande."
   invalid_channel: "\x0304✗\x03 Nom de canal invalide. Utilisez \x02#canal\x02."
   channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
   generic:        "\x0304✗\x03 Une erreur est survenue. Veuillez réessayer."
@@ -72,7 +73,6 @@ help:
   intro_expiration: "NOTE : Les canaux \x0304\x1Finutilisés\x0F depuis plus de %days% jours sont automatiquement supprimés."
   unknown_command:  "\x0304✗\x03 Commande inconnue \x02%command%\x02. Utilisez \x0303/msg %bot% HELP\x03."
   ircop_header:     "\x02\x0314Commandes disponibles pour les IRCOPS :\x03\x0F"
-  suboptions:       "Sous-options :"
 
 op:
   syntax:           "OP <#canal> <surnom>"
@@ -89,7 +89,6 @@ deop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 a été déopé."
 
 secure:
-  requires_access: "\x0304✗\x03 Avec SECURE activé, \x02%nickname%\x02 doit être dans la liste d'accès pour recevoir un rang."
   requires_min_level: "\x0304✗\x03 Avec SECURE activé, \x02%nickname%\x02 doit avoir au moins le niveau \x02%level%\x02 pour recevoir \x02%mode%\x02."
 
 set:
@@ -138,6 +137,7 @@ set:
     syntax:         "SET <#canal> EMAIL <e-mail|none>"
     short:          "Définir l'e-mail du canal."
     help:           "Modifie l'adresse e-mail du canal. Utilisez \x02none\x02 pour effacer."
+    invalid:        "\x0304✗\x03 Adresse e-mail invalide."
     updated:        "\x0303✔\x03 E-mail mis à jour."
     cleared:        "\x0303✔\x03 E-mail effacé."
   entrymsg:
@@ -145,7 +145,6 @@ set:
     short:          "Définir le message d'entrée du canal."
     help:           "Définit le message affiché lorsque les utilisateurs rejoignent le canal (NOTICE). Utilisez \x02none\x02 pour effacer."
     updated:        "\x0303✔\x03 Message d'entrée mis à jour."
-    cleared:        "\x0303✔\x03 Message d'entrée effacé."
     too_long:       "\x0304✗\x03 Le message d'entrée ne peut pas dépasser %max% caractères."
   topiclock:
     syntax:         "SET <#canal> TOPICLOCK {ON|OFF}"
@@ -331,10 +330,11 @@ restore:
 drop:
   syntax:           "DROP <#canal> [FORCE]"
   short:            "Abandonner un canal enregistré."
-  help:             "Supprime un canal enregistré de la base de données."
+  help:             "Supprime un canal enregistré de la base de données.\nCette commande nécessite la permission IRCop : chanserv.drop.\nFORCE supprime définitivement un canal en attente de suppression et nécessite la permission IRCop : chanserv.drop.force."
   success:          "03✔ Le canal %channel% a été marqué pour suppression et peut être restauré pendant la période de grâce."
   force_success:    "\x0303✔\x03 Le canal \x02%channel%\x02 a été définitivement supprimé."
   pending_deletion: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà en attente de suppression. Utilisez DROP <#canal> FORCE pour le supprimer définitivement."
+  invalid_channel:  "\x0304✗\x03 Nom de canal invalide. Utilisez \x02#canal\x02."
   not_registered:   "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
 
 suspend:
@@ -347,7 +347,6 @@ suspend:
   invalid_duration:  "\x0304✗\x03 Durée invalide. Utilisez : 0 (permanent), 1j, 12h ou 60m."
   permanent:         "Permanent"
   channel_suspended: "\x0304✗\x03 Le canal \x02%channel%\x02 est suspendu et ne peut pas être utilisé."
-  channel_forbidden: "\x0304✗\x03 Le canal \x02%channel%\x02 est interdit et ne peut pas être utilisé."
   notice_channel:    "\x0304⚠\x03 Le canal a été suspendu. Raison : %reason%"
 
 unsuspend:
@@ -369,17 +368,6 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "Vous n'êtes pas autorisé à rejoindre ce canal."
-
-permissions:
-  chanserv.drop: "Abandonner un canal enregistré (DROP)"
-  chanserv.drop.force: "Forcer la suppression définitive d'un abandon de canal récupérable (DROP FORCE)"
-  chanserv.restore: "Restaurer un canal en attente de suppression (RESTORE)"
-  chanserv.suspend: "Suspendre ou lever la suspension d'un canal (SUSPEND/UNSUSPEND)"
-  chanserv.forbid: "Interdire ou lever l'interdiction d'un canal (FORBID/UNFORBID)"
-  chanserv.noexpire: "Définir ou retirer la protection contre l'expiration d'un canal (NOEXPIRE)"
-  chanserv.history: "Consulter et gérer l'historique des actions du canal (HISTORY)"
-  chanserv.clearaccess: "Vider toute la liste d'accès d'un canal (CLEARACCESS)"
-  chanserv.clearusers: "Expulser tous les utilisateurs d'un canal (CLEARUSERS)"
 
 noexpire:
   syntax:           "NOEXPIRE <#canal> {ON|OFF}"
@@ -459,6 +447,7 @@ history:
   del:
     syntax:     "HISTORY <#canal> DEL <id>"
     short:      "Supprimer une entrée d'historique par ID."
+    help:       "Supprime une entrée de l'historique par son ID."
     success:    "\x0303✔\x03 Entrée d'historique \x02%id%\x02 supprimée."
     not_found:  "\x0304✗\x03 Entrée d'historique \x02%id%\x02 introuvable."
     invalid_id: "\x0304✗\x03 ID d'entrée invalide : \x02%id%\x02."
@@ -466,6 +455,7 @@ history:
   view:
     syntax:     "HISTORY <#canal> VIEW [PAGE|ALL]"
     short:      "Afficher l'historique des actions du canal."
+    help:       "Affiche les entrées de l'historique du canal."
     header:     "\x02Historique pour \x0307%channel%\x03\x02 (affichage %start%-%end% sur %total%) :"
     entry:       "#%id% [%date%] \x0303%action%\x03 par %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -475,6 +465,7 @@ history:
   clear:
     syntax:     "HISTORY <#canal> CLEAR"
     short:      "Supprimer toutes les entrées d'historique d'un canal."
+    help:       "Supprime toutes les entrées de l'historique du canal."
     success:    "\x0303✔\x03 \x02%count%\x02 entrées d'historique effacées pour \x02%channel%\x02."
 
 # --- Traductions des messages d'historique ---

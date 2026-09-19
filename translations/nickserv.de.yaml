@@ -64,7 +64,6 @@ recover:
   pending:          "\x0304✗\x03 Nickname \x02%nickname%\x02 hat eine ausstehende E-Mail-Verifizierung."
   suspended:        "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert. Grund: %reason%"
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 kann in diesem Netzwerk nicht verwendet werden."
-  pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist zur Löschung vorgemerkt und kann nicht verwendet werden."
   no_email:         "\x0304✗\x03 Für Nickname \x02%nickname%\x02 ist keine E-Mail hinterlegt. Wiederherstellung nicht verfügbar."
   throttled:        "\x0304✗\x03 Sie müssen \x02%minutes%\x02 Minute(n) warten, bevor Sie eine weitere Wiederherstellungs-E-Mail anfordern."
   invalid_token:    "\x0304✗\x03 Das Token ist ungültig oder abgelaufen. Fordern Sie ein neues mit \x0303RECOVER %nickname%\x03 an."
@@ -93,7 +92,6 @@ identify:
   pending_deletion: "\x0304✗\x03 Der Nickname \x02%nickname%\x02 steht zur Löschung an und kann nicht verwendet werden."
 
 # --- STATUS -----------------------------------------------------------------
-  udb_migrated:     "\x0307ℹ\x03 Der Nickname wurde migriert, ab sofort musst du dich mit /NICK %nickname%:<DeinPasswort> identifizieren"
 status:
   syntax:           "STATUS <nickname>"
   short:            "Den Registrierungsstatus eines Nicknames anzeigen."
@@ -130,7 +128,6 @@ info:
   status_suspended:   "\x0304Suspendiert\x03"
   status_forbidden:   "\x0304Gesperrt\x03"
   status_pending_deletion: "\x0307Löschung ausstehend\x03"
-  status_pending_deletion_at:  "  \x0314Gelöscht\x03           : %date%"
   reason:           "  \x0314Grund\x03                  : %reason%"
   suspended_until:  "  \x0314Endet am\x03               : %date%"
   suspended_permanent: "  \x0314Endet am\x03               : Dauerhaft"
@@ -231,57 +228,42 @@ saset:
     Syntax: SASET <Nickname> <Option> <Wert>
     Beispiel: SASET Benutzer PASSWORD neuespass
   unknown_option:   "\x0304✗\x03 Unbekannte Option \x02%option%\x02. Verfügbare Optionen: %options%."
-  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   cannot_modify_oper: "\x0304✗\x03 Kann Nickname eines IRC-Operators nicht ändern."
 
   password:
     syntax:         "SASET <Nickname> PASSWORD <neues_Passwort>"
     short:          "Passwort eines Nicknames ändern."
     help:           "Ändert das Passwort eines anderen Nicknames.\nDie Änderung ist sofort wirksam.\n\nSyntax: SASET <Nickname> PASSWORD <neues_Passwort>\nBeispiel: SASET Benutzer PASSWORD neuespass123"
-    success:        "\x0303✔\x03 Das Passwort von \x02%nickname%\x02 wurde aktualisiert."
 
   email:
     syntax:         "SASET <Nickname> EMAIL <neue_E-Mail>"
     short:          "E-Mail eines Nicknames ändern."
     help:           "Ändert die E-Mail eines anderen Nicknames.\nEs wird keine Bestätigung gesendet—die Änderung ist sofort wirksam.\n\nSyntax: SASET <Nickname> EMAIL <neue_E-Mail>\nBeispiel: SASET Benutzer EMAIL benutzer@beispiel.com"
-    success:        "\x0303✔\x03 Die E-Mail von \x02%nickname%\x02 wurde auf \x02%email%\x02 aktualisiert."
 
   language:
     syntax:         "SASET <Nickname> LANGUAGE <Code>"
     short:          "Sprache eines Nicknames ändern."
     help:           "Ändert die Sprache eines anderen Nicknames.\nVerfügbare Sprachen: en (Englisch), es (Spanisch).\n\nSyntax: SASET <Nickname> LANGUAGE <Code>\nBeispiel: SASET Benutzer LANGUAGE de"
-    success:        "\x0303✔\x03 Die Sprache von \x02%nickname%\x02 wurde auf \x02%language%\x02 geändert."
 
   timezone:
     syntax:         "SASET <Nickname> TIMEZONE <Zeitzone|OFF>"
     short:          "Zeitzone eines Nicknames ändern."
     help:           "Setzt oder löscht die Zeitzone eines anderen Nicknames.\nVerwenden Sie OFF zum Löschen.\n\nSyntax: SASET <Nickname> TIMEZONE <Zeitzone>\nBeispiel: SASET Benutzer TIMEZONE Europe/Berlin"
-    success:        "\x0303✔\x03 Die Zeitzone von \x02%nickname%\x02 wurde auf \x02%timezone%\x02 gesetzt."
-    cleared:        "\x0303✔\x03 Die Zeitzone von \x02%nickname%\x02 wurde gelöscht."
-    invalid:        "\x0304✗\x03 Ungültige Zeitzone \x02%timezone%\x02."
 
   private:
     syntax:         "SASET <Nickname> PRIVATE {ON|OFF}"
     short:          "Privatsphäre eines Nicknames ändern."
     help:           "Aktiviert oder deaktiviert die Privatsphäre der Informationen eines anderen Nicknames.\n\nSyntax: SASET <Nickname> PRIVATE {ON|OFF}\nBeispiel: SASET Benutzer PRIVATE ON"
-    on:             "\x0303✔\x03 Die Informationen von \x02%nickname%\x02 sind jetzt \x02privat\x02."
-    off:            "\x0303✔\x03 Die Informationen von \x02%nickname%\x02 sind jetzt \x02öffentlich\x02."
 
   msg:
     syntax:         "SASET <Nickname> MSG {ON|OFF}"
     short:          "Nachrichtenpräferenz eines Nicknames ändern."
     help:           "Legt fest, ob ein anderer Nickname Antworten als PRIVMSG (ON) oder NOTICE (OFF) erhält.\n\nSyntax: SASET <Nickname> MSG {ON|OFF}\nBeispiel: SASET Benutzer MSG ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02 erhält Nachrichten jetzt als \x02PRIVMSG\x02."
-    off:            "\x0303✔\x03 \x02%nickname%\x02 erhält Nachrichten jetzt als \x02NOTICE\x02."
 
   vhost:
     syntax:         "SASET <Nickname> VHOST [VHost]"
     short:          "Virtuellen Host eines Nicknames ändern."
     help:           "Setzt oder löscht den virtuellen Host eines anderen Nicknames.\nVerwenden Sie \x02SASET <Nickname> VHOST\x02 ohne Wert zum Löschen.\n\nSyntax: SASET <Nickname> VHOST [VHost]\nBeispiel: SASET Benutzer VHOST benutzer.beispiel.com"
-    success:        "\x0303✔\x03 Der VHost von \x02%nickname%\x02 wurde auf \x02%vhost%\x02 gesetzt."
-    cleared:        "\x0303✔\x03 Der VHost von \x02%nickname%\x02 wurde gelöscht."
-    invalid:        "\x0304✗\x03 Ungültiger VHost für \x02%nickname%\x02."
-    taken:          "\x0304✗\x03 Dieser VHost wird bereits von einem anderen Nickname verwendet."
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -297,7 +279,6 @@ help:
   options_header:   "\x02\x0314Optionen:\x03\x0F"
   general_footer:   "Verwenden Sie \x0303/msg %bot% HELP <Befehl>\x03 für weitere Informationen."
   set_sub_footer:   "Verwenden Sie \x0303/msg %bot% HELP %command% <Option>\x03 für weitere Informationen."
-  command_header:   "\x02Hilfe für %command%:\x02"
   syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 Keine Hilfe verfügbar für \x02%command%\x02."
@@ -329,19 +310,6 @@ userip:
     Beispiel: USERIP EinBenutzer
   not_online:       "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht verbunden."
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
-
-permissions:
-  nickserv.userip: "Echte IP-Adresse/Hostnamen eines Nicknames anzeigen (USERIP)"
-  nickserv.suspend: "Einen Nickname suspendieren oder entsuspendieren (SUSPEND/UNSUSPEND)"
-  nickserv.rename: "Einen verbundenen Nickname zwangsweise in einen zufälligen Nick umbenennen (RENAME)"
-  nickserv.drop: "Einen registrierten Nickname löschen (DROP)"
-  nickserv.drop.force: "Einen wiederherstellbaren Nickname dauerhaft löschen (DROP FORCE)"
-  nickserv.restore: "Einen zur Löschung anstehenden Nickname wiederherstellen (RESTORE)"
-  nickserv.forbid: "Einen Nickname sperren oder entsperren (FORBID/UNFORBID)"
-  nickserv.forbidvhost: "VHost-Muster sperren oder erlauben (FORBIDVHOST)"
-  nickserv.saset: "Die Einstellungen eines anderen Nicknames ändern (SASET)"
-  nickserv.noexpire: "Ablaufschutz für einen Nickname setzen oder entfernen (NOEXPIRE)"
-  nickserv.history: "Nickname-Aktionsverlauf anzeigen und verwalten (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

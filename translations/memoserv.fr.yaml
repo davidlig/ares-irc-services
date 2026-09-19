@@ -7,6 +7,7 @@ error:
   syntax: "\x0304✗\x03 Syntaxe incorrecte. Usage : \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Cette commande est réservée aux opérateurs IRC."
   not_identified: "\x0304✗\x03 Vous n'êtes pas identifié. Utilisez \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permission refusée. Vous n'avez pas accès à cette commande."
   channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
   insufficient_access: "\x0304✗\x03 Accès insuffisant pour \x02%operation%\x02 sur le canal \x02%channel%\x02."
 
@@ -116,6 +117,7 @@ help:
   syntax_label: "\x0307Syntaxe :\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
   unknown_command: "\x0304✗\x03 Commande inconnue \x02%command%\x02. Utilisez \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02\x0314Commandes disponibles pour les IRCOPS :\x03\x0F"
 
 notify:
   nick_pending: "Vous avez \x02%count%\x02 message(s) non lu(s). Pour les lister : \x0309/msg %bot% LIST\x03"
