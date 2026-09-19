@@ -123,6 +123,13 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private ?UdbUnsignedDecimal $roundSnapshotWatermark = null;
 
+    private ?UdbUnsignedDecimal $manifestRoundId = null;
+
+    private ?int $manifestRoundDeadline = null;
+
+    /** @var array<string, true> */
+    private array $manifestRequestedBlocks = [];
+
     public function __construct(
         private readonly string $sid,
         private readonly UdbBlockStateRepositoryInterface $blockStates,
@@ -186,7 +193,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     public function activeRoundId(): ?int
     {
-        return $this->reconciliation->id()?->toInt();
+        return $this->reconciliation->id()?->toInt() ?? $this->manifestRoundId?->toInt();
     }
 
     public function epoch(): string
@@ -266,6 +273,13 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
+        if (null !== $this->manifestRoundDeadline && $now >= $this->manifestRoundDeadline) {
+            if ($this->transfers->isEmpty()) {
+                $this->logger->debug('UDB manifest round completed without divergence.');
+                $this->clearManifestRound();
+            }
+        }
+
         $this->flushMutations();
         $this->scheduleNextDeadlineTimer();
     }
@@ -281,6 +295,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->reconciliation->reset();
         $this->transfers->reset();
         $this->clearRoundSnapshot();
+        $this->clearManifestRound();
         $this->errReofferCount = 0;
         $this->approved = null;
         $this->oclgView->reset();
@@ -307,6 +322,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             $this->helloBarrier->deadline(),
             $this->reconciliation->nextDeadline(),
             $this->transfers->nextDeadline(),
+            $this->manifestRoundDeadline,
             $this->wireTakeover?->nextDeadline(),
             $this->oclgView->nextDeadline(),
         ], static fn (?int $deadline): bool => null !== $deadline);
@@ -648,7 +664,15 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
-        if (!$this->reconciliation->acceptRes($roundId, $block, $this->clock->now())) {
+        $now = $this->clock->now();
+        $accepted = $this->reconciliation->acceptRes($roundId, $block, $now);
+        if (!$accepted && $this->isManifestResAcceptable($roundId, $block, $now)) {
+            $accepted = true;
+            $this->manifestRequestedBlocks[$block->letter()] = true;
+            $this->manifestRoundDeadline = $now + self::ROUND_INACTIVITY_TIMEOUT;
+        }
+
+        if (!$accepted) {
             $this->write(UdbWireCodec::err($this->sid, $frame->sourceSid, 'RES', 5, $roundId, $block));
 
             return;
@@ -876,9 +900,9 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         ]);
 
         $affectsRound = in_array($frame->subcommand, ['INF', 'RES', 'BEGIN', 'PUT', 'END'], true)
-            && null !== $this->reconciliation->id()
             && null !== $frame->roundId
-            && $frame->roundId->equals($this->reconciliation->id());
+            && ((null !== $this->reconciliation->id() && $frame->roundId->equals($this->reconciliation->id()))
+                || (null !== $this->manifestRoundId && $frame->roundId->equals($this->manifestRoundId)));
 
         if (!$affectsRound) {
             return;
@@ -922,19 +946,33 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
-        $watermark = $this->mutationSequence;
+        if ($this->reconciliation->isActive() || !$this->transfers->isEmpty()) {
+            $this->write(UdbWireCodec::err($this->sid, $frame->sourceSid, 'MANIFEST', 4, $frame->roundId, null));
+
+            return;
+        }
+
+        $now = $this->clock->now();
+        $this->manifestRoundId = $frame->roundId;
+        $this->manifestRoundDeadline = $now + self::ROUND_INACTIVITY_TIMEOUT;
+        $this->manifestRequestedBlocks = [];
+        $this->captureRoundSnapshot();
+
+        $watermark = $this->roundSnapshotWatermark ?? $this->mutationSequence;
         foreach (UdbBlock::all() as $block) {
-            $records = $this->snapshots->recordsForBlock($block);
+            $records = $this->roundSnapshotRecords[$block->letter()];
             $this->write(UdbWireCodec::manifestAck(
                 $this->sid,
                 $frame->sourceSid,
                 $frame->roundId,
                 $block,
                 count($records),
-                UdbChecksum::fromRecords(self::tuples($records)),
+                $this->roundSnapshotDigests[$block->letter()],
                 $watermark,
             ));
         }
+
+        $this->scheduleNextDeadlineTimer();
     }
 
     /** Ares is the root authority: EXP is an exact expiry compare-and-delete. */
@@ -1071,6 +1109,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->reconciliation->reset();
         $this->transfers->reset();
         $this->clearRoundSnapshot();
+        $this->clearManifestRound();
         $this->errReofferCount = 0;
         $this->oclgView->reset();
         $this->wireTakeover?->reset();
@@ -1121,12 +1160,44 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private function completeReconciliationIfSettled(): void
     {
-        if (!$this->reconciliation->completeIfSettled($this->transfers->isEmpty())) {
+        if ($this->reconciliation->isActive()) {
+            if (!$this->reconciliation->completeIfSettled($this->transfers->isEmpty())) {
+                return;
+            }
+            if (null !== $this->roundSnapshotWatermark) {
+                $this->mutationQueue->discardThrough($this->roundSnapshotWatermark);
+            }
+            $this->clearRoundSnapshot();
+
             return;
         }
-        if (null !== $this->roundSnapshotWatermark) {
-            $this->mutationQueue->discardThrough($this->roundSnapshotWatermark);
+
+        if (null !== $this->manifestRoundId && $this->transfers->isEmpty() && [] !== $this->manifestRequestedBlocks) {
+            if (null !== $this->roundSnapshotWatermark) {
+                $this->mutationQueue->discardThrough($this->roundSnapshotWatermark);
+            }
+            $this->clearManifestRound();
         }
+    }
+
+    private function isManifestResAcceptable(UdbUnsignedDecimal $roundId, UdbBlock $block, int $now): bool
+    {
+        if (null === $this->manifestRoundId || !$this->manifestRoundId->equals($roundId)) {
+            return false;
+        }
+
+        if (null !== $this->manifestRoundDeadline && $now >= $this->manifestRoundDeadline) {
+            return false;
+        }
+
+        return !isset($this->manifestRequestedBlocks[$block->letter()]);
+    }
+
+    private function clearManifestRound(): void
+    {
+        $this->manifestRoundId = null;
+        $this->manifestRoundDeadline = null;
+        $this->manifestRequestedBlocks = [];
         $this->clearRoundSnapshot();
     }
 

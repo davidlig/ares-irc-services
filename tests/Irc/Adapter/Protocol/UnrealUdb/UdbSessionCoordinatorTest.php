@@ -1102,6 +1102,100 @@ final class UdbSessionCoordinatorTest extends TestCase
     }
 
     #[Test]
+    public function manifestResServesBlockAndAcksCleanly(): void
+    {
+        $this->makeReady();
+        $this->coordinator->enqueueMutation(new UdbMutation('I', '1.2.3.4::clones', '*5'));
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '001', '002', roundId: 77));
+
+        self::assertSame(77, $this->coordinator->activeRoundId());
+
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 77, block: UdbBlock::Ips));
+
+        $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
+        self::assertSame(':002 DB 001 BEGIN 77 I 00000001 ' . $digest . ' 1', $this->written[0]);
+        self::assertSame(':002 DB 001 PUT 77 I 00000001 1.2.3.4::clones :*5', $this->written[1]);
+        self::assertSame(':002 DB 001 END 77 I 00000001 ' . $digest . ' 1', $this->written[2]);
+
+        // Duplicate RES during active transfer returns ERR RES 4 (SYNC_ACTIVE)
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 77, block: UdbBlock::Ips));
+        self::assertSame(':002 DB 001 ERR RES 4 77 I', $this->written[3]);
+
+        // Unknown roundId returns ERR RES 5
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 99, block: UdbBlock::Nicks));
+        self::assertSame([':002 DB 001 ERR RES 5 99 N'], $this->written);
+
+        // Acknowledging transfer settles the round
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 77, block: UdbBlock::Ips, txid: '00000001', checksum: $digest, watermark: 1));
+
+        self::assertTrue($this->coordinator->isAuthorityReady());
+        self::assertNull($this->coordinator->activeRoundId());
+
+        // RES after completion returns ERR RES 5
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 77, block: UdbBlock::Ips));
+        self::assertSame([':002 DB 001 ERR RES 5 77 I'], $this->written);
+    }
+
+    #[Test]
+    public function manifestRequestWhileReconciliationIsActiveReturnsSyncActiveError(): void
+    {
+        $this->startRound();
+        $this->written = [];
+
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '001', '002', roundId: 77));
+
+        self::assertSame([':002 DB 001 ERR MANIFEST 4 77 0'], $this->written);
+    }
+
+    #[Test]
+    public function manifestRoundExpiresCleanlyWithoutReofferWhenZeroDivergence(): void
+    {
+        $this->makeReady();
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '001', '002', roundId: 77));
+        self::assertSame(77, $this->coordinator->activeRoundId());
+
+        $this->written = [];
+        $this->clock->advance(61);
+        $this->coordinator->tick($this->connection);
+
+        // No reconciliation offer was triggered
+        self::assertSame([], $this->written);
+        self::assertNull($this->coordinator->activeRoundId());
+        self::assertTrue($this->coordinator->isAuthorityReady());
+    }
+
+    #[Test]
+    public function manifestResAfterDeadlineIsRejectedWithStaleRound(): void
+    {
+        $this->makeReady();
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '001', '002', roundId: 77));
+
+        $this->clock->advance(61);
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 77, block: UdbBlock::Ips));
+
+        self::assertSame([':002 DB 001 ERR RES 5 77 I'], $this->written);
+    }
+
+    #[Test]
+    public function peerErrorDuringManifestRoundTransferTriggersReoffer(): void
+    {
+        $this->makeReady();
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '001', '002', roundId: 77));
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 77, block: UdbBlock::Ips));
+
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::Err, '001', '002', subcommand: 'PUT', errorCode: 3, roundId: 77, block: UdbBlock::Ips));
+
+        $infLines = array_values(array_filter($this->written, static fn (string $line): bool => str_contains($line, ' INF ')));
+        self::assertCount(6, $infLines);
+    }
+
+    #[Test]
     public function reconciliationInventoryUsesOneWatermarkForAllSixBlocks(): void
     {
         $this->seedStore();

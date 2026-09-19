@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\E2E;
+namespace App\Tests\Shared;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
