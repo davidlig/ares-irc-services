@@ -18,7 +18,7 @@ parameters:
     services.default_language: '%env(SERVICES_DEFAULT_LANGUAGE)%'
     services.default_timezone_fallback: 'UTC'
     services.default_timezone: '%env(default:services.default_timezone_fallback:SERVICES_DEFAULT_TIMEZONE)%'
-    services.version: 'v1.0'
+    services.version: 'v2.0.0-beta'
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
     services.vhost_suffix:     '%env(default::NICKSERV_VHOST_SUFFIX)%'
 

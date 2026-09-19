@@ -53,14 +53,14 @@ final class CtcpVersionResponderTest extends TestCase
         $this->responder = new CtcpVersionResponder(
             $this->createTranslator(),
             $this->languageResolver,
-            'v1.0',
+            'v2.0.0-beta',
         );
     }
 
     #[Test]
     public function getVersionResponseReturnsExpectedString(): void
     {
-        self::assertSame('Ares IRC Services v1.0', $this->responder->getVersionResponse());
+        self::assertSame('Ares IRC Services v2.0.0-beta', $this->responder->getVersionResponse());
     }
 
     #[Test]
@@ -118,7 +118,7 @@ final class CtcpVersionResponderTest extends TestCase
         $responder = new CtcpVersionResponder(
             $this->createTranslator($spanishTribute),
             $this->createLanguageResolver(),
-            'v1.0',
+            'v2.0.0-beta',
         );
 
         $lines = $responder->getAsciiArtLines('es');
@@ -134,7 +134,7 @@ final class CtcpVersionResponderTest extends TestCase
         $responder = new CtcpVersionResponder(
             $this->createTranslator($tributeWithEscapedCodes),
             $this->createLanguageResolver(),
-            'v1.0',
+            'v2.0.0-beta',
         );
 
         $lines = $responder->getAsciiArtLines('en');
