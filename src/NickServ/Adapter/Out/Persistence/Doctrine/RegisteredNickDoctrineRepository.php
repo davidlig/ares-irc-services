@@ -22,8 +22,11 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function delete(RegisteredNick $nick): void
     {
-        $this->em->remove($nick);
-        $this->em->flush();
+        $entity = $this->em->contains($nick) ? $nick : $this->findById($nick->getId());
+        if (null !== $entity) {
+            $this->em->remove($entity);
+            $this->em->flush();
+        }
     }
 
     public function findByNick(string $nickname): ?RegisteredNick

@@ -60,6 +60,22 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
+    public function deleteRemovesDetachedNick(): void
+    {
+        $nick = $this->createRegisteredNick('DeleteDetached', 'detached@example.com');
+        $this->repository->save($nick);
+        $this->flushAndClear();
+
+        // Clear EM to detach the entity instance
+        $this->entityManager->clear();
+
+        $this->repository->delete($nick);
+        $this->flushAndClear();
+
+        self::assertNull($this->repository->findByNick('DeleteDetached'));
+    }
+
+    #[Test]
     public function findByIdReturnsNick(): void
     {
         $nick = $this->createRegisteredNick('TestUser', 'test@example.com');

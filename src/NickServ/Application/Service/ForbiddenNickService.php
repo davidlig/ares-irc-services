@@ -82,9 +82,9 @@ readonly class ForbiddenNickService
             return false;
         }
 
-        $this->removeNickReservation($nickname);
-
         $this->nickRepository->delete($account);
+
+        $this->removeNickReservation($nickname);
 
         $this->logger->info(sprintf(
             'ForbiddenNick: Nickname %s has been unforbidden',
