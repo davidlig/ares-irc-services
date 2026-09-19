@@ -90,7 +90,7 @@ final class RestoreCommandTest extends TestCase
         $repo->method('findByChannelName')->willReturn($channel);
 
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('restoreChannel')->with($channel, 'OperUser');
+        $dropService->expects(self::once())->method('restoreChannel')->with($channel, self::isInstanceOf(DateTimeImmutable::class), 'OperUser');
 
         $messages = [];
         $context = $this->createContext(['#test'], $messages);

@@ -10,7 +10,9 @@ use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
@@ -46,6 +48,8 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
         return [
             ChannelRegisteredEvent::class => 'onChannelRegistered',
             ChannelDropEvent::class => 'onChannelDrop',
+            ChannelPendingDeletionEvent::class => 'onChannelPendingDeletion',
+            ChannelRestoredEvent::class => 'onChannelRestored',
             ChannelFounderChangedEvent::class => 'onChannelFounderChanged',
             ChannelForbiddenEvent::class => 'onChannelForbidden',
             ChannelUnforbiddenEvent::class => 'onChannelUnforbidden',
@@ -75,6 +79,21 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
         $this->recordWriter->delete(self::BLOCK, $event->channelName);
     }
 
+    public function onChannelPendingDeletion(ChannelPendingDeletionEvent $event): void
+    {
+        $channel = $this->channels->findByName($event->channelNameLower);
+        if (null === $channel) {
+            return;
+        }
+
+        $this->writeSuspend($channel);
+    }
+
+    public function onChannelRestored(ChannelRestoredEvent $event): void
+    {
+        $this->recordWriter->delete(self::BLOCK, sprintf('%s::suspend', $event->channelName));
+    }
+
     public function onChannelFounderChanged(ChannelFounderChangedEvent $event): void
     {
         $channel = $this->channels->findByName(strtolower($event->channelName));
@@ -101,7 +120,8 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 
     public function onChannelSuspended(ChannelSuspendedEvent $event): void
     {
-        $this->recordWriter->insert(self::BLOCK, sprintf('%s::suspend', $event->channelName), '1');
+        $reason = '' !== $event->reason ? $event->reason : '1';
+        $this->recordWriter->insert(self::BLOCK, sprintf('%s::suspend', $event->channelName), $reason);
         $this->refreshOptions($event->channelNameLower);
     }
 
@@ -160,12 +180,14 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 
     /**
      * Reconciles every options record after the UDB store initializer has run.
-     * This removes legacy PERSISTENT/+P (*8) bits from existing stores.
+     * This removes legacy PERSISTENT/+P (*8) bits from existing stores and
+     * aligns suspension markers (including channels already pending deletion).
      */
     public function onNetworkSyncComplete(NetworkSyncCompleteEvent $event): void
     {
         foreach ($this->channels->all() as $channel) {
             $this->writeOptions($channel);
+            $this->writeSuspend($channel);
         }
     }
 
@@ -178,6 +200,21 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
         }
 
         $this->writeOptions($channel);
+    }
+
+    /** Upserts or removes the UDB-owned suspension marker for one channel. */
+    private function writeSuspend(ChannelProjection $channel): void
+    {
+        $path = sprintf('%s::suspend', $channel->name);
+        $records = $this->exporter->suspendRecords($channel);
+
+        if (isset($records[$path])) {
+            $this->recordWriter->insert(self::BLOCK, $path, $records[$path]);
+
+            return;
+        }
+
+        $this->recordWriter->delete(self::BLOCK, $path);
     }
 
     private function writeOptions(ChannelProjection $channel): void

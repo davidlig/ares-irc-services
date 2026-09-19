@@ -31,7 +31,7 @@ info:
   syntax:           "INFO <#channel>"
   short:            "Kanal bilgilerini gösterin."
   help:             "Kurucu, kayıt tarihi, halef, URL, e-posta, açıklama, son kullanım, başlık ve seçenekleri (TOPICLOCK, MLOCK, SECURE) gösterir."
-  header:          "\x02\x0307%channel%\x03 kanalı için bilgi:\x02"
+  header:          "\x02\x0307%channel%\x03 kanalı için bilgi\x02"
   footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Kurucu\x03             : \x02%nickname%\x02"
   registered:      "  \x0314Kayıt\x03              : %date%"
@@ -336,6 +336,7 @@ drop:
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten silinmeyi bekliyor. Kalıcı olarak silmek için DROP <#channel> FORCE kullanın."
   invalid_channel:  "\x0304✗\x03 Geçersiz kanal adı. \x02#channel\x02 kullanın."
   not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+  pending_deletion_reason: "%channel% kanalı silinme sürecinde. Daha fazla bilgi /msg %bot% INFO %channel%"
 
 suspend:
   syntax:           "SUSPEND <#channel> <süre> <sebep>"

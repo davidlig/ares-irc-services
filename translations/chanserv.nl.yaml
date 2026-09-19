@@ -31,7 +31,7 @@ info:
   syntax:           "INFO <#kanaal>"
   short:            "Toon kanaalinformatie."
   help:             "Toont oprichter, registratiedatum, opvolger, URL, e-mail, beschrijving, laatst gebruikt, onderwerp en opties (TOPICLOCK, MLOCK, SECURE)."
-  header:          "\x02Informatie voor kanaal \x0307%channel%\x03:\x02"
+  header:          "\x02Informatie voor kanaal \x0307%channel%\x03\x02"
   footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Oprichter\x03           : \x02%nickname%\x02"
   registered:      "  \x0314Geregistreerd\x03       : %date%"
@@ -336,6 +336,7 @@ drop:
   pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat al op het punt verwijderd te worden. Gebruik DROP <#kanaal> FORCE om het definitief te verwijderen."
   invalid_channel:  "\x0304✗\x03 Ongeldige kanaalnaam. Gebruik \x02#kanaal\x02."
   not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
+  pending_deletion_reason: "Kanaal %channel% staat op het punt verwijderd te worden. Meer informatie /msg %bot% INFO %channel%"
 
 suspend:
   syntax:           "SUSPEND <#kanaal> <duur> <reden>"

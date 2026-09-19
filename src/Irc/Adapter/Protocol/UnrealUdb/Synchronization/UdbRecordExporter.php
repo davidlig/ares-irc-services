@@ -44,6 +44,7 @@ final readonly class UdbRecordExporter
         private GlineProjectionQuery $glines,
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        private UdbChannelSuspendReasonResolver $suspendReasonResolver,
         private UdbChannelModesFormatter $modesFormatter = new UdbChannelModesFormatter(),
         private UdbClock $clock = new SystemUdbClock(),
     ) {}
@@ -214,7 +215,8 @@ final readonly class UdbRecordExporter
 
     /**
      * Full C-block profile of one channel (founder/topic/modes/options).
-     * Forbidden channels export only their forbid record.
+     * Forbidden channels export only their forbid record; suspended and
+     * pending-deletion channels carry the UDB-owned suspend record.
      *
      * @return array<string, string>
      */
@@ -229,11 +231,7 @@ final readonly class UdbRecordExporter
             return [sprintf('%s::forbid', $channel->name) => $reason];
         }
 
-        $records = [];
-
-        if ($channel->suspended) {
-            $records[sprintf('%s::suspend', $channel->name)] = '1';
-        }
+        $records = $this->suspendRecords($channel);
 
         $founder = $this->nicks->findById($channel->founderNickId);
         if (null !== $founder) {
@@ -259,6 +257,30 @@ final readonly class UdbRecordExporter
         }
 
         return $records;
+    }
+
+    /**
+     * UDB-owned C::<#channel>::suspend record, if the channel must be blocked.
+     *
+     * Suspended channels store their suspension reason; channels pending
+     * deletion store the translated pending-deletion reason. In both cases the
+     * UDB module removes +r and founder +q and shows the value to joiners.
+     *
+     * @return array<string, string>
+     */
+    public function suspendRecords(ChannelProjection $channel): array
+    {
+        if ($channel->suspended) {
+            $reason = $channel->suspensionReason;
+
+            return [sprintf('%s::suspend', $channel->name) => null !== $reason && '' !== $reason ? $reason : '1'];
+        }
+
+        if ($channel->pendingDeletion) {
+            return [sprintf('%s::suspend', $channel->name) => $this->suspendReasonResolver->pendingDeletionReason($channel->name)];
+        }
+
+        return [];
     }
 
     /** Channel option bitmask: LOCK_MODES (2) = MLOCK active, LOCK_TOPIC (4) = TOPICLOCK. */

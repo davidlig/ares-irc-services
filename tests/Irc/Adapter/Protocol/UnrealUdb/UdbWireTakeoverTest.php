@@ -6,6 +6,7 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeover;
 use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeoverOutcome;
@@ -24,6 +25,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_keys;
 use function array_map;
@@ -586,6 +588,7 @@ final class UdbWireTakeoverTest extends TestCase
             $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
         );
     }
 

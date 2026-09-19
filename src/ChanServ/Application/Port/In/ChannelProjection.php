@@ -22,5 +22,6 @@ final readonly class ChannelProjection
         public ?string $forbiddenReason,
         public bool $suspended,
         public bool $pendingDeletion,
+        public ?string $suspensionReason = null,
     ) {}
 }

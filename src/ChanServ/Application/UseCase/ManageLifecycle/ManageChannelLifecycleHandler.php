@@ -96,7 +96,7 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotPendingDeletion);
         }
 
-        $this->dropService->restoreChannel($channel, $command->actorNickname);
+        $this->dropService->restoreChannel($channel, $command->occurredAt, $command->actorNickname);
 
         return new ChannelLifecycleResult(ChannelLifecycleOutcome::Restored);
     }

@@ -13,6 +13,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterfa
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbHelloBarrier;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbPeerSession;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutationQueue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
@@ -38,6 +39,7 @@ use Psr\Log\NullLogger;
 use ReflectionClass;
 use ReflectionMethod;
 use RuntimeException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_slice;
 use function count;
@@ -2067,6 +2069,7 @@ final class UdbSessionCoordinatorTest extends TestCase
             $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
         );
     }
 

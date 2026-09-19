@@ -12,6 +12,8 @@ use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use DateTimeImmutable;
 
@@ -55,6 +57,14 @@ readonly class ChanDropService
             $channel->getCreatedAt()->getTimestamp(),
         );
 
+        $this->eventPublisher->publish(new ChannelPendingDeletionEvent(
+            channelId: $channel->getId(),
+            channelName: $channelName,
+            channelNameLower: $channel->getNameLower(),
+            performedBy: $operatorNick,
+            occurredAt: $occurredAt,
+        ));
+
         $this->debug->log(
             operator: $operatorNick ?? '*',
             command: 'DROP',
@@ -71,8 +81,11 @@ readonly class ChanDropService
         ));
     }
 
-    public function restoreChannel(RegisteredChannel $channel, ?string $operatorNick = null): void
-    {
+    public function restoreChannel(
+        RegisteredChannel $channel,
+        DateTimeImmutable $occurredAt,
+        ?string $operatorNick = null,
+    ): void {
         $channelName = $channel->getName();
 
         $channel->restoreFromPendingDeletion();
@@ -83,6 +96,14 @@ readonly class ChanDropService
             $channel->isNoExpire(),
             $channel->getCreatedAt()->getTimestamp(),
         );
+
+        $this->eventPublisher->publish(new ChannelRestoredEvent(
+            channelId: $channel->getId(),
+            channelName: $channelName,
+            channelNameLower: $channel->getNameLower(),
+            performedBy: $operatorNick,
+            occurredAt: $occurredAt,
+        ));
 
         $this->debug->log(
             operator: $operatorNick ?? '*',

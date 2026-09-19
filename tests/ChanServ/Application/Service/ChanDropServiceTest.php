@@ -12,6 +12,8 @@ use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelDropCleanupEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use DateTimeImmutable;
@@ -171,8 +173,16 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('save')->with($channel);
         $channelRepository->expects(self::never())->method('delete');
 
+        $occurredAt = new DateTimeImmutable();
         $eventPublisher = $this->createMock(ChanServEventPublisher::class);
-        $eventPublisher->expects(self::never())->method('publish');
+        $eventPublisher->expects(self::once())->method('publish')->with(self::callback(
+            static fn (object $event): bool => $event instanceof ChannelPendingDeletionEvent
+                && 201 === $event->channelId
+                && '#soft' === $event->channelName
+                && '#soft' === $event->channelNameLower
+                && 'OperUser' === $event->performedBy
+                && $occurredAt === $event->occurredAt,
+        ));
 
         $debug = $this->createMock(ChanAuditSink::class);
         $debug->expects(self::once())->method('log')->with('OperUser', 'DROP', '#soft', null, null, 'manual', self::anything());
@@ -191,7 +201,7 @@ final class ChanDropServiceTest extends TestCase
             $this->immediateTransactionBoundary(),
         );
 
-        $service->softDropChannel($channel, new DateTimeImmutable(), 'OperUser');
+        $service->softDropChannel($channel, $occurredAt, 'OperUser');
 
         self::assertTrue($channel->isPendingDeletion());
     }
@@ -205,6 +215,17 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::once())->method('save')->with($channel);
 
+        $occurredAt = new DateTimeImmutable();
+        $eventPublisher = $this->createMock(ChanServEventPublisher::class);
+        $eventPublisher->expects(self::once())->method('publish')->with(self::callback(
+            static fn (object $event): bool => $event instanceof ChannelRestoredEvent
+                && 202 === $event->channelId
+                && '#restore' === $event->channelName
+                && '#restore' === $event->channelNameLower
+                && 'OperUser' === $event->performedBy
+                && $occurredAt === $event->occurredAt,
+        ));
+
         $debug = $this->createMock(ChanAuditSink::class);
         $debug->expects(self::once())->method('log')->with('OperUser', 'RESTORE', '#restore', null, null, 'manual');
 
@@ -215,14 +236,14 @@ final class ChanDropServiceTest extends TestCase
 
         $service = new ChanDropService(
             $channelRepository,
-            $this->createStub(ChanServEventPublisher::class),
+            $eventPublisher,
             $debug,
             $this->createStub(ChanServActivitySink::class),
             $channelActions,
             $this->immediateTransactionBoundary(),
         );
 
-        $service->restoreChannel($channel, 'OperUser');
+        $service->restoreChannel($channel, $occurredAt, 'OperUser');
 
         self::assertFalse($channel->isPendingDeletion());
     }
@@ -277,7 +298,7 @@ final class ChanDropServiceTest extends TestCase
             $this->immediateTransactionBoundary(),
         );
 
-        $service->restoreChannel($channel);
+        $service->restoreChannel($channel, new DateTimeImmutable());
     }
 
     private function createChannelWithId(string $name, int $id): RegisteredChannel

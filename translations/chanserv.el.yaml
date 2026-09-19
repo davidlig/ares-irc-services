@@ -31,7 +31,7 @@ info:
   syntax:           "INFO <#channel>"
   short:            "Εμφάνιση πληροφοριών καναλιού."
   help:             "Εμφανίζει ιδρυτή, ημερομηνία καταχώρησης, διάδοχο, URL, email, περιγραφή, τελευταία χρήση, θέμα και επιλογές (TOPICLOCK, MLOCK, SECURE)."
-  header:          "\x02Πληροφορίες για το κανάλι \x0307%channel%\x03:\x02"
+  header:          "\x02Πληροφορίες για το κανάλι \x0307%channel%\x03\x02"
   footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Ιδρυτής\x03         : \x02%nickname%\x02"
   registered:      "  \x0314Καταχωρήθηκε\x03    : %date%"
@@ -336,6 +336,7 @@ drop:
   pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη σε αναμονή διαγραφής. Χρησιμοποιήστε DROP <#channel> FORCE για οριστική διαγραφή."
   invalid_channel:  "\x0304✗\x03 Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε \x02#channel\x02."
   not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
+  pending_deletion_reason: "Το κανάλι %channel% βρίσκεται σε διαδικασία διαγραφής. Περισσότερες πληροφορίες /msg %bot% INFO %channel%"
 
 suspend:
   syntax:           "SUSPEND <#channel> <duration> <reason>"

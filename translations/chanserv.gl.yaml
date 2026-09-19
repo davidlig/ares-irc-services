@@ -31,7 +31,7 @@ info:
   syntax:           "INFO <#canle>"
   short:            "Mostrar información da canle."
   help:             "Mostra fundador, data de rexistro, sucesor, URL, correo electrónico, descrición, último uso, tema e opcións (TOPICLOCK, MLOCK, SECURE)."
-  header:          "\x02Información da canle \x0307%channel%\x03:\x02"
+  header:          "\x02Información da canle \x0307%channel%\x03\x02"
   footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Fundador\x03        : \x02%nickname%\x02"
   registered:      "  \x0314Rexistrada\x03      : %date%"
@@ -336,6 +336,7 @@ drop:
   pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 xa está pendente de eliminación. Use DROP <#canle> FORCE para eliminalo permanentemente."
   invalid_channel:  "\x0304✗\x03 Nome de canle non válido. Use \x02#canle\x02."
   not_registered:   "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
+  pending_deletion_reason: "A canle %channel% está en proceso de eliminación. Máis información /msg %bot% INFO %channel%"
 
 suspend:
   syntax:           "SUSPEND <#canle> <duración> <motivo>"

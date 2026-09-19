@@ -11,6 +11,7 @@ use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbStoreInitializer;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbStoreInitializationListener;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
@@ -25,6 +26,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UdbStoreInitializer::class)]
 final class UdbStoreInitializerTest extends TestCase
@@ -70,6 +72,7 @@ final class UdbStoreInitializerTest extends TestCase
             $glines,
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
         );
     }
 

@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
@@ -24,6 +25,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UdbRecordExporter::class)]
 final class UdbRecordExporterTest extends TestCase
@@ -38,6 +40,8 @@ final class UdbRecordExporterTest extends TestCase
 
     private ChannelLookupPort $channelLookup;
 
+    private UdbChannelSuspendReasonResolver $suspendReasonResolver;
+
     private UdbRecordExporter $exporter;
 
     protected function setUp(): void
@@ -48,6 +52,10 @@ final class UdbRecordExporterTest extends TestCase
         $this->glines = $this->createStub(GlineProjectionQuery::class);
         $this->channelLookup = $this->createStub(ChannelLookupPort::class);
 
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('pending deletion reason');
+        $this->suspendReasonResolver = new UdbChannelSuspendReasonResolver($translator, 'ChanServ', 'en');
+
         $this->exporter = new UdbRecordExporter(
             $this->nicks,
             $this->channels,
@@ -55,6 +63,7 @@ final class UdbRecordExporterTest extends TestCase
             $this->glines,
             $this->channelLookup,
             $this->createModeSupportProvider(),
+            $this->suspendReasonResolver,
             clock: new MutableUdbClock(new DateTimeImmutable('2026-08-30 10:30:00')->getTimestamp()),
         );
     }
@@ -229,6 +238,7 @@ final class UdbRecordExporterTest extends TestCase
             $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createModeSupportProvider(),
+            $this->suspendReasonResolver,
         );
 
         $records = $exporter->channelRecords($channel);
@@ -252,14 +262,42 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
-    public function suspendedChannelExportsSuspendRecordWithoutOptions(): void
+    public function suspendedChannelExportsSuspendRecordWithItsReason(): void
     {
-        $channel = $this->createChannel('#suspended', suspended: true);
+        $channel = $this->createChannel('#suspended', suspended: true, suspensionReason: 'abuse');
 
         $records = $this->exporter->channelRecords($channel);
 
-        self::assertSame(['#suspended::suspend' => '1'], $records);
+        self::assertSame(['#suspended::suspend' => 'abuse'], $records);
         self::assertSame(0, $this->exporter->channelOptions($channel));
+    }
+
+    #[Test]
+    public function suspendedChannelWithoutReasonFallsBackToNeutralMarker(): void
+    {
+        $channel = $this->createChannel('#suspended', suspended: true);
+
+        self::assertSame(['#suspended::suspend' => '1'], $this->exporter->channelRecords($channel));
+    }
+
+    #[Test]
+    public function pendingDeletionChannelExportsTranslatedSuspendReason(): void
+    {
+        $channel = $this->createChannel('#pending', founderNickId: 7, mlockActive: true, topicLock: true, pendingDeletion: true);
+
+        $records = $this->exporter->channelRecords($channel);
+
+        self::assertSame([
+            '#pending::suspend' => 'pending deletion reason',
+            '#pending::modes' => '+nt',
+            '#pending::options' => '*6',
+        ], $records);
+    }
+
+    #[Test]
+    public function suspendRecordsAreEmptyForActiveChannels(): void
+    {
+        self::assertSame([], $this->exporter->suspendRecords($this->createChannel('#active')));
     }
 
     #[Test]
@@ -334,6 +372,7 @@ final class UdbRecordExporterTest extends TestCase
             $this->createStub(GlineProjectionQuery::class),
             $this->channelLookup,
             $this->createModeSupportProvider(),
+            $this->suspendReasonResolver,
         );
     }
 
@@ -399,13 +438,13 @@ final class UdbRecordExporterTest extends TestCase
     {
         $this->channels->method('all')->willReturn([
             $this->createChannel('#first'),
-            $this->createChannel('#second', suspended: true),
+            $this->createChannel('#second', suspended: true, suspensionReason: 'abuse'),
         ]);
         $secondSuspended = UdbPathCodec::encodePath(['#second', 'suspend']);
 
         self::assertNotNull($secondSuspended);
         self::assertSame([
-            $secondSuspended => '1',
+            $secondSuspended => 'abuse',
         ], $this->exporter->encodedBlockRecords(UdbBlock::Channels));
     }
 
@@ -469,6 +508,7 @@ final class UdbRecordExporterTest extends TestCase
         bool $pendingDeletion = false,
         string $mlock = '+nt',
         array $mlockParams = [],
+        ?string $suspensionReason = null,
     ): ChannelProjection {
         return new ChannelProjection(
             id: 1,
@@ -483,6 +523,7 @@ final class UdbRecordExporterTest extends TestCase
             forbiddenReason: $forbiddenReason,
             suspended: $suspended,
             pendingDeletion: $pendingDeletion,
+            suspensionReason: $suspensionReason,
         );
     }
 }

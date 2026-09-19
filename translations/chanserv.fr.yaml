@@ -31,7 +31,7 @@ info:
   syntax:           "INFO <#canal>"
   short:            "Afficher les informations du canal."
   help:             "Affiche le fondateur, la date d'enregistrement, le successeur, l'URL, l'e-mail, la description, la dernière utilisation, le sujet et les options (TOPICLOCK, MLOCK, SECURE)."
-  header:          "\x02Informations pour le canal \x0307%channel%\x03 :\x02"
+  header:          "\x02Informations pour le canal \x0307%channel%\x03\x02"
   footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Fondateur\x03           : \x02%nickname%\x02"
   registered:      "  \x0314Enregistré\x03          : %date%"
@@ -336,6 +336,7 @@ drop:
   pending_deletion: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà en attente de suppression. Utilisez DROP <#canal> FORCE pour le supprimer définitivement."
   invalid_channel:  "\x0304✗\x03 Nom de canal invalide. Utilisez \x02#canal\x02."
   not_registered:   "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
+  pending_deletion_reason: "Le canal %channel% est en cours de suppression. Plus d'informations /msg %bot% INFO %channel%"
 
 suspend:
   syntax:           "SUSPEND <#canal> <durée> <raison>"

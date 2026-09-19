@@ -31,7 +31,7 @@ info:
   syntax:           "INFO <#canal>"
   short:            "Afișați informațiile canalului."
   help:             "Afișează fondatorul, data înregistrării, succesorul, URL-ul, e-mailul, descrierea, ultima utilizare, subiectul și opțiunile (TOPICLOCK, MLOCK, SECURE)."
-  header:          "\x02Informații pentru canalul \x0307%channel%\x03:\x02"
+  header:          "\x02Informații pentru canalul \x0307%channel%\x03\x02"
   footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Fondator\x03             : \x02%nickname%\x02"
   registered:      "  \x0314Înregistrat\x03          : %date%"
@@ -336,6 +336,7 @@ drop:
   pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja în așteptare de ștergere. Folosiți DROP <#canal> FORCE pentru a-l șterge definitiv."
   invalid_channel:  "\x0304✗\x03 Nume de canal invalid. Folosiți \x02#canal\x02."
   not_registered:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  pending_deletion_reason: "Canalul %channel% este în curs de ștergere. Mai multe informații /msg %bot% INFO %channel%"
 
 suspend:
   syntax:           "SUSPEND <#canal> <durată> <motiv>"

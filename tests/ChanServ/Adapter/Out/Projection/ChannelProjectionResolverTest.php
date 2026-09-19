@@ -64,6 +64,29 @@ final class ChannelProjectionResolverTest extends TestCase
         self::assertNull(new ChannelProjectionResolver($channels)->findByName('#missing'));
     }
 
+    #[Test]
+    public function projectsSuspensionReasonOnlyForSuspendedChannels(): void
+    {
+        $suspended = RegisteredChannel::register(new DateTimeImmutable(), '#Suspended', 7, 'description');
+        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($suspended, 21);
+        $suspended->suspend('abuse');
+
+        $active = RegisteredChannel::register(new DateTimeImmutable(), '#Active', 7, 'description');
+        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($active, 22);
+        $active->suspend('abuse');
+        $active->unsuspend();
+
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturnCallback(
+            static fn (string $name): RegisteredChannel => '#suspended' === $name ? $suspended : $active,
+        );
+
+        $resolver = new ChannelProjectionResolver($channels);
+
+        self::assertSame('abuse', $resolver->findByName('#suspended')?->suspensionReason);
+        self::assertNull($resolver->findByName('#active')?->suspensionReason);
+    }
+
     private static function assertProjection(ChannelProjection $expected, ChannelProjection $actual): void
     {
         self::assertSame($expected->id, $actual->id);
@@ -78,5 +101,6 @@ final class ChannelProjectionResolverTest extends TestCase
         self::assertSame($expected->forbiddenReason, $actual->forbiddenReason);
         self::assertSame($expected->suspended, $actual->suspended);
         self::assertSame($expected->pendingDeletion, $actual->pendingDeletion);
+        self::assertSame($expected->suspensionReason, $actual->suspensionReason);
     }
 }

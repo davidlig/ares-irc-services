@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbOfflineTakeover;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function file_put_contents;
 use function flock;
@@ -389,6 +391,7 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
             $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
         ));
     }
 

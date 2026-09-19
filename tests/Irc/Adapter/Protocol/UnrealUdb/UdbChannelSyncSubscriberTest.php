@@ -10,13 +10,16 @@ use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSyncSubscriber;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
@@ -34,6 +37,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UdbChannelSyncSubscriber::class)]
 final class UdbChannelSyncSubscriberTest extends TestCase
@@ -71,6 +75,9 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $provider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $provider->method('getSupport')->willReturn($support);
 
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('pending deletion reason');
+
         return new UdbRecordExporter(
             $nickRepo ?? $this->createStub(NickProjectionQuery::class),
             $channelRepo ?? $this->createStub(ChannelProjectionQuery::class),
@@ -78,6 +85,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             $this->createStub(GlineProjectionQuery::class),
             $lookup ?? $this->createStub(ChannelLookupPort::class),
             $provider,
+            new UdbChannelSuspendReasonResolver($translator, 'ChanServ', 'en'),
         );
     }
 
@@ -93,6 +101,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         bool $pendingDeletion = false,
         string $mlock = '+nt',
         array $mlockParams = [],
+        ?string $suspensionReason = null,
     ): ChannelProjection {
         return new ChannelProjection(
             id: 1,
@@ -107,6 +116,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             forbiddenReason: $forbidden ? 'forbidden' : null,
             suspended: $suspended,
             pendingDeletion: $pendingDeletion,
+            suspensionReason: $suspensionReason,
         );
     }
 
@@ -118,6 +128,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         self::assertSame([
             ChannelRegisteredEvent::class => 'onChannelRegistered',
             ChannelDropEvent::class => 'onChannelDrop',
+            ChannelPendingDeletionEvent::class => 'onChannelPendingDeletion',
+            ChannelRestoredEvent::class => 'onChannelRestored',
             ChannelFounderChangedEvent::class => 'onChannelFounderChanged',
             ChannelForbiddenEvent::class => 'onChannelForbidden',
             ChannelUnforbiddenEvent::class => 'onChannelUnforbidden',
@@ -211,7 +223,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         );
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::suspend', '1');
+        $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::suspend', 'reason');
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#chan::options');
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
@@ -266,7 +278,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->exactly(2))->method('insert')->willReturnCallback(static function (string $block, string $path, string $value): bool {
             if ('C::#chan::suspend' === 'C::' . $path) {
-                self::assertSame('1', $value);
+                self::assertSame('reason', $value);
             } else {
                 self::assertSame('*6', $value);
                 self::assertSame('#chan::options', $path);
@@ -277,6 +289,49 @@ final class UdbChannelSyncSubscriberTest extends TestCase
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
         $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#chan', '#chan', 'reason', null, null, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+    }
+
+    #[Test]
+    public function onChannelSuspendedFallsBackToNeutralMarkerWithoutReason(): void
+    {
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::suspend', '1');
+
+        $sub = $this->createSubscriber(writer: $writer);
+        $sub->onChannelSuspended(new ChannelSuspendedEvent(1, '#chan', '#chan', '', null, null, 'oper', null, '', '', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+    }
+
+    #[Test]
+    public function onChannelPendingDeletionInsertsTheTranslatedSuspendReason(): void
+    {
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#pending', pendingDeletion: true));
+
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#pending::suspend', 'pending deletion reason');
+
+        $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
+        $sub->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#pending', '#pending', 'oper', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+    }
+
+    #[Test]
+    public function onChannelPendingDeletionIsSkippedForUnknownChannels(): void
+    {
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects($this->never())->method('insert');
+
+        $sub = $this->createSubscriber(writer: $writer);
+        $sub->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#missing', '#missing', null, new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
+    }
+
+    #[Test]
+    public function onChannelRestoredDeletesTheSuspendRecord(): void
+    {
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#pending::suspend');
+
+        $sub = $this->createSubscriber(writer: $writer);
+        $sub->onChannelRestored(new ChannelRestoredEvent(1, '#pending', '#pending', 'oper', new DateTimeImmutable('2026-01-01T00:00:00+00:00')));
     }
 
     #[Test]
@@ -418,7 +473,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function networkSyncReconcilesEveryChannelOptionsRecordWithoutPersistentBit(): void
+    public function networkSyncReconcilesEveryChannelOptionsAndSuspendRecordsWithoutPersistentBit(): void
     {
         $channelRepo = $this->createStub(ChannelProjectionQuery::class);
         $channelRepo->method('all')->willReturn([
@@ -426,6 +481,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             $this->createChannel('#mlock', mlockActive: true),
             $this->createChannel('#topiclock', topicLock: true),
             $this->createChannel('#both', mlockActive: true, topicLock: true),
+            $this->createChannel('#pending', pendingDeletion: true),
         ]);
 
         $inserts = [];
@@ -445,11 +501,19 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
         $sub->onNetworkSyncComplete(new NetworkSyncCompleteEvent($this->createStub(ConnectionInterface::class), '001'));
 
-        self::assertSame([['C', '#plain::options']], $deletes);
+        self::assertSame([
+            ['C', '#plain::options'],
+            ['C', '#plain::suspend'],
+            ['C', '#mlock::suspend'],
+            ['C', '#topiclock::suspend'],
+            ['C', '#both::suspend'],
+            ['C', '#pending::options'],
+        ], $deletes);
         self::assertSame([
             ['C', '#mlock::options', '*2'],
             ['C', '#topiclock::options', '*4'],
             ['C', '#both::options', '*6'],
+            ['C', '#pending::suspend', 'pending deletion reason'],
         ], $inserts);
     }
 

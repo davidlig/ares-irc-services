@@ -674,6 +674,11 @@ services:
         arguments:
             $sessionState: '@App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface'
 
+    App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver:
+        arguments:
+            $chanservNick:    '%chanserv.nick%'
+            $defaultLanguage: '%services.default_language%'
+
     App\Irc\Adapter\Protocol\UnrealUdb\UdbInboundFrameLogSubscriber:
         arguments:
             $logger: '@monolog.logger.irc'

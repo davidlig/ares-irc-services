@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\PasswordMigrationStateInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbNickSyncSubscriber;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
@@ -28,6 +29,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UdbNickSyncSubscriber::class)]
 final class UdbNickSyncSubscriberTest extends TestCase
@@ -63,6 +65,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
             $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
         );
     }
 

@@ -173,7 +173,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         $channel->markPendingDeletion($this->now);
         $channels = $this->channelsReturning($channel);
         $drops = $this->createMock(ChanDropService::class);
-        $drops->expects(self::once())->method('restoreChannel')->with($channel, 'Oper');
+        $drops->expects(self::once())->method('restoreChannel')->with($channel, $this->now, 'Oper');
 
         $result = $this->handler($channels, drops: $drops)->handle($this->command(ChannelLifecycleAction::Restore));
 

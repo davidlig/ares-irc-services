@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbPasswordRepairSubscriber;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UdbPasswordRepairSubscriber::class)]
 final class UdbPasswordRepairSubscriberTest extends TestCase
@@ -237,6 +239,7 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
             $this->createStub(GlineProjectionQuery::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            new UdbChannelSuspendReasonResolver($this->createStub(TranslatorInterface::class), 'ChanServ'),
         );
     }
 
