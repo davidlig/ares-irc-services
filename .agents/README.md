@@ -8,6 +8,7 @@ Load only the skill relevant to the current task.
 |---|---|
 | `architecture.md` | Ownership, modules, ports, events, dependency direction |
 | `services.md` | NickServ/ChanServ/MemoServ/OperServ commands, bots, HELP, translations, auth |
+| `chanserv.md` | ChanServ ACCESS, AKICK, LEVELS, MLOCK, SECURE, founder and rank invariants |
 | `protocol.md` | IRC protocol adapters, network actions, adding/changing an IRCd |
 | `unreal-udb.md` | UnrealIRCd UDB module wire/session/reconciliation/takeover work |
 | `persistence.md` | Doctrine, repositories, XML mapping, transactions, cleanup |

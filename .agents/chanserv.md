@@ -1,7 +1,8 @@
 # ChanServ Policy Invariants
 
 Use for ChanServ ACCESS, AKICK, LEVELS, MLOCK, SECURE, ownership, ranks, and event-driven
-enforcement. These behaviors are frozen for the bounded-context migration.
+enforcement. These invariants define the ChanServ service contract: preserve them unless a
+change is deliberately specified and tested.
 
 ## 1. Identity, founder, and ACCESS
 
@@ -36,8 +37,8 @@ enforcement. These behaviors are frozen for the bounded-context migration.
   supplied by that join event when it is above the desired rank, and removes that supplied rank when
   there is no desired rank. Other pre-existing ranks are reconciled only by full synchronization.
 - Full synchronization removes every supported held rank above the desired rank, then grants the
-  desired rank when needed. This downgrade behavior currently applies during full synchronization
-  even when SECURE is disabled and must be preserved.
+  desired rank when needed. This downgrade behavior deliberately applies during full
+  synchronization even when SECURE is disabled and must be preserved.
 - Rank changes are batched in groups of at most six network operations. Channel activity is touched
   when an identified member with an automatic rank joins or leaves, and when a registered channel
   is synchronized.
@@ -49,7 +50,7 @@ enforcement. These behaviors are frozen for the bounded-context migration.
 - An unidentified user is treated as having no desired rank. On join, any supplied rank is removed.
 - A live rank grant above the desired rank is immediately removed. List-mode parameters preceding a
   rank change must still be consumed correctly by the IRC adapter.
-- Rank synchronization uses the legacy snapshot-at-message-start batch. Enabling SECURE or changing
+- Rank synchronization uses a snapshot-at-message-start batch. Enabling SECURE or changing
   founder during one IRC message coalesces by case-insensitive channel name and is enforced at the
   end of the following IRC message, not at the end of the message that raised the change.
 - Suspended, forbidden, and pending-deletion channels do not enforce ranks.
@@ -67,8 +68,8 @@ enforcement. These behaviors are frozen for the bounded-context migration.
   is safe when its nickname part contains an alphanumeric character, or otherwise when the
   ident-and-host part contains at least four alphanumeric characters. An empty reason is absence.
 - When network synchronization is complete, AKICK ADD immediately applies the matching ban/kick to
-  current members. The legacy LIST path also reapplies all current AKICK bans and kicks; this unusual
-  event-driven side effect is frozen until its command is migrated deliberately.
+  current members. The LIST path also reapplies all current AKICK bans and kicks; this unusual
+  event-driven side effect is intentional and must be preserved.
 - `NOJOIN=-1` disables enforcement. Otherwise users whose effective access is below NOJOIN are
   kicked. Unidentified users have level `-1`; IRC operators and ChanServ itself are exempt.
 - Join-time NOJOIN runs before rank enforcement. AKICK and NOJOIN also run after network
