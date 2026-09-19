@@ -7,6 +7,7 @@ error:
   syntax:         "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
   not_identified: "\x0304✗\x03 Nu sunteți identificat. Folosiți \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permisiune refuzată. Nu aveți acces la această comandă."
   invalid_channel: "\x0304✗\x03 Nume de canal invalid. Folosiți \x02#canal\x02."
   channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
   generic:        "\x0304✗\x03 A apărut o eroare. Vă rugăm să încercați din nou."
@@ -19,6 +20,7 @@ register:
   short:            "Înregistrați un canal."
   help:             "Înregistrați și asociați un canal cu porecla dumneavoastră. Trebuie să fiți identificat cu %nickserv%."
   success:          "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."
+  already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
   channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu există în rețea."
   pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este în așteptare de ștergere și nu poate fi înregistrat."
   insufficient_channel_rank: "\x0304✗\x03 Trebuie să ai cel puțin statut de operator pe \x02%channel%\x02 pentru a-l înregistra."
@@ -29,7 +31,7 @@ info:
   syntax:           "INFO <#canal>"
   short:            "Afișați informațiile canalului."
   help:             "Afișează fondatorul, data înregistrării, succesorul, URL-ul, e-mailul, descrierea, ultima utilizare, subiectul și opțiunile (TOPICLOCK, MLOCK, SECURE)."
-  header:          "\x02Informații pentru canalul \x0307%channel%\x03:\x02"
+  header:          "\x02Informații pentru canalul \x0307%channel%\x03\x02"
   footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Fondator\x03             : \x02%nickname%\x02"
   registered:      "  \x0314Înregistrat\x03          : %date%"
@@ -71,7 +73,6 @@ help:
   intro_expiration: "NOTĂ: Canalele \x0304\x1Fnefolosite\x0F mai mult de %days% zile sunt eliminate automat."
   unknown_command:  "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
   ircop_header:     "\x02\x0314Comenzi disponibile pentru IRCOPS:\x03\x0F"
-  suboptions:       "Sub-opțiuni:"
 
 op:
   syntax:           "OP <#canal> <poreclă>"
@@ -88,7 +89,6 @@ deop:
   done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a retras statutul de operator."
 
 secure:
-  requires_access: "\x0304✗\x03 Cu SECURE activat, \x02%nickname%\x02 trebuie să fie în lista de acces pentru a primi un rang."
   requires_min_level: "\x0304✗\x03 Cu SECURE activat, \x02%nickname%\x02 trebuie să aibă cel puțin nivelul \x02%level%\x02 pentru a primi \x02%mode%\x02."
 
 set:
@@ -137,6 +137,7 @@ set:
     syntax:         "SET <#canal> EMAIL <e-mail|none>"
     short:          "Setați e-mailul canalului."
     help:           "Schimbați adresa de e-mail a canalului. Folosiți \x02none\x02 pentru a șterge."
+    invalid:        "\x0304✗\x03 Adresă de e-mail invalidă."
     updated:        "\x0303✔\x03 E-mailul a fost actualizat."
     cleared:        "\x0303✔\x03 E-mailul a fost șters."
   entrymsg:
@@ -144,7 +145,6 @@ set:
     short:          "Setați mesajul de intrare al canalului."
     help:           "Setați mesajul afișat atunci când utilizatorii intră pe canal (NOTICE). Folosiți \x02none\x02 pentru a șterge."
     updated:        "\x0303✔\x03 Mesajul de intrare a fost actualizat."
-    cleared:        "\x0303✔\x03 Mesajul de intrare a fost șters."
     too_long:       "\x0304✗\x03 Mesajul de intrare nu poate depăși %max% caractere."
   topiclock:
     syntax:         "SET <#canal> TOPICLOCK {ON|OFF}"
@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a retras halfopul."
 
 akick:
-  syntax:           "AKICK <#canal> {ADD|DEL|LIST|ENFORCE} [mască] [expirare] [motiv]"
+  syntax:           "AKICK <#canal> {ADD|DEL|LIST} [mască] [expirare] [motiv]"
   short:            "Gestionați lista de auto-kick."
-  help:             "ADD <mască> [expirare] [motiv]: adaugă intrare. DEL <mască|număr>: elimină. LIST: listează intrările. ENFORCE <mască>: dă kick utilizatorilor corespunzători."
-  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL, LIST sau ENFORCE."
+  help:             "ADD <mască> [expirare] [motiv]: adaugă intrare. DEL <mască|număr>: elimină. LIST: listează intrările."
+  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL sau LIST."
   invalid_mask:     "\x0304✗\x03 Format de mască invalid. Folosiți \x02poreclă!ident@host\x02 cu metacaractere (*)."
   dangerous_mask:   "\x0304✗\x03 Masca \x02%mask%\x02 este prea largă. Trebuie să conțină cel puțin 4 caractere alfanumerice."
   protected_user:   "\x0304✗\x03 Porecla \x02%nickname%\x02 are acces pe acest canal."
@@ -330,11 +330,13 @@ restore:
 drop:
   syntax:           "DROP <#canal> [FORCE]"
   short:            "Eliminați un canal înregistrat."
-  help:             "Elimină un canal înregistrat din baza de date."
+  help:             "Elimină un canal înregistrat din baza de date.\nAceastă comandă necesită permisiunea IRCop: chanserv.drop.\nFORCE șterge definitiv un canal în așteptare de ștergere și necesită permisiunea IRCop: chanserv.drop.force."
   success:          "03✔ Canalul %channel% a fost marcat pentru ștergere și poate fi restaurat în perioada de grație."
   force_success:    "\x0303✔\x03 Canalul \x02%channel%\x02 a fost șters definitiv."
   pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja în așteptare de ștergere. Folosiți DROP <#canal> FORCE pentru a-l șterge definitiv."
+  invalid_channel:  "\x0304✗\x03 Nume de canal invalid. Folosiți \x02#canal\x02."
   not_registered:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  pending_deletion_reason: "Canalul %channel% este în curs de ștergere. Mai multe informații /msg %bot% INFO %channel%"
 
 suspend:
   syntax:           "SUSPEND <#canal> <durată> <motiv>"
@@ -346,7 +348,6 @@ suspend:
   invalid_duration:  "\x0304✗\x03 Durată invalidă. Folosiți: 0 (permanent), 1d, 12h sau 60m."
   permanent:         "Permanent"
   channel_suspended: "\x0304✗\x03 Canalul \x02%channel%\x02 este suspendat și nu poate fi folosit."
-  channel_forbidden: "\x0304✗\x03 Canalul \x02%channel%\x02 este interzis și nu poate fi folosit."
   notice_channel:    "\x0304⚠\x03 Canalul a fost suspendat. Motiv: %reason%"
 
 unsuspend:
@@ -368,17 +369,6 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "Nu sunteți autorizat să intrați pe acest canal."
-
-permissions:
-  chanserv.drop: "Eliminați un canal înregistrat (DROP)"
-  chanserv.drop.force: "Forțați ștergerea definitivă a unui canal recuperabil (DROP FORCE)"
-  chanserv.restore: "Restaurați un canal în așteptare de ștergere (RESTORE)"
-  chanserv.suspend: "Suspendare sau anulare suspendare a unui canal (SUSPEND/UNSUSPEND)"
-  chanserv.forbid: "Interzicere sau anulare interzicere a unui canal (FORBID/UNFORBID)"
-  chanserv.noexpire: "Setare sau eliminare a protecției împotriva expirării pentru un canal (NOEXPIRE)"
-  chanserv.history: "Vizualizare și gestionare a istoricului de acțiuni al canalului (HISTORY)"
-  chanserv.clearaccess: "Ștergerea întregii liste de acces a unui canal (CLEARACCESS)"
-  chanserv.clearusers: "Eliminare prin kick a tuturor utilizatorilor dintr-un canal (CLEARUSERS)"
 
 noexpire:
   syntax:           "NOEXPIRE <#canal> {ON|OFF}"
@@ -458,6 +448,7 @@ history:
   del:
     syntax:     "HISTORY <#canal> DEL <id>"
     short:      "Ștergeți o intrare din istoric după ID."
+    help:       "Șterge o intrare din istoric după ID."
     success:    "\x0303✔\x03 Intrarea din istoric \x02%id%\x02 a fost ștearsă."
     not_found:  "\x0304✗\x03 Intrarea din istoric \x02%id%\x02 nu a fost găsită."
     invalid_id: "\x0304✗\x03 ID de intrare invalid: \x02%id%\x02."
@@ -465,6 +456,7 @@ history:
   view:
     syntax:     "HISTORY <#canal> VIEW [PAGINĂ|ALL]"
     short:      "Vizualizați istoricul de acțiuni al canalului."
+    help:       "Afișează intrările din istoricul canalului."
     header:     "\x02Istoric pentru \x0307%channel%\x03\x02 (se afișează %start%-%end% din %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 de %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -474,6 +466,7 @@ history:
   clear:
     syntax:     "HISTORY <#canal> CLEAR"
     short:      "Ștergeți toate intrările din istoricul unui canal."
+    help:       "Șterge toate intrările din istoricul canalului."
     success:    "\x0303✔\x03 S-au șters \x02%count%\x02 intrări din istoricul canalului \x02%channel%\x02."
 
 # --- History message translations ---

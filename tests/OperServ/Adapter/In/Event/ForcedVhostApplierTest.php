@@ -1,0 +1,609 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\OperServ\Adapter\In\Event;
+
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
+use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
+use App\NickServ\Application\Port\In\NickProjection;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\NickServ\Application\Service\VhostDisplayResolver;
+use App\OperServ\Adapter\In\Event\ForcedVhostApplier;
+use App\OperServ\Domain\Entity\OperIrcop;
+use App\OperServ\Domain\Entity\OperRole;
+use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
+use Psr\Log\NullLogger;
+use ReflectionClass;
+use Stringable;
+
+#[CoversClass(ForcedVhostApplier::class)]
+final class ForcedVhostApplierTest extends TestCase
+{
+    #[Test]
+    public function applyForcedVhostReturnsFalseWhenNotIrcop(): void
+    {
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn(null);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $result = $applier->applyForcedVhostIfApplicable(123, 'TestNick', 'UID1');
+
+        self::assertFalse($result);
+    }
+
+    #[Test]
+    public function applyForcedVhostReturnsFalseWhenRoleHasNoPattern(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn($ircop);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $result = $applier->applyForcedVhostIfApplicable(123, 'TestNick', 'UID1');
+
+        self::assertFalse($result);
+    }
+
+    #[Test]
+    public function applyForcedVhostAppliesVhostWhenRoleHasPattern(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $role->changeForcedVhostPattern('admin.network');
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn($ircop);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID1', 'davidlig.admin.network', '001');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $result = $applier->applyForcedVhostIfApplicable(123, '_davidlig_', 'UID1');
+
+        self::assertTrue($result);
+    }
+
+    #[Test]
+    public function applyForcedVhostReturnsFalseWhenServerSidIsMissing(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $role->changeForcedVhostPattern('admin.network');
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepository->method('findByNickId')->willReturn($ircop);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connectionHolder->method('getServerSid')->willReturn(null);
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepository,
+            $this->createStub(NickProjectionQuery::class),
+            new IdentifiedSessionRegistry(),
+            $notifier,
+            $this->createStub(NetworkUserLookupPort::class),
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        self::assertFalse($applier->applyForcedVhostIfApplicable(123, 'davidlig', 'UID1'));
+    }
+
+    #[Test]
+    public function applyForcedVhostCleansNickname(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $role->changeForcedVhostPattern('staff.ares');
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn($ircop);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID1', 'UserTest.staff.ares', '001');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $result = $applier->applyForcedVhostIfApplicable(123, '|User|Test|', 'UID1');
+
+        self::assertTrue($result);
+    }
+
+    #[Test]
+    public function updateVhostForRoleDoesNothingWhenNoIrcops(): void
+    {
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByRoleId')->willReturn([]);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $applier->updateVhostForRole(1, 'admin.ares');
+    }
+
+    #[Test]
+    public function updateVhostForRoleAppliesVhostToIdentifiedIrcops(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $role->changeForcedVhostPattern('admin.network');
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
+
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturn($nick);
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'davidlig');
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID1', 'davidlig.admin.network', '001');
+
+        $user = new SenderView('UID1', 'davidlig', 'i', 'h', 'c', 'ip');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $applier->updateVhostForRole(1, 'admin.network');
+    }
+
+    #[Test]
+    public function updateVhostForRoleClearsVhostWhenPatternIsNull(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
+
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturn($nick);
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'davidlig');
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID1', '', '001');
+
+        $user = new SenderView('UID1', 'davidlig', 'i', 'h', 'c', 'ip');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $applier->updateVhostForRole(1, null);
+    }
+
+    #[Test]
+    public function updateVhostForRoleSkipsNotIdentifiedIrcops(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
+
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturn($nick);
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $applier->updateVhostForRole(1, 'admin.network');
+    }
+
+    #[Test]
+    public function applyForcedVhostReturnsFalseWhenPatternEmpty(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $role->changeForcedVhostPattern('');
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn($ircop);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $result = $applier->applyForcedVhostIfApplicable(123, 'TestNick', 'UID1');
+
+        self::assertFalse($result);
+    }
+
+    #[Test]
+    public function applyForcedVhostReturnsFalseWhenPatternInvalid(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $role->changeForcedVhostPattern('invalid-pattern-no-dot');
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn($ircop);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+
+        $logger = new class extends AbstractLogger {
+            /** @var list<array{message: string|Stringable, context: array<string, mixed>}> */
+            public array $warnings = [];
+
+            /** @param array<string, mixed> $context */
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            {
+                if ('warning' === $level) {
+                    $this->warnings[] = ['message' => $message, 'context' => $context];
+                }
+            }
+        };
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            $logger,
+        );
+
+        $result = $applier->applyForcedVhostIfApplicable(123, 'TestNick', 'UID1');
+
+        self::assertFalse($result);
+        self::assertCount(1, $logger->warnings);
+        self::assertSame('ForcedVhostApplier: invalid pattern stored for role', $logger->warnings[0]['message']);
+    }
+
+    #[Test]
+    public function updateVhostForRoleSkipsWhenNickNotFound(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturn(null);
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $applier->updateVhostForRole(1, 'admin.network');
+    }
+
+    #[Test]
+    public function updateVhostForRoleSkipsWhenUserNotFound(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
+
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturn($nick);
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'davidlig');
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn(null);
+
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            new NullLogger(),
+        );
+
+        $applier->updateVhostForRole(1, 'admin.network');
+    }
+
+    #[Test]
+    public function updateVhostForRoleLogsWarningWhenPatternInvalid(): void
+    {
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
+
+        $nick = new NickProjection(123, 'davidlig', 'hash', null, false, null, false);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturn($nick);
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'davidlig');
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $user = new SenderView('UID1', 'davidlig', 'i', 'h', 'c', 'ip');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+
+        $logger = new class extends AbstractLogger {
+            /** @var list<array{message: string|Stringable, context: array<string, mixed>}> */
+            public array $warnings = [];
+
+            /** @param array<string, mixed> $context */
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            {
+                if ('warning' === $level) {
+                    $this->warnings[] = ['message' => $message, 'context' => $context];
+                }
+            }
+        };
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            $logger,
+        );
+
+        $applier->updateVhostForRole(1, 'invalid-pattern-no-dot');
+
+        self::assertCount(1, $logger->warnings);
+        self::assertSame('ForcedVhostApplier: invalid pattern for role update', $logger->warnings[0]['message']);
+    }
+
+    #[Test]
+    public function updateVhostForRoleRestoresPersonalVhostWhenPatternRemoved(): void
+    {
+        $roleRefl = new ReflectionClass(OperRole::class);
+        $roleIdProp = $roleRefl->getProperty('id');
+
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $roleIdProp->setValue($role, 1);
+        $role->changeForcedVhostPattern('admin.network');
+        $ircop = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), 123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
+
+        $nick = new NickProjection(123, 'davidlig', 'hash', 'personal.vhost', false, null, false);
+
+        $nickRepo = $this->createStub(NickProjectionQuery::class);
+        $nickRepo->method('findById')->willReturn($nick);
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'davidlig');
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('setUserVhost')
+            ->with('UID1', 'personal.vhost', '001');
+
+        $user = new SenderView('UID1', 'davidlig', 'i', 'h', 'c', 'ip');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $connectionHolder = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $logger = new class extends AbstractLogger {
+            /** @var list<array{message: string|Stringable, context: array<string, mixed>}> */
+            public array $infos = [];
+
+            /** @param array<string, mixed> $context */
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            {
+                if ('info' === $level) {
+                    $this->infos[] = ['message' => $message, 'context' => $context];
+                }
+            }
+        };
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            $logger,
+        );
+
+        $applier->updateVhostForRole(1, null);
+
+        self::assertCount(1, $logger->infos);
+        self::assertSame('ForcedVhostApplier: restored personal vhost (role pattern removed)', $logger->infos[0]['message']);
+        self::assertSame('personal.vhost', $logger->infos[0]['context']['personalVhost']);
+    }
+}

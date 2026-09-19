@@ -1,0 +1,419 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\ChanServ\Domain\Entity;
+
+use App\ChanServ\Domain\ValueObject\ChannelStatus;
+use DateTimeImmutable;
+use InvalidArgumentException;
+use LogicException;
+
+use function sprintf;
+use function strlen;
+
+/**
+ * A registered IRC channel. Founder and successor are stored as nick IDs (FK to NickServ).
+ *
+ * Persistence mapping is defined in config/doctrine (XML); Domain has no Doctrine dependency.
+ */
+class RegisteredChannel
+{
+    public const int ENTRYMSG_MAX_LENGTH = 255;
+
+    private int $id;
+
+    private string $name;
+
+    private string $nameLower;
+
+    private int $founderNickId;
+
+    private ?int $successorNickId = null;
+
+    private string $description = '';
+
+    private ?string $url = null;
+
+    private ?string $email = null;
+
+    private string $entrymsg;
+
+    private bool $topicLock = false;
+
+    /** Whether MLOCK is on (true) or off (false). Two explicit states. */
+    private bool $mlockActive = false;
+
+    /** Channel modes to lock when MLOCK is on (e.g. +nt or +ntl). Empty when active but no modes to lock. */
+    private string $mlock = '';
+
+    /** @var array<string, string> Params for MLOCK modes that take one (e.g. l => 100, k => key). Key = mode letter. */
+    private array $mlockParams = [];
+
+    private bool $secure = false;
+
+    private ?string $topic = null;
+
+    private ?DateTimeImmutable $lastTopicSetAt = null;
+
+    /** Nickname of who last set the topic (null if set by services or unknown). */
+    private ?string $lastTopicSetByNick = null;
+
+    private ChannelStatus $status = ChannelStatus::Active;
+
+    private ?string $suspendedReason = null;
+
+    private ?DateTimeImmutable $suspendedUntil = null;
+
+    private ?string $forbiddenReason = null;
+
+    private bool $noExpire = false;
+
+    private ?DateTimeImmutable $lastUsedAt = null;
+
+    private DateTimeImmutable $createdAt;
+
+    /** Set when a manual DROP starts the recoverable deletion grace period. */
+    private ?DateTimeImmutable $pendingDeletionAt = null;
+
+    private function __construct(DateTimeImmutable $createdAt)
+    {
+        $this->entrymsg = '';
+        $this->createdAt = $createdAt;
+    }
+
+    public static function register(
+        DateTimeImmutable $registeredAt,
+        string $channelName,
+        int $founderNickId,
+        string $description,
+    ): self {
+        $channel = new self($registeredAt);
+        $channel->name = $channelName;
+        $channel->nameLower = strtolower($channelName);
+        $channel->founderNickId = $founderNickId;
+        $channel->description = $description;
+        $channel->lastUsedAt = $registeredAt;
+
+        return $channel;
+    }
+
+    public static function createForbidden(
+        DateTimeImmutable $createdAt,
+        string $channelName,
+        string $reason,
+    ): self {
+        $channel = new self($createdAt);
+        $channel->name = $channelName;
+        $channel->nameLower = strtolower($channelName);
+        $channel->founderNickId = 0;
+        $channel->description = '';
+        $channel->status = ChannelStatus::Forbidden;
+        $channel->forbiddenReason = $reason;
+
+        return $channel;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getNameLower(): string
+    {
+        return $this->nameLower;
+    }
+
+    public function getFounderNickId(): int
+    {
+        return $this->founderNickId;
+    }
+
+    public function getSuccessorNickId(): ?int
+    {
+        return $this->successorNickId;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->url;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function getEntrymsg(): string
+    {
+        return $this->entrymsg;
+    }
+
+    public function isTopicLock(): bool
+    {
+        return $this->topicLock;
+    }
+
+    public function getMlock(): string
+    {
+        return $this->mlock;
+    }
+
+    /**
+     * @return array<string, string> Mode letter => param value (e.g. ['l' => '100', 'k' => 'key'])
+     */
+    public function getMlockParams(): array
+    {
+        return $this->mlockParams;
+    }
+
+    public function getMlockParam(string $letter): ?string
+    {
+        return $this->mlockParams[$letter] ?? null;
+    }
+
+    public function isMlockActive(): bool
+    {
+        return $this->mlockActive;
+    }
+
+    public function isSecure(): bool
+    {
+        return $this->secure;
+    }
+
+    public function getTopic(): ?string
+    {
+        return $this->topic;
+    }
+
+    public function getLastTopicSetAt(): ?DateTimeImmutable
+    {
+        return $this->lastTopicSetAt;
+    }
+
+    public function getLastTopicSetByNick(): ?string
+    {
+        return $this->lastTopicSetByNick;
+    }
+
+    public function getLastUsedAt(): ?DateTimeImmutable
+    {
+        return $this->lastUsedAt;
+    }
+
+    public function getCreatedAt(): DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function getPendingDeletionAt(): ?DateTimeImmutable
+    {
+        return $this->pendingDeletionAt;
+    }
+
+    public function getPendingDeletionExpiresAt(int $graceDays): ?DateTimeImmutable
+    {
+        if (null === $this->pendingDeletionAt || $graceDays <= 0) {
+            return $this->pendingDeletionAt;
+        }
+
+        return $this->pendingDeletionAt->modify(sprintf('+%d days', $graceDays));
+    }
+
+    public function changeFounder(int $newFounderNickId): void
+    {
+        $this->founderNickId = $newFounderNickId;
+        $this->successorNickId = null;
+    }
+
+    public function assignSuccessor(?int $nickId): void
+    {
+        $this->successorNickId = $nickId;
+    }
+
+    public function updateDescription(string $description): void
+    {
+        $this->description = $description;
+    }
+
+    public function updateUrl(?string $url): void
+    {
+        $this->url = $url;
+    }
+
+    public function updateEmail(?string $email): void
+    {
+        $this->email = $email;
+    }
+
+    public function updateEntrymsg(string $entrymsg): void
+    {
+        self::assertValidEntrymsg($entrymsg);
+        $this->entrymsg = $entrymsg;
+    }
+
+    public function configureTopicLock(bool $on): void
+    {
+        $this->topicLock = $on;
+    }
+
+    /**
+     * @param array<string, string> $params
+     */
+    public function configureMlock(bool $active, string $modeString = '', array $params = []): void
+    {
+        $this->mlockActive = $active;
+        $this->mlock = $modeString;
+        $this->mlockParams = $params;
+    }
+
+    public function configureSecure(bool $on): void
+    {
+        $this->secure = $on;
+    }
+
+    public function updateTopic(?string $topic, DateTimeImmutable $updatedAt, ?string $setByNick = null): void
+    {
+        $this->topic = $topic;
+        $this->lastTopicSetAt = null !== $topic ? $updatedAt : null;
+        $this->lastTopicSetByNick = null !== $topic ? $setByNick : null;
+    }
+
+    public function touchLastUsed(DateTimeImmutable $usedAt): void
+    {
+        $this->lastUsedAt = $usedAt;
+    }
+
+    public function isFounder(int $nickId): bool
+    {
+        return $this->founderNickId === $nickId;
+    }
+
+    public function getStatus(): ChannelStatus
+    {
+        return $this->status;
+    }
+
+    public function getSuspendedReason(): ?string
+    {
+        return $this->suspendedReason;
+    }
+
+    public function getSuspendedUntil(): ?DateTimeImmutable
+    {
+        return $this->suspendedUntil;
+    }
+
+    public function isSuspended(): bool
+    {
+        return ChannelStatus::Suspended === $this->status;
+    }
+
+    public function isPendingDeletion(): bool
+    {
+        return ChannelStatus::PendingDeletion === $this->status;
+    }
+
+    public function markPendingDeletion(DateTimeImmutable $at): void
+    {
+        if (ChannelStatus::Active !== $this->status) {
+            throw new LogicException('Only active channels can be marked for deletion.');
+        }
+
+        $this->status = ChannelStatus::PendingDeletion;
+        $this->pendingDeletionAt = $at;
+    }
+
+    public function restoreFromPendingDeletion(): void
+    {
+        if (!$this->isPendingDeletion()) {
+            throw new LogicException('Only channels pending deletion can be restored.');
+        }
+
+        $this->status = ChannelStatus::Active;
+        $this->pendingDeletionAt = null;
+    }
+
+    public function isCurrentlySuspended(DateTimeImmutable $now): bool
+    {
+        if (!$this->isSuspended()) {
+            return false;
+        }
+
+        if (null === $this->suspendedUntil) {
+            return true;
+        }
+
+        return $now < $this->suspendedUntil;
+    }
+
+    public function suspend(string $reason, ?DateTimeImmutable $until = null): void
+    {
+        $this->status = ChannelStatus::Suspended;
+        $this->suspendedReason = $reason;
+        $this->suspendedUntil = $until;
+    }
+
+    public function unsuspend(): void
+    {
+        $this->status = ChannelStatus::Active;
+        $this->suspendedReason = null;
+        $this->suspendedUntil = null;
+    }
+
+    public function isForbidden(): bool
+    {
+        return ChannelStatus::Forbidden === $this->status;
+    }
+
+    /**
+     * Whether the channel is in a blocked state where no ChanServ actions
+     * should be performed (suspended, forbidden, or pending deletion).
+     */
+    public function isBlocked(): bool
+    {
+        return $this->isSuspended() || $this->isForbidden() || $this->isPendingDeletion();
+    }
+
+    public function getForbiddenReason(): ?string
+    {
+        return $this->forbiddenReason;
+    }
+
+    public function updateForbiddenReason(string $reason): void
+    {
+        if (!$this->isForbidden()) {
+            throw new LogicException('Cannot update forbidden reason on a non-forbidden channel.');
+        }
+
+        $this->forbiddenReason = $reason;
+    }
+
+    public function isNoExpire(): bool
+    {
+        return $this->noExpire;
+    }
+
+    public function changeNoExpire(bool $noExpire): void
+    {
+        $this->noExpire = $noExpire;
+    }
+
+    private static function assertValidEntrymsg(string $entrymsg): void
+    {
+        if (strlen($entrymsg) > self::ENTRYMSG_MAX_LENGTH) {
+            throw new InvalidArgumentException(sprintf('Entry message cannot exceed %d characters.', self::ENTRYMSG_MAX_LENGTH));
+        }
+    }
+}

@@ -1,0 +1,327 @@
+deptrac:
+  paths:
+    - ./src
+
+  # The cache lives under var/ so running the gate never dirties the repository root.
+  cache_file: ./var/cache/deptrac.cache
+
+  layers:
+    - name: Irc Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Irc\\Domain\\#'
+
+    - name: Irc Application Public
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Irc\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
+
+    - name: Irc Application Internal
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Irc\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
+
+    - name: Irc Adapter
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Irc\\Adapter\\(?!(?:Protocol\\(?:InspIRCd|UnrealStandalone|UnrealUdb)(?:\\|$)))#'
+
+    - name: NickServ Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\NickServ\\Domain\\#'
+
+    - name: NickServ Application Public
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\NickServ\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
+
+    - name: NickServ Application Internal
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\NickServ\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
+
+    - name: NickServ Adapter
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\NickServ\\Adapter(?:\\|$)#'
+
+    - name: ChanServ Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\ChanServ\\Domain\\#'
+
+    - name: ChanServ Application Public
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\ChanServ\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
+
+    - name: ChanServ Application Internal
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\ChanServ\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
+
+    - name: ChanServ Adapter
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\ChanServ\\Adapter(?:\\|$)#'
+
+    - name: MemoServ Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\MemoServ\\Domain\\#'
+
+    - name: MemoServ Application Public
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\MemoServ\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
+
+    - name: MemoServ Application Internal
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\MemoServ\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
+
+    - name: MemoServ Adapter
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\MemoServ\\Adapter(?:\\|$)#'
+
+    - name: OperServ Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\OperServ\\Domain\\#'
+
+    - name: OperServ Application Public
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\OperServ\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
+
+    - name: OperServ Application Internal
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\OperServ\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
+
+    - name: OperServ Adapter
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\OperServ\\Adapter(?:\\|$)#'
+
+    - name: Shared Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Shared\\Domain(?:\\|$)#'
+
+    - name: Shared Application
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Shared\\Application(?:\\|$)#'
+
+    - name: InspIRCd
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Irc\\Adapter\\Protocol\\InspIRCd(?:\\|$)#'
+
+    - name: UnrealStandalone
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Irc\\Adapter\\Protocol\\UnrealStandalone(?:\\|$)#'
+
+    - name: UnrealUdb
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Irc\\Adapter\\Protocol\\UnrealUdb(?:\\|$)#'
+
+    - name: Bootstrap
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\Bootstrap(?:\\|$)#'
+
+    - name: External
+      collectors:
+        - type: classNameRegex
+          value: '#^(?:Amp|Doctrine|Psr|Revolt|Symfony)\\#'
+
+  ruleset:
+    Irc Domain:
+      - Shared Domain
+    Irc Application Public:
+      - Irc Domain
+      - Shared Domain
+      - Shared Application
+    Irc Application Internal:
+      - Irc Domain
+      - Irc Application Public
+      - Shared Domain
+      - Shared Application
+    Irc Adapter:
+      - Irc Domain
+      - Irc Application Public
+      - Irc Application Internal
+      - NickServ Application Public
+      - ChanServ Application Public
+      - MemoServ Application Public
+      - OperServ Application Public
+      - Shared Domain
+      - Shared Application
+      - External
+
+    NickServ Domain:
+      - Shared Domain
+    NickServ Application Public:
+      - NickServ Domain
+      - Shared Domain
+      - Shared Application
+    NickServ Application Internal:
+      - NickServ Domain
+      - NickServ Application Public
+      - Shared Domain
+      - Shared Application
+    NickServ Adapter:
+      - NickServ Domain
+      - NickServ Application Public
+      - NickServ Application Internal
+      - Irc Application Public
+      - ChanServ Application Public
+      - MemoServ Application Public
+      - OperServ Application Public
+      - Shared Domain
+      - Shared Application
+      - External
+
+    ChanServ Domain:
+      - Shared Domain
+    ChanServ Application Public:
+      - ChanServ Domain
+      - Shared Domain
+      - Shared Application
+    ChanServ Application Internal:
+      - ChanServ Domain
+      - ChanServ Application Public
+      - Shared Domain
+      - Shared Application
+    ChanServ Adapter:
+      - ChanServ Domain
+      - ChanServ Application Public
+      - ChanServ Application Internal
+      - Irc Application Public
+      - NickServ Application Public
+      - MemoServ Application Public
+      - OperServ Application Public
+      - Shared Domain
+      - Shared Application
+      - External
+
+    MemoServ Domain:
+      - Shared Domain
+    MemoServ Application Public:
+      - MemoServ Domain
+      - Shared Domain
+      - Shared Application
+    MemoServ Application Internal:
+      - MemoServ Domain
+      - MemoServ Application Public
+      - Shared Domain
+      - Shared Application
+    MemoServ Adapter:
+      - MemoServ Domain
+      - MemoServ Application Public
+      - MemoServ Application Internal
+      - Irc Application Public
+      - NickServ Application Public
+      - ChanServ Application Public
+      - OperServ Application Public
+      - Shared Domain
+      - Shared Application
+      - External
+
+    OperServ Domain:
+      - Shared Domain
+    OperServ Application Public:
+      - OperServ Domain
+      - Shared Domain
+      - Shared Application
+    OperServ Application Internal:
+      - OperServ Domain
+      - OperServ Application Public
+      - Shared Domain
+      - Shared Application
+    OperServ Adapter:
+      - OperServ Domain
+      - OperServ Application Public
+      - OperServ Application Internal
+      - Irc Application Public
+      - NickServ Application Public
+      - ChanServ Application Public
+      - MemoServ Application Public
+      - Shared Domain
+      - Shared Application
+      - External
+
+    Shared Domain: ~
+    Shared Application:
+      - Shared Domain
+
+    InspIRCd:
+      - Irc Domain
+      - Irc Application Public
+      - Irc Application Internal
+      - Irc Adapter
+      - NickServ Application Public
+      - ChanServ Application Public
+      - MemoServ Application Public
+      - OperServ Application Public
+      - Shared Domain
+      - Shared Application
+      - External
+    UnrealStandalone:
+      - Irc Domain
+      - Irc Application Public
+      - Irc Application Internal
+      - Irc Adapter
+      - NickServ Application Public
+      - ChanServ Application Public
+      - MemoServ Application Public
+      - OperServ Application Public
+      - Shared Domain
+      - Shared Application
+      - External
+    UnrealUdb:
+      - Irc Domain
+      - Irc Application Public
+      - Irc Application Internal
+      - Irc Adapter
+      - NickServ Application Public
+      - ChanServ Application Public
+      - MemoServ Application Public
+      - OperServ Application Public
+      - Shared Domain
+      - Shared Application
+      - External
+    Bootstrap:
+      - Irc Domain
+      - Irc Application Public
+      - Irc Application Internal
+      - Irc Adapter
+      - NickServ Domain
+      - NickServ Application Public
+      - NickServ Application Internal
+      - NickServ Adapter
+      - ChanServ Domain
+      - ChanServ Application Public
+      - ChanServ Application Internal
+      - ChanServ Adapter
+      - MemoServ Domain
+      - MemoServ Application Public
+      - MemoServ Application Internal
+      - MemoServ Adapter
+      - OperServ Domain
+      - OperServ Application Public
+      - OperServ Application Internal
+      - OperServ Adapter
+      - Shared Domain
+      - Shared Application
+      - InspIRCd
+      - UnrealStandalone
+      - UnrealUdb
+      - External
+    External: ~

@@ -7,6 +7,7 @@ error:
   syntax: "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
   not_identified: "\x0304✗\x03 No esteu identificat. Utilitzeu \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permís denegat. No teniu accés a aquesta ordre."
   channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
   insufficient_access: "\x0304✗\x03 Accés insuficient per a \x02%operation%\x02 al canal \x02%channel%\x02."
 
@@ -116,6 +117,7 @@ help:
   syntax_label: "\x0307Sintaxi:\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
   unknown_command: "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02\x0314Ordres disponibles per a IRCOPS:\x03\x0F"
 
 notify:
   nick_pending: "Teniu \x02%count%\x02 missatge(s) no llegit(s). Per llistar-los: \x0309/msg %bot% LIST\x03"

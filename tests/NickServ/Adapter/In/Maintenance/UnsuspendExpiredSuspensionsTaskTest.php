@@ -1,0 +1,176 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\NickServ\Adapter\In\Maintenance;
+
+use App\Irc\Application\Port\In\ServiceDebugNotifierInterface;
+use App\NickServ\Adapter\In\Maintenance\UnsuspendExpiredSuspensionsTask;
+use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\NickServEventPublisher;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickUnsuspendedEvent;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use ReflectionClass;
+
+#[CoversClass(UnsuspendExpiredSuspensionsTask::class)]
+final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
+{
+    private const string SERVER_NAME = 'test-server.example.com';
+
+    #[Test]
+    public function getNameReturnsNickservUnsuspendExpiredSuspensions(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $debugNotifier, new NullLogger(), $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600);
+
+        self::assertSame('nickserv.unsuspend_expired_suspensions', $task->getName());
+    }
+
+    #[Test]
+    public function getIntervalSecondsReturnsConfiguredValue(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $debugNotifier, new NullLogger(), $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 7200);
+
+        self::assertSame(7200, $task->getIntervalSeconds());
+    }
+
+    #[Test]
+    public function getOrderReturns195(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $debugNotifier, new NullLogger(), $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600);
+
+        self::assertSame(195, $task->getOrder());
+    }
+
+    #[Test]
+    public function runUnsuspendsExpiredSuspensionsAndLogsToDebug(): void
+    {
+        $nick1 = $this->createNickWithId('Nick1', 1);
+        $nick1->suspend('Expired ban', new DateTimeImmutable('-1 hour'));
+
+        $nick2 = $this->createNickWithId('Nick2', 2);
+        $nick2->suspend('Expired ban', new DateTimeImmutable('-1 day'));
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findExpiredSuspensions')->with($this->now())->willReturn([$nick1, $nick2]);
+        $savedIds = [];
+        $nickRepo->expects(self::exactly(2))->method('save')
+            ->willReturnCallback(static function (RegisteredNick $nick) use (&$savedIds): void {
+                self::assertFalse($nick->isSuspended());
+                $savedIds[] = $nick->getId();
+            });
+
+        $publishedIds = [];
+        $eventPublisher = $this->createMock(NickServEventPublisher::class);
+        $eventPublisher->expects(self::exactly(2))->method('publish')
+            ->willReturnCallback(function (NickUnsuspendedEvent $event) use (&$savedIds, &$publishedIds): void {
+                self::assertContains($event->nickId, $savedIds);
+                self::assertSame([1 => 'Nick1', 2 => 'Nick2'][$event->nickId], $event->nickname);
+                self::assertSame(self::SERVER_NAME, $event->performedBy);
+                self::assertNull($event->performedByNickId);
+                self::assertSame('*', $event->performedByIp);
+                self::assertSame('*', $event->performedByHost);
+                self::assertSame($this->now()->getTimestamp(), $event->occurredAt->getTimestamp());
+                $publishedIds[] = $event->nickId;
+            });
+
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::exactly(2))->method('log')
+            ->willReturnCallback(static function (string $operator, string $command, string $target): void {
+                self::assertSame(self::SERVER_NAME, $operator);
+                self::assertSame('UNSUSPEND', $command);
+            });
+
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $debugNotifier, new NullLogger(), $this->clock(), $eventPublisher, self::SERVER_NAME, 3600);
+        $task->run();
+
+        self::assertSame([1, 2], $publishedIds);
+        self::assertFalse($nick1->isSuspended());
+        self::assertFalse($nick2->isSuspended());
+    }
+
+    #[Test]
+    public function runDoesNothingWhenNoExpiredSuspensions(): void
+    {
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findExpiredSuspensions')->with($this->now())->willReturn([]);
+        $nickRepo->expects(self::never())->method('save');
+
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::never())->method('log');
+        $eventPublisher = $this->createMock(NickServEventPublisher::class);
+        $eventPublisher->expects(self::never())->method('publish');
+
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $debugNotifier, new NullLogger(), $this->clock(), $eventPublisher, self::SERVER_NAME, 3600);
+        $task->run();
+    }
+
+    #[Test]
+    public function runUnsuspendsCorrectNickById(): void
+    {
+        $nick = $this->createNickWithId('TestNick', 1);
+        $nick->suspend('Expired suspension', new DateTimeImmutable('-1 hour'));
+
+        self::assertTrue($nick->isSuspended());
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findExpiredSuspensions')->willReturn([$nick]);
+
+        $unsuspended = [];
+        $nickRepo->method('save')
+            ->willReturnCallback(static function (RegisteredNick $n) use (&$unsuspended): void {
+                $unsuspended[] = $n;
+            });
+
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::once())->method('log')->with(
+            self::SERVER_NAME,
+            'UNSUSPEND',
+            'TestNick',
+        );
+
+        $task = new UnsuspendExpiredSuspensionsTask($nickRepo, $debugNotifier, new NullLogger(), $this->clock(), $this->createStub(NickServEventPublisher::class), self::SERVER_NAME, 3600);
+        $task->run();
+
+        self::assertCount(1, $unsuspended);
+        self::assertFalse($nick->isSuspended());
+        self::assertNull($nick->getReason());
+        self::assertNull($nick->getSuspendedUntil());
+    }
+
+    private function createNickWithId(string $nickname, int $id): RegisteredNick
+    {
+        $nick = RegisteredNick::createPending($nickname, 'hash', $nickname . '@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick->activate();
+
+        $reflection = new ReflectionClass(RegisteredNick::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($nick, $id);
+
+        return $nick;
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn($this->now());
+
+        return $clock;
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+    }
+}

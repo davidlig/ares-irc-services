@@ -1,0 +1,209 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\NickServ\Application\UseCase\Verify;
+
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
+use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
+use App\NickServ\Application\Port\Out\VerificationTokenConsumer;
+use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\NickServ\Application\UseCase\Verify\VerifyNick;
+use App\NickServ\Application\UseCase\Verify\VerifyNickHandler;
+use App\NickServ\Application\UseCase\Verify\VerifyNickOutcome;
+use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(VerifyNickHandler::class)]
+#[CoversClass(VerifyNick::class)]
+#[CoversClass(VerifyNickResult::class)]
+final class VerifyNickHandlerTest extends TestCase
+{
+    #[Test]
+    public function returnsNoPendingWhenNickNotFound(): void
+    {
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findByNick')->with('alice')->willReturn(null);
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::never())->method('publish');
+
+        $handler = new VerifyNickHandler(
+            $nickRepo,
+            $this->createStub(VerificationTokenConsumer::class),
+            $this->createStub(IdentifiedSessionTracker::class),
+            $this->fixedClock(),
+            $this->authenticationMode(),
+            $publisher,
+        );
+
+        $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'token123', senderUid: 'UID1'));
+
+        self::assertSame(VerifyNickOutcome::NoPending, $result->outcome);
+        self::assertNull($result->nickname);
+    }
+
+    #[Test]
+    public function returnsNoPendingWhenNickIsNotPending(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findByNick')->with('alice')->willReturn($account);
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::never())->method('publish');
+
+        $handler = new VerifyNickHandler(
+            $nickRepo,
+            $this->createStub(VerificationTokenConsumer::class),
+            $this->createStub(IdentifiedSessionTracker::class),
+            $this->fixedClock(),
+            $this->authenticationMode(),
+            $publisher,
+        );
+
+        $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'token123', senderUid: 'UID1'));
+
+        self::assertSame(VerifyNickOutcome::NoPending, $result->outcome);
+    }
+
+    #[Test]
+    public function returnsInvalidTokenWhenTokenConsumerFails(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(true);
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+
+        $tokenConsumer = $this->createMock(VerificationTokenConsumer::class);
+        $tokenConsumer->expects(self::once())->method('consume')->with('alice', 'bad-token', $this->now())->willReturn(false);
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::never())->method('publish');
+
+        $handler = new VerifyNickHandler(
+            $nickRepo,
+            $tokenConsumer,
+            $this->createStub(IdentifiedSessionTracker::class),
+            $this->fixedClock(),
+            $this->authenticationMode(),
+            $publisher,
+        );
+
+        $result = $handler->handle(new VerifyNick(nickname: 'alice', token: 'bad-token', senderUid: 'UID1'));
+
+        self::assertSame(VerifyNickOutcome::InvalidToken, $result->outcome);
+    }
+
+    #[Test]
+    public function activatesAccountAndRegistersSessionOnSuccess(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('isPending')->willReturn(true);
+        $account->method('getId')->willReturn(42);
+        $account->method('getNickname')->willReturn('Alice');
+        $account->method('getPasswordHash')->willReturn('hashed-password');
+        $account->expects(self::once())->method('activate');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findByNick')->with('Alice')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $tokenConsumer = $this->createMock(VerificationTokenConsumer::class);
+        $tokenConsumer->expects(self::once())->method('consume')->with('Alice', 'good-token', $this->now())->willReturn(true);
+
+        $sessionTracker = $this->createMock(IdentifiedSessionTracker::class);
+        $sessionTracker->expects(self::once())->method('register')->with('UID1', 'Alice');
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::once())->method('publish')->with(self::callback(
+            static fn (NickPasswordHashAvailable $event): bool => 42 === $event->nickId
+                && 'Alice' === $event->nickname
+                && 'hashed-password' === $event->passwordHash,
+        ));
+
+        $handler = new VerifyNickHandler(
+            $nickRepo,
+            $tokenConsumer,
+            $sessionTracker,
+            $this->fixedClock(),
+            $this->authenticationMode(),
+            $publisher,
+        );
+
+        $result = $handler->handle(new VerifyNick(nickname: 'Alice', token: 'good-token', senderUid: 'UID1'));
+
+        self::assertSame(VerifyNickOutcome::Success, $result->outcome);
+        self::assertSame('Alice', $result->nickname);
+    }
+
+    #[Test]
+    public function activatesAccountWithoutRegisteringSessionWhenNativeAuthenticationIsRequired(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('isPending')->willReturn(true);
+        $account->method('getId')->willReturn(42);
+        $account->method('getNickname')->willReturn('Alice');
+        $account->method('getPasswordHash')->willReturn('hashed-password');
+        $account->expects(self::once())->method('activate');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findByNick')->with('Alice')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $tokenConsumer = $this->createMock(VerificationTokenConsumer::class);
+        $tokenConsumer->expects(self::once())->method('consume')->with('Alice', 'good-token', $this->now())->willReturn(true);
+
+        $sessionTracker = $this->createMock(IdentifiedSessionTracker::class);
+        $sessionTracker->expects(self::never())->method('register');
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::once())->method('publish')->with(self::callback(
+            static fn (NickPasswordHashAvailable $event): bool => 42 === $event->nickId
+                && 'Alice' === $event->nickname
+                && 'hashed-password' === $event->passwordHash,
+        ));
+
+        $handler = new VerifyNickHandler(
+            $nickRepo,
+            $tokenConsumer,
+            $sessionTracker,
+            $this->fixedClock(),
+            $this->authenticationMode(NicknameAuthenticationMode::NativeNick),
+            $publisher,
+        );
+
+        $result = $handler->handle(new VerifyNick(nickname: 'Alice', token: 'good-token', senderUid: 'UID1'));
+
+        self::assertSame(VerifyNickOutcome::SuccessNativeAuthenticationRequired, $result->outcome);
+        self::assertSame('Alice', $result->nickname);
+    }
+
+    private function fixedClock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn($this->now());
+
+        return $clock;
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+    }
+
+    private function authenticationMode(
+        NicknameAuthenticationMode $mode = NicknameAuthenticationMode::ServiceCommand,
+    ): NicknameAuthenticationModeQuery {
+        $query = $this->createStub(NicknameAuthenticationModeQuery::class);
+        $query->method('current')->willReturn($mode);
+
+        return $query;
+    }
+}

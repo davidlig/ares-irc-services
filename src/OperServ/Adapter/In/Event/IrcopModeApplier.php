@@ -1,0 +1,215 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\OperServ\Adapter\In\Event;
+
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\NickServ\Application\Port\In\IdentifiedSessionQuery;
+use App\NickServ\Application\Port\In\NickProjectionQuery;
+use App\OperServ\Domain\Entity\OperRole;
+use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use Psr\Log\LoggerInterface;
+
+use function array_diff;
+use function array_intersect;
+
+/**
+ * Applies or removes IRCOP user modes for a role.
+ * Used when an IRCOP is added/removed/changed, or when role modes are changed.
+ */
+final readonly class IrcopModeApplier
+{
+    public function __construct(
+        private IdentifiedSessionQuery $identifiedSessions,
+        private ActiveProtocolModuleHolderInterface $connectionHolder,
+        private OperIrcopRepositoryInterface $ircopRepository,
+        private NickProjectionQuery $nicks,
+        private NetworkUserLookupPort $userLookup,
+        private LoggerInterface $logger,
+    ) {}
+
+    /**
+     * Apply modes for a role to a user identified by their registered nickname.
+     * Only applies modes the user doesn't already have.
+     * Returns true if modes were applied, false if user is not connected or no protocol module.
+     */
+    public function applyModesForNick(string $registeredNick, OperRole $role): bool
+    {
+        $modes = $role->getUserModes();
+
+        if (empty($modes)) {
+            $this->logger->debug('IrcopModeApplier: no modes for role', ['role' => $role->getName(), 'nick' => $registeredNick]);
+
+            return false;
+        }
+
+        $uid = $this->identifiedSessions->findUidByNick($registeredNick);
+        $module = null !== $uid ? $this->connectionHolder->getProtocolModule() : null;
+        $user = null !== $uid ? $this->userLookup->findByUid($uid) : null;
+        $result = false;
+
+        if (null !== $uid && null !== $module && null !== $user) {
+            $currentModes = $this->parseModes($user->modes);
+            $toApply = array_values(array_diff($modes, $currentModes));
+
+            if (empty($toApply)) {
+                $this->logger->debug('IrcopModeApplier: user already has all modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modes]);
+                $result = true;
+            } else {
+                $serverSid = $this->connectionHolder->getServerSid();
+                if (null === $serverSid) {
+                    return false;
+                }
+                $serviceActions = $module->getServiceActions();
+                $userModeSupport = $module->getUserModeSupport();
+
+                [$modeStr, $params] = $userModeSupport->buildModeParams('+', $toApply);
+                $this->logger->info('IrcopModeApplier: applying modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modeStr]);
+                $serviceActions->setUserMode($serverSid, $uid, $modeStr, $params);
+
+                $this->userLookup->applyModeChange($uid, '+' . implode('', $toApply));
+                $result = true;
+            }
+        } elseif (null !== $uid && null !== $user) {
+            $this->logger->debug('IrcopModeApplier: no protocol module');
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Remove modes for a role from a user identified by their registered nickname.
+     * Only removes modes the user currently has.
+     * Returns true if modes were removed, false if user is not connected or no protocol module.
+     */
+    public function removeModesForNick(string $registeredNick, OperRole $role): bool
+    {
+        $modes = $role->getUserModes();
+
+        if (empty($modes)) {
+            return false;
+        }
+
+        $uid = $this->identifiedSessions->findUidByNick($registeredNick);
+        $module = null !== $uid ? $this->connectionHolder->getProtocolModule() : null;
+        $user = null !== $uid ? $this->userLookup->findByUid($uid) : null;
+        $result = false;
+
+        if (null !== $uid && null !== $module && null !== $user) {
+            $currentModes = $this->parseModes($user->modes);
+            $toRemove = array_values(array_intersect($modes, $currentModes));
+
+            if (empty($toRemove)) {
+                $this->logger->debug('IrcopModeApplier: user does not have any of the modes to remove', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modes]);
+                $result = true;
+            } else {
+                $serverSid = $this->connectionHolder->getServerSid();
+                if (null === $serverSid) {
+                    return false;
+                }
+                $serviceActions = $module->getServiceActions();
+                $userModeSupport = $module->getUserModeSupport();
+
+                [$modeStr, $params] = $userModeSupport->buildModeParams('-', $toRemove);
+                $this->logger->info('IrcopModeApplier: removing modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modeStr]);
+                $serviceActions->setUserMode($serverSid, $uid, $modeStr, $params);
+
+                $this->userLookup->applyModeChange($uid, '-' . implode('', $toRemove));
+                $result = true;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Update modes for all identified users with a specific role.
+     * Only sends mode changes for modes that differ between old and new.
+     *
+     * @param list<string> $oldModes
+     * @param list<string> $newModes
+     */
+    public function updateModesForRole(int $roleId, array $oldModes, array $newModes): void
+    {
+        $toRemove = array_values(array_diff($oldModes, $newModes));
+        $toAdd = array_values(array_diff($newModes, $oldModes));
+
+        if (empty($toRemove) && empty($toAdd)) {
+            return;
+        }
+
+        $module = $this->connectionHolder->getProtocolModule();
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $module || null === $serverSid) {
+            $this->logger->debug('IrcopModeApplier: no protocol module or server SID for role update');
+
+            return;
+        }
+
+        $ircops = $this->ircopRepository->findByRoleId($roleId);
+
+        foreach ($ircops as $ircop) {
+            $nick = $this->nicks->findById($ircop->getNickId());
+            if (null === $nick) {
+                continue;
+            }
+
+            $uid = $this->identifiedSessions->findUidByNick($nick->nickname);
+            if (null === $uid) {
+                continue;
+            }
+
+            $user = $this->userLookup->findByUid($uid);
+            if (null === $user) {
+                continue;
+            }
+
+            $currentModes = $this->parseModes($user->modes);
+
+            $serviceActions = $module->getServiceActions();
+            $userModeSupport = $module->getUserModeSupport();
+
+            $modesToRemove = array_values(array_intersect($toRemove, $currentModes));
+            if (!empty($modesToRemove)) {
+                [$modeStr, $params] = $userModeSupport->buildModeParams('-', $modesToRemove);
+                $this->logger->info('IrcopModeApplier: removing modes for role change', [
+                    'nick' => $nick->nickname,
+                    'uid' => $uid,
+                    'modes' => $modeStr,
+                ]);
+                $serviceActions->setUserMode($serverSid, $uid, $modeStr, $params);
+                $this->userLookup->applyModeChange($uid, '-' . implode('', $modesToRemove));
+            }
+
+            $modesToAdd = array_values(array_diff($toAdd, $currentModes));
+            if (!empty($modesToAdd)) {
+                [$modeStr, $params] = $userModeSupport->buildModeParams('+', $modesToAdd);
+                $this->logger->info('IrcopModeApplier: applying modes for role change', [
+                    'nick' => $nick->nickname,
+                    'uid' => $uid,
+                    'modes' => $modeStr,
+                ]);
+                $serviceActions->setUserMode($serverSid, $uid, $modeStr, $params);
+                $this->userLookup->applyModeChange($uid, '+' . implode('', $modesToAdd));
+            }
+        }
+    }
+
+    /**
+     * Parse mode string (e.g. "+ioqrtwxH") into an array of individual modes.
+     *
+     * @return list<string>
+     */
+    private function parseModes(string $modesStr): array
+    {
+        $modes = ltrim($modesStr, '+');
+        if ('' === $modes) {
+            return [];
+        }
+
+        return str_split($modes);
+    }
+}

@@ -1,0 +1,144 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\ChanServ\Adapter\In\Irc\Command;
+
+use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
+use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleAction;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleOutcome;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandlerInterface;
+use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
+
+use function array_slice;
+use function implode;
+use function trim;
+
+final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
+{
+    use BuildsChannelLifecycleRequest;
+
+    public function __construct(
+        private readonly ManageChannelLifecycleHandlerInterface $handler,
+    ) {}
+
+    public function getName(): string
+    {
+        return 'FORBID';
+    }
+
+    public function getAliases(): array
+    {
+        return [];
+    }
+
+    public function getMinArgs(): int
+    {
+        return 2;
+    }
+
+    public function getSyntaxKey(): string
+    {
+        return 'forbid.syntax';
+    }
+
+    public function getHelpKey(): string
+    {
+        return 'forbid.help';
+    }
+
+    public function getOrder(): int
+    {
+        return 79;
+    }
+
+    public function getShortDescKey(): string
+    {
+        return 'forbid.short';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
+    public function isOperOnly(): bool
+    {
+        return false;
+    }
+
+    public function getRequiredPermission(): string
+    {
+        return ChanServPermission::FORBID;
+    }
+
+    public function allowsSuspendedChannel(): bool
+    {
+        return true;
+    }
+
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return true;
+    }
+
+    public function usesLevelFounder(): bool
+    {
+        return false;
+    }
+
+    public function execute(ChanServContext $context): CommandOutcome
+    {
+        if (null === $context->sender) {
+            return CommandOutcome::rejected();
+        }
+
+        $validation = $this->validateForbid($context);
+        if (null === $validation) {
+            return CommandOutcome::rejected();
+        }
+
+        [$channelName, $reason] = $validation;
+        $result = $this->handler->handle($this->lifecycleRequest(
+            $context,
+            $channelName,
+            ChannelLifecycleAction::Forbid,
+            reason: $reason,
+        ));
+
+        $context->reply(
+            ChannelLifecycleOutcome::ForbiddenUpdated === $result->outcome ? 'forbid.updated' : 'forbid.success',
+            ['%channel%' => $channelName],
+        );
+
+        return CommandOutcome::success(new IrcopAuditData(target: $channelName, reason: $reason));
+    }
+
+    /** @return array{string, string}|null */
+    private function validateForbid(ChanServContext $context): ?array
+    {
+        $channelName = $context->getChannelNameArg(0);
+
+        if (null === $channelName) {
+            $context->reply('error.invalid_channel');
+
+            return null;
+        }
+
+        $reasonParts = array_slice($context->args, 1);
+        $reason = trim(implode(' ', $reasonParts));
+
+        if ('' === $reason) {
+            $context->reply('forbid.reason_required');
+
+            return null;
+        }
+
+        return [$channelName, $reason];
+    }
+}

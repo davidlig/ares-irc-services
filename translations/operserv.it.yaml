@@ -6,6 +6,7 @@ unknown_command: "\x0304✗\x03 Comando sconosciuto \x02%command%\x02. Usi \x030
 error:
   syntax:           "\x0304✗\x03 Sintassi errata. Uso: \x02%syntax%\x02"
   oper_only:        "\x0304✗\x03 Questo comando è riservato agli IRC Operator."
+  not_identified:   "\x0304✗\x03 Non è identificato. Usi \x0303/msg %nickserv% IDENTIFY\x03."
   permission_denied: "\x0304✗\x03 Non ha permessi sufficienti per eseguire questo comando."
   root_only:        "\x0304✗\x03 Questo comando è riservato agli amministratori root di rete."
   nick_not_registered: "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è registrato."
@@ -27,11 +28,11 @@ help:
   footer:           "\x0314─────────────────────────────\x03"
   intro_expiration: "NOTA: I nick \x0304\x1Fnon utilizzati\x0F per più di %days% giorni vengono rimossi automaticamente."
   unknown_command:  "\x0304✗\x03 Comando sconosciuto \x02%command%\x02. Usi \x0303/msg %bot% HELP\x03."
-  suboptions:       "Sotto-opzioni:"
+  ircop_header:     "\x02\x0314Comandi disponibili per IRCOPS:\x03\x0F"
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [ruolo]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [nickname] [ruolo]"
   short:            "Gestisce gli operatori IRC di rete."
   help:             "Gestisce gli operatori IRC di rete. ADD aggiunge un nickname registrato\ncome operatore con il ruolo specificato.\nDEL rimuove un operatore. LIST mostra tutti gli operatori.\nUsi ROLE LIST per vedere i ruoli disponibili.\nQuesto comando è riservato agli utenti Root configurati nei servizi."
 
@@ -42,14 +43,14 @@ ircop:
   role_changed:     "\x0303✓\x03 Ruolo cambiato per \x02%nickname%\x02 da %old% a %new%."
 
   add:
-    syntax:         "IRCOP <nickname> ADD <ruolo>"
+    syntax:         "IRCOP ADD <nickname> <ruolo>"
     short:          "Aggiunge un operatore IRC di rete."
     help:           "Aggiunge un nickname registrato come operatore IRC di rete.\nUsi ROLE LIST per vedere i ruoli disponibili.\nQuesto comando è riservato agli utenti Root."
     done:           "\x0303✓\x03 Aggiunto \x02%nickname%\x02 come \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è un nickname registrato attivo."
 
   del:
-    syntax:         "IRCOP <nickname> DEL"
+    syntax:         "IRCOP DEL <nickname>"
     short:          "Rimuove un operatore IRC di rete."
     help:            "Rimuove un operatore IRC di rete dalla lista.\nQuesto comando è riservato agli utenti Root."
     done:           "\x0303✓\x03 Rimosso \x02%nickname%\x02 dagli operatori IRC."
@@ -63,11 +64,30 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<ruolo>} [{VIEW|SET}] [operclass]"
+    short: "Gestisce la operclass Unreal del ruolo."
+    help: "LIST mostra le operclass disponibili nella rete.\nVIEW mostra la operclass del ruolo e quelle disponibili.\nSET la assegna all'identificazione (OFF per rimuovere).\nDisponibile solo sui protocolli UnrealIRCd."
+    list:
+      header: "\x0307---\x03 \x02Operclass Disponibili nella Rete\x02 \x0307---\x03"
+      empty: "Nessuna operclass disponibile nella rete."
+      not_supported: "\x0304✗\x03 Il protocollo attuale non supporta l'elenco delle operclass disponibili."
+    view:
+      empty: "Il ruolo %role% non ha operclass."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Operclass disponibili: \x0310%available%\x03"
+    set:
+      done: "Operclass impostata per %role%."
+      cleared: "Operclass rimossa da %role%."
+      not_available: "\x0304✗\x03 L'operclass \x02%operclass%\x02 non e disponibile nella rete. Operclass disponibili: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nome> ..."
   short:            "Gestisce i ruoli operatore."
   help:             "Gestisce i ruoli operatore. ADD crea un nuovo ruolo, DEL lo rimuove,\nLIST mostra tutti i ruoli, PERMS gestisce i permessi per un ruolo, MODES gestisce i modi IRCOP,\nVHOST gestisce il pattern vhost forzato per un ruolo.\nI ruoli protetti (ADMIN, OPER, PREOPER) non possono essere eliminati.\nQuesto comando è riservato agli utenti Root."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <nome> ..."
+  help_operclass:   "Gestisce i ruoli operatore. ADD crea un nuovo ruolo, DEL lo rimuove,\nLIST mostra tutti i ruoli, PERMS gestisce i permessi per un ruolo, MODES gestisce i modi IRCOP,\nVHOST gestisce il pattern vhost forzato per un ruolo, OPERCLASS gestisce la operclass Unreal.\nI ruoli protetti (ADMIN, OPER, PREOPER) non possono essere eliminati.\nQuesto comando è riservato agli utenti Root."
 
   unknown_sub:      "\x0304✗\x03 Sotto-comando sconosciuto \x02%sub%\x02. Usi ADD, DEL, LIST, PERMS, MODES o VHOST."
+  unknown_sub_operclass: "\x0304✗\x03 Sotto-comando sconosciuto \x02%sub%\x02. Usi ADD, DEL, LIST, PERMS, MODES, VHOST o OPERCLASS."
   not_found:        "\x0304✗\x03 Il ruolo \x02%role%\x02 non esiste."
   already_exists:   "\x0304✗\x03 Il ruolo \x02%role%\x02 esiste già."
   protected:        "\x0304✗\x03 Il ruolo \x02%role%\x02 è protetto e non può essere eliminato."
@@ -95,42 +115,21 @@ role:
     syntax:         "ROLE PERMS <ruolo> {LIST|ADD|DEL|CLEAR} [permesso|ALL]"
     short:          "Gestisce i permessi del ruolo."
     help:            "Gestisce i permessi assegnati a un ruolo.\nLIST mostra tutti i permessi del ruolo.\nADD assegna un permesso al ruolo.\nDEL rimuove un permesso dal ruolo (non per ruoli protetti).\nCLEAR rimuove tutti i permessi dal ruolo.\nUsi ALL per aggiungere tutti i permessi disponibili in una volta.\nQuesto comando è riservato agli utenti Root."
-    unknown_action:  "\x0304✗\x03 Azione sconosciuta \x02%action%\x02. Usi LIST, ADD, DEL o CLEAR."
     not_found:       "\x0304✗\x03 Il permesso \x02%perm%\x02 non esiste."
     already_has:     "\x0304✗\x03 Il ruolo \x02%role%\x02 ha già il permesso \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Il ruolo \x02%role%\x02 non ha il permesso \x02%perm%\x02."
-    protected:      "\x0304✗\x03 Impossibile modificare i permessi del ruolo protetto \x02%role%\x02."
 
     list:
-      syntax:       "ROLE PERMS <ruolo> LIST"
-      short:        "Elenca i permessi per un ruolo."
-      help:         "Elenca tutti i permessi assegnati a un ruolo.\nQuesto comando è riservato agli utenti Root."
       header:        "\x0307---\x03 \x02Permessi per %role%\x02 \x0307---\x03"
-      empty:        "Il ruolo \x02%role%\x02 non ha permessi assegnati."
-      assigned:     "\x0310Assegnati:\x03"
-      none_assigned: "\x0314Nessun permesso assegnato.\x03"
-      available:    "\x0310Disponibili:\x03"
-      all_assigned: "\x0314Tutti i permessi sono assegnati a questo ruolo.\x03"
 
     add:
-      syntax:       "ROLE PERMS <ruolo> ADD {permesso|ALL}"
-      short:        "Aggiunge un permesso a un ruolo."
-      help:         "Aggiunge un permesso a un ruolo.\nUsi ALL per aggiungere tutti i permessi disponibili in una volta.\nQuesto comando è riservato agli utenti Root."
       done:         "\x0303✓\x03 Aggiunto permesso \x02%perm%\x02 al ruolo \x02%role%\x02."
       all_done:     "\x0303✓\x03 Aggiunti \x02%count%\x02 permessi al ruolo \x02%role%\x02."
-      all_skipped:  "\x0304✗\x03 Il ruolo \x02%role%\x02 ha già tutti i permessi disponibili."
-      all_empty:    "\x0304✗\x03 Nessun permesso disponibile da aggiungere."
 
     del:
-      syntax:       "ROLE PERMS <ruolo> DEL <permesso>"
-      short:        "Rimuove un permesso da un ruolo."
-      help:         "Rimuove un permesso da un ruolo.\nImpossibile modificare i ruoli protetti.\nQuesto comando è riservato agli utenti Root."
       done:         "\x0303✓\x03 Rimosso permesso \x02%perm%\x02 dal ruolo \x02%role%\x02."
 
     clear:
-      syntax:       "ROLE PERMS <ruolo> CLEAR"
-      short:        "Rimuovi tutti i permessi da un ruolo."
-      help:         "Rimuove tutti i permessi da un ruolo.\nQuesto comando è riservato agli utenti Root."
       done:         "\x0303✓\x03 Rimossi \x02%count%\x02 permessi dal ruolo \x02%role%\x02."
       empty:        "\x0304✗\x03 Il ruolo \x02%role%\x02 non ha permessi assegnati."
 
@@ -138,46 +137,31 @@ role:
     syntax:         "ROLE MODES <ruolo> {VIEW|SET} [modi]"
     short:          "Gestisce i modi utente IRCOP per il ruolo."
     help:            "Gestisce i modi utente IRCOP assegnati a un ruolo.\nVIEW mostra i modi attuali del ruolo.\nSET imposta i modi IRCOP (es., oH per +oH).\nGli utenti con questo ruolo riceveranno questi modi all'identificazione.\nModi disponibili per IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nQuesto comando è riservato agli utenti Root."
-    unknown_action:  "\x0304✗\x03 Azione sconosciuta \x02%action%\x02. Usi VIEW o SET."
 
     view:
-      syntax:       "ROLE MODES <ruolo> VIEW"
-      short:        "Mostra i modi del ruolo."
-      help:          "Mostra i modi utente IRCOP assegnati a un ruolo.\nQuesto comando è riservato agli utenti Root."
       header:        "\x0307---\x03 \x02Modi per %role%\x02 \x0307---\x03"
       empty:        "Il ruolo \x02%role%\x02 non ha modi assegnati."
       line:         "  Modi: \x0303%modes%\x03"
 
     set:
-      syntax:       "ROLE MODES <ruolo> SET [modi]"
-      short:        "Imposta i modi utente IRCOP."
-      help:          "Imposta i modi utente IRCOP per il ruolo.\nSenza argomenti, rimuove tutti i modi dal ruolo.\nSolo modi IRCOP validi per l'IRCD attivo.\nGli utenti identificati con questo ruolo riceveranno le modifiche.\nQuesto comando è riservato agli utenti Root."
       done:         "\x0303✓\x03 Impostati modi \x02%modes%\x02 per il ruolo \x02%role%\x02."
       cleared:      "\x0303✓\x03 Rimossi tutti i modi dal ruolo \x02%role%\x02."
       invalid_mode: "\x0304✗\x03 Il modo \x02%mode%\x02 non è un modo IRCOP valido."
       invalid_modes: "\x0304✗\x03 Modi non validi: %invalid%. Modi validi: %valid%."
       no_irc_user_modes: "\x0304✗\x03 L'IRCD attuale non ha modi IRCOP configurati."
-      not_supported: "\x0304✗\x03 L'attuale protocollo non supporta l'impostazione delle modalità utente IRCOP dai Servizi."
 
   vhost:
     syntax:         "ROLE VHOST <ruolo> {VIEW|SET} [pattern]"
     short:          "Gestisce il pattern vhost forzato per un ruolo."
     help:           "Gestisce il vhost forzato assegnato a un ruolo.\nVIEW mostra il pattern vhost forzato attuale.\nSET assegna un pattern vhost forzato (gli utenti con questo ruolo\nriceveranno questo vhost all'identificazione, sovrascrivendo il vhost personale).\nIl pattern viene aggiunto dopo il nickname pulito, es.:\n  Nick: _davidlig_ → Pattern: admin.ares → VHost: davidlig.admin.ares\nCaratteri validi: a-z, A-Z, 0-9, trattino (-) e punto (.).\nDeve avere almeno un punto, non può iniziare/terminare con - o . né avere ..\nUsi OFF per azzerare il pattern vhost forzato.\nQuesto comando è riservato agli utenti Root."
-    unknown_action:  "\x0304✗\x03 Azione sconosciuta \x02%action%\x02. Usi VIEW o SET."
 
     view:
-      syntax:       "ROLE VHOST <ruolo> VIEW"
-      short:         "Mostra il pattern vhost forzato del ruolo."
-      help:          "Mostra il pattern vhost forzato assegnato a un ruolo.\nQuesto comando è riservato agli utenti Root."
       header:        "\x0307---\x03 \x02Vhost forzato per %role%\x02 \x0307---\x03"
       empty:        "Il ruolo \x02%role%\x02 non ha un pattern vhost forzato impostato."
       line:         "  Pattern: \x0303%pattern%\x03"
       example:      "  Esempio: \x02nickname\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <ruolo> SET [pattern]"
-      short:         "Imposta il pattern vhost forzato per il ruolo."
-      help:          "Imposta il pattern vhost forzato per il ruolo.\nGli utenti che si identificano con questo ruolo riceveranno il vhost forzato,\nche ha priorità sul vhost personale.\nIl pattern viene aggiunto dopo il nickname pulito.\nUsi OFF o ometta l'argomento per azzerare il vhost forzato.\nQuesto comando è riservato agli utenti Root."
       done:         "\x0303✓\x03 Impostato pattern vhost forzato per il ruolo \x02%role%\x02."
       cleared:      "\x0303✓\x03 Rimosso pattern vhost forzato dal ruolo \x02%role%\x02."
       invalid:      "\x0304✗\x03 Pattern vhost non valido. Caratteri validi: a-z, A-Z, 0-9, - e .. Deve avere almeno un punto, non può iniziare/terminare con - o . né avere .."
@@ -191,7 +175,6 @@ kill:
   protected_root:   "\x0304✗\x03 Impossibile killare l'utente Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Impossibile killare l'IRC operator \x02%nickname%\x02."
   done:             "\x0303✓\x03 Utente \x02%nickname%\x02 è stato killato (%reason%)."
-  permission_denied: "\x0304✗\x03 Permesso negato. Necessita il permesso operserv.kill."
 
 # --- GLINE --------------------------------------------------------------------
 gline:
@@ -239,7 +222,6 @@ global:
   short:            "Invia un messaggio globale a tutti gli utenti connessi."
   help:             "Invia un messaggio a tutti gli utenti connessi.\n\nSe il primo argomento è un nome servizio, il messaggio sarà inviato usando quel servizio esistente.\n\nSe non è un servizio, verrà creato un pseudo-client temporaneo con la\nmaschera specificata. La maschera deve essere nel formato: nick!ident@vhost\n- nick: nickname IRC valido (lettere, []{}|\\`, cifre, inizia con lettera)\n- ident: alfanumerico con . _ ~ -\n- vhost: hostname valido\n\nPer pseudo-client, il nickname non può essere connesso o registrato.\nLo pseudo-client rimarrà connesso durante l'invio e si disconnetterà\nautomaticamente (il nick sarà bloccato per 24h via SQLINE/QLINE).\n\nPRIVMSG invia come messaggio privato, NOTICE invia come notice.\nQuesto comando richiede il permesso operserv.global."
   mask_invalid:    "\x0304✗\x03 Formato maschera non valido: %error%"
-  nick_service:    "\x0304✗\x03 Impossibile usare un nickname di servizio."
   nick_connected: "\x0304✗\x03 Il nickname \x02%nickname%\x02 è attualmente connesso."
   nick_registered: "\x0304✗\x03 Il nickname \x02%nickname%\x02 è registrato."
   type_invalid:    "\x0304✗\x03 Il tipo di messaggio deve essere PRIVMSG o NOTICE."
@@ -254,6 +236,15 @@ raw:
   too_long:         "\x0304✗\x03 Linea troppo lunga. Massimo 510 caratteri."
   not_connected:    "\x0304✗\x03 Non connesso all'IRCd."
   done:             "\x0303✓\x03 Linea raw inviata."
+  protocol:
+    syntax: "\x0304✗\x03 Il protocollo attivo ha rifiutato la sintassi del comando RAW."
+    done: "\x0303✓\x03 Comando RAW gestito dal protocollo eseguito."
+    target: "\x0304✗\x03 Il protocollo attivo ha rifiutato la destinazione %target%."
+    unsupported: "\x0304✗\x03 Il protocollo attivo non supporta questo comando RAW."
+    invalid_resource_type: "\x0304✗\x03 Tipo di risorsa di protocollo sconosciuto: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Risorsa di protocollo non valida: %resource%."
+    invalid_value: "\x0304✗\x03 Valore non valido per la risorsa di protocollo: %resource%."
+    error: "\x0304✗\x03 Il protocollo attivo non ha potuto eseguire il comando RAW."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
@@ -264,13 +255,6 @@ debug:
   prefix_message:   "Messaggio: %reason%"
 
 # --- PERMESSI --------------------------------------------------------------
-permissions:
-  operserv.kill:    "Disconnettere un nickname dalla rete (KILL)"
-  operserv.gline:   "Gestire i G-line a livello di rete (GLINE)"
-  operserv.global:  "Inviare messaggi globali a tutti gli utenti (GLOBAL)"
-  operserv.raw:     "Inviare linee di protocollo raw all'IRCd (RAW)"
-  operserv.motd:    "Gestire i messaggi MOTD di connessione (MOTD)"
-
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Gestisce i messaggi MOTD inviati agli utenti alla connessione."

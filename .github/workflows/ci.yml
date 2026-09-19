@@ -50,11 +50,14 @@ jobs:
       - name: Check coding standards
         run: ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff
 
-      - name: Run tests with coverage
-        run: ./vendor/bin/phpunit --coverage-clover=var/coverage/clover.xml
+      - name: Run PHPStan at max level
+        run: composer phpstan
 
-      - name: Check coverage threshold
-        run: ./scripts/check-coverage.sh 100
+      - name: Run architecture gate
+        run: composer architecture
+
+      - name: Run tests and check coverage
+        run: ./scripts/check-coverage.sh 100 --issues
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6
@@ -62,3 +65,86 @@ jobs:
           files: var/coverage/clover.xml
           fail_ci_if_error: false
           use_oidc: true
+
+  migrations:
+    name: Migrations — ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: sqlite
+            database_url: "sqlite:///%kernel.project_dir%/var/data/matrix.db"
+          - engine: mariadb
+            database_url: "mysql://ares:ares@127.0.0.1:3306/ares?serverVersion=11.4.2-MariaDB&charset=utf8mb4"
+          - engine: postgres
+            database_url: "postgresql://ares:ares@127.0.0.1:5432/ares?serverVersion=17&charset=utf8"
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ares
+          MARIADB_USER: ares
+          MARIADB_PASSWORD: ares
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: ares
+          POSTGRES_USER: ares
+          POSTGRES_PASSWORD: ares
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ares"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          extensions: pdo_mysql, pdo_pgsql
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Create DB directory
+        run: mkdir -p var/data
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ matrix.database_url }}
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+      - name: Assert seeded rows
+        env:
+          DATABASE_URL: ${{ matrix.database_url }}
+        run: |
+          ROLES=$(php bin/console dbal:run-sql "SELECT name FROM oper_roles ORDER BY name" --env=test)
+          echo "$ROLES" | grep -q ADMIN
+          echo "$ROLES" | grep -q PREOPER
+          AUTHORITY=$(php bin/console dbal:run-sql "SELECT COUNT(*) AS authority FROM udb_authority_state" --env=test)
+          [ "$(echo "$AUTHORITY" | grep -oE '[0-9]+' | head -1)" = "1" ]
+
+      - name: Roll back and re-apply all migrations
+        env:
+          DATABASE_URL: ${{ matrix.database_url }}
+        run: |
+          php bin/console doctrine:migrations:migrate first --no-interaction --env=test
+          php bin/console doctrine:migrations:migrate --no-interaction --env=test

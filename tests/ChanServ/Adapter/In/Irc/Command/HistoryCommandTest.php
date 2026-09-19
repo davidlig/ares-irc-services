@@ -1,0 +1,1173 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
+
+use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
+use App\ChanServ\Adapter\In\Irc\ChanServContext;
+use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Adapter\In\Irc\Command\HistoryCommand;
+use App\ChanServ\Application\Model\ChanAccountView;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\Service\ChannelHistoryService;
+use App\ChanServ\Application\UseCase\ManageHistory\ChannelHistoryEntryView;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistory;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryHandler;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryResult;
+use App\ChanServ\Domain\Entity\ChannelHistory;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelModeSupportInterface;
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+#[CoversClass(HistoryCommand::class)]
+#[CoversClass(ChannelHistoryEntryView::class)]
+#[CoversClass(ManageChannelHistory::class)]
+#[CoversClass(ManageChannelHistoryHandler::class)]
+#[CoversClass(ManageChannelHistoryResult::class)]
+final class HistoryCommandTest extends TestCase
+{
+    #[Test]
+    public function getNameReturnsHistory(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('HISTORY', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('history.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('history.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsTwoHundred(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame(200, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('history.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsHistory(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame(ChanServPermission::HISTORY, $cmd->getRequiredPermission());
+    }
+
+    #[Test]
+    public function allowsSuspendedChannelReturnsTrue(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertTrue($cmd->allowsSuspendedChannel());
+    }
+
+    #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    #[Test]
+    public function usesLevelFounderReturnsFalse(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertFalse($cmd->usesLevelFounder());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsCorrectArray(): void
+    {
+        $cmd = $this->createCommand();
+
+        $help = $cmd->getSubCommandHelp();
+
+        self::assertCount(4, $help);
+        self::assertSame('ADD', $help[0]['name']);
+        self::assertSame('DEL', $help[1]['name']);
+        self::assertSame('VIEW', $help[2]['name']);
+        self::assertSame('CLEAR', $help[3]['name']);
+    }
+
+    #[Test]
+    public function executeDoesNothingWhenSenderNull(): void
+    {
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::never())->method('save');
+        $historyRepo->expects(self::never())->method('deleteByChannelId');
+        $historyRepo->expects(self::never())->method('deleteById');
+
+        $context = $this->createContextWithNullSender(['#test', 'VIEW'], historyRepo: $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+        $outcome = $cmd->execute($context);
+    }
+
+    #[Test]
+    public function executeWithInvalidChannelNameRepliesInvalidChannel(): void
+    {
+        $messages = [];
+        $context = $this->createContext(['InvalidChannel', 'VIEW'], $messages);
+
+        $cmd = $this->createCommand();
+        $cmd->execute($context);
+
+        self::assertContains('error.invalid_channel', $messages);
+    }
+
+    #[Test]
+    public function executeWithNonexistentChannelRepliesNotRegistered(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn(null);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo);
+
+        $cmd = $this->createCommand();
+        $cmd->execute($context);
+
+        self::assertContains('history.not_registered', $messages);
+    }
+
+    #[Test]
+    public function executeAddWithNoMessageRepliesSyntaxError(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::never())->method('save');
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'ADD'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+        $cmd->execute($context);
+
+        self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
+    public function executeAddWithWhitespaceMessageRepliesSyntaxError(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::never())->method('save');
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'ADD', '   '], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+        $cmd->execute($context);
+
+        self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
+    public function executeAddSavesHistoryAndRepliesSuccess(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $savedHistory = null;
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())
+            ->method('save')
+            ->willReturnCallback(static function (ChannelHistory $h) use (&$savedHistory): void {
+                $savedHistory = $h;
+            });
+
+        $historyService = new ChannelHistoryService($historyRepo);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'ADD', 'Manual', 'note'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            $historyService,
+            $this->createStub(ChanUserAccountPort::class),
+        );
+        $outcome = $cmd->execute($context);
+
+        self::assertContains('history.add.success', $messages);
+        self::assertNotNull($savedHistory);
+        self::assertSame(1, $savedHistory->getChannelId());
+        self::assertSame('HISTORY_ADD', $savedHistory->getAction());
+        self::assertSame('OperUser', $savedHistory->getPerformedBy());
+        self::assertSame('Manual note', $savedHistory->getMessage());
+        self::assertSame('127.0.0.1', $savedHistory->getExtraData()['ip']);
+        self::assertSame('i@h', $savedHistory->getExtraData()['host']);
+
+        $auditData = $outcome->auditData;
+        self::assertInstanceOf(IrcopAuditData::class, $auditData);
+        self::assertSame('#test', $auditData->target);
+        self::assertSame('Manual note', $auditData->reason);
+    }
+
+    #[Test]
+    public function executeDelWithMissingIdRepliesSyntaxError(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'DEL'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $outcome = $cmd->execute($context);
+
+        self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
+    public function executeDelWithInvalidIdRepliesInvalidId(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'DEL', 'abc'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.del.invalid_id', $messages);
+    }
+
+    #[Test]
+    public function executeDelWithNonexistentEntryRepliesNotFound(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('findById')->willReturn(null);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'DEL', '999'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.del.not_found', $messages);
+    }
+
+    #[Test]
+    public function executeDelWithWrongChannelIdRepliesNotFound(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $history = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 999,
+            action: 'TEST',
+            performedBy: 'OtherUser',
+            performedByNickId: null,
+            message: 'Test message',
+            extraData: [],
+        );
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('findById')->willReturn($history);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'DEL', '5'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.del.not_found', $messages);
+    }
+
+    #[Test]
+    public function executeDelDeletesEntryAndRepliesSuccess(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $history = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'TEST',
+            performedBy: 'OperUser',
+            performedByNickId: null,
+            message: 'Test message',
+            extraData: [],
+        );
+
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('findById')->willReturn($history);
+        $historyRepo->expects(self::once())->method('deleteById')->with(5);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'DEL', '5'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $outcome = $cmd->execute($context);
+
+        self::assertContains('history.del.success', $messages);
+
+        $auditData = $outcome->auditData;
+        self::assertInstanceOf(IrcopAuditData::class, $auditData);
+        self::assertSame('#test', $auditData->target);
+        self::assertSame(['entry_id' => 5], $auditData->extra);
+    }
+
+    #[Test]
+    public function executeViewWithNoHistoryRepliesNoEntries(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(0);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $outcome = $cmd->execute($context);
+
+        self::assertContains('history.view.no_entries', $messages);
+    }
+
+    #[Test]
+    public function executeWithPageNumber(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(100);
+        $historyRepo->expects(self::once())
+            ->method('findByChannelId')
+            ->with(1, 5, 5);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW', '2'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+            historyViewLimit: 5,
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewWithPageNumberUsesDefaultLimit(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(100);
+        $historyRepo->method('findByChannelId')->willReturn([]);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW', '2'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewWithInvalidPageNumberUsesPageOne(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(100);
+        $historyRepo->expects(self::once())
+            ->method('findByChannelId')
+            ->with(1, 5, 0);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW', '-5'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+            historyViewLimit: 5,
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewShowsPageHintWhenMorePagesExist(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(10);
+        $historyRepo->method('findByChannelId')->willReturn([]);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW', '1'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+            historyViewLimit: 5,
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.view.page_hint', $messages);
+    }
+
+    #[Test]
+    public function executeViewDisplaysHistoryEntriesWithExtraData(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'SUSPEND',
+            performedBy: 'OperUser',
+            performedByNickId: 2,
+            message: 'history.message.suspended',
+            extraData: ['duration' => '7d', 'expires_at' => '2024-01-22', 'ip' => '192.168.1.1', 'host' => 'oper@test'],
+        );
+        $history1 = self::historyWithId($history1, 1);
+
+        $history2 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'SET_EMAIL',
+            performedBy: 'User',
+            performedByNickId: null,
+            message: 'history.message.email_changed',
+            extraData: ['old_founder' => 'OldNick', 'new_founder' => 'NewNick'],
+        );
+        $history2 = self::historyWithId($history2, 2);
+
+        $history3 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'RECOVER',
+            performedBy: 'Admin',
+            performedByNickId: 3,
+            message: 'Custom message not a translation key',
+            extraData: ['mask' => '*@bad.host', 'level' => '10', 'target_nickname' => 'BadUser'],
+        );
+        $history3 = self::historyWithId($history3, 3);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(3);
+        $historyRepo->method('findByChannelId')->willReturn([$history1, $history2, $history3]);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewDisplaysHistoryWithUnknownOperator(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(null);
+
+        $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'TEST',
+            performedBy: 'OldUser',
+            performedByNickId: 999,
+            message: 'Test message',
+            extraData: [],
+        );
+        $history1 = self::historyWithId($history1, 1);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(1);
+        $historyRepo->method('findByChannelId')->willReturn([$history1]);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo, nickRepo: $nickRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $nickRepo,
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewDisplaysHistoryWithKnownOperator(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $operNick = $this->createNickWithId('KnownOper', 999);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn($operNick);
+
+        $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'TEST',
+            performedBy: 'KnownOper',
+            performedByNickId: 999,
+            message: 'Test message',
+            extraData: [],
+        );
+        $history1 = self::historyWithId($history1, 1);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(1);
+        $historyRepo->method('findByChannelId')->willReturn([$history1]);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo, nickRepo: $nickRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $nickRepo,
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewAllShowsAllEntries(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'SUSPEND',
+            performedBy: 'OperUser',
+            performedByNickId: 2,
+            message: 'Test',
+            extraData: [],
+        );
+
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(1);
+        $historyRepo->expects(self::once())
+            ->method('findByChannelId')
+            ->with(1, null, 0);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW', 'ALL'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeClearDeletesAllEntries(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())->method('deleteByChannelId')->with(1)->willReturn(5);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'CLEAR'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $outcome = $cmd->execute($context);
+
+        self::assertContains('history.clear.success', $messages);
+
+        $auditData = $outcome->auditData;
+        self::assertInstanceOf(IrcopAuditData::class, $auditData);
+        self::assertSame('#test', $auditData->target);
+        self::assertSame(['count' => 5], $auditData->extra);
+    }
+
+    #[Test]
+    public function executeWithUnknownActionRepliesSyntaxError(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'UNKNOWN'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
+    public function executeAddWithEmptyIp(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $savedHistory = null;
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())
+            ->method('save')
+            ->willReturnCallback(static function (ChannelHistory $h) use (&$savedHistory): void {
+                $savedHistory = $h;
+            });
+
+        $messages = [];
+        $context = $this->createContextWithIp(['#test', 'ADD', 'Test', 'note'], $messages, '', $channelRepo, $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.add.success', $messages);
+        self::assertNotNull($savedHistory);
+        self::assertSame('*', $savedHistory->getExtraData()['ip']);
+    }
+
+    #[Test]
+    public function executeAddWithAsteriskIp(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $savedHistory = null;
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())
+            ->method('save')
+            ->willReturnCallback(static function (ChannelHistory $h) use (&$savedHistory): void {
+                $savedHistory = $h;
+            });
+
+        $messages = [];
+        $context = $this->createContextWithIp(['#test', 'ADD', 'Test', 'note'], $messages, '*', $channelRepo, $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.add.success', $messages);
+        self::assertNotNull($savedHistory);
+        self::assertSame('*', $savedHistory->getExtraData()['ip']);
+    }
+
+    #[Test]
+    public function executeAddWithInvalidIpBase64(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $savedHistory = null;
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())
+            ->method('save')
+            ->willReturnCallback(static function (ChannelHistory $h) use (&$savedHistory): void {
+                $savedHistory = $h;
+            });
+
+        $messages = [];
+        $context = $this->createContextWithIp(['#test', 'ADD', 'Test', 'note'], $messages, 'invalid!base64', $channelRepo, $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.add.success', $messages);
+        self::assertNotNull($savedHistory);
+        self::assertSame('invalid!base64', $savedHistory->getExtraData()['ip']);
+    }
+
+    #[Test]
+    public function executeAddWithValidBase64ButInvalidIpBinaryFallsBackToRaw(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $savedHistory = null;
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::once())
+            ->method('save')
+            ->willReturnCallback(static function (ChannelHistory $h) use (&$savedHistory): void {
+                $savedHistory = $h;
+            });
+
+        $messages = [];
+        $context = $this->createContextWithIp(['#test', 'ADD', 'Test', 'note'], $messages, 'AQID', $channelRepo, $historyRepo);
+
+        $cmd = $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.add.success', $messages);
+        self::assertNotNull($savedHistory);
+        self::assertSame('AQID', $savedHistory->getExtraData()['ip']);
+    }
+
+    #[Test]
+    public function executeViewDisplaysEntryWithSuccessorExtraData(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'SUCCESSOR',
+            performedBy: 'OperUser',
+            performedByNickId: null,
+            message: 'history.message.successor_changed',
+            extraData: ['old_successor' => 'OldSucc', 'new_successor' => 'NewSucc'],
+        );
+        $history1 = self::historyWithId($history1, 1);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(1);
+        $historyRepo->method('findByChannelId')->willReturn([$history1]);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewDisplaysEntryWithNullOldFounderExtraData(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'FOUNDER',
+            performedBy: 'OperUser',
+            performedByNickId: null,
+            message: 'history.message.founder_changed',
+            extraData: ['old_founder' => null, 'new_founder' => 'NewFounder'],
+        );
+        $history1 = self::historyWithId($history1, 1);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(1);
+        $historyRepo->method('findByChannelId')->willReturn([$history1]);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewTranslatesAccessAddMessageWithTargetAndLevel(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'ACCESS_ADD',
+            performedBy: 'OperUser',
+            performedByNickId: null,
+            message: 'history.message.access_add',
+            extraData: ['target_nickname' => 'TargetUser', 'level' => '50'],
+        );
+        $history1 = self::historyWithId($history1, 1);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(1);
+        $historyRepo->method('findByChannelId')->willReturn([$history1]);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewTranslatesAkickAddMessageWithMask(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $history1 = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'AKICK_ADD',
+            performedBy: 'OperUser',
+            performedByNickId: null,
+            message: 'history.message.akick_add',
+            extraData: ['mask' => '*!*@bad.host'],
+        );
+        $history1 = self::historyWithId($history1, 1);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(1);
+        $historyRepo->method('findByChannelId')->willReturn([$history1]);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    private function buildCommand(
+        RegisteredChannelRepositoryInterface $channelRepository,
+        ChannelHistoryRepositoryInterface $historyRepository,
+        ChannelHistoryService $historyService,
+        ChanUserAccountPort $accountPort,
+        int $historyViewLimit = 40,
+    ): HistoryCommand {
+        return new HistoryCommand(new ManageChannelHistoryHandler(
+            $channelRepository,
+            $historyRepository,
+            $historyService,
+            $accountPort,
+            $historyViewLimit,
+        ));
+    }
+
+    private function createCommand(): HistoryCommand
+    {
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+
+        return $this->buildCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+    }
+
+    private function createCommandWithRepos(
+        RegisteredChannelRepositoryInterface $channelRepo,
+        ChannelHistoryRepositoryInterface $historyRepo,
+    ): HistoryCommand {
+        return $this->buildCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+    }
+
+    private function createSender(string $ipBase64 = 'fwAAAQ=='): SenderView
+    {
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $ipBase64, false, true, 'SID1', 'h', 'o');
+    }
+
+    private function createNickWithId(string $nickname, int $id): ChanAccountView
+    {
+        return new ChanAccountView($id, $nickname, 'en');
+    }
+
+    private function createChannelWithId(string $channelName, int $id): RegisteredChannel
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), $channelName, 1, 'Test channel');
+
+        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($channel, $id);
+
+        return $channel;
+    }
+
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
+    private function createContext(
+        array $args,
+        array &$messages,
+        ?RegisteredChannelRepositoryInterface $channelRepo = null,
+        ?ChannelHistoryRepositoryInterface $historyRepo = null,
+        ?ChanUserAccountPort $nickRepo = null,
+    ): ChanServContext {
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $targetUid, string $message, string $type) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->method('getServiceKey')->willReturn('chanserv');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $historyRepoFinal = $historyRepo ?? $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $nickRepoFinal = $nickRepo ?? $this->createStub(ChanUserAccountPort::class);
+
+        return new ChanServContext(
+            $this->createSender(),
+            $this->createNickWithId('OperUser', 2),
+            'HISTORY',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ChannelModeSupportInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    /** @param array<string> $args */
+    private function createContextWithNullSender(array $args, ChannelHistoryRepositoryInterface $historyRepo): ChanServContext
+    {
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return new ChanServContext(
+            null,
+            null,
+            'HISTORY',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ChannelModeSupportInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    /**
+     * @param array<string> $args
+     * @param array<string> $messages
+     */
+    private function createContextWithIp(
+        array $args,
+        array &$messages,
+        string $ipBase64,
+        RegisteredChannelRepositoryInterface $channelRepo,
+        ChannelHistoryRepositoryInterface $historyRepo,
+    ): ChanServContext {
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $targetUid, string $message, string $type) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->method('getServiceKey')->willReturn('chanserv');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return new ChanServContext(
+            $this->createSender($ipBase64),
+            $this->createNickWithId('OperUser', 2),
+            'HISTORY',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ChannelModeSupportInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider = $this->createStub(ServiceNicknameProviderInterface::class);
+        $provider->method('getServiceKey')->willReturn('chanserv');
+        $provider->method('getNickname')->willReturn('ChanServ');
+
+        return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private static function historyWithId(ChannelHistory $history, int $id): ChannelHistory
+    {
+        return new ChannelHistory(
+            id: $id,
+            channelId: $history->getChannelId(),
+            action: $history->getAction(),
+            performedBy: $history->getPerformedBy(),
+            performedByNickId: $history->getPerformedByNickId(),
+            performedAt: $history->getPerformedAt(),
+            message: $history->getMessage(),
+            extraData: $history->getExtraData(),
+        );
+    }
+}

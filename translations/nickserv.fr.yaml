@@ -41,6 +41,7 @@ verify:
   short:            "Confirmer votre adresse e-mail et activer votre surnom."
   help:             "Termine l'enregistrement en vérifiant le jeton envoyé à votre e-mail.\nLe jeton est valable 1 heure à partir du moment de l'enregistrement."
   success:          "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été enregistré avec succès et vous êtes maintenant identifié."
+  success_native:   "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été enregistré avec succès. Utilisez l’authentification native indiquée ci-dessous."
   invalid_token:    "\x0304✗\x03 Le jeton est invalide ou a expiré. Utilisez \x0303/msg %bot% REGISTER\x03 pour recommencer."
   no_pending:       "\x0304✗\x03 Vous n'avez aucun enregistrement en attente à vérifier."
 
@@ -63,7 +64,6 @@ recover:
   pending:          "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de vérification e-mail."
   suspended:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu. Raison : %reason%"
   forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être utilisé sur ce réseau."
-  pending_deletion: "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de suppression et ne peut pas être utilisé."
   no_email:         "\x0304✗\x03 Aucun e-mail n'est défini pour le surnom \x02%nickname%\x02. La récupération n'est pas disponible."
   throttled:        "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de demander un autre e-mail de récupération."
   invalid_token:    "\x0304✗\x03 Le jeton est invalide ou a expiré. Demandez-en un nouveau avec \x0303RECOVER %nickname%\x03."
@@ -75,6 +75,10 @@ identify:
   syntax:           "IDENTIFY <surnom> <motdepasse>"
   short:            "S'identifier comme le propriétaire d'un surnom."
   help:             "Authentifie votre session auprès de %nickserv% avec votre surnom et mot de passe.\nAprès une identification réussie, vous recevrez le mode enregistré \x02+r\x02\net, si vous utilisiez un surnom invité, votre surnom enregistré sera restauré."
+  native_syntax:    "/NICK <surnom>:<motdepasse> | /NICK <surnom>!<motdepasse>"
+  native_short:     "Affiche la syntaxe native d’authentification du pseudonyme."
+  native_help:      "Ce protocole authentifie les comptes par changement de pseudonyme.\nUtilisez /NICK <surnom>:<motdepasse> ou, si le pseudonyme est occupé, /NICK <surnom>!<motdepasse>."
+  native_authentication: "\x0307ℹ\x03 Ce protocole gère l’authentification par changement de pseudonyme. Utilisez \x0303/NICK <surnom>:<motdepasse>\x03 ou, si le pseudonyme est occupé, \x0303/NICK <surnom>!<motdepasse>\x03."
   success:          "\x0303✔\x03 Vous êtes maintenant identifié en tant que \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Vous êtes déjà identifié en tant que \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
@@ -92,7 +96,7 @@ status:
   syntax:           "STATUS <surnom>"
   short:            "Afficher le statut d'enregistrement d'un surnom."
   help:             "Affiche le statut actuel d'un surnom : enregistré, en attente de vérification,\nsuspendu ou interdit."
-  header:           "\x02Statut du surnom \x0307%nickname%\x03 :\x02"
+  header:           "\x02Statut du surnom \x0307%nickname%\x03\x02"
   unregistered:     "  Statut          : Non enregistré"
   not_registered_offline: "  Statut          : \x0315Non enregistré\x03"
   pending:          "  Statut          : \x0307En attente de vérification\x03"
@@ -118,13 +122,12 @@ info:
   help:             "Affiche les détails d'enregistrement d'un surnom : date d'enregistrement,\nstatut de connexion, dernier message de départ et adresse e-mail.\nL'e-mail n'est visible que par le propriétaire lorsqu'il est identifié.\nAvec PRIVATE ON, seuls le propriétaire et les opérateurs IRC\npeuvent voir les informations."
   not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
   private:          "\x0304✗\x03 Les informations du surnom \x02%nickname%\x02 sont privées."
-  header:           "\x02Informations pour le surnom \x0307%nickname%\x03 :\x02"
+  header:           "\x02Informations pour le surnom \x0307%nickname%\x03\x02"
   status:           "  \x0314Statut\x03           : %status%"
   status_registered:  "\x0303Enregistré\x03"
   status_suspended:   "\x0304Suspendu\x03"
   status_forbidden:   "\x0304Interdit\x03"
   status_pending_deletion: "\x0307En attente de suppression\x03"
-  status_pending_deletion_at:  "  \x0314Supprimé\x03           : %date%"
   reason:           "  \x0314Raison\x03           : %reason%"
   suspended_until:  "  \x0314Fin le\x03           : %date%"
   suspended_permanent: "  \x0314Fin le\x03           : Permanent"
@@ -198,9 +201,9 @@ set:
     off:            "\x0303✔\x03 Les messages des services seront maintenant envoyés en \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Définir ou effacer votre hôte virtuel personnalisé (hostname affiché)."
-    help:           "Définit un nom d'hôte personnalisé que les autres voient lorsque vous êtes identifié.\nUtilisez \x02SET VHOST OFF\x02 pour effacer. Uniquement lettres (a-z, A-Z), chiffres,\ntrait d'union et point ; pas de tiret/point au début/fin d'un bloc ; max 48 caractères. Unique par surnom."
+    help:           "Définit un nom d'hôte personnalisé que les autres voient lorsque vous êtes identifié.\nUtilisez \x02SET VHOST\x02 sans valeur pour l'effacer. Uniquement lettres (a-z, A-Z), chiffres,\ntrait d'union et point ; pas de tiret/point au début/fin d'un bloc ; max 48 caractères. Unique par surnom."
     success:        "\x0303✔\x03 Votre hôte virtuel a été défini sur \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Votre hôte virtuel a été effacé."
     invalid:        "\x0304✗\x03 Vhost invalide. Uniquement lettres, chiffres, trait d'union et point (pas au début/fin de bloc) ; max 48 caractères."
@@ -225,57 +228,42 @@ saset:
     Syntaxe : SASET <surnom> <option> <valeur>
     Exemple : SASET Utilisateur PASSWORD nouveau_mdp
   unknown_option:   "\x0304✗\x03 Option inconnue \x02%option%\x02. Options disponibles : %options%."
-  not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
   cannot_modify_oper: "\x0304✗\x03 Impossible de modifier le surnom d'un opérateur IRC."
 
   password:
     syntax:         "SASET <surnom> PASSWORD <nouveau_mdp>"
     short:          "Changer le mot de passe d'un surnom."
     help:           "Change le mot de passe d'un autre surnom.\nLe changement est immédiat.\n\nSyntaxe : SASET <surnom> PASSWORD <nouveau_mdp>\nExemple : SASET Utilisateur PASSWORD nouveau_mdp123"
-    success:        "\x0303✔\x03 Le mot de passe de \x02%nickname%\x02 a été mis à jour."
 
   email:
     syntax:         "SASET <surnom> EMAIL <nouvel_e-mail>"
     short:          "Changer l'e-mail d'un surnom."
     help:           "Change l'e-mail d'un autre surnom.\nAucune confirmation n'est envoyée—le changement est immédiat.\n\nSyntaxe : SASET <surnom> EMAIL <nouvel_e-mail>\nExemple : SASET Utilisateur EMAIL utilisateur@exemple.com"
-    success:        "\x0303✔\x03 L'e-mail de \x02%nickname%\x02 a été mis à jour en \x02%email%\x02."
 
   language:
     syntax:         "SASET <surnom> LANGUAGE <code>"
     short:          "Changer la langue d'un surnom."
     help:           "Change la langue d'un autre surnom.\nLangues disponibles : en (anglais), es (espagnol).\n\nSyntaxe : SASET <surnom> LANGUAGE <code>\nExemple : SASET Utilisateur LANGUAGE fr"
-    success:        "\x0303✔\x03 La langue de \x02%nickname%\x02 a été changée en \x02%language%\x02."
 
   timezone:
     syntax:         "SASET <surnom> TIMEZONE <fuseau_horaire|OFF>"
     short:          "Changer le fuseau horaire d'un surnom."
     help:           "Définit ou efface le fuseau horaire d'un autre surnom.\nUtilisez OFF pour l'effacer.\n\nSyntaxe : SASET <surnom> TIMEZONE <fuseau_horaire>\nExemple : SASET Utilisateur TIMEZONE Europe/Paris"
-    success:        "\x0303✔\x03 Le fuseau horaire de \x02%nickname%\x02 a été défini sur \x02%timezone%\x02."
-    cleared:        "\x0303✔\x03 Le fuseau horaire de \x02%nickname%\x02 a été effacé."
-    invalid:        "\x0304✗\x03 Fuseau horaire invalide \x02%timezone%\x02."
 
   private:
     syntax:         "SASET <surnom> PRIVATE {ON|OFF}"
     short:          "Changer la confidentialité d'un surnom."
     help:           "Active ou désactive la confidentialité des informations d'un autre surnom.\n\nSyntaxe : SASET <surnom> PRIVATE {ON|OFF}\nExemple : SASET Utilisateur PRIVATE ON"
-    on:             "\x0303✔\x03 Les informations de \x02%nickname%\x02 sont maintenant \x02privées\x02."
-    off:            "\x0303✔\x03 Les informations de \x02%nickname%\x02 sont maintenant \x02publiques\x02."
 
   msg:
     syntax:         "SASET <surnom> MSG {ON|OFF}"
     short:          "Changer la préférence de messages d'un surnom."
     help:           "Définit si un autre surnom reçoit les réponses en PRIVMSG (ON) ou NOTICE (OFF).\n\nSyntaxe : SASET <surnom> MSG {ON|OFF}\nExemple : SASET Utilisateur MSG ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02 recevra maintenant les messages en \x02PRIVMSG\x02."
-    off:            "\x0303✔\x03 \x02%nickname%\x02 recevra maintenant les messages en \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <surnom> VHOST <vhost|OFF>"
+    syntax:         "SASET <surnom> VHOST [vhost]"
     short:          "Changer l'hôte virtuel d'un surnom."
-    help:           "Définit ou efface l'hôte virtuel d'un autre surnom.\nUtilisez OFF pour l'effacer.\n\nSyntaxe : SASET <surnom> VHOST <vhost>\nExemple : SASET Utilisateur VHOST utilisateurs.exemple.com"
-    success:        "\x0303✔\x03 Le VHost de \x02%nickname%\x02 a été défini sur \x02%vhost%\x02."
-    cleared:        "\x0303✔\x03 Le VHost de \x02%nickname%\x02 a été effacé."
-    invalid:        "\x0304✗\x03 VHost invalide pour \x02%nickname%\x02."
-    taken:          "\x0304✗\x03 Ce vhost est déjà utilisé par un autre surnom."
+    help:           "Définit ou efface l'hôte virtuel d'un autre surnom.\nUtilisez \x02SASET <surnom> VHOST\x02 sans valeur pour l'effacer.\n\nSyntaxe : SASET <surnom> VHOST [vhost]\nExemple : SASET Utilisateur VHOST utilisateurs.exemple.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -291,7 +279,6 @@ help:
   options_header:   "\x02\x0314Options :\x03\x0F"
   general_footer:   "Utilisez \x0303/msg %bot% HELP <commande>\x03 pour plus d'informations."
   set_sub_footer:   "Utilisez \x0303/msg %bot% HELP %command% <option>\x03 pour plus d'informations."
-  command_header:   "\x02Aide pour %command% :\x02"
   syntax_label:     "\x0307Syntaxe :\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 Aucune aide disponible pour \x02%command%\x02."
@@ -323,19 +310,6 @@ userip:
     Exemple : USERIP Utilisateur123
   not_online:       "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas connecté."
   result:           "\x0307ℹ\x03 Surnom : \x02%nickname%\x02 | IP : \x0307%ip%\x03 | Hôte : \x0307%host%\x03"
-
-permissions:
-  nickserv.userip: "Voir l'adresse IP/nom d'hôte réel d'un surnom (USERIP)"
-  nickserv.suspend: "Suspendre ou lever la suspension d'un surnom (SUSPEND/UNSUSPEND)"
-  nickserv.rename: "Forcer le renommage d'un surnom connecté en un surnom aléatoire (RENAME)"
-  nickserv.drop: "Abandonner un surnom enregistré (DROP)"
-  nickserv.drop.force: "Forcer la suppression définitive d'un abandon de surnom récupérable (DROP FORCE)"
-  nickserv.restore: "Restaurer un surnom en attente de suppression (RESTORE)"
-  nickserv.forbid: "Interdire ou lever l'interdiction d'un surnom (FORBID/UNFORBID)"
-  nickserv.forbidvhost: "Interdire ou autoriser les motifs de vhost (FORBIDVHOST)"
-  nickserv.saset: "Modifier les paramètres d'un autre surnom (SASET)"
-  nickserv.noexpire: "Définir ou retirer la protection contre l'expiration d'un surnom (NOEXPIRE)"
-  nickserv.history: "Consulter et gérer l'historique des actions du surnom (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

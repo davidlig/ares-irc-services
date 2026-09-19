@@ -1,0 +1,245 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\NickServ\Adapter\In\Irc\Command;
+
+use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
+use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
+use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
+use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
+use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
+
+use function strlen;
+
+/**
+ * HELP [command [sub-option]].
+ *
+ * Without arguments:   lists all available commands with short descriptions.
+ * HELP <command>:      full help for the command, including sub-option table.
+ * HELP <cmd> <option>: detailed help for a specific sub-option (e.g. HELP SET PASSWORD).
+ * HELP SET TIMEZONE [region]: index of regions (Africa, America, ...) or list of timezones for that region.
+ *
+ * The registry is obtained from the context to avoid a circular dependency:
+ * NickServCommandRegistry → HelpCommand → NickServCommandRegistry.
+ */
+final readonly class HelpCommand implements NickServCommandInterface
+{
+    private const int TIMEZONE_LIST_MAX_LINE_LEN = 100;
+
+    public function __construct(
+        private UnifiedHelpFormatter $formatter,
+        private TimezoneHelpProvider $timezoneHelpProvider,
+        private NickServOperatorAccess $operatorAccess,
+        private int $inactivityExpiryDays = 0,
+    ) {}
+
+    public function getName(): string
+    {
+        return 'HELP';
+    }
+
+    public function getAliases(): array
+    {
+        return ['?'];
+    }
+
+    public function getMinArgs(): int
+    {
+        return 0;
+    }
+
+    public function getSyntaxKey(): string
+    {
+        return 'help.syntax';
+    }
+
+    public function getHelpKey(): string
+    {
+        return 'help.help';
+    }
+
+    public function getOrder(): int
+    {
+        return 99;
+    }
+
+    public function getShortDescKey(): string
+    {
+        return 'help.short';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
+    public function isOperOnly(): bool
+    {
+        return false;
+    }
+
+    public function getRequiredPermission(): ?string
+    {
+        return null;
+    }
+
+    public function getHelpParams(): array
+    {
+        return [];
+    }
+
+    public function execute(NickServContext $context): null
+    {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return null;
+        }
+
+        if (empty($context->args)) {
+            $this->showGeneralHelp($context);
+
+            return null;
+        }
+
+        $this->executeHelpForCommand($context, $sender);
+
+        return null;
+    }
+
+    private function executeHelpForCommand(NickServContext $context, SenderView $sender): void
+    {
+        $targetCmd = strtoupper($context->args[0]);
+        $handler = $context->getRegistry()->find($targetCmd);
+
+        if (null === $handler || ($handler->isOperOnly() && !$sender->isOper)) {
+            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+
+            return;
+        }
+
+        if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
+            $subName = strtoupper($context->args[1]);
+            $subCmd = $this->findSubCommand($handler, $subName);
+
+            if (null !== $subCmd) {
+                if ('SET' === $handler->getName() && 'TIMEZONE' === $subName) {
+                    $regionArg = trim($context->args[2] ?? '');
+                    if ('' !== $regionArg) {
+                        $this->showTimezoneRegionHelp($context, $regionArg);
+                    } else {
+                        $this->showTimezoneIndexHelp($context, $handler->getName(), $subCmd);
+                    }
+
+                    return;
+                }
+
+                $adapter = $this->createAdapter($context);
+                $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
+
+                return;
+            }
+        }
+
+        $adapter = $this->createAdapter($context);
+        $this->formatter->showCommandHelp($adapter, $handler);
+    }
+
+    private function showGeneralHelp(NickServContext $context): void
+    {
+        $adapter = $this->createAdapter($context);
+        $this->formatter->showGeneralHelp($adapter);
+        if ($this->inactivityExpiryDays > 0) {
+            $context->replyRaw(' ');
+            $context->reply('help.intro_expiration', ['%days%' => $this->inactivityExpiryDays]);
+        }
+        $context->reply('help.footer');
+    }
+
+    private function createAdapter(NickServContext $context): HelpFormatterContextAdapter
+    {
+        return new HelpFormatterContextAdapter(
+            $context,
+            $this->operatorAccess,
+        );
+    }
+
+    /**
+     * @param array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string} $sub
+     */
+    private function showTimezoneIndexHelp(NickServContext $context, string $parentName, array $sub): void
+    {
+        $adapter = $this->createAdapter($context);
+        $this->formatter->sendHeader($adapter, $parentName . ' ' . $sub['name']);
+        $context->reply($sub['help_key']);
+        $context->replyRaw(' ');
+        $context->reply('help.set_timezone.index_label', []);
+        $regionsStr = implode(', ', $this->timezoneHelpProvider->getRegions());
+        foreach ($this->chunkLine($regionsStr, self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
+            $context->replyRaw($line);
+        }
+        $context->replyRaw(' ');
+        $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
+        $context->reply('help.footer');
+    }
+
+    /**
+     * Splits a comma-separated string into lines of at most $maxLen chars (break at ", ").
+     *
+     * @return string[]
+     */
+    private function chunkLine(string $text, int $maxLen, string $linePrefix = ''): array
+    {
+        $lines = [];
+        $current = $linePrefix;
+        foreach (explode(', ', $text) as $i => $part) {
+            $addition = ($i > 0 ? ', ' : '') . $part;
+            if (strlen($current . $addition) > $maxLen && $current !== $linePrefix) {
+                $lines[] = $current;
+                $current = $linePrefix . $part;
+            } else {
+                $current .= $addition;
+            }
+        }
+        if ('' !== trim($current)) {
+            $lines[] = $current;
+        }
+
+        return $lines;
+    }
+
+    private function showTimezoneRegionHelp(NickServContext $context, string $regionArg): void
+    {
+        $region = $this->timezoneHelpProvider->resolveRegion($regionArg)
+            ?? $this->timezoneHelpProvider->getRegionForTimezone($regionArg);
+
+        $adapter = $this->createAdapter($context);
+
+        if (null === $region) {
+            $this->formatter->sendHeader($adapter, 'SET TIMEZONE ' . $regionArg);
+            $context->reply('help.set_timezone.region_unknown', []);
+            $context->replyRaw(' ');
+            $context->reply('help.footer');
+
+            return;
+        }
+
+        $this->formatter->sendHeader($adapter, 'SET TIMEZONE ' . $region);
+        $context->reply('help.set_timezone.region_header', ['region' => $region]);
+        $timezones = $this->timezoneHelpProvider->getTimezonesForRegion($region);
+        foreach ($this->chunkLine(implode(', ', $timezones), self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
+            $context->replyRaw($line);
+        }
+        $context->replyRaw(' ');
+        $context->reply('help.footer');
+    }
+
+    /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */
+    private function findSubCommand(NickServCommandInterface $handler, string $name): ?array
+    {
+        return array_find($handler->getSubCommandHelp(), static fn (array $sub): bool => $name === strtoupper($sub['name']));
+    }
+}

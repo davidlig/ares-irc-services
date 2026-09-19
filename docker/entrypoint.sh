@@ -21,7 +21,7 @@ if ! grep -q "^APP_SECRET=." /app/.env.local 2>/dev/null; then
     echo "==> Generating APP_SECRET (missing)"
     SECRET=$(php -r 'echo bin2hex(random_bytes(16));')
     echo "APP_SECRET=${SECRET}" >> /app/.env.local
-    echo "==> APP_SECRET generated: ${SECRET:0:8}..."
+    echo "==> APP_SECRET generated: $(printf '%.8s' "$SECRET")..."
 elif grep -q "^APP_SECRET=changeme" /app/.env.local 2>/dev/null; then
     echo "==> Generating APP_SECRET (replacing default)"
     SECRET=$(php -r 'echo bin2hex(random_bytes(16));')
@@ -31,7 +31,7 @@ elif grep -q "^APP_SECRET=changeme" /app/.env.local 2>/dev/null; then
     cat /tmp/env.tmp > /app/.env.local
     rm /tmp/env.tmp
 
-    echo "==> APP_SECRET generated: ${SECRET:0:8}..."
+    echo "==> APP_SECRET generated: $(printf '%.8s' "$SECRET")..."
 fi
 
 # 3. Sync .env.local with new keys from .env

@@ -6,6 +6,7 @@ unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %
 error:
   syntax:           "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
   oper_only:        "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
+  not_identified:   "\x0304✗\x03 Kimliğiniz doğrulanmamış. \x0303/msg %nickserv% IDENTIFY\x03 kullanın."
   permission_denied: "\x0304✗\x03 Bu komutu çalıştırmak için yeterli izinlere sahip değilsiniz."
   root_only:        "\x0304✗\x03 Bu komut yalnızca ağ root yöneticileri içindir."
   nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
@@ -27,11 +28,11 @@ help:
   footer:           "\x0314─────────────────────────────\x03"
   intro_expiration: "NOT: %days% günden fazla \x0304\x1Fkullanılmayan\x0F rumuzlar otomatik olarak kaldırılır."
   unknown_command:  "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
-  suboptions:       "Alt seçenekler:"
+  ircop_header:     "\x02\x0314IRCOPS için kullanılabilir komutlar:\x03\x0F"
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [rol]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [nickname] [rol]"
   short:            "Ağ IRC operatörlerini yönetin."
   help:             "Ağ IRC operatörlerini yönetin. ADD, kayıtlı bir rumuzu\nbelirtilen rolle operatör olarak ekler.\nDEL bir operatörü kaldırır. LIST tüm operatörleri gösterir.\nMevcut rolleri görmek için ROLE LIST kullanın.\nBu komut yalnızca hizmetlerde yapılandırılmış Root kullanıcıları içindir."
 
@@ -42,14 +43,14 @@ ircop:
   role_changed:     "\x0303✓\x03 \x02%nickname%\x02 için rol %old% yerine %new% olarak değiştirildi."
 
   add:
-    syntax:         "IRCOP <nickname> ADD <rol>"
+    syntax:         "IRCOP ADD <nickname> <rol>"
     short:          "Bir ağ IRC operatörü ekleyin."
     help:           "Kayıtlı bir rumuzu ağ IRC operatörü olarak ekler.\nMevcut rolleri görmek için ROLE LIST kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
     done:           "\x0303✓\x03 \x02%nickname%\x02, \x02%role%\x02 olarak eklendi."
     nick_not_active: "\x0304✗\x03 \x02%nickname%\x02 rumuzu etkin bir kayıtlı rumuz değil."
 
   del:
-    syntax:         "IRCOP <nickname> DEL"
+    syntax:         "IRCOP DEL <nickname>"
     short:          "Bir ağ IRC operatörünü kaldırın."
     help:            "Listeden bir ağ IRC operatörünü kaldırır.\nBu komut yalnızca Root kullanıcıları içindir."
     done:           "\x0303✓\x03 \x02%nickname%\x02 IRC operatörlerinden kaldırıldı."
@@ -63,11 +64,30 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<rol>} [{VIEW|SET}] [operclass]"
+    short: "Rolun Unreal operclass degerini yonetir."
+    help: "LIST agdaki kullanilabilir operclass'lari gosterir.\nVIEW rolun operclass'ini ve kullanilabilir olanlari gosterir.\nSET kimlik dogrulamada atar (OFF kaldirmak icin).\nYalnizca UnrealIRCd protokollerinde kullanilabilir."
+    list:
+      header: "\x0307---\x03 \x02Agdaki Kullanilabilir Operclass'lar\x02 \x0307---\x03"
+      empty: "Agda kullanilabilir operclass yok."
+      not_supported: "\x0304✗\x03 Gecerli protokol kullanilabilir operclass'lari listelemeyi desteklemiyor."
+    view:
+      empty: "%role% rolunun operclass degeri yok."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Kullanilabilir operclass'lar: \x0310%available%\x03"
+    set:
+      done: "%role% icin operclass ayarlandi."
+      cleared: "%role% icin operclass kaldirildi."
+      not_available: "\x0304✗\x03 \x02%operclass%\x02 operclass'i agda mevcut degil. Mevcut operclass'lar: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <ad> ..."
   short:            "Operatör rollerini yönetin."
   help:             "Operatör rollerini yönetin. ADD yeni bir rol oluşturur, DEL siler,\nLIST tüm rolleri gösterir, PERMS bir rolün izinlerini yönetir, MODES IRCOP modlarını yönetir,\nVHOST bir rol için zorunlu vhost kalıbını yönetir.\nKorumalı roller (ADMIN, OPER, PREOPER) silinemez.\nBu komut yalnızca Root kullanıcıları içindir."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <ad> ..."
+  help_operclass:   "Operatör rollerini yönetin. ADD yeni bir rol oluşturur, DEL siler,\nLIST tüm rolleri gösterir, PERMS bir rolün izinlerini yönetir, MODES IRCOP modlarını yönetir,\nVHOST bir rol için zorunlu vhost kalıbını yönetir, OPERCLASS Unreal operclass değerini yönetir.\nKorumalı roller (ADMIN, OPER, PREOPER) silinemez.\nBu komut yalnızca Root kullanıcıları içindir."
 
   unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL, LIST, PERMS, MODES veya VHOST kullanın."
+  unknown_sub_operclass: "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL, LIST, PERMS, MODES, VHOST veya OPERCLASS kullanın."
   not_found:        "\x0304✗\x03 \x02%role%\x02 rolü mevcut değil."
   already_exists:   "\x0304✗\x03 \x02%role%\x02 rolü zaten mevcut."
   protected:        "\x0304✗\x03 \x02%role%\x02 rolü korumalıdır ve silinemez."
@@ -95,42 +115,21 @@ role:
     syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [izin|ALL]"
     short:          "Rol izinlerini yönetin."
     help:            "Bir role atanmış izinleri yönetin.\nLIST, rolün tüm izinlerini gösterir.\nADD, role bir izin atar.\nDEL, rolden bir izni kaldırır (korumalı roller için geçerli değil).\nCLEAR, roldeki tüm izinleri kaldırır.\nMevcut tüm izinleri tek seferde eklemek için ALL kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
-    unknown_action:  "\x0304✗\x03 Bilinmeyen eylem \x02%action%\x02. LIST, ADD, DEL veya CLEAR kullanın."
     not_found:       "\x0304✗\x03 \x02%perm%\x02 izni mevcut değil."
     already_has:     "\x0304✗\x03 \x02%role%\x02 rolü zaten \x02%perm%\x02 iznine sahip."
     does_not_have:   "\x0304✗\x03 \x02%role%\x02 rolü \x02%perm%\x02 iznine sahip değil."
-    protected:      "\x0304✗\x03 Korumalı \x02%role%\x02 rolü için izinler değiştirilemez."
 
     list:
-      syntax:       "ROLE PERMS <rol> LIST"
-      short:        "Bir rolün izinlerini listeleyin."
-      help:         "Bir role atanmış tüm izinleri listeler.\nBu komut yalnızca Root kullanıcıları içindir."
       header:        "\x0307---\x03 \x02%role% için İzinler\x02 \x0307---\x03"
-      empty:        "\x02%role%\x02 rolüne atanmış izin yok."
-      assigned:     "\x0310Atanmış:\x03"
-      none_assigned: "\x0314Atanmış izin yok.\x03"
-      available:    "\x0310Kullanılabilir:\x03"
-      all_assigned: "\x0314Bu role tüm izinler atanmış.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rol> ADD {izin|ALL}"
-      short:        "Bir role izin ekleyin."
-      help:         "Bir role izin ekler.\nMevcut tüm izinleri tek seferde eklemek için ALL kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
       done:         "\x0303✓\x03 \x02%perm%\x02 izni \x02%role%\x02 rolüne eklendi."
       all_done:     "\x0303✓\x03 \x02%role%\x02 rolüne \x02%count%\x02 izin eklendi."
-      all_skipped:  "\x0304✗\x03 \x02%role%\x02 rolü zaten tüm mevcut izinlere sahip."
-      all_empty:    "\x0304✗\x03 Eklenebilecek izin bulunmamaktadır."
 
     del:
-      syntax:       "ROLE PERMS <rol> DEL <izin>"
-      short:        "Bir rolden izni kaldırın."
-      help:         "Bir rolden izni kaldırır.\nKorumalı roller değiştirilemez.\nBu komut yalnızca Root kullanıcıları içindir."
       done:         "\x0303✓\x03 \x02%perm%\x02 izni \x02%role%\x02 rolünden kaldırıldı."
 
     clear:
-      syntax:       "ROLE PERMS <rol> CLEAR"
-      short:        "Bir roldeki tüm izinleri kaldırın."
-      help:         "Bir roldeki tüm izinleri kaldırır.\nBu komut yalnızca Root kullanıcıları içindir."
       done:         "\x0303✓\x03 \x02%role%\x02 rolünden \x02%count%\x02 izin kaldırıldı."
       empty:        "\x0304✗\x03 \x02%role%\x02 rolüne atanmış izin yok."
 
@@ -138,46 +137,31 @@ role:
     syntax:         "ROLE MODES <rol> {VIEW|SET} [modlar]"
     short:          "Rol için IRCOP kullanıcı modlarını yönetin."
     help:            "Bir role atanmış IRCOP kullanıcı modlarını yönetin.\nVIEW, rolün mevcut modlarını gösterir.\nSET, IRCOP modlarını ayarlar (örn., oH için +oH).\nBu role sahip kullanıcılar kimlik doğrulamada bu modları alır.\nHer IRCD'ye göre kullanılabilir modlar: UnrealIRCd (H, q, s, W), InspIRCd (s).\nBu komut yalnızca Root kullanıcıları içindir."
-    unknown_action:  "\x0304✗\x03 Bilinmeyen eylem \x02%action%\x02. VIEW veya SET kullanın."
 
     view:
-      syntax:       "ROLE MODES <rol> VIEW"
-      short:        "Rolün modlarını gösterir."
-      help:          "Bir role atanmış IRCOP kullanıcı modlarını gösterir.\nBu komut yalnızca Root kullanıcıları içindir."
       header:        "\x0307---\x03 \x02%role% için Modlar\x02 \x0307---\x03"
       empty:        "\x02%role%\x02 rolüne atanmış mod yok."
       line:         "  Modlar: \x0303%modes%\x03"
 
     set:
-      syntax:       "ROLE MODES <rol> SET [modlar]"
-      short:        "IRCOP kullanıcı modlarını ayarlayın."
-      help:          "Rol için IRCOP kullanıcı modlarını ayarlayın.\nArgüman olmadan, roldeki tüm modları kaldırır.\nYalnızca aktif IRCD için geçerli IRCOP modları.\nBu role sahip kimliği doğrulanmış kullanıcılar değişiklikleri alır.\nBu komut yalnızca Root kullanıcıları içindir."
       done:         "\x0303✓\x03 \x02%role%\x02 rolü için modlar \x02%modes%\x02 olarak ayarlandı."
       cleared:      "\x0303✓\x03 \x02%role%\x02 rolünden tüm modlar kaldırıldı."
       invalid_mode: "\x0304✗\x03 \x02%mode%\x02 modu geçerli bir IRCOP modu değil."
       invalid_modes: "\x0304✗\x03 Geçersiz modlar: %invalid%. Geçerli modlar: %valid%."
       no_irc_user_modes: "\x0304✗\x03 Mevcut IRCD'de yapılandırılmış IRCOP modu yok."
-      not_supported: "\x0304✗\x03 Mevcut protokol Servislerden IRCOP kullanıcı modlarının ayarlanmasını desteklemiyor."
 
   vhost:
     syntax:         "ROLE VHOST <rol> {VIEW|SET} [kalıp]"
     short:          "Bir rol için zorunlu vhost kalıbını yönetin."
     help:           "Bir role atanmış zorunlu vhost'u yönetin.\nVIEW, mevcut zorunlu vhost kalıbını gösterir.\nSET bir zorunlu vhost kalıbı atar (bu role sahip kullanıcılar\nkimlik doğrulamada bu vhost'u alır, kişisel vhost'u geçersiz kılar).\nKalıp temizlenmiş rumuzun sonuna eklenir, örn.:\n  Rumuz: _davidlig_ → Kalıp: admin.ares → VHost: davidlig.admin.ares\nGeçerli karakterler: a-z, A-Z, 0-9, tire (-) ve nokta (.).\nEn az bir nokta olmalı, - veya . ile başlayamaz/bitemez veya .. içeremez.\nZorunlu vhost kalıbını temizlemek için OFF kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
-    unknown_action:  "\x0304✗\x03 Bilinmeyen eylem \x02%action%\x02. VIEW veya SET kullanın."
 
     view:
-      syntax:       "ROLE VHOST <rol> VIEW"
-      short:         "Rolün zorunlu vhost kalıbını gösterir."
-      help:          "Bir role atanmış zorunlu vhost kalıbını gösterir.\nBu komut yalnızca Root kullanıcıları içindir."
       header:        "\x0307---\x03 \x02%role% için Zorunlu vhost\x02 \x0307---\x03"
       empty:        "\x02%role%\x02 rolü için zorunlu vhost kalıbı ayarlanmamış."
       line:         "  Kalıp: \x0303%pattern%\x03"
       example:      "  Örnek: \x02rumuz\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <rol> SET [kalıp]"
-      short:         "Rol için zorunlu vhost kalıbını ayarlayın."
-      help:          "Rol için zorunlu vhost kalıbını ayarlar.\nBu rolle kimlik doğrulayan kullanıcılar zorunlu vhost'u alır,\nbu kişisel vhost'tan önceliklidir.\nKalıp temizlenmiş rumuzun sonuna eklenir.\nZorunlu vhost'u temizlemek için OFF kullanın veya argümanı belirtmeyin.\nBu komut yalnızca Root kullanıcıları içindir."
       done:         "\x0303✓\x03 \x02%role%\x02 rolü için zorunlu vhost kalıbı ayarlandı."
       cleared:      "\x0303✓\x03 \x02%role%\x02 rolünden zorunlu vhost kalıbı kaldırıldı."
       invalid:      "\x0304✗\x03 Geçersiz vhost kalıbı. Geçerli karakterler: a-z, A-Z, 0-9, - ve .. En az bir nokta olmalı, - veya . ile başlayamaz/bitemez veya .. içeremez."
@@ -191,7 +175,6 @@ kill:
   protected_root:   "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 kill'lenemez."
   protected_ircop:  "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 kill'lenemez."
   done:             "\x0303✓\x03 \x02%nickname%\x02 kullanıcısı kill'lendi (%reason%)."
-  permission_denied: "\x0304✗\x03 Erişim reddedildi. operserv.kill iznine ihtiyacınız var."
 
 # --- GLINE --------------------------------------------------------------------
 gline:
@@ -239,7 +222,6 @@ global:
   short:            "Tüm bağlı kullanıcılara genel bir mesaj gönderin."
   help:             "Tüm bağlı kullanıcılara bir mesaj gönderir.\n\nİlk argüman bir hizmet adıysa, mesaj mevcut hizmet kullanılarak gönderilir.\n\nHizmet değilse, belirtilen maskeyle geçici bir sözde istemci oluşturulur.\nMaske formatı: nick!ident@vhost\n- nick: IRC geçerli rumuz (harfler, []{}|\\`, rakamlar, harfle başlar)\n- ident: alfanümerik, . _ ~ - ile\n- vhost: geçerli host adı\n\nSözde istemciler için, rumuz bağlı veya kayıtlı olamaz.\nSözde istemci gönderme sırasında bağlı kalır ve otomatik olarak ayrılır\n(rumuz 24s boyunca SQLINE/QLINE ile engellenir).\n\nPRIVMSG özel mesaj olarak, NOTICE bildirim olarak gönderir.\nBu komut operserv.global iznini gerektirir."
   mask_invalid:    "\x0304✗\x03 Geçersiz maske formatı: %error%"
-  nick_service:    "\x0304✗\x03 Bir hizmet rumuzu kullanılamaz."
   nick_connected: "\x0304✗\x03 \x02%nickname%\x02 rumuzu şu anda bağlı."
   nick_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı."
   type_invalid:    "\x0304✗\x03 Mesaj türü PRIVMSG veya NOTICE olmalıdır."
@@ -254,22 +236,23 @@ raw:
   too_long:         "\x0304✗\x03 Satır çok uzun. Maksimum 510 karakter."
   not_connected:    "\x0304✗\x03 IRCd'ye bağlı değil."
   done:             "\x0303✓\x03 Ham satır gönderildi."
+  protocol:
+    syntax: "\x0304✗\x03 Etkin protokol RAW komutunun sözdizimini reddetti."
+    done: "\x0303✓\x03 Protokol tarafından yönetilen RAW komutu yürütüldü."
+    target: "\x0304✗\x03 Etkin protokol %target% hedefini reddetti."
+    unsupported: "\x0304✗\x03 Etkin protokol bu RAW komutunu desteklemiyor."
+    invalid_resource_type: "\x0304✗\x03 Bilinmeyen protokol kaynak türü: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Geçersiz protokol kaynağı: %resource%."
+    invalid_value: "\x0304✗\x03 Protokol kaynağı için geçersiz değer: %resource%."
+    error: "\x0304✗\x03 Etkin protokol RAW komutunu yürütemedi."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message:   "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. %reason%"
   actionWithDuration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
-  action_global:    "%operator%, %type% aracılığıyla %nickname% rumuzu ile %count% kullanıcıya GLOBAL komutunu çalıştırıyor. Mesaj: %message%"
+  action_global:    "%operator%, %type% aracılığıyla %target% rumuzu ile %count% kullanıcıya GLOBAL komutunu çalıştırıyor. Mesaj: %message%"
   prefix_reason:    "Sebep: %reason%"
   prefix_message:   "Mesaj: %reason%"
-
-# --- PERMISSIONS --------------------------------------------------------------
-permissions:
-  operserv.kill:    "Bir rumuzu ağdan ayırın (KILL)"
-  operserv.gline:   "Ağ genelindeki G-line'ları yönetin (GLINE)"
-  operserv.global:  "Tüm kullanıcılara genel mesaj gönderin (GLOBAL)"
-  operserv.raw:     "IRCd'ye ham protokol satırları gönderin (RAW)"
-  operserv.motd:    "Bağlantı MOTD mesajlarını yönetin (MOTD)"
 
 # --- MOTD ----------------------------------------------------------------------
 motd:

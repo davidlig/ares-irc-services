@@ -41,6 +41,7 @@ verify:
   short:            "Berretsi zure posta elektronikoko helbidea eta aktibatu zure ezizena."
   help:             "Zure posta elektronikora bidalitako tokena egiaztatuz erregistroa osatzen du.\nTokenak ordubeteko balioa du erregistro momentutik."
   success:          "\x0303✔\x03 \x02%nickname%\x02 ezizena arrakastaz erregistratu da eta orain identifikatuta zaude."
+  success_native:   "\x0303✔\x03 \x02%nickname%\x02 ezizena behar bezala erregistratu da. Erabili behean agertzen den jatorrizko autentifikazioa."
   invalid_token:    "\x0304✗\x03 Tokena baliogabea da edo iraungi da. Erabili \x0303/msg %bot% REGISTER\x03 berriro hasteko."
   no_pending:       "\x0304✗\x03 Ez duzu egiaztatzeko zain dagoen erregistrorik."
 
@@ -63,7 +64,6 @@ recover:
   pending:          "\x0304✗\x03 \x02%nickname%\x02 ezizenak posta elektronikoaren egiaztapena zain du."
   suspended:        "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago. Arrazoia: %reason%"
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erabili."
-  pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ezabatzeko zain dago eta ezin da erabili."
   no_email:         "\x0304✗\x03 Ez dago posta elektronikorik ezarrita \x02%nickname%\x02 ezizenarentzat. Berreskurapena ez dago erabilgarri."
   throttled:        "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar duzu beste berreskuratze posta elektroniko bat eskatu aurretik."
   invalid_token:    "\x0304✗\x03 Tokena baliogabea da edo iraungi da. Eskatu berri bat honekin \x0303RECOVER %nickname%\x03."
@@ -75,6 +75,10 @@ identify:
   syntax:           "IDENTIFY <ezizena> <pasahitza>"
   short:            "Identifikatu zeure burua ezizen baten jabe gisa."
   help:             "Zure saioa %nickserv% zerbitzuarekin autentikatzen du zure ezizena eta pasahitza erabiliz.\nIdentifikazio arrakastatsu baten ondoren \x02+r\x02 modu erregistratua jasoko duzu\neta, gonbidatu ezizen bat erabiltzen ari bazinen, zure ezizen erregistratua berreskuratuko da."
+  native_syntax:    "/NICK <ezizena>:<pasahitza> | /NICK <ezizena>!<pasahitza>"
+  native_short:     "Erakutsi ezizenaren jatorrizko autentifikazio-sintaxia."
+  native_help:      "Protokolo honek kontuak ezizen-aldaketen bidez autentifikatzen ditu.\nErabili /NICK <ezizena>:<pasahitza> edo, ezizena hartuta badago, /NICK <ezizena>!<pasahitza>."
+  native_authentication: "\x0307ℹ\x03 Protokolo honek autentifikazioa ezizen-aldaketen bidez kudeatzen du. Erabili \x0303/NICK <ezizena>:<pasahitza>\x03 edo, ezizena hartuta badago, \x0303/NICK <ezizena>!<pasahitza>\x03."
   success:          "\x0303✔\x03 Orain \x02%nickname%\x02 gisa identifikatuta zaude."
   already_identified: "\x0307ℹ\x03 Jada \x02%nickname%\x02 gisa identifikatuta zaude."
   not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
@@ -92,7 +96,7 @@ status:
   syntax:           "STATUS <ezizena>"
   short:            "Erakutsi ezizen baten erregistro egoera."
   help:             "Ezizen baten uneko egoera erakusten du: erregistratua, egiaztapena zain,\netenda, edo debekatua."
-  header:           "\x02\x0307%nickname%\x03 ezizenaren egoera:\x02"
+  header:           "\x02\x0307%nickname%\x03 ezizenaren egoera\x02"
   unregistered:     "  Egoera          : Erregistratu gabe"
   not_registered_offline: "  Egoera          : \x0315Erregistratu gabe\x03"
   pending:          "  Egoera          : \x0307Egiaztapena zain\x03"
@@ -118,13 +122,12 @@ info:
   help:             "Ezizen baten erregistro xehetasunak erakusten ditu: erregistro data,\nkonexio egoera, azken irteera mezua, eta posta elektronikoko helbidea.\nPosta jabeak identifikatuta daudenean soilik ikus dezake.\nPRIVATE ON dagoenean jabeak eta IRC Operadoreek soilik\nikus dezakete informazioa."
   not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   private:          "\x0304✗\x03 \x02%nickname%\x02 ezizenaren informazioa pribatua da."
-  header:           "\x02\x0307%nickname%\x03 ezizenaren informazioa:\x02"
+  header:           "\x02\x0307%nickname%\x03 ezizenaren informazioa\x02"
   status:           "  \x0314Egoera\x03             : %status%"
   status_registered:  "\x0303Erregistratua\x03"
   status_suspended:   "\x0304Etenda\x03"
   status_forbidden:   "\x0304Debekatua\x03"
   status_pending_deletion: "\x0307Ezabatzearen zain\x03"
-  status_pending_deletion_at:  "  \x0314Ezabatuta\x03          : %date%"
   reason:           "  \x0314Arrazoia\x03           : %reason%"
   suspended_until:  "  \x0314Amaiera\x03            : %date%"
   suspended_permanent: "  \x0314Amaiera\x03            : Iraunkorra"
@@ -198,9 +201,9 @@ set:
     off:            "\x0303✔\x03 Zerbitzuen mezuak orain \x02NOTICE\x02 gisa bidaliko dira."
 
   vhost:
-    syntax:         "SET VHOST <vhost-a>"
+    syntax:         "SET VHOST [vhost-a]"
     short:          "Ezarri edo garbitu zure ostalari birtual pertsonalizatua (erakutsitako ostalari izena)."
-    help:           "Identifikatuta zaudenean besteek ikusten duten ostalari izen pertsonalizatu bat ezartzen du.\nErabili \x02SET VHOST OFF\x02 garbitzeko. Letrak (a-z, A-Z), digituak, marra eta puntua soilik;\nbloke baten hasieran/amaieran marra edo punturik ez; gehienez 48 karaktere. Ezizen bakoitzeko bakarra."
+    help:           "Identifikatuta zaudenean besteek ikusten duten ostalari izen pertsonalizatu bat ezartzen du.\nErabili \x02SET VHOST\x02 baliorik gabe garbitzeko. Letrak (a-z, A-Z), digituak, marra eta puntua soilik;\nbloke baten hasieran/amaieran marra edo punturik ez; gehienez 48 karaktere. Ezizen bakoitzeko bakarra."
     success:        "\x0303✔\x03 Zure ostalari birtuala \x02%vhost%\x02 gisa ezarri da."
     cleared:        "\x0303✔\x03 Zure ostalari birtuala garbitu da."
     invalid:        "\x0304✗\x03 Vhost baliogabea. Letrak, digituak, marra eta puntua soilik (ez blokearen hasieran/amaieran); gehienez 48 karaktere."
@@ -225,57 +228,42 @@ saset:
     Sintaxia: SASET <ezizen> <aukera> <balio>
     Adibidea: SASET Erabiltzaile PASSWORD pasahitzberria
   unknown_option:   "\x0304✗\x03 Aukera ezezaguna \x02%option%\x02. Aukera erabilgarriak: %options%."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   cannot_modify_oper: "\x0304✗\x03 Ezin da IRC Operadore baten ezizena aldatu."
 
   password:
     syntax:         "SASET <ezizen> PASSWORD <pasahitz_berria>"
     short:          "Ezizen baten pasahitza aldatu."
     help:           "Beste ezizen baten pasahitza aldatzen du.\nAldaketa berehalakoa da.\n\nSintaxia: SASET <ezizen> PASSWORD <pasahitz_berria>\nAdibidea: SASET Erabiltzaile PASSWORD pasahitzberria123"
-    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en pasahitza eguneratu da."
 
   email:
     syntax:         "SASET <ezizen> EMAIL <posta_berria>"
     short:          "Ezizen baten posta elektronikoa aldatu."
     help:           "Beste ezizen baten posta elektronikoa aldatzen du.\nEz da berrespenik bidaltzen—aldaketa berehalakoa da.\n\nSintaxia: SASET <ezizen> EMAIL <posta_berria>\nAdibidea: SASET Erabiltzaile EMAIL erabiltzaile@adibidea.com"
-    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en posta \x02%email%\x02(e)ra eguneratu da."
 
   language:
     syntax:         "SASET <ezizen> LANGUAGE <kodea>"
     short:          "Ezizen baten hizkuntza aldatu."
     help:           "Beste ezizen baten hizkuntza aldatzen du.\nHizkuntza erabilgarriak: en (ingelesa), es (espainiera).\n\nSintaxia: SASET <ezizen> LANGUAGE <kodea>\nAdibidea: SASET Erabiltzaile LANGUAGE eu"
-    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en hizkuntza \x02%language%\x02(e)ra aldatu da."
 
   timezone:
     syntax:         "SASET <ezizen> TIMEZONE <ordu_zona|OFF>"
     short:          "Ezizen baten ordu-zona aldatu."
     help:           "Beste ezizen baten ordu-zona ezartzen edo garbitzen du.\nErabili OFF garbitzeko.\n\nSintaxia: SASET <ezizen> TIMEZONE <ordu_zona>\nAdibidea: SASET Erabiltzaile TIMEZONE Europe/Madrid"
-    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ordu-zona \x02%timezone%\x02 gisa ezarri da."
-    cleared:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ordu-zona garbitu da."
-    invalid:        "\x0304✗\x03 Ordu-zona baliogabea \x02%timezone%\x02."
 
   private:
     syntax:         "SASET <ezizen> PRIVATE {ON|OFF}"
     short:          "Ezizen baten pribatutasuna aldatu."
     help:           "Beste ezizen baten informazioaren pribatutasuna gaitu edo desgaitu.\n\nSintaxia: SASET <ezizen> PRIVATE {ON|OFF}\nAdibidea: SASET Erabiltzaile PRIVATE ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02-(r)en informazioa orain \x02pribatua\x02 da."
-    off:            "\x0303✔\x03 \x02%nickname%\x02-(r)en informazioa orain \x02publikoa\x02 da."
 
   msg:
     syntax:         "SASET <ezizen> MSG {ON|OFF}"
     short:          "Ezizen baten mezuen hobespena aldatu."
     help:           "Beste ezizen batek erantzunak PRIVMSG (ON) edo NOTICE (OFF) gisa jasoko dituen ezartzen du.\n\nSintaxia: SASET <ezizen> MSG {ON|OFF}\nAdibidea: SASET Erabiltzaile MSG ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02-k orain mezuak \x02PRIVMSG\x02 gisa jasoko ditu."
-    off:            "\x0303✔\x03 \x02%nickname%\x02-k orain mezuak \x02NOTICE\x02 gisa jasoko ditu."
 
   vhost:
-    syntax:         "SASET <ezizen> VHOST <vhost|OFF>"
+    syntax:         "SASET <ezizen> VHOST [vhost]"
     short:          "Ezizen baten ostalari birtuala aldatu."
-    help:           "Beste ezizen baten ostalari birtuala ezartzen edo garbitzen du.\nErabili OFF garbitzeko.\n\nSintaxia: SASET <ezizen> VHOST <vhost>\nAdibidea: SASET Erabiltzaile VHOST erabiltzaileak.adibidea.com"
-    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ostalari birtuala \x02%vhost%\x02 gisa ezarri da."
-    cleared:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ostalari birtuala garbitu da."
-    invalid:        "\x0304✗\x03 Vhost baliogabea \x02%nickname%\x02-(r)entzat."
-    taken:          "\x0304✗\x03 Vhost hori jada beste ezizen batek erabiltzen du."
+    help:           "Beste ezizen baten ostalari birtuala ezartzen edo garbitzen du.\nErabili \x02SASET <ezizen> VHOST\x02 baliorik gabe garbitzeko.\n\nSintaxia: SASET <ezizen> VHOST [vhost]\nAdibidea: SASET Erabiltzaile VHOST erabiltzaileak.adibidea.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -291,7 +279,6 @@ help:
   options_header:   "\x02\x0314Aukerak:\x03\x0F"
   general_footer:   "Erabili \x0303/msg %bot% HELP <komandoa>\x03 informazio gehiagorako."
   set_sub_footer:   "Erabili \x0303/msg %bot% HELP %command% <aukera>\x03 informazio gehiagorako."
-  command_header:   "\x02%command%(r)en laguntza:\x02"
   syntax_label:     "\x0307Sintaxia:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 Ez dago laguntzarik \x02%command%\x02 komandoarentzat."
@@ -323,19 +310,6 @@ userip:
     Adibidea: USERIP ErabiltzaileBat
   not_online:       "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
   result:           "\x0307ℹ\x03 Ezizena: \x02%nickname%\x02 | IPa: \x0307%ip%\x03 | Ostalaria: \x0307%host%\x03"
-
-permissions:
-  nickserv.userip: "Ikusi ezizen baten benetako IPa/ostalari izena (USERIP)"
-  nickserv.suspend: "Etten du edo etenaldia kendu ezizen bati (SUSPEND/UNSUSPEND)"
-  nickserv.rename: "Behartu konektatutako ezizen baten izen aldaketa ausazko batera (RENAME)"
-  nickserv.drop: "Ezabatu erregistratutako ezizen bat (DROP)"
-  nickserv.drop.force: "Berreskuragarria den ezizen baten ezabaketa behin betiko behartu (DROP FORCE)"
-  nickserv.restore: "Ezabatzearen zain dagoen ezizena berreskuratu (RESTORE)"
-  nickserv.forbid: "Debekatu edo des-debekatu ezizen bat (FORBID/UNFORBID)"
-  nickserv.forbidvhost: "Debekatu edo baimendu vhost ereduak (FORBIDVHOST)"
-  nickserv.saset: "Aldatu beste ezizen baten ezarpenak (SASET)"
-  nickserv.noexpire: "Ezarri edo kendu iraungitze babesa ezizen batentzat (NOEXPIRE)"
-  nickserv.history: "Ikusi eta kudeatu ezizenaren ekintza historia (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

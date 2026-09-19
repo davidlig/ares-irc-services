@@ -1,0 +1,79 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\NickServ\Adapter\Out\InMemory;
+
+use App\NickServ\Application\Port\In\IdentifiedSessionQuery;
+use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use Psr\Log\LoggerInterface;
+
+use function count;
+
+/**
+ * In-memory registry that tracks which registered nickname each connected
+ * user (identified by their UID) has authenticated as.
+ *
+ * Populated by IdentifyCommand and RegisterCommand on successful auth.
+ * Consumed by NickProtectionSubscriber when a user disconnects (QUIT) so
+ * that the correct registered account is updated even if the user had
+ * changed to a different nick (e.g. 'david') before quitting.
+ */
+final class IdentifiedSessionRegistry implements IdentifiedSessionQuery, IdentifiedSessionTracker
+{
+    /** @var array<string, string> uid → registered nick */
+    private array $sessions;
+
+    public function __construct(
+        private readonly ?LoggerInterface $logger = null,
+    ) {
+        $this->sessions = [];
+    }
+
+    public function register(string $uid, string $registeredNick): void
+    {
+        $this->sessions[$uid] = $registeredNick;
+        $this->logger?->debug('IdentifiedSessionRegistry: registered session', ['uid' => $uid, 'nick' => $registeredNick, 'total' => count($this->sessions)]);
+    }
+
+    /** Returns the registered nick for the UID, or null if not tracked. */
+    public function findNick(string $uid): ?string
+    {
+        return $this->sessions[$uid] ?? null;
+    }
+
+    /** Returns the UID for a registered nick, or null if not identified. */
+    public function findUidByNick(string $registeredNick): ?string
+    {
+        $lowerNick = strtolower($registeredNick);
+        $this->logger?->debug('IdentifiedSessionRegistry: searching for nick', ['search' => $registeredNick, 'total' => count($this->sessions)]);
+
+        return array_find_key($this->sessions, static fn ($nick) => strtolower($nick) === $lowerNick);
+    }
+
+    /** Removes the UID entry (called on quit to free memory). */
+    public function remove(string $uid): void
+    {
+        unset($this->sessions[$uid]);
+    }
+
+    /**
+     * Removes sessions whose UID is no longer connected.
+     * Returns the number of sessions removed. Used by maintenance to free memory.
+     *
+     * @param callable(string): bool $isConnected
+     */
+    public function pruneDisconnected(callable $isConnected): int
+    {
+        $removed = 0;
+
+        foreach ($this->sessions as $uid => $nick) {
+            if (!$isConnected($uid)) {
+                unset($this->sessions[$uid]);
+                ++$removed;
+            }
+        }
+
+        return $removed;
+    }
+}

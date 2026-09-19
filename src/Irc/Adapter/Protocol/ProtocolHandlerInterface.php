@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Irc\Adapter\Protocol;
+
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Domain\Server\ServerLink;
+
+interface ProtocolHandlerInterface
+{
+    /**
+     * Performs the server-to-server link handshake sequence.
+     */
+    public function performHandshake(ConnectionInterface $connection, ServerLink $link): void;
+
+    /**
+     * Handles an incoming message from the IRCD.
+     *
+     * Called for every parsed message in the read loop. Implementations must
+     * respond to mandatory protocol commands (e.g. PING → PONG, EOS → EOS).
+     */
+    public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void;
+
+    /**
+     * Parses a raw IRC line into an IRCMessage.
+     */
+    public function parseRawLine(string $rawLine): IRCMessage;
+
+    /**
+     * Serializes an IRCMessage back to a raw IRC line.
+     */
+    public function formatMessage(IRCMessage $message): string;
+
+    /**
+     * Returns a unique identifier for this protocol (e.g. 'unreal', 'inspircd').
+     */
+    public function getProtocolName(): string;
+
+    /**
+     * Returns the list of protocol capabilities supported.
+     *
+     * @return string[]
+     */
+    public function getSupportedCapabilities(): array;
+}

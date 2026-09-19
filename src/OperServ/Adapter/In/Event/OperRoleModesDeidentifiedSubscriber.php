@@ -1,0 +1,72 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\OperServ\Adapter\In\Event;
+
+use App\Irc\Application\Port\In\ActiveProtocolModuleHolderInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
+use App\OperServ\Domain\Repository\OperIrcopRepositoryInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+/**
+ * When a user loses their identified status, remove IRCOP user modes if they had a role assigned.
+ */
+final readonly class OperRoleModesDeidentifiedSubscriber implements EventSubscriberInterface
+{
+    public function __construct(
+        private OperIrcopRepositoryInterface $ircopRepository,
+        private ActiveProtocolModuleHolderInterface $connectionHolder,
+        private NetworkUserLookupPort $userLookup,
+        private LoggerInterface $logger,
+    ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            UserDeidentifiedEvent::class => ['onUserDeidentified', 0],
+        ];
+    }
+
+    public function onUserDeidentified(UserDeidentifiedEvent $event): void
+    {
+        $ircop = $this->ircopRepository->findByNickId($event->nickId);
+        if (null === $ircop) {
+            return;
+        }
+
+        $role = $ircop->getRole();
+        $modes = $role->getUserModes();
+
+        if (empty($modes)) {
+            return;
+        }
+
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            $this->logger->debug('OperRoleModesDeidentifiedSubscriber: no protocol module');
+
+            return;
+        }
+
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return;
+        }
+
+        $serviceActions = $module->getServiceActions();
+        $userModeSupport = $module->getUserModeSupport();
+
+        [$modeStr, $params] = $userModeSupport->buildModeParams('-', $modes);
+        $this->logger->info('OperRoleModesDeidentifiedSubscriber: removing modes on deidentify', [
+            'nickId' => $event->nickId,
+            'uid' => $event->uid,
+            'modes' => $modeStr,
+        ]);
+        $serviceActions->setUserMode($serverSid, $event->uid, $modeStr, $params);
+
+        $this->userLookup->applyModeChange($event->uid, '-' . implode('', $modes));
+    }
+}

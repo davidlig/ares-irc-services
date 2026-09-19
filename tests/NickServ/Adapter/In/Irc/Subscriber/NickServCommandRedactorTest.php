@@ -1,0 +1,193 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\NickServ\Adapter\In\Irc\Subscriber;
+
+use App\NickServ\Adapter\In\Irc\Subscriber\NickServCommandRedactor;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(NickServCommandRedactor::class)]
+final class NickServCommandRedactorTest extends TestCase
+{
+    #[Test]
+    public function redactNickServCommandMasksRegisterPassword(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('REGISTER mypassword user@example.com');
+
+        self::assertSame('REGISTER ****** ******', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandMasksIdentifyPassword(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('IDENTIFY NickServPassword123');
+
+        self::assertSame('IDENTIFY ******', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandMasksIdentifyWithNickAndPassword(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('IDENTIFY MyNick MyPassword');
+
+        self::assertSame('IDENTIFY MyNick ******', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandMasksSetPassword(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('SET PASSWORD newSecret123');
+
+        self::assertSame('SET PASSWORD ******', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandPreservesSetOtherOptions(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('SET EMAIL user@example.com');
+
+        self::assertSame('SET EMAIL ******', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandHandlesCaseInsensitiveRegister(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('register secretpass test@test.com');
+
+        self::assertSame('register ****** ******', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandHandlesCaseInsensitiveIdentify(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('identify MyNick MySecretPass');
+
+        self::assertSame('identify MyNick ******', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandHandlesCaseInsensitiveSetPassword(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('set password MyNewPassword');
+
+        self::assertSame('set password ******', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandPreservesOtherCommands(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('INFO NickName');
+
+        self::assertSame('INFO NickName', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandHandlesEmptyString(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('');
+
+        self::assertSame('', $result);
+    }
+
+    #[Test]
+    public function redactNickServCommandHandlesRegisterWithoutEmail(): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand('REGISTER mypassword');
+
+        self::assertSame('REGISTER ******', $result);
+    }
+
+    #[Test]
+    #[DataProvider('provideCommandsToRedact')]
+    public function redactNickServCommandCorrectlyRedacts(string $input, string $expected): void
+    {
+        $result = NickServCommandRedactor::redactNickServCommand($input);
+
+        self::assertSame($expected, $result);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function provideCommandsToRedact(): iterable
+    {
+        yield 'REGISTER with password and email' => [
+            'REGISTER password email@test.com',
+            'REGISTER ****** ******',
+        ];
+
+        yield 'IDENTIFY with one arg' => [
+            'IDENTIFY password',
+            'IDENTIFY ******',
+        ];
+
+        yield 'IDENTIFY with two args' => [
+            'IDENTIFY nickname password',
+            'IDENTIFY nickname ******',
+        ];
+
+        yield 'SET PASSWORD' => [
+            'SET PASSWORD newpass',
+            'SET PASSWORD ******',
+        ];
+
+        yield 'SET EMAIL' => [
+            'SET EMAIL test@test.com',
+            'SET EMAIL ******',
+        ];
+
+        yield 'INFO (no masking)' => [
+            'INFO TestUser',
+            'INFO TestUser',
+        ];
+
+        yield 'DROP (no masking)' => [
+            'DROP TestChannel',
+            'DROP TestChannel',
+        ];
+
+        yield 'REGISTER extra args' => [
+            'REGISTER password email@test.com extra',
+            'REGISTER ****** ****** extra',
+        ];
+
+        yield 'mixed case SET PASSWORD' => [
+            'Set Password SecretPass',
+            'Set Password ******',
+        ];
+
+        yield 'VERIFY token' => [
+            'VERIFY verification-token',
+            'VERIFY ******',
+        ];
+
+        yield 'RECOVER token' => [
+            'RECOVER TestNick recovery-token',
+            'RECOVER TestNick ******',
+        ];
+
+        yield 'RECOVER request without token' => [
+            'RECOVER TestNick',
+            'RECOVER TestNick',
+        ];
+
+        yield 'SET EMAIL confirmation token' => [
+            'SET EMAIL user@example.com confirmation-token',
+            'SET EMAIL ****** ******',
+        ];
+
+        yield 'SASET PASSWORD' => [
+            'SASET TestNick PASSWORD new-password',
+            'SASET TestNick PASSWORD ******',
+        ];
+
+        yield 'SASET EMAIL' => [
+            'SASET TestNick EMAIL user@example.com',
+            'SASET TestNick EMAIL ******',
+        ];
+    }
+}

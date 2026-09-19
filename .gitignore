@@ -9,6 +9,7 @@
 /vendor/
 ###< symfony/framework-bundle ###
 /.php-cs-fixer.cache
+/.deptrac.cache
 /.vscode/
 /docs/
 /backups/
@@ -23,9 +24,18 @@
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
-# Added by code-review-graph
-.code-review-graph/
 
-# Skill registry cache
+# Local agent and code intelligence caches
 .atl/
 /specs/
+/.codegraph/
+
+# Docker local overrides
+docker-compose.override.yml
+docker-compose.override.yaml
+compose.override.yml
+compose.override.yaml
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###

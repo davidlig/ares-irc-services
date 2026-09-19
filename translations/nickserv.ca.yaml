@@ -41,6 +41,7 @@ verify:
   short:            "Confirmar la vostra adreça de correu i activar el vostre sobrenom."
   help:             "Completa el registre verificant el token enviat al vostre correu.\nEl token és vàlid durant 1 hora des del moment del registre."
   success:          "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat amb èxit i ara esteu identificat."
+  success_native:   "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat correctament. Utilitzeu l'autenticació nativa que es mostra a continuació."
   invalid_token:    "\x0304✗\x03 El token no és vàlid o ha expirat. Utilitzeu \x0303/msg %bot% REGISTER\x03 per començar de nou."
   no_pending:       "\x0304✗\x03 No teniu cap registre pendent per verificar."
 
@@ -63,7 +64,6 @@ recover:
   pending:          "\x0304✗\x03 El sobrenom \x02%nickname%\x02 té una verificació de correu pendent."
   suspended:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Motiu: %reason%"
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot utilitzar en aquesta xarxa."
-  pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no es pot utilitzar."
   no_email:         "\x0304✗\x03 No hi ha cap correu establert per al sobrenom \x02%nickname%\x02. La recuperació no està disponible."
   throttled:        "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de sol·licitar un altre correu de recuperació."
   invalid_token:    "\x0304✗\x03 El token no és vàlid o ha expirat. Sol·liciteu-ne un de nou amb \x0303RECOVER %nickname%\x03."
@@ -75,6 +75,10 @@ identify:
   syntax:           "IDENTIFY <nickname> <password>"
   short:            "Identificar-vos com a propietari d'un sobrenom."
   help:             "Autentica la vostra sessió amb %nickserv% utilitzant el vostre sobrenom i contrasenya.\nDesprés d'una identificació amb èxit rebreu el mode registrat \x02+r\x02\ni, si estàveu utilitzant un sobrenom de convidat, es restaurarà el vostre sobrenom registrat."
+  native_syntax:    "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
+  native_short:     "Mostra la sintaxi d’autenticació nativa per canvi de sobrenom."
+  native_help:      "Aquest protocol autentica els comptes mitjançant canvis de sobrenom.\nUtilitzeu /NICK <nickname>:<password> o, si el sobrenom està ocupat, /NICK <nickname>!<password>."
+  native_authentication: "\x0307ℹ\x03 Aquest protocol gestiona l’autenticació mitjançant canvis de sobrenom. Utilitzeu \x0303/NICK <nickname>:<password>\x03 o, si el sobrenom està ocupat, \x0303/NICK <nickname>!<password>\x03."
   success:          "\x0303✔\x03 Ara esteu identificat com a \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Ja esteu identificat com a \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
@@ -92,7 +96,7 @@ status:
   syntax:           "STATUS <nickname>"
   short:            "Mostrar l'estat de registre d'un sobrenom."
   help:             "Mostra l'estat actual d'un sobrenom: registrat, verificació pendent,\nsuspès o prohibit."
-  header:           "\x02Estat del sobrenom \x0307%nickname%\x03:\x02"
+  header:           "\x02Estat del sobrenom \x0307%nickname%\x03\x02"
   unregistered:     "  Estat           : No registrat"
   not_registered_offline: "  Estat           : \x0315No registrat\x03"
   pending:          "  Estat           : \x0307Verificació pendent\x03"
@@ -118,13 +122,12 @@ info:
   help:             "Mostra els detalls de registre d'un sobrenom: data de registre, estat de\nconnexió, darrer missatge de sortida i adreça de correu. El correu només és\nvisible per al propietari quan està identificat. Amb PRIVATE ON només el\npropietari i els operadors d'IRC poden veure la informació."
   not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
   private:          "\x0304✗\x03 La informació del sobrenom \x02%nickname%\x02 és privada."
-  header:           "\x02Informació del sobrenom \x0307%nickname%\x03:\x02"
+  header:           "\x02Informació del sobrenom \x0307%nickname%\x03\x02"
   status:           "  \x0314Estat\x03                 : %status%"
   status_registered:  "\x0303Registrat\x03"
   status_suspended:   "\x0304Suspès\x03"
   status_forbidden:   "\x0304Prohibit\x03"
   status_pending_deletion: "\x0307Pendent d'eliminació\x03"
-  status_pending_deletion_at:  "  \x0314Eliminat\x03           : %date%"
   reason:           "  \x0314Motiu\x03                 : %reason%"
   suspended_until:  "  \x0314Acaba el\x03              : %date%"
   suspended_permanent: "  \x0314Acaba el\x03              : Permanent"
@@ -198,9 +201,9 @@ set:
     off:            "\x0303✔\x03 Els missatges del servei s'enviaran ara com a \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Establir o esborrar el vostre amfitrió virtual personalitzat (nom d'amfitrió mostrat)."
-    help:           "Estableix un nom d'amfitrió personalitzat que els altres veuen quan esteu identificat.\nUtilitzeu \x02SET VHOST OFF\x02 per esborrar-lo. Només lletres (a-z, A-Z), dígits, guionet i punt;\nsense guionet ni punt al principi/final de cap bloc; màx. 48 caràcters. Únic per sobrenom."
+    help:           "Estableix un nom d'amfitrió personalitzat que els altres veuen quan esteu identificat.\nExecuteu \x02SET VHOST\x02 sense cap valor per esborrar-lo. Només lletres (a-z, A-Z), dígits, guionet i punt;\nsense guionet ni punt al principi/final de cap bloc; màx. 48 caràcters. Únic per sobrenom."
     success:        "\x0303✔\x03 El vostre amfitrió virtual s'ha establert a \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 El vostre amfitrió virtual s'ha esborrat."
     invalid:        "\x0304✗\x03 Vhost no vàlid. Només lletres, dígits, guionet i punt (no al principi/final de bloc); màx. 48 caràcters."
@@ -225,57 +228,42 @@ saset:
     Sintaxi: SASET <sobrenom> <opció> <valor>
     Exemple: SASET Usuari PASSWORD contrasenyanova
   unknown_option:   "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Opcions disponibles: %options%."
-  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
   cannot_modify_oper: "\x0304✗\x03 No es pot modificar un sobrenom d'Operador d'IRC."
 
   password:
     syntax:         "SASET <sobrenom> PASSWORD <nova_contrasenya>"
     short:          "Canviar la contrasenya d'un sobrenom."
     help:           "Canvia la contrasenya d'un altre sobrenom.\nEl canvi és immediat.\n\nSintaxi: SASET <sobrenom> PASSWORD <nova_contrasenya>\nExemple: SASET Usuari PASSWORD contrasenyanova123"
-    success:        "\x0303✔\x03 La contrasenya de \x02%nickname%\x02 ha estat actualitzada."
 
   email:
     syntax:         "SASET <sobrenom> EMAIL <nou_correu>"
     short:          "Canviar el correu electrònic d'un sobrenom."
     help:           "Canvia el correu electrònic d'un altre sobrenom.\nNo s'envia cap confirmació—el canvi és immediat.\n\nSintaxi: SASET <sobrenom> EMAIL <nou_correu>\nExemple: SASET Usuari EMAIL usuari@exemple.com"
-    success:        "\x0303✔\x03 El correu de \x02%nickname%\x02 ha estat actualitzat a \x02%email%\x02."
 
   language:
     syntax:         "SASET <sobrenom> LANGUAGE <codi>"
     short:          "Canviar l'idioma d'un sobrenom."
     help:           "Canvia l'idioma d'un altre sobrenom.\nIdiomes disponibles: en (anglès), es (espanyol).\n\nSintaxi: SASET <sobrenom> LANGUAGE <codi>\nExemple: SASET Usuari LANGUAGE ca"
-    success:        "\x0303✔\x03 L'idioma de \x02%nickname%\x02 ha estat canviat a \x02%language%\x02."
 
   timezone:
     syntax:         "SASET <sobrenom> TIMEZONE <zona_horària|OFF>"
     short:          "Canviar la zona horària d'un sobrenom."
     help:           "Estableix o esborra la zona horària d'un altre sobrenom.\nUtilitzeu OFF per esborrar-la.\n\nSintaxi: SASET <sobrenom> TIMEZONE <zona_horària>\nExemple: SASET Usuari TIMEZONE Europe/Madrid"
-    success:        "\x0303✔\x03 La zona horària de \x02%nickname%\x02 ha estat establerta a \x02%timezone%\x02."
-    cleared:        "\x0303✔\x03 La zona horària de \x02%nickname%\x02 ha estat esborrada."
-    invalid:        "\x0304✗\x03 Zona horària no vàlida \x02%timezone%\x02."
 
   private:
     syntax:         "SASET <sobrenom> PRIVATE {ON|OFF}"
     short:          "Canviar la privadesa d'un sobrenom."
     help:           "Activa o desactiva la privadesa de la informació d'un altre sobrenom.\n\nSintaxi: SASET <sobrenom> PRIVATE {ON|OFF}\nExemple: SASET Usuari PRIVATE ON"
-    on:             "\x0303✔\x03 La informació de \x02%nickname%\x02 és ara \x02privada\x02."
-    off:            "\x0303✔\x03 La informació de \x02%nickname%\x02 és ara \x02pública\x02."
 
   msg:
     syntax:         "SASET <sobrenom> MSG {ON|OFF}"
     short:          "Canviar la preferència de missatges d'un sobrenom."
     help:           "Estableix si un altre sobrenom rep respostes com a PRIVMSG (ON) o NOTICE (OFF).\n\nSintaxi: SASET <sobrenom> MSG {ON|OFF}\nExemple: SASET Usuari MSG ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02 rebrà missatges com a \x02PRIVMSG\x02."
-    off:            "\x0303✔\x03 \x02%nickname%\x02 rebrà missatges com a \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <sobrenom> VHOST <vhost|OFF>"
+    syntax:         "SASET <sobrenom> VHOST [vhost]"
     short:          "Canviar l'amfitrió virtual d'un sobrenom."
-    help:           "Estableix o esborra l'amfitrió virtual d'un altre sobrenom.\nUtilitzeu OFF per esborrar-lo.\n\nSintaxi: SASET <sobrenom> VHOST <vhost>\nExemple: SASET Usuari VHOST usuaris.exemple.com"
-    success:        "\x0303✔\x03 L'amfitrió virtual de \x02%nickname%\x02 ha estat establert a \x02%vhost%\x02."
-    cleared:        "\x0303✔\x03 L'amfitrió virtual de \x02%nickname%\x02 ha estat esborrat."
-    invalid:        "\x0304✗\x03 Amfitrió virtual no vàlid per a \x02%nickname%\x02."
-    taken:          "\x0304✗\x03 Aquest vhost ja està en ús per un altre sobrenom."
+    help:           "Estableix o esborra l'amfitrió virtual d'un altre sobrenom.\nExecuteu \x02SASET <sobrenom> VHOST\x02 sense cap valor per esborrar-lo.\n\nSintaxi: SASET <sobrenom> VHOST [vhost]\nExemple: SASET Usuari VHOST usuaris.exemple.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -291,7 +279,6 @@ help:
   options_header:   "\x02\x0314Opcions:\x03\x0F"
   general_footer:   "Utilitzeu \x0303/msg %bot% HELP <command>\x03 per a més informació."
   set_sub_footer:   "Utilitzeu \x0303/msg %bot% HELP %command% <option>\x03 per a més informació."
-  command_header:   "\x02Ajuda per a %command%:\x02"
   syntax_label:     "\x0307Sintaxi:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 No hi ha ajuda disponible per a \x02%command%\x02."
@@ -323,19 +310,6 @@ userip:
     Exemple: USERIP SomeUser
   not_online:       "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
   result:           "\x0307ℹ\x03 Sobrenom: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Amfitrió: \x0307%host%\x03"
-
-permissions:
-  nickserv.userip: "Veure l'adreça IP/nom d'amfitrió real d'un sobrenom (USERIP)"
-  nickserv.suspend: "Suspendre o treure la suspensió d'un sobrenom (SUSPEND/UNSUSPEND)"
-  nickserv.rename: "Forçar el canvi de nom d'un sobrenom connectat a un sobrenom aleatori (RENAME)"
-  nickserv.drop: "Eliminar un sobrenom registrat (DROP)"
-  nickserv.drop.force: "Forçar l'eliminació permanent d'un sobrenom en període de gràcia (DROP FORCE)"
-  nickserv.restore: "Restaurar un sobrenom pendent d'eliminació (RESTORE)"
-  nickserv.forbid: "Prohibir o treure la prohibició d'un sobrenom (FORBID/UNFORBID)"
-  nickserv.forbidvhost: "Prohibir o permetre patrons de vhost (FORBIDVHOST)"
-  nickserv.saset: "Modificar la configuració d'un altre sobrenom (SASET)"
-  nickserv.noexpire: "Establir o treure la protecció contra l'expiració d'un sobrenom (NOEXPIRE)"
-  nickserv.history: "Veure i gestionar l'historial d'accions d'un sobrenom (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

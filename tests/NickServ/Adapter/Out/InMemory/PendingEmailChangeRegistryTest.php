@@ -1,0 +1,158 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\NickServ\Adapter\Out\InMemory;
+
+use App\NickServ\Adapter\Out\InMemory\PendingEmailChangeRegistry;
+use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+
+#[CoversClass(PendingEmailChangeRegistry::class)]
+final class PendingEmailChangeRegistryTest extends TestCase
+{
+    #[Test]
+    public function hasReturnsFalseInitially(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        self::assertFalse($registry->has('nick'));
+    }
+
+    #[Test]
+    public function storeAndHasAndConsume(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('Nick', 'new@example.com', 'token123', $this->now());
+        self::assertTrue($registry->has('nick'));
+        self::assertTrue($registry->consume('Nick', 'new@example.com', 'token123', $this->now()));
+        self::assertFalse($registry->has('nick'));
+    }
+
+    #[Test]
+    public function consumeReturnsFalseWhenNoEntry(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        self::assertFalse($registry->consume('unknown', 'a@b.com', 't', $this->now()));
+    }
+
+    #[Test]
+    public function consumeReturnsFalseWhenTokenMismatch(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('Nick', 'new@example.com', 'token123', $this->now());
+        self::assertFalse($registry->consume('Nick', 'new@example.com', 'wrong', $this->now()));
+        self::assertTrue($registry->has('nick'));
+    }
+
+    #[Test]
+    public function consumeReturnsFalseWhenEmailMismatch(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('Nick', 'new@example.com', 'token123', $this->now());
+        self::assertFalse($registry->consume('Nick', 'other@example.com', 'token123', $this->now()));
+    }
+
+    #[Test]
+    public function removeDeletesEntry(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('Nick', 'a@b.com', 't', $this->now());
+        $registry->remove('nick');
+        self::assertFalse($registry->has('nick'));
+    }
+
+    #[Test]
+    public function pruneExpiredReturnsCountOfRemoved(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('Nick', 'a@b.com', 't', $this->now());
+        $removed = $registry->pruneExpired($this->now());
+        self::assertGreaterThanOrEqual(0, $removed);
+    }
+
+    #[Test]
+    public function consumeIsCaseInsensitiveForEmail(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('Nick', 'new@example.com', 'token123', $this->now());
+        self::assertTrue($registry->consume('Nick', 'NEW@EXAMPLE.COM', 'token123', $this->now()));
+        self::assertFalse($registry->has('nick'));
+    }
+
+    #[Test]
+    public function hasIsCaseInsensitive(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('TestNick', 'a@b.com', 't', $this->now());
+        self::assertTrue($registry->has('testnick'));
+        self::assertTrue($registry->has('TESTNICK'));
+    }
+
+    #[Test]
+    public function removeIsCaseInsensitive(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('TestNick', 'a@b.com', 't', $this->now());
+        $registry->remove('TESTNICK');
+        self::assertFalse($registry->has('testnick'));
+    }
+
+    #[Test]
+    public function consumeRemovesEntryOnSuccess(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('Nick', 'new@example.com', 'token123', $this->now());
+        self::assertTrue($registry->consume('Nick', 'new@example.com', 'token123', $this->now()));
+        self::assertFalse($registry->has('nick'));
+        self::assertFalse($registry->consume('Nick', 'new@example.com', 'token123', $this->now()));
+    }
+
+    #[Test]
+    public function consumeReturnsFalseAndRemovesExpiredEntry(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('Nick', 'new@example.com', 'token123', $this->now());
+
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('entries');
+
+        /** @var array<string, array{newEmail: string, token: string, expiresAt: DateTimeImmutable}> $entries */
+        $entries = $property->getValue($registry);
+        $entries['nick']['expiresAt'] = $this->now()->modify('-1 hour');
+        $property->setValue($registry, $entries);
+
+        self::assertFalse($registry->consume('Nick', 'new@example.com', 'token123', $this->now()));
+        self::assertFalse($registry->has('nick'));
+    }
+
+    #[Test]
+    public function pruneExpiredRemovesExpiredEntries(): void
+    {
+        $registry = new PendingEmailChangeRegistry();
+        $registry->store('Nick1', 'a@b.com', 'token1', $this->now());
+
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('entries');
+
+        /** @var array<string, array{newEmail: string, token: string, expiresAt: DateTimeImmutable}> $entries */
+        $entries = $property->getValue($registry);
+        $entries['nick1']['expiresAt'] = $this->now()->modify('-1 hour');
+        $property->setValue($registry, $entries);
+
+        $registry->store('Nick2', 'c@d.com', 'token2', $this->now());
+
+        $removed = $registry->pruneExpired($this->now());
+
+        self::assertSame(1, $removed);
+        self::assertFalse($registry->has('nick1'));
+        self::assertTrue($registry->has('nick2'));
+    }
+
+    private function now(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('2026-09-06 12:00:00 UTC');
+    }
+}

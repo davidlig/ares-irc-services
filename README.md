@@ -38,9 +38,19 @@ A modular, protocol-agnostic IRC services daemon built with **PHP 8.5**, **Symfo
 | IRCd | Driver | S2S protocol | SID format | Auth | Plain/TLS ports (typical) |
 |------|--------|-------------|------------|------|---------------------------|
 | [UnrealIRCd](https://www.unrealircd.org/) 6.2.x | `unreal` | 6.2.x | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
+| [UnrealIRCd-UDB](https://github.com/davidlig/unrealircd-udb) 4.0.0 / UnrealIRCd 6.2.x | `unrealudb` | UDB 4 at pinned revision `ac3b915` | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
 | [InspIRCd](https://www.inspircd.org/) 4.10.x | `inspircd` | SpanTree v4 (1206) | 3-char alphanum (`0A0`) | Plaintext (no CHALLENGE) | 7000 / 7001 |
 
 The port you configure in `.env.local` (`IRC_IRCD_PORT`) must match whatever you set in your IRCd's `link` / `<link>` block.
+
+With the `unrealudb` driver, services are the **sole UDB authority**: all six blocks (`N/C/I/S/L/K`) live in the authoritative services store and are served to the IRCd. The driver targets only the pinned current contract: SHA-256 manifests, snapshot watermarks, epoch-scoped sequenced mutations, `MANIFEST` anti-entropy and `EXP` compare-and-delete. `N/C/K` blocks are always rebuilt from the services SQL projections while `I/S/L` remain adapter-owned data; administrative `RAW DB *` rejects `DRP`, and stale `EXP` requests are no-ops. The UDB `C::<channel>::access::<nick>` container is the module's join-authorization allowlist (key presence plus `+r`), not a rank store, so Ares never projects ChanServ ACCESS entries into it: access levels stay in SQL and channels are enforced by ChanServ policies. Existing `access` records written by older versions are not purged automatically; rebuild block `C` with the UDB takeover flow (or delete the `access` container) after upgrading.
+
+The driver supports a closed UnrealIRCd mode profile: the core and bundled
+`modules.default.conf` handlers encoded by `UdbSchema`. Custom mode modules,
+or blacklisting one of those handlers, are unsupported because the UDB module
+validates modes against the live UnrealIRCd registry while Ares validates them
+statically. Extending the profile requires an explicit discovery/configuration
+design rather than adding mode letters ad hoc.
 
 ---
 
@@ -160,7 +170,7 @@ All variables live in `.env.local`. Required variables are marked with ⚠.
 | `IRC_IRCD_HOST` | `127.0.0.1` | IRCd hostname or IP |
 | `IRC_IRCD_PORT` | `7000` | IRCd server-link listener port |
 | `IRC_LINK_PASSWORD` | `pass` | ⚠ Shared link password |
-| `IRC_PROTOCOL` | `unreal` | ⚠ `unreal` or `inspircd` |
+| `IRC_PROTOCOL` | `unreal` | ⚠ `unreal`, `unrealudb`, or `inspircd` |
 | `IRC_USE_TLS` | `false` | `true` to wrap the link in TLS |
 | `IRC_SERVER_SID` | `002` | ⚠ 3-digit numeric (Unreal) or 3-char alphanum (InspIRCd) |
 
@@ -259,6 +269,8 @@ DATABASE_URL="postgresql://user:pass@host:5432/db?serverVersion=16&charset=utf8"
 | `OPERSERV_MAX_GLINES` | `1000` | Max active G-lines |
 | `IRCOPS_DEBUG_CHANNEL` | _(commented out)_ | Channel for IRCop debug messages (e.g. `#opers`) |
 
+When a service bot nickname changes, restart Ares after applying database migrations. Ares reserves the configured names again. The `unrealudb` driver releases obsolete Ares reservations only when its live UDB record still has the exact reason `Reserved for network services`. For `unreal` and `inspircd`, Ares retains historical names in its inventory but cannot verify whether a Q-line or SQLINE still belongs to it; it therefore never removes obsolete wire reservations automatically. Inspect the IRCd's current ban before removing it manually, particularly if an operator may have replaced it. Once a historical line is confirmed absent or operator-owned, its row in `service_nick_reservations` may be removed to stop the warning; do not remove the operator's ban. Reservations created before tracking was added are likewise left untouched.
+
 ### Maintenance
 
 | Variable | Default | Description |
@@ -343,7 +355,7 @@ Ensure the `spanningtree` module is loaded.
 | `SET TIMEZONE` | `<tz>` | Set your timezone |
 | `SET PRIVATE` | `<on\|off>` | Hide registration in STATUS |
 | `SET MSG` | `<on\|off>` | Set NOTICE vs PRIVMSG delivery |
-| `SET VHOST` | `<vhost>` | Set a custom virtual host |
+| `SET VHOST` | `[vhost]` | Set or clear a custom virtual host |
 | `SASET` | `<nick> <option> <value>` | Admin SET on any nick |
 | `DROP` | `<nick>` | Drop a nickname registration |
 | `FORBID` | `<nick>` | Forbid a nickname from registration |
@@ -422,6 +434,7 @@ Ensure the `spanningtree` module is loaded.
 | `ROLE PERMS` | `<role> {LIST\|ADD\|DEL\|CLEAR} [permission\|ALL]` | Manage role permissions |
 | `ROLE MODES` | `<role> {VIEW\|SET} [modes]` | Manage IRCOP user modes for a role |
 | `ROLE VHOST` | `<role> {VIEW\|SET} [pattern]` | Manage forced vhost pattern for a role |
+| `ROLE OPERCLASS` | `<role> {VIEW\|SET} [operclass]` | Manage the Unreal operclass for a role |
 | `GLINE` | `ADD\|DEL\|LIST <mask> [duration] [reason]` | Manage G-lines |
 | `MOTD ADD` | `<bot> <type> <message> [expiry]` | Add a MOTD message |
 | `MOTD DEL` | `<bot> <id>` | Delete a MOTD message |
@@ -443,8 +456,12 @@ php bin/console irc:connect
 
 # Override individual values:
 php bin/console irc:connect services.example.com irc.example.com 6697 secret \
-    "Ares IRC Services" --protocol=unreal --tls
+    "Ares IRC Services" --tls
 ```
+
+The protocol adapter is selected once at startup through `IRC_PROTOCOL`; it cannot be switched per
+command invocation. This keeps protocol composition centralized and prevents mixing collaborators
+from different IRCd adapters in one daemon session.
 
 ### Startup flow
 
@@ -462,7 +479,6 @@ php bin/console irc:connect services.example.com irc.example.com 6697 secret \
 | `port` | `IRC_IRCD_PORT` | IRCd server-link port |
 | `password` | `IRC_LINK_PASSWORD` | Link password |
 | `description` | `IRC_DESCRIPTION` | Text in `/MAP` and `/LINKS` |
-| `--protocol` / `-p` | `IRC_PROTOCOL` | `unreal` or `inspircd` |
 | `--tls` | `IRC_USE_TLS` | Wrap connection in TLS |
 
 ---
@@ -522,6 +538,21 @@ make up             # build + start container
 make logs           # follow logs
 ```
 
+For large networks, Docker defaults PHP's `memory_limit` to 512 MiB for each CLI invocation and
+caps the container at 2 GiB. Total process memory can exceed PHP's limit. Set
+`PHP_MEMORY_LIMIT` and `ARES_CONTAINER_MEMORY_LIMIT` in the host shell or the
+Compose environment before running `make up`, for example:
+
+```bash
+PHP_MEMORY_LIMIT=1G ARES_CONTAINER_MEMORY_LIMIT=3g make up
+```
+
+These are Docker/Compose settings, not `.env.local` settings. Measure memory use under a
+representative load before choosing production limits. CLI OPcache is enabled, while JIT is
+disabled because this daemon spends much of its time on IRC, events, and database I/O.
+For large networks, use MySQL through `DATABASE_URL` instead of the default SQLite database;
+the Doctrine Messenger transport also uses that database.
+
 ### All `make` targets
 
 | Target | Description |
@@ -573,17 +604,13 @@ The container adds `host.docker.internal` → `host-gateway` in `extra_hosts`. U
 
 ## Testing & Development
 
-### Run tests
+### Run new or modified tests during development
 
 ```bash
-./vendor/bin/phpunit --no-coverage --display-all-issues
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/Path/Test1.php tests/Path/Test2.php
 ```
 
-### Check code coverage (100% required)
-
-```bash
-./scripts/check-coverage.sh 100
-```
+Run only the files being developed. The full suite is reserved for the final implementation gate.
 
 ### Code style (PHP-CS-Fixer)
 
@@ -598,25 +625,30 @@ composer cs-check   # check only
 php -l path/to/file.php                                 # syntax check
 php bin/console lint:container                           # DI validation
 php bin/console lint:yaml . --exclude vendor/ --parse-tags  # YAML lint
+composer phpstan                                        # PHPStan level max
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php  # format
-./vendor/bin/phpunit --no-coverage --display-all-issues   # tests
-./scripts/check-coverage.sh 100                          # coverage floor
+composer architecture                                   # Deptrac architecture boundaries
+./scripts/check-coverage.sh 100 --issues                 # tests + coverage floor (single run)
 ```
 
-Zero warnings, zero skipped, zero deprecated, zero incomplete required.
+Zero warnings, zero skipped, zero deprecated, zero incomplete required. Run `check-coverage.sh` only after the complete implementation; it runs the full PHPUnit suite WITH coverage exactly once. Do not run a standalone full suite immediately before or after it.
 
 ### Architecture
 
-The project follows **Clean Architecture** with **Domain-Driven Design**:
+The target architecture uses five bounded contexts with hexagonal layers inside each context:
 
 | Layer | Directory | Depends on | Imports |
 |-------|-----------|------------|---------|
-| Domain | `src/Domain/` | Nothing | Pure PHP |
-| Application | `src/Application/` | Domain | Domain |
-| Infrastructure | `src/Infrastructure/` | Domain + Application | Symfony, Doctrine |
-| UI | `src/UI/` | Application | Symfony Console |
+| Domain | `src/{Irc,NickServ,ChanServ,MemoServ,OperServ}/Domain/` | Same-context Domain, `Shared/Domain` | Pure PHP |
+| Application | `src/<Context>/Application/` | Same-context Domain/Application, Shared kernel | No framework or concrete adapter |
+| Adapter | `src/<Context>/Adapter/` | Own inner layers and public cross-context boundaries | External mechanisms |
+| Protocol | `src/Irc/Adapter/Protocol/{InspIRCd,UnrealStandalone,UnrealUdb}/` | Irc boundaries | Protocol-specific wire/runtime code |
+| Bootstrap | `src/Bootstrap/` | All composition boundaries | Framework/container wiring only |
+| Kernel | `src/Kernel.php` | Bootstrap | Framework entry point only |
 
-Read `.agents/architecture/README.md` for the full architecture guide.
+`composer architecture` enforces this graph with Deptrac. The gate accepts only the final bounded-context topology and its declared dependency boundaries.
+
+Read `AGENTS.md` and `.agents/architecture.md` for the full architecture contract.
 
 ---
 

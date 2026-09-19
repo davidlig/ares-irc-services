@@ -1,0 +1,518 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Irc\Adapter\In\Event;
+
+use App\Irc\Adapter\Event\MessageReceivedEvent;
+use App\Irc\Adapter\In\Event\CtcpHandler;
+use App\Irc\Adapter\In\Event\CtcpVersionResponder;
+use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SendCtcpPort;
+use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\SendNoticePort;
+use App\Irc\Application\Port\In\ServiceUidProviderInterface;
+use App\Irc\Application\Port\In\ServiceUidRegistry;
+use App\Irc\Application\Port\Out\ServiceUserPreferences;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+#[CoversClass(CtcpHandler::class)]
+final class CtcpHandlerTest extends TestCase
+{
+    private CtcpVersionResponder $versionResponder;
+
+    private function createTranslator(): TranslatorInterface
+    {
+        return new class implements TranslatorInterface {
+            /**
+             * @param array<string, mixed> $parameters
+             */
+            public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
+            {
+                if ('ctcp.version.tribute' === $id) {
+                    return "Para mi leal y eterno amigo,\nLlenaste mi casa de vida.";
+                }
+
+                return '';
+            }
+
+            public function getLocale(): string
+            {
+                return 'en';
+            }
+        };
+    }
+
+    private function createLanguageResolver(string $language = 'en'): ServiceUserPreferences
+    {
+        $preferences = $this->createStub(ServiceUserPreferences::class);
+        $preferences->method('languageFor')->willReturn($language);
+        $preferences->method('defaultLanguage')->willReturn($language);
+
+        return $preferences;
+    }
+
+    private function createSenderView(string $uid): SenderView
+    {
+        return new SenderView(
+            uid: $uid,
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example',
+            cloakedHost: 'cloak.example',
+            ipBase64: 'dGVzdA==',
+            isIdentified: false,
+            serverSid: '001',
+        );
+    }
+
+    protected function setUp(): void
+    {
+        $this->versionResponder = new CtcpVersionResponder(
+            $this->createTranslator(),
+            $this->createLanguageResolver(),
+            'v2.0.0-beta',
+        );
+    }
+
+    private function createUidRegistry(string $nickservUid = '002AAAAAA'): ServiceUidRegistry
+    {
+        $provider = new class('nickserv', 'NickServ', $nickservUid) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
+    }
+
+    private function createEmptyUidRegistry(): ServiceUidRegistry
+    {
+        return ServiceUidRegistry::fromIterable([]);
+    }
+
+    private function createUidRegistryWithUid(string $uid): ServiceUidRegistry
+    {
+        $provider = new class('nickserv', 'NickServ', $uid) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
+    }
+
+    #[Test]
+    public function getSubscribedEventsReturnsCorrectEvent(): void
+    {
+        $events = CtcpHandler::getSubscribedEvents();
+
+        self::assertArrayHasKey(MessageReceivedEvent::class, $events);
+        self::assertSame(['onMessage', 10], $events[MessageReceivedEvent::class]);
+    }
+
+    #[Test]
+    public function onMessageIgnoresNonPrivmsg(): void
+    {
+        $message = new IRCMessage(
+            command: 'NOTICE',
+            prefix: 'sender!user@host',
+            params: ['NickServ'],
+            trailing: "\x01VERSION\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp->expects(self::never())->method('sendCtcpReply');
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::never())->method('sendNotice');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+        );
+
+        $handler->onMessage($event);
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageRespondsToVersionViaSquery(): void
+    {
+        $senderUid = '001ABC';
+        $sender = $this->createSenderView($senderUid);
+        $message = new IRCMessage(
+            command: 'SQUERY',
+            prefix: $senderUid,
+            params: ['NickServ'],
+            trailing: "\x01VERSION\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with($senderUid)->willReturn($sender);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp
+            ->expects(self::once())
+            ->method('sendCtcpReply')
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.0.0-beta');
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice
+            ->expects(self::atLeastOnce())
+            ->method('sendMessage')
+            ->with('002AAAAAA', $senderUid, self::anything(), 'NOTICE');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+            userLookup: $userLookup,
+        );
+
+        $handler->onMessage($event);
+        self::assertTrue($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresEmptyTrailing(): void
+    {
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: 'sender!user@host',
+            params: ['NickServ'],
+            trailing: null,
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp->expects(self::never())->method('sendCtcpReply');
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::never())->method('sendNotice');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+        );
+
+        $handler->onMessage($event);
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresEmptyPrefix(): void
+    {
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: null,
+            params: ['NickServ'],
+            trailing: "\x01VERSION\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp->expects(self::never())->method('sendCtcpReply');
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::never())->method('sendNotice');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+        );
+
+        $handler->onMessage($event);
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresNonCtcpMessage(): void
+    {
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: 'sender!user@host',
+            params: ['NickServ'],
+            trailing: 'IDENTIFY password',
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp->expects(self::never())->method('sendCtcpReply');
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::never())->method('sendNotice');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+        );
+
+        $handler->onMessage($event);
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresOtherCtcpCommands(): void
+    {
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: 'sender!user@host',
+            params: ['NickServ'],
+            trailing: "\x01PING\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp->expects(self::never())->method('sendCtcpReply');
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::never())->method('sendNotice');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+        );
+
+        $handler->onMessage($event);
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresCtcpTime(): void
+    {
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: 'sender!user@host',
+            params: ['NickServ'],
+            trailing: "\x01TIME\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp->expects(self::never())->method('sendCtcpReply');
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::never())->method('sendNotice');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+        );
+
+        $handler->onMessage($event);
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageRespondsToCtcpVersionAndStopsPropagation(): void
+    {
+        $senderUid = '001ABC';
+        $sender = $this->createSenderView($senderUid);
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: $senderUid,
+            params: ['NickServ'],
+            trailing: "\x01VERSION\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with($senderUid)->willReturn($sender);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp
+            ->expects(self::once())
+            ->method('sendCtcpReply')
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.0.0-beta');
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice
+            ->expects(self::atLeastOnce())
+            ->method('sendMessage')
+            ->with('002AAAAAA', $senderUid, self::anything(), 'NOTICE');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+            userLookup: $userLookup,
+        );
+
+        $handler->onMessage($event);
+        self::assertTrue($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageRespondsToCtcpVersionLowercase(): void
+    {
+        $senderUid = '001ABC';
+        $sender = $this->createSenderView($senderUid);
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: $senderUid,
+            params: ['NickServ'],
+            trailing: "\x01version\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with($senderUid)->willReturn($sender);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp
+            ->expects(self::once())
+            ->method('sendCtcpReply')
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.0.0-beta');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            userLookup: $userLookup,
+        );
+
+        $handler->onMessage($event);
+        self::assertTrue($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageUsesDefaultLanguageWhenUserNotFound(): void
+    {
+        $senderUid = '001ABC';
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: $senderUid,
+            params: ['NickServ'],
+            trailing: "\x01VERSION\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with($senderUid)->willReturn(null);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp->expects(self::once())->method('sendCtcpReply')
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.0.0-beta');
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::atLeastOnce())->method('sendMessage')
+            ->with('002AAAAAA', $senderUid, self::anything(), 'NOTICE');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+            userLookup: $userLookup,
+        );
+
+        $handler->onMessage($event);
+        self::assertTrue($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageIgnoresUnknownTargetService(): void
+    {
+        $senderUid = '001ABC';
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: $senderUid,
+            params: ['UnknownService'],
+            trailing: "\x01VERSION\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp->expects(self::never())->method('sendCtcpReply');
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::never())->method('sendMessage');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+            uidRegistry: $this->createEmptyUidRegistry(),
+        );
+
+        $handler->onMessage($event);
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageRespondsToVersionWhenTargetIsServiceUid(): void
+    {
+        $senderUid = '001ABC';
+        $serviceUid = '002AAAAAA';
+        $sender = $this->createSenderView($senderUid);
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: $senderUid,
+            params: [$serviceUid],
+            trailing: "\x01VERSION\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with($senderUid)->willReturn($sender);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp
+            ->expects(self::once())
+            ->method('sendCtcpReply')
+            ->with($serviceUid, $senderUid, 'VERSION', 'Ares IRC Services v2.0.0-beta');
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice
+            ->expects(self::atLeastOnce())
+            ->method('sendMessage')
+            ->with($serviceUid, $senderUid, self::anything(), 'NOTICE');
+
+        $uidRegistry = $this->createUidRegistryWithUid($serviceUid);
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+            userLookup: $userLookup,
+            uidRegistry: $uidRegistry,
+        );
+
+        $handler->onMessage($event);
+        self::assertTrue($event->isPropagationStopped());
+    }
+
+    private function createHandler(
+        ?SendCtcpPort $sendCtcp = null,
+        ?SendNoticePort $sendNotice = null,
+        ?NetworkUserLookupPort $userLookup = null,
+        ?ServiceUidRegistry $uidRegistry = null,
+    ): CtcpHandler {
+        return new CtcpHandler(
+            $sendCtcp ?? $this->createStub(SendCtcpPort::class),
+            $sendNotice ?? $this->createStub(SendNoticePort::class),
+            $this->versionResponder,
+            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
+            $this->createLanguageResolver(),
+            $uidRegistry ?? $this->createUidRegistry(),
+        );
+    }
+}

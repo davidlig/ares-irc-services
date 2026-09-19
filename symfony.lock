@@ -1,4 +1,13 @@
 {
+    "deptrac/deptrac": {
+        "version": "4.7",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "3.0",
+            "ref": "05ab8813714080c7bc915cb10c780e6cfdbdb991"
+        }
+    },
     "doctrine/deprecations": {
         "version": "1.1",
         "recipe": {
@@ -45,6 +54,18 @@
         },
         "files": [
             ".php-cs-fixer.dist.php"
+        ]
+    },
+    "phpstan/phpstan": {
+        "version": "2.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "5e490cc197fb6bb1ae22e5abbc531ddc633b6767"
+        },
+        "files": [
+            "phpstan.dist.neon"
         ]
     },
     "phpunit/phpunit": {
@@ -105,6 +126,18 @@
             "src/Controller/.gitignore",
             "src/Kernel.php",
             ".editorconfig"
+        ]
+    },
+    "symfony/lock": {
+        "version": "7.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "5.2",
+            "ref": "8e937ff2b4735d110af1770f242c1107fdab4c8e"
+        },
+        "files": [
+            "config/packages/lock.yaml"
         ]
     },
     "symfony/mailer": {

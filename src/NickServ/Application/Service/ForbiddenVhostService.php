@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\NickServ\Application\Service;
+
+use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
+use App\NickServ\Domain\Entity\ForbiddenVhost;
+use DateTimeImmutable;
+
+readonly class ForbiddenVhostService
+{
+    public function __construct(
+        private ForbiddenVhostRepositoryInterface $repository,
+    ) {}
+
+    public function forbid(string $pattern, ?int $creatorNickId, DateTimeImmutable $createdAt): ForbiddenVhost
+    {
+        $forbidden = ForbiddenVhost::create($pattern, $creatorNickId, $createdAt);
+        $this->repository->save($forbidden);
+
+        return $forbidden;
+    }
+
+    public function unforbid(string $pattern): bool
+    {
+        $forbidden = $this->repository->findByPattern($pattern);
+
+        if (null === $forbidden) {
+            return false;
+        }
+
+        $this->repository->remove($forbidden);
+
+        return true;
+    }
+
+    public function matchesForbiddenPattern(string $vhost): bool
+    {
+        $forbiddenList = $this->repository->findAll();
+
+        return array_any($forbiddenList, static fn ($forbidden) => $forbidden->matches($vhost));
+    }
+
+    /**
+     * @return ForbiddenVhost[]
+     */
+    public function getAll(): array
+    {
+        return $this->repository->findAll();
+    }
+
+    public function count(): int
+    {
+        return $this->repository->countAll();
+    }
+}

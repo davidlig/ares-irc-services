@@ -1,0 +1,693 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\NickServ\Adapter\In\Irc\Command;
+
+use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\NickServ\Adapter\In\Irc\Command\SuspendCommand;
+use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
+use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
+use App\NickServ\Adapter\Out\Event\SymfonyNickServEventPublisher;
+use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
+use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Model\NickOperationActor;
+use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\PublishedEvent\NickSuspendedEvent;
+use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\Service\NickProtectabilityResult;
+use App\NickServ\Application\Service\NickSuspensionService;
+use App\NickServ\Application\Service\NickTargetValidator;
+use App\NickServ\Application\UseCase\Suspend\SuspendNick;
+use App\NickServ\Application\UseCase\Suspend\SuspendNickHandler;
+use App\NickServ\Application\UseCase\Suspend\SuspendNickOutcome;
+use App\NickServ\Application\UseCase\Suspend\SuspendNickResult;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+use const DATE_ATOM;
+
+#[CoversClass(SuspendCommand::class)]
+#[CoversClass(SuspendNickHandler::class)]
+#[CoversClass(SuspendNick::class)]
+#[CoversClass(SuspendNickResult::class)]
+#[CoversClass(SuspendNickOutcome::class)]
+#[CoversClass(NickOperationActor::class)]
+final class SuspendCommandTest extends TestCase
+{
+    #[Test]
+    public function getNameReturnsSuspend(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('SUSPEND', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsThree(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame(3, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('suspend.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('suspend.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsSeventy(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame(67, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('suspend.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsSuspendPermission(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame(NickServPermission::SUSPEND, $cmd->getRequiredPermission());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function executeWithNullSenderReturnsRejected(): void
+    {
+        $messages = [];
+        $outcome = $this->createCommand()->execute($this->createContext(null, [], $messages));
+
+        self::assertFalse($outcome->success);
+        self::assertSame([], $messages);
+    }
+
+    #[Test]
+    public function executeWithEmptyIpStoresAsteriskInEvent(): void
+    {
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save');
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o');
+
+        $context = $this->createContext($sender, ['TestNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $suspensionService,
+            $eventDispatcher,
+            $this->clock(),
+        );
+
+        $outcome = $cmd->execute($context);
+
+        self::assertContains('suspend.success', $messages);
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickSuspendedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+        self::assertSame('2026-09-06T12:00:00+00:00', $dispatchedEvents[0]->occurredAt->format(DATE_ATOM));
+        self::assertSame('2026-09-13T12:00:00+00:00', $dispatchedEvents[0]->expiresAt?->format(DATE_ATOM));
+    }
+
+    #[Test]
+    public function executeWithInvalidBase64IpStoresOriginalInEvent(): void
+    {
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save');
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'invalid!base64', false, true, 'SID1', 'h', 'o');
+
+        $context = $this->createContext($sender, ['TestNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $suspensionService,
+            $eventDispatcher,
+            $this->clock(),
+        );
+
+        $outcome = $cmd->execute($context);
+
+        self::assertContains('suspend.success', $messages);
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickSuspendedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('invalid!base64', $dispatchedEvents[0]->performedByIp);
+    }
+
+    #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame([], $cmd->getHelpParams());
+    }
+
+    #[Test]
+    public function executeWithEmptyReasonRepliesSyntaxError(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+
+        $context = $this->createContext($sender, ['TestNick', '7d'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $this->createStub(NickTargetValidator::class),
+            $this->createStub(NickSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
+    public function executeWithNonexistentNickRepliesNotRegistered(): void
+    {
+        $sender = $this->createSender();
+
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn(null);
+
+        $context = $this->createContext($sender, ['UnknownNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $this->createStub(NickTargetValidator::class),
+            $this->createStub(NickSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.not_registered', $messages);
+    }
+
+    #[Test]
+    public function executeWithForbiddenNickRepliesForbidden(): void
+    {
+        $sender = $this->createSender();
+        $nick = RegisteredNick::createForbidden('BadNick', 'Forbidden for spam');
+
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+
+        $context = $this->createContext($sender, ['BadNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $this->createStub(NickTargetValidator::class),
+            $this->createStub(NickSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.forbidden', $messages);
+    }
+
+    #[Test]
+    public function executeWithAlreadySuspendedNickRepliesAlreadySuspended(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createActivatedNick('TestNick');
+        $nick->suspend('Previous reason');
+
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+
+        $context = $this->createContext($sender, ['TestNick', '7d', 'Another reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $this->createStub(NickTargetValidator::class),
+            $this->createStub(NickSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.already_suspended', $messages);
+    }
+
+    #[Test]
+    public function executeWithRootNickRepliesCannotSuspendRoot(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createActivatedNick('RootUser');
+
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::root('RootUser'));
+
+        $context = $this->createContext($sender, ['RootUser', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $this->createStub(NickSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.cannot_suspend_root', $messages);
+    }
+
+    #[Test]
+    public function executeWithIrcopNickRepliesCannotSuspendOper(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createNickWithId('OperUser', 1);
+
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::ircop('OperUser'));
+
+        $context = $this->createContext($sender, ['OperUser', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $this->createStub(NickSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.cannot_suspend_oper', $messages);
+    }
+
+    #[Test]
+    public function executeWithServiceNickRepliesCannotSuspendService(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createActivatedNick('NickServ');
+
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::service('NickServ'));
+
+        $context = $this->createContext($sender, ['NickServ', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $this->createStub(NickSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.cannot_suspend_service', $messages);
+    }
+
+    #[Test]
+    public function executeWithInvalidDurationRepliesInvalidDuration(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $context = $this->createContext($sender, ['TestNick', 'invalid', 'Reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $this->createStub(NickSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.invalid_duration', $messages);
+    }
+
+    #[Test]
+    public function executeWithPermanentDurationSuspendsSuccessfully(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save')->with($nick);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension')->with($nick);
+
+        $context = $this->createContext($sender, ['TestNick', '0', 'Permanent'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $suspensionService,
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $outcome = $cmd->execute($context);
+
+        self::assertContains('suspend.success', $messages);
+        self::assertTrue($nick->isSuspended());
+
+        $auditData = $outcome->auditData;
+        self::assertInstanceOf(IrcopAuditData::class, $auditData);
+        self::assertSame('TestNick', $auditData->target);
+        self::assertSame('Permanent', $auditData->reason);
+    }
+
+    #[Test]
+    public function executeWithDurationSuspendsSuccessfully(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save');
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
+
+        $context = $this->createContext($sender, ['TestNick', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $suspensionService,
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.success', $messages);
+        self::assertTrue($nick->isSuspended());
+    }
+
+    #[Test]
+    public function executeWithMinuteDurationSuspendsSuccessfully(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save');
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
+
+        $context = $this->createContext($sender, ['TestNick', '30m', 'Testing'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $suspensionService,
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.success', $messages);
+        self::assertTrue($nick->isSuspended());
+    }
+
+    #[Test]
+    public function executeWithHourDurationSuspendsSuccessfully(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save');
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
+
+        $context = $this->createContext($sender, ['TestNick', '2h', 'Testing'], $messages, nickRepository: $nickRepository);
+
+        $cmd = $this->createCommandWith(
+            $nickRepository,
+            $validator,
+            $suspensionService,
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.success', $messages);
+        self::assertTrue($nick->isSuspended());
+    }
+
+    private function createCommand(): SuspendCommand
+    {
+        return $this->createCommandWith(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NickTargetValidator::class),
+            $this->createStub(NickSuspensionService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->clock(),
+        );
+    }
+
+    private function createCommandWith(
+        RegisteredNickRepositoryInterface $repository,
+        NickTargetValidator $validator,
+        NickSuspensionService $suspensionService,
+        EventBusInterface $eventBus,
+        Clock $clock,
+    ): SuspendCommand {
+        return new SuspendCommand(new SuspendNickHandler(
+            $repository,
+            $validator,
+            $suspensionService,
+            new SymfonyNickServEventPublisher($eventBus),
+            $clock,
+        ));
+    }
+
+    private function createSender(): SenderView
+    {
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+    }
+
+    private function createActivatedNick(string $nickname): RegisteredNick
+    {
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick->activate();
+
+        return $nick;
+    }
+
+    private function createNickWithId(string $nickname, int $id): RegisteredNick
+    {
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick->activate();
+
+        $reflection = new ReflectionClass(RegisteredNick::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($nick, $id);
+
+        return $nick;
+    }
+
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
+    private function createContext(
+        ?SenderView $sender,
+        array $args,
+        array &$messages,
+        ?RegisteredNickRepositoryInterface $nickRepository = null,
+    ): NickServContext {
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $type, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return new NickServContext(
+            $sender,
+            null,
+            'SUSPEND',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider = $this->createStub(ServiceNicknameProviderInterface::class);
+        $provider->method('getServiceKey')->willReturn('nickserv');
+        $provider->method('getNickname')->willReturn('NickServ');
+
+        return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
+    }
+}

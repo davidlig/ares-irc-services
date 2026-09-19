@@ -7,6 +7,7 @@ error:
   syntax: "\x0304✗\x03 Falsche Syntax. Verwendung: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Dieser Befehl ist IRC-Operatoren vorbehalten."
   not_identified: "\x0304✗\x03 Sie sind nicht identifiziert. Verwenden Sie \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Zugriff verweigert. Sie haben keinen Zugriff auf diesen Befehl."
   channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
   insufficient_access: "\x0304✗\x03 Unzureichender Zugriff für \x02%operation%\x02 auf Channel \x02%channel%\x02."
 
@@ -116,6 +117,7 @@ help:
   syntax_label: "\x0307Syntax:\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
   unknown_command: "\x0304✗\x03 Unbekannter Befehl \x02%command%\x02. Verwenden Sie \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02\x0314Verfügbare Befehle für IRCOPS:\x03\x0F"
 
 notify:
   nick_pending: "Sie haben \x02%count%\x02 ungelesene Nachricht(en). Zum Auflisten: \x0309/msg %bot% LIST\x03"

@@ -7,6 +7,7 @@ error:
   syntax: "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Komando hau IRC Operadoreentzat mugatuta dago."
   not_identified: "\x0304✗\x03 Ez zaude identifikatuta. Erabili \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Baimena ukatuta. Ez duzu komando honetarako sarbiderik."
   channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
   insufficient_access: "\x0304✗\x03 Ez duzu nahikoa sarbide \x02%operation%\x02 egiteko \x02%channel%\x02 kanalean."
 
@@ -116,6 +117,7 @@ help:
   syntax_label: "\x0307Sintaxia:\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
   unknown_command: "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02\x0314IRC Operadoreentzako komando erabilgarriak:\x03\x0F"
 
 notify:
   nick_pending: "\x02%count%\x02 irakurri gabeko mezu d(it)uzu. Zerrendatzeko: \x0309/msg %bot% LIST\x03"

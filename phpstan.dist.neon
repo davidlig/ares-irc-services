@@ -1,0 +1,17 @@
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
+
+parameters:
+    level: max
+    paths:
+        - bin/
+        - config/
+        - public/
+        - src/
+        - tests/
+
+    ignoreErrors:
+        -
+            message: '#Property (?:App\\[^:]+\\Domain\\Entity|App\\Irc\\Adapter\\Protocol\\UnrealUdb\\Model)\\[^:]+::\$id is (never written, only read|unused)\.#'
+            reportUnmatched: false

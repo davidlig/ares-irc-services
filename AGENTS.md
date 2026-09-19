@@ -1,197 +1,434 @@
-# Ares IRC Services — Clean Architecture, DDD & PHP 8.5
+# Ares IRC Services — Agent Contract
 
-You are an expert Symfony 7.4 Architect using PHP 8.5. All rules here are NON-NEGOTIABLE.
+This file is the authoritative instruction set for AI coding agents working in this repository.
+It is intentionally tool-agnostic so the same rules apply to OpenCode, Codex, Antigravity, and
+other coding CLIs.
 
----
+`AGENTS.md` contains the non-negotiable project rules. Load only the relevant `.agents/*.md` skill
+for the current task; do not load every skill by default.
 
-## 1. Golden Rules
+## 1. Project Baseline
 
-### 1.1 Parallelize EVERYTHING by Default
+- PHP >= 8.5
+- Symfony 7.4
+- Doctrine ORM 3.6
+- PHPUnit 13
+- PHPStan 2.x at `--level=max`
+- PHP-CS-Fixer with `.php-cs-fixer.dist.php`
+- Long-running IRC services daemon
+- Doctrine mappings are XML and live outside Domain code
+- All user-visible translation keys exist in all 14 supported languages:
+  `ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`
 
-Launch multiple independent operations in a SINGLE message:
-- Reading multiple files → Multiple `read` tool calls
-- Searching for patterns → Multiple `grep`/`glob`
-- Exploring different areas → Multiple task agents
-- Writing independent files → Multiple `write` tool calls
+IRC protocol adapters:
 
-**Do NOT parallelize:** sequential dependencies, same-file modifications, debugging with mental context, bug investigation (log correlation).
+- `InspIRCd`
+- `UnrealStandalone` — UnrealIRCd integration without the UDB module
+- `UnrealUdb` — independent UnrealIRCd integration for deployments using the UDB module
 
-### 1.2 Documentation Lookup with Context7 MCP (CRITICAL)
+When behavior depends on a framework/library version, consult current documentation available to
+the active CLI instead of relying on model memory.
 
-When you need documentation for Symfony 7.4, PHP 8.5, Doctrine ORM 3.6, PHPUnit 13, or any library in `composer.json`, use Context7 MCP if available:
+## 2. Repository Architecture
 
-1. `context7_resolve-library-id` — find the library ID
-2. `context7_query-docs` — ask the specific question
-3. If unsatisfied → retry with `researchMode: true`
+The codebase is organized **by bounded context**, with a hexagonal structure inside each module.
 
-**NEVER rely solely on training data** — verify with Context7 when available. Full reference: `.agents/documentation.md`.
+Top-level architecture:
 
----
+```text
+src/
+├── Irc/
+│   ├── Domain/
+│   ├── Application/
+│   │   ├── UseCase/
+│   │   ├── Port/
+│   │   │   ├── In/
+│   │   │   └── Out/
+│   │   ├── EventHandler/
+│   │   └── PublishedEvent/
+│   └── Adapter/
+│       ├── In/
+│       ├── Out/
+│       └── Protocol/
+│           ├── InspIRCd/
+│           ├── UnrealStandalone/
+│           └── UnrealUdb/
+├── NickServ/
+│   ├── Domain/
+│   ├── Application/
+│   └── Adapter/
+├── ChanServ/
+│   ├── Domain/
+│   ├── Application/
+│   └── Adapter/
+├── MemoServ/
+│   ├── Domain/
+│   ├── Application/
+│   └── Adapter/
+├── OperServ/
+│   ├── Domain/
+│   ├── Application/
+│   └── Adapter/
+├── Shared/
+│   ├── Domain/
+│   └── Application/
+├── Bootstrap/
+└── Kernel.php
+```
 
-## 2. Pre-Commit Verification Order (NON-NEGOTIABLE)
+Bounded contexts:
+
+- `Irc`
+- `NickServ`
+- `ChanServ`
+- `MemoServ`
+- `OperServ`
+
+`Shared` is a deliberately tiny shared kernel, not a bounded context or dumping ground.
+`Bootstrap` is the composition root.
+
+UDB is not a bounded context. It is an UnrealIRCd module/protocol concern owned entirely by
+`Irc/Adapter/Protocol/UnrealUdb`.
+
+Read `.agents/architecture.md` before structural changes.
+
+## 3. Dependency Rules
+
+### Domain
+
+Domain is pure PHP business code.
+
+Allowed:
+- same bounded-context Domain;
+- native PHP types;
+- narrowly approved `Shared/Domain` concepts.
+
+Forbidden:
+- Symfony;
+- Doctrine;
+- Amp;
+- PSR infrastructure APIs;
+- Application or Adapter imports;
+- sockets/connections;
+- IRC wire messages;
+- translators;
+- loggers;
+- entity managers;
+- password hashers;
+- mailers;
+- random generators;
+- infrastructure clocks.
+
+Time, generated values, hashes, and external facts are supplied explicitly when required.
+
+### Application
+
+Application owns use cases and orchestration.
+
+Allowed:
+- same bounded-context Domain;
+- same bounded-context Application;
+- its own `Port/In` and `Port/Out`;
+- narrowly approved `Shared/Application` contracts.
+
+Forbidden:
+- Symfony/framework classes;
+- Doctrine `EntityManager`;
+- concrete adapters;
+- IRC service Context objects;
+- raw IRC lines;
+- protocol-specific wire types;
+- translation keys as business results.
+
+A use case receives typed input and returns a semantic result.
+
+### Adapter
+
+Adapters translate between external mechanisms and Application boundaries.
+
+- `Adapter/In`: IRC commands, framework event bridges, CLI, external input.
+- `Adapter/Out`: Doctrine, mail, security implementations, network actions, logging/audit sinks.
+- `Irc/Adapter/Protocol/<Name>`: IRCd-specific wire parsing, formatting, state machines, protocol
+  actions, session state, and protocol-specific persistence/projection.
+
+### Bootstrap
+
+`Bootstrap` and Symfony configuration wire implementations together.
+
+Allowed:
+- framework/container configuration;
+- concrete adapter selection;
+- aliases/tags/factories;
+- runtime startup wiring.
+
+Forbidden:
+- business rules;
+- use-case orchestration;
+- protocol state machines.
+
+## 4. Port Ownership
+
+Ports are owned by the consumer.
+
+- `Port/In`: operations exposed by a bounded context.
+- `Port/Out`: capabilities needed by a use case from outside its inner layers.
+
+Rules:
+- never create a global cross-project `Application/Port`;
+- never place a port in `Shared` merely because multiple contexts need similar behavior;
+- prefer narrow context-specific ports over generic mega-interfaces;
+- output ports use semantic names, not technology names.
+
+Good:
+
+```text
+RegistrationMailSender
+VerificationTokenGenerator
+NickNetworkIdentity
+TransactionBoundary
+```
+
+Avoid:
+
+```text
+SymfonyMailerPort
+DoctrinePort
+GenericServiceActions
+UnrealProtocolPort
+```
+
+## 5. Cross-Context Communication
+
+A bounded context's Domain and internal Application classes are private implementation details.
+
+Forbidden:
+- one context importing another context's Domain entity;
+- one context importing another context's internal repository;
+- one service use case importing concrete Irc adapters.
+
+Use either:
+
+```text
+provider context
+    -> stable PublishedEvent
+    -> consumer Adapter/In
+    -> consumer Application
+```
+
+or synchronous boundaries:
+
+```text
+consumer Application
+    -> consumer-owned Port/Out
+    -> Adapter/Out
+    -> provider public Port/In
+```
+
+Do not bypass boundaries for convenience.
+
+## 6. IRC Service Commands
+
+IRC commands are inbound adapters, not Application handlers.
+
+Flow:
+
+```text
+IRC PRIVMSG
+  -> <Service>/Adapter/In/Irc/CommandRouter
+  -> <Service>/Adapter/In/Irc/Command/<Command>
+  -> typed Application input
+  -> use case
+  -> Domain + Port/Out
+  -> semantic result
+  -> IRC presenter/translator
+  -> network output
+```
+
+Application must not know:
+- `NickServContext`, `ChanServContext`, `MemoServContext`, `OperServContext`;
+- IRC command syntax;
+- HELP formatting;
+- IRC colors;
+- translation keys;
+- NOTICE vs PRIVMSG.
+
+Read `.agents/services.md`. For ChanServ policy work also read `.agents/chanserv.md`.
+
+## 7. Protocol Isolation
+
+Concrete protocol behavior belongs only under:
+
+```text
+Irc/Adapter/Protocol/
+├── InspIRCd/
+├── UnrealStandalone/
+└── UnrealUdb/
+```
+
+`UnrealStandalone` and `UnrealUdb` are sibling implementations.
+
+Non-negotiable:
+- neither imports implementation classes from the other;
+- neither extends the other;
+- neither decorates/composes the other;
+- neither shares persistence implementations with the other;
+- do not introduce shared behavioral bases, inheritance, composition, or traits merely to deduplicate
+  them;
+- controlled duplication is preferred when it preserves independent evolution;
+- shared extraction is allowed only for truly protocol-neutral, stateless primitives whose semantics
+  cannot diverge.
+
+Service Domain/Application code never sees:
+- concrete IRCd names;
+- raw IRC lines;
+- UDB frames;
+- protocol handlers;
+- socket connections.
+
+Read `.agents/protocol.md` and `.agents/unreal-udb.md`.
+
+## 8. Persistence
+
+Doctrine is an outer adapter.
+
+Rules:
+- Domain and Application never receive `EntityManagerInterface`;
+- business repository contracts normally live in the consuming Application `Port/Out`;
+- Domain repository abstractions require a real DDD reason;
+- XML mappings remain outside Domain code;
+- transaction/identity-map lifecycle belongs to infrastructure;
+- protocol-specific persisted state stays inside the owning protocol adapter.
+
+Read `.agents/persistence.md`.
+
+## 9. Security
+
+- never log plaintext passwords, verification tokens, recovery tokens, or secrets;
+- never publish plaintext credentials on a generic event bus;
+- password hashing/verifying is external to Domain entities;
+- random/token generation is behind Application output boundaries;
+- authorization, auditing, and IRC presentation are distinct concerns;
+- root/IRCop bypass semantics are centralized and explicit;
+- peer-provided IRC/UDB data is untrusted until validated.
+
+Read `.agents/security.md`.
+
+## 10. Testing & Quality Gates
+
+Tests must finish with:
+- zero failures;
+- zero warnings;
+- zero notices;
+- zero skipped tests;
+- zero incomplete tests;
+- zero risky tests;
+- zero deprecations.
+
+Production code maintains 100% line coverage through the project coverage gate.
+
+Use:
+- `createStub()` for return-value-only doubles;
+- `createMock()` only when verifying interactions with `expects()`.
+
+During implementation run focused tests without coverage.
+Run the full suite with coverage exactly once at final verification:
 
 ```bash
-# 1. PHP syntax check (on modified files)
-php -l path/to/file.php
-
-# 2–6. Single command:
-php bin/console lint:container && \
-php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
-./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
-./vendor/bin/phpunit --no-coverage --display-all-issues && \
-./scripts/check-coverage.sh 100
+./scripts/check-coverage.sh 100 --issues
 ```
 
-If any step fails, fix it and re-run from the failed step — never skip ahead.
+Read `.agents/testing.md`.
 
-**Commit order:** implement → php-cs-fixer → commit. Never commit unformatted code.
+## 11. PHP & Code Quality
 
----
+- `declare(strict_types=1);`
+- prefer `final` unless extension is intentional;
+- use `readonly` where immutability is appropriate;
+- entities expose behavior, not public setters;
+- use explicit precise types;
+- PHPStan `max` reports zero errors;
+- do not add suppression comments to hide design/type problems;
+- do not add PHPStan baselines for new code;
+- follow `.php-cs-fixer.dist.php`;
+- preserve project-enforced Yoda-condition style;
+- prefer cohesive classes over `Helper`, `Manager`, `Utils`, or broad `Service` buckets;
+- create interfaces only for real boundaries/substitutability/design reasons.
 
-## 3. Test Coverage (NON-NEGOTIABLE)
+## 12. Workflow
 
-**100% coverage on ALL new code. No exceptions.**
+For implementation tasks:
 
-- Every new class MUST have tests with `#[CoversClass(ClassName::class)]`
-- Every public method MUST have at least one test
-- Every branch/condition MUST be tested
-- Run `./scripts/check-coverage.sh 100` before claiming completion
-- Use `createStub()` for unverified dependencies, `createMock()` ONLY with `expects()`
-- Zero warnings, zero skipped, zero deprecated, zero incomplete
+1. inspect the affected bounded context/protocol adapter and direct callers;
+2. read only the relevant `.agents` skills;
+3. identify invariants and dependency boundaries;
+4. implement the complete requested scope;
+5. update/add tests together with production code;
+6. run focused tests during development;
+7. run final quality gates;
+8. update docs/agent rules only when their contract actually changes;
+9. summarize behavior, architecture, and validation performed.
 
----
+Parallelize independent discovery aggressively.
+Parallelize writes only when files/contracts are independent.
 
-## 4. Immutability & Readonly
+Never parallelize:
+- multiple edits to the same file;
+- dependent namespace changes;
+- port changes alongside consumers before the contract is frozen;
+- state-machine extraction with shared mutable state;
+- DI rewiring before ownership is settled.
 
-- **Value Objects**, **DTOs**, **Commands**, **Domain Events**: MUST be `readonly class`
-- **Entities**: Use `readonly` properties for IDs and immutable fields. Do NOT make the full class `readonly` if state changes.
-- **NEVER** use public setters (`setId`, `setName`). Use business methods (`rename()`, `suspend()`).
-- **NEVER** modify a DTO or Command after creation.
+Read `.agents/workflow.md`.
 
----
+## 13. Final Verification Order
 
-## 5. Architectural Layers (Strict Separation)
+Before claiming a code task complete:
 
-| Layer | Location | Depends On | Allowed Imports |
-|-------|----------|------------|-----------------|
-| **Domain** | `src/Domain/` | Nothing (pure PHP) | None |
-| **Application** | `src/Application/` | Domain only | Domain |
-| **Infrastructure** | `src/Infrastructure/` | Domain + Application | Symfony, Doctrine |
-| **UI** | `src/UI/` | Application | Symfony console |
+```bash
+php -l path/to/modified.php
 
-- **NEVER** put business logic in Controllers or Bots
-- **NEVER** import `Domain\IRC` entities in Application layer — use `Port/` DTOs and interfaces
-- **NEVER** use `match`/`switch` over protocol names — use `ProtocolModuleRegistry`
-- PHP 8.5 features: constructor promotion, property hooks, typed constants (`const string X = 'v';`)
-- Use Yoda conditions: `if (null === $variable)`
+php bin/console lint:container
 
----
+php bin/console lint:yaml . --exclude vendor/ --parse-tags
 
-## 6. Skill Reference Table
+./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress
 
-For detailed guidance, consult the corresponding skill file:
+./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
 
-| Area | Skill File | Use When |
-|------|-----------|----------|
-| **Workflow** | `.agents/workflow.md` | Parallel execution, pre-commit chain, bug investigation |
-| **Documentation** | `.agents/documentation.md` | Context7 MCP, library versions |
-| **Architecture** | `.agents/architecture/README.md` | Bounded contexts, layers, Port boundary |
-| **Entities** | `.agents/architecture/entities.md` | Entity design, property hooks, VO patterns |
-| **Events** | `.agents/architecture/events.md` | Domain events, subscribers |
-| **Drop Cleanup** | `.agents/architecture/drop-cleanup.md` | Ref cleanup on NickDrop/ChannelDrop |
-| **Database** | `.agents/database/README.md` | Doctrine ORM, XML mapping, migrations, EM clear |
-| **Services** | `.agents/services/README.md` | Core vs Services, Ports, Bots |
-| **Commands** | `.agents/services/commands.md` | Command handler structure and interface |
-| **Permissions** | `.agents/services/commands-permissions.md` | Authorization, voters, IRCop permissions |
-| **Translations** | `.agents/services/commands-translations.md` | i18n YAML, IRC color codes, 14-language rule |
-| **Testing** | `.agents/services/commands-testing.md` | Test patterns for command handlers |
-| **Live MCP Testing** | `.agents/services/live-mcp-testing.md` | IRC/MariaDB MCP validation against a running IRCd |
-| **Bots** | `.agents/services/bots.md` | New bot/service implementation checklist |
-| **IRCop** | `.agents/services/ircop-commands.md` | IRCop permission system |
-| **Debug** | `.agents/services/debug-actions.md` | Debug logging for IRCop commands |
-| **HELP** | `.agents/services/help-design.md` | Unified HELP output format |
-| **Testing** | `.agents/testing/README.md` | Core testing rules |
-| **Test Patterns** | `.agents/testing/testing-patterns.md` | Common test patterns by layer/type |
-| **Coverage** | `.agents/testing/testing-coverage-priorities.md` | Test priorities map |
-| **Memory** | `.agents/memory/README.md` | Daemon memory management, Doctrine clear, GC |
-| **Protocol** | `.agents/protocol/README.md` | IRCd modules, wire format |
-| **New IRCd** | `.agents/protocol/adding-new-ircd.md` | Adding new IRCd support checklist |
-
----
-
-## 7. Translations Rule (CRITICAL)
-
-Every translatable string MUST exist in ALL 14 languages: `ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`. Files at `translations/<service>.<lang>.yaml`. A task is incomplete if any key is missing in any language.
-
-**Syntax formatting rule:** Required positional arguments use `<>`, optional arguments use `[]`, and **choice/selection arguments MUST use `{}`**.
-
-**IMPORTANT — General vs subcommand syntax:** The general syntax shows ALL subcommands and their arguments in one line. Since some subcommands (LIST, CLEAR) don't require the argument, the general syntax uses `[]` for optionality. Each subcommand's own `syntax` should use the correct bracket for its specific context.
-
-```
-General: ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [permiso|ALL]  ← optativo (LIST/CLEAR no lo usan)
-Add:     ROLE PERMS <rol> ADD {permiso|ALL}                    ← elección requerida
-Del:     ROLE PERMS <rol> DEL <permiso>                        ← requerido
-List:    ROLE PERMS <rol> LIST                                 ← sin argumento
-Clear:   ROLE PERMS <rol> CLEAR                                ← sin argumento
+./scripts/check-coverage.sh 100 --issues
 ```
 
----
+Run any configured architecture dependency gate (for example Deptrac) at its project-defined step.
 
-## 8. Data Integrity — Ref Cleanup on Drop
+Never claim a gate passed unless it was actually run.
 
-Any feature storing `nickId` or `channelId` references MUST define cleanup behavior:
-- Subscribe to `NickDropEvent` or `ChannelDropEvent`
-- Choose CASCADE DELETE / SET NULL / TRANSFER strategy
-- Implement cleanup in repository + subscriber
-- Full checklist: `.agents/architecture/drop-cleanup.md`
+## 14. Commits
 
----
+Commit messages are English Conventional Commits:
 
-## 9. Live MCP Validation Safety
+```text
+type(scope): concise imperative summary
 
-When IRC or MariaDB MCP servers are available, use them for live smoke/integration validation after implementing IRC service behavior. This is mandatory for new or changed service commands when it can be done safely.
+Optional body explaining why and major architectural/behavioral effects.
+```
 
-- PHPUnit, linting, and coverage remain mandatory; MCP checks never replace them.
-- Use `.agents/services/live-mcp-testing.md` before any live IRC or DB validation.
-- Never run destructive commands against real nicks or real channels.
-- Always create temporary resources for live tests, such as `NickTest<suffix>` or `#test-<suffix>`.
-- Use `OPENCODE_IRC_ROOT_NICK` only when root, IRCop, or founder privileges are required.
+Common types:
+- `feat`
+- `fix`
+- `refactor`
+- `test`
+- `docs`
+- `chore`
 
-<!-- code-review-graph MCP tools -->
-## MCP Tools: code-review-graph
+Use the narrowest meaningful scope:
+- `nickserv`
+- `chanserv`
+- `memoserv`
+- `operserv`
+- `irc`
+- `protocol`
+- `unreal-udb`
+- `ci`
+- `agents`
 
-**IMPORTANT: This project has a knowledge graph. ALWAYS use the
-code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
-the codebase.** The graph is faster, cheaper (fewer tokens), and gives
-you structural context (callers, dependents, test coverage) that file
-scanning cannot.
-
-### When to use graph tools FIRST
-
-- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
-- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
-- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
-- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
-- **Architecture questions**: `get_architecture_overview` + `list_communities`
-
-Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
-
-### Key Tools
-
-| Tool | Use when |
-| ------ | ---------- |
-| `detect_changes` | Reviewing code changes — gives risk-scored analysis |
-| `get_review_context` | Need source snippets for review — token-efficient |
-| `get_impact_radius` | Understanding blast radius of a change |
-| `get_affected_flows` | Finding which execution paths are impacted |
-| `query_graph` | Tracing callers, callees, imports, tests, dependencies |
-| `semantic_search_nodes` | Finding functions/classes by name or keyword |
-| `get_architecture_overview` | Understanding high-level codebase structure |
-| `refactor_tool` | Planning renames, finding dead code |
-
-### Workflow
-
-1. The graph auto-updates on file changes (via hooks).
-2. Use `detect_changes` for code review.
-3. Use `get_affected_flows` to understand impact.
-4. Use `query_graph` pattern="tests_for" to check coverage.
+Never mention an AI agent in commit messages.

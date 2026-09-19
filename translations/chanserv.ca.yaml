@@ -7,6 +7,7 @@ error:
   syntax:         "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
   not_identified: "\x0304✗\x03 No esteu identificat. Utilitzeu \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permís denegat. No teniu accés a aquesta ordre."
   invalid_channel: "\x0304✗\x03 Nom de canal no vàlid. Utilitzeu \x02#channel\x02."
   channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
   generic:        "\x0304✗\x03 S'ha produït un error. Torneu-ho a provar."
@@ -19,6 +20,7 @@ register:
   short:            "Registrar un canal."
   help:             "Registreu i associeu un canal al vostre sobrenom. Heu d'estar identificat amb %nickserv%."
   success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat."
+  already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat."
   channel_not_on_network: "\x0304✗\x03 El canal \x02%channel%\x02 no existeix a la xarxa."
   pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 està pendent d'eliminació i no pot ser registrat."
   insufficient_channel_rank: "\x0304✗\x03 Heu de tenir com a mínim estat d'operador a \x02%channel%\x02 per registrar-lo."
@@ -29,7 +31,7 @@ info:
   syntax:           "INFO <#channel>"
   short:            "Mostrar la informació del canal."
   help:             "Mostra el fundador, la data de registre, el successor, l'URL, el correu electrònic, la descripció, el darrer ús, el tema i les opcions (TOPICLOCK, MLOCK, SECURE)."
-  header:          "\x02Informació del canal \x0307%channel%\x03:\x02"
+  header:          "\x02Informació del canal \x0307%channel%\x03\x02"
   footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Fundador\x03           : \x02%nickname%\x02"
   registered:      "  \x0314Registrat\x03          : %date%"
@@ -71,7 +73,6 @@ help:
   intro_expiration: "NOTA: Els canals \x0304\x1Fno utilitzats\x0F durant més de %days% dies s'eliminen automàticament."
   unknown_command:  "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
   ircop_header:     "\x02\x0314Ordres disponibles per a IRCOPS:\x03\x0F"
-  suboptions:       "Subopcions:"
 
 op:
   syntax:           "OP <#channel> <nickname>"
@@ -88,7 +89,6 @@ deop:
   done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret l'op."
 
 secure:
-  requires_access: "\x0304✗\x03 Amb SECURE activat, \x02%nickname%\x02 ha de ser a la llista d'accés per rebre un rang."
   requires_min_level: "\x0304✗\x03 Amb SECURE activat, \x02%nickname%\x02 ha de tenir almenys el nivell \x02%level%\x02 per rebre \x02%mode%\x02."
 
 set:
@@ -137,6 +137,7 @@ set:
     syntax:         "SET <#channel> EMAIL <email|none>"
     short:          "Establir el correu electrònic del canal."
     help:           "Canviar l'adreça de correu electrònic del canal. Utilitzeu \x02none\x02 per esborrar."
+    invalid:        "\x0304✗\x03 Adreça de correu no vàlida."
     updated:        "\x0303✔\x03 Correu electrònic actualitzat."
     cleared:        "\x0303✔\x03 Correu electrònic esborrat."
   entrymsg:
@@ -144,7 +145,6 @@ set:
     short:          "Establir el missatge d'entrada del canal."
     help:           "Establir el missatge que es mostra quan els usuaris s'uneixen al canal (NOTICE). Utilitzeu \x02none\x02 per esborrar."
     updated:        "\x0303✔\x03 Missatge d'entrada actualitzat."
-    cleared:        "\x0303✔\x03 Missatge d'entrada esborrat."
     too_long:       "\x0304✗\x03 El missatge d'entrada no pot superar els %max% caràcters."
   topiclock:
     syntax:         "SET <#channel> TOPICLOCK {ON|OFF}"
@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret el halfop."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST|ENFORCE} [mask] [expiry] [reason]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [reason]"
   short:            "Gestionar la llista d'auto-kick."
-  help:             "ADD <mask> [expiry] [reason]: afegir entrada. DEL <mask|num>: treure. LIST: llistar entrades. ENFORCE <mask>: fer kick als usuaris coincidents."
-  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, LIST, o ENFORCE."
+  help:             "ADD <mask> [expiry] [reason]: afegir entrada. DEL <mask|num>: treure. LIST: llistar entrades."
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL o LIST."
   invalid_mask:     "\x0304✗\x03 Format de màscara no vàlid. Utilitzeu \x02nick!ident@host\x02 amb comodins (*)."
   dangerous_mask:   "\x0304✗\x03 La màscara \x02%mask%\x02 és massa àmplia. Ha de contenir almenys 4 caràcters alfanumèrics."
   protected_user:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 té accés en aquest canal."
@@ -330,11 +330,13 @@ restore:
 drop:
   syntax:           "DROP <#channel> [FORCE]"
   short:            "Eliminar un canal registrat."
-  help:             "Treu un canal registrat de la base de dades."
+  help:             "Elimina un canal registrat de la base de dades.\nAquesta ordre requereix el permís d'IRCop: chanserv.drop.\nFORCE elimina permanentment un canal pendent d'eliminació i requereix el permís d'IRCop: chanserv.drop.force."
   success:          "03✔ El canal %channel% ha estat marcat per a eliminació i pot ser restaurat durant el període de gràcia."
   force_success:    "\x0303✔\x03 El canal \x02%channel%\x02 ha estat eliminat permanentment."
   pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 ja està pendent d'eliminació. Utilitza DROP <#channel> FORCE per eliminar-lo permanentment."
+  invalid_channel:  "\x0304✗\x03 Nom de canal no vàlid. Utilitzeu \x02#channel\x02."
   not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  pending_deletion_reason: "El canal %channel% està en procés d'eliminació. Més informació /msg %bot% INFO %channel%"
 
 suspend:
   syntax:           "SUSPEND <#channel> <duration> <reason>"
@@ -346,7 +348,6 @@ suspend:
   invalid_duration:  "\x0304✗\x03 Durada no vàlida. Utilitzeu: 0 (permanent), 1d, 12h, o 60m."
   permanent:         "Permanent"
   channel_suspended: "\x0304✗\x03 El canal \x02%channel%\x02 està suspès i no es pot utilitzar."
-  channel_forbidden: "\x0304✗\x03 El canal \x02%channel%\x02 està prohibit i no es pot utilitzar."
   notice_channel:    "\x0304⚠\x03 El canal ha estat suspès. Motiu: %reason%"
 
 unsuspend:
@@ -368,17 +369,6 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "No esteu autoritzat a unir-vos a aquest canal."
-
-permissions:
-  chanserv.drop: "Eliminar un canal registrat (DROP)"
-  chanserv.drop.force: "Forçar l'eliminació permanent d'un canal en període de gràcia (DROP FORCE)"
-  chanserv.restore: "Restaurar un canal pendent d'eliminació (RESTORE)"
-  chanserv.suspend: "Suspendre o treure la suspensió d'un canal (SUSPEND/UNSUSPEND)"
-  chanserv.forbid: "Prohibir o treure la prohibició d'un canal (FORBID/UNFORBID)"
-  chanserv.noexpire: "Establir o treure la protecció contra l'expiració d'un canal (NOEXPIRE)"
-  chanserv.history: "Veure i gestionar l'historial d'accions del canal (HISTORY)"
-  chanserv.clearaccess: "Esborrar tota la llista d'accés d'un canal (CLEARACCESS)"
-  chanserv.clearusers: "Fer kick a tots els usuaris d'un canal (CLEARUSERS)"
 
 noexpire:
   syntax:           "NOEXPIRE <#channel> {ON|OFF}"
@@ -458,6 +448,7 @@ history:
   del:
     syntax:     "HISTORY <#channel> DEL <id>"
     short:      "Esborrar una entrada de l'historial per ID."
+    help:       "Elimina una entrada de l'historial pel seu ID."
     success:    "\x0303✔\x03 Entrada d'historial \x02%id%\x02 esborrada."
     not_found:  "\x0304✗\x03 Entrada d'historial \x02%id%\x02 no trobada."
     invalid_id: "\x0304✗\x03 ID d'entrada no vàlid: \x02%id%\x02."
@@ -465,6 +456,7 @@ history:
   view:
     syntax:     "HISTORY <#channel> VIEW [PAGE|ALL]"
     short:      "Veure l'historial d'accions del canal."
+    help:       "Mostra les entrades de l'historial del canal."
     header:     "\x02Historial de \x0307%channel%\x03\x02 (mostrant %start%-%end% de %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 per %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -474,6 +466,7 @@ history:
   clear:
     syntax:     "HISTORY <#channel> CLEAR"
     short:      "Esborrar totes les entrades d'historial d'un canal."
+    help:       "Elimina totes les entrades de l'historial del canal."
     success:    "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'historial de \x02%channel%\x02."
 
 # --- History message translations ---

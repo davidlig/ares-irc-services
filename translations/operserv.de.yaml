@@ -6,6 +6,7 @@ unknown_command: "\x0304✗\x03 Unbekannter Befehl \x02%command%\x02. Verwenden 
 error:
   syntax:           "\x0304✗\x03 Falsche Syntax. Verwendung: \x02%syntax%\x02"
   oper_only:        "\x0304✗\x03 Dieser Befehl ist IRC-Operatoren vorbehalten."
+  not_identified:   "\x0304✗\x03 Sie sind nicht identifiziert. Verwenden Sie \x0303/msg %nickserv% IDENTIFY\x03."
   permission_denied: "\x0304✗\x03 Sie haben nicht die erforderlichen Berechtigungen, um diesen Befehl auszuführen."
   root_only:        "\x0304✗\x03 Dieser Befehl ist Netzwerk-Root-Administratoren vorbehalten."
   nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
@@ -27,11 +28,11 @@ help:
   footer:           "\x0314─────────────────────────────\x03"
   intro_expiration: "HINWEIS: Nicks, die \x0304\x1Fmehr als %days% Tage nicht genutzt\x0F werden, werden automatisch entfernt."
   unknown_command:  "\x0304✗\x03 Unbekannter Befehl \x02%command%\x02. Verwenden Sie \x0303/msg %bot% HELP\x03."
-  suboptions:       "Unteroptionen:"
+  ircop_header:     "\x02\x0314Verfügbare Befehle für IRCOPS:\x03\x0F"
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [Rolle]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [nickname] [Rolle]"
   short:            "Netzwerk-IRC-Operatoren verwalten."
   help:             "Verwaltet Netzwerk-IRC-Operatoren. ADD fügt einen registrierten Nickname\nals Operator mit der angegebenen Rolle hinzu.\nDEL entfernt einen Operator. LIST zeigt alle Operatoren.\nVerwenden Sie ROLE LIST, um verfügbare Rollen zu sehen.\nDieser Befehl ist Root-Benutzern vorbehalten, die in den Services konfiguriert sind."
 
@@ -42,14 +43,14 @@ ircop:
   role_changed:     "\x0303✓\x03 Rolle für \x02%nickname%\x02 von %old% auf %new% geändert."
 
   add:
-    syntax:         "IRCOP <nickname> ADD <Rolle>"
+    syntax:         "IRCOP ADD <nickname> <Rolle>"
     short:          "Einen Netzwerk-IRC-Operator hinzufügen."
     help:           "Fügt einen registrierten Nickname als Netzwerk-IRC-Operator hinzu.\nVerwenden Sie ROLE LIST, um verfügbare Rollen zu sehen.\nDieser Befehl ist Root-Benutzern vorbehalten."
     done:           "\x0303✓\x03 \x02%nickname%\x02 als \x02%role%\x02 hinzugefügt."
     nick_not_active: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist kein aktiver registrierter Nickname."
 
   del:
-    syntax:         "IRCOP <nickname> DEL"
+    syntax:         "IRCOP DEL <nickname>"
     short:          "Einen Netzwerk-IRC-Operator entfernen."
     help:            "Entfernt einen Netzwerk-IRC-Operator aus der Liste.\nDieser Befehl ist Root-Benutzern vorbehalten."
     done:           "\x0303✓\x03 \x02%nickname%\x02 aus den IRC-Operatoren entfernt."
@@ -63,11 +64,30 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<rolle>} [{VIEW|SET}] [operclass]"
+    short: "Verwaltet die Unreal-Operclass einer Rolle."
+    help: "LIST zeigt die im Netzwerk verfugbaren Operclasses an.\nVIEW zeigt die Operclass der Rolle und verfugbare Operclasses.\nSET weist sie beim Identifizieren zu (OFF zum Entfernen).\nNur fur UnrealIRCd-Protokolle verfugbar."
+    list:
+      header: "\x0307---\x03 \x02Verfugbare Operclasses im Netzwerk\x02 \x0307---\x03"
+      empty: "Keine Operclasses im Netzwerk verfugbar."
+      not_supported: "\x0304✗\x03 Das aktuelle Protokoll unterstutzt das Auflisten verfugbarer Operclasses nicht."
+    view:
+      empty: "Die Rolle %role% hat keine Operclass."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Verfugbare Operclasses: \x0310%available%\x03"
+    set:
+      done: "Operclass fur %role% gesetzt."
+      cleared: "Operclass von %role% entfernt."
+      not_available: "\x0304✗\x03 Die Operclass \x02%operclass%\x02 ist im Netzwerk nicht verfugbar. Verfugbare Operclasses: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <Name> ..."
   short:            "Operator-Rollen verwalten."
   help:             "Verwaltet Operator-Rollen. ADD erstellt eine neue Rolle, DEL löscht sie,\nLIST zeigt alle Rollen, PERMS verwaltet Berechtigungen einer Rolle, MODES verwaltet IRCOP-Modes,\nVHOST verwaltet das erzwungene VHost-Muster einer Rolle.\nGeschützte Rollen (ADMIN, OPER, PREOPER) können nicht gelöscht werden.\nDieser Befehl ist Root-Benutzern vorbehalten."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <Name> ..."
+  help_operclass:   "Verwaltet Operator-Rollen. ADD erstellt eine neue Rolle, DEL löscht sie,\nLIST zeigt alle Rollen, PERMS verwaltet Berechtigungen einer Rolle, MODES verwaltet IRCOP-Modes,\nVHOST verwaltet das erzwungene VHost-Muster einer Rolle, OPERCLASS verwaltet die Unreal-Operclass.\nGeschützte Rollen (ADMIN, OPER, PREOPER) können nicht gelöscht werden.\nDieser Befehl ist Root-Benutzern vorbehalten."
 
   unknown_sub:      "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL, LIST, PERMS, MODES oder VHOST."
+  unknown_sub_operclass: "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL, LIST, PERMS, MODES, VHOST oder OPERCLASS."
   not_found:        "\x0304✗\x03 Rolle \x02%role%\x02 existiert nicht."
   already_exists:   "\x0304✗\x03 Rolle \x02%role%\x02 existiert bereits."
   protected:        "\x0304✗\x03 Rolle \x02%role%\x02 ist geschützt und kann nicht gelöscht werden."
@@ -95,42 +115,21 @@ role:
     syntax:         "ROLE PERMS <Rolle> {LIST|ADD|DEL|CLEAR} [Berechtigung|ALL]"
     short:          "Rollen-Berechtigungen verwalten."
     help:            "Verwaltet Berechtigungen, die einer Rolle zugewiesen sind.\nLIST zeigt alle Berechtigungen der Rolle.\nADD weist der Rolle eine Berechtigung zu.\nDEL entfernt eine Berechtigung von der Rolle (nicht für geschützte Rollen).\nCLEAR entfernt alle Berechtigungen der Rolle.\nVerwenden Sie ALL, um alle verfügbaren Berechtigungen auf einmal hinzuzufügen.\nDieser Befehl ist Root-Benutzern vorbehalten."
-    unknown_action:  "\x0304✗\x03 Unbekannte Aktion \x02%action%\x02. Verwenden Sie LIST, ADD, DEL oder CLEAR."
     not_found:       "\x0304✗\x03 Berechtigung \x02%perm%\x02 existiert nicht."
     already_has:     "\x0304✗\x03 Rolle \x02%role%\x02 hat bereits die Berechtigung \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Rolle \x02%role%\x02 hat die Berechtigung \x02%perm%\x02 nicht."
-    protected:      "\x0304✗\x03 Berechtigungen für geschützte Rolle \x02%role%\x02 können nicht geändert werden."
 
     list:
-      syntax:       "ROLE PERMS <Rolle> LIST"
-      short:        "Berechtigungen einer Rolle auflisten."
-      help:         "Listet alle einer Rolle zugewiesenen Berechtigungen auf.\nDieser Befehl ist Root-Benutzern vorbehalten."
       header:        "\x0307---\x03 \x02Berechtigungen für %role%\x02 \x0307---\x03"
-      empty:        "Rolle \x02%role%\x02 hat keine Berechtigungen zugewiesen."
-      assigned:     "\x0310Zugewiesen:\x03"
-      none_assigned: "\x0314Keine Berechtigungen zugewiesen.\x03"
-      available:    "\x0310Verfügbar:\x03"
-      all_assigned: "\x0314Alle Berechtigungen sind dieser Rolle zugewiesen.\x03"
 
     add:
-      syntax:       "ROLE PERMS <Rolle> ADD {Berechtigung|ALL}"
-      short:        "Eine Berechtigung zu einer Rolle hinzufügen."
-      help:         "Fügt einer Rolle eine Berechtigung hinzu.\nVerwenden Sie ALL, um alle verfügbaren Berechtigungen auf einmal hinzuzufügen.\nDieser Befehl ist Root-Benutzern vorbehalten."
       done:         "\x0303✓\x03 Berechtigung \x02%perm%\x02 zu Rolle \x02%role%\x02 hinzugefügt."
       all_done:     "\x0303✓\x03 \x02%count%\x02 Berechtigungen zu Rolle \x02%role%\x02 hinzugefügt."
-      all_skipped:  "\x0304✗\x03 Rolle \x02%role%\x02 hat bereits alle verfügbaren Berechtigungen."
-      all_empty:    "\x0304✗\x03 Keine Berechtigungen zum Hinzufügen verfügbar."
 
     del:
-      syntax:       "ROLE PERMS <Rolle> DEL <Berechtigung>"
-      short:        "Eine Berechtigung von einer Rolle entfernen."
-      help:         "Entfernt eine Berechtigung von einer Rolle.\nGeschützte Rollen können nicht geändert werden.\nDieser Befehl ist Root-Benutzern vorbehalten."
       done:         "\x0303✓\x03 Berechtigung \x02%perm%\x02 von Rolle \x02%role%\x02 entfernt."
 
     clear:
-      syntax:       "ROLE PERMS <Rolle> CLEAR"
-      short:        "Alle Berechtigungen von einer Rolle entfernen."
-      help:         "Entfernt alle Berechtigungen von einer Rolle.\nDieser Befehl ist Root-Benutzern vorbehalten."
       done:         "\x0303✓\x03 \x02%count%\x02 Berechtigungen von Rolle \x02%role%\x02 entfernt."
       empty:        "\x0304✗\x03 Rolle \x02%role%\x02 hat keine Berechtigungen zugewiesen."
 
@@ -138,46 +137,31 @@ role:
     syntax:         "ROLE MODES <Rolle> {VIEW|SET} [Modes]"
     short:          "IRCOP-Benutzer-Modes für die Rolle verwalten."
     help:            "Verwaltet IRCOP-Benutzer-Modes, die einer Rolle zugewiesen sind.\nVIEW zeigt die aktuellen Modes der Rolle.\nSET setzt die IRCOP-Modes (z. B. oH für +oH).\nBenutzer mit dieser Rolle erhalten diese Modes bei der Identifizierung.\nVerfügbare Modes pro IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nDieser Befehl ist Root-Benutzern vorbehalten."
-    unknown_action:  "\x0304✗\x03 Unbekannte Aktion \x02%action%\x02. Verwenden Sie VIEW oder SET."
 
     view:
-      syntax:       "ROLE MODES <Rolle> VIEW"
-      short:        "Zeigt die Modes der Rolle."
-      help:          "Zeigt die IRCOP-Benutzer-Modes, die einer Rolle zugewiesen sind.\nDieser Befehl ist Root-Benutzern vorbehalten."
       header:        "\x0307---\x03 \x02Modes für %role%\x02 \x0307---\x03"
       empty:        "Die Rolle \x02%role%\x02 hat keine Modes zugewiesen."
       line:         "  Modes: \x0303%modes%\x03"
 
     set:
-      syntax:       "ROLE MODES <Rolle> SET [Modes]"
-      short:        "IRCOP-Benutzer-Modes setzen."
-      help:          "Setzt die IRCOP-Benutzer-Modes für die Rolle.\nOhne Argumente werden alle Modes der Rolle entfernt.\nNur gültige IRCOP-Modes für den aktiven IRCD.\nIdentifizierte Benutzer mit dieser Rolle erhalten die Änderungen.\nDieser Befehl ist Root-Benutzern vorbehalten."
       done:         "\x0303✓\x03 Modes \x02%modes%\x02 für Rolle \x02%role%\x02 gesetzt."
       cleared:      "\x0303✓\x03 Alle Modes von Rolle \x02%role%\x02 entfernt."
       invalid_mode: "\x0304✗\x03 Der Mode \x02%mode%\x02 ist kein gültiger IRCOP-Mode."
       invalid_modes: "\x0304✗\x03 Ungültige Modes: %invalid%. Gültige Modes: %valid%."
       no_irc_user_modes: "\x0304✗\x03 Der aktuelle IRCD hat keine IRCOP-Modes konfiguriert."
-      not_supported: "\x0304✗\x03 Das aktuelle Protokoll unterstützt das Setzen von IRCOP-Benutzermodi über Services nicht."
 
   vhost:
     syntax:         "ROLE VHOST <Rolle> {VIEW|SET} [Muster]"
     short:          "Erzwungenes VHost-Muster für eine Rolle verwalten."
     help:           "Verwaltet den erzwungenen VHost, der einer Rolle zugewiesen ist.\nVIEW zeigt das aktuelle erzwungene VHost-Muster.\nSET weist ein erzwungenes VHost-Muster zu (Benutzer mit dieser Rolle\nerhalten diesen VHost bei der Identifizierung und überschreiben persönliche VHosts).\nDas Muster wird nach dem bereinigten Nickname angehängt, z. B.:\n  Nick: _davidlig_ → Muster: admin.ares → VHost: davidlig.admin.ares\nGültige Zeichen: a-z, A-Z, 0-9, Bindestrich (-) und Punkt (.).\nMuss mindestens einen Punkt haben, darf nicht mit - oder . beginnen/enden oder .. enthalten\nVerwenden Sie OFF, um das erzwungene VHost-Muster zu löschen.\nDieser Befehl ist Root-Benutzern vorbehalten."
-    unknown_action:  "\x0304✗\x03 Unbekannte Aktion \x02%action%\x02. Verwenden Sie VIEW oder SET."
 
     view:
-      syntax:       "ROLE VHOST <Rolle> VIEW"
-      short:         "Zeigt das erzwungene VHost-Muster der Rolle."
-      help:          "Zeigt das erzwungene VHost-Muster, das einer Rolle zugewiesen ist.\nDieser Befehl ist Root-Benutzern vorbehalten."
       header:        "\x0307---\x03 \x02Erzwungener VHost für %role%\x02 \x0307---\x03"
       empty:        "Die Rolle \x02%role%\x02 hat kein erzwungenes VHost-Muster gesetzt."
       line:         "  Muster: \x0303%pattern%\x03"
       example:      "  Beispiel: \x02nickname\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <Rolle> SET [Muster]"
-      short:         "Das erzwungene VHost-Muster für die Rolle setzen."
-      help:          "Setzt das erzwungene VHost-Muster für die Rolle.\nBenutzer, die sich mit dieser Rolle identifizieren, erhalten den erzwungenen VHost,\nder Vorrang vor dem persönlichen VHost hat.\nDas Muster wird nach dem bereinigten Nickname angehängt.\nVerwenden Sie OFF oder lassen Sie das Argument weg, um den erzwungenen VHost zu löschen.\nDieser Befehl ist Root-Benutzern vorbehalten."
       done:         "\x0303✓\x03 Erzwungenes VHost-Muster für Rolle \x02%role%\x02 gesetzt."
       cleared:      "\x0303✓\x03 Erzwungenes VHost-Muster von Rolle \x02%role%\x02 entfernt."
       invalid:      "\x0304✗\x03 Ungültiges VHost-Muster. Gültige Zeichen: a-z, A-Z, 0-9, - und .. Muss mindestens einen Punkt haben, darf nicht mit - oder . beginnen/enden oder .. enthalten"
@@ -191,7 +175,6 @@ kill:
   protected_root:   "\x0304✗\x03 Root-Benutzer \x02%nickname%\x02 kann nicht gekillt werden."
   protected_ircop:  "\x0304✗\x03 IRC-Operator \x02%nickname%\x02 kann nicht gekillt werden."
   done:             "\x0303✓\x03 Benutzer \x02%nickname%\x02 wurde gekillt (%reason%)."
-  permission_denied: "\x0304✗\x03 Zugriff verweigert. Sie benötigen die Berechtigung operserv.kill."
 
 # --- GLINE --------------------------------------------------------------------
 gline:
@@ -239,7 +222,6 @@ global:
   short:            "Eine globale Nachricht an alle verbundenen Benutzer senden."
   help:             "Sendet eine Nachricht an alle verbundenen Benutzer.\n\nWenn das erste Argument ein Service-Name ist, wird die Nachricht mit diesem\nexistierenden Service gesendet.\n\nWenn kein Service, wird ein temporärer Pseudo-Client mit der angegebenen\nMaske erstellt. Die Maske muss im Format nick!ident@vhost sein:\n- nick: IRC-gültiger Nickname (Buchstaben, []{}|\\`, Ziffern, beginnt mit Buchstabe)\n- ident: alphanumerisch mit . _ ~ -\n- vhost: gültiger Hostname\n\nFür Pseudo-Clients darf der Nickname nicht verbunden oder registriert sein.\nDer Pseudo-Client bleibt während des Sendens verbunden und trennt sich\nautomatisch (der Nick wird für 24h via SQLINE/QLINE gesperrt).\n\nPRIVMSG sendet als private Nachricht, NOTICE sendet als Notice.\nDieser Befehl erfordert die Berechtigung operserv.global."
   mask_invalid:    "\x0304✗\x03 Ungültiges Maskenformat: %error%"
-  nick_service:    "\x0304✗\x03 Service-Nickname kann nicht verwendet werden."
   nick_connected: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist derzeit verbunden."
   nick_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist registriert."
   type_invalid:    "\x0304✗\x03 Nachrichtentyp muss PRIVMSG oder NOTICE sein."
@@ -254,6 +236,15 @@ raw:
   too_long:         "\x0304✗\x03 Zeile ist zu lang. Maximal 510 Zeichen."
   not_connected:    "\x0304✗\x03 Nicht mit IRCd verbunden."
   done:             "\x0303✓\x03 Rohe Zeile gesendet."
+  protocol:
+    syntax: "\x0304✗\x03 Das aktive Protokoll hat die Syntax des RAW-Befehls abgelehnt."
+    done: "\x0303✓\x03 Protokolleigener RAW-Befehl ausgeführt."
+    target: "\x0304✗\x03 Das aktive Protokoll hat das Ziel %target% abgelehnt."
+    unsupported: "\x0304✗\x03 Das aktive Protokoll unterstützt diesen RAW-Befehl nicht."
+    invalid_resource_type: "\x0304✗\x03 Unbekannter Protokoll-Ressourcentyp: %resource_type%."
+    invalid_resource: "\x0304✗\x03 Ungültige Protokollressource: %resource%."
+    invalid_value: "\x0304✗\x03 Ungültiger Wert für Protokollressource: %resource%."
+    error: "\x0304✗\x03 Das aktive Protokoll konnte den RAW-Befehl nicht ausführen."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
@@ -262,14 +253,6 @@ debug:
   action_global:    "%operator% führt Befehl GLOBAL mit Nickname %target% via %type% an %count% Benutzer aus. Nachricht: %message%"
   prefix_reason:    "Grund: %reason%"
   prefix_message:   "Nachricht: %reason%"
-
-# --- PERMISSIONS --------------------------------------------------------------
-permissions:
-  operserv.kill:    "Einen Nickname vom Netzwerk trennen (KILL)"
-  operserv.gline:   "Netzwerkweite G-Lines verwalten (GLINE)"
-  operserv.global:  "Globale Nachrichten an alle Benutzer senden (GLOBAL)"
-  operserv.raw:     "Rohe Protokollzeilen an den IRCd senden (RAW)"
-  operserv.motd:    "Connect-MOTD-Nachrichten verwalten (MOTD)"
 
 # --- MOTD ----------------------------------------------------------------------
 motd:

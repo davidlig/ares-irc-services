@@ -15,12 +15,9 @@ return (new PhpCsFixer\Config())
         '@Symfony' => true,
         '@Symfony:risky' => true,
 
-        // Specific rules for modern PHP (8.4+)
-        '@PHP80Migration:risky' => true,
-        '@PHP81Migration' => true,
-        '@PHP82Migration' => true,
-        '@PHP83Migration' => true,
-        '@PHP84Migration' => true,
+        // Specific rules for modern PHP (8.5+)
+        '@PHP8x5Migration' => true,
+        '@PHP8x5Migration:risky' => true,
 
         // Mandatory strict typing
         'declare_strict_types' => true,
@@ -52,6 +49,9 @@ return (new PhpCsFixer\Config())
             'import_constants' => true,
             'import_functions' => true,
         ],
+        'fully_qualified_strict_types' => [
+            'import_symbols' => true,
+        ],
         'ordered_imports' => [
             'sort_algorithm' => 'alpha',
             'imports_order' => ['class', 'function', 'const'],
@@ -70,6 +70,7 @@ return (new PhpCsFixer\Config())
 
         // Cleaner code
         'single_line_empty_body' => true,
+        'no_redundant_readonly_property' => true,
         'no_superfluous_phpdoc_tags' => [
             'remove_inheritdoc' => false,
         ],

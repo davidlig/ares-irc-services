@@ -7,6 +7,7 @@ error:
   syntax: "\x0304✗\x03 Λανθασμένη σύνταξη. Χρήση: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Αυτή η εντολή περιορίζεται σε IRC Operators."
   not_identified: "\x0304✗\x03 Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Άρνηση πρόσβασης. Δεν έχετε πρόσβαση σε αυτήν την εντολή."
   channel_not_registered: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
   insufficient_access: "\x0304✗\x03 Ανεπαρκής πρόσβαση για \x02%operation%\x02 στο κανάλι \x02%channel%\x02."
 
@@ -116,6 +117,7 @@ help:
   syntax_label: "\x0307Σύνταξη:\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
   unknown_command: "\x0304✗\x03 Άγνωστη εντολή \x02%command%\x02. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02\x0314Διαθέσιμες εντολές για IRCOPS:\x03\x0F"
 
 notify:
   nick_pending: "Έχετε \x02%count%\x02 μη αναγνωσμένο(α) μήνυμα(τα). Για λίστα: \x0309/msg %bot% LIST\x03"

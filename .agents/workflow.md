@@ -1,192 +1,132 @@
-# AI Assistant Workflow & Operations
+# Agent Workflow
 
-Use this skill for the project's operational workflow rules: parallel execution, pre-commit verification, and bug investigation.
+Use for investigation, implementation, parallel work, validation, and commits.
 
----
+## 1. Start from ownership
 
-## 1. Golden Rules (NON-NEGOTIABLE)
+Before coding:
+- inspect the affected bounded context/protocol adapter;
+- inspect direct callers/consumers;
+- inspect relevant tests and DI;
+- load only relevant `.agents` skills.
 
-### Parallelize EVERYTHING by Default
+Directory placement follows architecture, never convenience.
 
-Launch multiple independent operations in a SINGLE message:
+## 2. Bug investigation
 
-- Reading multiple files → Multiple `read` tool calls in one message
-- Searching for patterns → Multiple `grep`/`glob` in one message
-- Exploring different areas → Multiple task agents in one message
-- Writing independent files → Multiple `write` tool calls in one message
+1. inspect relevant logs when available;
+2. inspect recent changes when regression is plausible;
+3. identify the failing invariant;
+4. trace the symptom to the owning responsibility;
+5. fix the owner, not the first suppressible symptom.
 
-```
-Pattern: ONE message with multiple tool calls
-├── read file1.php          │
-├── read file2.php          │  All execute in parallel
-├── grep "pattern" src/      │  → Faster results
-└── glob "**/*.yaml"        │
-```
+Do not add ignore annotations/null guards until the invalid state is understood.
 
-#### When NOT to Parallelize
+## 3. Planning
 
-| Situation | Reason |
-|-----------|--------|
-| Sequential dependencies | B depends on result of A |
-| Same file modifications | Race conditions, merge conflicts |
-| Debugging with mental context | Requires sequential reasoning |
-| Bug investigation (logs) | Must correlate events in order |
+For architectural work establish:
+- scope;
+- invariants;
+- ownership;
+- dependency changes;
+- tests;
+- final verification.
 
-### Rules Summary
+If implementation was requested, continue through implementation rather than stopping after a plan.
 
-1. **Read operations**: ALWAYS parallel (multiple files in one message)
-2. **Search operations**: ALWAYS parallel (multiple patterns in one message)
-3. **Write operations**: CAN parallel if files don't overlap
-4. **Dependent tasks**: MUST be sequential (wait for result before next step)
-5. **Task agents**: Use for exploration in parallel before implementation
+## 4. Parallel work
 
----
+Parallelize:
+- independent reads;
+- searches;
+- analysis;
+- independent files after contracts are stable.
 
-## 2. Development Workflow
+Do not parallelize:
+- same-file writes;
+- dependent port/consumer changes;
+- overlapping namespace changes;
+- shared mutable state-machine extraction;
+- DI wiring before ownership is final.
 
-- **Think Before Coding**: Present a structured step-by-step plan or pseudocode before writing code. Wait for approval before generating code.
-- **Refactoring**: Before adding features, analyze for architectural violations and code smells (especially "Long Methods" or SRP violations). If a method has too much logic, propose refactoring via "Extract Method" before proceeding.
-- **Code Style (PHP CS Fixer)**: All code MUST comply with `.php-cs-fixer.dist.php`. Format code or ensure alignment with strict Symfony standards and PHP 8.5 features.
-- **Commit Order (CRITICAL)**: Run PHP CS Fixer BEFORE committing: (1) implement code, (2) run `./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php`, (3) then commit. Never commit first and fix style separately.
-- **Git Management**: Commit when task is done. Messages MUST be in English, follow Conventional Commits (`feat:`, `fix:`, `refactor:`).
-- **README Sync**: If you add/change/remove features, commands, or config vars, update `README.md`.
-- **Translations (CRITICAL)**: When adding translatable strings, create translations for ALL 14 languages: `ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`. Files at `translations/<service>.<lang>.yaml`. Every key MUST exist in all language files.
-- **Live MCP Validation**: After implementing IRC service behavior, use IRC/MariaDB MCPs when available and safe. Read `.agents/services/live-mcp-testing.md` first. Never use real nicks/channels for destructive validation.
+## 5. Refactoring
 
----
+Refactor by responsibility, not file size.
 
-## 3. Bug Investigation Workflow
+Before extracting a class identify:
+- state owned;
+- invariant protected;
+- dependency direction;
+- independent reason to change.
 
-When the user reports an error, bug, or unexpected behaviour:
+Avoid one-method forwarding chains.
 
-1. **Read application logs** under `var/log/*.log` (e.g., `irc-*.log`, `ares-*.log`, `maintenance-*.log`)
-2. **Review recent commits** (`git log` or commit history) for regressions
-3. If a specific commit is mentioned, inspect with `git show <hash>`
-4. Correlate log lines and diff with the user's description
-5. Form a hypothesis, then search the codebase or implement the fix
+Do not deduplicate `UnrealStandalone` and `UnrealUdb` behavior at the cost of coupling.
 
-Never skip log review when debugging reported errors.
+## 6. Documentation lookup
 
----
+Prefer:
+1. repository code/config for project conventions;
+2. official/current external docs;
+3. tests/specifications;
+4. model memory for stable background only.
 
-## 4. Pre-Commit Verification Order (NON-NEGOTIABLE)
+For protocol work use exact-version IRCd/module documentation.
 
-Run verifications in this EXACT order before committing:
+## 7. Development loop
+
+Run focused tests:
 
 ```bash
-# Step 1: PHP syntax check (on modified files)
-php -l path/to/file.php
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/.../ChangedTest.php
+```
 
-# Step 2: Verify container is valid
+Use scoped PHPStan during difficult work if useful.
+
+## 8. Final verification
+
+```bash
+php -l path/to/modified.php
+
 php bin/console lint:container
 
-# Step 3: Verify YAML files are valid
 php bin/console lint:yaml . --exclude vendor/ --parse-tags
 
-# Step 4: Format code
+./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress
+
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
 
-# Step 5: Run tests
-./vendor/bin/phpunit --no-coverage --display-all-issues
-
-# Step 6: Check coverage
-./scripts/check-coverage.sh 100
+./scripts/check-coverage.sh 100 --issues
 ```
 
-**Why this order:**
-- `php -l` catches syntax errors instantly
-- `lint:container` catches DI errors early
-- `lint:yaml` catches configuration errors
-- `php-cs-fixer` ensures consistent style
-- `phpunit` validates functionality
-- `coverage` ensures code is tested
+Also run the configured architecture dependency gate.
 
-If any step fails, do NOT proceed. Fix the error, re-run the failed step, and only continue when it passes.
+Inspect formatting changes before completion.
 
-**Single command for phases 2-6:**
+Never report an unexecuted gate as passed.
 
-```bash
-php bin/console lint:container && \
-php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
-./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
-./vendor/bin/phpunit --no-coverage --display-all-issues && \
-./scripts/check-coverage.sh 100
+## 9. Documentation consistency
+
+Update README/config docs for user-visible command/config/support changes.
+
+Update agent skills only for architectural/workflow contract changes.
+
+Do not use `.agents` as a changelog or status report.
+
+## 10. Commits
+
+Use English Conventional Commits.
+
+Examples:
+
+```text
+refactor(nickserv): separate IRC commands from application use cases
+
+refactor(protocol): isolate UnrealUdb reconciliation state
+
+fix(chanserv): preserve secure rank policy during channel sync
+
+test(unreal-udb): cover reconciliation absolute timeout
 ```
 
----
-
-## 5. Parallel Execution Workflow for New Features
-
-### Phase 1: Parallel Exploration
-
-Launch multiple searches in ONE message:
-
-| Search | Pattern |
-|--------|---------|
-| Find similar commands/handlers | `grep "implements.*CommandInterface" src/` |
-| Find repository interfaces | `glob "src/Domain/*/Repository/*Interface.php"` |
-| Find translation patterns | `glob "translations/*.<lang>.yaml"` |
-| Find test patterns | `glob "tests/Application/**/*Test.php"` |
-
-### Phase 2: Parallel Implementation
-
-Write implementation and tests simultaneously:
-
-```
-Single message with:
-├── write src/Domain/.../NewEntity.php
-├── write src/Application/.../NewHandler.php
-├── write tests/Domain/.../NewEntityTest.php
-└── write tests/Application/.../NewHandlerTest.php
-```
-
-### Phase 3: Parallel Verification
-
-Run all verifications together (order matters, use `&&`):
-
-```bash
-php bin/console lint:container && \
-php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
-./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
-./vendor/bin/phpunit --no-coverage --display-all-issues && \
-./scripts/check-coverage.sh 100
-```
-
-### Phase 4: Live MCP Validation
-
-When a running IRCd and the project MCPs are available, perform a live smoke/integration check after the mandatory local verification chain:
-
-- Use IRC MCP to exercise the implemented service command through `/msg` behavior.
-- Use MariaDB MCP only for read-only inspection, such as checking persisted state or reading a temporary nick verification token.
-- Create temporary resources such as `NickTest<timestamp>` and `#test-<timestamp>`.
-- Use `OPENCODE_IRC_ROOT_NICK` only when root, IRCop, or founder privileges are required.
-- Skip live validation rather than touching real nicks/channels or running unsafe destructive commands.
-
-Full rules: `.agents/services/live-mcp-testing.md`.
-
-### Parallelization Rules
-
-| Type | Rule |
-|------|------|
-| Independent reads | ALWAYS parallel |
-| Independent writes | CAN parallel (if no file overlap) |
-| Dependent tasks | MUST sequential |
-| Task agents | Use for exploration in parallel |
-
-### Task Agent Pattern
-
-When launching parallel task agents:
-
-```
-Task A: Find similar command handlers for REGISTER
-- Search: grep "RegisterCommand" src/
-- Return: List of files found, patterns identified
-- DO NOT modify files
-
-Task B: Find translations for REGISTER
-- Search: glob translations/*.yaml + grep "register"
-- Return: Translation keys found
-- DO NOT modify files
-```
-
-After all tasks complete, proceed with implementation.
+Do not mention AI agents in commit messages.

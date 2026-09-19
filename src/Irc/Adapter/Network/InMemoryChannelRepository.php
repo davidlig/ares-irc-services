@@ -1,0 +1,49 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Irc\Adapter\Network;
+
+use App\Irc\Domain\Network\Channel;
+use App\Irc\Domain\Repository\ChannelRepositoryInterface;
+use App\Irc\Domain\ValueObject\ChannelName;
+
+use function count;
+
+class InMemoryChannelRepository implements ChannelRepositoryInterface
+{
+    /** @var array<string, Channel> keyed by lowercase channel name */
+    private array $channels = [];
+
+    public function save(Channel $channel): void
+    {
+        $this->channels[strtolower($channel->name->value)] = $channel;
+    }
+
+    public function remove(ChannelName $name): void
+    {
+        unset($this->channels[strtolower($name->value)]);
+    }
+
+    public function findByName(ChannelName $name): ?Channel
+    {
+        return $this->channels[strtolower($name->value)] ?? null;
+    }
+
+    public function all(): array
+    {
+        return array_values($this->channels);
+    }
+
+    public function iterateAll(): iterable
+    {
+        foreach ($this->channels as $channel) {
+            yield $channel;
+        }
+    }
+
+    public function count(): int
+    {
+        return count($this->channels);
+    }
+}

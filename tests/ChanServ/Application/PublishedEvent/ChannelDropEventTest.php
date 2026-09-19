@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\ChanServ\Application\PublishedEvent;
+
+use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
+use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(ChannelDropEvent::class)]
+final class ChannelDropEventTest extends TestCase
+{
+    #[Test]
+    public function constructionAndProperties(): void
+    {
+        $at = new DateTimeImmutable('2024-01-15 12:00:00');
+        $event = new ChannelDropEvent(1, '#test', '#test', 'inactivity', $at);
+
+        self::assertSame(1, $event->channelId);
+        self::assertSame('#test', $event->channelName);
+        self::assertSame('#test', $event->channelNameLower);
+        self::assertSame('inactivity', $event->reason);
+        self::assertSame($at, $event->occurredAt);
+    }
+
+    #[Test]
+    public function preservesExplicitOccurredAt(): void
+    {
+        $occurredAt = new DateTimeImmutable('2026-01-02 03:04:05');
+        $event = new ChannelDropEvent(1, '#test', '#test', 'manual', $occurredAt);
+
+        self::assertSame($occurredAt, $event->occurredAt);
+    }
+}

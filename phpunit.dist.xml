@@ -4,8 +4,12 @@
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/13.0/phpunit.xsd"
          colors="true"
          failOnDeprecation="true"
+         failOnIncomplete="true"
          failOnNotice="true"
+         failOnRisky="true"
+         failOnSkipped="true"
          failOnWarning="true"
+         requireCoverageMetadata="true"
          bootstrap="tests/bootstrap.php"
          cacheDirectory=".phpunit.cache"
          displayDetailsOnTestsThatTriggerDeprecations="true"
@@ -42,7 +46,7 @@
             <directory>src</directory>
         </include>
         <exclude>
-            <file>src/Kernel.php</file>
+            <file>src/Bootstrap/Kernel.php</file>
         </exclude>
 
         <deprecationTrigger>

@@ -41,6 +41,7 @@ verify:
   short:            "Potwierdź swój adres e-mail i aktywuj nicka."
   help:             "Kończy rejestrację poprzez weryfikację tokenu wysłanego na Twój e-mail.\nToken jest ważny przez 1 godzinę od momentu rejestracji."
   success:          "\x0303✔\x03 Nick \x02%nickname%\x02 został pomyślnie zarejestrowany i jesteś teraz zidentyfikowany."
+  success_native:   "\x0303✔\x03 Nick \x02%nickname%\x02 został pomyślnie zarejestrowany. Użyj natywnego uwierzytelniania pokazanego poniżej."
   invalid_token:    "\x0304✗\x03 Token jest nieprawidłowy lub wygasł. Użyj \x0303/msg %bot% REGISTER\x03 aby zacząć od nowa."
   no_pending:       "\x0304✗\x03 Nie masz oczekującej rejestracji do zweryfikowania."
 
@@ -63,7 +64,6 @@ recover:
   pending:          "\x0304✗\x03 Nick \x02%nickname%\x02 oczekuje na weryfikację e-mail."
   suspended:        "\x0304✗\x03 Nick \x02%nickname%\x02 jest zawieszony. Powód: %reason%"
   forbidden:        "\x0304✗\x03 Nick \x02%nickname%\x02 nie może być używany w tej sieci."
-  pending_deletion: "\x0304✗\x03 Nick \x02%nickname%\x02 oczekuje na usunięcie i nie może być używany."
   no_email:         "\x0304✗\x03 Brak ustawionego e-maila dla nicka \x02%nickname%\x02. Odzyskiwanie nie jest dostępne."
   throttled:        "\x0304✗\x03 Musisz poczekać \x02%minutes%\x02 minut(y) przed zażądaniem kolejnego e-maila odzyskiwania."
   invalid_token:    "\x0304✗\x03 Token jest nieprawidłowy lub wygasł. Poproś o nowy używając \x0303RECOVER %nickname%\x03."
@@ -75,6 +75,10 @@ identify:
   syntax:           "IDENTIFY <nick> <hasło>"
   short:            "Zidentyfikuj się jako właściciel nicka."
   help:             "Uwierzytelnia Twoją sesję z %nickserv% używając Twojego nicka i hasła.\nPo udanej identyfikacji otrzymasz tryb zarejestrowanego \x02+r\x02\ni, jeśli używałeś nicka gościa, Twój zarejestrowany nick zostanie przywrócony."
+  native_syntax:    "/NICK <nick>:<hasło> | /NICK <nick>!<hasło>"
+  native_short:     "Wyświetla natywną składnię uwierzytelniania pseudonimu."
+  native_help:      "Ten protokół uwierzytelnia konta przez zmianę pseudonimu.\nUżyj /NICK <nick>:<hasło> albo, jeśli pseudonim jest zajęty, /NICK <nick>!<hasło>."
+  native_authentication: "\x0307ℹ\x03 Ten protokół obsługuje uwierzytelnianie przez zmianę pseudonimu. Użyj \x0303/NICK <nick>:<hasło>\x03 albo, jeśli pseudonim jest zajęty, \x0303/NICK <nick>!<hasło>\x03."
   success:          "\x0303✔\x03 Jesteś teraz zidentyfikowany jako \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Jesteś już zidentyfikowany jako \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
@@ -92,7 +96,7 @@ status:
   syntax:           "STATUS <nick>"
   short:            "Wyświetl status rejestracji nicka."
   help:             "Pokazuje obecny status nicka: zarejestrowany, oczekująca weryfikacja,\nzawieszony lub zabroniony."
-  header:           "\x02Status nicka \x0307%nickname%\x03:\x02"
+  header:           "\x02Status nicka \x0307%nickname%\x03\x02"
   unregistered:     "  Status          : Niezarejestrowany"
   not_registered_offline: "  Status          : \x0315Niezarejestrowany\x03"
   pending:          "  Status          : \x0307Oczekująca weryfikacja\x03"
@@ -118,13 +122,12 @@ info:
   help:             "Pokazuje szczegóły rejestracji nicka: datę rejestracji, status\npołączenia, ostatnią wiadomość wyjścia i adres e-mail. E-mail jest widoczny tylko\ndla właściciela gdy zidentyfikowany. Przy PRIVATE ON tylko właściciel i Operatorzy IRC\nmogą zobaczyć informacje."
   not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
   private:          "\x0304✗\x03 Informacje o nicku \x02%nickname%\x02 są prywatne."
-  header:           "\x02Informacje o nicku \x0307%nickname%\x03:\x02"
+  header:           "\x02Informacje o nicku \x0307%nickname%\x03\x02"
   status:           "  \x0314Status\x03                  : %status%"
   status_registered:  "\x0303Zarejestrowany\x03"
   status_suspended:   "\x0304Zawieszony\x03"
   status_forbidden:   "\x0304Zabroniony\x03"
   status_pending_deletion: "\x0307Oczekuje na usunięcie\x03"
-  status_pending_deletion_at:  "  \x0314Usunięty\x03           : %date%"
   reason:           "  \x0314Powód\x03                   : %reason%"
   suspended_until:  "  \x0314Kończy się\x03              : %date%"
   suspended_permanent: "  \x0314Kończy się\x03              : Stałe"
@@ -198,9 +201,9 @@ set:
     off:            "\x0303✔\x03 Wiadomości serwisów będą teraz wysyłane jako \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Ustaw lub wyczyść swój niestandardowy host wirtualny (wyświetlany hostname)."
-    help:           "Ustawia niestandardową nazwę hosta, którą inni widzą gdy jesteś zidentyfikowany.\nUżyj \x02SET VHOST OFF\x02 aby wyczyścić. Tylko litery (a-z, A-Z), cyfry, myślnik i kropka;\nbez myślnika lub kropki na początku/końcu bloku; maks. 48 znaków. Unikalny na nick."
+    help:           "Ustawia niestandardową nazwę hosta, którą inni widzą gdy jesteś zidentyfikowany.\nUżyj \x02SET VHOST\x02 bez wartości aby wyczyścić. Tylko litery (a-z, A-Z), cyfry, myślnik i kropka;\nbez myślnika lub kropki na początku/końcu bloku; maks. 48 znaków. Unikalny na nick."
     success:        "\x0303✔\x03 Twój host wirtualny został ustawiony na \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Twój host wirtualny został wyczyszczony."
     invalid:        "\x0304✗\x03 Nieprawidłowy vhost. Tylko litery, cyfry, myślnik i kropka (nie na początku/końcu bloku); maks. 48 znaków."
@@ -225,57 +228,42 @@ saset:
     Składnia: SASET <nick> <opcja> <wartość>
     Przykład: SASET Użytkownik PASSWORD nowehasło
   unknown_option:   "\x0304✗\x03 Nieznana opcja \x02%option%\x02. Dostępne opcje: %options%."
-  not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
   cannot_modify_oper: "\x0304✗\x03 Nie można modyfikować nicka Operatora IRC."
 
   password:
     syntax:         "SASET <nick> PASSWORD <nowe_hasło>"
     short:          "Zmień hasło nicka."
     help:           "Zmienia hasło innego nicka.\nZmiana jest natychmiastowa.\n\nSkładnia: SASET <nick> PASSWORD <nowe_hasło>\nPrzykład: SASET Użytkownik PASSWORD nowehasło123"
-    success:        "\x0303✔\x03 Hasło \x02%nickname%\x02 zostało zaktualizowane."
 
   email:
     syntax:         "SASET <nick> EMAIL <nowy_e-mail>"
     short:          "Zmień e-mail nicka."
     help:           "Zmienia e-mail innego nicka.\nŻadne potwierdzenie nie jest wysyłane—zmiana jest natychmiastowa.\n\nSkładnia: SASET <nick> EMAIL <nowy_e-mail>\nPrzykład: SASET Użytkownik EMAIL użytkownik@przykład.com"
-    success:        "\x0303✔\x03 E-mail \x02%nickname%\x02 został zaktualizowany na \x02%email%\x02."
 
   language:
     syntax:         "SASET <nick> LANGUAGE <kod>"
     short:          "Zmień język nicka."
     help:           "Zmienia język innego nicka.\nDostępne języki: en (angielski), es (hiszpański).\n\nSkładnia: SASET <nick> LANGUAGE <kod>\nPrzykład: SASET Użytkownik LANGUAGE pl"
-    success:        "\x0303✔\x03 Język \x02%nickname%\x02 został zmieniony na \x02%language%\x02."
 
   timezone:
     syntax:         "SASET <nick> TIMEZONE <strefa_czasowa|OFF>"
     short:          "Zmień strefę czasową nicka."
     help:           "Ustawia lub czyści strefę czasową innego nicka.\nUżyj OFF, aby wyczyścić.\n\nSkładnia: SASET <nick> TIMEZONE <strefa_czasowa>\nPrzykład: SASET Użytkownik TIMEZONE Europe/Warsaw"
-    success:        "\x0303✔\x03 Strefa czasowa \x02%nickname%\x02 została ustawiona na \x02%timezone%\x02."
-    cleared:        "\x0303✔\x03 Strefa czasowa \x02%nickname%\x02 została wyczyszczona."
-    invalid:        "\x0304✗\x03 Nieprawidłowa strefa czasowa \x02%timezone%\x02."
 
   private:
     syntax:         "SASET <nick> PRIVATE {ON|OFF}"
     short:          "Zmień prywatność nicka."
     help:           "Włącza lub wyłącza prywatność informacji innego nicka.\n\nSkładnia: SASET <nick> PRIVATE {ON|OFF}\nPrzykład: SASET Użytkownik PRIVATE ON"
-    on:             "\x0303✔\x03 Informacje \x02%nickname%\x02 są teraz \x02prywatne\x02."
-    off:            "\x0303✔\x03 Informacje \x02%nickname%\x02 są teraz \x02publiczne\x02."
 
   msg:
     syntax:         "SASET <nick> MSG {ON|OFF}"
     short:          "Zmień preferencję wiadomości nicka."
     help:           "Ustawia, czy inny nick otrzymuje odpowiedzi jako PRIVMSG (ON) lub NOTICE (OFF).\n\nSkładnia: SASET <nick> MSG {ON|OFF}\nPrzykład: SASET Użytkownik MSG ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02 będzie teraz otrzymywać wiadomości jako \x02PRIVMSG\x02."
-    off:            "\x0303✔\x03 \x02%nickname%\x02 będzie teraz otrzymywać wiadomości jako \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <nick> VHOST <vhost|OFF>"
+    syntax:         "SASET <nick> VHOST [vhost]"
     short:          "Zmień host wirtualny nicka."
-    help:           "Ustawia lub czyści host wirtualny innego nicka.\nUżyj OFF, aby wyczyścić.\n\nSkładnia: SASET <nick> VHOST <vhost>\nPrzykład: SASET Użytkownik VHOST użytkownicy.przykład.com"
-    success:        "\x0303✔\x03 Host wirtualny \x02%nickname%\x02 został ustawiony na \x02%vhost%\x02."
-    cleared:        "\x0303✔\x03 Host wirtualny \x02%nickname%\x02 został wyczyszczony."
-    invalid:        "\x0304✗\x03 Nieprawidłowy vhost dla \x02%nickname%\x02."
-    taken:          "\x0304✗\x03 Ten vhost jest już używany przez inny nick."
+    help:           "Ustawia lub czyści host wirtualny innego nicka.\nUżyj \x02SASET <nick> VHOST\x02 bez wartości, aby wyczyścić.\n\nSkładnia: SASET <nick> VHOST [vhost]\nPrzykład: SASET Użytkownik VHOST użytkownicy.przykład.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -291,7 +279,6 @@ help:
   options_header:   "\x02\x0314Opcje:\x03\x0F"
   general_footer:   "Użyj \x0303/msg %bot% HELP <komenda>\x03 aby uzyskać więcej informacji."
   set_sub_footer:   "Użyj \x0303/msg %bot% HELP %command% <opcja>\x03 aby uzyskać więcej informacji."
-  command_header:   "\x02Pomoc dla %command%:\x02"
   syntax_label:     "\x0307Składnia:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 Brak pomocy dla \x02%command%\x02."
@@ -323,19 +310,6 @@ userip:
     Przykład: USERIP JakisUzytkownik
   not_online:       "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest połączony."
   result:           "\x0307ℹ\x03 Nick: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
-
-permissions:
-  nickserv.userip: "Wyświetl prawdziwy adres IP/nazwę hosta nicka (USERIP)"
-  nickserv.suspend: "Zawieś lub zdejmij zawieszenie nicka (SUSPEND/UNSUSPEND)"
-  nickserv.rename: "Wymuś zmianę nicka połączonego użytkownika na losowy (RENAME)"
-  nickserv.drop: "Usuń zarejestrowany nick (DROP)"
-  nickserv.drop.force: "Trwale usuń odzyskiwalnego nicka (DROP FORCE)"
-  nickserv.restore: "Przywróć nicka oczekującego na usunięcie (RESTORE)"
-  nickserv.forbid: "Zabroń lub odblokuj nick (FORBID/UNFORBID)"
-  nickserv.forbidvhost: "Zabroń lub zezwól na wzorce vhost (FORBIDVHOST)"
-  nickserv.saset: "Modyfikuj ustawienia innego nicka (SASET)"
-  nickserv.noexpire: "Ustaw lub usuń ochronę przed wygaśnięciem nicka (NOEXPIRE)"
-  nickserv.history: "Przeglądaj i zarządzaj historią działań nicka (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

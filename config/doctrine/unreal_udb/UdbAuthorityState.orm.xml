@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState" table="udb_authority_state">
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="approved" type="boolean" column="approved"/>
+        <field name="approvedAt" type="datetimetz_immutable" column="approved_at" nullable="true"/>
+        <field name="fingerprint" type="string" length="64" column="fingerprint" nullable="true"/>
+        <field name="protocolRevision" type="string" length="40" column="protocol_revision" nullable="true"/>
+    </entity>
+</doctrine-mapping>

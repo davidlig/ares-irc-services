@@ -41,6 +41,7 @@ verify:
   short:            "Confirme o seu endereço de email e ative o seu nickname."
   help:             "Conclui o registo verificando o token enviado para o seu email.\nO token é válido por 1 hora a partir do momento do registo."
   success:          "\x0303✔\x03 O nickname \x02%nickname%\x02 foi registado com sucesso e agora está identificado."
+  success_native:   "\x0303✔\x03 O nickname \x02%nickname%\x02 foi registado com sucesso. Use a autenticação nativa indicada abaixo."
   invalid_token:    "\x0304✗\x03 O token é inválido ou expirou. Use \x0303/msg %bot% REGISTER\x03 para recomeçar."
   no_pending:       "\x0304✗\x03 Não tem nenhum registo pendente para verificar."
 
@@ -63,7 +64,6 @@ recover:
   pending:          "\x0304✗\x03 O nickname \x02%nickname%\x02 está pendente de verificação de email."
   suspended:        "\x0304✗\x03 O nickname \x02%nickname%\x02 está suspenso. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 O nickname \x02%nickname%\x02 não pode ser usado nesta rede."
-  pending_deletion: "\x0304✗\x03 O nickname \x02%nickname%\x02 está pendente de eliminação e não pode ser usado."
   no_email:         "\x0304✗\x03 Não está definido nenhum email para o nickname \x02%nickname%\x02. A recuperação não está disponível."
   throttled:        "\x0304✗\x03 Deve aguardar \x02%minutes%\x02 minuto(s) antes de solicitar outro email de recuperação."
   invalid_token:    "\x0304✗\x03 O token é inválido ou expirou. Solicite um novo com \x0303RECOVER %nickname%\x03."
@@ -75,6 +75,10 @@ identify:
   syntax:           "IDENTIFY <nickname> <palavra-passe>"
   short:            "Identifique-se como proprietário de um nickname."
   help:             "Autentica a sua sessão com %nickserv% usando o seu nickname e palavra-passe.\nApós uma identificação bem-sucedida receberá o modo registado \x02+r\x02\ne, se estava a usar um nick de convidado, o seu nick registado será restaurado."
+  native_syntax:    "/NICK <nickname>:<palavra-passe> | /NICK <nickname>!<palavra-passe>"
+  native_short:     "Mostra a sintaxe nativa de autenticação do apelido."
+  native_help:      "Este protocolo autentica contas através de mudanças de apelido.\nUse /NICK <nickname>:<palavra-passe> ou, se o apelido estiver ocupado, /NICK <nickname>!<palavra-passe>."
+  native_authentication: "\x0307ℹ\x03 Este protocolo gere a autenticação através de mudanças de apelido. Use \x0303/NICK <nickname>:<palavra-passe>\x03 ou, se o apelido estiver ocupado, \x0303/NICK <nickname>!<palavra-passe>\x03."
   success:          "\x0303✔\x03 Está agora identificado como \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Já está identificado como \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
@@ -92,7 +96,7 @@ status:
   syntax:           "STATUS <nickname>"
   short:            "Mostrar o estado de registo de um nickname."
   help:             "Mostra o estado atual de um nickname: registado, pendente de verificação,\nsuspenso ou proibido."
-  header:           "\x02Estado do nick \x0307%nickname%\x03:\x02"
+  header:           "\x02Estado do nick \x0307%nickname%\x03\x02"
   unregistered:     "  Estado          : Não registado"
   not_registered_offline: "  Estado          : \x0315Não registado\x03"
   pending:          "  Estado          : \x0307Pendente de verificação\x03"
@@ -118,13 +122,12 @@ info:
   help:             "Mostra detalhes de registo de um nickname: data de registo, estado\nde ligação, última mensagem de saída e endereço de email. O email só é visível para\no proprietário quando identificado. Com PRIVATE ON apenas o proprietário e Operadores de IRC\npodem ver as informações."
   not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
   private:          "\x0304✗\x03 As informações do nickname \x02%nickname%\x02 são privadas."
-  header:           "\x02Informações do nickname \x0307%nickname%\x03:\x02"
+  header:           "\x02Informações do nickname \x0307%nickname%\x03\x02"
   status:           "  \x0314Estado\x03            : %status%"
   status_registered:  "\x0303Registado\x03"
   status_suspended:   "\x0304Suspenso\x03"
   status_forbidden:   "\x0304Proibido\x03"
   status_pending_deletion: "\x0307Pendente de eliminação\x03"
-  status_pending_deletion_at:  "  \x0314Eliminado\x03          : %date%"
   reason:           "  \x0314Motivo\x03                 : %reason%"
   suspended_until:  "  \x0314Termina em\x03        : %date%"
   suspended_permanent: "  \x0314Termina em\x03        : Permanente"
@@ -198,9 +201,9 @@ set:
     off:            "\x0303✔\x03 As mensagens dos serviços serão agora enviadas como \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>"
+    syntax:         "SET VHOST [vhost]"
     short:          "Definir ou remover o seu host virtual personalizado (hostname exibido)."
-    help:           "Define um hostname personalizado que outros veem quando está identificado.\nUse \x02SET VHOST OFF\x02 para o limpar. Apenas letras (a-z, A-Z), dígitos, hífen e ponto;\nnenhum hífen ou ponto no início/fim de qualquer bloco; máx. 48 caracteres. Único por nickname."
+    help:           "Define um hostname personalizado que outros veem quando está identificado.\nUse \x02SET VHOST\x02 sem valor para o limpar. Apenas letras (a-z, A-Z), dígitos, hífen e ponto;\nnenhum hífen ou ponto no início/fim de qualquer bloco; máx. 48 caracteres. Único por nickname."
     success:        "\x0303✔\x03 O seu host virtual foi definido como \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 O seu host virtual foi removido."
     invalid:        "\x0304✗\x03 Vhost inválido. Apenas letras, dígitos, hífen e ponto (não no início/fim de bloco); máx. 48 caracteres."
@@ -225,57 +228,42 @@ saset:
     Sintaxe: SASET <nickname> <opção> <valor>
     Exemplo: SASET Utilizador PASSWORD novapasse
   unknown_option:   "\x0304✗\x03 Opção desconhecida \x02%option%\x02. Opções disponíveis: %options%."
-  not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
   cannot_modify_oper: "\x0304✗\x03 Não é possível modificar um nickname de Operador de IRC."
 
   password:
     syntax:         "SASET <nickname> PASSWORD <nova_palavra-passe>"
     short:          "Alterar a palavra-passe de um nickname."
     help:           "Altera a palavra-passe de outro nickname.\nA alteração é imediata.\n\nSintaxe: SASET <nickname> PASSWORD <nova_palavra-passe>\nExemplo: SASET Utilizador PASSWORD novapasse123"
-    success:        "\x0303✔\x03 A palavra-passe de \x02%nickname%\x02 foi atualizada."
 
   email:
     syntax:         "SASET <nickname> EMAIL <novo_email>"
     short:          "Alterar o email de um nickname."
     help:           "Altera o email de outro nickname.\nNenhuma confirmação é enviada—a alteração é imediata.\n\nSintaxe: SASET <nickname> EMAIL <novo_email>\nExemplo: SASET Utilizador EMAIL utilizador@exemplo.com"
-    success:        "\x0303✔\x03 O email de \x02%nickname%\x02 foi atualizado para \x02%email%\x02."
 
   language:
     syntax:         "SASET <nickname> LANGUAGE <código>"
     short:          "Alterar o idioma de um nickname."
     help:           "Altera o idioma de outro nickname.\nIdiomas disponíveis: en (inglês), es (espanhol).\n\nSintaxe: SASET <nickname> LANGUAGE <código>\nExemplo: SASET Utilizador LANGUAGE pt"
-    success:        "\x0303✔\x03 O idioma de \x02%nickname%\x02 foi alterado para \x02%language%\x02."
 
   timezone:
     syntax:         "SASET <nickname> TIMEZONE <fuso_horário|OFF>"
     short:          "Alterar o fuso horário de um nickname."
     help:           "Define ou remove o fuso horário de outro nickname.\nUse OFF para remover.\n\nSintaxe: SASET <nickname> TIMEZONE <fuso_horário>\nExemplo: SASET Utilizador TIMEZONE Europe/Lisboa"
-    success:        "\x0303✔\x03 O fuso horário de \x02%nickname%\x02 foi definido como \x02%timezone%\x02."
-    cleared:        "\x0303✔\x03 O fuso horário de \x02%nickname%\x02 foi removido."
-    invalid:        "\x0304✗\x03 Fuso horário inválido \x02%timezone%\x02."
 
   private:
     syntax:         "SASET <nickname> PRIVATE {ON|OFF}"
     short:          "Alterar a privacidade de um nickname."
     help:           "Ativa ou desativa a privacidade das informações de outro nickname.\n\nSintaxe: SASET <nickname> PRIVATE {ON|OFF}\nExemplo: SASET Utilizador PRIVATE ON"
-    on:             "\x0303✔\x03 As informações de \x02%nickname%\x02 são agora \x02privadas\x02."
-    off:            "\x0303✔\x03 As informações de \x02%nickname%\x02 são agora \x02públicas\x02."
 
   msg:
     syntax:         "SASET <nickname> MSG {ON|OFF}"
     short:          "Alterar a preferência de mensagens de um nickname."
     help:           "Define se outro nickname recebe respostas como PRIVMSG (ON) ou NOTICE (OFF).\n\nSintaxe: SASET <nickname> MSG {ON|OFF}\nExemplo: SASET Utilizador MSG ON"
-    on:             "\x0303✔\x03 \x02%nickname%\x02 receberá agora mensagens como \x02PRIVMSG\x02."
-    off:            "\x0303✔\x03 \x02%nickname%\x02 receberá agora mensagens como \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SASET <nickname> VHOST <vhost|OFF>"
+    syntax:         "SASET <nickname> VHOST [vhost]"
     short:          "Alterar o host virtual de um nickname."
-    help:           "Define ou remove o host virtual de outro nickname.\nUse OFF para remover.\n\nSintaxe: SASET <nickname> VHOST <vhost>\nExemplo: SASET Utilizador VHOST utilizadores.exemplo.com"
-    success:        "\x0303✔\x03 O VHost de \x02%nickname%\x02 foi definido como \x02%vhost%\x02."
-    cleared:        "\x0303✔\x03 O VHost de \x02%nickname%\x02 foi removido."
-    invalid:        "\x0304✗\x03 VHost inválido para \x02%nickname%\x02."
-    taken:          "\x0304✗\x03 Esse vhost já está em uso por outro nickname."
+    help:           "Define ou remove o host virtual de outro nickname.\nUse \x02SASET <nickname> VHOST\x02 sem valor para remover.\n\nSintaxe: SASET <nickname> VHOST [vhost]\nExemplo: SASET Utilizador VHOST utilizadores.exemplo.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -291,7 +279,6 @@ help:
   options_header:   "\x02\x0314Opções:\x03\x0F"
   general_footer:   "Use \x0303/msg %bot% HELP <comando>\x03 para mais informações."
   set_sub_footer:   "Use \x0303/msg %bot% HELP %command% <opção>\x03 para mais informações."
-  command_header:   "\x02Ajuda para %command%:\x02"
   syntax_label:     "\x0307Sintaxe:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 Nenhuma ajuda disponível para \x02%command%\x02."
@@ -323,19 +310,6 @@ userip:
     Exemplo: USERIP SomeUser
   not_online:       "\x0304✗\x03 O nickname \x02%nickname%\x02 não está ligado."
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
-
-permissions:
-  nickserv.userip: "Ver o endereço IP/hostname real de um nickname (USERIP)"
-  nickserv.suspend: "Suspender ou remover suspensão de um nickname (SUSPEND/UNSUSPEND)"
-  nickserv.rename: "Forçar renomeação de um nickname ligado para um nick aleatório (RENAME)"
-  nickserv.drop: "Remover um nickname registado (DROP)"
-  nickserv.drop.force: "Forçar a eliminação permanente de um nickname recuperável (DROP FORCE)"
-  nickserv.restore: "Restaurar um nickname pendente de eliminação (RESTORE)"
-  nickserv.forbid: "Proibir ou remover proibição de um nickname (FORBID/UNFORBID)"
-  nickserv.forbidvhost: "Proibir ou permitir padrões de vhost (FORBIDVHOST)"
-  nickserv.saset: "Modificar as configurações de outro nickname (SASET)"
-  nickserv.noexpire: "Definir ou remover proteção de expiração para um nickname (NOEXPIRE)"
-  nickserv.history: "Ver e gerir o histórico de ações do nickname (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

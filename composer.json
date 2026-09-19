@@ -10,7 +10,11 @@
         "php": ">=8.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-mbstring": "*",
         "ext-pdo_mysql": "*",
+        "ext-pdo_sqlite": "*",
+        "amphp/amp": "^3.1",
+        "amphp/socket": "^2.4",
         "doctrine/doctrine-bundle": "3.2.*",
         "doctrine/doctrine-migrations-bundle": "4.0.*",
         "doctrine/orm": "3.6.*",
@@ -19,6 +23,7 @@
         "symfony/dotenv": "7.4.*",
         "symfony/flex": "2.10.*",
         "symfony/framework-bundle": "7.4.*",
+        "symfony/lock": "7.4.*",
         "symfony/mailer": "7.4.*",
         "symfony/messenger": "7.4.*",
         "symfony/monolog-bundle": "4.0.*",
@@ -34,6 +39,9 @@
             "symfony/runtime": true
         },
         "bump-after-update": true,
+        "platform": {
+            "php": "8.5.0"
+        },
         "sort-packages": true
     },
     "autoload": {
@@ -43,6 +51,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "App\\Migrations\\": "migrations/",
             "App\\Tests\\": "tests/"
         }
     },
@@ -67,9 +76,10 @@
         "post-update-cmd": [
             "@auto-scripts"
         ],
+        "architecture": "deptrac analyse --config-file=deptrac.yaml --no-progress --fail-on-uncovered --report-uncovered",
         "cs-check": "php-cs-fixer fix --dry-run --diff",
         "cs-fix": "php-cs-fixer fix",
-        "check-returns": "php scripts/check-returns.php"
+        "phpstan": "phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress"
     },
     "conflict": {
         "symfony/symfony": "*"
@@ -82,7 +92,10 @@
         }
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.95.15",
-        "phpunit/phpunit": "^13.2.4"
+        "deptrac/deptrac": "^4.7.2",
+        "friendsofphp/php-cs-fixer": "^3.95.26",
+        "phpstan/phpstan": "^2.2.14",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpunit/phpunit": "^13.3.4"
     }
 }

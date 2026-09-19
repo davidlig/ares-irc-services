@@ -7,6 +7,7 @@ error:
   syntax: "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
   not_identified: "\x0304✗\x03 Kimliğiniz doğrulanmamış. \x0303/msg %nickserv% IDENTIFY\x03 kullanın."
+  permission_denied: "\x0304✗\x03 Erişim reddedildi. Bu komuta erişim yetkiniz yok."
   channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   insufficient_access: "\x0304✗\x03 \x02%channel%\x02 kanalında \x02%operation%\x02 işlemi için yetersiz yetki."
 
@@ -116,6 +117,7 @@ help:
   syntax_label: "\x0307Sözdizimi:\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
   unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
+  ircop_header: "\x02\x0314IRCOPS için kullanılabilir komutlar:\x03\x0F"
 
 notify:
   nick_pending: "\x02%count%\x02 okunmamış mesajınız var. Listelemek için: \x0309/msg %bot% LIST\x03"
