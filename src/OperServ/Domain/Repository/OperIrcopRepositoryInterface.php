@@ -28,4 +28,9 @@ interface OperIrcopRepositoryInterface
      * Delete IRCOP entry for a nick (used when nick is dropped).
      */
     public function deleteByNickId(int $nickId): void;
+
+    /**
+     * Clear the added_by reference on IRCOP entries assigned by a nick (used when nick is dropped).
+     */
+    public function clearAddedById(int $nickId): void;
 }

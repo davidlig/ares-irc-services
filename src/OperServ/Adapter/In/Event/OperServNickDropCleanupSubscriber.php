@@ -12,8 +12,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * When a nick is dropped:
- * - Remove the IRCOP entry for that nick (CASCADE DELETE)
- * - Clear creator reference in GLINE entries (SET NULL).
+ * - Remove the IRCOP entry for that nick (DELETE)
+ * - Clear the added_by reference on IRCOP entries assigned by the nick (SET NULL)
+ * - Clear creator reference in GLINE entries (SET NULL)
+ * - Remove MOTD entries created by the nick (DELETE).
  */
 final readonly class OperServNickDropCleanupSubscriber implements EventSubscriberInterface
 {
@@ -33,6 +35,7 @@ final readonly class OperServNickDropCleanupSubscriber implements EventSubscribe
     public function onNickDrop(NickDropCleanupEvent $event): void
     {
         $this->operIrcopRepository->deleteByNickId($event->nickId);
+        $this->operIrcopRepository->clearAddedById($event->nickId);
 
         $this->glineRepository->clearCreatorAccountId($event->nickId);
 

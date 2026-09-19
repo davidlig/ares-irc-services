@@ -63,4 +63,14 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
             ->setParameter('nickId', $nickId)
             ->execute();
     }
+
+    public function clearAddedById(int $nickId): void
+    {
+        $this->em
+            ->createQuery(
+                'UPDATE App\OperServ\Domain\Entity\OperIrcop i SET i.addedById = NULL WHERE i.addedById = :nickId'
+            )
+            ->setParameter('nickId', $nickId)
+            ->execute();
+    }
 }

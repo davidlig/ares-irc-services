@@ -45,6 +45,10 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('deleteByNickId')
             ->with(12345);
+        $operIrcopRepo
+            ->expects(self::once())
+            ->method('clearAddedById')
+            ->with(12345);
 
         $glineRepo
             ->expects(self::once())
@@ -79,6 +83,10 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('deleteByNickId')
             ->with(999);
+        $operIrcopRepo
+            ->expects(self::once())
+            ->method('clearAddedById')
+            ->with(999);
 
         $glineRepo
             ->expects(self::once())
@@ -112,6 +120,10 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
         $operIrcopRepo
             ->expects(self::once())
             ->method('deleteByNickId')
+            ->with(42);
+        $operIrcopRepo
+            ->expects(self::once())
+            ->method('clearAddedById')
             ->with(42);
 
         $glineRepo

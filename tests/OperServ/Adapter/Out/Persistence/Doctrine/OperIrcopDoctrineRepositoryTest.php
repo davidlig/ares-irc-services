@@ -234,6 +234,34 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertNotNull($this->repository->findByNickId(100));
     }
 
+    #[Test]
+    public function clearAddedByIdClearsOnlyMatchingEntries(): void
+    {
+        $role = $this->createOperRole('Admin');
+        $ircop1 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 100, role: $role, addedById: 900);
+        $ircop2 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 200, role: $role, addedById: 901);
+        $ircop3 = OperIrcop::create(new DateTimeImmutable('2026-01-01T00:00:00+00:00'), nickId: 300, role: $role, addedById: 900);
+
+        $this->repository->save($ircop1);
+        $this->repository->save($ircop2);
+        $this->repository->save($ircop3);
+        $this->flushAndClear();
+
+        $this->repository->clearAddedById(900);
+        $this->flushAndClear();
+
+        $found1 = $this->repository->findByNickId(100);
+        $found2 = $this->repository->findByNickId(200);
+        $found3 = $this->repository->findByNickId(300);
+
+        self::assertNotNull($found1);
+        self::assertNotNull($found2);
+        self::assertNotNull($found3);
+        self::assertNull($found1->getAddedById());
+        self::assertSame(901, $found2->getAddedById());
+        self::assertNull($found3->getAddedById());
+    }
+
     private function createOperRole(string $name): OperRole
     {
         $role = OperRole::create(name: $name, description: $name . ' role');
