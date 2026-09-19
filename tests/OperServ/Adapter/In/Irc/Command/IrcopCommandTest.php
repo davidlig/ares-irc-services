@@ -168,7 +168,7 @@ final class IrcopCommandTest extends TestCase
         yield 'added' => [new ManageIrcopResult(IrcopOutcome::Added, 'Target', 'ADMIN'), 'ircop.add.done', ['nickname' => 'Target', 'role' => 'ADMIN']];
         yield 'deleted' => [new ManageIrcopResult(IrcopOutcome::Deleted, 'Target'), 'ircop.del.done', ['nickname' => 'Target']];
         yield 'nick not registered' => [new ManageIrcopResult(IrcopOutcome::NickNotRegistered, 'Target'), 'error.nick_not_registered', ['nickname' => 'Target']];
-        yield 'nick not active' => [new ManageIrcopResult(IrcopOutcome::NickNotActive, 'Target'), 'ircop.nick_not_active', ['nickname' => 'Target']];
+        yield 'nick not active' => [new ManageIrcopResult(IrcopOutcome::NickNotActive, 'Target'), 'ircop.add.nick_not_active', ['nickname' => 'Target']];
         yield 'role not found' => [new ManageIrcopResult(IrcopOutcome::RoleNotFound, role: 'MISSING'), 'ircop.unknown_role', ['role' => 'MISSING', 'bot' => 'OperServ']];
         yield 'already assigned' => [new ManageIrcopResult(IrcopOutcome::AlreadyAssigned, 'Target', 'ADMIN'), 'ircop.already_admin', ['nickname' => 'Target', 'role' => 'ADMIN']];
         yield 'not assigned' => [new ManageIrcopResult(IrcopOutcome::NotAssigned, 'Target'), 'ircop.not_admin', ['nickname' => 'Target']];

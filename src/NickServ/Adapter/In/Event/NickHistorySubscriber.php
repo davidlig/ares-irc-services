@@ -16,7 +16,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Listens to nickname events and records history entries automatically.
  *
- * Messages are stored as translation keys (e.g., 'history.message.suspend')
+ * Messages are stored as translation keys (e.g., 'history.message.unsuspend')
  * and translated when viewed via HISTORY VIEW command.
  */
 final readonly class NickHistorySubscriber implements EventSubscriberInterface
