@@ -438,4 +438,34 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
         self::assertNotNull($found);
         self::assertSame(100, $found->getCreatorNickId());
     }
+
+    #[Test]
+    public function deleteByChannelIdDeletesOnlyMatchingChannel(): void
+    {
+        $akick1 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test1.com');
+        $akick2 = ChannelAkick::create(new DateTimeImmutable(), channelId: 2, creatorNickId: 100, mask: '*!*@test2.com');
+        $akick3 = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 200, mask: '*!*@test3.com');
+
+        $this->repository->save($akick1);
+        $this->repository->save($akick2);
+        $this->repository->save($akick3);
+        $this->flushAndClear();
+
+        $deleted = $this->repository->deleteByChannelId(1);
+        $this->flushAndClear();
+
+        self::assertSame(2, $deleted);
+        self::assertSame([], $this->repository->listByChannel(1));
+        self::assertCount(1, $this->repository->listByChannel(2));
+    }
+
+    #[Test]
+    public function deleteByChannelIdReturnsZeroWhenNoMatch(): void
+    {
+        $akick = ChannelAkick::create(new DateTimeImmutable(), channelId: 1, creatorNickId: 100, mask: '*!*@test.com');
+        $this->repository->save($akick);
+        $this->flushAndClear();
+
+        self::assertSame(0, $this->repository->deleteByChannelId(999));
+    }
 }

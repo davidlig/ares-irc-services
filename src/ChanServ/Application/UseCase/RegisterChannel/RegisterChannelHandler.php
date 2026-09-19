@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\RegisterChannel;
 
+use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelRegisterThrottlePort;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
@@ -23,6 +24,7 @@ final readonly class RegisterChannelHandler implements RegisterChannelHandlerInt
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelLevelRepositoryInterface $levelRepository,
+        private ChannelAkickRepositoryInterface $akickRepository,
         private ChannelRegisterThrottlePort $throttle,
         private EventBusInterface $events,
         private ChanServOperatorAccess $operatorAccess,
@@ -81,6 +83,9 @@ final readonly class RegisterChannelHandler implements RegisterChannelHandlerInt
             $command->description,
         );
         $this->channelRepository->save($channel);
+
+        $this->levelRepository->removeAllForChannel($channel->getId());
+        $this->akickRepository->deleteByChannelId($channel->getId());
 
         if (!$privileged) {
             $this->throttle->recordRegistration($command->accountId);

@@ -23,6 +23,8 @@ interface ChannelAkickRepositoryInterface
 
     public function countByChannel(int $channelId): int;
 
+    public function deleteByChannelId(int $channelId): int;
+
     /**
      * @return ChannelAkick[] All AKICK entries that have expired
      */

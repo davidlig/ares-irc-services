@@ -10,6 +10,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\RegisterCommand;
 use App\ChanServ\Adapter\Out\InMemory\ChannelRegisterThrottleRegistry;
 use App\ChanServ\Application\Model\ChanAccountView;
+use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelRegisterThrottlePort;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
@@ -240,6 +241,49 @@ final class RegisterCommandTest extends TestCase
         $channelLookup->method('findByChannelName')->willReturn($this->channelViewWithSenderPrefix('#test', 'UID1', [$prefixLetter]));
 
         $cmd = $this->createCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
+
+        self::assertSame(['register.success'], $messages);
+    }
+
+    #[Test]
+    public function successPurgesStaleRowsForNewChannelIdBeforeSeedingDefaults(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('existsByChannelName')->willReturn(false);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref->setValue($channel, 77);
+        });
+        $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $levelRepo->expects(self::once())->method('removeAllForChannel')->with(77);
+        $levelRepo->expects(self::atLeastOnce())->method('save');
+        $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akickRepo->expects(self::once())->method('deleteByChannelId')->with(77);
+        $throttle = new ChannelRegisterThrottleRegistry();
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($this->channelViewWithSenderPrefix('#test', 'UID1', ['o']));
+
+        $cmd = $this->createCommand(
+            $channelRepo,
+            $levelRepo,
+            $throttle,
+            $this->createStub(EventBusInterface::class),
+            $this->createNonRootRegistry(),
+            3,
+            0,
+            $akickRepo,
+        );
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.success'], $messages);
@@ -1114,10 +1158,12 @@ final class RegisterCommandTest extends TestCase
         ChanServOperatorAccess $operatorAccess,
         int $maxChannelsPerNick = 3,
         int $registerMinIntervalSeconds = 21600,
+        ?ChannelAkickRepositoryInterface $akickRepository = null,
     ): RegisterCommand {
         return new RegisterCommand(new RegisterChannelHandler(
             $channelRepository,
             $levelRepository,
+            $akickRepository ?? $this->createStub(ChannelAkickRepositoryInterface::class),
             $throttle,
             $events,
             $operatorAccess,

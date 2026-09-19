@@ -10,6 +10,7 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 use function array_filter;
+use function is_numeric;
 
 final readonly class ChannelAkickDoctrineRepository implements ChannelAkickRepositoryInterface
 {
@@ -60,6 +61,18 @@ final readonly class ChannelAkickDoctrineRepository implements ChannelAkickRepos
             )
             ->setParameter('cid', $channelId)
             ->getSingleScalarResult();
+    }
+
+    public function deleteByChannelId(int $channelId): int
+    {
+        $result = $this->em
+            ->createQuery(
+                'DELETE FROM ' . ChannelAkick::class . ' a WHERE a.channelId = :cid'
+            )
+            ->setParameter('cid', $channelId)
+            ->execute();
+
+        return is_numeric($result) ? (int) $result : 0;
     }
 
     /**
