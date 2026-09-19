@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 A \x02%nickname%\x02 foille retirado halfop."
 
 akick:
-  syntax:           "AKICK <#canle> {ADD|DEL|LIST|ENFORCE} [máscara] [caducidade] [motivo]"
+  syntax:           "AKICK <#canle> {ADD|DEL|LIST} [máscara] [caducidade] [motivo]"
   short:            "Xestionar a lista de expulsión automática."
-  help:             "ADD <máscara> [caducidade] [motivo]: engadir entrada. DEL <máscara|num>: eliminar. LIST: listar entradas. ENFORCE <máscara>: expulsar usuarios coincidentes."
-  unknown_sub:      "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use ADD, DEL, LIST ou ENFORCE."
+  help:             "ADD <máscara> [caducidade] [motivo]: engadir entrada. DEL <máscara|num>: eliminar. LIST: listar entradas."
+  unknown_sub:      "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use ADD, DEL ou LIST."
   invalid_mask:     "\x0304✗\x03 Formato de máscara non válido. Use \x02alcume!ident@host\x02 con comodíns (*)."
   dangerous_mask:   "\x0304✗\x03 A máscara \x02%mask%\x02 é demasiado ampla. Debe conter polo menos 4 caracteres alfanuméricos."
   protected_user:   "\x0304✗\x03 O alcume \x02%nickname%\x02 ten acceso nesta canle."

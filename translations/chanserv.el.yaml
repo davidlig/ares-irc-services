@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 Αφαιρέθηκε το halfop από τον/την \x02%nickname%\x02."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST|ENFORCE} [mask] [expiry] [reason]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [reason]"
   short:            "Διαχείριση λίστας auto-kick."
-  help:             "ADD <mask> [expiry] [reason]: προσθήκη καταχώρησης. DEL <mask|num>: αφαίρεση. LIST: λίστα καταχωρήσεων. ENFORCE <mask>: kick χρηστών που ταιριάζουν."
-  unknown_sub:      "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL, LIST, ή ENFORCE."
+  help:             "ADD <mask> [expiry] [reason]: προσθήκη καταχώρησης. DEL <mask|num>: αφαίρεση. LIST: λίστα καταχωρήσεων."
+  unknown_sub:      "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL ή LIST."
   invalid_mask:     "\x0304✗\x03 Μη έγκυρη μορφή μάσκας. Χρησιμοποιήστε \x02nick!ident@host\x02 με χαρακτήρες wildcard (*)."
   dangerous_mask:   "\x0304✗\x03 Η μάσκα \x02%mask%\x02 είναι πολύ ευρεία. Πρέπει να περιέχει τουλάχιστον 4 αλφαριθμητικούς χαρακτήρες."
   protected_user:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει πρόσβαση σε αυτό το κανάλι."

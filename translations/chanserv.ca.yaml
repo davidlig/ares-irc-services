@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret el halfop."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST|ENFORCE} [mask] [expiry] [reason]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [reason]"
   short:            "Gestionar la llista d'auto-kick."
-  help:             "ADD <mask> [expiry] [reason]: afegir entrada. DEL <mask|num>: treure. LIST: llistar entrades. ENFORCE <mask>: fer kick als usuaris coincidents."
-  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, LIST, o ENFORCE."
+  help:             "ADD <mask> [expiry] [reason]: afegir entrada. DEL <mask|num>: treure. LIST: llistar entrades."
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL o LIST."
   invalid_mask:     "\x0304✗\x03 Format de màscara no vàlid. Utilitzeu \x02nick!ident@host\x02 amb comodins (*)."
   dangerous_mask:   "\x0304✗\x03 La màscara \x02%mask%\x02 és massa àmplia. Ha de contenir almenys 4 caràcters alfanumèrics."
   protected_user:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 té accés en aquest canal."

@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 is gedehalfopt."
 
 akick:
-  syntax:           "AKICK <#kanaal> {ADD|DEL|LIST|ENFORCE} [masker] [verloop] [reden]"
+  syntax:           "AKICK <#kanaal> {ADD|DEL|LIST} [masker] [verloop] [reden]"
   short:            "Beheer auto-kick-lijst."
-  help:             "ADD <masker> [verloop] [reden]: voeg vermelding toe. DEL <masker|nr>: verwijder. LIST: toon vermeldingen. ENFORCE <masker>: kick overeenkomende gebruikers."
-  unknown_sub:      "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL, LIST of ENFORCE."
+  help:             "ADD <masker> [verloop] [reden]: voeg vermelding toe. DEL <masker|nr>: verwijder. LIST: toon vermeldingen."
+  unknown_sub:      "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
   invalid_mask:     "\x0304✗\x03 Ongeldig maskerformaat. Gebruik \x02nick!ident@host\x02 met wildcards (*)."
   dangerous_mask:   "\x0304✗\x03 Het masker \x02%mask%\x02 is te breed. Het moet ten minste 4 alfanumerieke tekens bevatten."
   protected_user:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 heeft toegang in dit kanaal."

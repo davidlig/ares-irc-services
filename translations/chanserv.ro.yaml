@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a retras halfopul."
 
 akick:
-  syntax:           "AKICK <#canal> {ADD|DEL|LIST|ENFORCE} [mască] [expirare] [motiv]"
+  syntax:           "AKICK <#canal> {ADD|DEL|LIST} [mască] [expirare] [motiv]"
   short:            "Gestionați lista de auto-kick."
-  help:             "ADD <mască> [expirare] [motiv]: adaugă intrare. DEL <mască|număr>: elimină. LIST: listează intrările. ENFORCE <mască>: dă kick utilizatorilor corespunzători."
-  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL, LIST sau ENFORCE."
+  help:             "ADD <mască> [expirare] [motiv]: adaugă intrare. DEL <mască|număr>: elimină. LIST: listează intrările."
+  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL sau LIST."
   invalid_mask:     "\x0304✗\x03 Format de mască invalid. Folosiți \x02poreclă!ident@host\x02 cu metacaractere (*)."
   dangerous_mask:   "\x0304✗\x03 Masca \x02%mask%\x02 este prea largă. Trebuie să conțină cel puțin 4 caractere alfanumerice."
   protected_user:   "\x0304✗\x03 Porecla \x02%nickname%\x02 are acces pe acest canal."

@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 adlı kullanıcının halfop'u alındı."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST|ENFORCE} [maske] [süre] [sebep]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST} [maske] [süre] [sebep]"
   short:            "Otomatik atma listesini yönetin."
-  help:             "ADD <maske> [süre] [sebep]: giriş ekler. DEL <maske|no>: kaldırır. LIST: girişleri listeler. ENFORCE <maske>: eşleşen kullanıcıları atar."
-  unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL, LIST veya ENFORCE kullanın."
+  help:             "ADD <maske> [süre] [sebep]: giriş ekler. DEL <maske|no>: kaldırır. LIST: girişleri listeler."
+  unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
   invalid_mask:     "\x0304✗\x03 Geçersiz maske formatı. Joker karakterler (*) ile \x02nick!ident@host\x02 kullanın."
   dangerous_mask:   "\x0304✗\x03 \x02%mask%\x02 maskesi çok geniş. En az 4 alfanümerik karakter içermelidir."
   protected_user:   "\x0304✗\x03 \x02%nickname%\x02 rumuzunun bu kanalda erişimi var."

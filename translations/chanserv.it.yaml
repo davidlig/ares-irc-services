@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 è stato dehalfoppato."
 
 akick:
-  syntax:           "AKICK <#canale> {ADD|DEL|LIST|ENFORCE} [maschera] [scadenza] [motivo]"
+  syntax:           "AKICK <#canale> {ADD|DEL|LIST} [maschera] [scadenza] [motivo]"
   short:            "Gestisce la lista di auto-kick."
-  help:             "ADD <maschera> [scadenza] [motivo]: aggiunge voce. DEL <maschera|num>: rimuove. LIST: elenca voci. ENFORCE <maschera>: espelle gli utenti corrispondenti."
-  unknown_sub:      "\x0304✗\x03 Sotto-comando sconosciuto \x02%sub%\x02. Usi ADD, DEL, LIST o ENFORCE."
+  help:             "ADD <maschera> [scadenza] [motivo]: aggiunge voce. DEL <maschera|num>: rimuove. LIST: elenca voci."
+  unknown_sub:      "\x0304✗\x03 Sotto-comando sconosciuto \x02%sub%\x02. Usi ADD, DEL o LIST."
   invalid_mask:     "\x0304✗\x03 Formato maschera non valido. Usi \x02nick!ident@host\x02 con caratteri jolly (*)."
   dangerous_mask:   "\x0304✗\x03 La maschera \x02%mask%\x02 è troppo ampia. Deve contenere almeno 4 caratteri alfanumerici."
   protected_user:   "\x0304✗\x03 Il nickname \x02%nickname%\x02 ha accesso in questo canale."

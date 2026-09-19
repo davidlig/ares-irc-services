@@ -286,10 +286,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02(r)i halfop modua kendu zaio."
 
 akick:
-  syntax:           "AKICK <#kanala> {ADD|DEL|LIST|ENFORCE} [maskara] [iraungitzea] [arrazoia]"
+  syntax:           "AKICK <#kanala> {ADD|DEL|LIST} [maskara] [iraungitzea] [arrazoia]"
   short:            "Kudeatu auto-kick zerrenda."
-  help:             "ADD <maskara> [iraungitzea] [arrazoia]: gehitu sarrera. DEL <maskara|zkia>: kendu. LIST: zerrendatu sarrerak. ENFORCE <maskara>: kick egin bat datozen erabiltzaileei."
-  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL, LIST edo ENFORCE."
+  help:             "ADD <maskara> [iraungitzea] [arrazoia]: gehitu sarrera. DEL <maskara|zkia>: kendu. LIST: zerrendatu sarrerak."
+  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
   invalid_mask:     "\x0304✗\x03 Maskara formatu baliogabea. Erabili \x02nick!ident@host\x02 komodinak erabiliz (*)."
   dangerous_mask:   "\x0304✗\x03 \x02%mask%\x02 maskara zabalegia da. Gutxienez 4 karaktere alfanumeriko eduki behar ditu."
   protected_user:   "\x0304✗\x03 \x02%nickname%\x02 ezizenak sarbidea du kanal honetan."
