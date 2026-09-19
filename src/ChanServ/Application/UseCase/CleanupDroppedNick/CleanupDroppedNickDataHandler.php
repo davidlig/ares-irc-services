@@ -41,14 +41,17 @@ final readonly class CleanupDroppedNickDataHandler
 
     private function handleFounderDrop(RegisteredChannel $channel, DateTimeImmutable $occurredAt): void
     {
+        $channelId = $channel->getId();
+        $channelName = $channel->getName();
+        $channelNameLower = $channel->getNameLower();
         $successorNickId = $channel->getSuccessorNickId();
 
         if (null !== $successorNickId) {
             $channel->changeFounder($successorNickId);
             $this->channelRepository->save($channel);
             $this->activitySink->founderTransferred(
-                $channel->getId(),
-                $channel->getName(),
+                $channelId,
+                $channelName,
                 $successorNickId,
             );
 
@@ -56,10 +59,10 @@ final readonly class CleanupDroppedNickDataHandler
         }
 
         $cleanupEvent = new ChannelDropCleanupEvent(
-            channelId: $channel->getId(),
+            channelId: $channelId,
             occurredAt: $occurredAt,
-            channelName: $channel->getName(),
-            channelNameLower: $channel->getNameLower(),
+            channelName: $channelName,
+            channelNameLower: $channelNameLower,
             reason: 'founder_dropped',
         );
 
@@ -76,6 +79,6 @@ final readonly class CleanupDroppedNickDataHandler
             ));
         });
 
-        $this->activitySink->channelDropped($channel->getId(), $channel->getName());
+        $this->activitySink->channelDropped($channelId, $channelName);
     }
 }
