@@ -24,6 +24,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbStructuralNodeCount;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireLogRedactor;
@@ -40,7 +41,6 @@ use function array_filter;
 use function array_keys;
 use function array_map;
 use function bin2hex;
-use function count;
 use function in_array;
 use function is_int;
 use function max;
@@ -120,6 +120,9 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     /** @var array<string, string> */
     private array $roundSnapshotDigests = [];
+
+    /** @var array<string, int> */
+    private array $roundSnapshotNodeCounts = [];
 
     private ?UdbUnsignedDecimal $roundSnapshotWatermark = null;
 
@@ -592,14 +595,13 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         }
 
         foreach (UdbBlock::all() as $block) {
-            $records = $this->roundSnapshotRecords[$block->letter()];
             $this->write(UdbWireCodec::inf(
                 $this->sid,
                 $remoteSid,
                 $roundId,
                 $block,
                 $this->roundSnapshotDigests[$block->letter()],
-                count($records),
+                $this->roundSnapshotNodeCounts[$block->letter()],
                 $now,
                 $this->roundSnapshotWatermark,
             ));
@@ -960,13 +962,12 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
         $watermark = $this->roundSnapshotWatermark ?? $this->mutationSequence;
         foreach (UdbBlock::all() as $block) {
-            $records = $this->roundSnapshotRecords[$block->letter()];
             $this->write(UdbWireCodec::manifestAck(
                 $this->sid,
                 $frame->sourceSid,
                 $frame->roundId,
                 $block,
-                count($records),
+                $this->roundSnapshotNodeCounts[$block->letter()],
                 $this->roundSnapshotDigests[$block->letter()],
                 $watermark,
             ));
@@ -1143,11 +1144,13 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     {
         $this->roundSnapshotRecords = [];
         $this->roundSnapshotDigests = [];
+        $this->roundSnapshotNodeCounts = [];
         $this->roundSnapshotWatermark = $this->mutationSequence;
         foreach (UdbBlock::all() as $block) {
             $records = $this->snapshots->recordsForBlock($block);
             $this->roundSnapshotRecords[$block->letter()] = $records;
             $this->roundSnapshotDigests[$block->letter()] = UdbChecksum::fromRecords(self::tuples($records));
+            $this->roundSnapshotNodeCounts[$block->letter()] = UdbStructuralNodeCount::fromRecords($block, $records);
         }
     }
 
@@ -1155,6 +1158,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     {
         $this->roundSnapshotRecords = [];
         $this->roundSnapshotDigests = [];
+        $this->roundSnapshotNodeCounts = [];
         $this->roundSnapshotWatermark = null;
     }
 

@@ -14,6 +14,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeoverOutcomeKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbStructuralNodeCount;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
@@ -29,11 +30,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_keys;
 use function array_map;
-use function count;
 use function strlen;
 
 #[CoversClass(UdbWireTakeover::class)]
 #[CoversClass(UdbWireTakeoverOutcome::class)]
+#[CoversClass(UdbStructuralNodeCount::class)]
 final class UdbWireTakeoverTest extends TestCase
 {
     private FakeUdbRecords $records;
@@ -105,10 +106,10 @@ final class UdbWireTakeoverTest extends TestCase
     }
 
     #[Test]
-    public function endRejectsAStageWhoseRecordCountDiffersFromTheInventory(): void
+    public function endRejectsAStageWhoseStructuralNodeCountDiffersFromTheInventory(): void
     {
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
-        $this->assertRequest($this->inventory(UdbBlock::Ips, digest: $digest, count: 2), UdbBlock::Ips, 1);
+        $this->assertRequest($this->inventory(UdbBlock::Ips, digest: $digest, count: 1), UdbBlock::Ips, 1);
         $this->assertIgnored($this->begin(UdbBlock::Ips, 'tx1', $digest));
         $this->assertIgnored($this->put(UdbBlock::Ips, 'tx1', '1.2.3.4::clones', '*5'));
 
@@ -165,13 +166,14 @@ final class UdbWireTakeoverTest extends TestCase
         self::assertSame(64, strlen($fingerprint));
         self::assertSame(['1.2.3.4::clones' => '*5'], $this->records->recordsByBlock('I'));
         self::assertSame($digest, $this->states->states['I']->getChecksum());
+        self::assertSame(1, $this->states->states['I']->getRecordCount());
     }
 
     #[Test]
     public function stagedPutCanonicalizesNumericValuesBeforeDigestAndPersistence(): void
     {
         $canonicalDigest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
-        $this->assertRequest($this->inventory(UdbBlock::Ips, digest: $canonicalDigest, count: 1), UdbBlock::Ips, 1);
+        $this->assertRequest($this->inventory(UdbBlock::Ips, digest: $canonicalDigest, count: 2), UdbBlock::Ips, 1);
         $this->assertIgnored($this->begin(UdbBlock::Ips, 'tx1', $canonicalDigest));
         $this->assertIgnored($this->put(UdbBlock::Ips, 'tx1', '1.2.3.4::clones', '*0005'));
         $this->assertAcknowledgement($this->end(UdbBlock::Ips, 'tx1', $canonicalDigest), UdbBlock::Ips, 1, 'tx1', $canonicalDigest);
@@ -279,7 +281,7 @@ final class UdbWireTakeoverTest extends TestCase
     public function mismatchedTxidAndRoundReturnErrWithoutAdvancingTheStage(): void
     {
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
-        $this->inventory(UdbBlock::Ips, digest: $digest, count: 1);
+        $this->inventory(UdbBlock::Ips, digest: $digest, count: 2);
         $this->begin(UdbBlock::Ips, 'tx1', $digest);
 
         $this->assertError($this->put(UdbBlock::Ips, 'wrong', '1.2.3.4::clones', '*5'), UdbBlock::Ips, 1, 'PUT', 5);
@@ -506,7 +508,7 @@ final class UdbWireTakeoverTest extends TestCase
         );
         $digest = UdbChecksum::fromRecords($tuples);
 
-        $this->assertRequest($this->inventory($block, $roundId, $digest, count($records)), $block, $roundId);
+        $this->assertRequest($this->inventory($block, $roundId, $digest, UdbStructuralNodeCount::fromRecords($block, $records)), $block, $roundId);
         $this->assertIgnored($this->begin($block, $txid, $digest, $roundId));
         foreach ($records as $path => $value) {
             $this->assertIgnored($this->put($block, $txid, $path, $value, $roundId));
