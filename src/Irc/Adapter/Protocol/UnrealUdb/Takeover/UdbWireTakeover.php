@@ -15,6 +15,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbStructuralNodeCount;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
@@ -320,7 +321,7 @@ final class UdbWireTakeover
         if (($frame->checksum ?? '') !== $digest
             || $stage['digest'] !== $digest
             || !$stage['watermark']->equals($watermark)
-            || (null !== $stage['expectedCount'] && count($stage['entries']) !== $stage['expectedCount'])
+            || (null !== $stage['expectedCount'] && UdbStructuralNodeCount::fromRecords($block, $stage['entries']) !== $stage['expectedCount'])
         ) {
             return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'END', 3);
         }

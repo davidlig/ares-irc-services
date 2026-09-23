@@ -1,3 +1,9 @@
+## [2.0.1] - 2026-09-23
+
+### 🐛 Bug Fixes
+
+- *(unreal-udb)* Correct UDB MANIFEST structural node count to prevent redundant C/N transfers and mode/topic churn
+
 ## [1.0.0-alpha] - 2026-06-06
 
 ### 🚀 Features

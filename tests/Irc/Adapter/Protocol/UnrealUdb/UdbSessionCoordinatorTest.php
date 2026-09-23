@@ -23,6 +23,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbOclgViewDigest;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbStructuralNodeCount;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
@@ -47,6 +48,7 @@ use function substr_count;
 
 #[CoversClass(UdbSessionCoordinator::class)]
 #[CoversClass(UdbPeerSession::class)]
+#[CoversClass(UdbStructuralNodeCount::class)]
 final class UdbSessionCoordinatorTest extends TestCase
 {
     private const string OWN_NAME = 'services.example.net';
@@ -194,11 +196,45 @@ final class UdbSessionCoordinatorTest extends TestCase
         self::assertSame($this->helAck(), $this->written[0]);
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N [0-9a-f]{64} \d+ \d+ \d+$/', $this->written[1]);
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ C /', $this->written[2]);
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ I /', $this->written[3]);
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ I [0-9a-f]{64} 2 \d+ \d+$/', $this->written[3]);
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ S /', $this->written[4]);
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ L /', $this->written[5]);
         self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ K /', $this->written[6]);
         self::assertSame($this->helRequest(), $this->written[7]);
+    }
+
+    #[Test]
+    public function inventoryAndManifestAdvertiseStructuralNodesWithoutChangingDigests(): void
+    {
+        $recordsByBlock = [
+            'N' => ['davidlig::vhost' => 'host.example', 'davidlig::oper' => 'netadmin', 'Ares::pass' => 'hash'],
+            'C' => ['#ares::topic' => 'support', '#ares::modes' => '+nt'],
+        ];
+        $snapshots = $this->createStub(UdbSnapshotProviderInterface::class);
+        $snapshots->method('recordsForBlock')->willReturnCallback(
+            static fn (UdbBlock $block): array => $recordsByBlock[$block->letter()] ?? [],
+        );
+        $this->coordinator = new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $snapshots,
+            scheduler: $this->scheduler,
+            clock: $this->clock,
+        );
+
+        $this->makeReady();
+        $nDigest = UdbChecksum::fromRecords([['davidlig::vhost', 'host.example'], ['davidlig::oper', 'netadmin'], ['Ares::pass', 'hash']]);
+        $cDigest = UdbChecksum::fromRecords([['#ares::topic', 'support'], ['#ares::modes', '+nt']]);
+        $infLines = array_values(array_filter($this->written, static fn (string $line): bool => str_contains($line, ' INF ')));
+        self::assertCount(6, $infLines);
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N ' . $nDigest . ' 5 \d+ 0$/', $infLines[0]);
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ C ' . $cDigest . ' 3 \d+ 0$/', $infLines[1]);
+
+        $this->written = [];
+        $this->handle(new UdbFrame(UdbFrameKind::ManifestReq, '001', '002', roundId: 77));
+        self::assertSame(':002 DB 001 MANIFEST ACK 77 N 5 ' . $nDigest . ' 0', $this->written[0]);
+        self::assertSame(':002 DB 001 MANIFEST ACK 77 C 3 ' . $cDigest . ' 0', $this->written[1]);
+        self::assertSame(':002 DB 001 MANIFEST ACK 77 I 0 ' . UdbChecksum::EMPTY . ' 0', $this->written[2]);
     }
 
     #[Test]
