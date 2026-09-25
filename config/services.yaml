@@ -18,7 +18,7 @@ parameters:
     services.default_language: '%env(SERVICES_DEFAULT_LANGUAGE)%'
     services.default_timezone_fallback: 'UTC'
     services.default_timezone: '%env(default:services.default_timezone_fallback:SERVICES_DEFAULT_TIMEZONE)%'
-    services.version: 'v2.1.0'
+    services.version: 'v2.1.1'
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
     services.vhost_suffix:     '%env(default::NICKSERV_VHOST_SUFFIX)%'
 
@@ -1353,6 +1353,9 @@ services:
         tags: ['chanserv.command']
 
     App\ChanServ\Adapter\In\Irc\Command\NoexpireCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\IrcoponlyCommand:
         tags: ['chanserv.command']
 
     # Maintenance Tasks

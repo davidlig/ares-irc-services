@@ -409,6 +409,11 @@ Ensure the `spanningtree` module is loaded.
 | `HISTORY` | `<#channel> [page]` | View channel action history |
 | `HELP` | `[command]` | Show command help |
 
+`IRCOPONLY` appears in ChanServ's IRCop `HELP` section for identified operators whose role has
+`chanserv.ircoponly`. A Root user can grant it with
+`/msg OperServ ROLE PERMS <role> ADD chanserv.ircoponly` and inspect a role with
+`/msg OperServ ROLE PERMS <role> LIST`. Identified Root users have this permission automatically.
+
 ### MemoServ
 
 | Command | Parameters | Description |

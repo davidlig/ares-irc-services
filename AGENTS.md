@@ -254,6 +254,12 @@ Application must not know:
 
 Read `.agents/services.md`. For ChanServ policy work also read `.agents/chanserv.md`.
 
+A new command is complete only when it is registered in the runtime command registry, appears in
+`HELP`, has translation keys in all 14 languages, and has a routing/HELP integration test. For an
+IRCop command, also register its permission in the service permission catalog and verify role-based
+authorization, Root access, and permission-filtered `HELP`. Follow the checklist in
+`.agents/services.md`.
+
 ## 7. Protocol Isolation
 
 Concrete protocol behavior belongs only under:

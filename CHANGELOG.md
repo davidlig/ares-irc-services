@@ -1,3 +1,10 @@
+## [2.1.1] - 2026-09-26
+
+### Bug Fixes
+
+- Register ChanServ `IRCOPONLY` in the command router so it appears in permission-filtered `HELP` and can be executed.
+- Document the `chanserv.ircoponly` role permission and how to assign it in OperServ.
+
 ## [2.1.0] - 2026-09-26
 
 ### Features
