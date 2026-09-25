@@ -23,5 +23,7 @@ final readonly class ChannelProjection
         public bool $suspended,
         public bool $pendingDeletion,
         public ?string $suspensionReason = null,
+        public bool $secure = false,
+        public bool $ircopOnly = false,
     ) {}
 }

@@ -47,7 +47,7 @@ final readonly class DoctrineChannelMlockPolicyRepository implements ChannelMloc
 
         $settings = [];
         foreach (str_split($channel->getMlock()) as $letter) {
-            if ('+' === $letter || '-' === $letter) {
+            if ('+' === $letter || '-' === $letter || 'O' === $letter) {
                 continue;
             }
             $settings[] = new ChannelSetting(new ModeName($letter), $channel->getMlockParam($letter));

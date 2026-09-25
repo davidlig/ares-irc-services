@@ -42,7 +42,7 @@ info:
   last_used:       "  \x0314Ostatnio użyty\x03         : %date%"
   topic:           "  \x0314Ostatni temat\x03          : %topic%"
   topic_set_by:    "  \x0314Temat ustawiony przez\x03  : %nickname%"
-  options:         "  \x0314Opcje\x03                  : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  options:         "  \x0314Opcje\x03                  : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%, IRCOPONLY %ircoponly%"
   no_expire:       "  \x0314Nigdy nie wygasa\x03       : Tak"
   mlock_modes:     "  \x0314Blokada trybów\x03         : %modes%"
   suspended_status: "  \x0314Status\x03                 : \x0304Zawieszony\x03"
@@ -369,6 +369,13 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "Nie masz uprawnień do dołączenia do tego kanału."
+
+ircoponly:
+  syntax:           "IRCOPONLY <#kanał> {ON|OFF}"
+  short:            "Ogranicz kanał do operatorów IRC."
+  help:             "Tylko uprawnieni operatorzy IRC mogą pozostać na kanale. ChanServ dołącza i chroni tryb +O."
+  on:               "IRCOPONLY włączono na %channel%."
+  off:              "IRCOPONLY wyłączono na %channel%."
 
 noexpire:
   syntax:           "NOEXPIRE <#kanał> {ON|OFF}"

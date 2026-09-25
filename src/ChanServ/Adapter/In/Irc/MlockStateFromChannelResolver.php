@@ -47,7 +47,7 @@ final readonly class MlockStateFromChannelResolver
                 continue;
             }
             // Skip +r (channel registered) and +P (permanent) - both are service-controlled
-            if ('r' === $c || $c === $permanentLetter) {
+            if ('r' === $c || 'O' === $c || $c === $permanentLetter) {
                 continue;
             }
             if (!isset($allowedLetters[$c])) {

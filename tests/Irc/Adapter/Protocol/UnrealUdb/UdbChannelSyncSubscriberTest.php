@@ -9,10 +9,12 @@ use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelIrcopOnlyUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelSecureUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
@@ -102,6 +104,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         string $mlock = '+nt',
         array $mlockParams = [],
         ?string $suspensionReason = null,
+        bool $secure = false,
+        bool $ircopOnly = false,
     ): ChannelProjection {
         return new ChannelProjection(
             id: 1,
@@ -117,6 +121,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             suspended: $suspended,
             pendingDeletion: $pendingDeletion,
             suspensionReason: $suspensionReason,
+            secure: $secure,
+            ircopOnly: $ircopOnly,
         );
     }
 
@@ -137,6 +143,8 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             ChannelUnsuspendedEvent::class => 'onChannelUnsuspended',
             ChannelMlockUpdatedEvent::class => 'onChannelMlockUpdated',
             ChannelTopiclockUpdatedEvent::class => 'onChannelTopiclockUpdated',
+            ChannelSecureUpdatedEvent::class => 'onChannelSecureUpdated',
+            ChannelIrcopOnlyUpdatedEvent::class => 'onChannelIrcopOnlyUpdated',
             ChannelTopicChangedEvent::class => 'onChannelTopicChanged',
             NetworkSyncCompleteEvent::class => ['onNetworkSyncComplete', -5],
         ], $events);
@@ -385,6 +393,43 @@ final class UdbChannelSyncSubscriberTest extends TestCase
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
         $sub->onChannelTopiclockUpdated(new ChannelTopiclockUpdatedEvent('#chan'));
+    }
+
+    #[Test]
+    public function secureAndIrcopUpdatesRefreshNativeOptions(): void
+    {
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturn($this->createChannel('#chan', secure: true, ircopOnly: true));
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::exactly(2))->method('insert')->willReturn(true)->with('C', '#chan::options', '*48');
+        $subscriber = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
+
+        $subscriber->onChannelSecureUpdated(new ChannelSecureUpdatedEvent('#chan'));
+        $subscriber->onChannelIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent('#chan'));
+    }
+
+    #[Test]
+    public function pendingDeletionAndRestoreReconcileOperatorOnlyBit(): void
+    {
+        $channelRepo = $this->createStub(ChannelProjectionQuery::class);
+        $channelRepo->method('findByName')->willReturnOnConsecutiveCalls(
+            $this->createChannel('#chan', pendingDeletion: true, ircopOnly: true),
+            $this->createChannel('#chan', ircopOnly: true),
+        );
+        $inserts = [];
+        $writer = $this->createStub(UdbRecordWriterInterface::class);
+        $writer->method('insert')->willReturnCallback(static function (string $block, string $path, string $value) use (&$inserts): bool {
+            $inserts[$path] = $value;
+
+            return true;
+        });
+        $subscriber = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
+        $now = new DateTimeImmutable('2026-09-26T00:00:00+00:00');
+
+        $subscriber->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#chan', '#chan', 'oper', $now));
+        self::assertArrayNotHasKey('#chan::options', $inserts);
+        $subscriber->onChannelRestored(new ChannelRestoredEvent(1, '#chan', '#chan', 'oper', $now));
+        self::assertSame('*16', $inserts['#chan::options']);
     }
 
     #[Test]

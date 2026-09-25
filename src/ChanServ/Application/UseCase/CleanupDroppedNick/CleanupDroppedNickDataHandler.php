@@ -69,13 +69,15 @@ final readonly class CleanupDroppedNickDataHandler
         $this->eventPublisher->publish($cleanupEvent);
         $this->channelRepository->delete($channel);
 
-        $this->transactionBoundary->afterCommit(function () use ($cleanupEvent): void {
+        $ircopOnly = $channel->isIrcopOnly();
+        $this->transactionBoundary->afterCommit(function () use ($cleanupEvent, $ircopOnly): void {
             $this->eventPublisher->publish(new ChannelDropEvent(
                 $cleanupEvent->channelId,
                 $cleanupEvent->channelName,
                 $cleanupEvent->channelNameLower,
                 $cleanupEvent->reason,
                 $cleanupEvent->occurredAt,
+                $ircopOnly,
             ));
         });
 

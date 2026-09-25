@@ -18,6 +18,8 @@ final readonly class ChanServPermission
 
     public const string NOEXPIRE = 'chanserv.noexpire';
 
+    public const string IRCOPONLY = 'chanserv.ircoponly';
+
     public const string LEVEL_FOUNDER = 'chanserv.level_founder';
 
     public const string HISTORY = 'chanserv.history';
@@ -39,6 +41,7 @@ final readonly class ChanServPermission
             self::SUSPEND,
             self::FORBID,
             self::NOEXPIRE,
+            self::IRCOPONLY,
             self::LEVEL_FOUNDER,
             self::HISTORY,
             self::CLEARUSERS,

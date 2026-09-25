@@ -17,7 +17,7 @@ use function str_contains;
  * INFO <#channel>.
  *
  * Shows channel info: founder, successor, url, email, description,
- * last used, last topic, TOPICLOCK, MLOCK, SECURE.
+ * last used, last topic, TOPICLOCK, MLOCK, SECURE, IRCOPONLY.
  */
 final readonly class InfoCommand implements ChanServCommandInterface
 {
@@ -184,6 +184,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
             '%topiclock%' => $info->topicLock ? 'ON' : 'OFF',
             '%mlock%' => $info->mlockActive ? 'ON' : 'OFF',
             '%secure%' => $info->secure ? 'ON' : 'OFF',
+            '%ircoponly%' => $info->ircopOnly ? 'ON' : 'OFF',
         ]));
         if ($info->noExpire) {
             $context->replyRaw($context->trans('info.no_expire'));

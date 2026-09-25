@@ -52,6 +52,8 @@ class RegisteredChannel
 
     private bool $secure = false;
 
+    private bool $ircopOnly = false;
+
     private ?string $topic = null;
 
     private ?DateTimeImmutable $lastTopicSetAt = null;
@@ -192,6 +194,11 @@ class RegisteredChannel
         return $this->secure;
     }
 
+    public function isIrcopOnly(): bool
+    {
+        return $this->ircopOnly;
+    }
+
     public function getTopic(): ?string
     {
         return $this->topic;
@@ -281,6 +288,11 @@ class RegisteredChannel
     public function configureSecure(bool $on): void
     {
         $this->secure = $on;
+    }
+
+    public function configureIrcopOnly(bool $on): void
+    {
+        $this->ircopOnly = $on;
     }
 
     public function updateTopic(?string $topic, DateTimeImmutable $updatedAt, ?string $setByNick = null): void

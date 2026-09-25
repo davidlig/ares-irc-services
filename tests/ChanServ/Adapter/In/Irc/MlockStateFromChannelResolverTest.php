@@ -34,7 +34,7 @@ final class MlockStateFromChannelResolverTest extends TestCase
         $resolver = new MlockStateFromChannelResolver();
         $view = new ChannelView(
             '#test',
-            '+ntkroPvnM',
+            '+ntkroPOvnM',
             null,
             0,
             modeParams: ['k' => 'secret'],

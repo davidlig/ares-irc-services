@@ -153,7 +153,7 @@ info:
 # --- SET --------------------------------------------------------------------
 set:
   syntax:           "SET <option> <value>"
-  short:            "Canviar la configuració del vostre sobrenom de %nickserv%."
+  short:            "Canviar les opcions del teu sobrenom."
   help:             "Modifica la configuració del vostre sobrenom de %nickserv%.\nHeu d'estar identificat per utilitzar aquesta ordre."
   unknown_option:   "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Opcions disponibles: %options%."
 

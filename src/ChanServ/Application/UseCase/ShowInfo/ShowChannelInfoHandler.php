@@ -44,6 +44,7 @@ final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInt
             mlockActive: $channel->isMlockActive(),
             mlock: $channel->getMlock(),
             secure: $channel->isSecure(),
+            ircopOnly: $channel->isIrcopOnly(),
             noExpire: $channel->isNoExpire(),
             forbidden: $channel->isForbidden(),
             forbiddenReason: $channel->getForbiddenReason(),

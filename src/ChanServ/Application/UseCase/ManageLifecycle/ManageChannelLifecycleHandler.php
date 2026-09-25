@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\UseCase\ManageLifecycle;
 
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\PublishedEvent\ChannelIrcopOnlyUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Application\Service\ChanDropService;
@@ -35,6 +36,8 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
             ChannelLifecycleAction::Restore => $this->restore($command),
             ChannelLifecycleAction::EnableNoExpire => $this->changeNoExpire($command, true),
             ChannelLifecycleAction::DisableNoExpire => $this->changeNoExpire($command, false),
+            ChannelLifecycleAction::EnableIrcopOnly => $this->changeIrcopOnly($command, true),
+            ChannelLifecycleAction::DisableIrcopOnly => $this->changeIrcopOnly($command, false),
             ChannelLifecycleAction::Suspend => $this->suspend($command),
             ChannelLifecycleAction::Unsuspend => $this->unsuspend($command),
         };
@@ -119,6 +122,25 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
 
         return new ChannelLifecycleResult(
             $enabled ? ChannelLifecycleOutcome::NoExpireEnabled : ChannelLifecycleOutcome::NoExpireDisabled,
+        );
+    }
+
+    private function changeIrcopOnly(ManageChannelLifecycle $command, bool $enabled): ChannelLifecycleResult
+    {
+        $channel = $this->channels->findByChannelName($command->channelName);
+        if (null === $channel) {
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
+        }
+        if ($channel->isForbidden()) {
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::ChannelForbidden);
+        }
+
+        $channel->configureIrcopOnly($enabled);
+        $this->channels->save($channel);
+        $this->events->dispatch(new ChannelIrcopOnlyUpdatedEvent($channel->getName()));
+
+        return new ChannelLifecycleResult(
+            $enabled ? ChannelLifecycleOutcome::IrcopOnlyEnabled : ChannelLifecycleOutcome::IrcopOnlyDisabled,
         );
     }
 

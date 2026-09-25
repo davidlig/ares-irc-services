@@ -1,3 +1,16 @@
+## [2.1.0] - 2026-09-26
+
+### Features
+
+- ChanServ `IRCOPONLY` protects registered channels for authorized IRC operators across all supported protocols.
+- UnrealUdb projects `SECURE_OPS` from ChanServ `SET SECURE` and `OPER_ONLY` from `IRCOPONLY`.
+- NickServ `SET` has a shorter description in all supported languages.
+
+### Upgrade
+
+- Apply the new `ircop_only` database migration before starting services.
+- Use UDB revision `0032fb5` or newer for the `SECURE_OPS` and `OPER_ONLY` channel option bits.
+
 ## [2.0.1] - 2026-09-23
 
 ### 🐛 Bug Fixes

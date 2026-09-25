@@ -153,7 +153,7 @@ info:
 # --- SET --------------------------------------------------------------------
 set:
   syntax:           "SET <opțiune> <valoare>"
-  short:            "Schimbați setările poreclei dumneavoastră %nickserv%."
+  short:            "Schimbați opțiunile poreclei dumneavoastră."
   help:             "Modifică setările poreclei dumneavoastră %nickserv%.\nTrebuie să fiți identificat pentru a folosi această comandă."
   unknown_option:   "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Opțiuni disponibile: %options%."
 

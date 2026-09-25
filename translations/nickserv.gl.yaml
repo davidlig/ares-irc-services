@@ -161,7 +161,7 @@ info:
 # --- SET --------------------------------------------------------------------
 set:
   syntax:           "SET <opción> <valor>"
-  short:            "Cambiar a súa configuración do alcume en %nickserv%."
+  short:            "Cambiar as opcións do teu alcume."
   help:             "Modifica a configuración do seu alcume en %nickserv%.\nDebe estar identificado para usar este comando."
   unknown_option:   "\x0304✗\x03 Opción descoñecida \x02%option%\x02. Opcións dispoñibles: %options%."
 

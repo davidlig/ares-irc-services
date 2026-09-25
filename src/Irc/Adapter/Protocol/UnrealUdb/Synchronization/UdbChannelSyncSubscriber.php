@@ -9,10 +9,12 @@ use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelForbiddenEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelIrcopOnlyUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelSecureUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnforbiddenEvent;
@@ -31,7 +33,7 @@ use function strtolower;
  * protocol driver is active); only wire propagation is gated by the session
  * coordinator. Channel flags are expressed with the current UDB schema:
  * founder/topic/modes plus the numeric C::<channel>::options bitmask
- * (2 = LOCK_MODES / MLOCK, 4 = LOCK_TOPIC / TOPICLOCK).
+ * (2 = MLOCK, 4 = TOPICLOCK, 16 = OPER_ONLY, 32 = SECURE_OPS).
  */
 final class UdbChannelSyncSubscriber implements EventSubscriberInterface
 {
@@ -57,6 +59,8 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
             ChannelUnsuspendedEvent::class => 'onChannelUnsuspended',
             ChannelMlockUpdatedEvent::class => 'onChannelMlockUpdated',
             ChannelTopiclockUpdatedEvent::class => 'onChannelTopiclockUpdated',
+            ChannelSecureUpdatedEvent::class => 'onChannelSecureUpdated',
+            ChannelIrcopOnlyUpdatedEvent::class => 'onChannelIrcopOnlyUpdated',
             ChannelTopicChangedEvent::class => 'onChannelTopicChanged',
             NetworkSyncCompleteEvent::class => ['onNetworkSyncComplete', -5],
         ];
@@ -87,11 +91,13 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
         }
 
         $this->writeSuspend($channel);
+        $this->writeOptions($channel);
     }
 
     public function onChannelRestored(ChannelRestoredEvent $event): void
     {
         $this->recordWriter->delete(self::BLOCK, sprintf('%s::suspend', $event->channelName));
+        $this->refreshOptions(strtolower($event->channelName));
     }
 
     public function onChannelFounderChanged(ChannelFounderChangedEvent $event): void
@@ -138,6 +144,16 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
     }
 
     public function onChannelTopiclockUpdated(ChannelTopiclockUpdatedEvent $event): void
+    {
+        $this->refreshOptions(strtolower($event->channelName));
+    }
+
+    public function onChannelSecureUpdated(ChannelSecureUpdatedEvent $event): void
+    {
+        $this->refreshOptions(strtolower($event->channelName));
+    }
+
+    public function onChannelIrcopOnlyUpdated(ChannelIrcopOnlyUpdatedEvent $event): void
     {
         $this->refreshOptions(strtolower($event->channelName));
     }

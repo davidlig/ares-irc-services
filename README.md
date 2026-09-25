@@ -38,7 +38,7 @@ A modular, protocol-agnostic IRC services daemon built with **PHP 8.5**, **Symfo
 | IRCd | Driver | S2S protocol | SID format | Auth | Plain/TLS ports (typical) |
 |------|--------|-------------|------------|------|---------------------------|
 | [UnrealIRCd](https://www.unrealircd.org/) 6.2.x | `unreal` | 6.2.x | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
-| [UnrealIRCd-UDB](https://github.com/davidlig/unrealircd-udb) 4.0.0 / UnrealIRCd 6.2.x | `unrealudb` | UDB 4 at pinned revision `ac3b915` | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
+| [UnrealIRCd-UDB](https://github.com/davidlig/unrealircd-udb) 4.0.0 / UnrealIRCd 6.2.x | `unrealudb` | UDB 4 at pinned revision `0032fb5` | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
 | [InspIRCd](https://www.inspircd.org/) 4.10.x | `inspircd` | SpanTree v4 (1206) | 3-char alphanum (`0A0`) | Plaintext (no CHALLENGE) | 7000 / 7001 |
 
 The port you configure in `.env.local` (`IRC_IRCD_PORT`) must match whatever you set in your IRCd's `link` / `<link>` block.
@@ -383,7 +383,8 @@ Ensure the `spanningtree` module is loaded.
 | `SET ENTRYMSG` | `<#channel> <msg>` | Set join greeting message |
 | `SET TOPICLOCK` | `<#channel> <on\|off>` | Lock the channel topic |
 | `SET MLOCK` | `<#channel> <modes>` | Set enforced channel modes |
-| `SET SECURE` | `<#channel> <on\|off>` | Only access-listed users can join |
+| `SET SECURE` | `<#channel> <on\|off>` | Enforce secure channel ranks; UDB stores the `SECURE_OPS` option |
+| `IRCOPONLY` | `<#channel> {ON\|OFF}` | Restrict a registered channel to authorized IRC operators |
 | `ACCESS` | `<#channel> <nick> <level>` | Grant access to a nick |
 | `DELACCESS` | `<#channel> <nick>` | Remove access from a nick |
 | `LEVELS` | `<#channel> <type> <level>` | Configure privilege levels |

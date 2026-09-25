@@ -75,6 +75,7 @@ final readonly class IrcChannelMlockNetworkQuery implements ChannelMlockNetworkQ
         $protected = array_values(array_filter([
             $support->getChannelRegisteredModeLetter(),
             $support->getPermanentChannelModeLetter(),
+            'O',
         ], static fn (?string $letter): bool => null !== $letter));
         $names = array_values(array_unique([...$names, ...$protected]));
 

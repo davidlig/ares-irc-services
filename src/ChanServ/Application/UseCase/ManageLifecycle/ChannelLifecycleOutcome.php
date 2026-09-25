@@ -18,6 +18,8 @@ enum ChannelLifecycleOutcome
     case NotPendingDeletion;
     case NoExpireEnabled;
     case NoExpireDisabled;
+    case IrcopOnlyEnabled;
+    case IrcopOnlyDisabled;
     case ChannelForbidden;
     case ChannelSuspended;
     case Suspended;

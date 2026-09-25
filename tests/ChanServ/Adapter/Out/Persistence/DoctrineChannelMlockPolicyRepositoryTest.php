@@ -17,7 +17,7 @@ final class DoctrineChannelMlockPolicyRepositoryTest extends TestCase
     #[Test]
     public function itNormalizesLookupAndLoadsOnlyTheMlockPolicySnapshot(): void
     {
-        $channel = $this->channel(7, '#Case', true, true, '+kR', ['k' => 'Secret']);
+        $channel = $this->channel(7, '#Case', true, true, '+kRO', ['k' => 'Secret']);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('findByChannelName')->with('#case')->willReturn($channel);
 

@@ -7,6 +7,7 @@ namespace App\ChanServ\Application\UseCase\ConfigureSecure;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelSecureUpdatedEvent;
 
 final readonly class ConfigureChannelSecureHandler implements ConfigureChannelSecureHandlerInterface
 {
@@ -19,6 +20,7 @@ final readonly class ConfigureChannelSecureHandler implements ConfigureChannelSe
     {
         $command->channel->configureSecure($command->enabled);
         $this->channels->save($command->channel);
+        $this->events->publish(new ChannelSecureUpdatedEvent($command->channel->getName()));
 
         if ($command->enabled) {
             $this->events->publish(new ChannelSecureEnabledEvent($command->channel->getName()));

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Application\UseCase\ManageLifecycle;
 
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\PublishedEvent\ChannelIrcopOnlyUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Application\Service\ChanDropService;
@@ -36,6 +37,31 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->now = new DateTimeImmutable('2026-09-09T10:00:00+00:00');
+    }
+
+    #[Test]
+    public function ircopOnlyCanBeEnabledAndDisabledWithPublishedUpdates(): void
+    {
+        $channel = $this->channel();
+        $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($channel);
+        $channels->expects(self::exactly(2))->method('save')->with($channel);
+        $events = $this->createMock(EventBusInterface::class);
+        $events->expects(self::exactly(2))->method('dispatch')->with(self::isInstanceOf(ChannelIrcopOnlyUpdatedEvent::class));
+        $handler = $this->handler($channels, events: $events);
+
+        self::assertSame(ChannelLifecycleOutcome::IrcopOnlyEnabled, $handler->handle($this->command(ChannelLifecycleAction::EnableIrcopOnly))->outcome);
+        self::assertTrue($channel->isIrcopOnly());
+        self::assertSame(ChannelLifecycleOutcome::IrcopOnlyDisabled, $handler->handle($this->command(ChannelLifecycleAction::DisableIrcopOnly))->outcome);
+        self::assertFalse($channel->isIrcopOnly());
+    }
+
+    #[Test]
+    public function ircopOnlyRejectsUnknownAndForbiddenChannels(): void
+    {
+        self::assertSame(ChannelLifecycleOutcome::NotRegistered, $this->handler($this->channelsReturning(null))->handle($this->command(ChannelLifecycleAction::EnableIrcopOnly))->outcome);
+        $forbidden = RegisteredChannel::createForbidden($this->now, '#test', 'reason');
+        self::assertSame(ChannelLifecycleOutcome::ChannelForbidden, $this->handler($this->channelsReturning($forbidden))->handle($this->command(ChannelLifecycleAction::DisableIrcopOnly))->outcome);
     }
 
     #[Test]

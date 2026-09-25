@@ -153,7 +153,7 @@ info:
 # --- SET --------------------------------------------------------------------
 set:
   syntax:           "SET <seçenek> <değer>"
-  short:            "%nickserv% rumuz ayarlarınızı değiştirin."
+  short:            "Rumuz seçeneklerinizi değiştirin."
   help:             "%nickserv% rumuz ayarlarınızı değiştirir.\nBu komutu kullanmak için kimliğiniz doğrulanmış olmalıdır."
   unknown_option:   "\x0304✗\x03 Bilinmeyen seçenek \x02%option%\x02. Kullanılabilir seçenekler: %options%."
 

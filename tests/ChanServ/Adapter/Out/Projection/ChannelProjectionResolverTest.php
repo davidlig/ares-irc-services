@@ -26,6 +26,8 @@ final class ChannelProjectionResolverTest extends TestCase
         $channel->updateTopic('Welcome', new DateTimeImmutable('2026-01-01 00:00:00'));
         $channel->configureMlock(true, '+ntkl', ['k' => 'secret', 'l' => '10']);
         $channel->configureTopicLock(true);
+        $channel->configureSecure(true);
+        $channel->configureIrcopOnly(true);
 
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('iterateAll')->willReturn([$channel]);
@@ -45,6 +47,9 @@ final class ChannelProjectionResolverTest extends TestCase
             null,
             false,
             false,
+            null,
+            true,
+            true,
         );
         $all = $resolver->all();
         self::assertCount(1, $all);
@@ -102,5 +107,7 @@ final class ChannelProjectionResolverTest extends TestCase
         self::assertSame($expected->suspended, $actual->suspended);
         self::assertSame($expected->pendingDeletion, $actual->pendingDeletion);
         self::assertSame($expected->suspensionReason, $actual->suspensionReason);
+        self::assertSame($expected->secure, $actual->secure);
+        self::assertSame($expected->ircopOnly, $actual->ircopOnly);
     }
 }

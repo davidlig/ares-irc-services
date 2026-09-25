@@ -42,7 +42,7 @@ info:
   last_used:       "  \x0314Last used\x03      : %date%"
   topic:           "  \x0314Last topic\x03     : %topic%"
   topic_set_by:    "  \x0314Topic set by\x03   : %nickname%"
-  options:         "  \x0314Options\x03        : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  options:         "  \x0314Options\x03        : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%, IRCOPONLY %ircoponly%"
   no_expire:       "  \x0314Never Expires\x03  : Yes"
   mlock_modes:     "  \x0314Mode lock\x03      : %modes%"
   suspended_status: "  \x0314Status\x03         : \x0304Suspended\x03"
@@ -369,6 +369,13 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "You are not authorized to join this channel."
+
+ircoponly:
+  syntax:           "IRCOPONLY <#channel> {ON|OFF}"
+  short:            "Restrict a channel to IRC operators."
+  help:             "Only authorized IRC operators may remain in the channel. ChanServ joins and protects mode +O."
+  on:               "IRCOPONLY is now ON for %channel%."
+  off:              "IRCOPONLY is now OFF for %channel%."
 
 noexpire:
   syntax:           "NOEXPIRE <#channel> {ON|OFF}"

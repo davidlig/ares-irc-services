@@ -324,6 +324,12 @@ final class UdbRecordExporterTest extends TestCase
         self::assertSame(4, $this->exporter->channelOptions($this->createChannel('#t', topicLock: true)));
         self::assertSame(6, $this->exporter->channelOptions($this->createChannel('#mt', mlockActive: true, topicLock: true)));
         self::assertSame(6, $this->exporter->channelOptions($this->createChannel('#pd', pendingDeletion: true, mlockActive: true, topicLock: true)));
+        self::assertSame(32, $this->exporter->channelOptions($this->createChannel('#secure', secure: true)));
+        self::assertSame(16, $this->exporter->channelOptions($this->createChannel('#opers', ircopOnly: true)));
+        self::assertSame(54, $this->exporter->channelOptions($this->createChannel('#all', mlockActive: true, topicLock: true, secure: true, ircopOnly: true)));
+        self::assertSame(32, $this->exporter->channelOptions($this->createChannel('#blocked', suspended: true, secure: true, ircopOnly: true)));
+        self::assertSame(0, $this->exporter->channelOptions($this->createChannel('#pending', pendingDeletion: true, ircopOnly: true)));
+        self::assertSame(0, $this->exporter->channelOptions($this->createChannel('#forbidden', forbidden: true, ircopOnly: true)));
     }
 
     #[Test]
@@ -509,6 +515,8 @@ final class UdbRecordExporterTest extends TestCase
         string $mlock = '+nt',
         array $mlockParams = [],
         ?string $suspensionReason = null,
+        bool $secure = false,
+        bool $ircopOnly = false,
     ): ChannelProjection {
         return new ChannelProjection(
             id: 1,
@@ -524,6 +532,8 @@ final class UdbRecordExporterTest extends TestCase
             suspended: $suspended,
             pendingDeletion: $pendingDeletion,
             suspensionReason: $suspensionReason,
+            secure: $secure,
+            ircopOnly: $ircopOnly,
         );
     }
 }

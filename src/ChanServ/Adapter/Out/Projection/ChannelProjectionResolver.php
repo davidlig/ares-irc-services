@@ -48,6 +48,8 @@ final readonly class ChannelProjectionResolver implements ChannelProjectionQuery
             $channel->isSuspended(),
             $channel->isPendingDeletion(),
             $channel->isSuspended() ? $channel->getSuspendedReason() : null,
+            $channel->isSecure(),
+            $channel->isIrcopOnly(),
         );
     }
 }

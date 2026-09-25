@@ -283,7 +283,7 @@ final readonly class UdbRecordExporter
         return [];
     }
 
-    /** Channel option bitmask: LOCK_MODES (2) = MLOCK active, LOCK_TOPIC (4) = TOPICLOCK. */
+    /** Channel option bitmask: MLOCK 2, TOPICLOCK 4, OPER_ONLY 16, SECURE_OPS 32. */
     public function channelOptions(ChannelProjection $channel): int
     {
         $options = 0;
@@ -292,6 +292,12 @@ final readonly class UdbRecordExporter
         }
         if ($channel->topicLock) {
             $options |= 4;
+        }
+        if ($channel->ircopOnly && !$channel->suspended && !$channel->pendingDeletion && !$channel->forbidden) {
+            $options |= 16;
+        }
+        if ($channel->secure) {
+            $options |= 32;
         }
 
         return $options;

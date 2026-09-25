@@ -12,6 +12,8 @@ enum ChannelLifecycleAction
     case Restore;
     case EnableNoExpire;
     case DisableNoExpire;
+    case EnableIrcopOnly;
+    case DisableIrcopOnly;
     case Suspend;
     case Unsuspend;
 }

@@ -75,7 +75,7 @@ final class CtcpHandlerTest extends TestCase
         $this->versionResponder = new CtcpVersionResponder(
             $this->createTranslator(),
             $this->createLanguageResolver(),
-            'v2.0.1',
+            'v2.1.0',
         );
     }
 
@@ -186,7 +186,7 @@ final class CtcpHandlerTest extends TestCase
         $sendCtcp
             ->expects(self::once())
             ->method('sendCtcpReply')
-            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.0.1');
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.1.0');
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice
@@ -349,7 +349,7 @@ final class CtcpHandlerTest extends TestCase
         $sendCtcp
             ->expects(self::once())
             ->method('sendCtcpReply')
-            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.0.1');
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.1.0');
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice
@@ -387,7 +387,7 @@ final class CtcpHandlerTest extends TestCase
         $sendCtcp
             ->expects(self::once())
             ->method('sendCtcpReply')
-            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.0.1');
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.1.0');
 
         $handler = $this->createHandler(
             sendCtcp: $sendCtcp,
@@ -415,7 +415,7 @@ final class CtcpHandlerTest extends TestCase
 
         $sendCtcp = $this->createMock(SendCtcpPort::class);
         $sendCtcp->expects(self::once())->method('sendCtcpReply')
-            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.0.1');
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v2.1.0');
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::atLeastOnce())->method('sendMessage')
@@ -479,7 +479,7 @@ final class CtcpHandlerTest extends TestCase
         $sendCtcp
             ->expects(self::once())
             ->method('sendCtcpReply')
-            ->with($serviceUid, $senderUid, 'VERSION', 'Ares IRC Services v2.0.1');
+            ->with($serviceUid, $senderUid, 'VERSION', 'Ares IRC Services v2.1.0');
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice

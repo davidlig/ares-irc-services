@@ -77,6 +77,7 @@ final class IrcChannelMlockNetworkQueryTest extends TestCase
                 ['K', true, false, false],
                 ['r', false, false, true],
                 ['P', false, false, true],
+                ['O', false, false, true],
             ],
             array_map(
                 static fn ($capability): array => [

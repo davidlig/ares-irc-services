@@ -7,6 +7,7 @@ namespace App\Tests\ChanServ\Application\UseCase\ConfigureSecure;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelSecureEnabledEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelSecureUpdatedEvent;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecure;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
@@ -26,13 +27,18 @@ final class ConfigureChannelSecureHandlerTest extends TestCase
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('save')->with($channel);
         $events = $this->createMock(ChanServEventPublisher::class);
-        $events->expects(self::once())->method('publish')->with(self::callback(
-            static fn (object $event): bool => $event instanceof ChannelSecureEnabledEvent && '#test' === $event->channelName,
-        ));
+        $published = [];
+        $events->expects(self::exactly(2))->method('publish')->willReturnCallback(static function (object $event) use (&$published): void {
+            $published[] = $event;
+        });
 
         new ConfigureChannelSecureHandler($channels, $events)->handle(new ConfigureChannelSecure($channel, true));
 
         self::assertTrue($channel->isSecure());
+        self::assertInstanceOf(ChannelSecureUpdatedEvent::class, $published[0]);
+        self::assertSame('#test', $published[0]->channelName);
+        self::assertInstanceOf(ChannelSecureEnabledEvent::class, $published[1]);
+        self::assertSame('#test', $published[1]->channelName);
     }
 
     #[Test]
@@ -43,7 +49,9 @@ final class ConfigureChannelSecureHandlerTest extends TestCase
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->expects(self::once())->method('save')->with($channel);
         $events = $this->createMock(ChanServEventPublisher::class);
-        $events->expects(self::never())->method('publish');
+        $events->expects(self::once())->method('publish')->with(self::callback(
+            static fn (object $event): bool => $event instanceof ChannelSecureUpdatedEvent && '#test' === $event->channelName,
+        ));
 
         new ConfigureChannelSecureHandler($channels, $events)->handle(new ConfigureChannelSecure($channel, false));
 

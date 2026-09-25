@@ -33,7 +33,7 @@ final class UdbChannelModesFormatterTest extends TestCase
     public function formatReturnsNullWhenOnlyExcludedModesArePresent(): void
     {
         // +r, +P, +q, +o, +b are excluded
-        self::assertNull($this->formatter->format('+rP', [], $this->udbSupport));
+        self::assertNull($this->formatter->format('+rPO', [], $this->udbSupport));
         self::assertNull($this->formatter->format('+qo', [], $this->udbSupport));
         self::assertNull($this->formatter->format('+b', [], $this->udbSupport));
     }
@@ -48,7 +48,7 @@ final class UdbChannelModesFormatterTest extends TestCase
     #[Test]
     public function formatExcludesPlusRAndPlusPWhileKeepingOtherModes(): void
     {
-        $formatted = $this->formatter->format('+rPnt', [], $this->udbSupport);
+        $formatted = $this->formatter->format('+rPOnt', [], $this->udbSupport);
         self::assertSame('+nt', $formatted);
     }
 

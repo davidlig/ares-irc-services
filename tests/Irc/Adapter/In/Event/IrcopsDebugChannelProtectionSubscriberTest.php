@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\In\Event;
 
+use App\ChanServ\Application\Port\In\ChannelProjection;
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
+use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelIrcopOnlyUpdatedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\In\Event\IrcopsDebugChannelProtectionSubscriber;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
@@ -11,7 +19,9 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\OperatorOnlyChannelControl;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\ValueObject\ChannelName;
@@ -22,6 +32,7 @@ use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,6 +51,8 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         self::assertSame(['onUserJoined', 15], $events[UserJoinedChannelEvent::class]);
         self::assertArrayHasKey(NetworkSyncCompleteEvent::class, $events);
         self::assertSame(['onSyncComplete', 15], $events[NetworkSyncCompleteEvent::class]);
+        self::assertArrayHasKey(ChannelIrcopOnlyUpdatedEvent::class, $events);
+        self::assertArrayHasKey(ChannelSettingsChangedEvent::class, $events);
     }
 
     #[Test]
@@ -762,6 +775,92 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         );
     }
 
+    #[Test]
+    public function enabledRegisteredChannelActivatesAndKicksExistingUnauthorizedMember(): void
+    {
+        $control = $this->createMock(OperatorOnlyChannelControl::class);
+        $control->expects(self::once())->method('activate')->with('#ops');
+        $actions = $this->createMock(ChannelServiceActionsPort::class);
+        $actions->expects(self::once())->method('kickFromChannel')->with('#ops', 'U1', 'denied');
+        $lookup = $this->createStub(ChannelLookupPort::class);
+        $lookup->method('findByChannelName')->willReturn(new ChannelView('#ops', '+O', null, 1, [['uid' => 'U1', 'roleLetter' => '']]));
+        $users = $this->createStub(NetworkUserLookupPort::class);
+        $users->method('findByUid')->willReturn(new SenderView('U1', 'Guest', 'i', 'h', 'c', 'ip', false, false, 'SID', 'h', 'i'));
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('denied');
+
+        $this->createSubscriber(channelActions: $actions, channelLookup: $lookup, userLookup: $users, translator: $translator, debugChannel: null, registeredChannels: $this->query($this->projection()), operatorOnlyControl: $control)
+            ->onIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent('#ops'));
+    }
+
+    #[Test]
+    public function protectedRegisteredChannelKicksUnauthorizedJoin(): void
+    {
+        $actions = $this->createMock(ChannelServiceActionsPort::class);
+        $actions->expects(self::once())->method('kickFromChannel')->with('#ops', 'U1', 'denied');
+        $users = $this->createStub(NetworkUserLookupPort::class);
+        $users->method('findByUid')->willReturn(new SenderView('U1', 'Guest', 'i', 'h', 'c', 'ip', false, false, 'SID', 'h', 'i'));
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('denied');
+
+        $this->createSubscriber(channelActions: $actions, userLookup: $users, translator: $translator, debugChannel: null, registeredChannels: $this->query($this->projection()))
+            ->onUserJoined($this->createEvent('U1', '#ops'));
+    }
+
+    #[Test]
+    public function syncActivatesOnlyActiveRegisteredChannels(): void
+    {
+        $control = $this->createMock(OperatorOnlyChannelControl::class);
+        $control->expects(self::once())->method('activate')->with('#ops');
+        $query = $this->createStub(ChannelProjectionQuery::class);
+        $query->method('all')->willReturn([$this->projection(), $this->projection(suspended: true), $this->projection(pendingDeletion: true), $this->projection(ircopOnly: false)]);
+
+        $this->createSubscriber(debugChannel: null, registeredChannels: $query, operatorOnlyControl: $control)
+            ->onSyncComplete(new NetworkSyncCompleteEvent($this->createStub(ConnectionInterface::class), '001'));
+    }
+
+    #[Test]
+    public function disabledOrBlockedChannelDeactivates(): void
+    {
+        $control = $this->createMock(OperatorOnlyChannelControl::class);
+        $control->expects(self::exactly(2))->method('deactivate')->with('#ops');
+        $query = $this->createStub(ChannelProjectionQuery::class);
+        $query->method('findByName')->willReturnOnConsecutiveCalls($this->projection(ircopOnly: false), $this->projection(suspended: true));
+        $subscriber = $this->createSubscriber(registeredChannels: $query, operatorOnlyControl: $control);
+        $subscriber->onIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent('#ops'));
+        $subscriber->onIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent('#ops'));
+    }
+
+    #[Test]
+    public function lifecyclePausesAndRestoresProtection(): void
+    {
+        $control = $this->createMock(OperatorOnlyChannelControl::class);
+        $control->expects(self::exactly(3))->method('deactivate')->with('#ops');
+        $control->expects(self::exactly(2))->method('activate')->with('#ops');
+        $control->expects(self::once())->method('ensureMode')->with('#ops');
+        $subscriber = $this->createSubscriber(registeredChannels: $this->query($this->projection()), operatorOnlyControl: $control);
+        $now = new DateTimeImmutable('2026-09-26T00:00:00+00:00');
+        $subscriber->onChannelSuspended(new ChannelSuspendedEvent(1, '#ops', '#ops', 'reason', null, null, 'Oper', null, '*', '*', $now));
+        $subscriber->onChannelPendingDeletion(new ChannelPendingDeletionEvent(1, '#ops', '#ops', 'Oper', $now));
+        $subscriber->onChannelUnsuspended(new ChannelUnsuspendedEvent(1, '#ops', '#ops', 'Oper', null, '*', '*', $now));
+        $subscriber->onChannelRestored(new ChannelRestoredEvent(1, '#ops', '#ops', 'Oper', $now));
+        $subscriber->onSettingsChanged(new ChannelSettingsChangedEvent('#ops'));
+        $subscriber->onChannelDrop(new ChannelDropEvent(1, '#ops', '#ops', 'drop', $now, true));
+    }
+
+    private function projection(bool $ircopOnly = true, bool $suspended = false, bool $pendingDeletion = false): ChannelProjection
+    {
+        return new ChannelProjection(1, '#ops', 1, null, false, '', [], false, false, null, $suspended, $pendingDeletion, null, false, $ircopOnly);
+    }
+
+    private function query(ChannelProjection $projection): ChannelProjectionQuery
+    {
+        $query = $this->createStub(ChannelProjectionQuery::class);
+        $query->method('findByName')->willReturn($projection);
+
+        return $query;
+    }
+
     private function createSubscriber(
         ?ChannelServiceActionsPort $channelActions = null,
         ?ChannelLookupPort $channelLookup = null,
@@ -772,6 +871,8 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         ?LoggerInterface $logger = null,
         ?string $debugChannel = '#ircops',
         string $chanservNick = 'ChanServ',
+        ?ChannelProjectionQuery $registeredChannels = null,
+        ?OperatorOnlyChannelControl $operatorOnlyControl = null,
     ): IrcopsDebugChannelProtectionSubscriber {
         return new IrcopsDebugChannelProtectionSubscriber(
             channelActions: $channelActions ?? $this->createStub(ChannelServiceActionsPort::class),
@@ -784,6 +885,8 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
             chanservNick: $chanservNick,
             debugChannel: $debugChannel,
             logger: $logger ?? $this->createStub(LoggerInterface::class),
+            registeredChannels: $registeredChannels,
+            operatorOnlyControl: $operatorOnlyControl,
         );
     }
 

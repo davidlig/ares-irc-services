@@ -14,5 +14,6 @@ final readonly class ChannelDropEvent
         public string $channelNameLower,
         public string $reason,
         public DateTimeImmutable $occurredAt,
+        public bool $ircopOnly = false,
     ) {}
 }

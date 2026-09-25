@@ -42,7 +42,7 @@ info:
   last_used:       "  \x0314Τελ. χρήση\x03      : %date%"
   topic:           "  \x0314Τελευταίο θέμα\x03  : %topic%"
   topic_set_by:    "  \x0314Θέμα από\x03        : %nickname%"
-  options:         "  \x0314Επιλογές\x03        : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  options:         "  \x0314Επιλογές\x03        : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%, IRCOPONLY %ircoponly%"
   no_expire:       "  \x0314Ποτέ δεν λήγει\x03  : Ναι"
   mlock_modes:     "  \x0314Κλείδωμα λειτ.\x03  : %modes%"
   suspended_status: "  \x0314Κατάσταση\x03       : \x0304Σε αναστολή\x03"
@@ -369,6 +369,13 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "Δεν είστε εξουσιοδοτημένοι να εισέλθετε σε αυτό το κανάλι."
+
+ircoponly:
+  syntax:           "IRCOPONLY <#channel> {ON|OFF}"
+  short:            "Περιορίστε ένα κανάλι στους χειριστές IRC."
+  help:             "Μόνο εξουσιοδοτημένοι χειριστές IRC μπορούν να παραμείνουν στο κανάλι. Το ChanServ εισέρχεται και προστατεύει το +O."
+  on:               "Το IRCOPONLY ενεργοποιήθηκε στο %channel%."
+  off:              "Το IRCOPONLY απενεργοποιήθηκε στο %channel%."
 
 noexpire:
   syntax:           "NOEXPIRE <#channel> {ON|OFF}"

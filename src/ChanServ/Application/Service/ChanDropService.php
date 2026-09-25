@@ -156,6 +156,7 @@ readonly class ChanDropService
             $channelNameLower,
             $reason,
             $cleanupEvent->occurredAt,
+            $channel->isIrcopOnly(),
         ));
 
         $this->debug->log(

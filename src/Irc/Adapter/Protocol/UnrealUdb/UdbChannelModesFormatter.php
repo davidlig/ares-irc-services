@@ -47,6 +47,7 @@ final readonly class UdbChannelModesFormatter
         if (null !== $permanentLetter) {
             $excludedLetters[] = $permanentLetter;
         }
+        $excludedLetters[] = 'O';
 
         $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
 

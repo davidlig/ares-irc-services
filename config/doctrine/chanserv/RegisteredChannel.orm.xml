@@ -28,6 +28,7 @@
         <field name="mlock" type="string" length="64" column="mlock"/>
         <field name="mlockParams" type="json" column="mlock_params"/>
         <field name="secure" type="boolean" column="secure"/>
+        <field name="ircopOnly" type="boolean" column="ircop_only"/>
         <field name="topic" type="text" nullable="true" column="topic"/>
         <field name="lastTopicSetAt" type="datetime_immutable" nullable="true" column="last_topic_set_at"/>
         <field name="lastTopicSetByNick" type="string" length="64" nullable="true" column="last_topic_set_by_nick"/>

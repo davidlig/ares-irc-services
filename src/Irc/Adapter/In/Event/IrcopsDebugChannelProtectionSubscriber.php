@@ -4,11 +4,20 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\In\Event;
 
+use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
+use App\ChanServ\Application\PublishedEvent\ChannelDropEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelIrcopOnlyUpdatedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelPendingDeletionEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelRestoredEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
+use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\OperatorOnlyChannelControl;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\PublishedEvent\ChannelSettingsChangedEvent;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\OperServ\Application\Port\In\OperatorActor;
@@ -32,6 +41,8 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         private string $chanservNick,
         private ?string $debugChannel,
         private LoggerInterface $logger,
+        private ?ChannelProjectionQuery $registeredChannels = null,
+        private ?OperatorOnlyChannelControl $operatorOnlyControl = null,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -39,19 +50,20 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         return [
             UserJoinedChannelEvent::class => ['onUserJoined', 15],
             NetworkSyncCompleteEvent::class => ['onSyncComplete', 15],
+            ChannelIrcopOnlyUpdatedEvent::class => 'onIrcopOnlyUpdated',
+            ChannelSuspendedEvent::class => 'onChannelSuspended',
+            ChannelUnsuspendedEvent::class => 'onChannelUnsuspended',
+            ChannelPendingDeletionEvent::class => 'onChannelPendingDeletion',
+            ChannelRestoredEvent::class => 'onChannelRestored',
+            ChannelDropEvent::class => 'onChannelDrop',
+            ChannelSettingsChangedEvent::class => 'onSettingsChanged',
         ];
     }
 
     public function onUserJoined(UserJoinedChannelEvent $event): void
     {
-        if (null === $this->debugChannel || '' === $this->debugChannel) {
-            return;
-        }
-
         $channelName = strtolower($event->channel->value);
-        $debugChannelLower = strtolower($this->debugChannel);
-
-        if ($channelName !== $debugChannelLower) {
+        if (!$this->isProtected($channelName)) {
             return;
         }
 
@@ -62,16 +74,96 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
             return;
         }
 
-        $this->kickIfUnauthorized($this->debugChannel, $uid, $user);
+        $this->kickIfUnauthorized($event->channel->value, $uid, $user);
     }
 
     public function onSyncComplete(NetworkSyncCompleteEvent $event): void
     {
-        if (null === $this->debugChannel || '' === $this->debugChannel) {
+        if (null !== $this->debugChannel && '' !== $this->debugChannel) {
+            $this->kickCurrentMembers($this->debugChannel);
+        }
+        foreach ($this->registeredChannels?->all() ?? [] as $channel) {
+            if (!$channel->ircopOnly || $channel->forbidden || $channel->suspended || $channel->pendingDeletion) {
+                continue;
+            }
+            $this->operatorOnlyControl?->activate($channel->name);
+            if (null === $this->debugChannel || strtolower($channel->name) !== strtolower($this->debugChannel)) {
+                $this->kickCurrentMembers($channel->name);
+            }
+        }
+    }
+
+    public function onIrcopOnlyUpdated(ChannelIrcopOnlyUpdatedEvent $event): void
+    {
+        $channel = $this->registeredChannels?->findByName(strtolower($event->channelName));
+        if (null !== $channel && $channel->ircopOnly && !$channel->forbidden && !$channel->suspended && !$channel->pendingDeletion) {
+            $this->operatorOnlyControl?->activate($channel->name);
+            $this->kickCurrentMembers($channel->name);
+
             return;
         }
+        $this->operatorOnlyControl?->deactivate($event->channelName);
+    }
 
-        $channelView = $this->channelLookup->findByChannelName($this->debugChannel);
+    public function onChannelSuspended(ChannelSuspendedEvent $event): void
+    {
+        $this->deactivateIfConfigured($event->channelName);
+    }
+
+    public function onChannelUnsuspended(ChannelUnsuspendedEvent $event): void
+    {
+        if ($this->registeredChannels?->findByName($event->channelNameLower)?->ircopOnly) {
+            $this->onIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent($event->channelName));
+        }
+    }
+
+    public function onChannelPendingDeletion(ChannelPendingDeletionEvent $event): void
+    {
+        $this->deactivateIfConfigured($event->channelName);
+    }
+
+    public function onChannelRestored(ChannelRestoredEvent $event): void
+    {
+        if ($this->registeredChannels?->findByName($event->channelNameLower)?->ircopOnly) {
+            $this->onIrcopOnlyUpdated(new ChannelIrcopOnlyUpdatedEvent($event->channelName));
+        }
+    }
+
+    public function onChannelDrop(ChannelDropEvent $event): void
+    {
+        if ($event->ircopOnly) {
+            $this->operatorOnlyControl?->deactivate($event->channelName);
+        }
+    }
+
+    public function onSettingsChanged(ChannelSettingsChangedEvent $event): void
+    {
+        $channel = $this->registeredChannels?->findByName(strtolower($event->channelName));
+        if (null !== $channel && $channel->ircopOnly && !$channel->forbidden && !$channel->suspended && !$channel->pendingDeletion) {
+            $this->operatorOnlyControl?->ensureMode($channel->name);
+        }
+    }
+
+    private function isProtected(string $channelName): bool
+    {
+        if (null !== $this->debugChannel && '' !== $this->debugChannel && $channelName === strtolower($this->debugChannel)) {
+            return true;
+        }
+        $channel = $this->registeredChannels?->findByName($channelName);
+
+        return null !== $channel && $channel->ircopOnly && !$channel->forbidden && !$channel->suspended && !$channel->pendingDeletion;
+    }
+
+    private function deactivateIfConfigured(string $channelName): void
+    {
+        if ($this->registeredChannels?->findByName(strtolower($channelName))?->ircopOnly) {
+            $this->operatorOnlyControl?->deactivate($channelName);
+        }
+    }
+
+    private function kickCurrentMembers(string $channelName): void
+    {
+        $channelView = $this->channelLookup->findByChannelName($channelName);
         if (null === $channelView) {
             return;
         }
@@ -87,7 +179,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
                 continue;
             }
 
-            $this->kickIfUnauthorized($this->debugChannel, $uid, $user);
+            $this->kickIfUnauthorized($channelName, $uid, $user);
         }
     }
 
