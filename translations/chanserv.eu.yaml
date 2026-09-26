@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 \x02%channel%\x02 kanalak ez du kanporatzeko erabiltzailerik."
   success:          "\x0303✔\x03 \x02%count%\x02 erabiltzaile kanporatu dira \x02%channel%\x02 kanaletik."
   default_reason:   "CLEARUSERS komandoa"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <eredua> [orria]"
+  short: "Eredu batekin bat datozen erregistratutako kanalak zerrendatu (IRCop-entzat soilik)."
+  help: "Emandako ereduarekin bat datozen erregistratutako kanalak zerrendatzen ditu. * komodinak edozein karaktere-sekuentzia adierazten du. Orria hautazkoa da eta 1etik hasten da."
+  header: "Kanala | Sortzailea | Erregistroa | Azken erabilera | Egoera"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "%page%/%pages% orria — %total% bat-etortze"
+  empty: "Ez dago %pattern% ereduarekin bat datorren kanalik."
+  status_active: "Aktibo"
+  status_suspended: "Etena"
+  status_pending_deletion: "Ezabatzeko zain"
+  status_forbidden: "Debekatua"

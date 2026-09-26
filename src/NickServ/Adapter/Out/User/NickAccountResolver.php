@@ -8,6 +8,10 @@ use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 
+use function array_filter;
+use function array_unique;
+use function array_values;
+
 final readonly class NickAccountResolver implements NickAccountQuery
 {
     public function __construct(
@@ -23,6 +27,16 @@ final readonly class NickAccountResolver implements NickAccountQuery
     public function findNicknameById(int $id): ?string
     {
         return $this->nickRepository->findById($id)?->getNickname();
+    }
+
+    public function findNicknamesByIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter($ids, static fn (int $id): bool => 0 < $id)));
+        if ([] === $ids) {
+            return [];
+        }
+
+        return $this->nickRepository->findNicknamesByIds($ids);
     }
 
     public function findAccountByNick(string $nickname): ?NickAccountData

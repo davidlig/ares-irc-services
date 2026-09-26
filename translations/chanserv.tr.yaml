@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 \x02%channel%\x02 kanalında atılacak kullanıcı yok."
   success:          "\x0303✔\x03 \x02%channel%\x02 kanalından \x02%count%\x02 kullanıcı atıldı."
   default_reason:   "CLEARUSERS komutu"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <desen> [sayfa]"
+  short: "Bir desenle eşleşen kayıtlı kanalları listeler (yalnızca IRCop)."
+  help: "Belirtilen desenle eşleşen kayıtlı kanalları listeler. * joker karakteri herhangi bir karakter dizisiyle eşleşir. Sayfa isteğe bağlıdır ve 1'den başlar."
+  header: "Kanal | Kurucu | Kayıt | Son kullanım | Durum"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Sayfa %page%/%pages% — %total% eşleşme"
+  empty: "%pattern% deseniyle eşleşen kanal yok."
+  status_active: "Etkin"
+  status_suspended: "Askıya alındı"
+  status_pending_deletion: "Silinmeyi bekliyor"
+  status_forbidden: "Yasaklandı"

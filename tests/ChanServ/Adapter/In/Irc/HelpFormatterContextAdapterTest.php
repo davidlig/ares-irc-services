@@ -8,10 +8,12 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Adapter\In\Irc\Command\ListCommand;
 use App\ChanServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
 use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandlerInterface;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
@@ -872,6 +874,78 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $adapter = $this->createAdapter($context);
 
         self::assertSame([], iterator_to_array($adapter->getIrcopCommands()));
+    }
+
+    #[Test]
+    public function getIrcopCommandsShowsListOnlyWhenTheActorHasItsPermission(): void
+    {
+        $command = new ListCommand($this->createStub(ListRegisteredChannelsHandlerInterface::class));
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
+        $account = new ChanAccountView(1, 'OperUser', 'en');
+        $context = $this->createContext(
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new ChanServCommandRegistry([$command]),
+            sender: $sender,
+            account: $account,
+        );
+        $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
+        $operatorAccess->expects(self::once())
+            ->method('hasPermission')
+            ->with('operuser', 1, true, true, ChanServPermission::LIST)
+            ->willReturn(true);
+
+        $commands = iterator_to_array(new HelpFormatterContextAdapter($context, $operatorAccess)->getIrcopCommands());
+
+        self::assertCount(1, $commands);
+        self::assertSame('LIST', $commands[0]->getName());
+    }
+
+    #[Test]
+    public function getIrcopCommandsHidesListFromAnActorWithoutItsPermission(): void
+    {
+        $command = new ListCommand($this->createStub(ListRegisteredChannelsHandlerInterface::class));
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
+        $account = new ChanAccountView(1, 'OperUser', 'en');
+        $context = $this->createContext(
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new ChanServCommandRegistry([$command]),
+            sender: $sender,
+            account: $account,
+        );
+        $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
+        $operatorAccess->expects(self::once())
+            ->method('hasPermission')
+            ->with('operuser', 1, true, true, ChanServPermission::LIST)
+            ->willReturn(false);
+
+        self::assertSame([], iterator_to_array(new HelpFormatterContextAdapter($context, $operatorAccess)->getIrcopCommands()));
+    }
+
+    #[Test]
+    public function getIrcopCommandsShowsListForIdentifiedRootBypass(): void
+    {
+        $command = new ListCommand($this->createStub(ListRegisteredChannelsHandlerInterface::class));
+        $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
+        $account = new ChanAccountView(1, 'RootAdmin', 'en');
+        $context = $this->createContext(
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new ChanServCommandRegistry([$command]),
+            sender: $sender,
+            account: $account,
+        );
+        $operatorAccess = $this->createMock(ChanServOperatorAccess::class);
+        $operatorAccess->expects(self::once())
+            ->method('hasPermission')
+            ->with('rootadmin', 1, true, true, ChanServPermission::LIST)
+            ->willReturn(true);
+
+        $commands = iterator_to_array(new HelpFormatterContextAdapter($context, $operatorAccess)->getIrcopCommands());
+
+        self::assertCount(1, $commands);
+        self::assertSame('LIST', $commands[0]->getName());
     }
 
     #[Test]

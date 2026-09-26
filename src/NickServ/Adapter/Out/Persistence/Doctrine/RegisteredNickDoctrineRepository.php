@@ -10,6 +10,9 @@ use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
+use function is_array;
+use function is_string;
+
 class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterface
 {
     public function __construct(private readonly EntityManagerInterface $em) {}
@@ -41,6 +44,33 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         $nick = $this->em->find(RegisteredNick::class, $id);
 
         return $nick instanceof RegisteredNick ? $nick : null;
+    }
+
+    public function findNicknamesByIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter($ids, static fn (int $id): bool => 0 < $id)));
+        if ([] === $ids) {
+            return [];
+        }
+
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('n.id AS accountId, n.nickname AS nickname')
+            ->from(RegisteredNick::class, 'n')
+            ->where('n.id IN (:ids)')
+            ->setParameter('ids', $ids);
+
+        /** @var array<mixed> $result */
+        $result = $queryBuilder->getQuery()->getArrayResult();
+        $nicknames = [];
+        foreach ($result as $row) {
+            if (!is_array($row) || !isset($row['accountId'], $row['nickname']) || !is_numeric($row['accountId']) || !is_string($row['nickname'])) {
+                continue;
+            }
+
+            $nicknames[(int) $row['accountId']] = $row['nickname'];
+        }
+
+        return $nicknames;
     }
 
     public function findByVhost(string $vhost): ?RegisteredNick

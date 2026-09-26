@@ -9,6 +9,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\HelpCommand;
 use App\ChanServ\Adapter\In\Irc\Command\IrcoponlyCommand;
+use App\ChanServ\Adapter\In\Irc\Command\ListCommand;
 use App\ChanServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
@@ -40,6 +41,22 @@ final class ChanServCommandWiringTest extends KernelTestCase
         $permissions = self::getContainer()->get(OperatorPermissionCatalog::class);
         self::assertInstanceOf(OperatorPermissionCatalog::class, $permissions);
         self::assertContains(ChanServPermission::IRCOPONLY, $permissions->getAllPermissions());
+    }
+
+    #[Test]
+    public function listIsRoutableAndItsPermissionAndPageSizeArePublished(): void
+    {
+        self::bootKernel();
+        $commands = self::getContainer()->get(ChanServCommandRegistry::class);
+        self::assertInstanceOf(ChanServCommandRegistry::class, $commands);
+        $command = $commands->find('LIST');
+        self::assertInstanceOf(ListCommand::class, $command);
+        self::assertSame(ChanServPermission::LIST, $command->getRequiredPermission());
+
+        $permissions = self::getContainer()->get(OperatorPermissionCatalog::class);
+        self::assertInstanceOf(OperatorPermissionCatalog::class, $permissions);
+        self::assertContains(ChanServPermission::LIST, $permissions->getAllPermissions());
+        self::assertSame(50, self::getContainer()->getParameter('chanserv.list_page_size'));
     }
 
     #[Test]

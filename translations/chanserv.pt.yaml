@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 O canal \x02%channel%\x02 não tem utilizadores para expulsar."
   success:          "\x0303✔\x03 Expulsos \x02%count%\x02 utilizador(es) de \x02%channel%\x02."
   default_reason:   "Comando CLEARUSERS"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <padrão> [página]"
+  short: "Lista canais registados que correspondem a um padrão (apenas IRCops)."
+  help: "Lista os canais registados que correspondem ao padrão indicado. O carácter * corresponde a qualquer sequência de caracteres. A página é opcional e começa em 1."
+  header: "Canal | Fundador | Registo | Última utilização | Estado"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Página %page%/%pages% — %total% correspondências"
+  empty: "Nenhum canal corresponde ao padrão %pattern%."
+  status_active: "Ativo"
+  status_suspended: "Suspenso"
+  status_pending_deletion: "Pendente de eliminação"
+  status_forbidden: "Proibido"

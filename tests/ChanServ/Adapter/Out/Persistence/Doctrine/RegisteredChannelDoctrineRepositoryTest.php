@@ -7,6 +7,7 @@ namespace App\Tests\ChanServ\Adapter\Out\Persistence\Doctrine;
 use App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -58,6 +59,36 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     public function findByChannelNameReturnsNullWhenNotFound(): void
     {
         self::assertNull($this->repository->findByChannelName('#nonexistent'));
+    }
+
+    #[Test]
+    public function countsAndSearchesByStrictCaseInsensitiveGlobWithBoundedStablePages(): void
+    {
+        $channels = [
+            RegisteredChannel::register(new DateTimeImmutable(), '#davidlig', 1, 'Davidlig'),
+            RegisteredChannel::register(new DateTimeImmutable(), '#davinia', 2, 'Davinia'),
+            RegisteredChannel::register(new DateTimeImmutable(), '#david', 3, 'David'),
+            RegisteredChannel::register(new DateTimeImmutable(), '#davi', 4, 'Davi'),
+        ];
+        $channels[1]->suspend('Test suspension');
+        $channels[2]->markPendingDeletion(new DateTimeImmutable());
+        $channels[3] = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#davi', 'Test forbidden');
+        foreach ($channels as $channel) {
+            $this->entityManager->persist($channel);
+        }
+        $this->flushAndClear();
+
+        self::assertSame(4, $this->repository->countByPattern('*AVI*'));
+        self::assertSame(1, $this->repository->countByPattern('*avid'));
+        self::assertSame(0, $this->repository->countByPattern('*?vid'));
+
+        $secondPage = $this->repository->searchByPattern('*avi*', 1, 2);
+
+        self::assertSame(['#david', '#davidlig'], array_map(static fn (RegisteredChannel $channel): string => $channel->getName(), $secondPage));
+        self::assertSame([
+            ChannelStatus::PendingDeletion,
+            ChannelStatus::Active,
+        ], array_map(static fn (RegisteredChannel $channel): ChannelStatus => $channel->getStatus(), $secondPage));
     }
 
     #[Test]

@@ -12,9 +12,14 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServService;
 use App\ChanServ\Adapter\In\Irc\ChanServUserPresentationPreferences;
+use App\ChanServ\Adapter\In\Irc\Command\ListCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Security\ChanServPermission;
+use App\ChanServ\Application\UseCase\List\ListRegisteredChannels;
+use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandlerInterface;
+use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsResult;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
@@ -34,6 +39,7 @@ use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -413,6 +419,86 @@ final class ChanServServiceTest extends TestCase
         $service->dispatch('OPCMD', $sender);
 
         self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
+    public function allowsListToInspectChannelsPendingDeletion(): void
+    {
+        $sender = new SenderView('UID1', 'OperUser', 'ident', 'host', 'cloak', 'ip', true, true, '001', 'cloak');
+        $pending = RegisteredChannel::register(new DateTimeImmutable(), '#pending', 1, 'Pending deletion');
+        $pending->markPendingDeletion(new DateTimeImmutable());
+
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByChannelName')->willReturn($pending);
+
+        $listHandler = $this->createMock(ListRegisteredChannelsHandlerInterface::class);
+        $listHandler->expects(self::once())
+            ->method('handle')
+            ->with(self::equalTo(new ListRegisteredChannels('#pending')))
+            ->willReturn(new ListRegisteredChannelsResult('#pending', 1, 50, 1, []));
+
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturnCallback(
+            static fn (string $permission): bool => ChanServPermission::LIST === $permission,
+        );
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $service = $this->createChanServService(
+            new ChanServCommandRegistry([new ListCommand($listHandler)]),
+            $channels,
+            $this->createStub(ChanUserAccountPort::class),
+            $notifier,
+            $this->createMessageTypeResolver(),
+            $translator,
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            authorizationChecker: $authorization,
+        );
+
+        $service->dispatch('LIST #pending', $sender);
+    }
+
+    #[Test]
+    public function deniesListWhenTheActorLacksChanServListPermission(): void
+    {
+        $sender = new SenderView('UID1', 'OperUser', 'ident', 'host', 'cloak', 'ip', true, true, '001', 'cloak');
+        $listHandler = $this->createMock(ListRegisteredChannelsHandlerInterface::class);
+        $listHandler->expects(self::never())->method('handle');
+
+        $authorization = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorization->expects(self::once())
+            ->method('isGranted')
+            ->with(ChanServPermission::LIST, self::anything())
+            ->willReturn(false);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
+            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id,
+        );
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Permission denied', 'NOTICE');
+
+        $service = $this->createChanServService(
+            new ChanServCommandRegistry([new ListCommand($listHandler)]),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChanUserAccountPort::class),
+            $notifier,
+            $this->createMessageTypeResolver(),
+            $translator,
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            authorizationChecker: $authorization,
+        );
+
+        $service->dispatch('LIST *', $sender);
     }
 
     #[Test]

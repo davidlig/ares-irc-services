@@ -85,6 +85,9 @@ parameters:
     # History view: maximum entries per page in VIEW (default: 40)
     chanserv.history_view_limit_default: 40
     chanserv.history_view_limit: '%env(int:default:chanserv.history_view_limit_default:CHANSERV_HISTORY_VIEW_LIMIT)%'
+    # IRCOP LIST: maximum matching channels shown per page
+    chanserv.list_page_size_default: 50
+    chanserv.list_page_size: '%env(int:default:chanserv.list_page_size_default:CHANSERV_LIST_PAGE_SIZE)%'
 
     # ChanServ pseudo-client
     chanserv.nick:     '%env(CHANSERV_NICK)%'
@@ -1209,6 +1212,9 @@ services:
     App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface:
         alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository
 
+    App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandler
+
     App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier:
         arguments:
             $defaultLanguage: '%services.default_language%'
@@ -1261,6 +1267,10 @@ services:
             $logger: '@App\ChanServ\Application\Port\Out\ChanServActivitySink'
 
     App\ChanServ\Application\Service\ChannelHistoryService: ~
+
+    App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandler:
+        arguments:
+            $pageSize: '%chanserv.list_page_size%'
 
     App\ChanServ\Application\Service\ChannelForbiddenService:
         arguments:
@@ -1350,6 +1360,9 @@ services:
         tags: ['chanserv.command']
 
     App\ChanServ\Adapter\In\Irc\Command\HistoryCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\ListCommand:
         tags: ['chanserv.command']
 
     App\ChanServ\Adapter\In\Irc\Command\ForbidCommand:

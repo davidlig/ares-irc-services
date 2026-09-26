@@ -18,6 +18,11 @@ interface RegisteredNickRepositoryInterface
 
     public function findById(int $id): ?RegisteredNick;
 
+    /** @param list<int> $ids
+     * @return array<int, string> nicknames keyed by account ID
+     */
+    public function findNicknamesByIds(array $ids): array;
+
     /** Returns the account that has this vhost (user part). Null if not used. Used for uniqueness check. */
     public function findByVhost(string $vhost): ?RegisteredNick;
 

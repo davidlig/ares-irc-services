@@ -28,6 +28,8 @@ final readonly class ChanServPermission
 
     public const string CLEARUSERS = 'chanserv.clearusers';
 
+    public const string LIST = 'chanserv.list';
+
     /**
      * @return list<string>
      */
@@ -45,6 +47,7 @@ final readonly class ChanServPermission
             self::LEVEL_FOUNDER,
             self::HISTORY,
             self::CLEARUSERS,
+            self::LIST,
         ];
     }
 

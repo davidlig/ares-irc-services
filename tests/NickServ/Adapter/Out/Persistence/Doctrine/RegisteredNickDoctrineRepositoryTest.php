@@ -96,6 +96,24 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
+    public function findNicknamesByIdsReturnsOneBulkProjectionAndSkipsMissingIds(): void
+    {
+        $first = $this->createRegisteredNick('BulkAlice', 'bulk-alice@example.com');
+        $second = $this->createRegisteredNick('BulkBob', 'bulk-bob@example.com');
+        $this->repository->save($first);
+        $this->repository->save($second);
+        $this->flushAndClear();
+
+        $nicknames = $this->repository->findNicknamesByIds([$first->getId(), 999999, $second->getId()]);
+
+        self::assertSame([
+            $first->getId() => 'BulkAlice',
+            $second->getId() => 'BulkBob',
+        ], $nicknames);
+        self::assertSame([], $this->repository->findNicknamesByIds([]));
+    }
+
+    #[Test]
     public function findByEmailFindsByEmail(): void
     {
         $nick = $this->createRegisteredNick('TestUser', 'test@example.com');

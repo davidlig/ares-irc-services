@@ -14,6 +14,7 @@ use function array_filter;
 use function array_values;
 use function count;
 use function strtolower;
+use function strtr;
 
 final readonly class RegisteredChannelDoctrineRepository implements RegisteredChannelRepositoryInterface
 {
@@ -40,6 +41,35 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
         return $this->em
             ->getRepository(RegisteredChannel::class)
             ->findOneBy(['nameLower' => $nameLower]);
+    }
+
+    public function countByPattern(string $pattern): int
+    {
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('COUNT(c.id)')
+            ->from(RegisteredChannel::class, 'c')
+            ->where("LOWER(c.nameLower) LIKE :pattern ESCAPE '!'")
+            ->setParameter('pattern', self::toLikePattern($pattern));
+
+        return (int) $queryBuilder->getQuery()->getSingleScalarResult();
+    }
+
+    public function searchByPattern(string $pattern, int $offset, int $limit): array
+    {
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('c')
+            ->from(RegisteredChannel::class, 'c')
+            ->where("LOWER(c.nameLower) LIKE :pattern ESCAPE '!'")
+            ->setParameter('pattern', self::toLikePattern($pattern))
+            ->orderBy('c.nameLower', 'ASC')
+            ->addOrderBy('c.id', 'ASC')
+            ->setFirstResult(max(0, $offset))
+            ->setMaxResults(max(0, $limit));
+
+        /** @var array<mixed> $result */
+        $result = $queryBuilder->getQuery()->getResult();
+
+        return array_values(array_filter($result, static fn (mixed $row): bool => $row instanceof RegisteredChannel));
     }
 
     public function existsByChannelName(string $channelName): bool
@@ -179,5 +209,10 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
 
         /* @var array<RegisteredChannel> */
         return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel));
+    }
+
+    private static function toLikePattern(string $pattern): string
+    {
+        return strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
     }
 }

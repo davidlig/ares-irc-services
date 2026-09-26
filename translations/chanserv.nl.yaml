@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen gebruikers om te kicken."
   success:          "\x0303✔\x03 \x02%count%\x02 gebruiker(s) gekickt uit \x02%channel%\x02."
   default_reason:   "CLEARUSERS commando"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <patroon> [pagina]"
+  short: "Toon geregistreerde kanalen die overeenkomen met een patroon (alleen IRCops)."
+  help: "Toont geregistreerde kanalen die overeenkomen met het opgegeven patroon. De joker * staat voor een willekeurige reeks tekens. De pagina is optioneel en begint bij 1."
+  header: "Kanaal | Oprichter | Registratie | Laatst gebruikt | Status"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Pagina %page%/%pages% — %total% overeenkomsten"
+  empty: "Geen kanalen komen overeen met patroon %pattern%."
+  status_active: "Actief"
+  status_suspended: "Geschorst"
+  status_pending_deletion: "Verwijdering in behandeling"
+  status_forbidden: "Verboden"
