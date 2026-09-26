@@ -30,6 +30,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function is_string;
+
 #[CoversClass(InfoCommand::class)]
 #[CoversClass(ChannelInfoView::class)]
 #[CoversClass(ShowChannelInfo::class)]
@@ -250,6 +252,107 @@ final class InfoCommandTest extends TestCase
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.email', $rawMessages);
+    }
+
+    #[Test]
+    public function showsUrlAndEmailAfterTopicAndTopicSetter(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->updateUrl('https://example.com');
+        $channel->updateEmail('test@example.com');
+        $channel->updateTopic('Welcome', new DateTimeImmutable('2026-01-01 00:00:00'), 'TopicSetter');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertLessThan(array_search('info.url', $messages, true), array_search('info.topic', $messages, true));
+        self::assertLessThan(array_search('info.url', $messages, true), array_search('info.topic_set_by', $messages, true));
+        self::assertLessThan(array_search('info.email', $messages, true), array_search('info.topic_set_by', $messages, true));
+    }
+
+    #[Test]
+    public function omitsOptionsWhenAllChannelOptionsAreOff(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertNotContains('info.options', $messages);
+    }
+
+    #[Test]
+    public function showsOnlyEnabledChannelOptions(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->configureTopicLock(true);
+        $channel->configureMlock(true, '+nt');
+        $channel->configureSecure(true);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            $options = $parameters['%options%'] ?? '';
+
+            return $id . ':' . (is_string($options) ? $options : '');
+        });
+
+        $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.options:TOPICLOCK, MLOCK, SECURE', $messages);
+    }
+
+    #[Test]
+    public function showsIrcopOnlyWhenEnabled(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->configureIrcopOnly(true);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            $options = $parameters['%options%'] ?? '';
+
+            return $id . ':' . (is_string($options) ? $options : '');
+        });
+
+        $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.options:IRCOPONLY', $messages);
     }
 
     #[Test]
