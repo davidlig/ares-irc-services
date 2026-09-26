@@ -151,4 +151,38 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
     {
         return $this->em->getRepository(RegisteredNick::class)->findAll();
     }
+
+    public function countByPattern(string $pattern): int
+    {
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('COUNT(n.id)')
+            ->from(RegisteredNick::class, 'n')
+            ->where("LOWER(n.nicknameLower) LIKE :pattern ESCAPE '!'")
+            ->setParameter('pattern', self::toLikePattern($pattern));
+
+        return (int) $queryBuilder->getQuery()->getSingleScalarResult();
+    }
+
+    public function searchByPattern(string $pattern, int $offset, int $limit): array
+    {
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('n')
+            ->from(RegisteredNick::class, 'n')
+            ->where("LOWER(n.nicknameLower) LIKE :pattern ESCAPE '!'")
+            ->setParameter('pattern', self::toLikePattern($pattern))
+            ->orderBy('n.nicknameLower', 'ASC')
+            ->addOrderBy('n.id', 'ASC')
+            ->setFirstResult(max(0, $offset))
+            ->setMaxResults(max(0, $limit));
+
+        /** @var array<mixed> $result */
+        $result = $queryBuilder->getQuery()->getResult();
+
+        return array_values(array_filter($result, static fn (mixed $row): bool => $row instanceof RegisteredNick));
+    }
+
+    private static function toLikePattern(string $pattern): string
+    {
+        return strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+    }
 }

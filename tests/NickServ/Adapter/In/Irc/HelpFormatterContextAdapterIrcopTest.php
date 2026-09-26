@@ -15,6 +15,7 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
+use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -226,6 +227,53 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             $this->context(new NickServCommandRegistry([]), identified: false, oper: true, account: true),
             $access,
         )->hasIrcopAccess());
+    }
+
+    #[Test]
+    public function listAppearsInIrcopHelpOnlyWhenCentralPermissionBoundaryGrantsIt(): void
+    {
+        $command = $this->createIrcopCommandStub('LIST', NickServPermission::LIST);
+        $registry = new NickServCommandRegistry([$command]);
+
+        $rootAccess = $this->createMock(NickServOperatorAccess::class);
+        $rootAccess->expects(self::once())
+            ->method('hasPermission')
+            ->with('rootadmin', 1, true, false, NickServPermission::LIST)
+            ->willReturn(true);
+        $rootContext = $this->context($registry, identified: true, oper: false, account: true);
+        $rootContext = new NickServContext(
+            new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', true, false),
+            $rootContext->senderAccount,
+            'HELP',
+            [],
+            $rootContext->getNotifier(),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            $rootContext->getPendingVerificationRegistry(),
+            $rootContext->getRecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+
+        self::assertSame([$command], iterator_to_array(new HelpFormatterContextAdapter($rootContext, $rootAccess)->getIrcopCommands()));
+
+        $roleAccess = $this->createMock(NickServOperatorAccess::class);
+        $roleAccess->expects(self::once())
+            ->method('hasPermission')
+            ->with('operuser', 1, true, true, NickServPermission::LIST)
+            ->willReturn(true);
+        self::assertSame([$command], iterator_to_array(new HelpFormatterContextAdapter(
+            $this->context($registry, identified: true, oper: true, account: true),
+            $roleAccess,
+        )->getIrcopCommands()));
+
+        $deniedAccess = $this->createStub(NickServOperatorAccess::class);
+        $deniedAccess->method('hasPermission')->willReturn(false);
+        $deniedContext = $this->context($registry, identified: true, oper: true, account: true);
+
+        self::assertSame([], iterator_to_array(new HelpFormatterContextAdapter($deniedContext, $deniedAccess)->getIrcopCommands()));
     }
 
     #[Test]

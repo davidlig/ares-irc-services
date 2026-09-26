@@ -630,6 +630,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 Nick \x02%nickname%\x02 jest zabroniony."
   suspended:         "\x0304✗\x03 Nick \x02%nickname%\x02 jest zawieszony."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <wzorzec> [strona]"
+  short: "Wyświetla zarejestrowane pseudonimy pasujące do wzorca (tylko IRCop)."
+  help: "Wyświetla zarejestrowane pseudonimy pasujące do podanego wzorca. Znak * dopasowuje dowolny ciąg znaków. Strona jest opcjonalna i numerowana od 1."
+  header: "Pseudonim | Rejestracja | Ostatnie połączenie | IP | Status"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Strona %page%/%pages% — %total% wyników"
+  empty: "Brak pseudonimów pasujących do wzorca %pattern%."
+  status_pending: "Oczekujący"
+  status_registered: "Zarejestrowany"
+  status_suspended: "Zawieszony"
+  status_pending_deletion: "Oczekuje na usunięcie"
+  status_forbidden: "Zabroniony"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% wykonuje komendę %command% na %target%. %reason%"

@@ -630,6 +630,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist gesperrt."
   suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <Muster> [Seite]"
+  short: "Listet registrierte Nicknames nach Muster auf (nur IRCops)."
+  help: "Listet registrierte Nicknames auf, die dem angegebenen Muster entsprechen. Das Platzhalterzeichen * steht für eine beliebige Zeichenfolge. Die Seite ist optional und beginnt bei 1."
+  header: "Nickname | Registrierung | Letzte Verbindung | IP | Status"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Seite %page%/%pages% — %total% Treffer"
+  empty: "Keine Nicknames entsprechen dem Muster %pattern%."
+  status_pending: "Ausstehend"
+  status_registered: "Registriert"
+  status_suspended: "Gesperrt"
+  status_pending_deletion: "Löschung ausstehend"
+  status_forbidden: "Verboten"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% führt Befehl %command% auf %target% aus. %reason%"

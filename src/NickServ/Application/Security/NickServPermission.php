@@ -46,6 +46,9 @@ final readonly class NickServPermission
     /** IRCop permission to view and manage nickname action history. */
     public const string HISTORY = 'nickserv.history';
 
+    /** IRCop permission to list registered nicknames and their stored connection details. */
+    public const string LIST = 'nickserv.list';
+
     /** @return list<string> */
     public static function allIrcop(): array
     {
@@ -61,6 +64,7 @@ final readonly class NickServPermission
             self::SASET,
             self::NOEXPIRE,
             self::HISTORY,
+            self::LIST,
         ];
     }
 

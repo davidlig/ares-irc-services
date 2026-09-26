@@ -630,6 +630,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."
   suspended:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <patroon> [pagina]"
+  short: "Toont geregistreerde bijnamen die overeenkomen met een patroon (alleen IRCops)."
+  help: "Toont geregistreerde bijnamen die overeenkomen met het opgegeven patroon. De joker * komt overeen met elke tekenreeks. De pagina is optioneel en begint bij 1."
+  header: "Bijnaam | Registratie | Laatste verbinding | IP | Status"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Pagina %page%/%pages% — %total% overeenkomsten"
+  empty: "Geen bijnamen komen overeen met patroon %pattern%."
+  status_pending: "In afwachting"
+  status_registered: "Geregistreerd"
+  status_suspended: "Geschorst"
+  status_pending_deletion: "Verwijdering in afwachting"
+  status_forbidden: "Verboden"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% voert commando %command% uit op %target%. %reason%"

@@ -75,6 +75,9 @@ parameters:
     # History view: maximum entries per page in VIEW (default: 40)
     nickserv.history_view_limit_default: 40
     nickserv.history_view_limit: '%env(int:default:nickserv.history_view_limit_default:NICKSERV_HISTORY_VIEW_LIMIT)%'
+    # IRCOP LIST: maximum matching nicknames shown per page
+    nickserv.list_page_size_default: 50
+    nickserv.list_page_size: '%env(int:default:nickserv.list_page_size_default:NICKSERV_LIST_PAGE_SIZE)%'
 
     # History retention: days to keep channel action history (0 = forever)
     chanserv.history_retention_days_default: 30
@@ -424,6 +427,9 @@ services:
 
     App\NickServ\Application\UseCase\History\HistoryNickHandlerInterface:
         alias: App\NickServ\Application\UseCase\History\HistoryNickHandler
+
+    App\NickServ\Application\UseCase\List\ListNickAccountsHandlerInterface:
+        alias: App\NickServ\Application\UseCase\List\ListNickAccountsHandler
 
     App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface:
         alias: App\NickServ\Application\UseCase\Set\SetNickSettingHandler
@@ -1690,6 +1696,13 @@ services:
             $historyViewLimit: '%nickserv.history_view_limit%'
 
     App\NickServ\Adapter\In\Irc\Command\HistoryCommand:
+        tags: ['nickserv.command']
+
+    App\NickServ\Application\UseCase\List\ListNickAccountsHandler:
+        arguments:
+            $pageSize: '%nickserv.list_page_size%'
+
+    App\NickServ\Adapter\In\Irc\Command\ListCommand:
         tags: ['nickserv.command']
 
     # --- NickServ Services -------------------------------------------------------

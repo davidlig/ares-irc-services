@@ -218,6 +218,82 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
+    public function searchByPatternUsesCaseInsensitiveStrictStarGlobAndIncludesEveryStatus(): void
+    {
+        $david = $this->createRegisteredNick('Davidlig', 'david@example.com');
+        $david->markSeen(new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        $david->updateLastConnection('203.0.113.7', 'user.example');
+        $this->repository->save($david);
+        $this->repository->save($this->createRegisteredNick('Davinia', 'davinia@example.com'));
+
+        $pending = RegisteredNick::createPending(
+            'PendingNick',
+            '$argon2id$v=19$m=65536,t=4,p=1$test$test',
+            'pending@example.com',
+            'en',
+            new DateTimeImmutable('+24 hours'),
+            new DateTimeImmutable(),
+        );
+        $this->repository->save($pending);
+
+        $suspended = $this->createRegisteredNick('SuspendedNick', 'suspended@example.com');
+        $suspended->suspend('test');
+        $this->repository->save($suspended);
+
+        $pendingDeletion = $this->createRegisteredNick('PendingDeletionNick', 'deletion@example.com');
+        $pendingDeletion->markPendingDeletion(new DateTimeImmutable());
+        $this->repository->save($pendingDeletion);
+        $this->repository->save(RegisteredNick::createForbidden('ForbiddenNick', 'reserved'));
+        $this->flushAndClear();
+
+        self::assertSame(['Davidlig', 'Davinia'], $this->names($this->repository->searchByPattern('*AVI*', 0, 10)));
+        self::assertSame(['Davidlig'], $this->names($this->repository->searchByPattern('*avid*', 0, 10)));
+        self::assertSame([], $this->repository->searchByPattern('*avid', 0, 10));
+        self::assertSame(2, $this->repository->countByPattern('*avi*'));
+        self::assertSame(6, $this->repository->countByPattern('*'));
+
+        $allStatuses = $this->repository->searchByPattern('*', 0, 10);
+        self::assertEqualsCanonicalizing(
+            [NickStatus::Pending, NickStatus::Registered, NickStatus::Registered, NickStatus::Suspended, NickStatus::PendingDeletion, NickStatus::Forbidden],
+            array_map(static fn (RegisteredNick $nick): NickStatus => $nick->getStatus(), $allStatuses),
+        );
+    }
+
+    #[Test]
+    public function searchByPatternReturnsStableAscendingPages(): void
+    {
+        foreach ([['Charlie', 'c@example.com'], ['alpha', 'a@example.com'], ['Bravo', 'b@example.com']] as [$nickname, $email]) {
+            $this->repository->save($this->createRegisteredNick($nickname, $email));
+        }
+        $this->flushAndClear();
+
+        self::assertSame(['alpha', 'Bravo'], $this->names($this->repository->searchByPattern('*', 0, 2)));
+        self::assertSame(['Charlie'], $this->names($this->repository->searchByPattern('*', 2, 2)));
+    }
+
+    #[Test]
+    public function searchByPatternTreatsSqlLikeWildcardsAsLiteralsAndBoundsInvalidPagination(): void
+    {
+        $this->repository->save($this->createRegisteredNick('Literal!%_Nick', 'literal@example.com'));
+        $this->repository->save($this->createRegisteredNick('OtherNick', 'other@example.com'));
+        $this->flushAndClear();
+
+        self::assertSame(['Literal!%_Nick'], $this->names($this->repository->searchByPattern('literal!%_nick', 0, 10)));
+        self::assertSame(['Literal!%_Nick'], $this->names($this->repository->searchByPattern('*', -5, 1)));
+        self::assertSame([], $this->repository->searchByPattern('*', 0, 0));
+    }
+
+    /**
+     * @param list<RegisteredNick> $nicks
+     *
+     * @return list<string>
+     */
+    private function names(array $nicks): array
+    {
+        return array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $nicks);
+    }
+
+    #[Test]
     public function findRegisteredInactiveSinceReturnsOldNicks(): void
     {
         $nick = $this->createRegisteredNick('Inactive', 'inactive@example.com');

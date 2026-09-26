@@ -630,6 +630,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă."
   suspended:         "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <model> [pagina]"
+  short: "Listează poreclele înregistrate care se potrivesc unui model (numai IRCops)."
+  help: "Listează poreclele înregistrate care se potrivesc modelului indicat. Caracterul * corespunde oricărei secvențe de caractere. Pagina este opțională și începe de la 1."
+  header: "Poreclă | Înregistrare | Ultima conexiune | IP | Stare"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Pagina %page%/%pages% — %total% rezultate"
+  empty: "Nicio poreclă nu corespunde modelului %pattern%."
+  status_pending: "În așteptare"
+  status_registered: "Înregistrat"
+  status_suspended: "Suspendat"
+  status_pending_deletion: "În așteptare ștergere"
+  status_forbidden: "Interzis"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% execută comanda %command% asupra %target%. %reason%"

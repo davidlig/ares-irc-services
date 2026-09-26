@@ -630,6 +630,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 O nickname \x02%nickname%\x02 está proibido."
   suspended:         "\x0304✗\x03 O nickname \x02%nickname%\x02 está suspenso."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <padrão> [página]"
+  short: "Lista alcunhas registadas que correspondem a um padrão (apenas IRCops)."
+  help: "Lista as alcunhas registadas que correspondem ao padrão indicado. O carácter curinga * corresponde a qualquer sequência de caracteres. A página é opcional e começa em 1."
+  header: "Alcunha | Registo | Última ligação | IP | Estado"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Página %page%/%pages% — %total% correspondências"
+  empty: "Nenhuma alcunha corresponde ao padrão %pattern%."
+  status_pending: "Pendente"
+  status_registered: "Registado"
+  status_suspended: "Suspenso"
+  status_pending_deletion: "Pendente de eliminação"
+  status_forbidden: "Proibido"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% executa o comando %command% em %target%. %reason%"

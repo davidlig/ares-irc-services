@@ -630,6 +630,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 Il nickname \x02%nickname%\x02 è vietato."
   suspended:         "\x0304✗\x03 Il nickname \x02%nickname%\x02 è sospeso."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <schema> [pagina]"
+  short: "Elenca i nickname registrati che corrispondono a uno schema (solo IRCop)."
+  help: "Elenca i nickname registrati che corrispondono allo schema indicato. Il carattere jolly * corrisponde a qualsiasi sequenza di caratteri. La pagina è facoltativa e parte da 1."
+  header: "Nickname | Registrazione | Ultima connessione | IP | Stato"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Pagina %page%/%pages% — %total% corrispondenze"
+  empty: "Nessun nickname corrisponde allo schema %pattern%."
+  status_pending: "In attesa"
+  status_registered: "Registrato"
+  status_suspended: "Sospeso"
+  status_pending_deletion: "In attesa di eliminazione"
+  status_forbidden: "Vietato"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% esegue il comando %command% su %target%. %reason%"

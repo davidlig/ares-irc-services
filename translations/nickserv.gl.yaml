@@ -640,6 +640,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está prohibido."
   suspended:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <patrón> [páxina]"
+  short: "Lista alcumes rexistrados que coinciden cun patrón (só para IRCops)."
+  help: "Lista os alcumes rexistrados que coinciden co patrón indicado. O comodín * coincide con calquera secuencia de caracteres. A páxina é opcional e comeza en 1."
+  header: "Alcume | Rexistro | Última conexión | IP | Estado"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Páxina %page%/%pages% — %total% coincidencias"
+  empty: "Ningún alcume coincide co patrón %pattern%."
+  status_pending: "Pendente"
+  status_registered: "Rexistrado"
+  status_suspended: "Suspendido"
+  status_pending_deletion: "Pendente de eliminación"
+  status_forbidden: "Prohibido"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% executa o comando %command% sobre %target%. %reason%"
