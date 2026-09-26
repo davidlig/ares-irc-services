@@ -1,3 +1,9 @@
+## [2.1.3] - 2026-09-26
+
+### Features
+
+- Add IRC operator `LIST <pattern> [page]` to NickServ and ChanServ with strict wildcard matching, stable pagination, and registration/activity details.
+
 ## [2.1.2] - 2026-09-26
 
 ### Features
