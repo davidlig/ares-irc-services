@@ -1,3 +1,16 @@
+## [2.2.2] - 2026-09-27
+
+### Performance
+
+- Index NickServ `WHOIP` IP lookups while preserving all matching nicknames and their order.
+- Optimize exact and prefix searches for NickServ and ChanServ `LIST` with database-specific indexes, preserving existing matching, Unicode behavior, totals, and pagination.
+
+### Upgrade
+
+- Apply migrations `Version20260927000001` and `Version20260927000002` before starting services to install the `WHOIP` and `LIST` indexes.
+- Index creation can lock tables; schedule the upgrade accordingly and maintain an operator-managed database backup.
+- Keep the migration-owned `LIST` expression indexes and virtual columns; do not rebuild them with `doctrine:schema:update`. Restore the previous code before reverting these migrations.
+
 ## [2.2.1] - 2026-09-27
 
 ### Bug Fixes
