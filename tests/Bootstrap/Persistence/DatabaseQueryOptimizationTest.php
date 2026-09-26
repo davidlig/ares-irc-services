@@ -23,6 +23,7 @@ use Doctrine\Migrations\MigratorConfiguration;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\Driver\SimplifiedXmlDriver;
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -123,6 +124,16 @@ final class DatabaseQueryOptimizationTest extends TestCase
         $target = $factory->getVersionAliasResolver()->resolveVersionAlias($version);
         $plan = $factory->getMigrationPlanCalculator()->getPlanUntilVersion($target);
         $factory->getMigrator()->migrate($plan, new MigratorConfiguration());
+        if ($this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform) {
+            // Historical DDL migrations implicitly commit in MySQL while DBAL's
+            // nesting counter remains incremented. Match the production CLI's
+            // connection lifetime before reusing this connection for fixture DML.
+            $native = $this->connection->getNativeConnection();
+            self::assertInstanceOf(PDO::class, $native);
+            self::assertFalse($native->inTransaction(), 'Do not discard an actual uncommitted migration transaction.');
+            $this->connection->close();
+        }
+        self::assertSame(0, $this->connection->getTransactionNestingLevel());
     }
 
     private function seedEdgeCases(): void
@@ -153,11 +164,14 @@ final class DatabaseQueryOptimizationTest extends TestCase
 
     private function seedCardinality(): void
     {
+        self::assertSame(0, $this->connection->getTransactionNestingLevel());
         $this->connection->beginTransaction();
+        self::assertSame(1, $this->connection->getTransactionNestingLevel());
         for ($i = 100; $i < 50100; ++$i) {
             $this->insertPair($i, sprintf('load%05d', $i), 12345 === $i ? '203.0.113.9' : null, 0);
         }
         $this->connection->commit();
+        self::assertSame(0, $this->connection->getTransactionNestingLevel());
     }
 
     /** @return array<string, string> */
