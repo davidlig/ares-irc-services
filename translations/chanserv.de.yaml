@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 hat keine Benutzer zum Kicken."
   success:          "\x0303✔\x03 \x02%count%\x02 Benutzer aus \x02%channel%\x02 gekickt."
   default_reason:   "CLEARUSERS-Befehl"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <Muster> [Seite]"
+  short: "Registrierte Kanäle nach Muster auflisten (nur IRCops)."
+  help: "Listet registrierte Kanäle auf, die dem angegebenen Muster entsprechen. Das Platzhalterzeichen * steht für eine beliebige Zeichenfolge. Die Seite ist optional und beginnt bei 1."
+  header: "Kanal | Gründer | Registrierung | Zuletzt verwendet | Status"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Seite %page%/%pages% — %total% Treffer"
+  empty: "Keine Kanäle entsprechen dem Muster %pattern%."
+  status_active: "Aktiv"
+  status_suspended: "Gesperrt"
+  status_pending_deletion: "Löschung ausstehend"
+  status_forbidden: "Verboten"

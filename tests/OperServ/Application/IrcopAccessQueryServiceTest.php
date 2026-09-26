@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Application;
 
+use App\NickServ\Application\Security\NickServPermission;
 use App\OperServ\Application\IrcopAccessQueryService;
 use App\OperServ\Application\Port\Out\OperatorRoleAccess;
 use App\OperServ\Application\Port\Out\RootIdentityRegistry;
@@ -26,7 +27,7 @@ final class IrcopAccessQueryServiceTest extends TestCase
 
         self::assertTrue($query->isRoot('RootAdmin', 42, true, false));
         self::assertTrue($query->isIrcop('RootAdmin', 42, true, false));
-        self::assertTrue($query->hasPermission('RootAdmin', 42, true, false, 'nickserv.saset'));
+        self::assertTrue($query->hasPermission('RootAdmin', 42, true, false, NickServPermission::WHOIP));
     }
 
     #[Test]
@@ -55,14 +56,14 @@ final class IrcopAccessQueryServiceTest extends TestCase
     #[Test]
     public function permissionsRequireIdentificationIrcOperatorRoleAndExactPermission(): void
     {
-        $query = $this->query([], [42], ['nickserv.saset']);
+        $query = $this->query([], [42], [NickServPermission::WHOIP]);
 
-        self::assertFalse($query->hasPermission('OperUser', 42, false, true, 'nickserv.saset'));
-        self::assertFalse($query->hasPermission('OperUser', 42, true, false, 'nickserv.saset'));
-        self::assertFalse($this->query([], [], ['nickserv.saset'])->hasPermission('OperUser', 42, true, true, 'nickserv.saset'));
-        self::assertFalse($query->hasPermission('OperUser', 42, true, true, 'nickserv.drop'));
-        self::assertTrue($query->hasPermission('OperUser', 42, true, true, 'nickserv.saset'));
-        self::assertTrue($query->hasAnyPermission('OperUser', 42, true, true, ['nickserv.drop', 'nickserv.saset']));
+        self::assertFalse($query->hasPermission('OperUser', 42, false, true, NickServPermission::WHOIP));
+        self::assertFalse($query->hasPermission('OperUser', 42, true, false, NickServPermission::WHOIP));
+        self::assertFalse($this->query([], [], [NickServPermission::WHOIP])->hasPermission('OperUser', 42, true, true, NickServPermission::WHOIP));
+        self::assertFalse($query->hasPermission('OperUser', 42, true, true, NickServPermission::LIST));
+        self::assertTrue($query->hasPermission('OperUser', 42, true, true, NickServPermission::WHOIP));
+        self::assertTrue($query->hasAnyPermission('OperUser', 42, true, true, [NickServPermission::LIST, NickServPermission::WHOIP]));
         self::assertFalse($query->hasAnyPermission('OperUser', 42, true, true, []));
     }
 

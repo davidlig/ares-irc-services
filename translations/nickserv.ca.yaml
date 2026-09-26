@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
   result:           "\x0307ℹ\x03 Sobrenom: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Amfitrió: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Troba nicks per l'adreça IP de la seva darrera connexió identificada."
+  help:             |
+    Mostra els nicks registrats la darrera connexió identificada dels quals va utilitzar aquesta IP.
+    L'adreça desada pot estar desactualitzada.
+    Només disponible per als IRCops amb el permís 'nickserv.whoip'.
+
+    Sintaxi: WHOIP <ip>
+    Exemple: WHOIP 203.0.113.7
+  empty:            "No hi ha cap nick registrat que coincideixi amb aquesta IP."
+  result:           "Coincidència de nick: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <nickname> <duration> <reason>"
@@ -630,6 +643,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit."
   suspended:         "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <patró> [pàgina]"
+  short: "Llista els sobrenoms registrats que coincideixen amb un patró (només IRCops)."
+  help: "Llista els sobrenoms registrats que coincideixen amb el patró indicat. El comodí * coincideix amb qualsevol seqüència. La pàgina és opcional i comença per 1."
+  header: "Sobrenom | Registre | Última connexió | IP | Estat"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Pàgina %page%/%pages% — %total% coincidències"
+  empty: "Cap sobrenom coincideix amb el patró %pattern%."
+  status_pending: "Pendent"
+  status_registered: "Registrat"
+  status_suspended: "Suspès"
+  status_pending_deletion: "Eliminació pendent"
+  status_forbidden: "Prohibit"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% executa l'ordre %command% sobre %target%. %reason%"

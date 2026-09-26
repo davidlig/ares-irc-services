@@ -543,3 +543,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 A canle \x02%channel%\x02 non ten usuarios que expulsar."
   success:          "\x0303✔\x03 Expulsado(s) \x02%count%\x02 usuario(s) de \x02%channel%\x02."
   default_reason:   "Comando CLEARUSERS"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <patrón> [páxina]"
+  short: "Lista as canles rexistradas que coinciden cun patrón (só IRCops)."
+  help: "Lista as canles rexistradas que coinciden co patrón indicado. O comodín * coincide con calquera secuencia de caracteres. A páxina é opcional e comeza en 1."
+  header: "Canle | Fundador | Rexistro | Último uso | Estado"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Páxina %page%/%pages% — %total% coincidencias"
+  empty: "Ningunha canle coincide co patrón %pattern%."
+  status_active: "Activa"
+  status_suspended: "Suspendida"
+  status_pending_deletion: "Pendente de eliminación"
+  status_forbidden: "Prohibida"

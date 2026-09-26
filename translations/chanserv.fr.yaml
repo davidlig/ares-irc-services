@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 Le canal \x02%channel%\x02 n'a aucun utilisateur à expulser."
   success:          "\x0303✔\x03 \x02%count%\x02 utilisateur(s) expulsé(s) de \x02%channel%\x02."
   default_reason:   "Commande CLEARUSERS"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <motif> [page]"
+  short: "Lister les salons enregistrés correspondant à un motif (IRCops uniquement)."
+  help: "Liste les salons enregistrés correspondant au motif fourni. Le caractère * correspond à toute séquence de caractères. La page est facultative et commence à 1."
+  header: "Salon | Fondateur | Enregistrement | Dernière utilisation | État"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Page %page%/%pages% — %total% résultats"
+  empty: "Aucun salon ne correspond au motif %pattern%."
+  status_active: "Actif"
+  status_suspended: "Suspendu"
+  status_pending_deletion: "Suppression en attente"
+  status_forbidden: "Interdit"

@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 Nickname \x02%nickname%\x02 is not connected."
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Find nicknames by the IP address of their last identified connection."
+  help:             |
+    Lists registered nicknames whose last identified connection used this IP address.
+    The stored address may be outdated.
+    Only available to IRCops with 'nickserv.whoip' permission.
+
+    Syntax: WHOIP <ip>
+    Example: WHOIP 203.0.113.7
+  empty:            "No registered nicknames match this IP address."
+  result:           "Nickname match: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <nickname> <duration> <reason>"
@@ -630,6 +643,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden."
   suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <pattern> [page]"
+  short: "List registered nicknames matching a pattern (IRC Operators only)."
+  help: "Lists registered nicknames matching the supplied pattern. The * wildcard matches any sequence of characters. The page is optional and starts at 1."
+  header: "Nickname | Registration | Last connection | IP | Status"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Page %page%/%pages% — %total% matches"
+  empty: "No nicknames match the pattern %pattern%."
+  status_pending: "Pending"
+  status_registered: "Registered"
+  status_suspended: "Suspended"
+  status_pending_deletion: "Pending deletion"
+  status_forbidden: "Forbidden"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% executes command %command% on %target%. %reason%"

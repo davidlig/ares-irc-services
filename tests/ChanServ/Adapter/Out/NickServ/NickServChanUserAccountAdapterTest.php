@@ -131,4 +131,20 @@ final class NickServChanUserAccountAdapterTest extends TestCase
         $adapter = new NickServChanUserAccountAdapter($query);
         self::assertSame('Alice', $adapter->findNicknameById(42));
     }
+
+    #[Test]
+    public function findNicknamesByIdsUsesTheChanServOwnedProjectionAndSkipsMissingIds(): void
+    {
+        $query = $this->createMock(NickAccountQuery::class);
+        $query->expects(self::once())
+            ->method('findNicknamesByIds')
+            ->with([10, 20])
+            ->willReturn([10 => 'Alice']);
+        $query->expects(self::never())->method('findNicknameById');
+
+        $adapter = new NickServChanUserAccountAdapter($query);
+
+        self::assertSame([10 => 'Alice'], $adapter->findNicknamesByIds([10, 0, 20, 10]));
+        self::assertSame([], $adapter->findNicknamesByIds([]));
+    }
 }

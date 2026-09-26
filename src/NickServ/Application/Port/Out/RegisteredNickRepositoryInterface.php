@@ -18,6 +18,11 @@ interface RegisteredNickRepositoryInterface
 
     public function findById(int $id): ?RegisteredNick;
 
+    /** @param list<int> $ids
+     * @return array<int, string> nicknames keyed by account ID
+     */
+    public function findNicknamesByIds(array $ids): array;
+
     /** Returns the account that has this vhost (user part). Null if not used. Used for uniqueness check. */
     public function findByVhost(string $vhost): ?RegisteredNick;
 
@@ -60,4 +65,20 @@ interface RegisteredNickRepositoryInterface
 
     /** @return RegisteredNick[] */
     public function all(): array;
+
+    /**
+     * Counts every nickname whose canonical name matches a case-insensitive, strict star glob.
+     * The only wildcard in the supplied pattern is '*'.
+     */
+    public function countByPattern(string $pattern): int;
+
+    /**
+     * Returns a bounded, stable ascending page of all nickname statuses matching the glob.
+     *
+     * @return list<RegisteredNick>
+     */
+    public function searchByPattern(string $pattern, int $offset, int $limit): array;
+
+    /** @return list<string> */
+    public function findNicknamesByLastConnectIp(string $ip): array;
 }

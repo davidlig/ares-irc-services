@@ -15,6 +15,12 @@ interface RegisteredChannelRepositoryInterface
 
     public function findByChannelName(string $channelName): ?RegisteredChannel;
 
+    /** Counts every channel whose canonical name matches a case-insensitive, strict star glob. */
+    public function countByPattern(string $pattern): int;
+
+    /** @return list<RegisteredChannel> bounded, stable ascending page of channels matching the strict star glob */
+    public function searchByPattern(string $pattern, int $offset, int $limit): array;
+
     public function existsByChannelName(string $channelName): bool;
 
     /** @return RegisteredChannel[] */

@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 Kanał \x02%channel%\x02 nie ma użytkowników do wyrzucenia."
   success:          "\x0303✔\x03 Wyrzucono \x02%count%\x02 użytkownika(ów) z \x02%channel%\x02."
   default_reason:   "Komenda CLEARUSERS"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <wzorzec> [strona]"
+  short: "Wyświetla zarejestrowane kanały pasujące do wzorca (tylko IRCop)."
+  help: "Wyświetla zarejestrowane kanały pasujące do podanego wzorca. Symbol * dopasowuje dowolny ciąg znaków. Strona jest opcjonalna i zaczyna się od 1."
+  header: "Kanał | Założyciel | Rejestracja | Ostatnie użycie | Status"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Strona %page%/%pages% — %total% dopasowań"
+  empty: "Brak kanałów pasujących do wzorca %pattern%."
+  status_active: "Aktywny"
+  status_suspended: "Zawieszony"
+  status_pending_deletion: "Oczekuje na usunięcie"
+  status_forbidden: "Zabroniony"

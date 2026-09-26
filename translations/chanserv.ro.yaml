@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 Canalul \x02%channel%\x02 nu are utilizatori cărora să li se dea kick."
   success:          "\x0303✔\x03 S-a dat kick la \x02%count%\x02 utilizator(i) din \x02%channel%\x02."
   default_reason:   "Comanda CLEARUSERS"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <model> [pagină]"
+  short: "Listează canalele înregistrate care corespund unui model (doar pentru IRCops)."
+  help: "Listează canalele înregistrate care corespund modelului indicat. Caracterul * se potrivește cu orice secvență de caractere. Pagina este opțională și începe de la 1."
+  header: "Canal | Fondator | Înregistrare | Ultima utilizare | Stare"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Pagina %page%/%pages% — %total% potriviri"
+  empty: "Niciun canal nu corespunde modelului %pattern%."
+  status_active: "Activ"
+  status_suspended: "Suspendat"
+  status_pending_deletion: "Ștergere în așteptare"
+  status_forbidden: "Interzis"

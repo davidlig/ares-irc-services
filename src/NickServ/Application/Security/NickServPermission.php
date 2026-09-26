@@ -16,6 +16,9 @@ final readonly class NickServPermission
     /** IRCop permission to view the real IP/Host of a user. */
     public const string USERIP = 'nickserv.userip';
 
+    /** IRCop permission to find registered nicknames by their last identified IP. */
+    public const string WHOIP = 'nickserv.whoip';
+
     /** IRCop permission to suspend a nickname. */
     public const string SUSPEND = 'nickserv.suspend';
 
@@ -46,11 +49,15 @@ final readonly class NickServPermission
     /** IRCop permission to view and manage nickname action history. */
     public const string HISTORY = 'nickserv.history';
 
+    /** IRCop permission to list registered nicknames and their stored connection details. */
+    public const string LIST = 'nickserv.list';
+
     /** @return list<string> */
     public static function allIrcop(): array
     {
         return [
             self::USERIP,
+            self::WHOIP,
             self::SUSPEND,
             self::RENAME,
             self::DROP,
@@ -61,6 +68,7 @@ final readonly class NickServPermission
             self::SASET,
             self::NOEXPIRE,
             self::HISTORY,
+            self::LIST,
         ];
     }
 

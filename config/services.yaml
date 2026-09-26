@@ -18,7 +18,7 @@ parameters:
     services.default_language: '%env(SERVICES_DEFAULT_LANGUAGE)%'
     services.default_timezone_fallback: 'UTC'
     services.default_timezone: '%env(default:services.default_timezone_fallback:SERVICES_DEFAULT_TIMEZONE)%'
-    services.version: 'v2.1.2'
+    services.version: 'v2.2.0'
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
     services.vhost_suffix:     '%env(default::NICKSERV_VHOST_SUFFIX)%'
 
@@ -75,6 +75,9 @@ parameters:
     # History view: maximum entries per page in VIEW (default: 40)
     nickserv.history_view_limit_default: 40
     nickserv.history_view_limit: '%env(int:default:nickserv.history_view_limit_default:NICKSERV_HISTORY_VIEW_LIMIT)%'
+    # IRCOP LIST: maximum matching nicknames shown per page
+    nickserv.list_page_size_default: 50
+    nickserv.list_page_size: '%env(int:default:nickserv.list_page_size_default:NICKSERV_LIST_PAGE_SIZE)%'
 
     # History retention: days to keep channel action history (0 = forever)
     chanserv.history_retention_days_default: 30
@@ -82,6 +85,9 @@ parameters:
     # History view: maximum entries per page in VIEW (default: 40)
     chanserv.history_view_limit_default: 40
     chanserv.history_view_limit: '%env(int:default:chanserv.history_view_limit_default:CHANSERV_HISTORY_VIEW_LIMIT)%'
+    # IRCOP LIST: maximum matching channels shown per page
+    chanserv.list_page_size_default: 50
+    chanserv.list_page_size: '%env(int:default:chanserv.list_page_size_default:CHANSERV_LIST_PAGE_SIZE)%'
 
     # ChanServ pseudo-client
     chanserv.nick:     '%env(CHANSERV_NICK)%'
@@ -424,6 +430,12 @@ services:
 
     App\NickServ\Application\UseCase\History\HistoryNickHandlerInterface:
         alias: App\NickServ\Application\UseCase\History\HistoryNickHandler
+
+    App\NickServ\Application\UseCase\List\ListNickAccountsHandlerInterface:
+        alias: App\NickServ\Application\UseCase\List\ListNickAccountsHandler
+
+    App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandler
 
     App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface:
         alias: App\NickServ\Application\UseCase\Set\SetNickSettingHandler
@@ -1203,6 +1215,9 @@ services:
     App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface:
         alias: App\ChanServ\Adapter\Out\Persistence\Doctrine\RegisteredChannelDoctrineRepository
 
+    App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandler
+
     App\ChanServ\Adapter\Out\Service\ChanServDebugNotifier:
         arguments:
             $defaultLanguage: '%services.default_language%'
@@ -1255,6 +1270,10 @@ services:
             $logger: '@App\ChanServ\Application\Port\Out\ChanServActivitySink'
 
     App\ChanServ\Application\Service\ChannelHistoryService: ~
+
+    App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandler:
+        arguments:
+            $pageSize: '%chanserv.list_page_size%'
 
     App\ChanServ\Application\Service\ChannelForbiddenService:
         arguments:
@@ -1344,6 +1363,9 @@ services:
         tags: ['chanserv.command']
 
     App\ChanServ\Adapter\In\Irc\Command\HistoryCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\ListCommand:
         tags: ['chanserv.command']
 
     App\ChanServ\Adapter\In\Irc\Command\ForbidCommand:
@@ -1649,6 +1671,9 @@ services:
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
         tags: ['nickserv.command']
 
+    App\NickServ\Adapter\In\Irc\Command\WhoipCommand:
+        tags: ['nickserv.command']
+
     App\NickServ\Adapter\In\Irc\Command\SuspendCommand:
         tags: ['nickserv.command']
 
@@ -1690,6 +1715,15 @@ services:
             $historyViewLimit: '%nickserv.history_view_limit%'
 
     App\NickServ\Adapter\In\Irc\Command\HistoryCommand:
+        tags: ['nickserv.command']
+
+    App\NickServ\Application\UseCase\List\ListNickAccountsHandler:
+        arguments:
+            $pageSize: '%nickserv.list_page_size%'
+
+    App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandler: ~
+
+    App\NickServ\Adapter\In\Irc\Command\ListCommand:
         tags: ['nickserv.command']
 
     # --- NickServ Services -------------------------------------------------------

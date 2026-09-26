@@ -319,6 +319,19 @@ userip:
   not_online:       "\x0304✗\x03 O alcume \x02%nickname%\x02 non está conectado."
   result:           "\x0307ℹ\x03 Alcume: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Busca alcumes polo IP da súa última conexión identificada."
+  help:             |
+    Mostra os alcumes rexistrados cuxa última conexión identificada empregou este enderezo IP.
+    O enderezo gardado pode estar desactualizado.
+    Só dispoñible para IRCops co permiso 'nickserv.whoip'.
+
+    Sintaxe: WHOIP <ip>
+    Exemplo: WHOIP 203.0.113.7
+  empty:            "Non hai alcumes rexistrados que coincidan con este enderezo IP."
+  result:           "Coincidencia de alcume: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <alcume> <duración> <motivo>"
@@ -640,6 +653,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está prohibido."
   suspended:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <patrón> [páxina]"
+  short: "Lista alcumes rexistrados que coinciden cun patrón (só para IRCops)."
+  help: "Lista os alcumes rexistrados que coinciden co patrón indicado. O comodín * coincide con calquera secuencia de caracteres. A páxina é opcional e comeza en 1."
+  header: "Alcume | Rexistro | Última conexión | IP | Estado"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Páxina %page%/%pages% — %total% coincidencias"
+  empty: "Ningún alcume coincide co patrón %pattern%."
+  status_pending: "Pendente"
+  status_registered: "Rexistrado"
+  status_suspended: "Suspendido"
+  status_pending_deletion: "Pendente de eliminación"
+  status_forbidden: "Prohibido"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% executa o comando %command% sobre %target%. %reason%"

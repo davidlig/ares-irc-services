@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
   result:           "\x0307ℹ\x03 Ezizena: \x02%nickname%\x02 | IPa: \x0307%ip%\x03 | Ostalaria: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Bilatu ezizenak azken identifikatutako konexioaren IP helbidearen arabera."
+  help:             |
+    Zerrendatu IP hau erabili zuten azken identifikatutako konexioa duten erregistratutako ezizenak.
+    Gordetako IP helbidea zaharkituta egon daiteke.
+    'nickserv.whoip' baimena duten IRCopentzat soilik erabilgarri.
+
+    Sintaxia: WHOIP <ip>
+    Adibidea: WHOIP 203.0.113.7
+  empty:            "Ez da IP honekin bat datorren ezizen erregistraturik aurkitu."
+  result:           "Bat datorren ezizena: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <ezizena> <iraupena> <arrazoia>"
@@ -630,6 +643,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 ezizena debekatua dago."
   suspended:         "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <eredua> [orria]"
+  short: "Eredu batekin bat datozen goitizen erregistratuak zerrendatzen ditu (IRCopsentzat bakarrik)."
+  help: "Emandako ereduarekin bat datozen goitizen erregistratuak zerrendatzen ditu. * komodinak edozein karaktere-sekuentzia adierazten du. Orria aukerakoa da eta 1etik hasten da."
+  header: "Goitizena | Erregistroa | Azken konexioa | IPa | Egoera"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "%page%/%pages% orria — %total% emaitza"
+  empty: "Ez dago %pattern% ereduarekin bat datorren goitizenik."
+  status_pending: "Zain"
+  status_registered: "Erregistratuta"
+  status_suspended: "Etena"
+  status_pending_deletion: "Ezabatzeko zain"
+  status_forbidden: "Debekatuta"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. %reason%"

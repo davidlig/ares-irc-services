@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 El apodo \x02%nickname%\x02 no está conectado."
   result:           "\x0307ℹ\x03 Apodo: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Busca apodos por la IP de su última conexión identificada."
+  help:             |
+    Muestra los apodos registrados cuya última conexión identificada utilizó esta dirección IP.
+    La dirección guardada puede estar desactualizada.
+    Solo disponible para IRCops con el permiso 'nickserv.whoip'.
+
+    Sintaxis: WHOIP <ip>
+    Ejemplo: WHOIP 203.0.113.7
+  empty:            "No hay apodos registrados que coincidan con esta dirección IP."
+  result:           "Coincidencia de apodo: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <apodo> <duración> <razón>"
@@ -630,6 +643,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 El apodo \x02%nickname%\x02 está prohibido."
   suspended:         "\x0304✗\x03 El apodo \x02%nickname%\x02 está suspendido."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <patrón> [página]"
+  short: "Lista apodos registrados que coinciden con un patrón (solo IRCops)."
+  help: "Lista los apodos registrados que coinciden con el patrón indicado. El comodín * coincide con cualquier secuencia de caracteres. La página es opcional y empieza en 1."
+  header: "Apodo | Registro | Última conexión | IP | Estado"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Página %page%/%pages% — %total% coincidencias"
+  empty: "Ningún apodo coincide con el patrón %pattern%."
+  status_pending: "Pendiente"
+  status_registered: "Registrado"
+  status_suspended: "Suspendido"
+  status_pending_deletion: "Pendiente de eliminación"
+  status_forbidden: "Prohibido"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% ejecuta el comando %command% sobre %target%. %reason%"

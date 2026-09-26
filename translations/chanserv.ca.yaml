@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap usuari per fer kick."
   success:          "\x0303✔\x03 S'ha fet kick a \x02%count%\x02 usuari(s) de \x02%channel%\x02."
   default_reason:   "ordre CLEARUSERS"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <patró> [pàgina]"
+  short: "Llista canals registrats que coincideixen amb un patró (només IRCops)."
+  help: "Llista els canals registrats que coincideixen amb el patró indicat. El comodí * coincideix amb qualsevol seqüència de caràcters. La pàgina és opcional i comença per 1."
+  header: "Canal | Fundador | Registre | Últim ús | Estat"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Pàgina %page%/%pages% — %total% coincidències"
+  empty: "Cap canal coincideix amb el patró %pattern%."
+  status_active: "Actiu"
+  status_suspended: "Suspès"
+  status_pending_deletion: "Pendent d'eliminació"
+  status_forbidden: "Prohibit"

@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verbonden."
   result:           "\x0307ℹ\x03 Bijnaam: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Zoekt nicknames op basis van het IP-adres van hun laatste geïdentificeerde verbinding."
+  help:             |
+    Toont geregistreerde nicknames waarvan de laatste geïdentificeerde verbinding dit IP-adres gebruikte.
+    Het opgeslagen adres kan verouderd zijn.
+    Alleen beschikbaar voor IRCops met de machtiging 'nickserv.whoip'.
+
+    Syntax: WHOIP <ip>
+    Voorbeeld: WHOIP 203.0.113.7
+  empty:            "Geen geregistreerde nicknames komen overeen met dit IP-adres."
+  result:           "Overeenkomende nickname: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <bijnaam> <duur> <reden>"
@@ -630,6 +643,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."
   suspended:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <patroon> [pagina]"
+  short: "Toont geregistreerde bijnamen die overeenkomen met een patroon (alleen IRCops)."
+  help: "Toont geregistreerde bijnamen die overeenkomen met het opgegeven patroon. De joker * komt overeen met elke tekenreeks. De pagina is optioneel en begint bij 1."
+  header: "Bijnaam | Registratie | Laatste verbinding | IP | Status"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Pagina %page%/%pages% — %total% overeenkomsten"
+  empty: "Geen bijnamen komen overeen met patroon %pattern%."
+  status_pending: "In afwachting"
+  status_registered: "Geregistreerd"
+  status_suspended: "Geschorst"
+  status_pending_deletion: "Verwijdering in afwachting"
+  status_forbidden: "Verboden"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% voert commando %command% uit op %target%. %reason%"

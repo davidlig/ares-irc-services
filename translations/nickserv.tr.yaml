@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 \x02%nickname%\x02 rumuzu bağlı değil."
   result:           "\x0307ℹ\x03 Rumuz: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Son tanımlanmış bağlantılarının IP adresine göre takma adları bulur."
+  help:             |
+    Son tanımlanmış bağlantısı bu IP adresini kullanmış kayıtlı takma adları listeler.
+    Kaydedilen adres güncel olmayabilir.
+    Yalnızca 'nickserv.whoip' iznine sahip IRCop'ler kullanabilir.
+
+    Sözdizimi: WHOIP <ip>
+    Örnek: WHOIP 203.0.113.7
+  empty:            "Bu IP adresiyle eşleşen kayıtlı takma ad yok."
+  result:           "Eşleşen takma ad: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <nickname> <süre> <sebep>"
@@ -630,6 +643,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış."
   suspended:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <desen> [sayfa]"
+  short: "Bir desenle eşleşen kayıtlı takma adları listeler (yalnızca IRCop)."
+  help: "Belirtilen desenle eşleşen kayıtlı takma adları listeler. * joker karakteri herhangi bir karakter dizisiyle eşleşir. Sayfa isteğe bağlıdır ve 1'den başlar."
+  header: "Takma ad | Kayıt | Son bağlantı | IP | Durum"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Sayfa %page%/%pages% — %total% eşleşme"
+  empty: "%pattern% deseniyle eşleşen takma ad yok."
+  status_pending: "Beklemede"
+  status_registered: "Kayıtlı"
+  status_suspended: "Askıya alınmış"
+  status_pending_deletion: "Silinmeyi bekliyor"
+  status_forbidden: "Yasaklı"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. %reason%"

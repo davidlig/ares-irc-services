@@ -43,6 +43,21 @@ final class NickAccountResolverTest extends TestCase
     }
 
     #[Test]
+    public function findNicknamesByIdsUsesOneRepositoryBulkLookupAndSkipsInvalidIds(): void
+    {
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())
+            ->method('findNicknamesByIds')
+            ->with([10, 20])
+            ->willReturn([10 => 'Alice']);
+
+        $resolver = new NickAccountResolver($repo, 'en');
+
+        self::assertSame([10 => 'Alice'], $resolver->findNicknamesByIds([10, 0, 20, 10]));
+        self::assertSame([], $resolver->findNicknamesByIds([]));
+    }
+
+    #[Test]
     public function findAccountByNickReturnsDataWhenFound(): void
     {
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);

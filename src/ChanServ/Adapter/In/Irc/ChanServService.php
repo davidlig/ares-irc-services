@@ -262,7 +262,7 @@ final readonly class ChanServService
     private function isPendingDeletionViolation(ChanServContext $context, ChanServCommandInterface $handler): ?string
     {
         $channelName = $context->getChannelNameArg(0);
-        if (null === $channelName || in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
+        if (null === $channelName || in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP', 'LIST'], true)) {
             return null;
         }
 

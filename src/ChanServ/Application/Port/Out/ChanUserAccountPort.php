@@ -15,4 +15,9 @@ interface ChanUserAccountPort
     public function findIdByNick(string $nickname): ?int;
 
     public function findNicknameById(int $id): ?string;
+
+    /** @param list<int> $ids
+     * @return array<int, string> found nicknames keyed by nickname ID
+     */
+    public function findNicknamesByIds(array $ids): array;
 }

@@ -10,6 +10,9 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -93,6 +96,60 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     public function findByIdReturnsNullWhenNotFound(): void
     {
         self::assertNull($this->repository->findById(999999));
+    }
+
+    #[Test]
+    public function findNicknamesByIdsReturnsOneBulkProjectionAndSkipsMissingIds(): void
+    {
+        $first = $this->createRegisteredNick('BulkAlice', 'bulk-alice@example.com');
+        $second = $this->createRegisteredNick('BulkBob', 'bulk-bob@example.com');
+        $this->repository->save($first);
+        $this->repository->save($second);
+        $this->flushAndClear();
+
+        $nicknames = $this->repository->findNicknamesByIds([$first->getId(), 999999, $second->getId()]);
+
+        self::assertSame([
+            $first->getId() => 'BulkAlice',
+            $second->getId() => 'BulkBob',
+        ], $nicknames);
+        self::assertSame([], $this->repository->findNicknamesByIds([]));
+    }
+
+    #[Test]
+    public function findNicknamesByIdsSkipsMalformedProjectionRows(): void
+    {
+        $query = $this->createMock(Query::class);
+        $query->expects(self::once())->method('getArrayResult')->willReturn([
+            'invalid row',
+            ['accountId' => 1],
+            ['accountId' => 'not-an-id', 'nickname' => 'InvalidId'],
+            ['accountId' => 2, 'nickname' => 42],
+            ['accountId' => 3, 'nickname' => 'Alice'],
+        ]);
+        $queryBuilder = $this->createMock(QueryBuilder::class);
+        $queryBuilder->expects(self::once())
+            ->method('select')
+            ->with('n.id AS accountId, n.nickname AS nickname')
+            ->willReturnSelf();
+        $queryBuilder->expects(self::once())
+            ->method('from')
+            ->with(RegisteredNick::class, 'n')
+            ->willReturnSelf();
+        $queryBuilder->expects(self::once())
+            ->method('where')
+            ->with('n.id IN (:ids)')
+            ->willReturnSelf();
+        $queryBuilder->expects(self::once())
+            ->method('setParameter')
+            ->with('ids', [1, 2, 3])
+            ->willReturnSelf();
+        $queryBuilder->expects(self::once())->method('getQuery')->willReturn($query);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('createQueryBuilder')->willReturn($queryBuilder);
+        $repository = new RegisteredNickDoctrineRepository($entityManager);
+
+        self::assertSame([3 => 'Alice'], $repository->findNicknamesByIds([1, 2, 3]));
     }
 
     #[Test]
@@ -215,6 +272,140 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         $all = $this->repository->all();
 
         self::assertCount(2, $all);
+    }
+
+    #[Test]
+    public function searchByPatternUsesCaseInsensitiveStrictStarGlobAndIncludesEveryStatus(): void
+    {
+        $david = $this->createRegisteredNick('Davidlig', 'david@example.com');
+        $david->markSeen(new DateTimeImmutable('2026-01-01 00:00:00 UTC'));
+        $david->updateLastConnection('203.0.113.7', 'user.example');
+        $this->repository->save($david);
+        $this->repository->save($this->createRegisteredNick('Davinia', 'davinia@example.com'));
+
+        $pending = RegisteredNick::createPending(
+            'PendingNick',
+            '$argon2id$v=19$m=65536,t=4,p=1$test$test',
+            'pending@example.com',
+            'en',
+            new DateTimeImmutable('+24 hours'),
+            new DateTimeImmutable(),
+        );
+        $this->repository->save($pending);
+
+        $suspended = $this->createRegisteredNick('SuspendedNick', 'suspended@example.com');
+        $suspended->suspend('test');
+        $this->repository->save($suspended);
+
+        $pendingDeletion = $this->createRegisteredNick('PendingDeletionNick', 'deletion@example.com');
+        $pendingDeletion->markPendingDeletion(new DateTimeImmutable());
+        $this->repository->save($pendingDeletion);
+        $this->repository->save(RegisteredNick::createForbidden('ForbiddenNick', 'reserved'));
+        $this->flushAndClear();
+
+        self::assertSame(['Davidlig', 'Davinia'], $this->names($this->repository->searchByPattern('*AVI*', 0, 10)));
+        self::assertSame(['Davidlig'], $this->names($this->repository->searchByPattern('*avid*', 0, 10)));
+        self::assertSame([], $this->repository->searchByPattern('*avid', 0, 10));
+        self::assertSame(2, $this->repository->countByPattern('*avi*'));
+        self::assertSame(6, $this->repository->countByPattern('*'));
+
+        $allStatuses = $this->repository->searchByPattern('*', 0, 10);
+        self::assertEqualsCanonicalizing(
+            [NickStatus::Pending, NickStatus::Registered, NickStatus::Registered, NickStatus::Suspended, NickStatus::PendingDeletion, NickStatus::Forbidden],
+            array_map(static fn (RegisteredNick $nick): NickStatus => $nick->getStatus(), $allStatuses),
+        );
+    }
+
+    #[Test]
+    public function searchByPatternReturnsStableAscendingPages(): void
+    {
+        foreach ([['Charlie', 'c@example.com'], ['alpha', 'a@example.com'], ['Bravo', 'b@example.com']] as [$nickname, $email]) {
+            $this->repository->save($this->createRegisteredNick($nickname, $email));
+        }
+        $this->flushAndClear();
+
+        self::assertSame(['alpha', 'Bravo'], $this->names($this->repository->searchByPattern('*', 0, 2)));
+        self::assertSame(['Charlie'], $this->names($this->repository->searchByPattern('*', 2, 2)));
+    }
+
+    #[Test]
+    public function searchByPatternTreatsSqlLikeWildcardsAsLiteralsAndBoundsInvalidPagination(): void
+    {
+        $this->repository->save($this->createRegisteredNick('Literal!%_Nick', 'literal@example.com'));
+        $this->repository->save($this->createRegisteredNick('OtherNick', 'other@example.com'));
+        $this->flushAndClear();
+
+        self::assertSame(['Literal!%_Nick'], $this->names($this->repository->searchByPattern('literal!%_nick', 0, 10)));
+        self::assertSame(['Literal!%_Nick'], $this->names($this->repository->searchByPattern('*', -5, 1)));
+        self::assertSame([], $this->repository->searchByPattern('*', 0, 0));
+    }
+
+    #[Test]
+    public function findNicknamesByLastConnectIpMatchesExactIpv4InStableOrderAcrossStatuses(): void
+    {
+        $ipv4 = '203.0.113.7';
+        $zebra = $this->createRegisteredNick('Zebra', 'zebra@example.com');
+        $zebra->updateLastConnection($ipv4, 'zebra.example');
+        $this->repository->save($zebra);
+
+        $alpha = $this->createRegisteredNick('alpha', 'alpha@example.com');
+        $alpha->updateLastConnection($ipv4, 'alpha.example');
+        $this->repository->save($alpha);
+
+        $bravo = $this->createRegisteredNick('Bravo', 'bravo@example.com');
+        $bravo->updateLastConnection($ipv4, 'bravo.example');
+        $this->repository->save($bravo);
+
+        $pending = RegisteredNick::createPending(
+            'Pending',
+            '$argon2id$v=19$m=65536,t=4,p=1$test$test',
+            'pending@example.com',
+            'en',
+            new DateTimeImmutable('+24 hours'),
+            new DateTimeImmutable(),
+        );
+        $pending->updateLastConnection($ipv4, 'pending.example');
+        $this->repository->save($pending);
+
+        $otherIp = $this->createRegisteredNick('OtherIp', 'other-ip@example.com');
+        $otherIp->updateLastConnection('203.0.113.8', 'other.example');
+        $this->repository->save($otherIp);
+        $this->repository->save($this->createRegisteredNick('NoIp', 'no-ip@example.com'));
+        $this->flushAndClear();
+
+        self::assertSame(
+            ['alpha', 'Bravo', 'Pending', 'Zebra'],
+            $this->repository->findNicknamesByLastConnectIp($ipv4),
+        );
+    }
+
+    #[Test]
+    public function findNicknamesByLastConnectIpMatchesCanonicalIpv6AndReturnsEmptyForUnknownIp(): void
+    {
+        $ipv6 = '2001:db8::5';
+        foreach ([['V6Bravo', 'v6-bravo@example.com'], ['V6Alpha', 'v6-alpha@example.com']] as [$nickname, $email]) {
+            $nick = $this->createRegisteredNick($nickname, $email);
+            $nick->updateLastConnection($ipv6, 'ipv6.example');
+            $this->repository->save($nick);
+        }
+
+        $otherIp = $this->createRegisteredNick('OtherV6', 'other-v6@example.com');
+        $otherIp->updateLastConnection('2001:db8::6', 'other.example');
+        $this->repository->save($otherIp);
+        $this->flushAndClear();
+
+        self::assertSame(['V6Alpha', 'V6Bravo'], $this->repository->findNicknamesByLastConnectIp($ipv6));
+        self::assertSame([], $this->repository->findNicknamesByLastConnectIp('2001:db8::7'));
+    }
+
+    /**
+     * @param list<RegisteredNick> $nicks
+     *
+     * @return list<string>
+     */
+    private function names(array $nicks): array
+    {
+        return array_map(static fn (RegisteredNick $nick): string => $nick->getNickname(), $nicks);
     }
 
     #[Test]

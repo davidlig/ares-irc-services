@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht verbunden."
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Findet Nicknames anhand der IP ihres letzten identifizierten Logins."
+  help:             |
+    Listet registrierte Nicknames auf, deren letzte identifizierte Verbindung diese IP verwendet hat.
+    Die gespeicherte IP-Adresse kann veraltet sein.
+    Nur für IRCops mit der Berechtigung 'nickserv.whoip' verfügbar.
+
+    Syntax: WHOIP <ip>
+    Beispiel: WHOIP 203.0.113.7
+  empty:            "Keine registrierten Nicknames passen zu dieser IP."
+  result:           "Passender Nickname: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <nickname> <Dauer> <Grund>"
@@ -630,6 +643,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist gesperrt."
   suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <Muster> [Seite]"
+  short: "Listet registrierte Nicknames nach Muster auf (nur IRCops)."
+  help: "Listet registrierte Nicknames auf, die dem angegebenen Muster entsprechen. Das Platzhalterzeichen * steht für eine beliebige Zeichenfolge. Die Seite ist optional und beginnt bei 1."
+  header: "Nickname | Registrierung | Letzte Verbindung | IP | Status"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Seite %page%/%pages% — %total% Treffer"
+  empty: "Keine Nicknames entsprechen dem Muster %pattern%."
+  status_pending: "Ausstehend"
+  status_registered: "Registriert"
+  status_suspended: "Gesperrt"
+  status_pending_deletion: "Löschung ausstehend"
+  status_forbidden: "Verboten"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% führt Befehl %command% auf %target% aus. %reason%"

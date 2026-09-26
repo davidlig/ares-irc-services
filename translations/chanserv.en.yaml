@@ -541,3 +541,17 @@ clearusers:
   empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 has no users to kick."
   success:          "\x0303✔\x03 Kicked \x02%count%\x02 user(s) from \x02%channel%\x02."
   default_reason:   "CLEARUSERS command"
+
+# --- LIST (IRCop) ------------------------------------------------------------
+list:
+  syntax: "LIST <pattern> [page]"
+  short: "List registered channels matching a pattern (IRCop only)."
+  help: "Lists registered channels matching the supplied pattern. The * wildcard matches any sequence of characters. The page is optional and starts at 1."
+  header: "Channel | Founder | Registered | Last used | Status"
+  row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Page %page%/%pages% — %total% matches"
+  empty: "No channels match the pattern %pattern%."
+  status_active: "Active"
+  status_suspended: "Suspended"
+  status_pending_deletion: "Pending deletion"
+  status_forbidden: "Forbidden"

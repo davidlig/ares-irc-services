@@ -10,6 +10,9 @@ use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
+use function is_array;
+use function is_string;
+
 class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterface
 {
     public function __construct(private readonly EntityManagerInterface $em) {}
@@ -41,6 +44,33 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         $nick = $this->em->find(RegisteredNick::class, $id);
 
         return $nick instanceof RegisteredNick ? $nick : null;
+    }
+
+    public function findNicknamesByIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter($ids, static fn (int $id): bool => 0 < $id)));
+        if ([] === $ids) {
+            return [];
+        }
+
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('n.id AS accountId, n.nickname AS nickname')
+            ->from(RegisteredNick::class, 'n')
+            ->where('n.id IN (:ids)')
+            ->setParameter('ids', $ids);
+
+        /** @var array<mixed> $result */
+        $result = $queryBuilder->getQuery()->getArrayResult();
+        $nicknames = [];
+        foreach ($result as $row) {
+            if (!is_array($row) || !isset($row['accountId'], $row['nickname']) || !is_numeric($row['accountId']) || !is_string($row['nickname'])) {
+                continue;
+            }
+
+            $nicknames[(int) $row['accountId']] = $row['nickname'];
+        }
+
+        return $nicknames;
     }
 
     public function findByVhost(string $vhost): ?RegisteredNick
@@ -150,5 +180,55 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
     public function all(): array
     {
         return $this->em->getRepository(RegisteredNick::class)->findAll();
+    }
+
+    public function countByPattern(string $pattern): int
+    {
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('COUNT(n.id)')
+            ->from(RegisteredNick::class, 'n')
+            ->where("LOWER(n.nicknameLower) LIKE :pattern ESCAPE '!'")
+            ->setParameter('pattern', self::toLikePattern($pattern));
+
+        return (int) $queryBuilder->getQuery()->getSingleScalarResult();
+    }
+
+    public function searchByPattern(string $pattern, int $offset, int $limit): array
+    {
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('n')
+            ->from(RegisteredNick::class, 'n')
+            ->where("LOWER(n.nicknameLower) LIKE :pattern ESCAPE '!'")
+            ->setParameter('pattern', self::toLikePattern($pattern))
+            ->orderBy('n.nicknameLower', 'ASC')
+            ->addOrderBy('n.id', 'ASC')
+            ->setFirstResult(max(0, $offset))
+            ->setMaxResults(max(0, $limit));
+
+        /** @var array<mixed> $result */
+        $result = $queryBuilder->getQuery()->getResult();
+
+        return array_values(array_filter($result, static fn (mixed $row): bool => $row instanceof RegisteredNick));
+    }
+
+    public function findNicknamesByLastConnectIp(string $ip): array
+    {
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('n.nickname')
+            ->from(RegisteredNick::class, 'n')
+            ->where('n.lastConnectIp = :ip')
+            ->setParameter('ip', $ip)
+            ->orderBy('n.nicknameLower', 'ASC')
+            ->addOrderBy('n.id', 'ASC');
+
+        /** @var list<string> $nicknames */
+        $nicknames = $queryBuilder->getQuery()->getSingleColumnResult();
+
+        return $nicknames;
+    }
+
+    private static function toLikePattern(string $pattern): string
+    {
+        return strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
     }
 }

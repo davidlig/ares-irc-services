@@ -9,6 +9,10 @@ use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 
+use function array_filter;
+use function array_unique;
+use function array_values;
+
 final readonly class NickServChanUserAccountAdapter implements ChanUserAccountPort
 {
     public function __construct(private NickAccountQuery $nickAccountQuery) {}
@@ -41,6 +45,16 @@ final readonly class NickServChanUserAccountAdapter implements ChanUserAccountPo
     public function findNicknameById(int $id): ?string
     {
         return $this->nickAccountQuery->findNicknameById($id);
+    }
+
+    public function findNicknamesByIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter($ids, static fn (int $id): bool => 0 < $id)));
+        if ([] === $ids) {
+            return [];
+        }
+
+        return $this->nickAccountQuery->findNicknamesByIds($ids);
     }
 
     private function toView(NickAccountData $data): ChanAccountView

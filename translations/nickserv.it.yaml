@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è connesso."
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Trova i nickname in base all'IP dell'ultima connessione identificata."
+  help:             |
+    Elenca i nickname registrati la cui ultima connessione identificata ha usato questo indirizzo IP.
+    L'indirizzo salvato potrebbe non essere aggiornato.
+    Disponibile solo agli IRCop con il permesso 'nickserv.whoip'.
+
+    Sintassi: WHOIP <ip>
+    Esempio: WHOIP 203.0.113.7
+  empty:            "Nessun nickname registrato corrisponde a questo indirizzo IP."
+  result:           "Nickname corrispondente: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <nickname> <durata> <motivo>"
@@ -630,6 +643,20 @@ noexpire:
   forbidden:         "\x0304✗\x03 Il nickname \x02%nickname%\x02 è vietato."
   suspended:         "\x0304✗\x03 Il nickname \x02%nickname%\x02 è sospeso."
 
+# --- LIST (IRCOP) ------------------------------------------------------------
+list:
+  syntax: "LIST <schema> [pagina]"
+  short: "Elenca i nickname registrati che corrispondono a uno schema (solo IRCop)."
+  help: "Elenca i nickname registrati che corrispondono allo schema indicato. Il carattere jolly * corrisponde a qualsiasi sequenza di caratteri. La pagina è facoltativa e parte da 1."
+  header: "Nickname | Registrazione | Ultima connessione | IP | Stato"
+  row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Pagina %page%/%pages% — %total% corrispondenze"
+  empty: "Nessun nickname corrisponde allo schema %pattern%."
+  status_pending: "In attesa"
+  status_registered: "Registrato"
+  status_suspended: "Sospeso"
+  status_pending_deletion: "In attesa di eliminazione"
+  status_forbidden: "Vietato"
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message: "%operator% esegue il comando %command% su %target%. %reason%"
