@@ -3,37 +3,25 @@
 ### Features
 
 - Add NickServ IRC operator `WHOIP <ip>` to find every nickname matching the exact stored last identified IP, with a dedicated permission and audited match count.
-- Add paginated IRC operator `LIST <pattern> [page]` to NickServ and ChanServ with strict `*` matching and registration/activity details.
-- Add ChanServ `SET PRIVATE {ON|OFF}` and privacy-aware `INFO` output; only enabled options are listed and URL/email follow the latest topic details.
+- Add paginated IRC operator `LIST <pattern> [page]` to NickServ and ChanServ with strict `*` matching, stable pagination, and registration/activity details.
+- Add ChanServ `SET PRIVATE {ON|OFF}` to restrict channel information to the founder, users with `ACCESS`, and IRC operators.
+- Refine ChanServ `INFO` to list only enabled options and present URL/email after the latest topic details.
+
+### Bug Fixes
+
 - Register ChanServ `IRCOPONLY` in command routing and permission-filtered `HELP`, and document the `chanserv.ircoponly` permission assignment in OperServ.
+- Preserve configured production Docker mounts and startup configuration; fix environment-key synchronization failures and stop logging generated secret prefixes.
+
+### Maintenance
+
+- Deploy tested `main` commits through an isolated GitHub Actions runner and a protected host executor, after PHP quality checks and the SQLite, MariaDB, and PostgreSQL migration matrix pass.
+- Keep deployment configuration outside release checkouts, with an explicit production host-network override and readiness checks after startup.
+- Update Composer development tooling (PHP-CS-Fixer, PHPStan, PHPStan-PHPUnit, and PHPUnit) and locked dependencies.
 
 ### Upgrade
 
 - Apply migration `Version20260926000002` before starting services to add the ChanServ privacy setting.
-
-## [2.1.3] - 2026-09-26
-
-### Features
-
-- Add IRC operator `LIST <pattern> [page]` to NickServ and ChanServ with strict wildcard matching, stable pagination, and registration/activity details.
-
-## [2.1.2] - 2026-09-26
-
-### Features
-
-- ChanServ `INFO` lists only enabled channel options and presents URL and email after the latest topic details.
-- Add ChanServ `SET PRIVATE {ON|OFF}` to restrict channel information to the founder, users with `ACCESS`, and IRC operators.
-
-### Upgrade
-
-- Apply migration `Version20260926000002` before starting services to add the channel privacy setting.
-
-## [2.1.1] - 2026-09-26
-
-### Bug Fixes
-
-- Register ChanServ `IRCOPONLY` in the command router so it appears in permission-filtered `HELP` and can be executed.
-- Document the `chanserv.ircoponly` role permission and how to assign it in OperServ.
+- Automatic deployment does not create database backups; operators must manage database protection separately.
 
 ## [2.1.0] - 2026-09-26
 
