@@ -9,11 +9,13 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\InfoCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
+use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\ShowInfo\ChannelInfoView;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfo;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandler;
+use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
@@ -353,6 +355,121 @@ final class InfoCommandTest extends TestCase
         $this->createCommand($channelRepo, $nickRepo)->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertContains('info.options:IRCOPONLY', $messages);
+    }
+
+    #[Test]
+    public function privateInfoDeniesUnidentifiedCallersBeforeAnyOtherOutput(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->configurePrivate(true);
+        $channel->suspend('Sensitive status');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $this->createCommand($channelRepo, $this->createStub(ChanUserAccountPort::class))->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertSame(['info.private'], $messages);
+    }
+
+    #[Test]
+    public function privateInfoAllowsIdentifiedAccessEntry(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->configurePrivate(true);
+        new ReflectionClass($channel)->getProperty('id')->setValue($channel, 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $access = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $access->method('findByChannelAndNick')->willReturn(new ChannelAccess(1, 2, 10));
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $context = $this->createContext(
+            ['#Test'],
+            $notifier,
+            $translator,
+            senderAccount: new ChanAccountView(2, 'Member', 'en'),
+            sender: new SenderView('UID1', 'Member', 'i', 'h', 'c', 'ip', isIdentified: true),
+        );
+        $this->createCommand($channelRepo, $nickRepo, 7, $access)->execute($context);
+
+        self::assertContains('info.header', $messages);
+        self::assertNotContains('info.private', $messages);
+    }
+
+    #[Test]
+    public function privateInfoDeniesIdentifiedCallerWithoutAccessEntry(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+        $channel->configurePrivate(true);
+        new ReflectionClass($channel)->getProperty('id')->setValue($channel, 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $access = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $access->method('findByChannelAndNick')->willReturn(null);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'FounderNick', 'en'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $context = $this->createContext(
+            ['#Test'],
+            $notifier,
+            $translator,
+            senderAccount: new ChanAccountView(2, 'Member', 'en'),
+            sender: new SenderView('UID1', 'Member', 'i', 'h', 'c', 'ip', isIdentified: true),
+        );
+
+        $this->createCommand($channelRepo, $nickRepo, 7, $access)->execute($context);
+
+        self::assertSame(['info.private'], $messages);
+    }
+
+    #[Test]
+    public function privateInfoAllowsIdentifiedFounderAndIrcop(): void
+    {
+        foreach ([
+            [new ChanAccountView(1, 'Founder', 'en'), new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip', isIdentified: true)],
+            [null, new SenderView('UID2', 'Oper', 'i', 'h', 'c', 'ip', isOper: true)],
+        ] as [$account, $sender]) {
+            $channel = RegisteredChannel::register(new DateTimeImmutable(), '#Test', 1, 'Desc');
+            $channel->configurePrivate(true);
+            $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+            $channelRepo->method('findByChannelName')->willReturn($channel);
+            $nickRepo = $this->createStub(ChanUserAccountPort::class);
+            $nickRepo->method('findAccountById')->willReturn(new ChanAccountView(1, 'Founder', 'en'));
+            $messages = [];
+            $notifier = $this->createStub(ChanServNotifierInterface::class);
+            $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+                $messages[] = $message;
+            });
+            $translator = $this->createStub(TranslatorInterface::class);
+            $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+            $context = $this->createContext(['#Test'], $notifier, $translator, senderAccount: $account, sender: $sender);
+
+            $this->createCommand($channelRepo, $nickRepo)->execute($context);
+
+            self::assertContains('info.header', $messages);
+            self::assertNotContains('info.private', $messages);
+        }
     }
 
     #[Test]
@@ -1050,8 +1167,14 @@ final class InfoCommandTest extends TestCase
         RegisteredChannelRepositoryInterface $channels,
         ChanUserAccountPort $accounts,
         int $dropGraceDays = 7,
+        ?ChannelAccessRepositoryInterface $access = null,
     ): InfoCommand {
-        return new InfoCommand(new ShowChannelInfoHandler($channels, $accounts, $dropGraceDays));
+        return new InfoCommand(new ShowChannelInfoHandler(
+            $channels,
+            $accounts,
+            $access ?? $this->createStub(ChannelAccessRepositoryInterface::class),
+            $dropGraceDays,
+        ));
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

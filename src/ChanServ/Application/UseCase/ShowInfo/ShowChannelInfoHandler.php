@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\ShowInfo;
 
+use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
 
 use function strtolower;
 
@@ -14,6 +16,7 @@ final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInt
     public function __construct(
         private RegisteredChannelRepositoryInterface $channels,
         private ChanUserAccountPort $accounts,
+        private ChannelAccessRepositoryInterface $access,
         private int $dropGraceDays = 7,
     ) {}
 
@@ -23,6 +26,8 @@ final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInt
         if (null === $channel) {
             return null;
         }
+
+        $privateInfoDenied = $this->isPrivateInfoDenied($channel, $query);
 
         $founderId = $channel->getFounderNickId();
         $founder = $this->accounts->findAccountById($founderId);
@@ -54,6 +59,24 @@ final readonly class ShowChannelInfoHandler implements ShowChannelInfoHandlerInt
             suspended: $channel->isSuspended(),
             suspendedReason: $channel->getSuspendedReason(),
             suspendedUntil: $channel->getSuspendedUntil(),
+            privateInfoDenied: $privateInfoDenied,
         );
+    }
+
+    private function isPrivateInfoDenied(RegisteredChannel $channel, ShowChannelInfo $query): bool
+    {
+        if (!$channel->isPrivate() || $query->requesterIsOper) {
+            return false;
+        }
+
+        $accountId = $query->requesterAccountId;
+        if (!$query->requesterIsIdentified || null === $accountId) {
+            return true;
+        }
+        if ($channel->getFounderNickId() === $accountId) {
+            return false;
+        }
+
+        return null === $this->access->findByChannelAndNick($channel->getId(), $accountId);
     }
 }

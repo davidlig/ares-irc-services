@@ -100,7 +100,14 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return;
         }
 
-        $info = $this->handler->handle(new ShowChannelInfo($channelName));
+        $sender = $context->sender;
+        $senderIsIdentified = null !== $sender && $sender->isIdentified;
+        $info = $this->handler->handle(new ShowChannelInfo(
+            channelName: $channelName,
+            requesterAccountId: $senderIsIdentified ? $context->senderAccount?->id : null,
+            requesterIsIdentified: $senderIsIdentified,
+            requesterIsOper: null !== $sender && $sender->isOper,
+        ));
         if (null === $info) {
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
@@ -110,6 +117,12 @@ final readonly class InfoCommand implements ChanServCommandInterface
 
     private function present(ChanServContext $context, string $channelName, ChannelInfoView $info): void
     {
+        if ($info->privateInfoDenied) {
+            $context->reply('info.private', ['%channel%' => $channelName]);
+
+            return;
+        }
+
         if ($info->forbidden) {
             $this->presentForbidden($context, $channelName, $info);
 
