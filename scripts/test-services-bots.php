@@ -391,6 +391,7 @@ final class ServicesTestSuite
             ['STATUS', 1, [], "STATUS {$this->founderBot->nickname}", false],
             ['RECOVER', 1, [], "RECOVER {$this->targetBot->nickname}", false],
             ['USERIP', 1, [], "USERIP {$this->targetBot->nickname}", true],
+            ['WHOIP', 1, [], 'WHOIP 203.0.113.7', true],
             ['RENAME', 1, [], 'RENAME NonExistentOldNick NonExistentNewNick', true],
             ['NOEXPIRE', 2, [], "NOEXPIRE {$this->targetBot->nickname} ON", true],
             ['SUSPEND', 3, [], "SUSPEND {$this->targetBot->nickname} 1d Test suspension", true],

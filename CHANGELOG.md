@@ -1,3 +1,16 @@
+## [2.2.0] - 2026-09-26
+
+### Features
+
+- Add NickServ IRC operator `WHOIP <ip>` to find every nickname matching the exact stored last identified IP, with a dedicated permission and audited match count.
+- Add paginated IRC operator `LIST <pattern> [page]` to NickServ and ChanServ with strict `*` matching and registration/activity details.
+- Add ChanServ `SET PRIVATE {ON|OFF}` and privacy-aware `INFO` output; only enabled options are listed and URL/email follow the latest topic details.
+- Register ChanServ `IRCOPONLY` in command routing and permission-filtered `HELP`, and document the `chanserv.ircoponly` permission assignment in OperServ.
+
+### Upgrade
+
+- Apply migration `Version20260926000002` before starting services to add the ChanServ privacy setting.
+
 ## [2.1.3] - 2026-09-26
 
 ### Features

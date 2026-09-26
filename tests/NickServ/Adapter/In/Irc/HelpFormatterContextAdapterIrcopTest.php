@@ -230,15 +230,15 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
     }
 
     #[Test]
-    public function listAppearsInIrcopHelpOnlyWhenCentralPermissionBoundaryGrantsIt(): void
+    public function whoipAppearsInIrcopHelpOnlyWhenCentralPermissionBoundaryGrantsIt(): void
     {
-        $command = $this->createIrcopCommandStub('LIST', NickServPermission::LIST);
+        $command = $this->createIrcopCommandStub('WHOIP', NickServPermission::WHOIP);
         $registry = new NickServCommandRegistry([$command]);
 
         $rootAccess = $this->createMock(NickServOperatorAccess::class);
         $rootAccess->expects(self::once())
             ->method('hasPermission')
-            ->with('rootadmin', 1, true, false, NickServPermission::LIST)
+            ->with('rootadmin', 1, true, false, NickServPermission::WHOIP)
             ->willReturn(true);
         $rootContext = $this->context($registry, identified: true, oper: false, account: true);
         $rootContext = new NickServContext(
@@ -262,7 +262,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $roleAccess = $this->createMock(NickServOperatorAccess::class);
         $roleAccess->expects(self::once())
             ->method('hasPermission')
-            ->with('operuser', 1, true, true, NickServPermission::LIST)
+            ->with('operuser', 1, true, true, NickServPermission::WHOIP)
             ->willReturn(true);
         self::assertSame([$command], iterator_to_array(new HelpFormatterContextAdapter(
             $this->context($registry, identified: true, oper: true, account: true),

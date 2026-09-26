@@ -9,8 +9,10 @@ use App\ChanServ\Adapter\In\Irc\Command\ListCommand as ChanServListCommand;
 use App\ChanServ\Application\Security\ChanServPermission;
 use App\Irc\Adapter\In\Event\CtcpVersionResponder;
 use App\NickServ\Adapter\In\Irc\Command\ListCommand as NickServListCommand;
+use App\NickServ\Adapter\In\Irc\Command\WhoipCommand as NickServWhoipCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Application\Security\NickServPermission;
+use App\OperServ\Application\Port\In\OperatorPermissionCatalog;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -19,7 +21,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 final class ServicesListIntegrationTest extends KernelTestCase
 {
     #[Test]
-    public function registersBothListCommandsWithTheirDefaultPageSizes(): void
+    public function registersWhoipAndBothListCommandsWithTheirDefaultPageSizes(): void
     {
         self::bootKernel();
         $container = self::getContainer();
@@ -29,6 +31,14 @@ final class ServicesListIntegrationTest extends KernelTestCase
         $nickList = $nickServ->find('LIST');
         self::assertInstanceOf(NickServListCommand::class, $nickList);
         self::assertSame(NickServPermission::LIST, $nickList->getRequiredPermission());
+
+        $nickWhoip = $nickServ->find('WHOIP');
+        self::assertInstanceOf(NickServWhoipCommand::class, $nickWhoip);
+        self::assertSame(NickServPermission::WHOIP, $nickWhoip->getRequiredPermission());
+
+        $permissionCatalog = $container->get(OperatorPermissionCatalog::class);
+        self::assertInstanceOf(OperatorPermissionCatalog::class, $permissionCatalog);
+        self::assertContains(NickServPermission::WHOIP, $permissionCatalog->getAllPermissions());
 
         $chanServ = $container->get(ChanServCommandRegistry::class);
         self::assertInstanceOf(ChanServCommandRegistry::class, $chanServ);
@@ -49,6 +59,6 @@ final class ServicesListIntegrationTest extends KernelTestCase
         $responder = self::getContainer()->get(CtcpVersionResponder::class);
 
         self::assertInstanceOf(CtcpVersionResponder::class, $responder);
-        self::assertSame('Ares IRC Services v2.1.3', $responder->getVersionResponse());
+        self::assertSame('Ares IRC Services v2.2.0', $responder->getVersionResponse());
     }
 }

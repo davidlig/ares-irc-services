@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
   result:           "\x0307ℹ\x03 Ezizena: \x02%nickname%\x02 | IPa: \x0307%ip%\x03 | Ostalaria: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Bilatu ezizenak azken identifikatutako konexioaren IP helbidearen arabera."
+  help:             |
+    Zerrendatu IP hau erabili zuten azken identifikatutako konexioa duten erregistratutako ezizenak.
+    Gordetako IP helbidea zaharkituta egon daiteke.
+    'nickserv.whoip' baimena duten IRCopentzat soilik erabilgarri.
+
+    Sintaxia: WHOIP <ip>
+    Adibidea: WHOIP 203.0.113.7
+  empty:            "Ez da IP honekin bat datorren ezizen erregistraturik aurkitu."
+  result:           "Bat datorren ezizena: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <ezizena> <iraupena> <arrazoia>"

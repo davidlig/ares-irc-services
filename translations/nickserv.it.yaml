@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è connesso."
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Trova i nickname in base all'IP dell'ultima connessione identificata."
+  help:             |
+    Elenca i nickname registrati la cui ultima connessione identificata ha usato questo indirizzo IP.
+    L'indirizzo salvato potrebbe non essere aggiornato.
+    Disponibile solo agli IRCop con il permesso 'nickserv.whoip'.
+
+    Sintassi: WHOIP <ip>
+    Esempio: WHOIP 203.0.113.7
+  empty:            "Nessun nickname registrato corrisponde a questo indirizzo IP."
+  result:           "Nickname corrispondente: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <nickname> <durata> <motivo>"

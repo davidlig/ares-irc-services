@@ -16,6 +16,9 @@ final readonly class NickServPermission
     /** IRCop permission to view the real IP/Host of a user. */
     public const string USERIP = 'nickserv.userip';
 
+    /** IRCop permission to find registered nicknames by their last identified IP. */
+    public const string WHOIP = 'nickserv.whoip';
+
     /** IRCop permission to suspend a nickname. */
     public const string SUSPEND = 'nickserv.suspend';
 
@@ -54,6 +57,7 @@ final readonly class NickServPermission
     {
         return [
             self::USERIP,
+            self::WHOIP,
             self::SUSPEND,
             self::RENAME,
             self::DROP,

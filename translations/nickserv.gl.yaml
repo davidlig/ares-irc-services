@@ -319,6 +319,19 @@ userip:
   not_online:       "\x0304✗\x03 O alcume \x02%nickname%\x02 non está conectado."
   result:           "\x0307ℹ\x03 Alcume: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Busca alcumes polo IP da súa última conexión identificada."
+  help:             |
+    Mostra os alcumes rexistrados cuxa última conexión identificada empregou este enderezo IP.
+    O enderezo gardado pode estar desactualizado.
+    Só dispoñible para IRCops co permiso 'nickserv.whoip'.
+
+    Sintaxe: WHOIP <ip>
+    Exemplo: WHOIP 203.0.113.7
+  empty:            "Non hai alcumes rexistrados que coincidan con este enderezo IP."
+  result:           "Coincidencia de alcume: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <alcume> <duración> <motivo>"

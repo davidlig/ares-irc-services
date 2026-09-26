@@ -18,7 +18,7 @@ parameters:
     services.default_language: '%env(SERVICES_DEFAULT_LANGUAGE)%'
     services.default_timezone_fallback: 'UTC'
     services.default_timezone: '%env(default:services.default_timezone_fallback:SERVICES_DEFAULT_TIMEZONE)%'
-    services.version: 'v2.1.3'
+    services.version: 'v2.2.0'
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
     services.vhost_suffix:     '%env(default::NICKSERV_VHOST_SUFFIX)%'
 
@@ -433,6 +433,9 @@ services:
 
     App\NickServ\Application\UseCase\List\ListNickAccountsHandlerInterface:
         alias: App\NickServ\Application\UseCase\List\ListNickAccountsHandler
+
+    App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandler
 
     App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface:
         alias: App\NickServ\Application\UseCase\Set\SetNickSettingHandler
@@ -1668,6 +1671,9 @@ services:
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
         tags: ['nickserv.command']
 
+    App\NickServ\Adapter\In\Irc\Command\WhoipCommand:
+        tags: ['nickserv.command']
+
     App\NickServ\Adapter\In\Irc\Command\SuspendCommand:
         tags: ['nickserv.command']
 
@@ -1714,6 +1720,8 @@ services:
     App\NickServ\Application\UseCase\List\ListNickAccountsHandler:
         arguments:
             $pageSize: '%nickserv.list_page_size%'
+
+    App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandler: ~
 
     App\NickServ\Adapter\In\Irc\Command\ListCommand:
         tags: ['nickserv.command']

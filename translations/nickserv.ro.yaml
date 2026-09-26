@@ -311,6 +311,19 @@ userip:
   not_online:       "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este conectată."
   result:           "\x0307ℹ\x03 Poreclă: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
+whoip:
+  syntax:           "WHOIP <ip>"
+  short:            "Caută nickname-uri după IP-ul ultimei lor conexiuni identificate."
+  help:             |
+    Afișează nickname-urile înregistrate a căror ultimă conexiune identificată a folosit această adresă IP.
+    Adresa salvată poate fi învechită.
+    Disponibilă doar pentru IRCopii cu permisiunea 'nickserv.whoip'.
+
+    Sintaxă: WHOIP <ip>
+    Exemplu: WHOIP 203.0.113.7
+  empty:            "Nu există nickname-uri înregistrate care să corespundă acestei adrese IP."
+  result:           "Nickname corespunzător: %nickname%"
+
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <poreclă> <durată> <motiv>"
