@@ -317,12 +317,8 @@ whoip:
   help:             |
     Afișează nickname-urile înregistrate a căror ultimă conexiune identificată a folosit această adresă IP.
     Adresa salvată poate fi învechită.
-    Disponibilă doar pentru IRCopii cu permisiunea 'nickserv.whoip'.
-
-    Sintaxă: WHOIP <ip>
-    Exemplu: WHOIP 203.0.113.7
   empty:            "Nu există nickname-uri înregistrate care să corespundă acestei adrese IP."
-  result:           "Nickname corespunzător: %nickname%"
+  header:           "Nickname-uri corespunzătoare:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

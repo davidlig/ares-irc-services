@@ -317,12 +317,8 @@ whoip:
   help:             |
     Affiche les surnoms enregistrés dont la dernière connexion identifiée a utilisé cette adresse IP.
     L'adresse enregistrée peut être obsolète.
-    Disponible uniquement pour les IRCops avec la permission 'nickserv.whoip'.
-
-    Syntaxe : WHOIP <ip>
-    Exemple : WHOIP 203.0.113.7
   empty:            "Aucun surnom enregistré ne correspond à cette adresse IP."
-  result:           "Surnom correspondant : %nickname%"
+  header:           "Surnoms correspondants :"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

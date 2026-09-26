@@ -317,12 +317,8 @@ whoip:
   help:             |
     Listet registrierte Nicknames auf, deren letzte identifizierte Verbindung diese IP verwendet hat.
     Die gespeicherte IP-Adresse kann veraltet sein.
-    Nur für IRCops mit der Berechtigung 'nickserv.whoip' verfügbar.
-
-    Syntax: WHOIP <ip>
-    Beispiel: WHOIP 203.0.113.7
   empty:            "Keine registrierten Nicknames passen zu dieser IP."
-  result:           "Passender Nickname: %nickname%"
+  header:           "Übereinstimmende Nicknamen:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

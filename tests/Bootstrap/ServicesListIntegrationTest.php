@@ -59,6 +59,6 @@ final class ServicesListIntegrationTest extends KernelTestCase
         $responder = self::getContainer()->get(CtcpVersionResponder::class);
 
         self::assertInstanceOf(CtcpVersionResponder::class, $responder);
-        self::assertSame('Ares IRC Services v2.2.0', $responder->getVersionResponse());
+        self::assertSame('Ares IRC Services v2.2.1', $responder->getVersionResponse());
     }
 }

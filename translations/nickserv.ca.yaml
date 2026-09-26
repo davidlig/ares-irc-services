@@ -317,12 +317,8 @@ whoip:
   help:             |
     Mostra els nicks registrats la darrera connexió identificada dels quals va utilitzar aquesta IP.
     L'adreça desada pot estar desactualitzada.
-    Només disponible per als IRCops amb el permís 'nickserv.whoip'.
-
-    Sintaxi: WHOIP <ip>
-    Exemple: WHOIP 203.0.113.7
   empty:            "No hi ha cap nick registrat que coincideixi amb aquesta IP."
-  result:           "Coincidència de nick: %nickname%"
+  header:           "Sobrenoms coincidents:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

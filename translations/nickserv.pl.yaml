@@ -317,12 +317,8 @@ whoip:
   help:             |
     Wyświetla zarejestrowane pseudonimy, których ostatnie uwierzytelnione połączenie użyło tego adresu IP.
     Zapisany adres może być nieaktualny.
-    Dostępne tylko dla IRCops z uprawnieniem 'nickserv.whoip'.
-
-    Składnia: WHOIP <ip>
-    Przykład: WHOIP 203.0.113.7
   empty:            "Brak zarejestrowanych pseudonimów pasujących do tego adresu IP."
-  result:           "Pasujący pseudonim: %nickname%"
+  header:           "Pasujące pseudonimy:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
