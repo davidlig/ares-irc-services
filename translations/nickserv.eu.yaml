@@ -317,10 +317,6 @@ whoip:
   help:             |
     Zerrendatu IP hau erabili zuten azken identifikatutako konexioa duten erregistratutako ezizenak.
     Gordetako IP helbidea zaharkituta egon daiteke.
-    'nickserv.whoip' baimena duten IRCopentzat soilik erabilgarri.
-
-    Sintaxia: WHOIP <ip>
-    Adibidea: WHOIP 203.0.113.7
   empty:            "Ez da IP honekin bat datorren ezizen erregistraturik aurkitu."
   header:           "Bat datozen ezizenak:"
 

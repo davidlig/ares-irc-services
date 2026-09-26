@@ -317,10 +317,6 @@ whoip:
   help:             |
     Son tanımlanmış bağlantısı bu IP adresini kullanmış kayıtlı takma adları listeler.
     Kaydedilen adres güncel olmayabilir.
-    Yalnızca 'nickserv.whoip' iznine sahip IRCop'ler kullanabilir.
-
-    Sözdizimi: WHOIP <ip>
-    Örnek: WHOIP 203.0.113.7
   empty:            "Bu IP adresiyle eşleşen kayıtlı takma ad yok."
   header:           "Eşleşen takma adlar:"
 

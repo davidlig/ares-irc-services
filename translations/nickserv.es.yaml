@@ -317,10 +317,6 @@ whoip:
   help:             |
     Muestra los apodos registrados cuya última conexión identificada utilizó esta dirección IP.
     La dirección guardada puede estar desactualizada.
-    Solo disponible para IRCops con el permiso 'nickserv.whoip'.
-
-    Sintaxis: WHOIP <ip>
-    Ejemplo: WHOIP 203.0.113.7
   empty:            "No hay apodos registrados que coincidan con esta dirección IP."
   header:           "Apodos coincidentes:"
 

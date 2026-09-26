@@ -325,10 +325,6 @@ whoip:
   help:             |
     Mostra os alcumes rexistrados cuxa última conexión identificada empregou este enderezo IP.
     O enderezo gardado pode estar desactualizado.
-    Só dispoñible para IRCops co permiso 'nickserv.whoip'.
-
-    Sintaxe: WHOIP <ip>
-    Exemplo: WHOIP 203.0.113.7
   empty:            "Non hai alcumes rexistrados que coincidan con este enderezo IP."
   header:           "Alcumes coincidentes:"
 

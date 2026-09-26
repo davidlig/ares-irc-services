@@ -317,10 +317,6 @@ whoip:
   help:             |
     Lista os nicknames registados cuja última ligação identificada utilizou este endereço IP.
     O endereço guardado pode estar desatualizado.
-    Disponível apenas para IRCops com a permissão 'nickserv.whoip'.
-
-    Sintaxe: WHOIP <ip>
-    Exemplo: WHOIP 203.0.113.7
   empty:            "Não há nicknames registados correspondentes a este endereço IP."
   header:           "Nicknames correspondentes:"
 

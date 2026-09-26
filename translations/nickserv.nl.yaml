@@ -317,10 +317,6 @@ whoip:
   help:             |
     Toont geregistreerde nicknames waarvan de laatste geïdentificeerde verbinding dit IP-adres gebruikte.
     Het opgeslagen adres kan verouderd zijn.
-    Alleen beschikbaar voor IRCops met de machtiging 'nickserv.whoip'.
-
-    Syntax: WHOIP <ip>
-    Voorbeeld: WHOIP 203.0.113.7
   empty:            "Geen geregistreerde nicknames komen overeen met dit IP-adres."
   header:           "Overeenkomende nicknames:"
 

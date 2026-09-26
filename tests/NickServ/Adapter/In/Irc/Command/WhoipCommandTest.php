@@ -7,11 +7,14 @@ namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\WhoipCommand;
+use App\NickServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
+use App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIp;
 use App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandlerInterface;
@@ -23,7 +26,11 @@ use Symfony\Component\Translation\Loader\YamlFileLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function explode;
+use function implode;
 use function is_string;
+use function substr_count;
+use function trim;
 
 #[CoversClass(WhoipCommand::class)]
 final class WhoipCommandTest extends TestCase
@@ -181,6 +188,42 @@ final class WhoipCommandTest extends TestCase
         new WhoipCommand($handler)->execute($this->createContext($this->sender(), $messages, ['192.0.2.10'], $translator, $locale));
 
         self::assertSame([$heading, 'Alice', 'PendingNick'], $messages);
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function helpLocales(): iterable
+    {
+        foreach (self::localizedHeadings() as $locale => $values) {
+            yield $locale => [$values[0]];
+        }
+    }
+
+    #[Test]
+    #[DataProvider('helpLocales')]
+    public function rendersConciseLocalizedHelpWithOneSyntaxFooter(string $locale): void
+    {
+        $translator = new Translator($locale);
+        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addResource('yaml', __DIR__ . '/../../../../../../translations/nickserv.' . $locale . '.yaml', $locale, 'nickserv');
+        $handler = $this->createStub(FindNicknamesByLastConnectIpHandlerInterface::class);
+        $messages = [];
+        $context = $this->createContext($this->sender(), $messages, ['WHOIP'], $translator, $locale);
+        $adapter = new HelpFormatterContextAdapter($context, $this->createStub(NickServOperatorAccess::class));
+
+        new UnifiedHelpFormatter()->showCommandHelp($adapter, new WhoipCommand($handler));
+
+        $output = implode("\n", $messages);
+        self::assertSame(1, substr_count($output, 'WHOIP <ip>'));
+        self::assertStringNotContainsString('nickserv.whoip', $output);
+        self::assertStringNotContainsString('203.0.113.7', $output);
+        $help = $translator->trans('whoip.help', [], 'nickserv', $locale);
+        $description = explode("\n", trim($help));
+        self::assertCount(2, $description);
+        foreach ($description as $line) {
+            self::assertNotSame('', trim($line));
+            self::assertStringContainsString($line, $output);
+        }
+        self::assertContains($translator->trans('help.syntax_label', ['%syntax%' => 'WHOIP <ip>'], 'nickserv', $locale), $messages);
     }
 
     #[Test]
