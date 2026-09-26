@@ -10,6 +10,9 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -111,6 +114,42 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             $second->getId() => 'BulkBob',
         ], $nicknames);
         self::assertSame([], $this->repository->findNicknamesByIds([]));
+    }
+
+    #[Test]
+    public function findNicknamesByIdsSkipsMalformedProjectionRows(): void
+    {
+        $query = $this->createMock(Query::class);
+        $query->expects(self::once())->method('getArrayResult')->willReturn([
+            'invalid row',
+            ['accountId' => 1],
+            ['accountId' => 'not-an-id', 'nickname' => 'InvalidId'],
+            ['accountId' => 2, 'nickname' => 42],
+            ['accountId' => 3, 'nickname' => 'Alice'],
+        ]);
+        $queryBuilder = $this->createMock(QueryBuilder::class);
+        $queryBuilder->expects(self::once())
+            ->method('select')
+            ->with('n.id AS accountId, n.nickname AS nickname')
+            ->willReturnSelf();
+        $queryBuilder->expects(self::once())
+            ->method('from')
+            ->with(RegisteredNick::class, 'n')
+            ->willReturnSelf();
+        $queryBuilder->expects(self::once())
+            ->method('where')
+            ->with('n.id IN (:ids)')
+            ->willReturnSelf();
+        $queryBuilder->expects(self::once())
+            ->method('setParameter')
+            ->with('ids', [1, 2, 3])
+            ->willReturnSelf();
+        $queryBuilder->expects(self::once())->method('getQuery')->willReturn($query);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::once())->method('createQueryBuilder')->willReturn($queryBuilder);
+        $repository = new RegisteredNickDoctrineRepository($entityManager);
+
+        self::assertSame([3 => 'Alice'], $repository->findNicknamesByIds([1, 2, 3]));
     }
 
     #[Test]
