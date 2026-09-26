@@ -1,0 +1,13 @@
+[Unit]
+Description=Protected Ares deployment executor
+[Service]
+Type=exec
+ExecStart=/usr/bin/python3 %h/.local/share/ares-actions/host-command/deploy.py serve %h/.local/share/ares-actions/config.json
+StandardInput=socket
+StandardOutput=socket
+StandardError=null
+TimeoutStartSec=30min
+RuntimeMaxSec=30min
+KillMode=mixed
+UMask=0077
+NoNewPrivileges=yes

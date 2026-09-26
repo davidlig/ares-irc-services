@@ -1,0 +1,9 @@
+[Unit]
+Description=Private Ares deployment request socket
+[Socket]
+ListenStream=%h/.local/share/ares-actions/runner-state/deploy.sock
+SocketMode=0600
+Accept=yes
+RemoveOnStop=true
+[Install]
+WantedBy=sockets.target
