@@ -91,6 +91,32 @@ When moving/renaming mapped classes update together:
 
 A namespace-only change does not require a schema migration unless schema semantics changed.
 
+### Native LIST search indexes
+
+Use migrations, not `doctrine:schema:update`, to manage LIST search indexes. Doctrine's portable
+schema model does not retain expression indexes, SQLite index collations or PostgreSQL operator
+classes. A schema diff is not authoritative for these extensions.
+
+| Engine | Migration-owned extension |
+|---|---|
+| SQLite | Ordinary `nickname_lower/name_lower COLLATE NOCASE` index |
+| PostgreSQL | `LOWER(nickname_lower/name_lower) text_pattern_ops` index |
+| MariaDB/MySQL | Indexed virtual `list_search_key`, preserving the source column charset/collation |
+
+The two Doctrine repositories own native LIST predicates and hydrate existing entities through
+ORM result-set mappings. Do not add the technical search column to Domain. Preserve database
+`LOWER` semantics on PostgreSQL/MariaDB/MySQL: Unicode behavior can differ from PHP normalization.
+SQLite uses direct column predicates because its default built-in `LIKE` already folds ASCII,
+just like its built-in `LOWER`. Do not override SQLite `LIKE`/`LOWER` or enable `case_sensitive_like`;
+the compatibility tests rely on those built-in semantics. Ordinary SQLite indexes also avoid DBAL's
+inability to introspect expression indexes. Exact searches retain the
+escaped `LIKE` check because equality can treat trailing spaces and linguistic equivalents differently.
+
+Verify these extensions on migrated databases, not only SchemaTool-created fixtures. Future table
+rebuilds must preserve/recreate them explicitly. Index creation may lock tables; use the deployment
+backup and maintenance procedures. For downgrade, restore compatible code before removing helper
+columns; migration rollback removes only the new indexes and generated columns, not source data.
+
 ## 8. Reference cleanup
 
 **Non-negotiable** — a definitive DROP of a nickname or a channel cleans every dependent

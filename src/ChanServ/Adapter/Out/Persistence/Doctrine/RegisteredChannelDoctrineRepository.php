@@ -8,7 +8,10 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use DateTimeImmutable;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
 
 use function array_filter;
 use function array_values;
@@ -45,31 +48,52 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
 
     public function countByPattern(string $pattern): int
     {
-        $queryBuilder = $this->em->createQueryBuilder();
-        $queryBuilder->select('COUNT(c.id)')
-            ->from(RegisteredChannel::class, 'c')
-            ->where("LOWER(c.nameLower) LIKE :pattern ESCAPE '!'")
-            ->setParameter('pattern', self::toLikePattern($pattern));
+        [$predicate, $parameters] = $this->patternPredicate($pattern);
 
-        return (int) $queryBuilder->getQuery()->getSingleScalarResult();
+        $count = $this->em->getConnection()->fetchOne(
+            'SELECT COUNT(c.id) FROM registered_channels c WHERE ' . $predicate,
+            $parameters,
+        );
+
+        return is_numeric($count) ? (int) $count : 0;
     }
 
     public function searchByPattern(string $pattern, int $offset, int $limit): array
     {
-        $queryBuilder = $this->em->createQueryBuilder();
-        $queryBuilder->select('c')
-            ->from(RegisteredChannel::class, 'c')
-            ->where("LOWER(c.nameLower) LIKE :pattern ESCAPE '!'")
-            ->setParameter('pattern', self::toLikePattern($pattern))
-            ->orderBy('c.nameLower', 'ASC')
-            ->addOrderBy('c.id', 'ASC')
-            ->setFirstResult(max(0, $offset))
-            ->setMaxResults(max(0, $limit));
+        [$predicate, $parameters] = $this->patternPredicate($pattern);
+        $mapping = new ResultSetMappingBuilder($this->em);
+        $mapping->addRootEntityFromClassMetadata(RegisteredChannel::class, 'c');
+        $sql = 'SELECT ' . $mapping->generateSelectClause()
+            . ' FROM registered_channels c WHERE ' . $predicate
+            . ' ORDER BY c.name_lower ASC, c.id ASC';
+        $sql = $this->em->getConnection()->getDatabasePlatform()->modifyLimitQuery($sql, max(0, $limit), max(0, $offset));
 
         /** @var array<mixed> $result */
-        $result = $queryBuilder->getQuery()->getResult();
+        $result = $this->em->createNativeQuery($sql, $mapping)->setParameters($parameters)->getResult();
 
         return array_values(array_filter($result, static fn (mixed $row): bool => $row instanceof RegisteredChannel));
+    }
+
+    /** @return array{string, array<string, string>} */
+    private function patternPredicate(string $pattern): array
+    {
+        $platform = $this->em->getConnection()->getDatabasePlatform();
+        $expression = match (true) {
+            $platform instanceof AbstractMySQLPlatform => 'c.list_search_key',
+            // SQLite LIKE already folds ASCII, just like its built-in LOWER.
+            $platform instanceof SQLitePlatform => 'c.name_lower',
+            default => 'LOWER(c.name_lower)',
+        };
+        $predicate = $expression . " LIKE :pattern ESCAPE '!'";
+        $parameters = ['pattern' => self::toLikePattern($pattern)];
+        if (!str_contains($pattern, '*')) {
+            $equality = $platform instanceof SQLitePlatform ? $expression . ' COLLATE NOCASE' : $expression;
+            // Keep LIKE: equality can ignore trailing spaces or broaden linguistic matches.
+            $predicate = $equality . ' = :exact AND ' . $predicate;
+            $parameters['exact'] = strtolower($pattern);
+        }
+
+        return [$predicate, $parameters];
     }
 
     public function existsByChannelName(string $channelName): bool
