@@ -35,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
+      - name: Test deployment infrastructure
+        run: python3 -m unittest discover -s scripts/deploy/tests -v
+
       - name: Create DB directory
         run: mkdir -p var/data
 
@@ -148,3 +151,51 @@ jobs:
         run: |
           php bin/console doctrine:migrations:migrate first --no-interaction --env=test
           php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
+  deploy:
+    name: Deploy Ares IRC Services
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, migrations]
+    runs-on: [self-hosted, linux, x64, ares-deploy]
+    timeout-minutes: 35
+    environment: production
+    concurrency:
+      group: production-ares
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact tested commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Package and submit verified sources
+        env:
+          DEPLOY_COMMAND: ${{ secrets.DEPLOY_COMMAND }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          deploy_uid=$(id -u)
+          [[ "$deploy_uid" -ne 0 ]]
+          [[ -n "$DEPLOY_COMMAND" && "$DEPLOY_COMMAND" == /* && -f "$DEPLOY_COMMAND" && -x "$DEPLOY_COMMAND" && ! -L "$DEPLOY_COMMAND" ]]
+          command_path=$(realpath -e -- "$DEPLOY_COMMAND")
+          workspace=$(realpath -e -- "$GITHUB_WORKSPACE")
+          [[ "$command_path" == "$DEPLOY_COMMAND" && "$command_path" != "$workspace" && "$command_path" != "$workspace/"* ]]
+          [[ "$(stat -c %u -- "$command_path")" == "$deploy_uid" ]]
+          probe=$command_path
+          while :; do
+            owner=$(stat -c %u -- "$probe")
+            [[ "$owner" == "$deploy_uid" || "$owner" == 0 ]]
+            mode=$(stat -c %a -- "$probe")
+            (( (8#$mode & 022) == 0 ))
+            [[ "$probe" == / ]] && break
+            probe=${probe%/*}
+            [[ -n "$probe" ]] || probe=/
+          done
+          archive="$RUNNER_TEMP/ares-$GITHUB_SHA.tar.gz"
+          git archive --format=tar HEAD | gzip -9 > "$archive"
+          checksum=$(sha256sum "$archive" | cut -d' ' -f1)
+          "$DEPLOY_COMMAND" "$archive" "$checksum" "$GITHUB_SHA"

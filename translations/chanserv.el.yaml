@@ -42,7 +42,8 @@ info:
   last_used:       "  \x0314Τελ. χρήση\x03      : %date%"
   topic:           "  \x0314Τελευταίο θέμα\x03  : %topic%"
   topic_set_by:    "  \x0314Θέμα από\x03        : %nickname%"
-  options:         "  \x0314Επιλογές\x03        : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%, IRCOPONLY %ircoponly%"
+  options:         "  \x0314Επιλογές\x03        : %options%"
+  private:         "\x0304✗\x03 Οι πληροφορίες του καναλιού \x02%channel%\x02 είναι ιδιωτικές."
   no_expire:       "  \x0314Ποτέ δεν λήγει\x03  : Ναι"
   mlock_modes:     "  \x0314Κλείδωμα λειτ.\x03  : %modes%"
   suspended_status: "  \x0314Κατάσταση\x03       : \x0304Σε αναστολή\x03"
@@ -94,7 +95,7 @@ secure:
 set:
   syntax:           "SET <#channel> <option> [value]"
   short:            "Αλλαγή επιλογών καναλιού."
-  help:             "Αλλαγή επιλογών καναλιού. Χρησιμοποιήστε \x0303HELP SET <option>\x03 για καθεμία: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Αλλαγή επιλογών καναλιού. Χρησιμοποιήστε \x0303HELP SET <option>\x03 για καθεμία: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Άγνωστη επιλογή \x02%option%\x02. Χρησιμοποιήστε μία από: %options%."
   founder:
     syntax:         "SET <#channel> FOUNDER <nickname> [token]"
@@ -163,6 +164,12 @@ set:
     off:            "\x0303✔\x03 Το MLOCK είναι τώρα OFF."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 ενεργοποιεί το MLOCK (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 απενεργοποιεί το MLOCK."
+  private:
+    syntax:         "SET <#κανάλι> PRIVATE {ON|OFF}"
+    short:          "Απόκρυψη πληροφοριών καναλιού."
+    help:           "Όταν είναι ON, μόνο ο ιδρυτής και οι χρήστες με πρόσβαση μπορούν να δουν τις πληροφορίες του καναλιού."
+    on:             "\x0303✔\x03 Οι πληροφορίες του καναλιού είναι πλέον ιδιωτικές."
+    off:            "\x0303✔\x03 Οι πληροφορίες του καναλιού είναι πλέον δημόσιες."
   secure:
     syntax:         "SET <#channel> SECURE {ON|OFF}"
     short:          "Απαίτηση λίστας πρόσβασης για βαθμίδες καναλιού."

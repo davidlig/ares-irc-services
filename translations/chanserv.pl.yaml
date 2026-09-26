@@ -42,7 +42,8 @@ info:
   last_used:       "  \x0314Ostatnio użyty\x03         : %date%"
   topic:           "  \x0314Ostatni temat\x03          : %topic%"
   topic_set_by:    "  \x0314Temat ustawiony przez\x03  : %nickname%"
-  options:         "  \x0314Opcje\x03                  : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%, IRCOPONLY %ircoponly%"
+  options:         "  \x0314Opcje\x03                  : %options%"
+  private:         "\x0304✗\x03 Informacje o kanale \x02%channel%\x02 są prywatne."
   no_expire:       "  \x0314Nigdy nie wygasa\x03       : Tak"
   mlock_modes:     "  \x0314Blokada trybów\x03         : %modes%"
   suspended_status: "  \x0314Status\x03                 : \x0304Zawieszony\x03"
@@ -94,7 +95,7 @@ secure:
 set:
   syntax:           "SET <#kanał> <opcja> [wartość]"
   short:            "Zmień opcje kanału."
-  help:             "Zmień opcje kanału. Użyj \x0303HELP SET <opcja>\x03 dla każdej: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Zmień opcje kanału. Użyj \x0303HELP SET <opcja>\x03 dla każdej: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Nieznana opcja \x02%option%\x02. Użyj jednej z: %options%."
   founder:
     syntax:         "SET <#kanał> FOUNDER <nick> [token]"
@@ -163,6 +164,12 @@ set:
     off:            "\x0303✔\x03 MLOCK jest teraz WYŁĄCZONY."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 włącza MLOCK (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 wyłącza MLOCK."
+  private:
+    syntax:         "SET <#kanał> PRIVATE {ON|OFF}"
+    short:          "Ukryj informacje o kanale przed użytkownikami bez dostępu."
+    help:           "Gdy ON, informacje o kanale widzą tylko założyciel i użytkownicy z dostępem."
+    on:             "\x0303✔\x03 Informacje o kanale są teraz prywatne."
+    off:            "\x0303✔\x03 Informacje o kanale są teraz publiczne."
   secure:
     syntax:         "SET <#kanał> SECURE {ON|OFF}"
     short:          "Wymagaj listy dostępu dla rang kanału."

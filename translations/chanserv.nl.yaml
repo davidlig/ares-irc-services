@@ -42,7 +42,8 @@ info:
   last_used:       "  \x0314Laatst gebruikt\x03     : %date%"
   topic:           "  \x0314Laatste onderwerp\x03   : %topic%"
   topic_set_by:    "  \x0314Onderwerp door\x03      : %nickname%"
-  options:         "  \x0314Opties\x03              : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%, IRCOPONLY %ircoponly%"
+  options:         "  \x0314Opties\x03              : %options%"
+  private:         "\x0304✗\x03 De kanaalinformatie van \x02%channel%\x02 is privé."
   no_expire:       "  \x0314Vervalt nooit\x03       : Ja"
   mlock_modes:     "  \x0314Mode-vergrendeling\x03  : %modes%"
   suspended_status: "  \x0314Status\x03              : \x0304Geschorst\x03"
@@ -94,7 +95,7 @@ secure:
 set:
   syntax:           "SET <#kanaal> <optie> [waarde]"
   short:            "Wijzig kanaalopties."
-  help:             "Wijzig kanaalopties. Gebruik \x0303HELP SET <optie>\x03 voor elk: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Wijzig kanaalopties. Gebruik \x0303HELP SET <optie>\x03 voor elk: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Onbekende optie \x02%option%\x02. Gebruik een van: %options%."
   founder:
     syntax:         "SET <#kanaal> FOUNDER <bijnaam> [token]"
@@ -163,6 +164,12 @@ set:
     off:            "\x0303✔\x03 MLOCK is nu OFF."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 schakelt MLOCK in (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 schakelt MLOCK uit."
+  private:
+    syntax:         "SET <#kanaal> PRIVATE {ON|OFF}"
+    short:          "Verberg kanaalinformatie voor gebruikers zonder toegang."
+    help:           "Wanneer ON kunnen alleen de oprichter en gebruikers met toegang de kanaalinformatie bekijken."
+    on:             "\x0303✔\x03 Kanaalinformatie is nu privé."
+    off:            "\x0303✔\x03 Kanaalinformatie is nu openbaar."
   secure:
     syntax:         "SET <#kanaal> SECURE {ON|OFF}"
     short:          "Vereis toegangslijst voor kanaalrangen."

@@ -1,0 +1,8 @@
+{
+  "runner_work_root": "/home/DEPLOY_USER/.local/share/ares-actions/runner-state/_work",
+  "runner_container_work_root": "/runner-state/_work",
+  "deploy_root": "/home/DEPLOY_USER/deploy/ares-irc-services",
+  "env_file": "/home/DEPLOY_USER/deploy/secrets/.env.local",
+  "legacy_checkout": "/home/DEPLOY_USER/docker/ares-irc-services",
+  "readiness_timeout": 120
+}

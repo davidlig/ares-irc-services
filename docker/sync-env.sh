@@ -5,8 +5,8 @@
 
 set -e
 
-ENV_FILE="/app/.env"
-LOCAL_FILE="/app/.env.local"
+ENV_FILE="${ENV_FILE:-/app/.env}"
+LOCAL_FILE="${LOCAL_FILE:-/app/.env.local}"
 
 if [ ! -f "$ENV_FILE" ]; then
     echo "ERROR: $ENV_FILE not found"
@@ -26,7 +26,6 @@ ADDED_VARS=0
 sync_block() {
     local BLOCK="$1"
     local IN_BLOCK=0
-    local ADDED_IN_BLOCK=0
 
     # Buffer for comments preceding a variable
     local COMMENT_BUFFER=""
@@ -39,6 +38,7 @@ sync_block() {
                 IN_BLOCK=1
                 # Clear buffer when entering block to avoid capturing the marker
                 COMMENT_BUFFER=""
+                continue
                 ;;
             "###< $BLOCK ###")
                 IN_BLOCK=0
@@ -71,7 +71,6 @@ sync_block() {
                                 echo "$line" >> "$LOCAL_FILE"
                                 echo "    Added (commented): $POTENTIAL_VAR"
                                 ADDED_VARS=$((ADDED_VARS + 1))
-                                ADDED_IN_BLOCK=$((ADDED_IN_BLOCK + 1))
                             fi
                             ;;
                         *)
@@ -101,7 +100,6 @@ sync_block() {
                         echo "$line" >> "$LOCAL_FILE"
                         echo "    Added: $VAR_NAME"
                         ADDED_VARS=$((ADDED_VARS + 1))
-                        ADDED_IN_BLOCK=$((ADDED_IN_BLOCK + 1))
                     else
                         # Variable exists, clear buffer
                         COMMENT_BUFFER=""
@@ -115,17 +113,16 @@ sync_block() {
         fi
     done < "$ENV_FILE"
 
-    return $ADDED_IN_BLOCK
+    # Counts belong in ADDED_VARS, not the status: set -e treats additions as errors.
+    return 0
 }
 
 # Sync both configuration blocks
 echo "==> Syncing ares/irc-link configuration"
 sync_block "ares/irc-link"
-LINK_ADDED=$?
 
 echo "==> Syncing ares/services configuration"
 sync_block "ares/services"
-SERVICES_ADDED=$?
 
 if [ "$ADDED_VARS" -gt 0 ]; then
     echo "==> Synced $ADDED_VARS new configuration key(s)"

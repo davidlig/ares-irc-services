@@ -30,6 +30,7 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
             ChannelSetting::Description => $this->description($command),
             ChannelSetting::Email => $this->email($command),
             ChannelSetting::EntryMessage => $this->entryMessage($command),
+            ChannelSetting::Private => $this->channelPrivacy($command),
             ChannelSetting::Successor => $this->successor($command),
             ChannelSetting::TopicLock => $this->topicLock($command),
             ChannelSetting::Url => $this->url($command),
@@ -122,6 +123,14 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
         $command->channel->configureTopicLock($enabled);
         $this->channels->save($command->channel);
         $this->events->dispatch(new ChannelTopiclockUpdatedEvent($command->channel->getName()));
+
+        return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::Updated);
+    }
+
+    private function channelPrivacy(UpdateChannelSetting $command): UpdateChannelSettingResult
+    {
+        $command->channel->configurePrivate('ON' === $command->value);
+        $this->channels->save($command->channel);
 
         return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::Updated);
     }

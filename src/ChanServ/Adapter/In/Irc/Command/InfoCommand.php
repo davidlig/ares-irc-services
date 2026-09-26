@@ -10,7 +10,9 @@ use App\ChanServ\Application\UseCase\ShowInfo\ChannelInfoView;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfo;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandlerInterface;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
+use DateTimeImmutable;
 
+use function implode;
 use function str_contains;
 
 /**
@@ -98,98 +100,192 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return;
         }
 
-        $info = $this->handler->handle(new ShowChannelInfo($channelName));
+        $sender = $context->sender;
+        $senderIsIdentified = null !== $sender && $sender->isIdentified;
+        $info = $this->handler->handle(new ShowChannelInfo(
+            channelName: $channelName,
+            requesterAccountId: $senderIsIdentified ? $context->senderAccount?->id : null,
+            requesterIsIdentified: $senderIsIdentified,
+            requesterIsOper: null !== $sender && $sender->isOper,
+        ));
         if (null === $info) {
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
 
+        $this->present($context, $channelName, $info);
+    }
+
+    private function present(ChanServContext $context, string $channelName, ChannelInfoView $info): void
+    {
+        if ($info->privateInfoDenied) {
+            $context->reply('info.private', ['%channel%' => $channelName]);
+
+            return;
+        }
+
         if ($info->forbidden) {
-            $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
-            $context->replyRaw($context->trans('info.forbidden_status'));
-            if (null !== $info->forbiddenReason) {
-                $context->replyRaw($context->trans('info.forbidden_reason', ['%reason%' => $info->forbiddenReason]));
-            }
-            $context->replyRaw($context->trans('info.footer'));
+            $this->presentForbidden($context, $channelName, $info);
 
             return;
         }
 
         if ($info->pendingDeletion) {
-            $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
-            $context->replyRaw($context->trans('info.pending_deletion_status'));
-            $pendingDeletionAt = $info->pendingDeletionAt;
-            if (null !== $pendingDeletionAt) {
-                $context->replyRaw($context->trans('info.pending_deletion_at', ['%date%' => $context->formatDate($pendingDeletionAt)]));
-            }
-            $expiresAt = $info->pendingDeletionUntil;
-            if (null !== $expiresAt) {
-                $context->replyRaw($context->trans('info.pending_deletion_until', ['%date%' => $context->formatDate($expiresAt)]));
-            }
-            $context->replyRaw($context->trans('info.pending_deletion_notice'));
-            $context->replyRaw($context->trans('info.footer'));
+            $this->presentPendingDeletion($context, $channelName, $info);
 
             return;
         }
 
+        $this->presentRegisteredChannel($context, $channelName, $info);
+    }
+
+    private function presentForbidden(ChanServContext $context, string $channelName, ChannelInfoView $info): void
+    {
+        $this->presentHeader($context, $channelName);
+        $context->replyRaw($context->trans('info.forbidden_status'));
+        $this->presentOptionalLine($context, 'info.forbidden_reason', '%reason%', $info->forbiddenReason);
+        $this->presentFooter($context);
+    }
+
+    private function presentPendingDeletion(ChanServContext $context, string $channelName, ChannelInfoView $info): void
+    {
+        $this->presentHeader($context, $channelName);
+        $context->replyRaw($context->trans('info.pending_deletion_status'));
+        $this->presentOptionalDate($context, 'info.pending_deletion_at', $info->pendingDeletionAt);
+        $this->presentOptionalDate($context, 'info.pending_deletion_until', $info->pendingDeletionUntil);
+        $context->replyRaw($context->trans('info.pending_deletion_notice'));
+        $this->presentFooter($context);
+    }
+
+    private function presentRegisteredChannel(ChanServContext $context, string $channelName, ChannelInfoView $info): void
+    {
         $canShowTopic = $this->canShowTopic($context, $info);
 
-        $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
-
-        if ($info->suspended) {
-            $context->replyRaw($context->trans('info.suspended_status'));
-            if (null !== $info->suspendedReason) {
-                $context->replyRaw($context->trans('info.suspended_reason', ['%reason%' => $info->suspendedReason]));
-            }
-            $suspendedUntil = $info->suspendedUntil;
-            if (null !== $suspendedUntil) {
-                $context->replyRaw($context->trans('info.suspended_until', ['%date%' => $context->formatDate($suspendedUntil)]));
-            } else {
-                $context->replyRaw($context->trans('info.suspended_permanent'));
-            }
-        }
-
-        $context->replyRaw($context->trans('info.founder', ['%nickname%' => $info->founderName]));
-        if (null !== $info->successorName) {
-            $context->replyRaw($context->trans('info.successor', ['%nickname%' => $info->successorName]));
-        }
-        if ('' !== $info->description) {
-            $context->replyRaw($context->trans('info.description', ['%desc%' => $info->description]));
-        }
-        $context->replyRaw($context->trans('info.registered', ['%date%' => $context->formatDate($info->createdAt)]));
+        $this->presentHeader($context, $channelName);
+        $this->presentSuspendedStatus($context, $info);
+        $this->presentChannelIdentity($context, $info);
         $context->replyRaw($context->trans('info.last_used', [
             '%date%' => $context->formatDate($info->lastUsedAt),
         ]));
-        if (null !== $info->url) {
-            $context->replyRaw($context->trans('info.url', ['%url%' => $info->url]));
+        $this->presentTopic($context, $info, $canShowTopic);
+        $this->presentContactDetails($context, $info);
+        $this->presentMlockModes($context, $info);
+        $this->presentEnabledOptions($context, $info);
+        $this->presentNoExpire($context, $info);
+        $this->presentFooter($context);
+    }
+
+    private function presentHeader(ChanServContext $context, string $channelName): void
+    {
+        $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
+    }
+
+    private function presentFooter(ChanServContext $context): void
+    {
+        $context->replyRaw($context->trans('info.footer'));
+    }
+
+    private function presentSuspendedStatus(ChanServContext $context, ChannelInfoView $info): void
+    {
+        if (!$info->suspended) {
+            return;
         }
-        if (null !== $info->email) {
-            $context->replyRaw($context->trans('info.email', ['%email%' => $info->email]));
+
+        $context->replyRaw($context->trans('info.suspended_status'));
+        $this->presentOptionalLine($context, 'info.suspended_reason', '%reason%', $info->suspendedReason);
+
+        if (null === $info->suspendedUntil) {
+            $context->replyRaw($context->trans('info.suspended_permanent'));
+
+            return;
         }
-        if ($canShowTopic && null !== $info->topic) {
-            $context->replyRaw($context->trans('info.topic', [
-                '%topic%' => $info->topic,
-            ]));
-            if (null !== $info->lastTopicSetByNick) {
-                $context->replyRaw($context->trans('info.topic_set_by', ['%nickname%' => $info->lastTopicSetByNick]));
-            }
+
+        $this->presentOptionalDate($context, 'info.suspended_until', $info->suspendedUntil);
+    }
+
+    private function presentChannelIdentity(ChanServContext $context, ChannelInfoView $info): void
+    {
+        $context->replyRaw($context->trans('info.founder', ['%nickname%' => $info->founderName]));
+        $this->presentOptionalLine($context, 'info.successor', '%nickname%', $info->successorName);
+
+        if ('' !== $info->description) {
+            $context->replyRaw($context->trans('info.description', ['%desc%' => $info->description]));
+        }
+
+        $context->replyRaw($context->trans('info.registered', ['%date%' => $context->formatDate($info->createdAt)]));
+    }
+
+    private function presentTopic(ChanServContext $context, ChannelInfoView $info, bool $canShowTopic): void
+    {
+        if (!$canShowTopic || null === $info->topic) {
+            return;
+        }
+
+        $context->replyRaw($context->trans('info.topic', ['%topic%' => $info->topic]));
+        $this->presentOptionalLine($context, 'info.topic_set_by', '%nickname%', $info->lastTopicSetByNick);
+    }
+
+    private function presentContactDetails(ChanServContext $context, ChannelInfoView $info): void
+    {
+        $this->presentOptionalLine($context, 'info.url', '%url%', $info->url);
+        $this->presentOptionalLine($context, 'info.email', '%email%', $info->email);
+    }
+
+    private function presentMlockModes(ChanServContext $context, ChannelInfoView $info): void
+    {
+        if (!$info->mlockActive) {
+            return;
+        }
+
+        $modesDisplay = '' !== $info->mlock ? $info->mlock : $context->trans('set.mlock.no_modes');
+        $context->replyRaw($context->trans('info.mlock_modes', ['%modes%' => $modesDisplay]));
+    }
+
+    private function presentEnabledOptions(ChanServContext $context, ChannelInfoView $info): void
+    {
+        $enabledOptions = [];
+        if ($info->topicLock) {
+            $enabledOptions[] = 'TOPICLOCK';
         }
         if ($info->mlockActive) {
-            $modesDisplay = $info->mlock;
-            if ('' === $modesDisplay) {
-                $modesDisplay = $context->trans('set.mlock.no_modes');
-            }
-            $context->replyRaw($context->trans('info.mlock_modes', ['%modes%' => $modesDisplay]));
+            $enabledOptions[] = 'MLOCK';
         }
-        $context->replyRaw($context->trans('info.options', [
-            '%topiclock%' => $info->topicLock ? 'ON' : 'OFF',
-            '%mlock%' => $info->mlockActive ? 'ON' : 'OFF',
-            '%secure%' => $info->secure ? 'ON' : 'OFF',
-            '%ircoponly%' => $info->ircopOnly ? 'ON' : 'OFF',
-        ]));
-        if ($info->noExpire) {
-            $context->replyRaw($context->trans('info.no_expire'));
+        if ($info->secure) {
+            $enabledOptions[] = 'SECURE';
         }
-        $context->replyRaw($context->trans('info.footer'));
+        if ($info->ircopOnly) {
+            $enabledOptions[] = 'IRCOPONLY';
+        }
+
+        if ([] === $enabledOptions) {
+            return;
+        }
+
+        $context->replyRaw($context->trans('info.options', ['%options%' => implode(', ', $enabledOptions)]));
+    }
+
+    private function presentNoExpire(ChanServContext $context, ChannelInfoView $info): void
+    {
+        if (!$info->noExpire) {
+            return;
+        }
+
+        $context->replyRaw($context->trans('info.no_expire'));
+    }
+
+    private function presentOptionalDate(ChanServContext $context, string $key, ?DateTimeImmutable $date): void
+    {
+        if (null !== $date) {
+            $context->replyRaw($context->trans($key, ['%date%' => $context->formatDate($date)]));
+        }
+    }
+
+    private function presentOptionalLine(ChanServContext $context, string $key, string $placeholder, ?string $value): void
+    {
+        if (null === $value) {
+            return;
+        }
+
+        $context->replyRaw($context->trans($key, [$placeholder => $value]));
     }
 
     private function canShowTopic(ChanServContext $context, ChannelInfoView $info): bool

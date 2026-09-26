@@ -42,7 +42,8 @@ info:
   last_used:       "  \x0314Son kullanım\x03       : %date%"
   topic:           "  \x0314Son başlık\x03         : %topic%"
   topic_set_by:    "  \x0314Başlığı ayarlayan\x03  : %nickname%"
-  options:         "  \x0314Seçenekler\x03         : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%, IRCOPONLY %ircoponly%"
+  options:         "  \x0314Seçenekler\x03         : %options%"
+  private:         "\x0304✗\x03 \x02%channel%\x02 kanalının bilgileri özeldir."
   no_expire:       "  \x0314Hiç Sona Ermez\x03     : Evet"
   mlock_modes:     "  \x0314Mod kilidi\x03         : %modes%"
   suspended_status: "  \x0314Durum\x03              : \x0304Askıya alındı\x03"
@@ -94,7 +95,7 @@ secure:
 set:
   syntax:           "SET <#channel> <seçenek> [değer]"
   short:            "Kanal seçeneklerini değiştirin."
-  help:             "Kanal seçeneklerini değiştirin. Her biri için \x0303HELP SET <seçenek>\x03 kullanın: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Kanal seçeneklerini değiştirin. Her biri için \x0303HELP SET <seçenek>\x03 kullanın: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Bilinmeyen seçenek \x02%option%\x02. Şunlardan birini kullanın: %options%."
   founder:
     syntax:         "SET <#channel> FOUNDER <nickname> [token]"
@@ -163,6 +164,12 @@ set:
     off:            "\x0303✔\x03 MLOCK şimdi KAPALI."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 MLOCK özelliğini etkinleştiriyor (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 MLOCK özelliğini devre dışı bırakıyor."
+  private:
+    syntax:         "SET <#channel> PRIVATE {ON|OFF}"
+    short:          "Kanal bilgilerini erişimi olmayan kullanıcılardan gizleyin."
+    help:           "ON olduğunda, kanal bilgilerini yalnızca kurucu ve erişimi olan kullanıcılar görebilir."
+    on:             "\x0303✔\x03 Kanal bilgileri artık gizli."
+    off:            "\x0303✔\x03 Kanal bilgileri artık herkese açık."
   secure:
     syntax:         "SET <#channel> SECURE {ON|OFF}"
     short:          "Kanal rütbeleri için erişim listesi gerektirin."

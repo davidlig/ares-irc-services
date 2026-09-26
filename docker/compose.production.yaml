@@ -1,0 +1,4 @@
+# Explicit production override: localhost MariaDB and IRC use the host network.
+services:
+  ares:
+    network_mode: host

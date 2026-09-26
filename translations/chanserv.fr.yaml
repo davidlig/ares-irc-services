@@ -42,7 +42,8 @@ info:
   last_used:       "  \x0314Dernière util.\x03      : %date%"
   topic:           "  \x0314Dernier sujet\x03       : %topic%"
   topic_set_by:    "  \x0314Sujet défini par\x03    : %nickname%"
-  options:         "  \x0314Options\x03             : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%, IRCOPONLY %ircoponly%"
+  options:         "  \x0314Options\x03             : %options%"
+  private:         "\x0304✗\x03 Les informations du canal \x02%channel%\x02 sont privées."
   no_expire:       "  \x0314N'expire jamais\x03     : Oui"
   mlock_modes:     "  \x0314Verrouillage modes\x03  : %modes%"
   suspended_status: "  \x0314Statut\x03              : \x0304Suspendu\x03"
@@ -94,7 +95,7 @@ secure:
 set:
   syntax:           "SET <#canal> <option> [valeur]"
   short:            "Modifier les options du canal."
-  help:             "Modifie les options du canal. Utilisez \x0303HELP SET <option>\x03 pour chacune : FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Modifie les options du canal. Utilisez \x0303HELP SET <option>\x03 pour chacune : FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Option inconnue \x02%option%\x02. Utilisez l'une de : %options%."
   founder:
     syntax:         "SET <#canal> FOUNDER <surnom> [jeton]"
@@ -163,6 +164,12 @@ set:
     off:            "\x0303✔\x03 MLOCK est maintenant OFF."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 active MLOCK (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 désactive MLOCK."
+  private:
+    syntax:         "SET <#canal> PRIVATE {ON|OFF}"
+    short:          "Masquer les informations du canal aux utilisateurs sans accès."
+    help:           "Lorsque ON, seuls le fondateur et les utilisateurs ayant accès peuvent consulter les informations du canal."
+    on:             "\x0303✔\x03 Les informations du canal sont maintenant privées."
+    off:            "\x0303✔\x03 Les informations du canal sont maintenant publiques."
   secure:
     syntax:         "SET <#canal> SECURE {ON|OFF}"
     short:          "Exiger la liste d'accès pour les rangs du canal."

@@ -1,0 +1,33 @@
+services:
+  runner:
+    build:
+      context: .
+      dockerfile: runner.Dockerfile
+      args:
+        RUNNER_BASE_IMAGE: ${RUNNER_BASE_IMAGE:?Set a reviewed official runner image digest}
+    init: true
+    restart: unless-stopped
+    user: "${DEPLOY_UID:?Set deployment UID}:${DEPLOY_GID:?Set deployment GID}"
+    environment:
+      HOME: /runner-state
+      RUNNER_URL: ${RUNNER_URL:?Set the Ares repository URL}
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+      RUNNER_NAME: ${RUNNER_NAME:-ares-deploy}
+    volumes:
+      - ${RUNNER_STATE:?Set absolute private runner state}:/runner-state
+      - ${RUNNER_COMMAND_DIR:?Set absolute command directory}:/runner-command:ro
+    working_dir: /runner-state
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        umask 077
+        if [[ ! -x ./run.sh ]]; then
+          cp -R /home/runner/. /runner-state/
+          chmod -R u+rwX,go-rwx /runner-state
+        fi
+        if [[ ! -f .runner ]]; then
+          : "$${RUNNER_TOKEN:?One-use registration token required}"
+          ./config.sh --unattended --url "$$RUNNER_URL" --token "$$RUNNER_TOKEN" --name "$$RUNNER_NAME" --labels ares-deploy --work _work
+        fi
+        exec ./run.sh

@@ -1,3 +1,14 @@
+## [2.1.2] - 2026-09-26
+
+### Features
+
+- ChanServ `INFO` lists only enabled channel options and presents URL and email after the latest topic details.
+- Add ChanServ `SET PRIVATE {ON|OFF}` to restrict channel information to the founder, users with `ACCESS`, and IRC operators.
+
+### Upgrade
+
+- Apply migration `Version20260926000002` before starting services to add the channel privacy setting.
+
 ## [2.1.1] - 2026-09-26
 
 ### Bug Fixes

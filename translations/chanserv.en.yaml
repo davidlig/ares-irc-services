@@ -42,7 +42,8 @@ info:
   last_used:       "  \x0314Last used\x03      : %date%"
   topic:           "  \x0314Last topic\x03     : %topic%"
   topic_set_by:    "  \x0314Topic set by\x03   : %nickname%"
-  options:         "  \x0314Options\x03        : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%, IRCOPONLY %ircoponly%"
+  options:         "  \x0314Options\x03        : %options%"
+  private:         "\x0304✗\x03 Channel information for \x02%channel%\x02 is private."
   no_expire:       "  \x0314Never Expires\x03  : Yes"
   mlock_modes:     "  \x0314Mode lock\x03      : %modes%"
   suspended_status: "  \x0314Status\x03         : \x0304Suspended\x03"
@@ -94,7 +95,7 @@ secure:
 set:
   syntax:           "SET <#channel> <option> [value]"
   short:            "Change channel options."
-  help:             "Change channel options. Use \x0303HELP SET <option>\x03 for each: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Change channel options. Use \x0303HELP SET <option>\x03 for each: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Unknown option \x02%option%\x02. Use one of: %options%."
   founder:
     syntax:         "SET <#channel> FOUNDER <nickname> [token]"
@@ -163,6 +164,12 @@ set:
     off:            "\x0303✔\x03 MLOCK is now OFF."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 enables MLOCK (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 disables MLOCK."
+  private:
+    syntax:         "SET <#channel> PRIVATE {ON|OFF}"
+    short:          "Hide channel information from users without access."
+    help:           "When ON, only the founder and users with channel access can view channel information."
+    on:             "\x0303✔\x03 Channel information is now private."
+    off:            "\x0303✔\x03 Channel information is now public."
   secure:
     syntax:         "SET <#channel> SECURE {ON|OFF}"
     short:          "Require access list for channel ranks."

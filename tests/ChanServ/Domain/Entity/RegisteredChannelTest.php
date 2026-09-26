@@ -35,6 +35,7 @@ final class RegisteredChannelTest extends TestCase
         self::assertSame('', $channel->getMlock());
         self::assertFalse($channel->isSecure());
         self::assertFalse($channel->isIrcopOnly());
+        self::assertFalse($channel->isPrivate());
         self::assertNull($channel->getTopic());
         self::assertTrue($channel->isFounder(1));
         self::assertFalse($channel->isFounder(2));
@@ -83,6 +84,18 @@ final class RegisteredChannelTest extends TestCase
         self::assertTrue($channel->isIrcopOnly());
         $channel->configureIrcopOnly(false);
         self::assertFalse($channel->isIrcopOnly());
+    }
+
+    #[Test]
+    public function configurePrivateChangesPersistedChannelPolicy(): void
+    {
+        $channel = RegisteredChannel::register(new DateTimeImmutable(), '#private', 1, 'Private');
+
+        $channel->configurePrivate(true);
+        self::assertTrue($channel->isPrivate());
+
+        $channel->configurePrivate(false);
+        self::assertFalse($channel->isPrivate());
     }
 
     #[Test]

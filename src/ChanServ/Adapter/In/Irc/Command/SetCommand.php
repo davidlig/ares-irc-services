@@ -18,13 +18,13 @@ use function strtoupper;
  *
  * Value is optional for some options (e.g. SUCCESSOR with no value clears the successor).
  * Option handlers: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG,
- * TOPICLOCK, MLOCK, SECURE. FOUNDER and SUCCESSOR require founder; others require SET level.
+ * TOPICLOCK, MLOCK, SECURE, PRIVATE. FOUNDER and SUCCESSOR require founder; others require SET level.
  */
 final readonly class SetCommand implements ChanServCommandInterface
 {
     private const array SUPPORTED_OPTIONS = [
         'FOUNDER', 'SUCCESSOR', 'DESC', 'URL', 'EMAIL', 'ENTRYMSG',
-        'TOPICLOCK', 'MLOCK', 'SECURE',
+        'TOPICLOCK', 'MLOCK', 'SECURE', 'PRIVATE',
     ];
 
     /** @var array<string, SetOptionHandlerInterface> */
@@ -41,6 +41,7 @@ final readonly class SetCommand implements ChanServCommandInterface
         SetTopiclockHandler $setTopiclockHandler,
         SetMlockHandler $setMlockHandler,
         SetSecureHandler $setSecureHandler,
+        SetPrivateHandler $setPrivateHandler,
     ) {
         $this->handlers = [
             'FOUNDER' => $setFounderHandler,
@@ -52,6 +53,7 @@ final readonly class SetCommand implements ChanServCommandInterface
             'TOPICLOCK' => $setTopiclockHandler,
             'MLOCK' => $setMlockHandler,
             'SECURE' => $setSecureHandler,
+            'PRIVATE' => $setPrivateHandler,
         ];
     }
 
@@ -102,6 +104,7 @@ final readonly class SetCommand implements ChanServCommandInterface
             ['name' => 'TOPICLOCK', 'desc_key' => 'set.topiclock.short', 'help_key' => 'set.topiclock.help', 'syntax_key' => 'set.topiclock.syntax'],
             ['name' => 'MLOCK', 'desc_key' => 'set.mlock.short', 'help_key' => 'set.mlock.help', 'syntax_key' => 'set.mlock.syntax'],
             ['name' => 'SECURE', 'desc_key' => 'set.secure.short', 'help_key' => 'set.secure.help', 'syntax_key' => 'set.secure.syntax'],
+            ['name' => 'PRIVATE', 'desc_key' => 'set.private.short', 'help_key' => 'set.private.help', 'syntax_key' => 'set.private.syntax'],
         ];
     }
 
