@@ -94,7 +94,7 @@ secure:
 set:
   syntax:           "SET <#channel> <seçenek> [değer]"
   short:            "Kanal seçeneklerini değiştirin."
-  help:             "Kanal seçeneklerini değiştirin. Her biri için \x0303HELP SET <seçenek>\x03 kullanın: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Kanal seçeneklerini değiştirin. Her biri için \x0303HELP SET <seçenek>\x03 kullanın: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Bilinmeyen seçenek \x02%option%\x02. Şunlardan birini kullanın: %options%."
   founder:
     syntax:         "SET <#channel> FOUNDER <nickname> [token]"
@@ -163,6 +163,12 @@ set:
     off:            "\x0303✔\x03 MLOCK şimdi KAPALI."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 MLOCK özelliğini etkinleştiriyor (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 MLOCK özelliğini devre dışı bırakıyor."
+  private:
+    syntax:         "SET <#channel> PRIVATE {ON|OFF}"
+    short:          "Kanal bilgilerini erişimi olmayan kullanıcılardan gizleyin."
+    help:           "ON olduğunda, kanal bilgilerini yalnızca kurucu ve erişimi olan kullanıcılar görebilir."
+    on:             "\x0303✔\x03 Kanal bilgileri artık gizli."
+    off:            "\x0303✔\x03 Kanal bilgileri artık herkese açık."
   secure:
     syntax:         "SET <#channel> SECURE {ON|OFF}"
     short:          "Kanal rütbeleri için erişim listesi gerektirin."

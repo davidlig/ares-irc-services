@@ -94,7 +94,7 @@ secure:
 set:
   syntax:           "SET <#channel> <option> [value]"
   short:            "Αλλαγή επιλογών καναλιού."
-  help:             "Αλλαγή επιλογών καναλιού. Χρησιμοποιήστε \x0303HELP SET <option>\x03 για καθεμία: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Αλλαγή επιλογών καναλιού. Χρησιμοποιήστε \x0303HELP SET <option>\x03 για καθεμία: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Άγνωστη επιλογή \x02%option%\x02. Χρησιμοποιήστε μία από: %options%."
   founder:
     syntax:         "SET <#channel> FOUNDER <nickname> [token]"
@@ -163,6 +163,12 @@ set:
     off:            "\x0303✔\x03 Το MLOCK είναι τώρα OFF."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 ενεργοποιεί το MLOCK (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 απενεργοποιεί το MLOCK."
+  private:
+    syntax:         "SET <#κανάλι> PRIVATE {ON|OFF}"
+    short:          "Απόκρυψη πληροφοριών καναλιού."
+    help:           "Όταν είναι ON, μόνο ο ιδρυτής και οι χρήστες με πρόσβαση μπορούν να δουν τις πληροφορίες του καναλιού."
+    on:             "\x0303✔\x03 Οι πληροφορίες του καναλιού είναι πλέον ιδιωτικές."
+    off:            "\x0303✔\x03 Οι πληροφορίες του καναλιού είναι πλέον δημόσιες."
   secure:
     syntax:         "SET <#channel> SECURE {ON|OFF}"
     short:          "Απαίτηση λίστας πρόσβασης για βαθμίδες καναλιού."

@@ -94,7 +94,7 @@ secure:
 set:
   syntax:           "SET <#canal> <opțiune> [valoare]"
   short:            "Modificați opțiunile canalului."
-  help:             "Modificați opțiunile canalului. Folosiți \x0303HELP SET <opțiune>\x03 pentru fiecare: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Modificați opțiunile canalului. Folosiți \x0303HELP SET <opțiune>\x03 pentru fiecare: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Folosiți una dintre: %options%."
   founder:
     syntax:         "SET <#canal> FOUNDER <poreclă> [token]"
@@ -163,6 +163,12 @@ set:
     off:            "\x0303✔\x03 MLOCK este acum DEZACTIVAT."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activează MLOCK (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 dezactivează MLOCK."
+  private:
+    syntax:         "SET <#canal> PRIVATE {ON|OFF}"
+    short:          "Ascunde informațiile canalului de utilizatorii fără acces."
+    help:           "Când este ON, doar fondatorul și utilizatorii cu acces pot vedea informațiile canalului."
+    on:             "\x0303✔\x03 Informațiile canalului sunt acum private."
+    off:            "\x0303✔\x03 Informațiile canalului sunt acum publice."
   secure:
     syntax:         "SET <#canal> SECURE {ON|OFF}"
     short:          "Solicitați lista de acces pentru ranguri de canal."

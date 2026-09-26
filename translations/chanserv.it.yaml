@@ -94,7 +94,7 @@ secure:
 set:
   syntax:           "SET <#canale> <opzione> [valore]"
   short:            "Modifica le opzioni del canale."
-  help:             "Modifica le opzioni del canale. Usi \x0303HELP SET <opzione>\x03 per ognuna: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Modifica le opzioni del canale. Usi \x0303HELP SET <opzione>\x03 per ognuna: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Opzione sconosciuta \x02%option%\x02. Usi una tra: %options%."
   founder:
     syntax:         "SET <#canale> FOUNDER <nickname> [token]"
@@ -163,6 +163,12 @@ set:
     off:            "\x0303✔\x03 MLOCK ora OFF."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 attiva MLOCK (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 disattiva MLOCK."
+  private:
+    syntax:         "SET <#canale> PRIVATE {ON|OFF}"
+    short:          "Nascondi le informazioni del canale agli utenti senza accesso."
+    help:           "Quando ON, solo il fondatore e gli utenti con accesso possono visualizzare le informazioni del canale."
+    on:             "\x0303✔\x03 Le informazioni del canale ora sono private."
+    off:            "\x0303✔\x03 Le informazioni del canale ora sono pubbliche."
   secure:
     syntax:         "SET <#canale> SECURE {ON|OFF}"
     short:          "Richiede la lista di accesso per i ranghi del canale."

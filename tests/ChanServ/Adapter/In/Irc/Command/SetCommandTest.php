@@ -13,6 +13,7 @@ use App\ChanServ\Adapter\In\Irc\Command\SetEmailHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetEntrymsgHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetFounderHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetMlockHandler;
+use App\ChanServ\Adapter\In\Irc\Command\SetPrivateHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetSecureHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetSuccessorHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetTopiclockHandler;
@@ -106,6 +107,7 @@ final class SetCommandTest extends TestCase
             new SetTopiclockHandler($settingUpdater),
             new SetMlockHandler($this->createStub(ConfigureChannelMlockHandlerInterface::class), new MlockStateFromChannelResolver()),
             new SetSecureHandler($this->createStub(ConfigureChannelSecureHandlerInterface::class)),
+            new SetPrivateHandler($settingUpdater),
         );
     }
 
@@ -303,9 +305,10 @@ final class SetCommandTest extends TestCase
             ),
         );
         $help = $cmd->getSubCommandHelp();
-        self::assertCount(9, $help);
+        self::assertCount(10, $help);
         self::assertSame('FOUNDER', $help[0]['name']);
         self::assertSame('SUCCESSOR', $help[1]['name']);
+        self::assertSame('PRIVATE', $help[9]['name']);
     }
 
     #[Test]

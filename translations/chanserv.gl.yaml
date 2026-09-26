@@ -94,7 +94,7 @@ secure:
 set:
   syntax:           "SET <#canle> <opción> [valor]"
   short:            "Cambiar as opcións da canle."
-  help:             "Cambiar as opcións da canle. Use \x0303HELP SET <opción>\x03 para cada unha: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Cambiar as opcións da canle. Use \x0303HELP SET <opción>\x03 para cada unha: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Opción descoñecida \x02%option%\x02. Use unha de: %options%."
   founder:
     syntax:         "SET <#canle> FOUNDER <alcume> [token]"
@@ -163,6 +163,12 @@ set:
     off:            "\x0303✔\x03 MLOCK está agora OFF."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa MLOCK (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva MLOCK."
+  private:
+    syntax:         "SET <#canle> PRIVATE {ON|OFF}"
+    short:          "Agochar a información da canle aos usuarios sen acceso."
+    help:           "Cando está ON, só o fundador e os usuarios con acceso poden ver a información da canle."
+    on:             "\x0303✔\x03 A información da canle agora é privada."
+    off:            "\x0303✔\x03 A información da canle agora é pública."
   secure:
     syntax:         "SET <#canle> SECURE {ON|OFF}"
     short:          "Esixir lista de acceso para rangos de canle."

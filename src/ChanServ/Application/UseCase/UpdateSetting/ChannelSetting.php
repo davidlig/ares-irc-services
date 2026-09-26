@@ -9,6 +9,7 @@ enum ChannelSetting
     case Description;
     case Email;
     case EntryMessage;
+    case Private;
     case Successor;
     case TopicLock;
     case Url;

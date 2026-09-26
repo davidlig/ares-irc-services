@@ -94,7 +94,7 @@ secure:
 set:
   syntax:           "SET <#kanala> <aukera> [balioa]"
   short:            "Aldatu kanalaren aukerak."
-  help:             "Aldatu kanalaren aukerak. Erabili \x0303HELP SET <aukera>\x03 bakoitzerako: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  help:             "Aldatu kanalaren aukerak. Erabili \x0303HELP SET <aukera>\x03 bakoitzerako: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
   unknown_option:    "\x0304✗\x03 Aukera ezezaguna \x02%option%\x02. Erabili hauetako bat: %options%."
   founder:
     syntax:         "SET <#kanala> FOUNDER <ezizena> [tokena]"
@@ -163,6 +163,12 @@ set:
     off:            "\x0303✔\x03 MLOCK orain OFF dago."
     notice_on:      "\x0303✔\x03 \x0302%nickname%\x03(e)k MLOCK gaitzen du (%modes%)."
     notice_off:     "\x0304✗\x03 \x0302%nickname%\x03(e)k MLOCK desgaitzen du."
+  private:
+    syntax:         "SET <#kanala> PRIVATE {ON|OFF}"
+    short:          "Ezkutatu kanalaren informazioa sarbiderik gabeko erabiltzaileei."
+    help:           "ON dagoenean, sortzaileak eta sarbidea duten erabiltzaileek soilik ikus dezakete kanalaren informazioa."
+    on:             "\x0303✔\x03 Kanalaren informazioa pribatua da orain."
+    off:            "\x0303✔\x03 Kanalaren informazioa publikoa da orain."
   secure:
     syntax:         "SET <#kanala> SECURE {ON|OFF}"
     short:          "Eskatu sarbide zerrenda kanal mailetarako."
