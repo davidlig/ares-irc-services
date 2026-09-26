@@ -32,7 +32,7 @@ class WorkflowTests(unittest.TestCase):
         import json
         config = json.loads((ROOT / 'scripts/deploy/templates/config.example.json').read_text())
         self.assertEqual('/runner-state/_work', config['runner_container_work_root'])
-        self.assertEqual('/usr/bin/python3', config['backup_command'][0])
+        self.assertNotIn('backup_command', config)
         self.assertNotIn('password', str(config).lower())
 
     def test_packaging_shell_syntax(self):
@@ -59,3 +59,14 @@ class WorkflowTests(unittest.TestCase):
     def test_infrastructure_tests_follow_dependency_install(self):
         workflow = (ROOT / '.github/workflows/ci.yml').read_text()
         self.assertLess(workflow.index('      - name: Install dependencies'), workflow.index('      - name: Test deployment infrastructure'))
+
+    def test_no_automatic_backup_helper_or_procedures(self):
+        self.assertFalse((ROOT / 'scripts/deploy/backup.py').exists())
+        self.assertFalse((ROOT / 'scripts/deploy/tests/test_backup.py').exists())
+        guide = (ROOT / 'scripts/deploy/README.md').read_text()
+        self.assertIn('No automatic database backup or configuration copy', guide)
+        self.assertNotIn('backup.py', guide)
+        self.assertNotIn('--credentials-image', guide)
+        self.assertNotIn('mariadb-dump', guide)
+        self.assertNotIn('mariadb:11.4', guide)
+        self.assertNotIn('client.cnf', guide)

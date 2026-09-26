@@ -25,14 +25,11 @@ class DeployTests(unittest.TestCase):
         self.env = self.root / 'env'
         self.env.write_text('DATABASE_URL=secret\n')
         self.env.chmod(0o600)
-        self.helper = self.root / 'backup'
-        self.helper.write_text('#!/bin/sh\nexit 0\n')
-        self.helper.chmod(0o700)
         self.config = dict(runner_work_root=str(self.root / 'work'),
                            runner_container_work_root='/runner-state/_work',
                            deploy_root=str(self.root / 'deploy'), env_file=str(self.env),
                            legacy_checkout=str(self.root / 'legacy'),
-                           backup_command=[str(self.helper)], readiness_timeout=2)
+                           readiness_timeout=2)
         self.config_path = self.root / 'config.json'
         self.config_path.write_text(json.dumps(self.config))
         self.config_path.chmod(0o600)
@@ -116,8 +113,6 @@ class DeployTests(unittest.TestCase):
             calls.append((argv, cwd))
             if failure and argv == ['make', failure]:
                 raise deploy.DeployError('command failed')
-            if failure == 'backup' and argv[0] == str(self.helper):
-                raise deploy.DeployError('backup failed')
             return ''
         request = self.archive()
         def readiness(*args, **kwargs):
@@ -136,11 +131,26 @@ class DeployTests(unittest.TestCase):
         self.assertTrue((self.root / 'deploy/releases' / self.sha / '.env.local').is_symlink())
         self.assertFalse((self.root / 'deploy/releases' / self.sha / 'var/log').is_symlink())
 
-    def test_backup_failure_never_stops_services(self):
-        executor, request, calls = self.run_deploy('backup')
+    def test_no_automatic_backup_or_env_copy_preserves_historical_artifacts(self):
+        historical = self.root / 'deploy/backups/historical'
+        historical.mkdir(parents=True)
+        artifact = historical / '.env.local'
+        artifact.write_text('preserved old artifact')
+        before = self.env.read_bytes()
+        executor, request, calls = self.run_deploy()
+        executor.execute(*request)
+        self.assertEqual('preserved old artifact', artifact.read_text())
+        self.assertEqual([historical], list(historical.parent.iterdir()))
+        self.assertEqual(before, self.env.read_bytes())
+        self.assertFalse(any('backup' in str(argv).lower() for argv, _ in calls))
+        copies = [path for path in (self.root / 'deploy').rglob('.env.local') if not path.is_symlink()]
+        self.assertEqual([artifact], copies)
+
+    def test_obsolete_backup_command_is_rejected(self):
+        self.config['backup_command'] = ['/usr/bin/python3', '/old/backup.py']
+        self.config_path.write_text(json.dumps(self.config))
         with self.assertRaises(deploy.DeployError):
-            executor.execute(*request)
-        self.assertFalse(any(argv in (['make', 'down'], ['make', 'clean'], ['make', 'up']) for argv, _ in calls))
+            deploy.load_config(self.config_path)
 
     def test_hash_failure_never_runs_commands(self):
         executor, request, calls = self.run_deploy()
@@ -196,7 +206,7 @@ class DeployTests(unittest.TestCase):
         second, request, calls = self.run_deploy()
         second.execute(*request)
         self.assertFalse(any(cwd == self.config['legacy_checkout'] for _, cwd in calls))
-        metadata = list((self.root / 'deploy/backups').glob('d*/deployment.json'))[0]
+        metadata = list((self.root / 'deploy/attempts').glob('d*/status.json'))[0]
         self.assertTrue(json.loads(metadata.read_text())['previous'].endswith('a' * 40))
 
     def test_existing_current_survives_failed_next_activation(self):
@@ -258,14 +268,15 @@ class DeployTests(unittest.TestCase):
         self.assertIn('__ARES_DEPLOY_STATUS__:1', out.getvalue())
 
     def test_attempt_failure_metadata_and_private_diagnostic_log(self):
-        executor, request, calls = self.run_deploy('backup')
+        executor, request, calls = self.run_deploy('up')
         with self.assertRaises(deploy.DeployError):
             executor.execute(*request)
         attempt = list((self.root / 'deploy/attempts').iterdir())[0]
         metadata = json.loads((attempt / 'status.json').read_text())
         self.assertEqual('failed', metadata['status'])
-        self.assertEqual('backup', metadata['stage'])
-        self.assertTrue(Path(metadata['backup']).is_dir())
+        self.assertEqual('up', metadata['stage'])
+        self.assertNotIn('backup', metadata)
+        self.assertIsNone(metadata['previous'])
         self.assertEqual(0o600, (attempt / 'status.json').stat().st_mode & 0o777)
         log = attempt / 'command.log'
         deploy.command(['/usr/bin/python3', '-c', 'print("private-build-diagnostic")'], log_path=log)
@@ -356,6 +367,34 @@ class DeployTests(unittest.TestCase):
             executor = deploy.Executor(cfg)
         self.assertEqual('unix:///var/run/docker.sock', executor.env.get('DOCKER_HOST'))
         self.assertNotIn('DOCKER_CONTEXT', executor.env)
+
+    def test_external_environment_requires_protected_file_and_ancestors(self):
+        self.env.chmod(0o666)
+        with self.assertRaises(deploy.DeployError):
+            deploy.load_config(self.config_path)
+        self.env.chmod(0o600)
+        secrets = self.root / 'secrets'
+        secrets.mkdir(mode=0o700)
+        protected_env = secrets / '.env.local'
+        self.env.rename(protected_env)
+        self.config['env_file'] = str(protected_env)
+        self.config_path.write_text(json.dumps(self.config))
+        deploy.load_config(self.config_path)
+        secrets.chmod(0o770)
+        with self.assertRaises(deploy.DeployError):
+            deploy.load_config(self.config_path)
+
+    def test_external_environment_rejects_untrusted_owner(self):
+        original = Path.lstat
+        def lstat(path, *args, **kwargs):
+            info = original(path, *args, **kwargs)
+            if path == self.env:
+                values = list(info)
+                values[4] = os.geteuid() + 1
+                return os.stat_result(values)
+            return info
+        with patch.object(Path, 'lstat', lstat), self.assertRaises(deploy.DeployError):
+            deploy.load_config(self.config_path)
 
 
 if __name__ == '__main__':

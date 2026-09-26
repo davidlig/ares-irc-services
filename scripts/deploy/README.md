@@ -13,17 +13,16 @@ operator authorization; committing these files does not install anything remotel
 2. Register a dedicated Ares runner, configure the `production` environment,
    and test request rejection without deploying.
 3. Schedule the first cutover. After both CI jobs pass on a main push, the executor
-   backs up, runs `make down && make clean && make up`, and checks fresh IRC readiness.
+   runs `make down && make clean && make up`, and checks fresh IRC readiness.
 
 ## Prerequisites and trust boundary
 
 - Host: Linux, user systemd with linger enabled by an administrator, Python 3,
   GNU Make, Docker Engine and Compose v2. Deployment account has Docker access.
-- Normally the running `ares-irc-services` container supplies its effective
-  `DATABASE_URL`, captured privately through PHP/Symfony. For an initial deployment
-  without any Ares container, explicitly configure the bootstrap pair below. The MariaDB client runs on the host network: the database
-  hostname must resolve and be reachable there. Production Ares uses host networking
-  through `docker/compose.production.yaml`; keep that override in the deployment.
+- Production Ares uses host networking through `docker/compose.production.yaml`;
+  the configured external MariaDB hostname must resolve and be reachable there.
+  Deployment Docker commands are pinned to the local Unix socket, not an ambient
+  Docker context. No database client or credential-reader image is required.
 - Source checkout and all protected deployment directories must be owned by the
   deployment account (or root where appropriate), without group/other write access.
   The user-provided `.env.local` is not replaced or printed; entrypoint can append keys.
@@ -36,13 +35,9 @@ operator authorization; committing these files does not install anything remotel
   The bridge limits interfaces, not the privileges of trusted main code: the host
   executes its Makefile and Docker build. Checksums prove integrity, not origin
   authentication or a host sandbox. A compromised runner can endanger the host.
-- Pin the official runner base image to a reviewed digest and choose a MariaDB client
-  image compatible with the deployed database. Re-pull that client before downtime.
+- Pin the official runner base image to a reviewed digest.
 
-See [GitHub self-hosted runner security](https://docs.github.com/en/actions/reference/runners/self-hosted-runners)
-and [MariaDB dump semantics](https://mariadb.com/docs/server/clients-and-utilities/backup-restore-and-import-clients/mariadb-dump).
-`--single-transaction` assumes transactional tables; concurrent DDL can invalidate
-its consistency guarantees. Routines, events and triggers are included explicitly.
+See [GitHub self-hosted runner security](https://docs.github.com/en/actions/reference/runners/self-hosted-runners).
 
 ## Install host commands and socket
 
@@ -56,7 +51,7 @@ install -d -m 0700 "$ACTIONS_ROOT" "$ACTIONS_ROOT/runner-state" \
   "$ACTIONS_ROOT/runner-command" "$ACTIONS_ROOT/host-command" \
   "$HOME/.config/systemd/user" "$HOME/deploy/ares-irc-services"
 install -m 0700 scripts/deploy/submit-deploy "$ACTIONS_ROOT/runner-command/submit-deploy"
-install -m 0700 scripts/deploy/deploy.py scripts/deploy/backup.py "$ACTIONS_ROOT/host-command/"
+install -m 0700 scripts/deploy/deploy.py "$ACTIONS_ROOT/host-command/"
 install -m 0600 scripts/deploy/templates/config.example.json "$ACTIONS_ROOT/config.json"
 install -m 0600 scripts/deploy/templates/runner-compose.yaml "$ACTIONS_ROOT/compose.yaml"
 install -m 0600 scripts/deploy/templates/runner.Dockerfile "$ACTIONS_ROOT/runner.Dockerfile"
@@ -64,8 +59,8 @@ install -m 0600 scripts/deploy/templates/ares-deploy.socket \
   scripts/deploy/templates/ares-deploy@.service "$HOME/.config/systemd/user/"
 ```
 
-Edit `config.json`: replace every `DEPLOY_USER`, confirm old checkout, absolute
-legacy checkout and backup image. `env_file` must point to the user-provided
+Edit `config.json`: replace every `DEPLOY_USER` and confirm the absolute legacy
+checkout path. `env_file` must point to the user-provided
 `~/deploy/secrets/.env.local`; supply it separately, not through a commit or release
 archive. Once provided, set `chmod 700 "$HOME/deploy/secrets"` and
 `chmod 600 "$HOME/deploy/secrets/.env.local"`. No setup command here reads or copies
@@ -87,33 +82,6 @@ RUNNER_TOKEN=ONE_USE_REGISTRATION_TOKEN
 
 Use the actual values from `id -u`, `id -g` and the repository runner registration
 page. No registration tokens belong in the repository or shell history.
-### Bootstrap when no Ares container exists
-
-Keep the ordinary backup command for subsequent deployments. If the first host
-has no Ares container, append **both** optional flags to `backup_command` in the
-private JSON, before the directory argument added by the executor:
-
-```text
---credentials-image sha256:REVIEWED_EXISTING_ARES_IMAGE_ID
---env-file /home/DEPLOY_USER/deploy/secrets/.env.local
-```
-
-The image must already exist locally and be pinned by full image ID or repository
-digest, and include PHP and Ares's Symfony Dotenv dependencies. Never use a mutable
-tag here. The helper verifies the container is truly absent using a successful
-Docker query; Docker errors, stopped containers, or credential-reading failures
-are not silently converted to bootstrap. With a running container it retains the
-normal runtime credential source.
-
-The ephemeral reader bypasses the image entrypoint and executes only PHP, with
-network disabled, a read-only root filesystem and a read-only external env mount.
-It starts no daemon, runs no migration, and emits credentials only into a private
-captured pipe. Symfony `loadEnv` reads the external configuration, ignoring dumped
-`.env.local.php` and any baked `DATABASE_URL`. Secret file permissions are 0600,
-secret directory 0700, owned by the deployment account. The actual database dump
-still uses the MariaDB client on the host network; backup is never skipped.
-Remove the bootstrap flags once a running Ares container is established if desired.
-
 Enable socket and runner:
 
 ```bash
@@ -138,10 +106,8 @@ that permit automatic deployment if no manual approvals are intended. Restrict
 runner access to this repository and do not add its label to other jobs.
 The deploy job waits for PHP quality/coverage **and** the migration matrix.
 
-Before the first merge, review host config and make sure either the old container
-is running or the explicit bootstrap image is available, the external secret file
-is ready, backup permissions work,
-and a maintenance window is available. The first activation stops the legacy
+Before the first merge, review host config, confirm the external secret file is
+ready, and schedule a maintenance window. The first activation stops the legacy
 Compose project; subsequent releases use stable project `ares-production`.
 Never launch a second Ares instance with the same IRC identity.
 
@@ -157,10 +123,10 @@ directory; `make clean` clears release-local cache/log files and local Docker im
 No old data/logs are copied. Cleanup of previous data artifacts is a separate operation.
 Startup readiness inspects only fresh logs from the new release after cleanup,
 not old logs. The production database must remain external MariaDB, not release-local SQLite.
-Protected backups and deployment diagnostics are retained outside releases and
-are independent of disposable application logs.
+Protected deployment diagnostics are retained outside releases and are independent
+of disposable application logs. Existing historical artifacts are not deleted.
 
-A deployment saves configuration and a MariaDB dump before stopping services.
+No automatic database backup or configuration copy is performed before deployment.
 `make clean` acts only on release-local paths, not the external configuration or MariaDB.
 Startup runs migrations and appends missing configuration keys. Readiness requires
 new EOS and all four service introductions, no restart/link loss, then ten stable
@@ -169,11 +135,11 @@ This proves initial network synchronization, not every service command end-to-en
 
 ## Failure and manual recovery
 
-Build, backup and startup failures fail Actions. Migration/start/readiness failures
-stop the new container and preserve backups and release diagnostics; **there is no
+Build and startup failures fail Actions. Migration/start/readiness failures
+stop the new container and preserve release diagnostics; **there is no
 automatic database restore or migration down**. Actions prints only sanitized status.
 Inspect `~/deploy/ares-irc-services/attempts/<commit>-<attempt>/status.json`
-for the failed stage and release/backup locations, and `command.log` for captured
+for the failed stage, attempted release and previous release, and `command.log` for captured
 build/migration output (both mode 0600, directory 0700). Read these protected
 host diagnostics and app/error logs in the attempted release's `var/log` locally,
 without copying credentials or raw private logs into issues.
@@ -185,29 +151,18 @@ not guaranteed by deployment. Before restarting the previous source, inspect
 migration changes and prove compatibility with the current schema. If compatible,
 select that release explicitly and start with the same production Compose project,
 production override and the external secret bind mount. Never run both old and new.
-If incompatible, keep Ares stopped, fix forward or perform an approved database
-restore. A restore can discard writes and must account for IRC/UDB state.
-
-For an approved MariaDB restore, create a private `client.cnf` (mode 0600), use a
-compatible client image and the preserved `database.sql` as stdin:
-
-```bash
-docker run --rm -i --network host --user "$(id -u):$(id -g)" \
-  --mount "type=bind,src=/ABSOLUTE/PRIVATE/client.cnf,dst=/client.cnf,readonly" \
-  mariadb:11.4 mariadb --defaults-extra-file=/client.cnf < /ABSOLUTE/BACKUP/database.sql
-```
-
-Reconcile restored DB with IRC/UDB before restarting. Do not paste passwords into
-argv or environment, and remove the private restore credential file afterwards.
-Retain backups/releases until recovery has been tested; cleanup is a separate,
-explicit operation, never part of a failed activation.
+If incompatible, keep Ares stopped and fix forward. Startup migrations are not
+reversed automatically, and restarting an older image does not undo schema changes.
+Database maintenance and recovery are separate operator decisions, not deployment
+procedures. Retain existing artifacts and releases; cleanup is a separate, explicit
+operation, never part of a failed activation.
 
 ## Local validation
 
 ```bash
 python3 -m unittest discover -s scripts/deploy/tests -v
-python3 -m py_compile scripts/deploy/deploy.py scripts/deploy/backup.py scripts/deploy/submit-deploy
+python3 -m py_compile scripts/deploy/deploy.py scripts/deploy/submit-deploy
 ```
 
 These checks use fakes and fixtures. They do not register a runner, access production,
-restart services, or prove live database backup/recovery.
+restart services, or prove a live deployment.

@@ -25,7 +25,7 @@ MAX_EXPANDED = 512 * 1024 * 1024
 MAX_FILES = 30000
 PATH = '/usr/local/bin:/usr/bin:/bin'
 REQUIRED = {'runner_work_root', 'runner_container_work_root', 'deploy_root',
-            'env_file', 'backup_command', 'legacy_checkout'}
+            'env_file', 'legacy_checkout'}
 
 
 class DeployError(Exception):
@@ -69,7 +69,7 @@ def load_config(path):
     cfg = json.loads(path.read_text())
     if not isinstance(cfg, dict) or not REQUIRED <= cfg.keys() or cfg.keys() - REQUIRED - {'readiness_timeout'}:
         raise DeployError('invalid configuration fields')
-    for key in REQUIRED - {'backup_command'}:
+    for key in REQUIRED:
         value = cfg[key]
         if not isinstance(value, str) or not Path(value).is_absolute() or '..' in Path(value).parts:
             raise DeployError('configuration paths must be absolute')
@@ -85,15 +85,7 @@ def load_config(path):
             raise DeployError('first cutover requires legacy checkout')
     if not Path(cfg['env_file']).is_file() or Path(cfg['env_file']).is_symlink():
         raise DeployError('environment file unavailable')
-    command = cfg['backup_command']
-    if not isinstance(command, list) or not command or any(not isinstance(arg, str) or '\0' in arg for arg in command):
-        raise DeployError('invalid backup command')
-    if not Path(command[0]).is_absolute():
-        raise DeployError('backup executable must be absolute')
-    for arg in command:
-        if Path(arg).is_absolute():
-            # Distribution Python can be a trusted symlink, resolve before checking.
-            private_file(Path(arg).resolve())
+    private_file(cfg['env_file'])
     timeout = cfg.get('readiness_timeout', 120)
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not 1 <= timeout <= 600:
         raise DeployError('invalid readiness timeout')
@@ -365,19 +357,13 @@ class Executor:
             (release / '.env.local').symlink_to(self.cfg['env_file'])
             self.env['ARES_COMPOSE_OVERRIDE'] = str(release / 'docker/compose.production.yaml')
             self.stage('preflight', release=str(release))
-            # Validate tooling and rendered mounts before any backup or service interruption.
+            # Validate tooling and rendered mounts before any service interruption.
             self.run(['make', '--version'], env=self.env)
             self.run(['docker', 'compose', 'version'], env=self.env)
             self.run(['docker', 'compose', '-f', 'docker/compose.yaml', '-f', 'docker/compose.production.yaml', 'config', '--quiet'], cwd=release, env=self.env)
-            backup = root / 'backups' / (commit + '-' + str(time.time_ns()))
-            backup.mkdir(mode=0o700, parents=True)
-            shutil.copyfile(self.cfg['env_file'], backup / '.env.local')
-            (backup / '.env.local').chmod(0o600)
             current = root / 'current'
             previous = str(current.resolve()) if current.is_symlink() else None
-            (backup / 'deployment.json').write_text(json.dumps({'previous': previous, 'commit': commit}))
-            self.stage('backup', backup=str(backup), previous=previous)
-            self.run(self.cfg['backup_command'] + [str(backup)], env=self.env)
+            self.stage('preflight', previous=previous)
             # Once cut over, do not revisit the legacy project even if activation later fails.
             cutover = root / '.legacy-stopped'
             if not cutover_done(root):
