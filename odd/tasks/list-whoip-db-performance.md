@@ -23,7 +23,7 @@ Implement the accepted plan: optimize NickServ WHOIP and NickServ/ChanServ LIST 
 
 ## Tasks
 
-- [ ] **T1 — WHOIP index and regression proof.** Delegate mapping/writer: XML, migration and tests. Verify IP lookup, null/missing/multiple matches, IPv4/IPv6, deterministic order, migration up/down and index access. Commit behavior with tests.
+- [x] **T1 — WHOIP index and regression proof.** Delegate mapping/writer: XML, migration and tests. Verify IP lookup, null/missing/multiple matches, IPv4/IPv6, deterministic order, migration up/down and index access. Commit behavior with tests.
 - [ ] **T2 — Compatible LIST queries and native schema extensions.** Delegate writer: both repositories, migration and tests. Use original LOWER semantics; exact equality plus escaped LIKE residual (SQLite equality NOCASE); wildcard LIKE. Compare old/new outputs including Unicode and escaping. No new inner-layer contracts. Commit behavior with tests and persistence contract documentation.
 - [ ] **T3 — Migrated database matrix and query-plan proof.** Delegate writer: isolated migration-backed tests and CI SQLite/MariaDB11.4/PostgreSQL17/MySQL8.4. Explicit disposable test DSN only; no ambient production DATABASE_URL. ~50k synthetic rows, updated statistics, selective EXPLAIN checks without timing thresholds. Migration up/down/reapply and semantic equivalence per engine. Commit checks with CI integration.
 - [ ] **T4 — v2.2.2 metadata and final local verification.** Delegate version config, CTCP expectations, changelog and cumulative release documentation. Parent runs final gates in order. Keep historical changelog entries. Commit metadata with tests.
@@ -42,9 +42,11 @@ Implement the accepted plan: optimize NickServ WHOIP and NickServ/ChanServ LIST 
 
 - Planning complete; local main clean before branch creation. Runtime authoritative session identity unavailable: Engram writes omit session_id.
 - Remote scope confirmed by user: current gh session, davidlig/ares-irc-services, full planned delivery; no SSH/direct production access.
-- Work-unit commits: none yet. Authored changed lines: 0.
+- T1 verified: portable XML/migration index and 3 regression tests (146 authored implementation/test lines). RED before source: 3 tests with 2 failures/1 error for missing index. Writer and parent GREEN: 34 tests/94 assertions, no issues; SQLite up/down/reapply preserved rows, EXPLAIN uses SEARCH without scan/sort. Changed PHP lint, focused PHPStan max, fixer dry-run and diff checks passed. Cross-engine runtime proof is assigned to T3, not claimed here. RDD disabled/unmanaged.
+- Initial tracker commit: `96b8108b`. Approved GitHub issue: https://github.com/davidlig/ares-irc-services/issues/11. v2.2.1 remote notes and prior SHA backed up in `.git/ares-release-2.2.1.json`; no assets.
+- T4 metadata prepared independently: version/config/CTCP/changelog, 37 authored lines. Writer RED: 24 tests/844 assertions, one expected version failure. Writer and parent GREEN: 24 tests/844 assertions, no issues. PHP syntax, scoped PHPStan/fixer dry-run, YAML and diff checks passed. Final project verification remains pending, so T4 stays unchecked. Work-unit commit: `5fd75119` (`chore(irc): prepare v2.2.2 performance release`).
 - Mirror: `odd/list-whoip-db-performance/tasks`; synchronized at task checkpoints and verified by readback.
 
 ## Next step
 
-T1 implementation after initial tracker/mirror readback. Parent owns subsequent evidence and mirror updates.
+Implement T2; independent T3 harness work is in progress. Final gates remain pending; do not publish before completion.
