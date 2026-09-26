@@ -262,7 +262,19 @@ final class DatabaseQueryOptimizationTest extends TestCase
             $this->createdSqliteStatistics = true;
         }
         foreach (['registered_nicks', 'registered_channels'] as $table) {
-            $this->connection->executeStatement(($this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform ? 'ANALYZE TABLE ' : 'ANALYZE ') . $table);
+            if ($this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform) {
+                // ANALYZE TABLE yields a status rowset; PDO::exec leaves it pending.
+                $result = $this->connection->executeQuery('ANALYZE TABLE ' . $table);
+                try {
+                    $rows = $result->fetchAllAssociative();
+                    self::assertContains('OK', array_column($rows, 'Msg_text'));
+                    self::assertNotContains('error', array_column($rows, 'Msg_type'));
+                } finally {
+                    $result->free();
+                }
+            } else {
+                $this->connection->executeStatement('ANALYZE ' . $table);
+            }
         }
     }
 
