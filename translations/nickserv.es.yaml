@@ -322,7 +322,7 @@ whoip:
     Sintaxis: WHOIP <ip>
     Ejemplo: WHOIP 203.0.113.7
   empty:            "No hay apodos registrados que coincidan con esta dirección IP."
-  result:           "Coincidencia de apodo: %nickname%"
+  header:           "Apodos coincidentes:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

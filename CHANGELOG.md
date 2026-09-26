@@ -1,3 +1,9 @@
+## [2.2.1] - 2026-09-27
+
+### Bug Fixes
+
+- Show one localized heading for NickServ `WHOIP` matches followed by one plain nickname per line, instead of repeating the result label for every nickname.
+
 ## [2.2.0] - 2026-09-26
 
 ### Features

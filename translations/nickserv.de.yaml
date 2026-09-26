@@ -322,7 +322,7 @@ whoip:
     Syntax: WHOIP <ip>
     Beispiel: WHOIP 203.0.113.7
   empty:            "Keine registrierten Nicknames passen zu dieser IP."
-  result:           "Passender Nickname: %nickname%"
+  header:           "Übereinstimmende Nicknamen:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

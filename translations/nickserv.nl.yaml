@@ -322,7 +322,7 @@ whoip:
     Syntax: WHOIP <ip>
     Voorbeeld: WHOIP 203.0.113.7
   empty:            "Geen geregistreerde nicknames komen overeen met dit IP-adres."
-  result:           "Overeenkomende nickname: %nickname%"
+  header:           "Overeenkomende nicknames:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

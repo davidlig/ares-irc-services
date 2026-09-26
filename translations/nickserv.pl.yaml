@@ -322,7 +322,7 @@ whoip:
     Składnia: WHOIP <ip>
     Przykład: WHOIP 203.0.113.7
   empty:            "Brak zarejestrowanych pseudonimów pasujących do tego adresu IP."
-  result:           "Pasujący pseudonim: %nickname%"
+  header:           "Pasujące pseudonimy:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

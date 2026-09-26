@@ -322,7 +322,7 @@ whoip:
     Sözdizimi: WHOIP <ip>
     Örnek: WHOIP 203.0.113.7
   empty:            "Bu IP adresiyle eşleşen kayıtlı takma ad yok."
-  result:           "Eşleşen takma ad: %nickname%"
+  header:           "Eşleşen takma adlar:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

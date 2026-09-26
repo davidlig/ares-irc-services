@@ -96,8 +96,9 @@ final readonly class WhoipCommand implements NickServCommandInterface, IrcopAudi
         if ([] === $nicknames) {
             $context->reply('whoip.empty');
         } else {
+            $context->reply('whoip.header');
             foreach ($nicknames as $nickname) {
-                $context->reply('whoip.result', ['nickname' => $nickname]);
+                $context->replyRaw($nickname);
             }
         }
 

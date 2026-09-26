@@ -322,7 +322,7 @@ whoip:
     Sintassi: WHOIP <ip>
     Esempio: WHOIP 203.0.113.7
   empty:            "Nessun nickname registrato corrisponde a questo indirizzo IP."
-  result:           "Nickname corrispondente: %nickname%"
+  header:           "Nickname corrispondenti:"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
