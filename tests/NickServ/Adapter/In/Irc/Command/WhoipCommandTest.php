@@ -16,6 +16,7 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIp;
 use App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandlerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -57,13 +58,40 @@ final class WhoipCommandTest extends TestCase
     }
 
     #[Test]
-    public function rejectsInvalidIpWithSyntaxAndDoesNotQuery(): void
+    #[DataProvider('invalidIpProvider')]
+    public function rejectsInvalidIpWithSyntaxAndDoesNotQuery(string $ip): void
     {
         $handler = $this->createMock(FindNicknamesByLastConnectIpHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
         $messages = [];
-        $outcome = new WhoipCommand($handler)->execute($this->createContext($this->sender(), $messages, ['not-an-ip']));
+        $outcome = new WhoipCommand($handler)->execute($this->createContext($this->sender(), $messages, [$ip]));
+
+        self::assertFalse($outcome->success);
+        self::assertSame(['error.syntax [%syntax%: whoip.syntax]'], $messages);
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function invalidIpProvider(): iterable
+    {
+        yield 'hostname' => ['not-an-ip'];
+        yield 'empty' => [''];
+        yield 'invalid IPv4 octet' => ['192.0.2.256'];
+        yield 'IPv4 subnet' => ['192.0.2.0/24'];
+        yield 'IPv6 subnet' => ['2001:db8::/32'];
+        yield 'IPv4 port' => ['192.0.2.1:6667'];
+        yield 'bracketed IPv6' => ['[2001:db8::1]'];
+        yield 'leading whitespace' => [' 192.0.2.1'];
+    }
+
+    #[Test]
+    public function rejectsMissingArgumentWithSyntaxAndDoesNotQuery(): void
+    {
+        $handler = $this->createMock(FindNicknamesByLastConnectIpHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+
+        $messages = [];
+        $outcome = new WhoipCommand($handler)->execute($this->createContext($this->sender(), $messages, []));
 
         self::assertFalse($outcome->success);
         self::assertSame(['error.syntax [%syntax%: whoip.syntax]'], $messages);

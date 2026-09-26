@@ -87,11 +87,7 @@ final readonly class WhoipCommand implements NickServCommandInterface, IrcopAudi
         }
 
         $packedIp = inet_pton($context->args[0]);
-        if (false === $packedIp) {
-            return $this->rejectSyntax($context);
-        }
-
-        $ip = inet_ntop($packedIp);
+        $ip = false === $packedIp ? false : inet_ntop($packedIp);
         if (false === $ip) {
             return $this->rejectSyntax($context);
         }
