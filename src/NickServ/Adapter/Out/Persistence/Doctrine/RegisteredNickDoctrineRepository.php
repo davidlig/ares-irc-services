@@ -211,6 +211,22 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return array_values(array_filter($result, static fn (mixed $row): bool => $row instanceof RegisteredNick));
     }
 
+    public function findNicknamesByLastConnectIp(string $ip): array
+    {
+        $queryBuilder = $this->em->createQueryBuilder();
+        $queryBuilder->select('n.nickname')
+            ->from(RegisteredNick::class, 'n')
+            ->where('n.lastConnectIp = :ip')
+            ->setParameter('ip', $ip)
+            ->orderBy('n.nicknameLower', 'ASC')
+            ->addOrderBy('n.id', 'ASC');
+
+        /** @var list<string> $nicknames */
+        $nicknames = $queryBuilder->getQuery()->getSingleColumnResult();
+
+        return $nicknames;
+    }
+
     private static function toLikePattern(string $pattern): string
     {
         return strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);

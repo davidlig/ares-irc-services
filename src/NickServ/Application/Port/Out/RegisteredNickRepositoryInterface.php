@@ -78,4 +78,7 @@ interface RegisteredNickRepositoryInterface
      * @return list<RegisteredNick>
      */
     public function searchByPattern(string $pattern, int $offset, int $limit): array;
+
+    /** @return list<string> */
+    public function findNicknamesByLastConnectIp(string $ip): array;
 }

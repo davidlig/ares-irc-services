@@ -340,6 +340,64 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         self::assertSame([], $this->repository->searchByPattern('*', 0, 0));
     }
 
+    #[Test]
+    public function findNicknamesByLastConnectIpMatchesExactIpv4InStableOrderAcrossStatuses(): void
+    {
+        $ipv4 = '203.0.113.7';
+        $zebra = $this->createRegisteredNick('Zebra', 'zebra@example.com');
+        $zebra->updateLastConnection($ipv4, 'zebra.example');
+        $this->repository->save($zebra);
+
+        $alpha = $this->createRegisteredNick('alpha', 'alpha@example.com');
+        $alpha->updateLastConnection($ipv4, 'alpha.example');
+        $this->repository->save($alpha);
+
+        $bravo = $this->createRegisteredNick('Bravo', 'bravo@example.com');
+        $bravo->updateLastConnection($ipv4, 'bravo.example');
+        $this->repository->save($bravo);
+
+        $pending = RegisteredNick::createPending(
+            'Pending',
+            '$argon2id$v=19$m=65536,t=4,p=1$test$test',
+            'pending@example.com',
+            'en',
+            new DateTimeImmutable('+24 hours'),
+            new DateTimeImmutable(),
+        );
+        $pending->updateLastConnection($ipv4, 'pending.example');
+        $this->repository->save($pending);
+
+        $otherIp = $this->createRegisteredNick('OtherIp', 'other-ip@example.com');
+        $otherIp->updateLastConnection('203.0.113.8', 'other.example');
+        $this->repository->save($otherIp);
+        $this->repository->save($this->createRegisteredNick('NoIp', 'no-ip@example.com'));
+        $this->flushAndClear();
+
+        self::assertSame(
+            ['alpha', 'Bravo', 'Pending', 'Zebra'],
+            $this->repository->findNicknamesByLastConnectIp($ipv4),
+        );
+    }
+
+    #[Test]
+    public function findNicknamesByLastConnectIpMatchesCanonicalIpv6AndReturnsEmptyForUnknownIp(): void
+    {
+        $ipv6 = '2001:db8::5';
+        foreach ([['V6Bravo', 'v6-bravo@example.com'], ['V6Alpha', 'v6-alpha@example.com']] as [$nickname, $email]) {
+            $nick = $this->createRegisteredNick($nickname, $email);
+            $nick->updateLastConnection($ipv6, 'ipv6.example');
+            $this->repository->save($nick);
+        }
+
+        $otherIp = $this->createRegisteredNick('OtherV6', 'other-v6@example.com');
+        $otherIp->updateLastConnection('2001:db8::6', 'other.example');
+        $this->repository->save($otherIp);
+        $this->flushAndClear();
+
+        self::assertSame(['V6Alpha', 'V6Bravo'], $this->repository->findNicknamesByLastConnectIp($ipv6));
+        self::assertSame([], $this->repository->findNicknamesByLastConnectIp('2001:db8::7'));
+    }
+
     /**
      * @param list<RegisteredNick> $nicks
      *
