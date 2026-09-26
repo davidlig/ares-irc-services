@@ -3,6 +3,8 @@
 # Detect docker compose command (v2 uses 'docker compose', v1 uses 'docker-compose')
 DOCKER_COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 UID := $(shell id -u)
+# Production adds host networking without changing local Compose defaults.
+COMPOSE_FILES := -f docker/compose.yaml $(if $(ARES_COMPOSE_OVERRIDE),-f $(ARES_COMPOSE_OVERRIDE))
 
 BACKUP_DIR ?= backups
 BACKUP_FILE = ares-$(shell date +%Y%m%d-%H%M%S).db
@@ -14,10 +16,10 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: ## Build Docker image
-	UID=$(UID) $(DOCKER_COMPOSE) -f docker/compose.yaml build
+	UID=$(UID) $(DOCKER_COMPOSE) $(COMPOSE_FILES) build
 
 build-no-cache: ## Build without cache
-	UID=$(UID) $(DOCKER_COMPOSE) -f docker/compose.yaml build --no-cache
+	UID=$(UID) $(DOCKER_COMPOSE) $(COMPOSE_FILES) build --no-cache
 
 config: ## Create .env.local from .env template
 	@./scripts/init-env.sh
@@ -28,35 +30,35 @@ up: ## Start services in background (always rebuilds image)
 		exit 1; \
 	fi
 	@mkdir -p var/data var/log
-	UID=$(UID) $(DOCKER_COMPOSE) -f docker/compose.yaml up -d --build
+	UID=$(UID) $(DOCKER_COMPOSE) $(COMPOSE_FILES) up -d --build
 
 down: ## Stop services
-	$(DOCKER_COMPOSE) -f docker/compose.yaml down
+	$(DOCKER_COMPOSE) $(COMPOSE_FILES) down
 
 logs: ## Follow logs in real-time
-	$(DOCKER_COMPOSE) -f docker/compose.yaml logs -f ares
+	$(DOCKER_COMPOSE) $(COMPOSE_FILES) logs -f ares
 
 logs-tail: ## Show last 100 lines of logs
-	$(DOCKER_COMPOSE) -f docker/compose.yaml logs --tail=100 ares
+	$(DOCKER_COMPOSE) $(COMPOSE_FILES) logs --tail=100 ares
 
 ps: ## Show container status
-	$(DOCKER_COMPOSE) -f docker/compose.yaml ps
+	$(DOCKER_COMPOSE) $(COMPOSE_FILES) ps
 
 shell: ## Open shell inside container
-	$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares /bin/sh
+	$(DOCKER_COMPOSE) $(COMPOSE_FILES) exec ares /bin/sh
 
 clean: ## Remove containers, volumes, and images
-	$(DOCKER_COMPOSE) -f docker/compose.yaml down -v --rmi local
+	$(DOCKER_COMPOSE) $(COMPOSE_FILES) down -v --rmi local
 	rm -rf var/cache/* var/log/*
 
 restart: down up ## Restart services
 
 # Database operations
 db-shell: ## Open SQLite shell
-	$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares php bin/console dbal:run-sql
+	$(DOCKER_COMPOSE) $(COMPOSE_FILES) exec ares php bin/console dbal:run-sql
 
 db-migrate: ## Run migrations manually
-	$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares php bin/console doctrine:migrations:migrate -n
+	$(DOCKER_COMPOSE) $(COMPOSE_FILES) exec ares php bin/console doctrine:migrations:migrate -n
 
 db-backup: ## Backup database to backups/ directory
 	@mkdir -p $(BACKUP_DIR)
@@ -72,16 +74,16 @@ db-restore: ## Restore database from backups/ (usage: make db-restore FILE=backu
 		echo "❌ File not found: $(FILE)"; \
 		exit 1; \
 	fi
-	@$(DOCKER_COMPOSE) -f docker/compose.yaml down
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILES) down
 	@cp $(FILE) var/data/ares.db
-	@$(DOCKER_COMPOSE) -f docker/compose.yaml up -d
+	@$(DOCKER_COMPOSE) $(COMPOSE_FILES) up -d
 	@echo "✅ Database restored from: $(FILE)"
 
 config-show: ## Show current configuration
-	$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares php bin/console debug:dotenv
+	$(DOCKER_COMPOSE) $(COMPOSE_FILES) exec ares php bin/console debug:dotenv
 
 health: ## Check container health
-	@container_id="$$($(DOCKER_COMPOSE) -f docker/compose.yaml ps -q ares)"; \
+	@container_id="$$($(DOCKER_COMPOSE) $(COMPOSE_FILES) ps -q ares)"; \
 		if [ -n "$$container_id" ] && [ "$$(docker inspect --format '{{.State.Health.Status}}' "$$container_id" 2>/dev/null)" = "healthy" ]; then \
 			echo "✅ Healthy"; \
 		else \

@@ -10,11 +10,12 @@ services:
     mem_limit: ${ARES_CONTAINER_MEMORY_LIMIT:-2G}
     stop_grace_period: 30s
 
-    # Bind mounts for persistence
+    # Deployments override host paths to keep persistence outside release checkouts.
+    # Local development retains the existing defaults; env remains writable for sync.
     volumes:
-      - ../var/data:/app/var/data
-      - ../var/log:/app/var/log
-      - ../.env.local:/app/.env.local
+      - ${ARES_DATA_DIR:-../var/data}:/app/var/data
+      - ${ARES_LOG_DIR:-../var/log}:/app/var/log
+      - ${ARES_ENV_FILE:-../.env.local}:/app/.env.local
 
     # Network configuration for external IRCD access
     extra_hosts:
