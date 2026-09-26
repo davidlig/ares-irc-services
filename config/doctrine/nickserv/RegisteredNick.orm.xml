@@ -6,6 +6,7 @@
     <entity name="App\NickServ\Domain\Entity\RegisteredNick" table="registered_nicks">
         <indexes>
             <index name="idx_nickname_lower" columns="nickname_lower"/>
+            <index name="idx_registered_nicks_whoip" columns="last_connect_ip,nickname_lower,id"/>
             <index name="idx_status_expires" columns="status,expires_at"/>
             <index name="idx_status_pending_deletion" columns="status,pending_deletion_at"/>
         </indexes>

@@ -8,7 +8,10 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\ResultSetMappingBuilder;
 
 use function is_array;
 use function is_string;
@@ -184,31 +187,52 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function countByPattern(string $pattern): int
     {
-        $queryBuilder = $this->em->createQueryBuilder();
-        $queryBuilder->select('COUNT(n.id)')
-            ->from(RegisteredNick::class, 'n')
-            ->where("LOWER(n.nicknameLower) LIKE :pattern ESCAPE '!'")
-            ->setParameter('pattern', self::toLikePattern($pattern));
+        [$predicate, $parameters] = $this->patternPredicate($pattern);
 
-        return (int) $queryBuilder->getQuery()->getSingleScalarResult();
+        $count = $this->em->getConnection()->fetchOne(
+            'SELECT COUNT(n.id) FROM registered_nicks n WHERE ' . $predicate,
+            $parameters,
+        );
+
+        return is_numeric($count) ? (int) $count : 0;
     }
 
     public function searchByPattern(string $pattern, int $offset, int $limit): array
     {
-        $queryBuilder = $this->em->createQueryBuilder();
-        $queryBuilder->select('n')
-            ->from(RegisteredNick::class, 'n')
-            ->where("LOWER(n.nicknameLower) LIKE :pattern ESCAPE '!'")
-            ->setParameter('pattern', self::toLikePattern($pattern))
-            ->orderBy('n.nicknameLower', 'ASC')
-            ->addOrderBy('n.id', 'ASC')
-            ->setFirstResult(max(0, $offset))
-            ->setMaxResults(max(0, $limit));
+        [$predicate, $parameters] = $this->patternPredicate($pattern);
+        $mapping = new ResultSetMappingBuilder($this->em);
+        $mapping->addRootEntityFromClassMetadata(RegisteredNick::class, 'n');
+        $sql = 'SELECT ' . $mapping->generateSelectClause()
+            . ' FROM registered_nicks n WHERE ' . $predicate
+            . ' ORDER BY n.nickname_lower ASC, n.id ASC';
+        $sql = $this->em->getConnection()->getDatabasePlatform()->modifyLimitQuery($sql, max(0, $limit), max(0, $offset));
 
         /** @var array<mixed> $result */
-        $result = $queryBuilder->getQuery()->getResult();
+        $result = $this->em->createNativeQuery($sql, $mapping)->setParameters($parameters)->getResult();
 
         return array_values(array_filter($result, static fn (mixed $row): bool => $row instanceof RegisteredNick));
+    }
+
+    /** @return array{string, array<string, string>} */
+    private function patternPredicate(string $pattern): array
+    {
+        $platform = $this->em->getConnection()->getDatabasePlatform();
+        $expression = match (true) {
+            $platform instanceof AbstractMySQLPlatform => 'n.list_search_key',
+            // SQLite LIKE already folds ASCII, just like its built-in LOWER.
+            $platform instanceof SQLitePlatform => 'n.nickname_lower',
+            default => 'LOWER(n.nickname_lower)',
+        };
+        $predicate = $expression . " LIKE :pattern ESCAPE '!'";
+        $parameters = ['pattern' => self::toLikePattern($pattern)];
+        if (!str_contains($pattern, '*')) {
+            $equality = $platform instanceof SQLitePlatform ? $expression . ' COLLATE NOCASE' : $expression;
+            // Keep LIKE: equality can ignore trailing spaces or broaden linguistic matches.
+            $predicate = $equality . ' = :exact AND ' . $predicate;
+            $parameters['exact'] = strtolower($pattern);
+        }
+
+        return [$predicate, $parameters];
     }
 
     public function findNicknamesByLastConnectIp(string $ip): array

@@ -80,10 +80,16 @@ jobs:
         include:
           - engine: sqlite
             database_url: "sqlite:///%kernel.project_dir%/var/data/matrix.db"
+            query_test_database_url: "sqlite:///:memory:"
           - engine: mariadb
             database_url: "mysql://ares:ares@127.0.0.1:3306/ares?serverVersion=11.4.2-MariaDB&charset=utf8mb4"
+            query_test_database_url: "mysql://ares:ares@127.0.0.1:3306/ares?serverVersion=11.4.2-MariaDB&charset=utf8mb4"
           - engine: postgres
             database_url: "postgresql://ares:ares@127.0.0.1:5432/ares?serverVersion=17&charset=utf8"
+            query_test_database_url: "postgresql://ares:ares@127.0.0.1:5432/ares?serverVersion=17&charset=utf8"
+          - engine: mysql
+            database_url: "mysql://ares:ares@127.0.0.1:3307/ares?serverVersion=8.4.0&charset=utf8mb4"
+            query_test_database_url: "mysql://ares:ares@127.0.0.1:3307/ares?serverVersion=8.4.0&charset=utf8mb4"
 
     services:
       mariadb:
@@ -97,6 +103,20 @@ jobs:
           - 3306:3306
         options: >-
           --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: ares
+          MYSQL_USER: ares
+          MYSQL_PASSWORD: ares
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -129,6 +149,12 @@ jobs:
 
       - name: Create DB directory
         run: mkdir -p var/data
+
+      # The harness refuses nonempty schemas and removes only its own migrated fixture.
+      - name: Verify migrated LIST and WHOIP semantics and query plans
+        env:
+          ARES_QUERY_TEST_DATABASE_URL: ${{ matrix.query_test_database_url }}
+        run: ./vendor/bin/phpunit --no-coverage --display-all-issues tests/Bootstrap/Persistence/DatabaseQueryOptimizationTest.php
 
       - name: Run migrations
         env:

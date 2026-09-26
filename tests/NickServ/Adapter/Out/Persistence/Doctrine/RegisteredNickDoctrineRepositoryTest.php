@@ -10,12 +10,23 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\NativeQuery;
 use Doctrine\ORM\Query;
+use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\QueryBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+
+use function array_slice;
+use function count;
 
 #[CoversClass(RegisteredNickDoctrineRepository::class)]
 #[Group('integration')]
@@ -27,6 +38,105 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     {
         parent::setUp();
         $this->repository = new RegisteredNickDoctrineRepository($this->entityManager);
+    }
+
+    #[Test]
+    #[DataProvider('listPlatforms')]
+    public function countUsesThePlatformSearchKeyAndRetainsTheLiteralLikeCheck(string $engine): void
+    {
+        $platform = match ($engine) {
+            'mysql' => new MySQLPlatform(),
+            'mariadb' => new MariaDBPlatform(),
+            'postgres' => new PostgreSQLPlatform(),
+            default => new SQLitePlatform(),
+        };
+        $expression = match ($engine) {
+            'mysql', 'mariadb' => 'n.list_search_key',
+            'sqlite' => 'n.nickname_lower',
+            default => 'LOWER(n.nickname_lower)',
+        };
+        $equality = 'sqlite' === $engine ? $expression . ' COLLATE NOCASE' : $expression;
+        $connection = $this->createMock(Connection::class);
+        $connection->method('getDatabasePlatform')->willReturn($platform);
+        $connection->expects(self::once())->method('fetchOne')
+            ->with(
+                'SELECT COUNT(n.id) FROM registered_nicks n WHERE ' . $equality . ' = :exact AND ' . $expression . " LIKE :pattern ESCAPE '!'",
+                ['pattern' => 'name!!!%!_', 'exact' => 'name!%_'],
+            )
+            ->willReturn('2');
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        self::assertSame(2, new RegisteredNickDoctrineRepository($em)->countByPattern('NAME!%_'));
+    }
+
+    #[Test]
+    public function countReturnsZeroWhenTheDriverHasNoScalarResult(): void
+    {
+        $connection = $this->createStub(Connection::class);
+        $connection->method('getDatabasePlatform')->willReturn(new SQLitePlatform());
+        $connection->method('fetchOne')->willReturn(false);
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+
+        self::assertSame(0, new RegisteredNickDoctrineRepository($em)->countByPattern('*'));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function listPlatforms(): iterable
+    {
+        foreach (['sqlite', 'postgres', 'mysql', 'mariadb'] as $engine) {
+            yield $engine => [$engine];
+        }
+    }
+
+    #[Test]
+    public function nativePageBindsItsPatternAndFiltersUnexpectedHydrationRows(): void
+    {
+        $connection = $this->createStub(Connection::class);
+        $connection->method('getDatabasePlatform')->willReturn(new MySQLPlatform());
+        $entity = $this->createRegisteredNick('Native', 'native@example.com');
+        $query = $this->createMock(NativeQuery::class);
+        $query->expects(self::once())->method('setParameters')
+            ->with(['pattern' => 'na%'])->willReturnSelf();
+        $query->expects(self::once())->method('getResult')->willReturn(['unexpected', $entity]);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+        $em->method('getClassMetadata')->willReturn($this->entityManager->getClassMetadata(RegisteredNick::class));
+        $em->expects(self::once())->method('createNativeQuery')
+            ->with(
+                self::callback(static fn (string $sql): bool => str_contains($sql, "n.list_search_key LIKE :pattern ESCAPE '!'")
+                    && str_ends_with($sql, 'ORDER BY n.nickname_lower ASC, n.id ASC LIMIT 2 OFFSET 3')),
+                self::callback(static fn (ResultSetMapping $mapping): bool => NickStatus::class === ($mapping->enumMappings['status'] ?? null)),
+            )->willReturn($query);
+
+        self::assertSame([$entity], new RegisteredNickDoctrineRepository($em)->searchByPattern('Na*', 3, 2));
+    }
+
+    #[Test]
+    public function listPreservesLegacyMatchesForUnicodeLiteralsAndPageBoundaries(): void
+    {
+        foreach (['Alpha', 'Alpine', 'Literal!%_?[]\\\\Name', 'École', 'éclair', 'İstanbul', 'space '] as $index => $name) {
+            $this->entityManager->persist($this->createRegisteredNick($name, 'list-' . $index . '@example.com'));
+        }
+        $this->flushAndClear();
+        $connection = $this->entityManager->getConnection();
+
+        $connection->update('registered_nicks', ['nickname_lower' => 'AlPhA'], ['nickname' => 'Alpha']);
+        $connection->update('registered_nicks', ['nickname_lower' => 'ÉcOlE'], ['nickname' => 'École']);
+
+        foreach (['*', 'ALPHA', 'Al*', '*a*', '**a**', 'Literal!%_?[]\\\\Name', 'É*', 'é*', 'İ*', 'space ', 'space'] as $pattern) {
+            $like = strtr(strtolower($pattern), ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+            $legacy = $connection->fetchFirstColumn(
+                "SELECT nickname FROM registered_nicks WHERE LOWER(nickname_lower) LIKE ? ESCAPE '!' ORDER BY nickname_lower ASC, id ASC",
+                [$like],
+            );
+            self::assertSame(count($legacy), $this->repository->countByPattern($pattern), $pattern);
+            foreach ([[0, 10], [1, 2], [-5, 1], [0, 0], [0, -2], [999, 5]] as [$offset, $limit]) {
+                $actual = array_map(static fn (RegisteredNick $entity): string => $entity->getNickname(), $this->repository->searchByPattern($pattern, $offset, $limit));
+                self::assertSame(array_slice($legacy, max(0, $offset), max(0, $limit)), $actual, $pattern);
+            }
+        }
     }
 
     #[Test]
