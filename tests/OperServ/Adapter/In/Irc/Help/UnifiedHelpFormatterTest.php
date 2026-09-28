@@ -17,7 +17,7 @@ use function in_array;
 final class UnifiedHelpFormatterTest extends TestCase
 {
     #[Test]
-    public function rendersFilteredGeneralHelpAndSortedIrcopSection(): void
+    public function rendersFilteredGroupedGeneralHelp(): void
     {
         $context = new OperServHelpFormatterContext(
             commands: [
@@ -25,12 +25,7 @@ final class UnifiedHelpFormatterTest extends TestCase
                 new OperServHelpableCommand('VISIBLE', 1),
                 new OperServHelpableCommand('HELP', 0),
             ],
-            ircopCommands: [
-                new OperServHelpableCommand('LATE', 9),
-                new OperServHelpableCommand('EARLY', 1),
-            ],
             visibleCommands: ['VISIBLE'],
-            ircopAccess: true,
         );
 
         new UnifiedHelpFormatter()->showGeneralHelp($context);
@@ -44,13 +39,10 @@ final class UnifiedHelpFormatterTest extends TestCase
             self::assertIsString($reply['params']['command']);
             $renderedCommands[] = $reply['params']['command'];
         }
-        self::assertSame([
-            'VISIBLE     ',
-            'EARLY       ',
-            'LATE        ',
-        ], $renderedCommands);
-        self::assertContains('help.ircop_header', array_column($context->replies, 'key'));
-        self::assertStringContainsString('ℹ translated:help.header_title', $context->rawReplies[0]);
+        self::assertSame(['VISIBLE     '], $renderedCommands);
+        self::assertNotContains('help.ircop_header', array_column($context->replies, 'key'));
+        self::assertStringContainsString('● translated:help.header_title', $context->rawReplies[0]);
+        self::assertContains('help.group_header', array_column($context->replies, 'key'));
     }
 
     #[Test]
@@ -95,7 +87,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'help.syntax_label',
             'help.footer',
         ], array_column($context->replies, 'key'));
-        self::assertStringContainsString('ℹ SET EMAIL', $context->rawReplies[0]);
+        self::assertStringContainsString('● HELP SET EMAIL', $context->rawReplies[0]);
     }
 }
 
@@ -142,6 +134,18 @@ final class OperServHelpFormatterContext implements HelpFormatterContextInterfac
     public function shouldShowCommandInGeneralHelp(HelpableCommandInterface $command): bool
     {
         return in_array($command->getName(), $this->visibleCommands, true);
+    }
+
+    public function canViewCommandInHelp(HelpableCommandInterface $command): bool
+    {
+        return $this->shouldShowCommandInGeneralHelp($command);
+    }
+
+    public function getHelpGroups(): array
+    {
+        return [
+            ['group_key' => 'help.group.operations', 'commands' => ['VISIBLE', 'HIDDEN'], 'admin' => false, 'subgroup' => false],
+        ];
     }
 
     public function getIrcopCommands(): iterable

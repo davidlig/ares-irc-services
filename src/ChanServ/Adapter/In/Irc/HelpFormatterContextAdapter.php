@@ -17,6 +17,14 @@ use function strtolower;
  */
 final readonly class HelpFormatterContextAdapter implements HelpFormatterContextInterface
 {
+    private const array HELP_GROUPS = [
+        ['group_key' => 'help.group.registration_info', 'commands' => ['REGISTER', 'INFO', 'SET'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.access_levels', 'commands' => ['ACCESS', 'DELACCESS', 'LEVELS'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.ranks_entry', 'commands' => ['OP', 'DEOP', 'VOICE', 'DEVOICE', 'ADMIN', 'DEADMIN', 'HALFOP', 'DEHALFOP', 'INVITE'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.protection', 'commands' => ['AKICK'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.ircop_header', 'commands' => ['IRCOPONLY', 'DROP', 'SUSPEND', 'UNSUSPEND', 'FORBID', 'UNFORBID', 'NOEXPIRE', 'CLEARACCESS', 'CLEARUSERS', 'HISTORY', 'RESTORE', 'LIST'], 'admin' => true, 'subgroup' => false],
+    ];
+
     /** Commands that require specific mode support to show (name => mode letter). */
     private const array MODE_DEPENDENT_COMMANDS = [
         'ADMIN' => 'a',
@@ -71,6 +79,26 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         }
 
         return $this->shouldShowByName($command);
+    }
+
+    public function canViewCommandInHelp(HelpableCommandInterface $command): bool
+    {
+        if ($this->shouldShowCommandInGeneralHelp($command)) {
+            return true;
+        }
+
+        foreach ($this->getIrcopCommands() as $ircopCommand) {
+            if ($ircopCommand->getName() === $command->getName()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function getHelpGroups(): array
+    {
+        return self::HELP_GROUPS;
     }
 
     private function shouldShowByName(HelpableCommandInterface $command): bool

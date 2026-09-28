@@ -145,6 +145,41 @@ final class ServicesCommandHelpAlignmentTest extends TestCase
     }
 
     #[Test]
+    public function verifiesGroupedHelpLabelsExistInEveryLocale(): void
+    {
+        self::assertNotNull(self::$translator);
+
+        $groupKeys = [
+            'nickserv' => [
+                'help.group.registration_auth', 'help.group.account_security',
+                'help.ircop_group.lookup', 'help.ircop_group.account_management',
+                'help.ircop_group.suspensions_bans', 'help.ircop_group.deletion',
+            ],
+            'chanserv' => [
+                'help.group.registration_info', 'help.group.access_levels',
+                'help.group.ranks_entry', 'help.group.protection',
+            ],
+            'memoserv' => ['help.group.messages', 'help.group.preferences'],
+            'operserv' => [
+                'help.group.operators_roles', 'help.group.network_security',
+                'help.group.communication', 'help.group.low_level',
+            ],
+        ];
+
+        foreach (self::$registries as $domain => $_registry) {
+            foreach (['help.group_header', 'help.subgroup_header', ...$groupKeys[$domain]] as $key) {
+                foreach (self::LOCALES as $locale) {
+                    self::assertNotSame(
+                        $key,
+                        self::$translator->trans($key, [], $domain, $locale),
+                        sprintf('Missing grouped HELP translation %s in %s (%s).', $key, $domain, $locale),
+                    );
+                }
+            }
+        }
+    }
+
+    #[Test]
     public function detectsDiscrepanciesBetweenHelpSyntaxAndSubcommands(): void
     {
         self::assertNotNull(self::$translator);

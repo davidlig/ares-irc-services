@@ -140,7 +140,7 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
-    public function unknownCommandRepliesHelpUnknown(): void
+    public function hidesPermissionRestrictedCommandHelpWithoutPermission(): void
     {
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -196,9 +196,9 @@ final class HelpCommandTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
-                return null;
+                return 'chanserv.forbid';
             }
 
             public function allowsSuspendedChannel(): bool
@@ -221,7 +221,7 @@ final class HelpCommandTest extends TestCase
         $registry = new ChanServCommandRegistry([$handler]);
 
         $cmd = $this->createCommand();
-        $cmd->execute($this->createContext(['UNKNOWNCMD'], $notifier, $translator, $registry));
+        $cmd->execute($this->createContext(['REGISTER'], $notifier, $translator, $registry));
 
         self::assertContains('help.unknown_command', $messages);
     }

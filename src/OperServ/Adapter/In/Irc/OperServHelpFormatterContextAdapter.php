@@ -9,6 +9,13 @@ use App\OperServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 
 final readonly class OperServHelpFormatterContextAdapter implements HelpFormatterContextInterface
 {
+    private const array HELP_GROUPS = [
+        ['group_key' => 'help.group.operators_roles', 'commands' => ['IRCOP', 'ROLE'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.network_security', 'commands' => ['GLINE', 'KILL'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.communication', 'commands' => ['MOTD', 'GLOBAL'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.low_level', 'commands' => ['RAW'], 'admin' => false, 'subgroup' => false],
+    ];
+
     public function __construct(private OperServContext $context) {}
 
     public function reply(string $key, array $params = []): void
@@ -44,6 +51,16 @@ final readonly class OperServHelpFormatterContextAdapter implements HelpFormatte
         }
 
         return !$command->isOperOnly() || $this->context->isAuthorized(null);
+    }
+
+    public function canViewCommandInHelp(HelpableCommandInterface $command): bool
+    {
+        return $this->shouldShowCommandInGeneralHelp($command);
+    }
+
+    public function getHelpGroups(): array
+    {
+        return self::HELP_GROUPS;
     }
 
     /** @return iterable<HelpableCommandInterface> */

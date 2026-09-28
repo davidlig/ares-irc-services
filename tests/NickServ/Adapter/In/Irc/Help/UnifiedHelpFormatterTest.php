@@ -50,7 +50,9 @@ final class UnifiedHelpFormatterTest extends TestCase
             'LATE        ',
         ], $renderedCommands);
         self::assertContains('help.ircop_header', array_column($context->replies, 'key'));
-        self::assertStringContainsString('ℹ translated:help.header_title', $context->rawReplies[0]);
+        self::assertStringContainsString('● translated:help.header_title', $context->rawReplies[0]);
+        self::assertContains('help.group_header', array_column($context->replies, 'key'));
+        self::assertContains('help.subgroup_header', array_column($context->replies, 'key'));
     }
 
     #[Test]
@@ -95,7 +97,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'help.syntax_label',
             'help.footer',
         ], array_column($context->replies, 'key'));
-        self::assertStringContainsString('ℹ SET EMAIL', $context->rawReplies[0]);
+        self::assertStringContainsString('● HELP SET EMAIL', $context->rawReplies[0]);
     }
 }
 
@@ -142,6 +144,19 @@ final class NickServHelpFormatterContext implements HelpFormatterContextInterfac
     public function shouldShowCommandInGeneralHelp(HelpableCommandInterface $command): bool
     {
         return in_array($command->getName(), $this->visibleCommands, true);
+    }
+
+    public function canViewCommandInHelp(HelpableCommandInterface $command): bool
+    {
+        return $this->shouldShowCommandInGeneralHelp($command) || in_array($command, $this->ircopCommands, true);
+    }
+
+    public function getHelpGroups(): array
+    {
+        return [
+            ['group_key' => 'help.group.public', 'commands' => ['VISIBLE', 'HIDDEN'], 'admin' => false, 'subgroup' => false],
+            ['group_key' => 'help.ircop_group.operations', 'commands' => ['EARLY', 'LATE'], 'admin' => true, 'subgroup' => true],
+        ];
     }
 
     public function getIrcopCommands(): iterable

@@ -95,9 +95,9 @@ final class HelpCommandTest extends TestCase
     /**
      * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string}> $subcommands
      */
-    private function createDummyCommand(string $name, int $order = 1, array $subcommands = []): MemoServCommandInterface
+    private function createDummyCommand(string $name, int $order = 1, array $subcommands = [], bool $operOnly = false): MemoServCommandInterface
     {
-        return new class($name, $order, $subcommands) implements MemoServCommandInterface {
+        return new class($name, $order, $subcommands, $operOnly) implements MemoServCommandInterface {
             /**
              * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string}> $subcommands
              */
@@ -105,6 +105,7 @@ final class HelpCommandTest extends TestCase
                 private string $name,
                 private int $order,
                 private array $subcommands,
+                private bool $operOnly,
             ) {}
 
             public function getName(): string
@@ -152,7 +153,7 @@ final class HelpCommandTest extends TestCase
 
             public function isOperOnly(): bool
             {
-                return false;
+                return $this->operOnly;
             }
 
             public function getRequiredPermission(): ?string
@@ -200,6 +201,25 @@ final class HelpCommandTest extends TestCase
         self::assertNotEmpty($replies);
         self::assertStringContainsString('help.header_title', $replies[0]);
         self::assertContains('help.footer', $replies);
+    }
+
+    #[Test]
+    public function hidesOperOnlyCommandHelpFromNonOperator(): void
+    {
+        $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
+        $command = new HelpCommand(new UnifiedHelpFormatter());
+        $replies = [];
+        $context = $this->createContext(
+            $sender,
+            null,
+            ['RESTRICTED'],
+            $replies,
+            [$this->createDummyCommand('RESTRICTED', operOnly: true)],
+        );
+
+        $command->execute($context);
+
+        self::assertSame(['help.unknown_command [%command%: RESTRICTED]'], $replies);
     }
 
     #[Test]

@@ -121,6 +121,13 @@ final readonly class HelpCommand implements NickServCommandInterface
             return;
         }
 
+        $adapter = $this->createAdapter($context);
+        if (!$adapter->canViewCommandInHelp($handler)) {
+            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+
+            return;
+        }
+
         if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
             $subName = strtoupper($context->args[1]);
             $subCmd = $this->findSubCommand($handler, $subName);
@@ -137,14 +144,12 @@ final readonly class HelpCommand implements NickServCommandInterface
                     return;
                 }
 
-                $adapter = $this->createAdapter($context);
                 $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
                 return;
             }
         }
 
-        $adapter = $this->createAdapter($context);
         $this->formatter->showCommandHelp($adapter, $handler);
     }
 
@@ -173,7 +178,7 @@ final readonly class HelpCommand implements NickServCommandInterface
     private function showTimezoneIndexHelp(NickServContext $context, string $parentName, array $sub): void
     {
         $adapter = $this->createAdapter($context);
-        $this->formatter->sendHeader($adapter, $parentName . ' ' . $sub['name']);
+        $this->formatter->sendHeader($adapter, 'HELP ' . $parentName . ' ' . $sub['name']);
         $context->reply($sub['help_key']);
         $context->replyRaw(' ');
         $context->reply('help.set_timezone.index_label', []);
@@ -219,7 +224,7 @@ final readonly class HelpCommand implements NickServCommandInterface
         $adapter = $this->createAdapter($context);
 
         if (null === $region) {
-            $this->formatter->sendHeader($adapter, 'SET TIMEZONE ' . $regionArg);
+            $this->formatter->sendHeader($adapter, 'HELP SET TIMEZONE ' . $regionArg);
             $context->reply('help.set_timezone.region_unknown', []);
             $context->replyRaw(' ');
             $context->reply('help.footer');
@@ -227,7 +232,7 @@ final readonly class HelpCommand implements NickServCommandInterface
             return;
         }
 
-        $this->formatter->sendHeader($adapter, 'SET TIMEZONE ' . $region);
+        $this->formatter->sendHeader($adapter, 'HELP SET TIMEZONE ' . $region);
         $context->reply('help.set_timezone.region_header', ['region' => $region]);
         $timezones = $this->timezoneHelpProvider->getTimezonesForRegion($region);
         foreach ($this->chunkLine(implode(', ', $timezones), self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {

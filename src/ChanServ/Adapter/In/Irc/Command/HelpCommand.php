@@ -110,19 +110,24 @@ final readonly class HelpCommand implements ChanServCommandInterface
             return;
         }
 
+        $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
+        if (!$adapter->canViewCommandInHelp($handler)) {
+            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+
+            return;
+        }
+
         if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
             $subName = strtoupper($context->args[1]);
             $subCmd = $this->findSubCommand($handler, $subName);
 
             if (null !== $subCmd) {
-                $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
                 $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
                 return;
             }
         }
 
-        $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
         $this->formatter->showCommandHelp($adapter, $handler);
     }
 

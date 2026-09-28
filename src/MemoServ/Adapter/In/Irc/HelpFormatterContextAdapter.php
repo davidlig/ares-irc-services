@@ -12,6 +12,11 @@ use App\MemoServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
  */
 final readonly class HelpFormatterContextAdapter implements HelpFormatterContextInterface
 {
+    private const array HELP_GROUPS = [
+        ['group_key' => 'help.group.messages', 'commands' => ['SEND', 'READ', 'LIST', 'DEL'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.preferences', 'commands' => ['IGNORE', 'ENABLE', 'DISABLE'], 'admin' => false, 'subgroup' => false],
+    ];
+
     public function __construct(
         private MemoServContext $context,
     ) {}
@@ -45,6 +50,16 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     public function shouldShowCommandInGeneralHelp(HelpableCommandInterface $command): bool
     {
         return !$command->isOperOnly();
+    }
+
+    public function canViewCommandInHelp(HelpableCommandInterface $command): bool
+    {
+        return $this->shouldShowCommandInGeneralHelp($command);
+    }
+
+    public function getHelpGroups(): array
+    {
+        return self::HELP_GROUPS;
     }
 
     public function getIrcopCommands(): iterable

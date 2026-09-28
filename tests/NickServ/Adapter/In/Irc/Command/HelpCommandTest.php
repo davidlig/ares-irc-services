@@ -318,7 +318,7 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
-    public function operOnlyCommandHiddenFromNonOper(): void
+    public function permissionRestrictedCommandHelpHiddenWithoutPermission(): void
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false, '', '');
         $messages = [];
@@ -329,7 +329,7 @@ final class HelpCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $operOnlyHandler = new class implements NickServCommandInterface {
+        $restrictedHandler = new class implements NickServCommandInterface {
             public function getName(): string
             {
                 return 'OPERCMD';
@@ -372,12 +372,12 @@ final class HelpCommandTest extends TestCase
 
             public function isOperOnly(): bool
             {
-                return true;
+                return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
-                return null;
+                return 'nickserv.forbid';
             }
 
             public function getHelpParams(): array
@@ -390,10 +390,10 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
         };
-        $registry = new NickServCommandRegistry([$operOnlyHandler]);
+        $registry = new NickServCommandRegistry([$restrictedHandler]);
 
         $cmd = $this->createHelpCommand(0);
-        $cmd->execute($this->createContext($sender, ['OPER'], $notifier, $translator, $registry));
+        $cmd->execute($this->createContext($sender, ['OPERCMD'], $notifier, $translator, $registry));
 
         self::assertContains('help.unknown_command', $messages);
     }
