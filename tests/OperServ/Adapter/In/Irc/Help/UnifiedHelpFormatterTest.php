@@ -10,12 +10,17 @@ use App\OperServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Yaml\Yaml;
 
 use function in_array;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {
+    private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
+
+    private const array ALLOWED_COLORS = ['03', '04', '06', '07', '10', '14'];
+
     #[Test]
     public function rendersFilteredGroupedGeneralHelp(): void
     {
@@ -41,7 +46,8 @@ final class UnifiedHelpFormatterTest extends TestCase
         }
         self::assertSame(['VISIBLE     '], $renderedCommands);
         self::assertNotContains('help.ircop_header', array_column($context->replies, 'key'));
-        self::assertStringContainsString('● translated:help.header_title', $context->rawReplies[0]);
+        self::assertSame('help.header', $context->replies[0]['key']);
+        self::assertSame('translated:help.header_title', $context->replies[0]['params']['title']);
         self::assertContains('help.group_header', array_column($context->replies, 'key'));
     }
 
@@ -113,12 +119,109 @@ final class UnifiedHelpFormatterTest extends TestCase
         ]);
 
         self::assertSame([
+            'help.header',
             'set.email.help',
             'set.email.options',
             'help.syntax_label',
             'help.footer',
         ], array_column($context->replies, 'key'));
-        self::assertStringContainsString('● HELP SET EMAIL', $context->rawReplies[0]);
+        self::assertSame('help.header', $context->replies[0]['key']);
+        self::assertSame('HELP SET EMAIL', $context->replies[0]['params']['title']);
+    }
+
+    #[Test]
+    public function operServCatalogsUseOnlyCanonicalHelpColorsAndKeepPlaceholderContracts(): void
+    {
+        $root = dirname(__DIR__, 6);
+        $colorRoles = [
+            'help.header' => ['06', '14'],
+            'help.general_header' => ['06'],
+            'help.options_header' => ['06'],
+            'help.command_line' => ['10', '03'],
+            'help.subcommand_line' => ['10', '03'],
+            'help.general_footer' => ['10', '03'],
+            'help.set_sub_footer' => ['10', '03'],
+            'help.syntax_label' => ['03'],
+            'help.group_header' => ['06'],
+            'help.subgroup_header' => ['04'],
+            'help.unknown_command' => ['04', '03'],
+            'help.ircop_header' => ['04'],
+            'help.intro_expiration' => ['07'],
+            'help.footer' => ['14'],
+        ];
+        $placeholderContracts = [
+            'help.header' => ['%title%', '%separator%'],
+            'help.command_line' => ['%command%', '%description%'],
+            'help.subcommand_line' => ['%command%', '%description%'],
+            'help.general_footer' => ['%bot%'],
+            'help.set_sub_footer' => ['%bot%', '%command%'],
+            'help.syntax_label' => ['%syntax%'],
+            'help.group_header' => ['%group%'],
+            'help.subgroup_header' => ['%group%'],
+            'help.unknown_command' => ['%command%', '%bot%'],
+        ];
+
+        foreach (self::LOCALES as $locale) {
+            $catalog = Yaml::parseFile($root . '/translations/operserv.' . $locale . '.yaml');
+            self::assertIsArray($catalog, $locale);
+            self::assertArrayHasKey('help', $catalog, $locale);
+            self::assertIsArray($catalog['help'], $locale);
+
+            $entries = [];
+            $flatten = static function (array $values, string $prefix) use (&$flatten, &$entries): void {
+                foreach ($values as $key => $value) {
+                    $path = $prefix . '.' . (string) $key;
+                    if (is_array($value)) {
+                        $flatten($value, $path);
+                    } elseif (is_string($value)) {
+                        $entries[$path] = $value;
+                    }
+                }
+            };
+            $flatten($catalog['help'], 'help');
+
+            foreach ($entries as $key => $value) {
+                preg_match_all('/\x03([0-9]{1,2})/', $value, $matches, PREG_OFFSET_CAPTURE);
+                foreach ($matches[1] as $index => [$color, $offset]) {
+                    self::assertSame(2, strlen($color), $locale . ': ' . $key . ' uses a two-digit mIRC color');
+                    self::assertContains($color, self::ALLOWED_COLORS, $locale . ': ' . $key . ' uses canonical colors only');
+
+                    $fragmentStart = $offset + 2;
+                    $nextColorOffset = $matches[0][$index + 1][1] ?? strlen($value);
+                    $fragment = substr($value, $fragmentStart, $nextColorOffset - $fragmentStart);
+                    self::assertTrue(
+                        str_contains($fragment, "\x0F") || 1 === preg_match('/\x03(?![0-9]{2})/', $fragment),
+                        $locale . ': ' . $key . ' resets each colored fragment',
+                    );
+                }
+            }
+
+            foreach ($colorRoles as $key => $colors) {
+                self::assertArrayHasKey($key, $entries, $locale);
+                preg_match_all('/\x03([0-9]{2})/', $entries[$key], $matches);
+                foreach ($colors as $color) {
+                    self::assertContains($color, $matches[1], $locale . ': ' . $key . ' uses its semantic palette role');
+                }
+            }
+
+            foreach ($placeholderContracts as $key => $placeholders) {
+                self::assertArrayHasKey($key, $entries, $locale);
+                foreach ($placeholders as $placeholder) {
+                    self::assertStringContainsString($placeholder, $entries[$key], $locale . ': ' . $key . ' retains ' . $placeholder);
+                }
+            }
+
+            self::assertStringContainsString(
+                "\x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%",
+                $entries['help.command_line'],
+                $locale . ': command descriptions return to the default foreground',
+            );
+            self::assertMatchesRegularExpression(
+                '/\x0304✗ [^\x03]+\x03\x0F \x02\x0303%command%\x03\x0F/',
+                $entries['help.unknown_command'],
+                $locale . ': error label and command use their semantic colors and reset',
+            );
+        }
     }
 }
 

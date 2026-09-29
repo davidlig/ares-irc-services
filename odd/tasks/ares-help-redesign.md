@@ -161,7 +161,7 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Verification history: the first catalog run found missing `help.header`; adding that key exposed stale legacy `11`/`12` styles in existing HELP values, so the task stayed open until all 14 help subtrees were migrated. An initial new test fixture also had a command outside its groups; corrected before the final passing run.
 - Runtime harness: **N/A** — translated formatter output is exercised directly by PHPUnit; no live IRC session was authorized or required.
 - Authored diff: 352 additions plus deletions across the ChanServ formatter/command, test, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
-- Progress: implementation and checks complete; work-unit commit pending. Manual IRC-client light/dark visual verification remains pending.
+- Progress: implementation and checks complete; work-unit committed as `3855dc9a` (`fix(chanserv): localize HELP color markup`). Manual IRC-client light/dark visual verification remains pending.
 
 #### HLP-07 — MemoServ color migration
 
@@ -174,10 +174,12 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 
 #### HLP-08 — OperServ color migration and palette regression guard
 
-- [ ] Migrate OperServ HELP formatter, tests, and all 14 locale catalogs using existing translation entries and no new style class; add/extend an all-service/all-locale check preventing forbidden structural colors.
+- [x] Migrate OperServ HELP formatter, tests, and all 14 locale catalogs using existing translation entries and no new style class; add/extend an all-service/all-locale check preventing forbidden structural colors.
 - Route: **delegated direct**. Trigger evidence: formatter, regression test, and 14 locale files are non-trivial; code contracts are frozen by HLP-05.
-- Checks: focused OperServ HELP/formatter tests, all-locale alignment/palette checks, PHP lint, `git diff --check`.
-- Progress: pending.
+- Checks passed: focused OperServ HELP formatter/command tests (`12 tests, 1,888 assertions`); combined all-service HELP, translation alignment, and palette-guard suite (`104 tests, 4,961 assertions`); `php -l` on every changed PHP file; `git diff --check`.
+- Palette guard: `TranslationCatalogTest` inspects all 56 service catalogs across all 14 locales, allowing only structural colors `03`, `04`, `06`, `07`, `10`, and `14`; the same test ensures HELP commands contain no style helper, mIRC color controls, or marker glyphs.
+- Authored diff: 577 additions plus deletions across OperServ formatter/tests, shared translation regression coverage, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
+- Progress: implementation and focused checks complete; work-unit commit pending. Manual IRC-client light/dark visual verification remains pending.
 
 #### HLP-09 — Final verification and delivery record
 
@@ -189,6 +191,6 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 ### Delivery and recovery state
 
 - Feature identity remains `ares-help-redesign`; HLP-01 through HLP-04 above are historical completed tasks, and HLP-05 through HLP-09 are the newly authorized follow-up.
-- Current branch is `feat/ares-help-redesign`; working tree contains an uncommitted NickServ migration and partial ChanServ/MemoServ formatter edits; reconcile those edits with the no-new-class and all-locales constraint before continuing. TDD: disabled, source: prior explicit user choice recorded in the existing tracker, runner: `./vendor/bin/phpunit --no-coverage --display-all-issues`.
-- Forecast: re-estimate for the revised four-service/all-locale implementation; strategy: cached `feature-branch-chain`. Create reviewable local work-unit slices and record each commit in this document. No push/PR/tag or other remote operation.
-- Current next step: commit the verified ChanServ work unit, then complete OperServ and the shared all-service palette guard.
+- Current branch is `feat/ares-help-redesign`; HLP-05, HLP-06, and HLP-07 are committed as `65e4ce57`, `3855dc9a`, and `2522d912`. HLP-08 OperServ plus shared palette guard is implemented and verified but uncommitted. TDD: disabled, source: prior explicit user choice recorded in the existing tracker, runner: `./vendor/bin/phpunit --no-coverage --display-all-issues`.
+- Forecast was under by more than 400 authored changes. Actual follow-up work is approximately 2,533 additions plus deletions across HLP-05 through HLP-08; cached `feature-branch-chain` strategy applies. Keep each service as a local work-unit commit and record commit IDs; no push/PR/tag or other remote operation.
+- Current next step: commit verified HLP-08, then run and record the final project verification gates; manual IRC-client visual verification remains pending.

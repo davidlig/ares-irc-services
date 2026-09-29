@@ -19,6 +19,7 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HelpCommand::class)]
@@ -129,6 +130,44 @@ final class HelpCommandTest extends TestCase
         self::assertSame(['help.unknown_command'], $notifier->messages);
     }
 
+    #[Test]
+    public function rendersLocalizedHeaderRowsAndErrorsWithoutStylesInCommandPhp(): void
+    {
+        $notifier = new HelpNotifier();
+        $command = new HelpCommand(new UnifiedHelpFormatter());
+        $translation = new HelpTranslation($this->englishTranslationEntries());
+
+        $command->execute($this->context(
+            [],
+            [new HelpFixtureCommand('ROLE')],
+            $notifier,
+            $this->authorization(true),
+            $translation,
+        ));
+
+        $generalHelp = implode("\n", $notifier->messages);
+        self::assertSame(
+            "\x02\x0306● OperServ\x03\x0F \x0314" . str_repeat('─', 29) . "\x03\x0F",
+            $notifier->messages[0],
+        );
+        self::assertStringContainsString(
+            "\x0310›\x03\x0F \x02\x0303ROLE        \x03\x0FManage operator roles.",
+            $generalHelp,
+        );
+
+        $notifier->messages = [];
+        $command->execute($this->context(['MISSING'], [], $notifier, $this->authorization(true), $translation));
+        $error = implode("\n", $notifier->messages);
+        self::assertStringContainsString("\x0304✗ Unknown command\x03\x0F \x02\x0303MISSING\x03\x0F", $error);
+        self::assertStringContainsString("\x0303/msg OperServ HELP\x03\x0F", $error);
+
+        $commandSource = file_get_contents(dirname(__DIR__, 6) . '/src/OperServ/Adapter/In/Irc/Command/HelpCommand.php');
+        self::assertIsString($commandSource);
+        foreach (["\\x03", "\\x02", "\\x0F", "\x03", "\x02", "\x0F", '●', '◆', '›', 'ℹ', '⚠', '✗', '─'] as $style) {
+            self::assertStringNotContainsString($style, $commandSource);
+        }
+    }
+
     /** @param list<OperServCommandInterface> $commands
      * @param list<string> $arguments
      */
@@ -137,6 +176,7 @@ final class HelpCommandTest extends TestCase
         array $commands,
         HelpNotifier $notifier,
         OperatorAuthorizationQuery $authorization,
+        ?HelpTranslation $translation = null,
     ): OperServContext {
         return new OperServContext(
             new SenderView('001AAA', 'Oper', 'ident', 'host', 'cloak', 'ip', true, true),
@@ -144,7 +184,7 @@ final class HelpCommandTest extends TestCase
             'HELP',
             $arguments,
             $notifier,
-            new HelpTranslation(),
+            $translation ?? new HelpTranslation(),
             'en',
             'UTC',
             'NOTICE',
@@ -152,6 +192,28 @@ final class HelpCommandTest extends TestCase
             new ServiceNicknameRegistry([]),
             $authorization,
         );
+    }
+
+    /** @return array<string, string> */
+    private function englishTranslationEntries(): array
+    {
+        $catalog = Yaml::parseFile(dirname(__DIR__, 6) . '/translations/operserv.en.yaml');
+        self::assertIsArray($catalog);
+
+        $entries = [];
+        $flatten = static function (array $values, string $prefix = '') use (&$flatten, &$entries): void {
+            foreach ($values as $key => $value) {
+                $path = '' === $prefix ? (string) $key : $prefix . '.' . (string) $key;
+                if (is_array($value)) {
+                    $flatten($value, $path);
+                } elseif (is_string($value)) {
+                    $entries[$path] = $value;
+                }
+            }
+        };
+        $flatten($catalog);
+
+        return $entries;
     }
 
     private function authorization(bool $granted): OperatorAuthorizationQuery
@@ -261,10 +323,20 @@ final class HelpNotifier implements OperServNotifierInterface
 
 final class HelpTranslation implements TranslatorInterface
 {
+    /** @param array<string, string> $translations */
+    public function __construct(private readonly array $translations = []) {}
+
     /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
-        return $id;
+        $replacements = [];
+        foreach ($parameters as $key => $value) {
+            if (is_scalar($value)) {
+                $replacements[(string) $key] = (string) $value;
+            }
+        }
+
+        return strtr($this->translations[$id] ?? $id, $replacements);
     }
 
     public function getLocale(): string

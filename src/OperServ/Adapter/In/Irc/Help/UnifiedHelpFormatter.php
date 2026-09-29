@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\OperServ\Adapter\In\Irc\Help;
 
 use function is_array;
-use function sprintf;
 use function strtoupper;
 
 /**
@@ -22,10 +21,12 @@ final readonly class UnifiedHelpFormatter
 
     public function sendHeader(HelpFormatterContextInterface $context, string $title): void
     {
-        $visible = 4 + mb_strlen($title);
+        $visible = 3 + mb_strlen($title);
         $dashes = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
-        $line = sprintf("\x02\x0312 ● %s \x0F\x0314%s\x03", $title, $dashes);
-        $context->replyRaw($line);
+        $context->reply('help.header', [
+            'title' => $title,
+            'separator' => $dashes,
+        ]);
     }
 
     public function showGeneralHelp(HelpFormatterContextInterface $context): void
