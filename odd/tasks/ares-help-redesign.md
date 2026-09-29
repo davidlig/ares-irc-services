@@ -26,7 +26,7 @@ Current HELP output uses flat command lists and parallel formatters without func
 - TDD: disabled, explicitly selected by user. Use ordinary focused functional checks with `./vendor/bin/phpunit --no-coverage --display-all-issues`.
 - Receipt-driven development: disabled by global user preference; delivery is `disabled/unmanaged`. Do not start reviews, retry assessments, or toggle the mode.
 - Delivery strategy: `ask-on-risk` default; user selected `feature-branch-chain` on 2026-09-29 after the forecast exceeded 400 authored lines. The original 800–1,400-line forecast was low: HLP-01 measured 2,184 authored additions/deletions; projected feature total is now approximately 2,400 lines (generated files excluded). Cache the selected strategy and record each slice boundary and its commits; no push/PR is authorized.
-- Local feature-branch chain slices: 1) HLP-01 HELP code, tests, and all translations — `d2089f4d`; 2) HLP-02 agent guidance — `47d9bef1`; 3) HLP-03 version/changelog/assertions — `68519c31`; 4) HLP-01R focused coverage follow-up — `fa6bbb04`. The cached `feature-branch-chain` strategy still applies; no PRs or remote actions are authorized.
+- Local feature-branch chain slices: 1) HLP-01 HELP code, tests, and all translations — `d2089f4d`; 2) HLP-02 agent guidance — `47d9bef1`; 3) HLP-03 version/changelog/assertions — `68519c31`; 4) HLP-01R focused coverage follow-up — `fa6bbb04`; 5) HLP-04 final verification record — `55791ba2`. The cached `feature-branch-chain` strategy still applies; no PRs or remote actions are authorized.
 - Use Conventional Commits on this feature branch, with tests/docs alongside their behavior. Do not push or create a PR/tag without explicit authorization.
 
 ## Acceptance criteria
@@ -83,11 +83,11 @@ Current HELP output uses flat command lists and parallel formatters without func
 - Final corrected candidate passed: `php -l` on all 31 changed PHP files; `php bin/console lint:container`; YAML lint (441 files); PHPStan max; PHP-CS-Fixer (fixed 2/1,945 files, both HLP-01R test docblocks); Deptrac (0 violations, skipped violations, uncovered, warnings, or errors; 4,410 allowed); `git diff --check`.
 - Final corrected full-coverage gate passed: `./scripts/check-coverage.sh 100 --issues` — `5,841 tests, 30,128 assertions`; classes 100% (890/890), methods 100% (4,515/4,515), lines 100% (20,531/20,531); no reported issues.
 - Initial candidate history: the first run passed 5,831 tests / 30,098 assertions but failed at 99.64% (20,459/20,531; 72 HELP lines uncovered). After HLP-01R test-only coverage corrections, the corrected candidate passed the full 100% gate above.
-- Progress: all final checks passed; no failed, skipped, or unavailable checks remain. RDD outcome: disabled/unmanaged. No push, PR, or tag was requested or performed.
+- Progress: all final checks passed and the verification record was committed as `55791ba2` (`docs(help): record final redesign verification`); no failed, skipped, or unavailable checks remain. RDD outcome: disabled/unmanaged. No push, PR, or tag was requested or performed.
 
 ## Current progress and next step
 
-- Branch created from clean `main`; HLP-01 is complete and committed as the first local chain slice (`d2089f4d`).
+- Branch created from clean `main`; HLP-01, HLP-01R, HLP-02, HLP-03, and HLP-04 are complete, with their local work-unit commit identities recorded above.
 - Delivery chain strategy selected: `feature-branch-chain`; PRs/remote actions remain unauthorized.
 - The design pack and current HELP architecture were reviewed; the direct-help visibility choice was confirmed by the user.
 - Next: no implementation work remains; remote delivery was not authorized, so the local feature branch is ready for the user's decision about any later push or PR.
