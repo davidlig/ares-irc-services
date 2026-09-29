@@ -243,10 +243,10 @@ final class TranslationCatalogTest extends TestCase
                         continue;
                     }
 
-                    /** @var array<int, array<int, string>> $colorMatches */
+                    /* @var array<int, array<int, string>> $colorMatches */
                     preg_match_all('/\x03(\d{1,2})(?:,(\d{1,2}))?(?!\d)/', $value, $colorMatches, PREG_SET_ORDER);
                     foreach ($colorMatches as $colorMatch) {
-                        foreach ([$colorMatch[1] ?? '', $colorMatch[2] ?? ''] as $color) {
+                        foreach ([$colorMatch[1], $colorMatch[2] ?? ''] as $color) {
                             if ('' !== $color && !in_array($color, $allowedColors, true)) {
                                 $violations[] = sprintf('%s.%s [%s] uses structural color %s', $domain, $key, $locale, $color);
                             }
@@ -270,9 +270,6 @@ final class TranslationCatalogTest extends TestCase
             $path = self::ROOT . '/src/' . $service . '/Adapter/In/Irc/Command/HelpCommand.php';
             $source = file_get_contents($path);
             self::assertIsString($source, $path);
-            if (!is_string($source)) {
-                continue;
-            }
 
             self::assertDoesNotMatchRegularExpression('/IrcHelpStyle|\\\\x03|\\\\x0F|[\x03\x0F]/u', $source, $path);
             self::assertDoesNotMatchRegularExpression('/[›ℹ⚠✗●◆]/u', $source, $path);

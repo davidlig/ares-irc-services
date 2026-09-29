@@ -9,6 +9,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\ChanServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
+
 use function array_find;
 use function strtoupper;
 
@@ -61,6 +62,7 @@ final readonly class HelpCommand implements ChanServCommandInterface
         return 'help.short';
     }
 
+    /** @return array<string, mixed> */
     public function getHelpParams(): array
     {
         return [];

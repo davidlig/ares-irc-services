@@ -22,6 +22,11 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function dirname;
+use function is_array;
+use function is_scalar;
+use function is_string;
+
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
 {
@@ -163,7 +168,7 @@ final class HelpCommandTest extends TestCase
 
         $commandSource = file_get_contents(dirname(__DIR__, 6) . '/src/OperServ/Adapter/In/Irc/Command/HelpCommand.php');
         self::assertIsString($commandSource);
-        foreach (["\\x03", "\\x02", "\\x0F", "\x03", "\x02", "\x0F", '●', '◆', '›', 'ℹ', '⚠', '✗', '─'] as $style) {
+        foreach (['\\x03', '\\x02', '\\x0F', "\x03", "\x02", "\x0F", '●', '◆', '›', 'ℹ', '⚠', '✗', '─'] as $style) {
             self::assertStringNotContainsString($style, $commandSource);
         }
     }
