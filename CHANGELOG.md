@@ -1,3 +1,10 @@
+## [2.3.0] - 2026-09-29
+
+### Features
+
+- Redesign NickServ, ChanServ, MemoServ, and OperServ HELP with functional command groups and localized guidance in all 14 supported languages.
+- Hide restricted commands from general and direct HELP lookups without changing command execution authorization.
+
 ## [2.2.2] - 2026-09-27
 
 ### Performance

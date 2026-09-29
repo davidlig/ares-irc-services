@@ -26,7 +26,7 @@ Current HELP output uses flat command lists and parallel formatters without func
 - TDD: disabled, explicitly selected by user. Use ordinary focused functional checks with `./vendor/bin/phpunit --no-coverage --display-all-issues`.
 - Receipt-driven development: disabled by global user preference; delivery is `disabled/unmanaged`. Do not start reviews, retry assessments, or toggle the mode.
 - Delivery strategy: `ask-on-risk` default; user selected `feature-branch-chain` on 2026-09-29 after the forecast exceeded 400 authored lines. The original 800–1,400-line forecast was low: HLP-01 measured 2,184 authored additions/deletions; projected feature total is now approximately 2,400 lines (generated files excluded). Cache the selected strategy and record each slice boundary and its commits; no push/PR is authorized.
-- Local feature-branch chain slices: 1) HLP-01 HELP code, tests, and all translations — `d2089f4d`; 2) HLP-02 agent guidance — pending; 3) HLP-03 version/changelog/assertions — pending. No PRs or remote actions are authorized.
+- Local feature-branch chain slices: 1) HLP-01 HELP code, tests, and all translations — `d2089f4d`; 2) HLP-02 agent guidance — `47d9bef1`; 3) HLP-03 version/changelog/assertions — pending. No PRs or remote actions are authorized.
 - Use Conventional Commits on this feature branch, with tests/docs alongside their behavior. Do not push or create a PR/tag without explicit authorization.
 
 ## Acceptance criteria
@@ -57,14 +57,15 @@ Current HELP output uses flat command lists and parallel formatters without func
 - [x] Expand `.agents/services.md` with concise, actionable checklists covering HELP grouping/metadata, all-locale translation, permission-filtered direct/general HELP, runtime registration, bot wiring, and integration tests for new commands/services.
 - Route: **direct inline**. Trigger evidence: one contributor-guide file; bounded bot/tag/wiring discovery was delegated before the edit, and the remaining checklist scope is clear.
 - Checks passed: documentation review against service/architecture boundaries; `git diff --check`; lines longer than 120 characters scan returned none. Delegated discovery confirmed current service command tags and gateway/provider wiring names.
-- Progress: implemented and reviewed; HLP-02 slice commit pending.
+- Progress: implemented, reviewed, and committed as `47d9bef1` (`docs(agents): guide service command and bot additions`). RDD outcome: disabled/unmanaged.
 
 ### HLP-03 — Prepare release version 2.3.0
 
-- [ ] Change the visible `services.version` to `v2.3.0`, add the top `2.3.0` changelog entry, and update all visible-version assertions.
+- [x] Change the visible `services.version` to `v2.3.0`, add the top `2.3.0` changelog entry, and update all visible-version assertions.
 - Route: **delegated direct**. Trigger evidence: coordinated non-trivial config, release-note, and test changes.
-- Checks: focused service-list and CTCP version tests without coverage; YAML lint.
-- Progress: not started. Commit: pending.
+- Checks passed: focused service-list and CTCP tests (`24 tests, 844 assertions`); `php bin/console lint:yaml config/services.yaml --parse-tags`; `git diff --check`. An initial YAML lint invocation without `--parse-tags` failed on Symfony `!tagged_iterator`, then the documented invocation passed.
+- Forecast: 31 authored changed lines across 5 files.
+- Progress: implemented and verified; HLP-03 slice commit pending.
 
 ### HLP-04 — Final verification and delivery record
 
@@ -78,7 +79,7 @@ Current HELP output uses flat command lists and parallel formatters without func
 - Branch created from clean `main`; HLP-01 is complete and committed as the first local chain slice (`d2089f4d`).
 - Delivery chain strategy selected: `feature-branch-chain`; PRs/remote actions remain unauthorized.
 - The design pack and current HELP architecture were reviewed; the direct-help visibility choice was confirmed by the user.
-- Next: create the HLP-02 work-unit commit, then implement HLP-03 and run final verification.
+- Next: create the HLP-03 work-unit commit, then run final verification.
 
 ## Relevant files
 
