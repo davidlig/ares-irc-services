@@ -150,17 +150,17 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Verification history: an earlier NickServ run found missing locale keys and stale command-test expectations; those were repaired and revised NickServ checks now pass.
 - Runtime harness: **N/A** — deterministic presentation output is covered by PHPUnit; no live IRC session was authorized or required. Manual mIRC light/dark visual confirmation remains pending.
 - Rollback boundary: revert the revised NickServ HELP presentation/tests and 14 catalogs, the palette/catalog regression check, and the adjusted style guidance; do not retain a new shared helper class.
-- Authored diff: re-estimate after the four-service migration; cached `feature-branch-chain` strategy applies.
-- Progress: revised implementation and focused checks are complete; the helper class and unit test are removed, and NickServ uses its 14 localized catalogs. HLP-05 work-unit commit is pending. The global catalog failure is tracked separately under HLP-06.
+- Authored diff: 1,095 additions plus deletions in commit `65e4ce57` (including this tracker update); the slice includes NickServ's 14 catalogs, formatter/command/tests, and both style-guide changes. Cached `feature-branch-chain` strategy applies.
+- Progress: revised implementation and focused checks are complete; the helper class and unit test are removed, and NickServ uses its 14 localized catalogs. Work-unit committed as `65e4ce57` (`fix(nickserv): localize HELP color markup`). The global catalog failure is tracked separately under HLP-06.
 
 #### HLP-06 — ChanServ color migration
 
 - [ ] Migrate ChanServ HELP formatter, tests, and all 14 locale catalogs to the canonical style using existing translation entries, with no new style class; preserve all mode/permission-dependent visibility.
 - Route: **delegated direct**. Trigger evidence: writer trigger applies across formatter, test, and 14 non-trivial locale files.
-- Checks passed on the current service slice: focused ChanServ HELP formatter/command tests (`29 tests, 149 assertions`), including rendered output across all 14 locales; `php -l` on both changed production files and both changed tests; `git diff --check`; focused HELP palette scan found no forbidden structural colors. The shared translation-catalog test then exposed that `help.header` is missing from ChanServ's English catalog.
+- Checks passed on the current partial service slice: focused ChanServ HELP formatter/command/catalog tests (`32 tests, 149 assertions`), including the localized header across all 14 locales; `php -l` on both changed production files and both changed tests; `git diff --check`. The shared catalog failure for the missing `help.header` key is now fixed.
 - Runtime harness: **N/A** — translated formatter output is exercised directly by PHPUnit; no live IRC session was authorized or required.
 - Authored diff: 431 additions plus deletions across the ChanServ formatter/command, tests, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
-- Progress: reopened after `TranslationCatalogTest` reported `help.header @ src/ChanServ/Adapter/In/Irc/Help/UnifiedHelpFormatter.php`; add/verify that key across all 14 catalogs before closing and committing HLP-06.
+- Progress: still open after parent diff review found the existing ChanServ HELP translation values retain forbidden legacy `11`/`12` colors (`general_header`, command rows, options/groups, and related entries); the header-only assertions and catalog-key test do not prove palette migration. Migrate all structural HELP markup in all 14 catalogs and verify the palette before closing/committing HLP-06.
 
 #### HLP-07 — MemoServ color migration
 
@@ -190,4 +190,4 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Feature identity remains `ares-help-redesign`; HLP-01 through HLP-04 above are historical completed tasks, and HLP-05 through HLP-09 are the newly authorized follow-up.
 - Current branch is `feat/ares-help-redesign`; working tree contains an uncommitted NickServ migration and partial ChanServ/MemoServ formatter edits; reconcile those edits with the no-new-class and all-locales constraint before continuing. TDD: disabled, source: prior explicit user choice recorded in the existing tracker, runner: `./vendor/bin/phpunit --no-coverage --display-all-issues`.
 - Forecast: re-estimate for the revised four-service/all-locale implementation; strategy: cached `feature-branch-chain`. Create reviewable local work-unit slices and record each commit in this document. No push/PR/tag or other remote operation.
-- Current next step: fix and verify the ChanServ `help.header` catalog key across all 14 locales, then close/commit HLP-05 and HLP-06 as separate work units; verify OperServ and complete the shared all-service palette guard.
+- Current next step: finish ChanServ's full 14-locale palette migration and palette-aware tests; then close/commit HLP-06 and HLP-07 separately, verify OperServ, and complete the shared all-service palette guard.

@@ -289,4 +289,18 @@ final class HelpCommandTest extends TestCase
         self::assertNotEmpty($replies);
         self::assertStringContainsString('IGNORE', $replies[0]);
     }
+
+    #[Test]
+    public function helpCommandAndFormatterKeepStyleMarkupAndMarkersInTranslations(): void
+    {
+        foreach ([
+            '/src/MemoServ/Adapter/In/Irc/Command/HelpCommand.php',
+            '/src/MemoServ/Adapter/In/Irc/Help/UnifiedHelpFormatter.php',
+        ] as $relativePath) {
+            $source = file_get_contents(dirname(__DIR__, 6) . $relativePath);
+            self::assertIsString($source);
+            self::assertStringNotContainsString('IrcHelpStyle', $source);
+            self::assertDoesNotMatchRegularExpression('/[›ℹ⚠✗●◆─]|\x02|\x03\d{0,2}|\x0F|\\\\x0[23]|\\\\x0F/u', $source);
+        }
+    }
 }
