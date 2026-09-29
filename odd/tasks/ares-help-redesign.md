@@ -152,6 +152,8 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Rollback boundary: revert the revised NickServ HELP presentation/tests and 14 catalogs, the palette/catalog regression check, and the adjusted style guidance; do not retain a new shared helper class.
 - Authored diff: 1,095 additions plus deletions in commit `65e4ce57` (including this tracker update); the slice includes NickServ's 14 catalogs, formatter/command/tests, and both style-guide changes. Cached `feature-branch-chain` strategy applies.
 - Progress: revised implementation and focused checks are complete; the helper class and unit test are removed, and NickServ uses its 14 localized catalogs. Work-unit committed as `65e4ce57` (`fix(nickserv): localize HELP color markup`). The global catalog failure is tracked separately under HLP-06.
+- [x] Fix final PHPStan max findings in NickServ HELP tests: validate string-keyed translation parameter maps, safely render mixed parameter values, and safely access the final raw reply; preserve behavior and all-locale coverage.
+- PHPStan max now passes with zero findings across `src/` and `tests/`; relevant fixes are in `tests/NickServ/Adapter/In/Irc/Command/HelpCommandTest.php` and `Help/UnifiedHelpFormatterTest.php`.
 
 #### HLP-06 — ChanServ color migration
 
@@ -162,6 +164,8 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Runtime harness: **N/A** — translated formatter output is exercised directly by PHPUnit; no live IRC session was authorized or required.
 - Authored diff: 352 additions plus deletions across the ChanServ formatter/command, test, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
 - Progress: implementation and checks complete; work-unit committed as `3855dc9a` (`fix(chanserv): localize HELP color markup`). Manual IRC-client light/dark visual verification remains pending.
+- [x] Fix final PHPStan findings in `src/ChanServ/Adapter/In/Irc/Command/HelpCommand.php` (empty-array return type) and `tests/ChanServ/Adapter/In/Irc/Help/UnifiedHelpFormatterTest.php` (validated YAML catalog and precise nested map/string/index types), without changing output.
+- PHPStan max now passes with zero findings; the full suite also identified one previously uncovered `getHelpParams()` return line, tracked as a focused coverage follow-up in HLP-09.
 
 #### HLP-07 — MemoServ color migration
 
@@ -171,6 +175,8 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Runtime harness: **N/A** — translated formatter output is exercised directly by PHPUnit; no live IRC session was authorized or required. Manual IRC client verification remains pending.
 - Authored diff: 486 additions plus deletions across the MemoServ formatter, tests, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
 - Progress: implementation and checks complete; work-unit committed as `2522d912` (`fix(memoserv): localize HELP color markup`).
+- [x] Add precise array generics for the recursive catalog flattener and optional translations in `tests/MemoServ/Adapter/In/Irc/Help/UnifiedHelpFormatterTest.php`; validate decoded catalogs as string-keyed maps and preserve all 14 locale assertions.
+- PHPStan max now passes with zero findings; all MemoServ formatting and locale assertions remain passing.
 
 #### HLP-08 — OperServ color migration and palette regression guard
 
@@ -179,18 +185,24 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Checks passed: focused OperServ HELP formatter/command tests (`12 tests, 1,888 assertions`); combined all-service HELP, translation alignment, and palette-guard suite (`104 tests, 4,961 assertions`); `php -l` on every changed PHP file; `git diff --check`.
 - Palette guard: `TranslationCatalogTest` inspects all 56 service catalogs across all 14 locales, allowing only structural colors `03`, `04`, `06`, `07`, `10`, and `14`; the same test ensures HELP commands contain no style helper, mIRC color controls, or marker glyphs.
 - Authored diff: 577 additions plus deletions across OperServ formatter/tests, shared translation regression coverage, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
-- Progress: implementation and focused checks complete; work-unit commit pending. Manual IRC-client light/dark visual verification remains pending.
+- Progress: implementation and focused checks complete; work-unit committed as `6964e310` (`fix(operserv): localize HELP color markup`). Manual IRC-client light/dark visual verification remains pending.
+- [x] Refine regex-capture and file-read types in `tests/Shared/Translations/TranslationCatalogTest.php` to resolve its final PHPStan max findings without suppressions; preserve the all-service/all-locale palette guard.
+- PHPStan max now passes with zero findings; the all-service/all-locale palette guard remains passing.
 
 #### HLP-09 — Final verification and delivery record
 
-- [ ] Run applicable final gates once, record failures/unavailable checks and commit identities, and record manual visual validation as passed or pending.
+- [x] Run and record final static, functional, and architecture checks; record coverage outcome and manual visual validation honestly.
+- [x] Add a focused ChanServ HELP command test for the empty `getHelpParams()` result, then rerun coverage against the corrected candidate.
 - Route: **direct verification**; testing/build actors may be used without changing the implementation route.
 - Checks: project final verification order in `AGENTS.md`, including the single full coverage run and configured architecture gate.
-- Progress: pending.
+- Passed on the corrected candidate: `php -l` on all 10 changed PHP files; `php bin/console lint:container`; YAML lint (441 files); PHPStan max (zero findings); PHP-CS-Fixer (8 of 1,945 files fixed and inspected, then 0 files on the clean rerun); focused all-service HELP/catalog suite (`89 tests, 6,050 assertions`); Deptrac (0 violations, skipped violations, uncovered, warnings, or errors; 4,410 allowed); `git diff --check`.
+- Coverage history: the first run completed `5,851 tests, 35,937 assertions`, but exposed one uncovered ChanServ `HelpCommand::getHelpParams()` return statement. Added a focused empty-parameter test and aligned its return-map PHPDoc with the help-parameter contract. The corrected `./scripts/check-coverage.sh 100 --issues` passed: `5,852 tests`, 100% classes (890/890), methods (4,518/4,518), and lines (20,580/20,580); no issues reported. The earlier 99.99% result is retained here as verification history, not an outstanding failure.
+- PHPStan history: the initial max analysis identified 26 findings across six paths; corrections in HLP-05 through HLP-08 removed the missing array generics, validated translation maps, safe indexes, and redundant assertions without suppressions. The exact full analysis now passes with zero findings.
+- Progress: correction and final verification work unit committed as `a693eb8a` (`fix(help): close color migration verification gaps`). All automated project gates pass. Manual IRC-client light/dark visual verification remains pending because no local live IRC client was available; no remote operations were authorized or performed.
 
 ### Delivery and recovery state
 
 - Feature identity remains `ares-help-redesign`; HLP-01 through HLP-04 above are historical completed tasks, and HLP-05 through HLP-09 are the newly authorized follow-up.
-- Current branch is `feat/ares-help-redesign`; HLP-05, HLP-06, and HLP-07 are committed as `65e4ce57`, `3855dc9a`, and `2522d912`. HLP-08 OperServ plus shared palette guard is implemented and verified but uncommitted. TDD: disabled, source: prior explicit user choice recorded in the existing tracker, runner: `./vendor/bin/phpunit --no-coverage --display-all-issues`.
-- Forecast was under by more than 400 authored changes. Actual follow-up work is approximately 2,533 additions plus deletions across HLP-05 through HLP-08; cached `feature-branch-chain` strategy applies. Keep each service as a local work-unit commit and record commit IDs; no push/PR/tag or other remote operation.
-- Current next step: commit verified HLP-08, then run and record the final project verification gates; manual IRC-client visual verification remains pending.
+- Current branch is `feat/ares-help-redesign`; HLP-05, HLP-06, HLP-07, and HLP-08 are committed as `65e4ce57`, `3855dc9a`, `2522d912`, and `6964e310`; final correction/verification is committed as `a693eb8a`. TDD: disabled, source: prior explicit user choice recorded in the existing tracker, runner: `./vendor/bin/phpunit --no-coverage --display-all-issues`.
+- Forecast was under by more than 400 authored changes. Follow-up work-unit diffs total 2,798 additions plus deletions through `a693eb8a` (generated files excluded); cached `feature-branch-chain` strategy applies. No push/PR/tag or other remote operation.
+- Current next step: no further code work remains. Manual IRC-client light/dark visual verification is pending client availability; remote delivery remains the user's decision.
