@@ -9,7 +9,6 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\ChanServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
-
 use function array_find;
 use function strtoupper;
 
@@ -60,6 +59,11 @@ final readonly class HelpCommand implements ChanServCommandInterface
     public function getShortDescKey(): string
     {
         return 'help.short';
+    }
+
+    public function getHelpParams(): array
+    {
+        return [];
     }
 
     public function getSubCommandHelp(): array
@@ -137,9 +141,12 @@ final readonly class HelpCommand implements ChanServCommandInterface
         $this->formatter->showGeneralHelp($adapter);
         if ($this->inactivityExpiryDays > 0) {
             $context->replyRaw(' ');
-            $context->reply('help.intro_expiration', ['%days%' => $this->inactivityExpiryDays]);
+            $context->reply('help.intro_expiration', [
+                'label' => $context->trans('help.intro_expiration_label'),
+                'days' => $this->inactivityExpiryDays,
+            ]);
         }
-        $context->reply('help.footer');
+        $this->formatter->sendFooter($adapter);
     }
 
     /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */

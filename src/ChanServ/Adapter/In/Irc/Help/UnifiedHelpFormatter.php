@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Help;
 
 use function is_array;
-use function sprintf;
 use function strtoupper;
 
 /**
@@ -22,10 +21,17 @@ final readonly class UnifiedHelpFormatter
 
     public function sendHeader(HelpFormatterContextInterface $context, string $title): void
     {
-        $visible = 4 + mb_strlen($title);
+        $visible = 3 + mb_strlen($title);
         $dashes = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
-        $line = sprintf("\x02\x0312 ● %s \x0F\x0314%s\x03", $title, $dashes);
-        $context->replyRaw($line);
+        $context->reply('help.header', [
+            'title' => $title,
+            'separator' => $dashes,
+        ]);
+    }
+
+    public function sendFooter(HelpFormatterContextInterface $context): void
+    {
+        $context->reply('help.footer');
     }
 
     public function showGeneralHelp(HelpFormatterContextInterface $context): void
@@ -80,11 +86,15 @@ final readonly class UnifiedHelpFormatter
                 }
                 if ($group['subgroup']) {
                     $context->replyRaw(' ');
-                    $context->reply('help.subgroup_header', ['group' => $context->trans($group['group_key'])]);
+                    $context->reply('help.subgroup_header', [
+                        'group' => $context->trans($group['group_key']),
+                    ]);
                 }
             } else {
                 $context->replyRaw(' ');
-                $context->reply('help.group_header', ['group' => $context->trans($group['group_key'])]);
+                $context->reply('help.group_header', [
+                    'group' => $context->trans($group['group_key']),
+                ]);
             }
 
             foreach ($groupCommands as $command) {
@@ -140,12 +150,14 @@ final readonly class UnifiedHelpFormatter
             }
 
             $context->replyRaw(' ');
-            $context->reply('help.set_sub_footer', ['command' => $handler->getName()]);
+            $context->reply('help.set_sub_footer', [
+                'command' => $handler->getName(),
+            ]);
         }
 
         $context->replyRaw(' ');
         $context->reply('help.syntax_label', ['syntax' => $context->trans($handler->getSyntaxKey())]);
-        $context->reply('help.footer');
+        $this->sendFooter($context);
     }
 
     /**
@@ -161,6 +173,6 @@ final readonly class UnifiedHelpFormatter
         }
         $context->replyRaw(' ');
         $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
-        $context->reply('help.footer');
+        $this->sendFooter($context);
     }
 }
