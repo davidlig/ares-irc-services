@@ -25,6 +25,14 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
 {
+    private const array SERVICE_NICKNAME_PLACEHOLDERS = [
+        '%bot%' => '',
+        '%nickserv%' => 'NickServ',
+        '%chanserv%' => 'ChanServ',
+        '%memoserv%' => 'MemoServ',
+        '%operserv%' => 'OperServ',
+    ];
+
     private function createHelpCommand(int $inactivityExpiryDays = 0): HelpCommand
     {
         return new HelpCommand(
@@ -245,8 +253,20 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
+        $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translations): string {
+            $translations[] = ['id' => $id, 'parameters' => $parameters];
+
+            $translation = match ($id) {
+                'help.intro_expiration_label' => 'NOTE',
+                'help.warning_marker' => 'translated:help.warning_marker',
+                'help.intro_expiration' => '%marker% %label%: Nicknames unused for more than %days% days are automatically removed.',
+                default => $id,
+            };
+
+            return self::replaceTranslationParameters($translation, $parameters);
+        });
 
         $handler = new class implements NickServCommandInterface {
             public function getName(): string
@@ -314,7 +334,23 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(30);
         $cmd->execute($this->createContext($sender, [], $notifier, $translator, $registry));
 
-        self::assertContains('help.intro_expiration', $messages);
+        self::assertContains(
+            'translated:help.warning_marker NOTE: Nicknames unused for more than 30 days are automatically removed.',
+            $messages,
+        );
+        self::assertContains([
+            'id' => 'help.intro_expiration',
+            'parameters' => [
+                ...self::SERVICE_NICKNAME_PLACEHOLDERS,
+                '%marker%' => 'translated:help.warning_marker',
+                '%label%' => 'NOTE',
+                '%days%' => 30,
+            ],
+        ], $translations);
+        $output = implode("\n", $messages);
+        self::assertStringNotContainsString('help.intro_expiration_label', $output);
+        self::assertStringNotContainsString('%label%', $output);
+        self::assertStringNotContainsString('%days%', $output);
     }
 
     #[Test]
@@ -576,8 +612,17 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
+        $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translations): string {
+            $translations[] = ['id' => $id, 'parameters' => $parameters];
+
+            $translation = 'help.set_timezone.region_header' === $id
+                ? 'Timezones for %region%:'
+                : $id;
+
+            return self::replaceTranslationParameters($translation, $parameters);
+        });
 
         $handlerWithSub = new class implements NickServCommandInterface {
             public function getName(): string
@@ -653,6 +698,17 @@ final class HelpCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, ['SET', 'TIMEZONE', 'Europe'], $notifier, $translator, $registry));
 
         self::assertNotEmpty($messages);
+        self::assertContains('Timezones for Europe:', $messages);
+        self::assertContains([
+            'id' => 'help.set_timezone.region_header',
+            'parameters' => [
+                ...self::SERVICE_NICKNAME_PLACEHOLDERS,
+                '%region%' => 'Europe',
+            ],
+        ], $translations);
+        $output = implode("\n", $messages);
+        self::assertStringNotContainsString('help.set_timezone.region_header', $output);
+        self::assertStringNotContainsString('%region%', $output);
     }
 
     #[Test]
@@ -664,8 +720,20 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
+        $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translations): string {
+            $translations[] = ['id' => $id, 'parameters' => $parameters];
+
+            $translation = match ($id) {
+                'help.set_timezone.region_syntax' => 'HELP SET TIMEZONE',
+                'help.error_marker' => 'translated:help.error_marker',
+                'help.set_timezone.region_unknown' => '%marker% Unknown region. Use %syntax% for the index.',
+                default => $id,
+            };
+
+            return self::replaceTranslationParameters($translation, $parameters);
+        });
 
         $handlerWithSub = new class implements NickServCommandInterface {
             public function getName(): string
@@ -740,7 +808,21 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['SET', 'TIMEZONE', 'UnknownRegion'], $notifier, $translator, $registry));
 
-        self::assertContains('help.set_timezone.region_unknown', $messages);
+        self::assertContains(
+            'translated:help.error_marker Unknown region. Use HELP SET TIMEZONE for the index.',
+            $messages,
+        );
+        self::assertContains([
+            'id' => 'help.set_timezone.region_unknown',
+            'parameters' => [
+                ...self::SERVICE_NICKNAME_PLACEHOLDERS,
+                '%marker%' => 'translated:help.error_marker',
+                '%syntax%' => 'HELP SET TIMEZONE',
+            ],
+        ], $translations);
+        $output = implode("\n", $messages);
+        self::assertStringNotContainsString('help.set_timezone.region_syntax', $output);
+        self::assertStringNotContainsString('%syntax%', $output);
     }
 
     #[Test]
@@ -752,8 +834,19 @@ final class HelpCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
+        $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translations): string {
+            $translations[] = ['id' => $id, 'parameters' => $parameters];
+
+            $translation = match ($id) {
+                'help.set_timezone.index_syntax' => 'HELP SET TIMEZONE <region>',
+                'help.set_timezone.index_label' => 'Regions (use %syntax% for list):',
+                default => $id,
+            };
+
+            return self::replaceTranslationParameters($translation, $parameters);
+        });
 
         $handlerWithSub = new class implements NickServCommandInterface {
             public function getName(): string
@@ -828,7 +921,20 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['SET', 'TIMEZONE'], $notifier, $translator, $registry));
 
-        self::assertContains('help.set_timezone.index_label', $messages);
+        self::assertContains(
+            'Regions (use HELP SET TIMEZONE <region> for list):',
+            $messages,
+        );
+        self::assertContains([
+            'id' => 'help.set_timezone.index_label',
+            'parameters' => [
+                ...self::SERVICE_NICKNAME_PLACEHOLDERS,
+                '%syntax%' => 'HELP SET TIMEZONE <region>',
+            ],
+        ], $translations);
+        $output = implode("\n", $messages);
+        self::assertStringNotContainsString('help.set_timezone.index_syntax', $output);
+        self::assertStringNotContainsString('%syntax%', $output);
     }
 
     #[Test]
@@ -1053,5 +1159,15 @@ final class HelpCommandTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
+    }
+
+    /**
+     * @param array<string, mixed> $parameters
+     */
+    private static function replaceTranslationParameters(string $translation, array $parameters): string
+    {
+        $stringParameters = array_map(static fn (mixed $value): string => (string) $value, $parameters);
+
+        return strtr($translation, $stringParameters);
     }
 }

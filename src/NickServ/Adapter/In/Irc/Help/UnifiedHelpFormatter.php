@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc\Help;
 
 use function is_array;
-use function sprintf;
 use function strtoupper;
 
 /**
@@ -18,14 +17,14 @@ final readonly class UnifiedHelpFormatter
 
     private const int SUBS_PAD = 10;
 
-    private const int HEADER_WIDTH = 40;
-
     public function sendHeader(HelpFormatterContextInterface $context, string $title): void
     {
-        $visible = 4 + mb_strlen($title);
-        $dashes = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
-        $line = sprintf("\x02\x0312 ● %s \x0F\x0314%s\x03", $title, $dashes);
-        $context->replyRaw($line);
+        $context->reply('help.header', ['title' => $title]);
+    }
+
+    public function sendFooter(HelpFormatterContextInterface $context): void
+    {
+        $context->replyRaw($context->trans('help.footer'));
     }
 
     public function showGeneralHelp(HelpFormatterContextInterface $context): void
@@ -48,7 +47,7 @@ final readonly class UnifiedHelpFormatter
         $this->sendHeader($context, $context->trans('help.header_title'));
         $context->reply('help.intro');
         $context->replyRaw(' ');
-        $context->reply('help.general_header');
+        $context->replyRaw($context->trans('help.general_header'));
 
         $shown = [];
         $generalFooterSent = false;
@@ -70,25 +69,33 @@ final readonly class UnifiedHelpFormatter
             if ($group['admin']) {
                 if (!$generalFooterSent) {
                     $context->replyRaw(' ');
-                    $context->reply('help.general_footer');
+                    $context->reply('help.general_footer', [
+                        'marker' => $context->trans('help.info_marker'),
+                        'syntax' => $context->trans('help.general_syntax'),
+                    ]);
                     $generalFooterSent = true;
                 }
                 if (!$ircopHeaderSent) {
                     $context->replyRaw(' ');
-                    $context->reply('help.ircop_header');
+                    $context->replyRaw($context->trans('help.ircop_header'));
                     $ircopHeaderSent = true;
                 }
                 if ($group['subgroup']) {
                     $context->replyRaw(' ');
-                    $context->reply('help.subgroup_header', ['group' => $context->trans($group['group_key'])]);
+                    $context->replyRaw($context->trans('help.subgroup_header', [
+                        'group' => $context->trans($group['group_key']),
+                    ]));
                 }
             } else {
                 $context->replyRaw(' ');
-                $context->reply('help.group_header', ['group' => $context->trans($group['group_key'])]);
+                $context->replyRaw($context->trans('help.group_header', [
+                    'group' => $context->trans($group['group_key']),
+                ]));
             }
 
             foreach ($groupCommands as $command) {
                 $context->reply('help.command_line', [
+                    'marker' => $context->trans('help.navigation_marker'),
                     'command' => str_pad($command->getName(), self::CMD_PAD),
                     'description' => $context->trans($command->getShortDescKey()),
                 ]);
@@ -97,7 +104,10 @@ final readonly class UnifiedHelpFormatter
 
         if (!$generalFooterSent) {
             $context->replyRaw(' ');
-            $context->reply('help.general_footer');
+            $context->reply('help.general_footer', [
+                'marker' => $context->trans('help.info_marker'),
+                'syntax' => $context->trans('help.general_syntax'),
+            ]);
         }
 
         // Keep a visible fallback for any future command not yet assigned to a group.
@@ -110,6 +120,7 @@ final readonly class UnifiedHelpFormatter
         usort($ungroupedCommands, static fn (HelpableCommandInterface $a, HelpableCommandInterface $b): int => $a->getOrder() <=> $b->getOrder());
         foreach ($ungroupedCommands as $command) {
             $context->reply('help.command_line', [
+                'marker' => $context->trans('help.navigation_marker'),
                 'command' => str_pad($command->getName(), self::CMD_PAD),
                 'description' => $context->trans($command->getShortDescKey()),
             ]);
@@ -130,22 +141,30 @@ final readonly class UnifiedHelpFormatter
 
         if ([] !== $subCmds) {
             $context->replyRaw(' ');
-            $context->reply('help.options_header');
+            $context->replyRaw($context->trans('help.options_header'));
 
             foreach ($subCmds as $sub) {
                 $context->reply('help.subcommand_line', [
+                    'marker' => $context->trans('help.navigation_marker'),
                     'command' => str_pad($sub['name'], self::SUBS_PAD),
                     'description' => $context->trans($sub['desc_key']),
                 ]);
             }
 
             $context->replyRaw(' ');
-            $context->reply('help.set_sub_footer', ['command' => $handler->getName()]);
+            $context->reply('help.set_sub_footer', [
+                'marker' => $context->trans('help.info_marker'),
+                'syntax' => $context->trans('help.set_sub_syntax', [
+                    'command' => $handler->getName(),
+                ]),
+            ]);
         }
 
         $context->replyRaw(' ');
-        $context->reply('help.syntax_label', ['syntax' => $context->trans($handler->getSyntaxKey())]);
-        $context->reply('help.footer');
+        $context->reply('help.syntax_label', [
+            'syntax' => $context->trans($handler->getSyntaxKey()),
+        ]);
+        $this->sendFooter($context);
     }
 
     /**
@@ -160,7 +179,9 @@ final readonly class UnifiedHelpFormatter
             $context->reply($sub['options_key']);
         }
         $context->replyRaw(' ');
-        $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
-        $context->reply('help.footer');
+        $context->reply('help.syntax_label', [
+            'syntax' => $context->trans($sub['syntax_key']),
+        ]);
+        $this->sendFooter($context);
     }
 }

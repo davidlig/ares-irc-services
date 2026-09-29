@@ -118,9 +118,21 @@ Argument syntax:
 - `[arg]` optional;
 - `{A|B|C}` required choice.
 
-HELP formatting belongs to IRC presentation, not Application.
+HELP formatting belongs to IRC presentation, not Application. Keep color markup and marker glyphs in
+the existing localized HELP translation values; do not add a helper class or hardcode markers or
+color-selection calls in command PHP. Pass dynamic values through translation placeholders, keep
+descriptions in the client's default foreground, and cover all 14 locale catalogs. Follow
+[.agents/irc-help-style.md](irc-help-style.md) for the canonical palette and reset rules.
 
-## 5. Bots
+## 5. HELP presentation
+
+Use `.agents/irc-help-style.md` for HELP colors, markers, emphasis, and resets. Keep each service's
+formatter, group metadata, translations, and command-visibility policy inside that service. Do not
+add a style/helper class: localized HELP values own color markup and marker glyphs, with dynamic
+values supplied through placeholders. Keep descriptions in the client's default foreground and
+add HELP regression coverage across all 14 locale catalogs.
+
+## 6. Bots
 
 Service bots are network adapters. A service bot owns its network identity and transport; it does
 not own the service's command registry or business behavior.
@@ -152,7 +164,7 @@ When adding or wiring a service bot:
 4. Add or update integration coverage for service identity/UID, message routing to the right
    command registry, and presented replies. Run the focused wiring and service-command tests.
 
-## 6. Authorization
+## 7. Authorization
 
 Separate:
 
@@ -169,7 +181,7 @@ Domain/Application policies.
 
 Root bypass semantics are centralized.
 
-## 7. Audit
+## 8. Audit
 
 Auditing is separate from authorization and command presentation.
 
@@ -179,7 +191,7 @@ After a sensitive operation:
 - exclude secrets;
 - use output adapters for file logs or IRC debug channels.
 
-## 8. Event-triggered behavior
+## 9. Event-triggered behavior
 
 Framework event subscribers belong in `Adapter/In/Event`.
 
@@ -194,7 +206,7 @@ framework/published event
 
 Business logic does not remain in subscribers.
 
-## 9. Drop cleanup
+## 10. Drop cleanup
 
 Every persistent reference to a nick/channel defines lifecycle behavior:
 
@@ -206,7 +218,7 @@ Every persistent reference to a nick/channel defines lifecycle behavior:
 Local atomic cleanup belongs inside the transaction boundary.
 IRC/mail/protocol effects are post-commit external effects.
 
-## 10. Protocol independence
+## 11. Protocol independence
 
 Service code must not branch on:
 
@@ -219,7 +231,7 @@ UnrealUdb
 Service use cases express semantic network needs through ports.
 The active Irc protocol adapter implements them.
 
-## 11. Command review
+## 12. Command review
 
 A service command is correctly separated only if:
 
@@ -231,7 +243,7 @@ A service command is correctly separated only if:
 - secrets are not published;
 - use case is testable without Symfony/IRC.
 
-## 12. New command checklist
+## 13. New command checklist
 
 Before calling a service command complete:
 
