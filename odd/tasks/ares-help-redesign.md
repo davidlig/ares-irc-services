@@ -26,7 +26,7 @@ Current HELP output uses flat command lists and parallel formatters without func
 - TDD: disabled, explicitly selected by user. Use ordinary focused functional checks with `./vendor/bin/phpunit --no-coverage --display-all-issues`.
 - Receipt-driven development: disabled by global user preference; delivery is `disabled/unmanaged`. Do not start reviews, retry assessments, or toggle the mode.
 - Delivery strategy: `ask-on-risk` default; user selected `feature-branch-chain` on 2026-09-29 after the forecast exceeded 400 authored lines. The original 800–1,400-line forecast was low: HLP-01 measured 2,184 authored additions/deletions; projected feature total is now approximately 2,400 lines (generated files excluded). Cache the selected strategy and record each slice boundary and its commits; no push/PR is authorized.
-- Planned local chain slices: 1) HLP-01 HELP code, tests, and all translations; 2) HLP-02 agent guidance; 3) HLP-03 version/changelog/assertions. PR-to-commit mapping remains pending and no PR may be created without authorization.
+- Local feature-branch chain slices: 1) HLP-01 HELP code, tests, and all translations — `d2089f4d`; 2) HLP-02 agent guidance — pending; 3) HLP-03 version/changelog/assertions — pending. No PRs or remote actions are authorized.
 - Use Conventional Commits on this feature branch, with tests/docs alongside their behavior. Do not push or create a PR/tag without explicit authorization.
 
 ## Acceptance criteria
@@ -50,14 +50,14 @@ Current HELP output uses flat command lists and parallel formatters without func
 - Route: **delegated direct**. Trigger evidence: mapping required 4+ source files and was completed read-only; writer trigger applies because this task changes four formatter/context implementations, all locale catalogs, and their tests. Code and all required translations stay together to avoid shipping referenced-but-missing locale keys.
 - Checks passed: focused four-service HELP tests plus shared translation alignment (`66 tests, 983 assertions`); `php -l` on all 23 changed PHP files; `php bin/console lint:yaml . --exclude vendor/ --parse-tags` (441 files, reported by delegated writer) and independent `php bin/console lint:yaml translations --parse-tags` (84 files); `git diff --check`; PHPStan max (reported by delegated writer). PHP-CS-Fixer remains pending for final verification because its prior attempt failed to open local TCP under sandbox and the retry was aborted.
 - Forecast: actual HLP-01 diff is 2,184 authored additions/deletions across 79 files; selected strategy is `feature-branch-chain`.
-- Progress: implemented and focused checks passed; first feature-branch slice commit pending.
+- Progress: implemented, focused checks passed, and committed as `d2089f4d` (`feat(help): redesign service help across locales`). RDD outcome: disabled/unmanaged.
 
 ### HLP-02 — Future command and service-bot agent guidance
 
-- [ ] Expand `.agents/services.md` with concise, actionable checklists covering HELP grouping/metadata, all-locale translation, permission-filtered direct/general HELP, runtime registration, bot wiring, and integration tests for new commands/services.
-- Route: **delegated direct**. Trigger evidence: documentation preparation and a contributor-facing guide change.
-- Checks: documentation review for architecture consistency and cognitive load; markdown diff inspection.
-- Progress: not started. Commit: pending.
+- [x] Expand `.agents/services.md` with concise, actionable checklists covering HELP grouping/metadata, all-locale translation, permission-filtered direct/general HELP, runtime registration, bot wiring, and integration tests for new commands/services.
+- Route: **direct inline**. Trigger evidence: one contributor-guide file; bounded bot/tag/wiring discovery was delegated before the edit, and the remaining checklist scope is clear.
+- Checks passed: documentation review against service/architecture boundaries; `git diff --check`; lines longer than 120 characters scan returned none. Delegated discovery confirmed current service command tags and gateway/provider wiring names.
+- Progress: implemented and reviewed; HLP-02 slice commit pending.
 
 ### HLP-03 — Prepare release version 2.3.0
 
@@ -75,10 +75,10 @@ Current HELP output uses flat command lists and parallel formatters without func
 
 ## Current progress and next step
 
-- Branch created from clean `main`; HLP-01 implementation is complete and focused checks passed; first slice commit pending.
+- Branch created from clean `main`; HLP-01 is complete and committed as the first local chain slice (`d2089f4d`).
 - Delivery chain strategy selected: `feature-branch-chain`; PRs/remote actions remain unauthorized.
 - The design pack and current HELP architecture were reviewed; the direct-help visibility choice was confirmed by the user.
-- Next: create the HLP-01 work-unit commit, then proceed with HLP-02 and HLP-03.
+- Next: create the HLP-02 work-unit commit, then implement HLP-03 and run final verification.
 
 ## Relevant files
 
