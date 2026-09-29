@@ -26,7 +26,7 @@ Current HELP output uses flat command lists and parallel formatters without func
 - TDD: disabled, explicitly selected by user. Use ordinary focused functional checks with `./vendor/bin/phpunit --no-coverage --display-all-issues`.
 - Receipt-driven development: disabled by global user preference; delivery is `disabled/unmanaged`. Do not start reviews, retry assessments, or toggle the mode.
 - Delivery strategy: `ask-on-risk` default; user selected `feature-branch-chain` on 2026-09-29 after the forecast exceeded 400 authored lines. The original 800–1,400-line forecast was low: HLP-01 measured 2,184 authored additions/deletions; projected feature total is now approximately 2,400 lines (generated files excluded). Cache the selected strategy and record each slice boundary and its commits; no push/PR is authorized.
-- Local feature-branch chain slices: 1) HLP-01 HELP code, tests, and all translations — `d2089f4d`; 2) HLP-02 agent guidance — `47d9bef1`; 3) HLP-03 version/changelog/assertions — pending. No PRs or remote actions are authorized.
+- Local feature-branch chain slices: 1) HLP-01 HELP code, tests, and all translations — `d2089f4d`; 2) HLP-02 agent guidance — `47d9bef1`; 3) HLP-03 version/changelog/assertions — `68519c31`; 4) HLP-01R focused coverage follow-up — pending. The cached `feature-branch-chain` strategy still applies; no PRs or remote actions are authorized.
 - Use Conventional Commits on this feature branch, with tests/docs alongside their behavior. Do not push or create a PR/tag without explicit authorization.
 
 ## Acceptance criteria
@@ -52,6 +52,14 @@ Current HELP output uses flat command lists and parallel formatters without func
 - Forecast: actual HLP-01 diff is 2,184 authored additions/deletions across 79 files; selected strategy is `feature-branch-chain`.
 - Progress: implemented, focused checks passed, and committed as `d2089f4d` (`feat(help): redesign service help across locales`). RDD outcome: disabled/unmanaged.
 
+### HLP-01R — Cover remaining HELP presentation branches
+
+- [x] Add focused tests for HELP production branches found uncovered by the first final coverage run, without changing command authorization or user-visible behavior.
+- Route: **delegated direct**. Trigger evidence: read-only Clover mapping identified branches across four formatters, five context-adapter tests, and ChanServ's command HelpCommand test; changes span 2+ non-trivial files.
+- Mapped cases: ungrouped visible-command fallback in all four formatter tests; synthetic admin/subgroup and IRCOP cases for MemoServ/OperServ; context-adapter visibility/group forwarding cases; distinct unknown `HELP MISSING` case in ChanServ. Keep the known-but-denied command behavior test unchanged.
+- Checks passed: focused tests across the 10 mapped files (`98 tests, 225 assertions`); `php -l` on all 10 changed test files; `git diff --check`. The full coverage rerun belongs to HLP-04.
+- Progress: test-only cases implemented and verified; existing known-but-denied behavior remains unchanged. Record the work-unit commit identity during final tracker closure.
+
 ### HLP-02 — Future command and service-bot agent guidance
 
 - [x] Expand `.agents/services.md` with concise, actionable checklists covering HELP grouping/metadata, all-locale translation, permission-filtered direct/general HELP, runtime registration, bot wiring, and integration tests for new commands/services.
@@ -65,21 +73,23 @@ Current HELP output uses flat command lists and parallel formatters without func
 - Route: **delegated direct**. Trigger evidence: coordinated non-trivial config, release-note, and test changes.
 - Checks passed: focused service-list and CTCP tests (`24 tests, 844 assertions`); `php bin/console lint:yaml config/services.yaml --parse-tags`; `git diff --check`. An initial YAML lint invocation without `--parse-tags` failed on Symfony `!tagged_iterator`, then the documented invocation passed.
 - Forecast: 31 authored changed lines across 5 files.
-- Progress: implemented and verified; HLP-03 slice commit pending.
+- Progress: implemented, verified, and committed as `68519c31` (`chore(release): bump service version to 2.3.0`). RDD outcome: disabled/unmanaged.
 
 ### HLP-04 — Final verification and delivery record
 
-- [ ] Run `php -l` on changed PHP files, `php bin/console lint:container`, `php bin/console lint:yaml . --exclude vendor/ --parse-tags`, PHPStan max, PHP-CS-Fixer (inspect resulting diff), configured architecture gate, and `./scripts/check-coverage.sh 100 --issues` exactly once at final verification.
+- [ ] Run `php -l` on changed PHP files, `php bin/console lint:container`, `php bin/console lint:yaml . --exclude vendor/ --parse-tags`, PHPStan max, PHP-CS-Fixer (inspect resulting diff), configured architecture gate, and the final `./scripts/check-coverage.sh 100 --issues` after HLP-01R.
 - [ ] Record each result, failed/skipped/unavailable checks, work-unit commit IDs, and final next step here; update the Engram mirror after each task.
 - Route: direct verification; tests/checks may use fresh workers where useful.
-- Progress: not started.
+- Other final gates passed on the first candidate: changed-PHP `php -l`; container lint; YAML lint (441 files); PHPStan max; PHP-CS-Fixer (fixed 0/1,945); Deptrac (0 violations, skips, uncovered, warnings, or errors); `git diff --check`.
+- Initial full-coverage candidate failed: 5,831 tests / 30,098 assertions passed, but line coverage was 99.64% (20,459/20,531; 72 uncovered). HLP-01R added focused tests for those HELP branches; rerun full coverage once on the corrected final candidate.
+- Progress: other final gates passed; HLP-01R focused checks are complete; corrected full-coverage gate remains.
 
 ## Current progress and next step
 
 - Branch created from clean `main`; HLP-01 is complete and committed as the first local chain slice (`d2089f4d`).
 - Delivery chain strategy selected: `feature-branch-chain`; PRs/remote actions remain unauthorized.
 - The design pack and current HELP architecture were reviewed; the direct-help visibility choice was confirmed by the user.
-- Next: create the HLP-03 work-unit commit, then run final verification.
+- Next: commit HLP-01R, complete final verification including one corrected full-coverage run, then record the final outcome.
 
 ## Relevant files
 

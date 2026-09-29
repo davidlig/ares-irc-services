@@ -171,6 +171,16 @@ final class HelpFormatterContextAdapterTest extends TestCase
         self::assertFalse($adapter->hasIrcopAccess());
     }
 
+    #[Test]
+    public function canViewPublicButNotOperOnlyCommandAndExposesHelpGroups(): void
+    {
+        $adapter = new HelpFormatterContextAdapter($this->createMinimalContext());
+
+        self::assertTrue($adapter->canViewCommandInHelp($this->createCommandStub('PUBLIC')));
+        self::assertFalse($adapter->canViewCommandInHelp($this->createCommandStub('OPER', true)));
+        self::assertSame('help.group.messages', $adapter->getHelpGroups()[0]['group_key']);
+    }
+
     private function createMinimalContext(): MemoServContext
     {
         return new MemoServContext(

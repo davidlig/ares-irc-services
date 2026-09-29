@@ -46,6 +46,37 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function mergesIrcopCommandsAndRendersAdminSubgroupAndUngroupedCommand(): void
+    {
+        $visible = new OperServHelpableCommand('VISIBLE', 1);
+        $ircop = new OperServHelpableCommand('IRCOP', 2);
+        $ungrouped = new OperServHelpableCommand('FUTURE', 3);
+        $context = new OperServHelpFormatterContext(
+            commands: [$visible, $ungrouped],
+            ircopCommands: [$ircop],
+            visibleCommands: ['VISIBLE', 'FUTURE'],
+            ircopAccess: true,
+            helpGroups: [
+                ['group_key' => 'help.group.empty', 'commands' => ['MISSING'], 'admin' => false, 'subgroup' => false],
+                ['group_key' => 'help.group.public', 'commands' => ['VISIBLE'], 'admin' => false, 'subgroup' => false],
+                ['group_key' => 'help.ircop_group.operations', 'commands' => ['IRCOP'], 'admin' => true, 'subgroup' => true],
+            ],
+        );
+
+        new UnifiedHelpFormatter()->showGeneralHelp($context);
+
+        $keys = array_column($context->replies, 'key');
+        self::assertContains('help.general_footer', $keys);
+        self::assertContains('help.ircop_header', $keys);
+        self::assertContains('help.subgroup_header', $keys);
+        $commandLines = array_values(array_filter(
+            $context->replies,
+            static fn (array $reply): bool => 'help.command_line' === $reply['key'],
+        ));
+        self::assertSame(['VISIBLE     ', 'IRCOP       ', 'FUTURE      '], array_column(array_column($commandLines, 'params'), 'command'));
+    }
+
+    #[Test]
     public function rendersCommandHelpWithParametersAndOptions(): void
     {
         $context = new OperServHelpFormatterContext();
@@ -100,15 +131,17 @@ final class OperServHelpFormatterContext implements HelpFormatterContextInterfac
     public array $rawReplies = [];
 
     /**
-     * @param list<HelpableCommandInterface> $commands
-     * @param list<HelpableCommandInterface> $ircopCommands
-     * @param list<string>                   $visibleCommands
+     * @param list<HelpableCommandInterface>                                                           $commands
+     * @param list<HelpableCommandInterface>                                                           $ircopCommands
+     * @param list<string>                                                                             $visibleCommands
+     * @param list<array{group_key: string, commands: list<string>, admin: bool, subgroup: bool}>|null $helpGroups
      */
     public function __construct(
         private readonly array $commands = [],
         private readonly array $ircopCommands = [],
         private readonly array $visibleCommands = [],
         private readonly bool $ircopAccess = false,
+        private readonly ?array $helpGroups = null,
     ) {}
 
     public function reply(string $key, array $params = []): void
@@ -143,7 +176,7 @@ final class OperServHelpFormatterContext implements HelpFormatterContextInterfac
 
     public function getHelpGroups(): array
     {
-        return [
+        return $this->helpGroups ?? [
             ['group_key' => 'help.group.operations', 'commands' => ['VISIBLE', 'HIDDEN'], 'admin' => false, 'subgroup' => false],
         ];
     }

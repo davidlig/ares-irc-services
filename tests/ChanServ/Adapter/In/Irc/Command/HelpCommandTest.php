@@ -227,6 +227,27 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
+    public function unknownCommandShowsUnknownCommandReply(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $this->createCommand()->execute($this->createContext(
+            ['MISSING'],
+            $notifier,
+            $translator,
+            new ChanServCommandRegistry([]),
+        ));
+
+        self::assertSame(['help.unknown_command'], $messages);
+    }
+
+    #[Test]
     public function oneArgShowsCommandHelpForKnownCommand(): void
     {
         $messages = [];

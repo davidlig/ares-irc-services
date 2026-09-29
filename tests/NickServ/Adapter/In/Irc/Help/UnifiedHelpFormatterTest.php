@@ -56,6 +56,28 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function rendersUngroupedCommandAndGeneralFooterWithoutAdminCommands(): void
+    {
+        $command = new NickServHelpableCommand('FUTURE', 1);
+        $context = new NickServHelpFormatterContext(
+            commands: [$command],
+            visibleCommands: ['FUTURE'],
+        );
+
+        new UnifiedHelpFormatter()->showGeneralHelp($context);
+
+        $keys = array_column($context->replies, 'key');
+        self::assertContains('help.general_footer', $keys);
+        self::assertNotContains('help.ircop_header', $keys);
+        $commandLines = array_values(array_filter(
+            $context->replies,
+            static fn (array $reply): bool => 'help.command_line' === $reply['key'],
+        ));
+        self::assertSame(['FUTURE      '], array_column(array_column($commandLines, 'params'), 'command'));
+        self::assertSame(['translated:future.short'], array_column(array_column($commandLines, 'params'), 'description'));
+    }
+
+    #[Test]
     public function rendersCommandHelpWithParametersAndOptions(): void
     {
         $context = new NickServHelpFormatterContext();
