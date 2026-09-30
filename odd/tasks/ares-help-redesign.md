@@ -90,7 +90,7 @@ Current HELP output uses flat command lists and parallel formatters without func
 - Branch created from clean `main`; HLP-01, HLP-01R, HLP-02, HLP-03, and HLP-04 are complete, with their local work-unit commit identities recorded above.
 - Delivery chain strategy selected: `feature-branch-chain`; PRs/remote actions remain unauthorized.
 - The design pack and current HELP architecture were reviewed; the direct-help visibility choice was confirmed by the user.
-- Next: no implementation work remains; remote delivery was not authorized, so the local feature branch is ready for the user's decision about any later push or PR.
+- Original redesign scope is complete. A follow-up color-correction scope is now authorized below; no remote delivery, push, or PR is authorized.
 
 ## Relevant files
 
@@ -99,3 +99,95 @@ Current HELP output uses flat command lists and parallel formatters without func
 - `translations/{nickserv,chanserv,memoserv,operserv}.*.yaml` — localized help catalogs.
 - `.agents/services.md` — contributor guidance for service commands and bots.
 - `config/services.yaml`, `CHANGELOG.md`, and CTCP/service-version tests — visible release version.
+
+## Authorized follow-up: HELP color update
+
+### Objective
+
+Apply `plans/ares-help-color-update-plan.md` using `plans/irc-help-style.md` as the design rule: make HELP structure consistently readable on light and dark IRC client backgrounds for NickServ, ChanServ, MemoServ, OperServ, and future commands/services.
+
+### Problem and why
+
+The completed HELP redesign emits structural mIRC colors `11` and `12`, and its visual palette is partly embedded in translated layout strings. The new plan replaces those choices with semantic roles and resets that avoid formatting bleed, while preserving localized text and existing behavior.
+
+### Authorized scope
+
+- HELP presentation only: service headers, sections/groups, command/subcommand rows, navigational hints, warnings, admin sections, separators, and HELP-specific error/help text where its existing color is structural.
+- Four service-owned HELP formatters, focused regression/translation checks, all 14 locales for the four service catalogs, and agent guidance required by the plan.
+- New `.agents/irc-help-style.md` and the reference/checklist update in `.agents/services.md`.
+- No command execution, business logic, authorization policy, persistence, IRC protocol behavior, non-HELP response redesign, design-plan edits, remote operations, push, PR, or tag.
+
+### Constraints and decisions
+
+- The new color plan supersedes earlier palette choices for HELP only; retain current groups, command inventory, translations' natural wording, dynamic behavior, and permission filtering.
+- Use mIRC decimal color codes: title/normal section `06`, command `03`, marker `10`, admin/error `04`, warning `07`, separator `14`; descriptions remain default foreground. Bold/reset controls do not mean color index `02`.
+- Do not introduce structural colors `00`, `01`, `02`, `08`, `09`, `11`, `12`, `13`, or `15`.
+- Do not add classes or a shared style helper. Keep formatting in the existing service HELP formatters, but keep marker glyphs and mIRC color markup out of command PHP; place localized structural markup in the existing HELP translation entries and guard its palette in tests. Keep formatter and visibility policy service-owned.
+- Complete the correction in all four service bots and all 14 supported languages; a NickServ-only implementation is incomplete.
+- TDD is disabled by the user's explicit HELP-redesign choice. Run ordinary focused functional checks with `./vendor/bin/phpunit --no-coverage --display-all-issues`.
+- Receipt-driven development remains disabled by global user preference: report `disabled/unmanaged`; do not assess, review, or toggle it.
+- Reuse the already selected `feature-branch-chain` strategy for this HELP feature on `feat/ares-help-redesign`; no remote delivery is authorized. Forecast approximately 1,300 authored changed lines (generated files excluded); track actual additions plus deletions from task commits and record slice boundaries.
+
+### Acceptance criteria
+
+- All four services use the same documented color semantics for HELP structure; descriptions remain uncolored by structural palette, and each styled fragment resets formatting.
+- HELP general, command, and supported subcommand output remains translated in all 14 locales, with no forbidden structural colors.
+- Existing command grouping, metadata, sender visibility, Root/IRCop permission behavior, and command execution are unchanged.
+- Style behavior, formatter integration, all-locale placeholders/palette, and representative HELP paths have regression coverage.
+- `.agents/irc-help-style.md` exists and `.agents/services.md` makes it mandatory for new commands/services.
+- All applicable project quality gates pass. Manual mIRC light/dark verification is recorded honestly; if no local client is available, it remains explicitly pending rather than claimed.
+
+### Tasks and progress
+
+#### HLP-05 — NickServ migration without a new style class
+
+- [x] Remove the newly introduced `IrcHelpStyle` class and its unit test; place HELP markers/color markup in existing localized HELP translation entries, and migrate NickServ formatter/tests plus all 14 locale catalogs without changing visibility or behavior.
+- [x] Rewrite `.agents/irc-help-style.md` to document the palette without a helper class, and make `.agents/services.md` reference that rule for all bots.
+- Route: **delegated direct**. Trigger evidence: implementation changes multiple non-trivial PHP, test, and locale files; the style API is shared with the remaining independent service migrations.
+- Implementation constraint: no additional class; no marker glyph or color-selection helper call in command PHP. Colors/markers belong in existing localized HELP resources, while code retains only layout and presentation branching.
+- Checks passed on the revised implementation: NickServ formatter/command/context/alignment tests (`43 tests, 1,862 assertions`); `php -l` on the four changed NickServ PHP files; `git diff --check`.
+- Cross-service regression outcome: combined NickServ/alignment/catalog run (`47 tests, 1,949 assertions`) has one failure in `TranslationCatalogTest::everyKeyReferencedByCodeIsDefined`: ChanServ formatter references `help.header`, missing from the ChanServ catalog. HLP-06 is reopened to fix and reverify that translation contract; the NickServ tests in the run passed.
+- Verification history: an earlier NickServ run found missing locale keys and stale command-test expectations; those were repaired and revised NickServ checks now pass.
+- Runtime harness: **N/A** — deterministic presentation output is covered by PHPUnit; no live IRC session was authorized or required. Manual mIRC light/dark visual confirmation remains pending.
+- Rollback boundary: revert the revised NickServ HELP presentation/tests and 14 catalogs, the palette/catalog regression check, and the adjusted style guidance; do not retain a new shared helper class.
+- Authored diff: re-estimate after the four-service migration; cached `feature-branch-chain` strategy applies.
+- Progress: revised implementation and focused checks are complete; the helper class and unit test are removed, and NickServ uses its 14 localized catalogs. HLP-05 work-unit commit is pending. The global catalog failure is tracked separately under HLP-06.
+
+#### HLP-06 — ChanServ color migration
+
+- [ ] Migrate ChanServ HELP formatter, tests, and all 14 locale catalogs to the canonical style using existing translation entries, with no new style class; preserve all mode/permission-dependent visibility.
+- Route: **delegated direct**. Trigger evidence: writer trigger applies across formatter, test, and 14 non-trivial locale files.
+- Checks passed on the current service slice: focused ChanServ HELP formatter/command tests (`29 tests, 149 assertions`), including rendered output across all 14 locales; `php -l` on both changed production files and both changed tests; `git diff --check`; focused HELP palette scan found no forbidden structural colors. The shared translation-catalog test then exposed that `help.header` is missing from ChanServ's English catalog.
+- Runtime harness: **N/A** — translated formatter output is exercised directly by PHPUnit; no live IRC session was authorized or required.
+- Authored diff: 431 additions plus deletions across the ChanServ formatter/command, tests, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
+- Progress: reopened after `TranslationCatalogTest` reported `help.header @ src/ChanServ/Adapter/In/Irc/Help/UnifiedHelpFormatter.php`; add/verify that key across all 14 catalogs before closing and committing HLP-06.
+
+#### HLP-07 — MemoServ color migration
+
+- [x] Migrate MemoServ HELP formatter, tests, and all 14 locale catalogs to the canonical style using existing translation entries, with no new style class; preserve existing command visibility.
+- Route: **delegated direct**. Trigger evidence: writer trigger applies across formatter, test, and 14 non-trivial locale files.
+- Checks passed: focused MemoServ HELP formatter/command tests (`13 tests, 700 assertions`), including translated rendering and canonical-color checks across all 14 locales; `php -l` on the modified formatter and both changed tests; `git diff --check`.
+- Runtime harness: **N/A** — translated formatter output is exercised directly by PHPUnit; no live IRC session was authorized or required. Manual IRC client verification remains pending.
+- Authored diff: 486 additions plus deletions across the MemoServ formatter, tests, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
+- Progress: implementation and checks complete; work-unit commit pending, then record its identity here.
+
+#### HLP-08 — OperServ color migration and palette regression guard
+
+- [ ] Migrate OperServ HELP formatter, tests, and all 14 locale catalogs using existing translation entries and no new style class; add/extend an all-service/all-locale check preventing forbidden structural colors.
+- Route: **delegated direct**. Trigger evidence: formatter, regression test, and 14 locale files are non-trivial; code contracts are frozen by HLP-05.
+- Checks: focused OperServ HELP/formatter tests, all-locale alignment/palette checks, PHP lint, `git diff --check`.
+- Progress: pending.
+
+#### HLP-09 — Final verification and delivery record
+
+- [ ] Run applicable final gates once, record failures/unavailable checks and commit identities, and record manual visual validation as passed or pending.
+- Route: **direct verification**; testing/build actors may be used without changing the implementation route.
+- Checks: project final verification order in `AGENTS.md`, including the single full coverage run and configured architecture gate.
+- Progress: pending.
+
+### Delivery and recovery state
+
+- Feature identity remains `ares-help-redesign`; HLP-01 through HLP-04 above are historical completed tasks, and HLP-05 through HLP-09 are the newly authorized follow-up.
+- Current branch is `feat/ares-help-redesign`; working tree contains an uncommitted NickServ migration and partial ChanServ/MemoServ formatter edits; reconcile those edits with the no-new-class and all-locales constraint before continuing. TDD: disabled, source: prior explicit user choice recorded in the existing tracker, runner: `./vendor/bin/phpunit --no-coverage --display-all-issues`.
+- Forecast: re-estimate for the revised four-service/all-locale implementation; strategy: cached `feature-branch-chain`. Create reviewable local work-unit slices and record each commit in this document. No push/PR/tag or other remote operation.
+- Current next step: fix and verify the ChanServ `help.header` catalog key across all 14 locales, then close/commit HLP-05 and HLP-06 as separate work units; verify OperServ and complete the shared all-service palette guard.
