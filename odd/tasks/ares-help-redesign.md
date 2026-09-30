@@ -232,8 +232,11 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 
 - [ ] Create the draft tracker PR and chained child PRs from the existing work-unit boundaries; link the approved issue in every PR and add exactly one `type:feature` label.
 - [ ] Add `size:exception` only to oversized indivisible work units/tracker integration PR as accepted by the user; each child body records chain position, immediate base/dependency, scope, and verification evidence.
-- Route: **direct inline**. Trigger evidence: source feature and commit boundaries are already implemented and verified; no code changes are planned.
+- Route: **delegated direct**. Trigger evidence: the scoped read-only PR-history and GitHub-settings mapping was delegated before preparing remote branch/PR writes; the existing work units and immediate-parent boundaries are now verified.
 - Acceptance: focused diffs where possible; preserve work-unit boundaries, do not mix feature-branch-chain with another chain strategy, and observe applicable checks.
+- Chain layout: create `feat/ares-help-redesign-tracker` at `d2089f4d` (core HELP redesign, 2,273 authored changed lines; indivisible and user-approved `size:exception`) and open it as a draft PR to `main`. Six child PRs follow the exact original linear history, each targeting the preceding source branch: `d2089f4d..55d1f306` (343), `55d1f306..65e4ce57` (NickServ, 1,095; exception), `65e4ce57..2522d912` (MemoServ, 496; exception), `2522d912..3855dc9a` (ChanServ, 365), `3855dc9a..6964e310` (OperServ, 593; exception), and `6964e310..dc43e881` (verification/issue evidence, 318). Full tracker diff is 4,311 authored changed lines (+3,379/−932); later commits revise earlier task/translation lines, so slice sizes are not additive.
+- Merge topology: repository settings permit merge commits, squash, and rebase, but not auto-merge; use merge commits for children so original commit ancestry remains available. No `main` branch protection or repository ruleset was visible, so explicitly wait for and check the final tracker PR's CI rather than relying on server enforcement.
+- Verification caveat: `.github/workflows/ci.yml` only runs CI on PRs targeting `main`; chained child PRs to feature branches will not receive Actions runs. Their documented focused tests remain the child-slice evidence, and the final tracker PR to `main` must run and pass the applicable full CI before merge.
 
 #### DLV-03 — Integrate the chain and merge to main
 
@@ -249,5 +252,5 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 
 ### Delivery progress
 
-- Current status: DLV-01 is complete; issue #13 is published and approved. Read-only discovery verified the repository, active authorized `gh` session, issue settings/labels, current branch, existing issue/PR state, CI behavior, and release/tag absence.
-- Next step: prepare the selected feature-branch-chain PRs under DLV-02, then continue through DLV-04 while recording actual issue/PR/release IDs and checks.
+- Current status: DLV-01 is complete; issue #13 is published and approved. Read-only discovery verified the repository, active authorized `gh` session, issue settings/labels, current branch, existing issue/PR state, CI behavior, merge methods, and release/tag absence. Exact source/target commit boundaries and focused diff sizes are mapped; no child branch or PR has been created yet.
+- Next step: create the tracker branch/PR and six chained child PRs per the recorded boundaries, then integrate, run final main-target CI, merge, observe deployment, and publish tag/release `2.3.0`.
