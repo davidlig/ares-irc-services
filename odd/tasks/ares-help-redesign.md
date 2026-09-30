@@ -206,3 +206,48 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Current branch is `feat/ares-help-redesign`; HLP-05, HLP-06, HLP-07, and HLP-08 are committed as `65e4ce57`, `3855dc9a`, `2522d912`, and `6964e310`; final correction/verification is committed as `a693eb8a`. TDD: disabled, source: prior explicit user choice recorded in the existing tracker, runner: `./vendor/bin/phpunit --no-coverage --display-all-issues`.
 - Forecast was under by more than 400 authored changes. Follow-up work-unit diffs total 2,798 additions plus deletions through `a693eb8a` (generated files excluded); cached `feature-branch-chain` strategy applies. No push/PR/tag or other remote operation.
 - Current next step: no further code work remains. Manual IRC-client light/dark visual verification is pending client availability; remote delivery remains the user's decision.
+
+## Authorized GitHub delivery — 2026-09-30
+
+### Authorization and delivery constraints
+
+- The user explicitly authorized creating an issue, preparing PRs, merging the completed HELP work to `main`, and publishing a release, and confirmed the current `gh` session for `davidlig/ares-irc-services`.
+- The requested release tag is exactly `2.3.0` (without a `v` prefix).
+- The user confirmed that the merge to `main` may trigger the configured production deployment.
+- The user accepted `size:exception` for indivisible work units that exceed the chained-PR 400-line review budget. Do not split coherent code/translation/test units just to meet the budget.
+- Keep the previously selected `feature-branch-chain` strategy. Use an issue-approved, exactly-one-`type:*`-label PR chain; apply `size:exception` to each applicable oversized PR. Never bypass failing CI or required protections.
+- GitHub discovery on 2026-09-30: issues and blank issues are enabled; the default branch is `main`; no repository issue/PR templates are present; labels include `status:approved`, `type:feature`, and `size:exception`. No matching HELP redesign issue/PR or release/tag `2.3.0` was found. The issue fallback body must receive a pre-submission privacy review before publication.
+- CI runs the production deploy job on pushes to `main` after test and migration jobs pass. RDD is disabled/unmanaged; do not start review flows.
+
+### Delivery tasks
+
+#### DLV-01 — Create the approved issue
+
+- [x] Publish one structured feature issue for the all-service HELP redesign/color update and v2.3.0 release, applying the existing `status:approved` label with the user's explicit approval.
+- Route: **direct inline**. Trigger evidence: one public GitHub issue artifact; repository/template/label discovery is complete and no issue template applies.
+- Acceptance: no duplicate; body reflects only verified scope/evidence; issue link and approval label recorded below.
+- Completed: issue [#13](https://github.com/davidlig/ares-irc-services/issues/13), “Redesign and localize HELP across all services (v2.3.0)”; labels `enhancement` and `status:approved`. The body passed the required pre-submission privacy scan and distinguishes pending manual IRC-client visual confirmation from automated checks.
+
+#### DLV-02 — Prepare the feature-branch PR chain
+
+- [ ] Create the draft tracker PR and chained child PRs from the existing work-unit boundaries; link the approved issue in every PR and add exactly one `type:feature` label.
+- [ ] Add `size:exception` only to oversized indivisible work units/tracker integration PR as accepted by the user; each child body records chain position, immediate base/dependency, scope, and verification evidence.
+- Route: **direct inline**. Trigger evidence: source feature and commit boundaries are already implemented and verified; no code changes are planned.
+- Acceptance: focused diffs where possible; preserve work-unit boundaries, do not mix feature-branch-chain with another chain strategy, and observe applicable checks.
+
+#### DLV-03 — Integrate the chain and merge to main
+
+- [ ] Merge child PRs in chain order, then merge the tracker PR to `main` only after required checks pass; observe the resulting production deployment and record its result.
+- Route: **direct delivery**. Trigger evidence: user explicitly authorized merge and its production-deploy side effect.
+- Acceptance: no bypass; main contains the full approved chain; deployment status recorded accurately.
+
+#### DLV-04 — Publish release/tag 2.3.0
+
+- [ ] After the verified main merge, create GitHub tag/release `2.3.0` using the prepared `CHANGELOG.md` entry; record tag target and release URL.
+- Route: **direct delivery**. Trigger evidence: explicit user-specified tag and release authorization.
+- Acceptance: tag points to the merged main commit; release notes match the v2.3.0 changelog; remote artifact and URL recorded.
+
+### Delivery progress
+
+- Current status: DLV-01 is complete; issue #13 is published and approved. Read-only discovery verified the repository, active authorized `gh` session, issue settings/labels, current branch, existing issue/PR state, CI behavior, and release/tag absence.
+- Next step: prepare the selected feature-branch-chain PRs under DLV-02, then continue through DLV-04 while recording actual issue/PR/release IDs and checks.
