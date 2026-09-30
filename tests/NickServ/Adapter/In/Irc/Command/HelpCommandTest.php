@@ -20,7 +20,10 @@ use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function is_scalar;
 
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
@@ -255,18 +258,20 @@ final class HelpCommandTest extends TestCase
         });
         $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translations): string {
-            $translations[] = ['id' => $id, 'parameters' => $parameters];
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []) use (&$translations): string {
+                $translations[] = ['id' => $id, 'parameters' => $parameters];
 
-            $translation = match ($id) {
-                'help.intro_expiration_label' => 'NOTE',
-                'help.warning_marker' => 'translated:help.warning_marker',
-                'help.intro_expiration' => '%marker% %label%: Nicknames unused for more than %days% days are automatically removed.',
-                default => $id,
-            };
+                $translation = match ($id) {
+                    'help.intro_expiration_label' => 'NOTE',
+                    'help.warning_marker' => 'translated:help.warning_marker',
+                    'help.intro_expiration' => '%marker% %label%: Nicknames unused for more than %days% days are automatically removed.',
+                    default => $id,
+                };
 
-            return self::replaceTranslationParameters($translation, $parameters);
-        });
+                return self::replaceTranslationParameters($translation, self::requireStringKeyedParameters($parameters));
+            },
+        );
 
         $handler = new class implements NickServCommandInterface {
             public function getName(): string
@@ -614,15 +619,17 @@ final class HelpCommandTest extends TestCase
         });
         $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translations): string {
-            $translations[] = ['id' => $id, 'parameters' => $parameters];
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []) use (&$translations): string {
+                $translations[] = ['id' => $id, 'parameters' => $parameters];
 
-            $translation = 'help.set_timezone.region_header' === $id
-                ? 'Timezones for %region%:'
-                : $id;
+                $translation = 'help.set_timezone.region_header' === $id
+                    ? 'Timezones for %region%:'
+                    : $id;
 
-            return self::replaceTranslationParameters($translation, $parameters);
-        });
+                return self::replaceTranslationParameters($translation, self::requireStringKeyedParameters($parameters));
+            },
+        );
 
         $handlerWithSub = new class implements NickServCommandInterface {
             public function getName(): string
@@ -722,18 +729,20 @@ final class HelpCommandTest extends TestCase
         });
         $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translations): string {
-            $translations[] = ['id' => $id, 'parameters' => $parameters];
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []) use (&$translations): string {
+                $translations[] = ['id' => $id, 'parameters' => $parameters];
 
-            $translation = match ($id) {
-                'help.set_timezone.region_syntax' => 'HELP SET TIMEZONE',
-                'help.error_marker' => 'translated:help.error_marker',
-                'help.set_timezone.region_unknown' => '%marker% Unknown region. Use %syntax% for the index.',
-                default => $id,
-            };
+                $translation = match ($id) {
+                    'help.set_timezone.region_syntax' => 'HELP SET TIMEZONE',
+                    'help.error_marker' => 'translated:help.error_marker',
+                    'help.set_timezone.region_unknown' => '%marker% Unknown region. Use %syntax% for the index.',
+                    default => $id,
+                };
 
-            return self::replaceTranslationParameters($translation, $parameters);
-        });
+                return self::replaceTranslationParameters($translation, self::requireStringKeyedParameters($parameters));
+            },
+        );
 
         $handlerWithSub = new class implements NickServCommandInterface {
             public function getName(): string
@@ -836,17 +845,19 @@ final class HelpCommandTest extends TestCase
         });
         $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translations): string {
-            $translations[] = ['id' => $id, 'parameters' => $parameters];
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []) use (&$translations): string {
+                $translations[] = ['id' => $id, 'parameters' => $parameters];
 
-            $translation = match ($id) {
-                'help.set_timezone.index_syntax' => 'HELP SET TIMEZONE <region>',
-                'help.set_timezone.index_label' => 'Regions (use %syntax% for list):',
-                default => $id,
-            };
+                $translation = match ($id) {
+                    'help.set_timezone.index_syntax' => 'HELP SET TIMEZONE <region>',
+                    'help.set_timezone.index_label' => 'Regions (use %syntax% for list):',
+                    default => $id,
+                };
 
-            return self::replaceTranslationParameters($translation, $parameters);
-        });
+                return self::replaceTranslationParameters($translation, self::requireStringKeyedParameters($parameters));
+            },
+        );
 
         $handlerWithSub = new class implements NickServCommandInterface {
             public function getName(): string
@@ -1162,11 +1173,34 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
+     * @param array<array-key, mixed> $parameters
+     *
+     * @return array<string, mixed>
+     */
+    private static function requireStringKeyedParameters(array $parameters): array
+    {
+        $stringKeyedParameters = [];
+        foreach ($parameters as $key => $value) {
+            self::assertIsString($key);
+            $stringKeyedParameters[$key] = $value;
+        }
+
+        return $stringKeyedParameters;
+    }
+
+    /**
      * @param array<string, mixed> $parameters
      */
     private static function replaceTranslationParameters(string $translation, array $parameters): string
     {
-        $stringParameters = array_map(static fn (mixed $value): string => (string) $value, $parameters);
+        $stringParameters = [];
+        foreach ($parameters as $key => $value) {
+            $stringParameters[$key] = match (true) {
+                is_scalar($value) => (string) $value,
+                $value instanceof Stringable => (string) $value,
+                default => '',
+            };
+        }
 
         return strtr($translation, $stringParameters);
     }
