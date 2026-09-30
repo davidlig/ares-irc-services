@@ -238,6 +238,21 @@ final class HelpFormatterContextAdapterTest extends TestCase
     }
 
     #[Test]
+    public function canViewPublicCommandAndExposesHelpGroups(): void
+    {
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new NickServCommandRegistry([]),
+        );
+        $adapter = $this->createAdapter($context);
+
+        self::assertTrue($adapter->canViewCommandInHelp($this->createCommandStub('INFO')));
+        self::assertSame('help.group.registration_auth', $adapter->getHelpGroups()[0]['group_key']);
+    }
+
+    #[Test]
     public function getIrcopCommandsReturnsEmptyWhenSenderNull(): void
     {
         $cmd = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');

@@ -606,6 +606,35 @@ final class HelpFormatterContextAdapterTest extends TestCase
     }
 
     #[Test]
+    public function canViewPublicAndAuthorizedIrcopCommandsAndExposesHelpGroups(): void
+    {
+        $public = $this->createStub(ChanServCommandInterface::class);
+        $public->method('getName')->willReturn('INFO');
+        $restricted = $this->createStub(ChanServCommandInterface::class);
+        $restricted->method('getName')->willReturn('DROP');
+        $restricted->method('getRequiredPermission')->willReturn(ChanServPermission::DROP);
+        $registry = new ChanServCommandRegistry([$restricted]);
+        $context = $this->createContext(
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $registry,
+            sender: new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true),
+            account: new ChanAccountView(1, 'OperUser', 'en'),
+        );
+        $allowedAccess = $this->createStub(ChanServOperatorAccess::class);
+        $allowedAccess->method('hasPermission')->willReturn(true);
+        $allowed = new HelpFormatterContextAdapter($context, $allowedAccess);
+        $deniedAccess = $this->createStub(ChanServOperatorAccess::class);
+        $deniedAccess->method('hasPermission')->willReturn(false);
+        $denied = new HelpFormatterContextAdapter($context, $deniedAccess);
+
+        self::assertTrue($allowed->canViewCommandInHelp($public));
+        self::assertTrue($allowed->canViewCommandInHelp($restricted));
+        self::assertFalse($denied->canViewCommandInHelp($restricted));
+        self::assertSame('help.group.registration_info', $allowed->getHelpGroups()[0]['group_key']);
+    }
+
+    #[Test]
     public function hasIrcopAccessIsFalseForAnIdentifiedNonOper(): void
     {
         $context = $this->createContext(

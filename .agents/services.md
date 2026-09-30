@@ -122,7 +122,8 @@ HELP formatting belongs to IRC presentation, not Application.
 
 ## 5. Bots
 
-Service bots are network adapters.
+Service bots are network adapters. A service bot owns its network identity and transport; it does
+not own the service's command registry or business behavior.
 
 Allowed responsibilities:
 - introduce service;
@@ -135,6 +136,21 @@ Forbidden:
 - account/channel policy;
 - authorization implementation;
 - password handling rules.
+
+When adding or wiring a service bot:
+
+1. Keep the bot in the service's inbound adapter/composition path. Route messages through the
+   existing `ServiceCommandGateway` listener (`service_command_listener`) to that service's
+   `CommandRouter`; do not call use cases or command handlers from the bot.
+2. Provide its nickname and UID through `app.service_nickname_provider` and
+   `app.service_uid_provider`. Keep protocol-specific registration and network actions in the
+   relevant IRC protocol adapter.
+3. Wire the bot and gateway in `config/services.yaml` (or the existing service configuration),
+   reusing the registry's established command tag. Current examples are `nickserv.command`,
+   `chanserv.command`, `memoserv.command`, and `operserv.command.new`; verify the actual tag rather
+   than assuming all registries use the same spelling.
+4. Add or update integration coverage for service identity/UID, message routing to the right
+   command registry, and presented replies. Run the focused wiring and service-command tests.
 
 ## 6. Authorization
 
@@ -221,15 +237,25 @@ Before calling a service command complete:
 
 1. Put IRC parsing and reply handling in `<Service>/Adapter/In/Irc/Command`; send typed input to an
    Application use case for the behavior. Define name, aliases, minimum arguments, syntax, order,
-   short description, and `HELP` metadata in the command adapter.
+   short description, subcommand help, and permission metadata in the command adapter.
 2. Register the command in the service's runtime command registry. Where the registry uses a tagged
-   iterator, add its explicit tag in `config/services.yaml` (for ChanServ, `chanserv.command`). Check
+   iterator, add its explicit tag in `config/services.yaml` (for example, `chanserv.command`). Check
    the compiled container's tag list and verify the registry resolves the command by its public name.
-3. Add every command, success, error, and `HELP` translation key in all 14 languages. Verify both
-   general `HELP` and `HELP <command>` use the registered command and its translated metadata.
-   Update the global command count in `ServicesCommandHelpAlignmentTest` when the registry grows.
-4. Test parsing and use-case outcomes, then add a container/registry integration test that catches a
-   missing service tag. Run the focused tests and the repository quality gates.
+3. Add the command to its functional group in the service's presentation-only HELP group metadata.
+   Keep group order and descriptions out of Application/Domain. If the command is restricted, use
+   the same visibility policy for general HELP and direct `HELP <command>`; do not change execution
+   authorization just to filter its help text.
+4. Add every command, success, error, syntax, short/detail help, subcommand, and group-label key in
+   all 14 languages: `ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`,
+   `tr`. Preserve each locale's natural wording and interpolation placeholders; do not copy one
+   language's prose into another catalog.
+5. Add focused tests for routing/registration, group placement/order, direct and general HELP
+   visibility, detailed syntax/subcommands, and relevant permission/Root behavior. Extend
+   `ServicesCommandHelpAlignmentTest` for new keys/locales and update the expected global command
+   count when the registry grows.
+6. Run the focused command, HELP, and container/registry integration tests, then follow the project
+   quality gates. A command is incomplete if it executes but is absent from permission-filtered
+   HELP or any supported locale.
 
 For an IRCop command, also:
 

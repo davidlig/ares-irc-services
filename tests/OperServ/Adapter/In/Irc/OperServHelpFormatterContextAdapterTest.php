@@ -83,6 +83,15 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         self::assertFalse($adapter->shouldShowCommandInGeneralHelp(new FormatterCommand('OPER', operOnly: true)));
     }
 
+    #[Test]
+    public function canViewPublicCommandAndExposesHelpGroups(): void
+    {
+        $adapter = new OperServHelpFormatterContextAdapter($this->context());
+
+        self::assertTrue($adapter->canViewCommandInHelp(new FormatterCommand('PUBLIC')));
+        self::assertSame('help.group.operators_roles', $adapter->getHelpGroups()[0]['group_key']);
+    }
+
     /** @param list<OperServCommandInterface> $commands */
     private function context(
         array $commands = [],
