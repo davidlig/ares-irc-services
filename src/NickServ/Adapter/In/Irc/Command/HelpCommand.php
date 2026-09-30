@@ -116,7 +116,20 @@ final readonly class HelpCommand implements NickServCommandInterface
         $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler || ($handler->isOperOnly() && !$sender->isOper)) {
-            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+            $context->reply('help.unknown_command', [
+                'command' => $targetCmd,
+                'marker' => $context->trans('help.error_marker'),
+            ]);
+
+            return;
+        }
+
+        $adapter = $this->createAdapter($context);
+        if (!$adapter->canViewCommandInHelp($handler)) {
+            $context->reply('help.unknown_command', [
+                'command' => $targetCmd,
+                'marker' => $context->trans('help.error_marker'),
+            ]);
 
             return;
         }
@@ -137,14 +150,12 @@ final readonly class HelpCommand implements NickServCommandInterface
                     return;
                 }
 
-                $adapter = $this->createAdapter($context);
                 $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
                 return;
             }
         }
 
-        $adapter = $this->createAdapter($context);
         $this->formatter->showCommandHelp($adapter, $handler);
     }
 
@@ -154,9 +165,13 @@ final readonly class HelpCommand implements NickServCommandInterface
         $this->formatter->showGeneralHelp($adapter);
         if ($this->inactivityExpiryDays > 0) {
             $context->replyRaw(' ');
-            $context->reply('help.intro_expiration', ['%days%' => $this->inactivityExpiryDays]);
+            $context->reply('help.intro_expiration', [
+                'marker' => $context->trans('help.warning_marker'),
+                'label' => $context->trans('help.intro_expiration_label'),
+                'days' => $this->inactivityExpiryDays,
+            ]);
         }
-        $context->reply('help.footer');
+        $this->formatter->sendFooter($adapter);
     }
 
     private function createAdapter(NickServContext $context): HelpFormatterContextAdapter
@@ -173,17 +188,21 @@ final readonly class HelpCommand implements NickServCommandInterface
     private function showTimezoneIndexHelp(NickServContext $context, string $parentName, array $sub): void
     {
         $adapter = $this->createAdapter($context);
-        $this->formatter->sendHeader($adapter, $parentName . ' ' . $sub['name']);
+        $this->formatter->sendHeader($adapter, 'HELP ' . $parentName . ' ' . $sub['name']);
         $context->reply($sub['help_key']);
         $context->replyRaw(' ');
-        $context->reply('help.set_timezone.index_label', []);
+        $context->reply('help.set_timezone.index_label', [
+            'syntax' => $context->trans('help.set_timezone.index_syntax'),
+        ]);
         $regionsStr = implode(', ', $this->timezoneHelpProvider->getRegions());
         foreach ($this->chunkLine($regionsStr, self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
             $context->replyRaw($line);
         }
         $context->replyRaw(' ');
-        $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
-        $context->reply('help.footer');
+        $context->reply('help.syntax_label', [
+            'syntax' => $context->trans($sub['syntax_key']),
+        ]);
+        $this->formatter->sendFooter($adapter);
     }
 
     /**
@@ -219,22 +238,25 @@ final readonly class HelpCommand implements NickServCommandInterface
         $adapter = $this->createAdapter($context);
 
         if (null === $region) {
-            $this->formatter->sendHeader($adapter, 'SET TIMEZONE ' . $regionArg);
-            $context->reply('help.set_timezone.region_unknown', []);
+            $this->formatter->sendHeader($adapter, 'HELP SET TIMEZONE ' . $regionArg);
+            $context->reply('help.set_timezone.region_unknown', [
+                'marker' => $context->trans('help.error_marker'),
+                'syntax' => $context->trans('help.set_timezone.region_syntax'),
+            ]);
             $context->replyRaw(' ');
-            $context->reply('help.footer');
+            $this->formatter->sendFooter($adapter);
 
             return;
         }
 
-        $this->formatter->sendHeader($adapter, 'SET TIMEZONE ' . $region);
-        $context->reply('help.set_timezone.region_header', ['region' => $region]);
+        $this->formatter->sendHeader($adapter, 'HELP SET TIMEZONE ' . $region);
+        $context->replyRaw($context->trans('help.set_timezone.region_header', ['region' => $region]));
         $timezones = $this->timezoneHelpProvider->getTimezonesForRegion($region);
         foreach ($this->chunkLine(implode(', ', $timezones), self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
             $context->replyRaw($line);
         }
         $context->replyRaw(' ');
-        $context->reply('help.footer');
+        $this->formatter->sendFooter($adapter);
     }
 
     /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */

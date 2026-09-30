@@ -91,19 +91,24 @@ final readonly class HelpCommand implements MemoServCommandInterface
             return null;
         }
 
+        $adapter = new HelpFormatterContextAdapter($context);
+        if (!$adapter->canViewCommandInHelp($handler)) {
+            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+
+            return null;
+        }
+
         if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
             $subName = strtoupper($context->args[1]);
             $subCmd = $this->findSubCommand($handler, $subName);
 
             if (null !== $subCmd) {
-                $adapter = new HelpFormatterContextAdapter($context);
                 $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
                 return null;
             }
         }
 
-        $adapter = new HelpFormatterContextAdapter($context);
         $this->formatter->showCommandHelp($adapter, $handler);
 
         return null;

@@ -10,14 +10,20 @@ use App\MemoServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Stringable;
+use Symfony\Component\Yaml\Yaml;
 
+use function dirname;
 use function in_array;
+use function is_array;
+use function is_scalar;
+use function is_string;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {
     #[Test]
-    public function rendersFilteredGeneralHelpAndSortedIrcopSection(): void
+    public function rendersFilteredGroupedGeneralHelp(): void
     {
         $context = new MemoServHelpFormatterContext(
             commands: [
@@ -25,12 +31,7 @@ final class UnifiedHelpFormatterTest extends TestCase
                 new MemoServHelpableCommand('VISIBLE', 1),
                 new MemoServHelpableCommand('HELP', 0),
             ],
-            ircopCommands: [
-                new MemoServHelpableCommand('LATE', 9),
-                new MemoServHelpableCommand('EARLY', 1),
-            ],
             visibleCommands: ['VISIBLE'],
-            ircopAccess: true,
         );
 
         new UnifiedHelpFormatter()->showGeneralHelp($context);
@@ -44,13 +45,38 @@ final class UnifiedHelpFormatterTest extends TestCase
             self::assertIsString($reply['params']['command']);
             $renderedCommands[] = $reply['params']['command'];
         }
-        self::assertSame([
-            'VISIBLE     ',
-            'EARLY       ',
-            'LATE        ',
-        ], $renderedCommands);
-        self::assertContains('help.ircop_header', array_column($context->replies, 'key'));
-        self::assertStringContainsString('ℹ translated:help.header_title', $context->rawReplies[0]);
+        self::assertSame(['VISIBLE     '], $renderedCommands);
+        self::assertNotContains('help.ircop_header', array_column($context->replies, 'key'));
+        self::assertSame('help.header', $context->replies[0]['key']);
+        self::assertSame('MemoServ', $context->replies[0]['params']['title']);
+        self::assertContains('help.group_header', array_column($context->replies, 'key'));
+    }
+
+    #[Test]
+    public function rendersAdminSubgroupAndUngroupedCommand(): void
+    {
+        $visible = new MemoServHelpableCommand('VISIBLE', 1);
+        $ungrouped = new MemoServHelpableCommand('FUTURE', 2);
+        $context = new MemoServHelpFormatterContext(
+            commands: [$visible, $ungrouped],
+            visibleCommands: ['VISIBLE', 'FUTURE'],
+            helpGroups: [
+                ['group_key' => 'help.group.empty', 'commands' => ['MISSING'], 'admin' => false, 'subgroup' => false],
+                ['group_key' => 'help.ircop_group.operations', 'commands' => ['VISIBLE'], 'admin' => true, 'subgroup' => true],
+            ],
+        );
+
+        new UnifiedHelpFormatter()->showGeneralHelp($context);
+
+        $keys = array_column($context->replies, 'key');
+        self::assertContains('help.general_footer', $keys);
+        self::assertContains('help.ircop_header', $keys);
+        self::assertContains('help.subgroup_header', $keys);
+        $commandLines = array_values(array_filter(
+            $context->replies,
+            static fn (array $reply): bool => 'help.command_line' === $reply['key'],
+        ));
+        self::assertSame(['VISIBLE     ', 'FUTURE      '], array_column(array_column($commandLines, 'params'), 'command'));
     }
 
     #[Test]
@@ -90,12 +116,136 @@ final class UnifiedHelpFormatterTest extends TestCase
         ]);
 
         self::assertSame([
+            'help.header',
             'set.email.help',
             'set.email.options',
             'help.syntax_label',
             'help.footer',
         ], array_column($context->replies, 'key'));
-        self::assertStringContainsString('ℹ SET EMAIL', $context->rawReplies[0]);
+        self::assertSame('HELP SET EMAIL', $context->replies[0]['params']['title']);
+    }
+
+    #[Test]
+    public function rendersCanonicalColorsFromAllMemoServTranslationCatalogs(): void
+    {
+        foreach (['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'] as $locale) {
+            $catalog = $this->requireStringKeyedArray(
+                Yaml::parseFile(dirname(__DIR__, 6) . '/translations/memoserv.' . $locale . '.yaml'),
+                $locale . ' catalog must parse as a mapping',
+            );
+
+            $helpTranslations = $catalog['help'] ?? null;
+            self::assertIsArray($helpTranslations, $locale);
+            self::assertSame('%bot%', $helpTranslations['header_title'] ?? null, $locale);
+            self::assertArrayHasKey('header', $helpTranslations, $locale);
+            foreach ($this->flattenStrings($helpTranslations) as $translation) {
+                preg_match_all('/\x03(\d{1,2})/', $translation, $matches);
+                foreach ($matches[1] as $color) {
+                    self::assertContains($color, ['03', '04', '06', '07', '10', '14'], $locale . ' uses non-canonical HELP color ' . $color);
+                }
+            }
+
+            $command = new MemoServHelpableCommand('IGNORE', 1, [[
+                'name' => 'ADD',
+                'desc_key' => 'ignore.add.short',
+                'help_key' => 'ignore.add.help',
+                'syntax_key' => 'ignore.add.syntax',
+            ]]);
+            $context = new MemoServHelpFormatterContext(
+                commands: [$command],
+                visibleCommands: ['IGNORE'],
+                helpGroups: [[
+                    'group_key' => 'help.group.messages',
+                    'commands' => ['IGNORE'],
+                    'admin' => false,
+                    'subgroup' => false,
+                ]],
+                translations: $catalog,
+            );
+            $formatter = new UnifiedHelpFormatter();
+            $formatter->showGeneralHelp($context);
+            $formatter->showCommandHelp($context, $command);
+
+            foreach ($context->renderedReplies as $renderedReply) {
+                self::assertDoesNotMatchRegularExpression('/%[^%]+%/', $renderedReply, $locale);
+            }
+
+            self::assertStringContainsString("\x02\x0306● MemoServ\x03\x0F", $context->renderedReplies[0], $locale);
+            self::assertStringContainsString("\x0314─────────────────────────────\x03\x0F", $context->renderedReplies[0], $locale);
+
+            $commandRow = $this->renderedReplyFor($context, 'help.command_line');
+            self::assertMatchesRegularExpression('/\x0310›\x03\x0F \x02\x0303IGNORE\s+\x03\x0F.+/u', $commandRow, $locale);
+
+            $generalFooter = $this->renderedReplyFor($context, 'help.general_footer');
+            self::assertMatchesRegularExpression('/\x0310ℹ\x03\x0F.*\x0303\/msg MemoServ HELP.*\x03\x0F/u', $generalFooter, $locale);
+
+            $subcommandFooter = $this->renderedReplyFor($context, 'help.set_sub_footer');
+            self::assertMatchesRegularExpression('/\x0310ℹ\x03\x0F.*\x0303\/msg MemoServ HELP IGNORE <[^>]+>\x03\x0F/u', $subcommandFooter, $locale);
+
+            $syntax = $this->renderedReplyFor($context, 'help.syntax_label');
+            self::assertMatchesRegularExpression('/\x02\x0306.+\x03\x0F \x02\x0303.+\x03\x0F/u', $syntax, $locale);
+
+            $formatter->showSubCommandHelp($context, 'IGNORE', [
+                'name' => 'ADD',
+                'help_key' => 'ignore.add.help',
+                'syntax_key' => 'ignore.add.syntax',
+            ]);
+            $subcommandHeader = null;
+            foreach ($context->replies as $index => $reply) {
+                if ('help.header' === $reply['key'] && 'HELP IGNORE ADD' === $reply['params']['title']) {
+                    $subcommandHeader = $context->renderedReplies[$index];
+                    break;
+                }
+            }
+            self::assertIsString($subcommandHeader, $locale);
+            self::assertStringContainsString("\x02\x0306● HELP IGNORE ADD\x03\x0F", $subcommandHeader, $locale);
+        }
+    }
+
+    /**
+     * @param array<array-key, mixed> $values
+     *
+     * @return list<string>
+     */
+    private function flattenStrings(array $values): array
+    {
+        $strings = [];
+        foreach ($values as $value) {
+            if (is_array($value)) {
+                array_push($strings, ...$this->flattenStrings($value));
+            } elseif (is_string($value)) {
+                $strings[] = $value;
+            }
+        }
+
+        return $strings;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function requireStringKeyedArray(mixed $value, string $message): array
+    {
+        self::assertIsArray($value, $message);
+
+        $entries = [];
+        foreach ($value as $key => $entry) {
+            self::assertIsString($key, $message);
+            $entries[$key] = $entry;
+        }
+
+        return $entries;
+    }
+
+    private function renderedReplyFor(MemoServHelpFormatterContext $context, string $key): string
+    {
+        foreach ($context->replies as $index => $reply) {
+            if ($key === $reply['key']) {
+                return $context->renderedReplies[$index];
+            }
+        }
+
+        self::fail('No reply found for ' . $key);
     }
 }
 
@@ -107,21 +257,29 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
     /** @var list<string> */
     public array $rawReplies = [];
 
+    /** @var list<string> */
+    public array $renderedReplies = [];
+
     /**
-     * @param list<HelpableCommandInterface> $commands
-     * @param list<HelpableCommandInterface> $ircopCommands
-     * @param list<string>                   $visibleCommands
+     * @param list<HelpableCommandInterface>                                                           $commands
+     * @param list<HelpableCommandInterface>                                                           $ircopCommands
+     * @param list<string>                                                                             $visibleCommands
+     * @param list<array{group_key: string, commands: list<string>, admin: bool, subgroup: bool}>|null $helpGroups
+     * @param array<string, mixed>|null                                                                $translations
      */
     public function __construct(
         private readonly array $commands = [],
         private readonly array $ircopCommands = [],
         private readonly array $visibleCommands = [],
         private readonly bool $ircopAccess = false,
+        private readonly ?array $helpGroups = null,
+        private readonly ?array $translations = null,
     ) {}
 
     public function reply(string $key, array $params = []): void
     {
         $this->replies[] = ['key' => $key, 'params' => $params];
+        $this->renderedReplies[] = $this->translate($key, $params);
     }
 
     public function replyRaw(string $message): void
@@ -131,7 +289,7 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
 
     public function trans(string $key, array $params = []): string
     {
-        return 'translated:' . $key;
+        return $this->translate($key, $params);
     }
 
     public function getCommandsForGeneralHelp(): iterable
@@ -144,6 +302,19 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
         return in_array($command->getName(), $this->visibleCommands, true);
     }
 
+    public function canViewCommandInHelp(HelpableCommandInterface $command): bool
+    {
+        return $this->shouldShowCommandInGeneralHelp($command);
+    }
+
+    public function getHelpGroups(): array
+    {
+        return $this->helpGroups ?? [
+            ['group_key' => 'help.group.messages', 'commands' => ['VISIBLE', 'HIDDEN'], 'admin' => false, 'subgroup' => false],
+            ['group_key' => 'help.group.preferences', 'commands' => [], 'admin' => false, 'subgroup' => false],
+        ];
+    }
+
     public function getIrcopCommands(): iterable
     {
         return $this->ircopCommands;
@@ -152,6 +323,32 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
     public function hasIrcopAccess(): bool
     {
         return $this->ircopAccess;
+    }
+
+    /** @param array<string, mixed> $params */
+    private function translate(string $key, array $params = []): string
+    {
+        if (null === $this->translations) {
+            $translation = 'help.header_title' === $key ? '%bot%' : 'translated:' . $key;
+        } else {
+            $translation = $this->translations;
+            foreach (explode('.', $key) as $part) {
+                if (!is_array($translation) || !isset($translation[$part])) {
+                    return $key;
+                }
+                $translation = $translation[$part];
+            }
+        }
+        if (!is_string($translation)) {
+            return $key;
+        }
+
+        $replace = ['%bot%' => 'MemoServ', '%memoserv%' => 'MemoServ'];
+        foreach ($params as $name => $value) {
+            $replace['%' . trim((string) $name, '%') . '%'] = is_scalar($value) || $value instanceof Stringable ? (string) $value : '';
+        }
+
+        return strtr($translation, $replace);
     }
 }
 

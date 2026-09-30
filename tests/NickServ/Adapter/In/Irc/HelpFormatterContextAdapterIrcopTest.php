@@ -288,6 +288,28 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         self::assertFalse($adapter->shouldShowCommandInGeneralHelp($command));
     }
 
+    #[Test]
+    public function canViewNickServOperatorCommandOnlyWhenCentralPermissionBoundaryGrantsIt(): void
+    {
+        $command = $this->createIrcopCommandStub('WHOIP', NickServPermission::WHOIP);
+        $registry = new NickServCommandRegistry([$command]);
+        $allowedAccess = $this->createStub(NickServOperatorAccess::class);
+        $allowedAccess->method('hasPermission')->willReturn(true);
+        $allowed = new HelpFormatterContextAdapter(
+            $this->context($registry, identified: true, oper: true, account: true),
+            $allowedAccess,
+        );
+        $deniedAccess = $this->createStub(NickServOperatorAccess::class);
+        $deniedAccess->method('hasPermission')->willReturn(false);
+        $denied = new HelpFormatterContextAdapter(
+            $this->context($registry, identified: true, oper: true, account: true),
+            $deniedAccess,
+        );
+
+        self::assertTrue($allowed->canViewCommandInHelp($command));
+        self::assertFalse($denied->canViewCommandInHelp($command));
+    }
+
     private function context(
         NickServCommandRegistry $registry,
         bool $identified,

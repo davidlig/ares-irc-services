@@ -17,6 +17,15 @@ use function strtolower;
  */
 final readonly class HelpFormatterContextAdapter implements HelpFormatterContextInterface
 {
+    private const array HELP_GROUPS = [
+        ['group_key' => 'help.group.registration_auth', 'commands' => ['REGISTER', 'IDENTIFY', 'VERIFY', 'RESEND', 'RECOVER'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.account_security', 'commands' => ['STATUS', 'INFO', 'SET'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.ircop_group.lookup', 'commands' => ['USERIP', 'WHOIP', 'LIST', 'HISTORY'], 'admin' => true, 'subgroup' => true],
+        ['group_key' => 'help.ircop_group.account_management', 'commands' => ['SASET', 'RENAME', 'NOEXPIRE'], 'admin' => true, 'subgroup' => true],
+        ['group_key' => 'help.ircop_group.suspensions_bans', 'commands' => ['SUSPEND', 'UNSUSPEND', 'FORBID', 'UNFORBID', 'FORBIDVHOST'], 'admin' => true, 'subgroup' => true],
+        ['group_key' => 'help.ircop_group.deletion', 'commands' => ['DROP', 'RESTORE'], 'admin' => true, 'subgroup' => true],
+    ];
+
     public function __construct(
         private NickServContext $context,
         private NickServOperatorAccess $operatorAccess,
@@ -65,6 +74,26 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         }
 
         return true;
+    }
+
+    public function canViewCommandInHelp(HelpableCommandInterface $command): bool
+    {
+        if ($this->shouldShowCommandInGeneralHelp($command)) {
+            return true;
+        }
+
+        foreach ($this->getIrcopCommands() as $ircopCommand) {
+            if ($ircopCommand->getName() === $command->getName()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function getHelpGroups(): array
+    {
+        return self::HELP_GROUPS;
     }
 
     /**

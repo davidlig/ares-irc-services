@@ -6,7 +6,7 @@ namespace App\NickServ\Adapter\In\Irc\Help;
 
 /**
  * Port for the unified HELP formatter. Abstracts reply, translation and command
- * listing so NickServ and ChanServ can share the same help layout (header, options, syntax, footer).
+ * listing while the NickServ formatter owns the HELP layout.
  */
 interface HelpFormatterContextInterface
 {
@@ -30,6 +30,19 @@ interface HelpFormatterContextInterface
     public function getCommandsForGeneralHelp(): iterable;
 
     public function shouldShowCommandInGeneralHelp(HelpableCommandInterface $command): bool;
+
+    /**
+     * Whether this sender may view detailed help for the command.
+     */
+    public function canViewCommandInHelp(HelpableCommandInterface $command): bool;
+
+    /**
+     * Ordered presentation-only command groups. Restricted commands remain subject to
+     * shouldShowCommandInGeneralHelp()/getIrcopCommands() when rendered.
+     *
+     * @return list<array{group_key: string, commands: list<string>, admin: bool, subgroup: bool}>
+     */
+    public function getHelpGroups(): array;
 
     /**
      * Returns IRCop commands that the current user has permission for.

@@ -53,6 +53,12 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
+    public function helpCommandHasNoHelpParameters(): void
+    {
+        self::assertSame([], $this->createCommand()->getHelpParams());
+    }
+
+    #[Test]
     public function emptyArgsShowsGeneralHelpAndFooter(): void
     {
         $messages = [];
@@ -140,7 +146,7 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
-    public function unknownCommandRepliesHelpUnknown(): void
+    public function hidesPermissionRestrictedCommandHelpWithoutPermission(): void
     {
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -196,9 +202,9 @@ final class HelpCommandTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
-                return null;
+                return 'chanserv.forbid';
             }
 
             public function allowsSuspendedChannel(): bool
@@ -221,9 +227,30 @@ final class HelpCommandTest extends TestCase
         $registry = new ChanServCommandRegistry([$handler]);
 
         $cmd = $this->createCommand();
-        $cmd->execute($this->createContext(['UNKNOWNCMD'], $notifier, $translator, $registry));
+        $cmd->execute($this->createContext(['REGISTER'], $notifier, $translator, $registry));
 
         self::assertContains('help.unknown_command', $messages);
+    }
+
+    #[Test]
+    public function unknownCommandShowsUnknownCommandReply(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $this->createCommand()->execute($this->createContext(
+            ['MISSING'],
+            $notifier,
+            $translator,
+            new ChanServCommandRegistry([]),
+        ));
+
+        self::assertSame(['help.unknown_command'], $messages);
     }
 
     #[Test]

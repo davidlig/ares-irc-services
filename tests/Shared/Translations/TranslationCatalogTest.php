@@ -19,6 +19,7 @@ use function array_unique;
 use function array_values;
 use function file_get_contents;
 use function implode;
+use function in_array;
 use function is_array;
 use function is_dir;
 use function is_string;
@@ -220,6 +221,59 @@ final class TranslationCatalogTest extends TestCase
             $mismatches,
             "Placeholder mismatch across locales:\n" . implode("\n", $mismatches),
         );
+    }
+
+    #[Test]
+    public function serviceHelpTranslationsUseOnlyTheCanonicalStructuralPalette(): void
+    {
+        $allowedColors = ['03', '04', '06', '07', '10', '14'];
+        $violations = [];
+
+        foreach (self::SERVICE_DIRS as $domain) {
+            foreach (self::LOCALES as $locale) {
+                $catalog = self::flatten(self::parseDomain($domain, $locale));
+                foreach ($catalog as $key => $value) {
+                    if (
+                        !is_string($value)
+                        || (!str_starts_with($key, 'help.')
+                            && !str_ends_with($key, '.help')
+                            && !str_ends_with($key, '.short')
+                            && !str_ends_with($key, '.syntax'))
+                    ) {
+                        continue;
+                    }
+
+                    /* @var array<int, array<int, string>> $colorMatches */
+                    preg_match_all('/\x03(\d{1,2})(?:,(\d{1,2}))?(?!\d)/', $value, $colorMatches, PREG_SET_ORDER);
+                    foreach ($colorMatches as $colorMatch) {
+                        foreach ([$colorMatch[1], $colorMatch[2] ?? ''] as $color) {
+                            if ('' !== $color && !in_array($color, $allowedColors, true)) {
+                                $violations[] = sprintf('%s.%s [%s] uses structural color %s', $domain, $key, $locale, $color);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self::assertSame(
+            [],
+            $violations,
+            "HELP translation markup contains colors outside the approved structural palette:\n" . implode("\n", $violations),
+        );
+    }
+
+    #[Test]
+    public function serviceHelpCommandsKeepStyleMarkupAndMarkersInTranslations(): void
+    {
+        foreach (array_keys(self::SERVICE_DIRS) as $service) {
+            $path = self::ROOT . '/src/' . $service . '/Adapter/In/Irc/Command/HelpCommand.php';
+            $source = file_get_contents($path);
+            self::assertIsString($source, $path);
+
+            self::assertDoesNotMatchRegularExpression('/IrcHelpStyle|\\\\x03|\\\\x0F|[\x03\x0F]/u', $source, $path);
+            self::assertDoesNotMatchRegularExpression('/[›ℹ⚠✗●◆]/u', $source, $path);
+        }
     }
 
     /**

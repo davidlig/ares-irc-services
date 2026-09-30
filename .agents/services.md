@@ -118,11 +118,24 @@ Argument syntax:
 - `[arg]` optional;
 - `{A|B|C}` required choice.
 
-HELP formatting belongs to IRC presentation, not Application.
+HELP formatting belongs to IRC presentation, not Application. Keep color markup and marker glyphs in
+the existing localized HELP translation values; do not add a helper class or hardcode markers or
+color-selection calls in command PHP. Pass dynamic values through translation placeholders, keep
+descriptions in the client's default foreground, and cover all 14 locale catalogs. Follow
+[.agents/irc-help-style.md](irc-help-style.md) for the canonical palette and reset rules.
 
-## 5. Bots
+## 5. HELP presentation
 
-Service bots are network adapters.
+Use `.agents/irc-help-style.md` for HELP colors, markers, emphasis, and resets. Keep each service's
+formatter, group metadata, translations, and command-visibility policy inside that service. Do not
+add a style/helper class: localized HELP values own color markup and marker glyphs, with dynamic
+values supplied through placeholders. Keep descriptions in the client's default foreground and
+add HELP regression coverage across all 14 locale catalogs.
+
+## 6. Bots
+
+Service bots are network adapters. A service bot owns its network identity and transport; it does
+not own the service's command registry or business behavior.
 
 Allowed responsibilities:
 - introduce service;
@@ -136,7 +149,22 @@ Forbidden:
 - authorization implementation;
 - password handling rules.
 
-## 6. Authorization
+When adding or wiring a service bot:
+
+1. Keep the bot in the service's inbound adapter/composition path. Route messages through the
+   existing `ServiceCommandGateway` listener (`service_command_listener`) to that service's
+   `CommandRouter`; do not call use cases or command handlers from the bot.
+2. Provide its nickname and UID through `app.service_nickname_provider` and
+   `app.service_uid_provider`. Keep protocol-specific registration and network actions in the
+   relevant IRC protocol adapter.
+3. Wire the bot and gateway in `config/services.yaml` (or the existing service configuration),
+   reusing the registry's established command tag. Current examples are `nickserv.command`,
+   `chanserv.command`, `memoserv.command`, and `operserv.command.new`; verify the actual tag rather
+   than assuming all registries use the same spelling.
+4. Add or update integration coverage for service identity/UID, message routing to the right
+   command registry, and presented replies. Run the focused wiring and service-command tests.
+
+## 7. Authorization
 
 Separate:
 
@@ -153,7 +181,7 @@ Domain/Application policies.
 
 Root bypass semantics are centralized.
 
-## 7. Audit
+## 8. Audit
 
 Auditing is separate from authorization and command presentation.
 
@@ -163,7 +191,7 @@ After a sensitive operation:
 - exclude secrets;
 - use output adapters for file logs or IRC debug channels.
 
-## 8. Event-triggered behavior
+## 9. Event-triggered behavior
 
 Framework event subscribers belong in `Adapter/In/Event`.
 
@@ -178,7 +206,7 @@ framework/published event
 
 Business logic does not remain in subscribers.
 
-## 9. Drop cleanup
+## 10. Drop cleanup
 
 Every persistent reference to a nick/channel defines lifecycle behavior:
 
@@ -190,7 +218,7 @@ Every persistent reference to a nick/channel defines lifecycle behavior:
 Local atomic cleanup belongs inside the transaction boundary.
 IRC/mail/protocol effects are post-commit external effects.
 
-## 10. Protocol independence
+## 11. Protocol independence
 
 Service code must not branch on:
 
@@ -203,7 +231,7 @@ UnrealUdb
 Service use cases express semantic network needs through ports.
 The active Irc protocol adapter implements them.
 
-## 11. Command review
+## 12. Command review
 
 A service command is correctly separated only if:
 
@@ -215,21 +243,31 @@ A service command is correctly separated only if:
 - secrets are not published;
 - use case is testable without Symfony/IRC.
 
-## 12. New command checklist
+## 13. New command checklist
 
 Before calling a service command complete:
 
 1. Put IRC parsing and reply handling in `<Service>/Adapter/In/Irc/Command`; send typed input to an
    Application use case for the behavior. Define name, aliases, minimum arguments, syntax, order,
-   short description, and `HELP` metadata in the command adapter.
+   short description, subcommand help, and permission metadata in the command adapter.
 2. Register the command in the service's runtime command registry. Where the registry uses a tagged
-   iterator, add its explicit tag in `config/services.yaml` (for ChanServ, `chanserv.command`). Check
+   iterator, add its explicit tag in `config/services.yaml` (for example, `chanserv.command`). Check
    the compiled container's tag list and verify the registry resolves the command by its public name.
-3. Add every command, success, error, and `HELP` translation key in all 14 languages. Verify both
-   general `HELP` and `HELP <command>` use the registered command and its translated metadata.
-   Update the global command count in `ServicesCommandHelpAlignmentTest` when the registry grows.
-4. Test parsing and use-case outcomes, then add a container/registry integration test that catches a
-   missing service tag. Run the focused tests and the repository quality gates.
+3. Add the command to its functional group in the service's presentation-only HELP group metadata.
+   Keep group order and descriptions out of Application/Domain. If the command is restricted, use
+   the same visibility policy for general HELP and direct `HELP <command>`; do not change execution
+   authorization just to filter its help text.
+4. Add every command, success, error, syntax, short/detail help, subcommand, and group-label key in
+   all 14 languages: `ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`,
+   `tr`. Preserve each locale's natural wording and interpolation placeholders; do not copy one
+   language's prose into another catalog.
+5. Add focused tests for routing/registration, group placement/order, direct and general HELP
+   visibility, detailed syntax/subcommands, and relevant permission/Root behavior. Extend
+   `ServicesCommandHelpAlignmentTest` for new keys/locales and update the expected global command
+   count when the registry grows.
+6. Run the focused command, HELP, and container/registry integration tests, then follow the project
+   quality gates. A command is incomplete if it executes but is absent from permission-filtered
+   HELP or any supported locale.
 
 For an IRCop command, also:
 

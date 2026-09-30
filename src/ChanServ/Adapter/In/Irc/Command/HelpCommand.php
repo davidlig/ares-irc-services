@@ -62,6 +62,12 @@ final readonly class HelpCommand implements ChanServCommandInterface
         return 'help.short';
     }
 
+    /** @return array<string, mixed> */
+    public function getHelpParams(): array
+    {
+        return [];
+    }
+
     public function getSubCommandHelp(): array
     {
         return [];
@@ -110,19 +116,24 @@ final readonly class HelpCommand implements ChanServCommandInterface
             return;
         }
 
+        $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
+        if (!$adapter->canViewCommandInHelp($handler)) {
+            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+
+            return;
+        }
+
         if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
             $subName = strtoupper($context->args[1]);
             $subCmd = $this->findSubCommand($handler, $subName);
 
             if (null !== $subCmd) {
-                $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
                 $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
                 return;
             }
         }
 
-        $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
         $this->formatter->showCommandHelp($adapter, $handler);
     }
 
@@ -132,9 +143,12 @@ final readonly class HelpCommand implements ChanServCommandInterface
         $this->formatter->showGeneralHelp($adapter);
         if ($this->inactivityExpiryDays > 0) {
             $context->replyRaw(' ');
-            $context->reply('help.intro_expiration', ['%days%' => $this->inactivityExpiryDays]);
+            $context->reply('help.intro_expiration', [
+                'label' => $context->trans('help.intro_expiration_label'),
+                'days' => $this->inactivityExpiryDays,
+            ]);
         }
-        $context->reply('help.footer');
+        $this->formatter->sendFooter($adapter);
     }
 
     /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */
