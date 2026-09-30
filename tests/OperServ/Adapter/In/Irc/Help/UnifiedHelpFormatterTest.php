@@ -12,7 +12,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
+use function dirname;
 use function in_array;
+use function is_array;
+use function is_string;
+use function strlen;
+
+use const PREG_OFFSET_CAPTURE;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase

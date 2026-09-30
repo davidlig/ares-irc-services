@@ -12,7 +12,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
+use function count;
+use function dirname;
+use function end;
 use function in_array;
+use function is_array;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
@@ -157,7 +161,7 @@ final class UnifiedHelpFormatterTest extends TestCase
         $keys = array_column($context->replies, 'key');
         self::assertContains('help.general_footer', $keys);
         self::assertContains([
-                'key' => 'help.general_footer',
+            'key' => 'help.general_footer',
             'params' => [
                 'marker' => 'translated:help.info_marker',
                 'syntax' => 'translated:help.general_syntax',
@@ -235,7 +239,8 @@ final class UnifiedHelpFormatterTest extends TestCase
             'key' => 'help.header',
             'params' => ['title' => 'HELP SET EMAIL'],
         ], $context->replies);
-        self::assertSame('translated:help.footer', $context->rawReplies[array_key_last($context->rawReplies)]);
+        $rawReplies = $context->rawReplies;
+        self::assertSame('translated:help.footer', end($rawReplies));
     }
 }
 

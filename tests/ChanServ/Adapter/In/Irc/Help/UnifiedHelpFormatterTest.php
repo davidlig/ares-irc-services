@@ -149,8 +149,8 @@ final class UnifiedHelpFormatterTest extends TestCase
 
         $expectedTemplate = "\x02\x0306● %title%\x03\x0F \x0314%separator%\x03";
         foreach (self::LOCALES as $locale) {
-            $catalog = $this->loadCatalog($locale);
-            self::assertSame($expectedTemplate, $catalog['help']['header'] ?? null, $locale);
+            $help = $this->loadHelpCatalog($locale);
+            self::assertSame($expectedTemplate, $help['header'] ?? null, $locale);
         }
     }
 
@@ -158,10 +158,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     public function allLocaleHelpTemplatesUseOnlyCanonicalStructuralColors(): void
     {
         foreach (self::LOCALES as $locale) {
-            $catalog = $this->loadCatalog($locale);
-            $help = $catalog['help'] ?? null;
-
-            self::assertIsArray($help, $locale . ' must define the help subtree');
+            $help = $this->loadHelpCatalog($locale);
             $this->assertHelpColorsAllowed($help, $locale);
         }
     }
@@ -169,8 +166,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function rendersCanonicalHelpColorsAndLeavesDescriptionsUncolored(): void
     {
-        $catalog = $this->loadCatalog('en');
-        $help = $catalog['help'];
+        $help = $this->loadHelpCatalog('en');
         $context = new ChanServHelpFormatterContext(
             commands: [new ChanServHelpableCommand('VISIBLE', 1)],
             visibleCommands: ['VISIBLE'],
@@ -188,7 +184,9 @@ final class UnifiedHelpFormatterTest extends TestCase
 
         $renderedCommand = $this->renderReply($context->replies, $help, 'help.command_line');
         self::assertSame("  \x0310›\x03 \x0303VISIBLE     \x03translated:visible.short", $renderedCommand);
-        self::assertSame('translated:visible.short', substr($renderedCommand, strpos($renderedCommand, 'translated:visible.short')));
+        $descriptionOffset = strpos($renderedCommand, 'translated:visible.short');
+        self::assertNotFalse($descriptionOffset);
+        self::assertSame('translated:visible.short', substr($renderedCommand, $descriptionOffset));
 
         $setContext = new ChanServHelpFormatterContext();
         new UnifiedHelpFormatter()->showCommandHelp($setContext, new ChanServHelpableCommand('SET', 1, [[
@@ -200,8 +198,13 @@ final class UnifiedHelpFormatterTest extends TestCase
         self::assertSame("\x02\x0306◆ Options:\x03\x0F", $this->renderReply($setContext->replies, $help, 'help.options_header'));
         self::assertSame("  \x0310›\x03 \x0303EMAIL     \x03translated:set.email.short", $this->renderReply($setContext->replies, $help, 'help.subcommand_line'));
 
-        self::assertSame("\x0307⚠\x03 NOTE: Channels unused for more than 30 days are automatically removed.", $this->renderTemplate($help['intro_expiration'], ['days' => '30']));
-        self::assertSame("\x0304✗\x03 Unknown command \x02FUTURE\x02. Use \x0303/msg ChanServ HELP\x03.", $this->renderTemplate($help['unknown_command'], ['command' => 'FUTURE', 'bot' => 'ChanServ']));
+        $introExpiration = $help['intro_expiration'] ?? null;
+        self::assertIsString($introExpiration);
+        self::assertSame("\x0307⚠\x03 NOTE: Channels unused for more than 30 days are automatically removed.", $this->renderTemplate($introExpiration, ['days' => '30']));
+
+        $unknownCommand = $help['unknown_command'] ?? null;
+        self::assertIsString($unknownCommand);
+        self::assertSame("\x0304✗\x03 Unknown command \x02FUTURE\x02. Use \x0303/msg ChanServ HELP\x03.", $this->renderTemplate($unknownCommand, ['command' => 'FUTURE', 'bot' => 'ChanServ']));
         self::assertSame("\x0314─────────────────────────────\x03", $help['footer']);
     }
 
@@ -210,10 +213,35 @@ final class UnifiedHelpFormatterTest extends TestCase
      */
     private function loadCatalog(string $locale): array
     {
-        $catalog = Yaml::parseFile(dirname(__DIR__, 6) . '/translations/chanserv.' . $locale . '.yaml');
-        self::assertIsArray($catalog, $locale . ' catalog must parse as a mapping');
+        $path = dirname(__DIR__, 6) . '/translations/chanserv.' . $locale . '.yaml';
 
-        return $catalog;
+        return $this->requireStringKeyedArray(Yaml::parseFile($path), $locale . ' catalog must parse as a mapping');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function loadHelpCatalog(string $locale): array
+    {
+        $catalog = $this->loadCatalog($locale);
+
+        return $this->requireStringKeyedArray($catalog['help'] ?? null, $locale . ' must define the help subtree');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function requireStringKeyedArray(mixed $value, string $message): array
+    {
+        self::assertIsArray($value, $message);
+
+        $entries = [];
+        foreach ($value as $key => $entry) {
+            self::assertIsString($key, $message);
+            $entries[$key] = $entry;
+        }
+
+        return $entries;
     }
 
     /**

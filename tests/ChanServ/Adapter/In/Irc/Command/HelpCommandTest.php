@@ -53,6 +53,12 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
+    public function helpCommandHasNoHelpParameters(): void
+    {
+        self::assertSame([], $this->createCommand()->getHelpParams());
+    }
+
+    #[Test]
     public function emptyArgsShowsGeneralHelpAndFooter(): void
     {
         $messages = [];

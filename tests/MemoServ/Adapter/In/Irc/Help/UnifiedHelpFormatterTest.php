@@ -10,10 +10,14 @@ use App\MemoServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Stringable;
 use Symfony\Component\Yaml\Yaml;
 
+use function dirname;
 use function in_array;
 use function is_array;
+use function is_scalar;
+use function is_string;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
@@ -125,8 +129,10 @@ final class UnifiedHelpFormatterTest extends TestCase
     public function rendersCanonicalColorsFromAllMemoServTranslationCatalogs(): void
     {
         foreach (['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'] as $locale) {
-            $catalog = Yaml::parseFile(dirname(__DIR__, 6) . '/translations/memoserv.' . $locale . '.yaml');
-            self::assertIsArray($catalog);
+            $catalog = $this->requireStringKeyedArray(
+                Yaml::parseFile(dirname(__DIR__, 6) . '/translations/memoserv.' . $locale . '.yaml'),
+                $locale . ' catalog must parse as a mapping',
+            );
 
             $helpTranslations = $catalog['help'] ?? null;
             self::assertIsArray($helpTranslations, $locale);
@@ -196,7 +202,11 @@ final class UnifiedHelpFormatterTest extends TestCase
         }
     }
 
-    /** @return list<string> */
+    /**
+     * @param array<array-key, mixed> $values
+     *
+     * @return list<string>
+     */
     private function flattenStrings(array $values): array
     {
         $strings = [];
@@ -209,6 +219,22 @@ final class UnifiedHelpFormatterTest extends TestCase
         }
 
         return $strings;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function requireStringKeyedArray(mixed $value, string $message): array
+    {
+        self::assertIsArray($value, $message);
+
+        $entries = [];
+        foreach ($value as $key => $entry) {
+            self::assertIsString($key, $message);
+            $entries[$key] = $entry;
+        }
+
+        return $entries;
     }
 
     private function renderedReplyFor(MemoServHelpFormatterContext $context, string $key): string
@@ -239,6 +265,7 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
      * @param list<HelpableCommandInterface>                                                           $ircopCommands
      * @param list<string>                                                                             $visibleCommands
      * @param list<array{group_key: string, commands: list<string>, admin: bool, subgroup: bool}>|null $helpGroups
+     * @param array<string, mixed>|null                                                                $translations
      */
     public function __construct(
         private readonly array $commands = [],
@@ -318,7 +345,7 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
 
         $replace = ['%bot%' => 'MemoServ', '%memoserv%' => 'MemoServ'];
         foreach ($params as $name => $value) {
-            $replace['%' . trim((string) $name, '%') . '%'] = is_scalar($value) || $value instanceof \Stringable ? (string) $value : '';
+            $replace['%' . trim((string) $name, '%') . '%'] = is_scalar($value) || $value instanceof Stringable ? (string) $value : '';
         }
 
         return strtr($translation, $replace);

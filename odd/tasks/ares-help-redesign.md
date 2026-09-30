@@ -152,6 +152,8 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Rollback boundary: revert the revised NickServ HELP presentation/tests and 14 catalogs, the palette/catalog regression check, and the adjusted style guidance; do not retain a new shared helper class.
 - Authored diff: 1,095 additions plus deletions in commit `65e4ce57` (including this tracker update); the slice includes NickServ's 14 catalogs, formatter/command/tests, and both style-guide changes. Cached `feature-branch-chain` strategy applies.
 - Progress: revised implementation and focused checks are complete; the helper class and unit test are removed, and NickServ uses its 14 localized catalogs. Work-unit committed as `65e4ce57` (`fix(nickserv): localize HELP color markup`). The global catalog failure is tracked separately under HLP-06.
+- [x] Fix final PHPStan max findings in NickServ HELP tests: validate string-keyed translation parameter maps, safely render mixed parameter values, and safely access the final raw reply; preserve behavior and all-locale coverage.
+- PHPStan max now passes with zero findings across `src/` and `tests/`; relevant fixes are in `tests/NickServ/Adapter/In/Irc/Command/HelpCommandTest.php` and `Help/UnifiedHelpFormatterTest.php`.
 
 #### HLP-06 — ChanServ color migration
 
@@ -162,6 +164,8 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Runtime harness: **N/A** — translated formatter output is exercised directly by PHPUnit; no live IRC session was authorized or required.
 - Authored diff: 352 additions plus deletions across the ChanServ formatter/command, test, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
 - Progress: implementation and checks complete; work-unit committed as `3855dc9a` (`fix(chanserv): localize HELP color markup`). Manual IRC-client light/dark visual verification remains pending.
+- [x] Fix final PHPStan findings in `src/ChanServ/Adapter/In/Irc/Command/HelpCommand.php` (empty-array return type) and `tests/ChanServ/Adapter/In/Irc/Help/UnifiedHelpFormatterTest.php` (validated YAML catalog and precise nested map/string/index types), without changing output.
+- PHPStan max now passes with zero findings; the full suite also identified one previously uncovered `getHelpParams()` return line, tracked as a focused coverage follow-up in HLP-09.
 
 #### HLP-07 — MemoServ color migration
 
@@ -171,6 +175,8 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Runtime harness: **N/A** — translated formatter output is exercised directly by PHPUnit; no live IRC session was authorized or required. Manual IRC client verification remains pending.
 - Authored diff: 486 additions plus deletions across the MemoServ formatter, tests, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
 - Progress: implementation and checks complete; work-unit committed as `2522d912` (`fix(memoserv): localize HELP color markup`).
+- [x] Add precise array generics for the recursive catalog flattener and optional translations in `tests/MemoServ/Adapter/In/Irc/Help/UnifiedHelpFormatterTest.php`; validate decoded catalogs as string-keyed maps and preserve all 14 locale assertions.
+- PHPStan max now passes with zero findings; all MemoServ formatting and locale assertions remain passing.
 
 #### HLP-08 — OperServ color migration and palette regression guard
 
@@ -179,18 +185,74 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - Checks passed: focused OperServ HELP formatter/command tests (`12 tests, 1,888 assertions`); combined all-service HELP, translation alignment, and palette-guard suite (`104 tests, 4,961 assertions`); `php -l` on every changed PHP file; `git diff --check`.
 - Palette guard: `TranslationCatalogTest` inspects all 56 service catalogs across all 14 locales, allowing only structural colors `03`, `04`, `06`, `07`, `10`, and `14`; the same test ensures HELP commands contain no style helper, mIRC color controls, or marker glyphs.
 - Authored diff: 577 additions plus deletions across OperServ formatter/tests, shared translation regression coverage, and 14 locale catalogs; cached `feature-branch-chain` strategy applies.
-- Progress: implementation and focused checks complete; work-unit commit pending. Manual IRC-client light/dark visual verification remains pending.
+- Progress: implementation and focused checks complete; work-unit committed as `6964e310` (`fix(operserv): localize HELP color markup`). Manual IRC-client light/dark visual verification remains pending.
+- [x] Refine regex-capture and file-read types in `tests/Shared/Translations/TranslationCatalogTest.php` to resolve its final PHPStan max findings without suppressions; preserve the all-service/all-locale palette guard.
+- PHPStan max now passes with zero findings; the all-service/all-locale palette guard remains passing.
 
 #### HLP-09 — Final verification and delivery record
 
-- [ ] Run applicable final gates once, record failures/unavailable checks and commit identities, and record manual visual validation as passed or pending.
+- [x] Run and record final static, functional, and architecture checks; record coverage outcome and manual visual validation honestly.
+- [x] Add a focused ChanServ HELP command test for the empty `getHelpParams()` result, then rerun coverage against the corrected candidate.
 - Route: **direct verification**; testing/build actors may be used without changing the implementation route.
 - Checks: project final verification order in `AGENTS.md`, including the single full coverage run and configured architecture gate.
-- Progress: pending.
+- Passed on the corrected candidate: `php -l` on all 10 changed PHP files; `php bin/console lint:container`; YAML lint (441 files); PHPStan max (zero findings); PHP-CS-Fixer (8 of 1,945 files fixed and inspected, then 0 files on the clean rerun); focused all-service HELP/catalog suite (`89 tests, 6,050 assertions`); Deptrac (0 violations, skipped violations, uncovered, warnings, or errors; 4,410 allowed); `git diff --check`.
+- Coverage history: the first run completed `5,851 tests, 35,937 assertions`, but exposed one uncovered ChanServ `HelpCommand::getHelpParams()` return statement. Added a focused empty-parameter test and aligned its return-map PHPDoc with the help-parameter contract. The corrected `./scripts/check-coverage.sh 100 --issues` passed: `5,852 tests`, 100% classes (890/890), methods (4,518/4,518), and lines (20,580/20,580); no issues reported. The earlier 99.99% result is retained here as verification history, not an outstanding failure.
+- PHPStan history: the initial max analysis identified 26 findings across six paths; corrections in HLP-05 through HLP-08 removed the missing array generics, validated translation maps, safe indexes, and redundant assertions without suppressions. The exact full analysis now passes with zero findings.
+- Progress: correction and final verification work unit committed as `a693eb8a` (`fix(help): close color migration verification gaps`). All automated project gates pass. Manual IRC-client light/dark visual verification remains pending because no local live IRC client was available; no remote operations were authorized or performed.
 
 ### Delivery and recovery state
 
 - Feature identity remains `ares-help-redesign`; HLP-01 through HLP-04 above are historical completed tasks, and HLP-05 through HLP-09 are the newly authorized follow-up.
-- Current branch is `feat/ares-help-redesign`; HLP-05, HLP-06, and HLP-07 are committed as `65e4ce57`, `3855dc9a`, and `2522d912`. HLP-08 OperServ plus shared palette guard is implemented and verified but uncommitted. TDD: disabled, source: prior explicit user choice recorded in the existing tracker, runner: `./vendor/bin/phpunit --no-coverage --display-all-issues`.
-- Forecast was under by more than 400 authored changes. Actual follow-up work is approximately 2,533 additions plus deletions across HLP-05 through HLP-08; cached `feature-branch-chain` strategy applies. Keep each service as a local work-unit commit and record commit IDs; no push/PR/tag or other remote operation.
-- Current next step: commit verified HLP-08, then run and record the final project verification gates; manual IRC-client visual verification remains pending.
+- Current branch is `feat/ares-help-redesign`; HLP-05, HLP-06, HLP-07, and HLP-08 are committed as `65e4ce57`, `3855dc9a`, `2522d912`, and `6964e310`; final correction/verification is committed as `a693eb8a`. TDD: disabled, source: prior explicit user choice recorded in the existing tracker, runner: `./vendor/bin/phpunit --no-coverage --display-all-issues`.
+- Forecast was under by more than 400 authored changes. Follow-up work-unit diffs total 2,798 additions plus deletions through `a693eb8a` (generated files excluded); cached `feature-branch-chain` strategy applies. No push/PR/tag or other remote operation.
+- Current next step: no further code work remains. Manual IRC-client light/dark visual verification is pending client availability; remote delivery remains the user's decision.
+
+## Authorized GitHub delivery — 2026-09-30
+
+### Authorization and delivery constraints
+
+- The user explicitly authorized creating an issue, preparing PRs, merging the completed HELP work to `main`, and publishing a release, and confirmed the current `gh` session for `davidlig/ares-irc-services`.
+- The requested release tag is exactly `2.3.0` (without a `v` prefix).
+- The user confirmed that the merge to `main` may trigger the configured production deployment.
+- The user accepted `size:exception` for indivisible work units that exceed the chained-PR 400-line review budget. Do not split coherent code/translation/test units just to meet the budget.
+- Keep the previously selected `feature-branch-chain` strategy. Use an issue-approved, exactly-one-`type:*`-label PR chain; apply `size:exception` to each applicable oversized PR. Never bypass failing CI or required protections.
+- GitHub discovery on 2026-09-30: issues and blank issues are enabled; the default branch is `main`; no repository issue/PR templates are present; labels include `status:approved`, `type:feature`, and `size:exception`. No matching HELP redesign issue/PR or release/tag `2.3.0` was found. The issue fallback body must receive a pre-submission privacy review before publication.
+- CI runs the production deploy job on pushes to `main` after test and migration jobs pass. RDD is disabled/unmanaged; do not start review flows.
+
+### Delivery tasks
+
+#### DLV-01 — Create the approved issue
+
+- [x] Publish one structured feature issue for the all-service HELP redesign/color update and v2.3.0 release, applying the existing `status:approved` label with the user's explicit approval.
+- Route: **direct inline**. Trigger evidence: one public GitHub issue artifact; repository/template/label discovery is complete and no issue template applies.
+- Acceptance: no duplicate; body reflects only verified scope/evidence; issue link and approval label recorded below.
+- Completed: issue [#13](https://github.com/davidlig/ares-irc-services/issues/13), “Redesign and localize HELP across all services (v2.3.0)”; labels `enhancement` and `status:approved`. The body passed the required pre-submission privacy scan and distinguishes pending manual IRC-client visual confirmation from automated checks.
+
+#### DLV-02 — Prepare the feature-branch PR chain
+
+- [x] Create the draft tracker PR and chained child PRs from the existing work-unit boundaries; link the approved issue in every PR and add exactly one `type:feature` label.
+- [x] Add `size:exception` only to oversized indivisible work units/tracker integration PR as accepted by the user; each child body records chain position, immediate base/dependency, scope, and verification evidence.
+- Route: **delegated direct**. Trigger evidence: the scoped read-only PR-history and GitHub-settings mapping was delegated before preparing remote branch/PR writes; the existing work units and immediate-parent boundaries are now verified.
+- Acceptance: focused diffs where possible; preserve work-unit boundaries, do not mix feature-branch-chain with another chain strategy, and observe applicable checks.
+- Chain layout: create `feat/ares-help-redesign-tracker` at `d2089f4d` (core HELP redesign, 2,273 authored changed lines; indivisible and user-approved `size:exception`) and open it as a draft PR to `main`. Six child PRs follow the exact original linear history, each targeting the preceding source branch: `d2089f4d..55d1f306` (343), `55d1f306..65e4ce57` (NickServ, 1,095; exception), `65e4ce57..2522d912` (MemoServ, 496; exception), `2522d912..3855dc9a` (ChanServ, 365), `3855dc9a..6964e310` (OperServ, 593; exception), and `6964e310..a51ae72e` (verification/issue evidence, 323). Full feature diff at `a51ae72e` is 4,316 authored changed lines (+3,384/−932); later commits revise earlier task/translation lines, so slice sizes are not additive.
+- Merge topology: repository settings permit merge commits, squash, and rebase, but not auto-merge; use merge commits for children so original commit ancestry remains available. No `main` branch protection or repository ruleset was visible, so explicitly wait for and check the final tracker PR's CI rather than relying on server enforcement.
+- Verification caveat: `.github/workflows/ci.yml` only runs CI on PRs targeting `main`; chained child PRs to feature branches will not receive Actions runs. Their documented focused tests remain the child-slice evidence, and the final tracker PR to `main` must run and pass the applicable full CI before merge.
+- Published PRs: draft tracker [#14](https://github.com/davidlig/ares-irc-services/pull/14) (2,273; `type:feature`, `size:exception`); [#15](https://github.com/davidlig/ares-irc-services/pull/15) release readiness (343; `type:feature`); [#16](https://github.com/davidlig/ares-irc-services/pull/16) NickServ (1,095; exception); [#17](https://github.com/davidlig/ares-irc-services/pull/17) MemoServ (496; exception); [#18](https://github.com/davidlig/ares-irc-services/pull/18) ChanServ (365); [#19](https://github.com/davidlig/ares-irc-services/pull/19) OperServ (593; exception); [#20](https://github.com/davidlig/ares-irc-services/pull/20) final verification (323; head updated to delivery-record commit `a51ae72e`). Each is linked to approved issue #13 and has exactly one `type:feature` label; oversized indivisible PRs carry the approved exception label.
+- Initial tracker CI result: PHP/coverage job failed on the incomplete core-only boundary at 99.64% lines (20,459/20,531; 5,831 tests); all four migration matrix jobs passed and deployment was skipped. Coverage tests/corrections are included in children #15 and #20. This is not the final full-chain CI result; the tracker remains draft and must be rerun after integration.
+
+#### DLV-03 — Integrate the chain and merge to main
+
+- [ ] Merge child PRs in chain order, then merge the tracker PR to `main` only after required checks pass; observe the resulting production deployment and record its result.
+- Route: **direct delivery**. Trigger evidence: user explicitly authorized merge and its production-deploy side effect.
+- Acceptance: no bypass; main contains the full approved chain; deployment status recorded accurately.
+
+#### DLV-04 — Publish release/tag 2.3.0
+
+- [ ] After the verified main merge, create GitHub tag/release `2.3.0` using the prepared `CHANGELOG.md` entry; record tag target and release URL.
+- Route: **direct delivery**. Trigger evidence: explicit user-specified tag and release authorization.
+- Acceptance: tag points to the merged main commit; release notes match the v2.3.0 changelog; remote artifact and URL recorded.
+
+### Delivery progress
+
+- Current status: DLV-01 is complete; issue #13 is published and approved. DLV-02 is complete: tracker #14 and child PRs #15–#20 are open, linked to #13, correctly labeled, and match the selected branch chain. Child PRs have no Actions checks because their bases are feature branches. Tracker #14's first, incomplete-boundary CI failed at 99.64% coverage as recorded above; it has not been merged.
+- Next step: integrate the child PRs in order into the tracker, rerun and require passing full CI on #14, then merge to `main`, observe deployment, and publish tag/release `2.3.0`.

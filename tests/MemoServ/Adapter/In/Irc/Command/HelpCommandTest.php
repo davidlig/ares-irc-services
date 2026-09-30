@@ -20,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function dirname;
 use function implode;
 use function is_scalar;
 use function ksort;
