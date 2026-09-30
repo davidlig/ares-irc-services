@@ -245,10 +245,11 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 - [ ] Merge child PRs in chain order, then merge the tracker PR to `main` only after required checks pass; observe the resulting production deployment and record its result.
 - [x] Merge child PRs #15–#20 in order into their immediate parent branches: #15 `ff47d7ba`, #16 `cd628cb5`, #17 `06dd8ec0`, #18 `b3f4c2f0`, #19 `9fb877fc`, #20 `ec319753`.
 - [x] Integrate the completed child chain into tracker #14 at commit `61a26924`; merge-base remains the unchanged `main` commit `5b3e1b58`, and the integrated tracker diff is 4,316 changed lines (+3,384/−932).
+- [x] Run complete main-target CI after child integration at head `76ac3f25` (workflow `36759956623`): PHP 8.5 lint/CS/tests/coverage passed; MariaDB, MySQL, PostgreSQL, and SQLite migration jobs all passed; deployment was skipped as expected for a pull request.
 - [ ] Convert draft tracker #14 to ready only after final PR-to-main checks are green; merge it only after required checks pass, then observe and record the production deployment.
 - Route: **direct delivery**. Trigger evidence: user explicitly authorized merge and its production-deploy side effect.
 - Acceptance: no bypass; main contains the full approved chain; deployment status recorded accurately.
-- Current CI: earlier run `36757706058` failed at 99.64% coverage on the incomplete core-only boundary; the later complete chain is now integrated and must receive a fresh full CI run before any tracker merge. No final full-chain result is yet available.
+- Current CI: earlier run `36757706058` failed at 99.64% coverage on the incomplete core-only boundary. The complete chain then passed all main-target checks in workflow `36759956623` at head `76ac3f25`. The task-tracker update in progress must be pushed and checked on its new head before merge.
 
 #### DLV-04 — Publish release/tag 2.3.0
 
@@ -258,5 +259,5 @@ The completed HELP redesign emits structural mIRC colors `11` and `12`, and its 
 
 ### Delivery progress
 
-- Current status: DLV-01 and DLV-02 are complete. PRs #15–#20 have all merged to their immediate parent branches in order; the completed chain is integrated into draft tracker #14 at `61a26924`. PR #14 has not been merged to `main`; its initial coverage failure was for the incomplete slice, and final integrated CI is pending.
-- Next step: push the integrated tracker update, wait for all full main-target CI jobs to pass, mark #14 ready, merge without bypass, observe the production deployment, then publish tag/release `2.3.0`.
+- Current status: DLV-01 and DLV-02 are complete. PRs #15–#20 have all merged to their immediate parent branches in order; the completed chain is integrated into draft tracker #14 at `61a26924`. The complete chain passed CI at `76ac3f25`, but #14 is still draft and unmerged; a fresh check is required after pushing this task-record update.
+- Next step: push the tracker-record update, wait for fresh full main-target CI on its new head, mark #14 ready, merge without bypass, observe the production deployment, then publish tag/release `2.3.0`.
