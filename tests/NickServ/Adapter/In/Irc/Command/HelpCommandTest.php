@@ -267,7 +267,7 @@ final class HelpCommandTest extends TestCase
                 $translation = match ($id) {
                     'help.intro_expiration_label' => 'NOTE',
                     'help.warning_marker' => "\x0304⚠\x03\x0F",
-                    'help.intro_expiration' => '%marker% %label%: Nicknames unused for more than %days% days are automatically removed.',
+                    'help.intro_expiration' => "%marker% %label%: Nicknames unused for more than \x1F\x0304%days% days\x03\x1F are automatically removed.",
                     default => $id,
                 };
 
@@ -342,7 +342,7 @@ final class HelpCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, [], $notifier, $translator, $registry));
 
         self::assertContains(
-            "\x0304⚠\x03\x0F NOTE: Nicknames unused for more than 30 days are automatically removed.",
+            "\x0304⚠\x03\x0F NOTE: Nicknames unused for more than \x1F\x030430 days\x03\x1F are automatically removed.",
             $messages,
         );
         self::assertContains([
