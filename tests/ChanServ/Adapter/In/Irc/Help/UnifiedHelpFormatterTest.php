@@ -429,9 +429,9 @@ final class ChanServHelpFormatterContext implements HelpFormatterContextInterfac
     public array $translations = [];
 
     /**
-     * @param list<HelpableCommandInterface> $commands
-     * @param list<HelpableCommandInterface> $ircopCommands
-     * @param list<string>                   $visibleCommands
+     * @param list<HelpableCommandInterface>                                                      $commands
+     * @param list<HelpableCommandInterface>                                                      $ircopCommands
+     * @param list<string>                                                                        $visibleCommands
      * @param list<array{group_key: string, commands: list<string>, admin: bool, subgroup: bool}> $helpGroups
      */
     public function __construct(
