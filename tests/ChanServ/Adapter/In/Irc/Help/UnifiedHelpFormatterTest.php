@@ -118,7 +118,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             $translatedKeys,
             static fn (string $key): bool => in_array($key, $groupKeys, true),
         )));
-        self::assertSame(4, count(array_filter($translatedKeys, static fn (string $key): bool => 'help.subgroup_header' === $key)));
+        self::assertCount(4, array_filter($translatedKeys, static fn (string $key): bool => 'help.subgroup_header' === $key));
 
         $commandLines = array_values(array_filter(
             $context->translations,
