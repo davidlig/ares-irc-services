@@ -130,10 +130,8 @@ $connection = new class implements ConnectionInterface {
 
     public function disconnect(): void {}
 
-    public function writeLine(string $data): void {}
-
-    /** @param list<string> $lines */
-    public function writeLines(array $lines): void {}
+    /** @param string|list<string> $data */
+    public function writeLine(array|string $data): void {}
 
     public function readLine(): ?string
     {

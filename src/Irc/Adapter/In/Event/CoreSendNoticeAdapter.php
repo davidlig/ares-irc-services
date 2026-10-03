@@ -62,7 +62,7 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
         }
 
         if ([] !== $rawLines) {
-            $this->connectionHolder->writeLines($rawLines);
+            $this->connectionHolder->writeLine($rawLines);
         }
     }
 

@@ -15,6 +15,7 @@ use Throwable;
 
 use function Amp\Socket\connect;
 use function Amp\Socket\connectTls;
+use function is_string;
 use function rtrim;
 use function sprintf;
 use function strlen;
@@ -106,16 +107,17 @@ class SocketConnection implements ConnectionInterface
         ]);
     }
 
-    public function writeLine(string $data): void
+    /** @param string|list<string> $data */
+    public function writeLine(array|string $data): void
     {
-        $this->writePayload($data . "\r\n");
-    }
+        if (is_string($data)) {
+            $this->writePayload($data . "\r\n");
 
-    /** @param list<string> $lines */
-    public function writeLines(array $lines): void
-    {
+            return;
+        }
+
         $chunk = '';
-        foreach ($lines as $line) {
+        foreach ($data as $line) {
             $payload = $line . "\r\n";
             if ('' !== $chunk && strlen($chunk) + strlen($payload) > self::WRITE_CHUNK_BYTES) {
                 $this->writePayload($chunk);

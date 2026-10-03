@@ -10,15 +10,13 @@ interface ConnectionInterface
 
     public function disconnect(): void;
 
-    public function writeLine(string $data): void;
-
     /**
-     * Writes complete IRC lines synchronously, adding CRLF to each line.
-     * An empty batch is a no-op.
+     * Writes one IRC line or a list of complete lines synchronously, adding CRLF
+     * to each line. A string is written immediately; an empty list is a no-op.
      *
-     * @param list<string> $lines
+     * @param string|list<string> $data
      */
-    public function writeLines(array $lines): void;
+    public function writeLine(array|string $data): void;
 
     public function readLine(): ?string;
 

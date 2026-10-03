@@ -150,33 +150,32 @@ final class ActiveConnectionHolderTest extends TestCase
     }
 
     #[Test]
-    public function writeLinesDoesNothingWithoutAConnection(): void
+    public function writeLineWithArrayDoesNothingWithoutAConnection(): void
     {
-        $this->holder->writeLines(['FIRST', 'SECOND']);
+        $this->holder->writeLine(['FIRST', 'SECOND']);
         self::assertNull($this->holder->getConnection());
     }
 
     #[Test]
-    public function writeLinesDelegatesTheCompleteBatch(): void
+    public function writeLineWithArrayDelegatesTheCompleteBatch(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::once())->method('writeLines')->with(['FIRST', ' ', 'SECOND']);
-        $connection->expects(self::never())->method('writeLine');
+        $connection->expects(self::once())->method('writeLine')->with(['FIRST', ' ', 'SECOND']);
         $this->holder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
 
-        $this->holder->writeLines(['FIRST', ' ', 'SECOND']);
+        $this->holder->writeLine(['FIRST', ' ', 'SECOND']);
     }
 
     #[Test]
-    public function writeLinesPropagatesTheConnectionFailure(): void
+    public function writeLineWithArrayPropagatesTheConnectionFailure(): void
     {
         $failure = new RuntimeException('Write failed');
         $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::once())->method('writeLines')->with(['FIRST'])->willThrowException($failure);
+        $connection->expects(self::once())->method('writeLine')->with(['FIRST'])->willThrowException($failure);
         $this->holder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
 
         try {
-            $this->holder->writeLines(['FIRST']);
+            $this->holder->writeLine(['FIRST']);
             self::fail('Expected the connection failure');
         } catch (RuntimeException $exception) {
             self::assertSame($failure, $exception);

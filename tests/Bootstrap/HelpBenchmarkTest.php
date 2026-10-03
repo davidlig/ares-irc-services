@@ -40,9 +40,9 @@ final class HelpBenchmarkTest extends TestCase
             self::assertGreaterThan(0, $timing['bytes']);
             self::assertIsString($timing['sha256']);
             self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $timing['sha256']);
-            self::assertIsInt($timing['write_line_calls']);
-            self::assertIsInt($timing['write_lines_calls']);
-            self::assertGreaterThan(0, $timing['write_line_calls'] + $timing['write_lines_calls']);
+            self::assertIsInt($timing['write_line_string_calls']);
+            self::assertIsInt($timing['write_line_array_calls']);
+            self::assertGreaterThan(0, $timing['write_line_string_calls'] + $timing['write_line_array_calls']);
             foreach (['first_line_ms', 'last_line_ms'] as $metric) {
                 self::assertIsArray($timing[$metric]);
                 self::assertGreaterThanOrEqual(0, $timing[$metric]['median']);

@@ -82,28 +82,19 @@ final class HelpBenchmarkConnection implements ConnectionInterface
         $this->delegate?->disconnect();
     }
 
-    public function writeLine(string $data): void
+    /** @param string|list<string> $data */
+    public function writeLine(array|string $data): void
     {
-        ++$this->singleCalls;
-        $this->payload .= $data . "\r\n";
-        $this->delegate?->writeLine($data);
-    }
-
-    /** @param list<string> $lines */
-    public function writeLines(array $lines): void
-    {
-        ++$this->batchCalls;
-        foreach ($lines as $line) {
-            $this->payload .= $line . "\r\n";
-        }
-        if (null !== $this->delegate) {
-            // Allows this same harness to run before and after writeLines is added.
-            $writer = [$this->delegate, 'writeLines'];
-            if (!is_callable($writer)) {
-                throw new RuntimeException('The batch API is unavailable on the socket connection.');
+        if (is_string($data)) {
+            ++$this->singleCalls;
+            $this->payload .= $data . "\r\n";
+        } else {
+            ++$this->batchCalls;
+            foreach ($data as $line) {
+                $this->payload .= $line . "\r\n";
             }
-            $writer($lines);
         }
+        $this->delegate?->writeLine($data);
     }
 
     public function readLine(): ?string
@@ -476,7 +467,7 @@ try {
                 'service' => $domain, 'locale' => $locale, 'actor' => 'root',
                 'command' => trim('HELP ' . implode(' ', $args)),
                 'lines' => substr_count($reference, "\r\n"), 'bytes' => strlen($reference), 'sha256' => $digest,
-                'write_line_calls' => $connection->singleCalls, 'write_lines_calls' => $connection->batchCalls,
+                'write_line_string_calls' => $connection->singleCalls, 'write_line_array_calls' => $connection->batchCalls,
                 'first_line_ms' => helpBenchmarkSummary($firstSamples), 'last_line_ms' => helpBenchmarkSummary($lastSamples),
             ];
         }

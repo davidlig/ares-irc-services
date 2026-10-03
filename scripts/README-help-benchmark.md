@@ -36,9 +36,12 @@ commands other than HELP, start the daemon or query persistence.
   through the receiver observing the first/last **complete** IRC line. Startup and warmups are
   excluded. Reference rendering already warms translation/timezone catalogs: these are hot-path
   measurements, **not cold-start measurements**.
-- `write_line_calls` / `write_lines_calls` and `outputs[].connection_calls` count connection API
-  calls, **not underlying socket writes, packets or syscalls**. Batching reduces these calls;
-  network backpressure or chunking can still cause multiple underlying writes.
+- `write_line_string_calls` / `write_line_array_calls` count calls to `writeLine()` by argument
+  shape; `outputs[].connection_calls` retains the total. These are connection API calls,
+  **not underlying socket writes, packets or syscalls**. Batching reduces these calls;
+  network backpressure or chunking can still cause multiple underlying writes. The timing fields
+  replace the older `write_line_calls` / `write_lines_calls` names; existing output identity
+  records and the comparison below remain unchanged.
 
 The measured path uses real HELP commands, Symfony translations, service bots, CoreSendNotice and
 SocketConnection. Context fixture construction is included; container startup, SQL, production

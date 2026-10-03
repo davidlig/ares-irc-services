@@ -43,7 +43,6 @@ final class CoreSendNoticeAdapterTest extends TestCase
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::never())->method('writeLine');
-        $connection->expects(self::never())->method('writeLines');
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         // Do not set protocol module so getProtocolModule() returns null
 
@@ -55,8 +54,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
-        $connection->expects(self::once())->method('writeLines')->with(['NOTICE 001USER :Hi']);
-        $connection->expects(self::never())->method('writeLine');
+        $connection->expects(self::once())->method('writeLine')->with(['NOTICE 001USER :Hi']);
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturn('NOTICE 001USER :Hi');
@@ -73,10 +71,9 @@ final class CoreSendNoticeAdapterTest extends TestCase
         $lines = [];
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
-        $connection->expects(self::once())->method('writeLines')->willReturnCallback(static function (array $batch) use (&$lines): void {
+        $connection->expects(self::once())->method('writeLine')->willReturnCallback(static function (array $batch) use (&$lines): void {
             $lines = $batch;
         });
-        $connection->expects(self::never())->method('writeLine');
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturnCallback(static fn (IRCMessage $message): string => 'NOTICE 001USER :' . ($message->trailing ?? ''));
@@ -94,7 +91,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
-        $connection->expects(self::once())->method('writeLines')->with([':001NS PRIVMSG 001USER :Hi']);
+        $connection->expects(self::once())->method('writeLine')->with([':001NS PRIVMSG 001USER :Hi']);
         $handler = $this->createMock(ProtocolHandlerInterface::class);
         $handler->expects(self::once())->method('formatMessage')->with(self::callback(static function (IRCMessage $message): bool {
             self::assertSame('PRIVMSG', $message->command);
@@ -118,7 +115,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
-        $connection->expects(self::once())->method('writeLines')->with([':001NS NOTICE 001USER :Hi']);
+        $connection->expects(self::once())->method('writeLine')->with([':001NS NOTICE 001USER :Hi']);
         $handler = $this->createMock(ProtocolHandlerInterface::class);
         $handler->expects(self::once())->method('formatMessage')->with(self::callback(static function (IRCMessage $message): bool {
             self::assertSame('NOTICE', $message->command);
@@ -141,7 +138,6 @@ final class CoreSendNoticeAdapterTest extends TestCase
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::never())->method('writeLine');
-        $connection->expects(self::never())->method('writeLines');
         $handler = $this->createMock(ProtocolHandlerInterface::class);
         $handler->expects(self::never())->method('formatMessage');
         $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
@@ -159,7 +155,6 @@ final class CoreSendNoticeAdapterTest extends TestCase
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::never())->method('writeLine');
-        $connection->expects(self::never())->method('writeLines');
         $handler = $this->createMock(ProtocolHandlerInterface::class);
         $handler->expects(self::exactly(2))->method('formatMessage')->willReturnCallback(static function (IRCMessage $message) use ($failure): string {
             if ('SECOND' === $message->trailing) {
@@ -187,7 +182,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
         $failure = new RuntimeException('Write failed');
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
-        $connection->expects(self::once())->method('writeLines')->with(['NOTICE 001USER :Hi'])->willThrowException($failure);
+        $connection->expects(self::once())->method('writeLine')->with(['NOTICE 001USER :Hi'])->willThrowException($failure);
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturn('NOTICE 001USER :Hi');
         $module = $this->createStub(ProtocolRuntimeModuleInterface::class);

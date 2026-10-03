@@ -113,33 +113,33 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
-    public function writeLinesThrowsWhenNotConnected(): void
+    public function writeLineWithArrayThrowsWhenNotConnected(): void
     {
         $connection = new SocketConnection('127.0.0.1', 7000);
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Cannot write: connection is not open.');
 
-        $connection->writeLines(['PING']);
+        $connection->writeLine(['PING']);
     }
 
     #[Test]
-    public function writeLinesEmptyBatchDoesNothingEvenWithoutAConnection(): void
+    public function writeLineWithArrayEmptyBatchDoesNothingEvenWithoutAConnection(): void
     {
         $connection = new SocketConnection('127.0.0.1', 7000);
-        $connection->writeLines([]);
+        $connection->writeLine([]);
 
         self::assertSame(ConnectionStatus::Disconnected, $connection->getStatus());
     }
 
     #[Test]
-    public function writeLinesEmptyBatchDoesNotTouchAnOpenSocket(): void
+    public function writeLineWithArrayEmptyBatchDoesNotTouchAnOpenSocket(): void
     {
         $socket = $this->createMock(Socket::class);
         $socket->expects(self::never())->method('write');
         $socket->expects(self::never())->method('isClosed');
         $connection = $this->connectionWithSocket($socket);
 
-        $connection->writeLines([]);
+        $connection->writeLine([]);
 
         self::assertSame(ConnectionStatus::Connected, $connection->getStatus());
     }
@@ -178,7 +178,7 @@ final class SocketConnectionTest extends TestCase
      */
     #[Test]
     #[DataProvider('lineBatches')]
-    public function writeLinesBatchesWithoutSplittingOrChangingAnyLine(array $lines, array $expectedPayloads): void
+    public function writeLineWithArrayBatchesWithoutSplittingOrChangingAnyLine(array $lines, array $expectedPayloads): void
     {
         $written = [];
         $socket = $this->createMock(Socket::class);
@@ -189,7 +189,7 @@ final class SocketConnectionTest extends TestCase
         });
         $connection = $this->connectionWithSocket($socket);
 
-        $connection->writeLines($lines);
+        $connection->writeLine($lines);
 
         self::assertSame($expectedPayloads, $written);
         self::assertSame(ConnectionStatus::Connected, $connection->getStatus());
@@ -215,7 +215,28 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
-    public function writeLinesRejectsAClosedSocket(): void
+    public function writeLinePreservesOrderAcrossStringAndArrayArguments(): void
+    {
+        $written = [];
+        $socket = $this->createMock(Socket::class);
+        $socket->method('isClosed')->willReturn(false);
+        $socket->method('isReadable')->willReturn(true);
+        $socket->expects(self::exactly(3))->method('write')->willReturnCallback(static function (string $payload) use (&$written): void {
+            $written[] = $payload;
+        });
+        $connection = $this->connectionWithSocket($socket);
+
+        $connection->writeLine('FIRST');
+        self::assertSame("FIRST\r\n", implode('', $written));
+        $connection->writeLine(['SECOND', 'THIRD']);
+        self::assertSame("FIRST\r\nSECOND\r\nTHIRD\r\n", implode('', $written));
+        $connection->writeLine('LAST');
+
+        self::assertSame(["FIRST\r\n", "SECOND\r\nTHIRD\r\n", "LAST\r\n"], $written);
+    }
+
+    #[Test]
+    public function writeLineWithArrayRejectsAClosedSocket(): void
     {
         $socket = $this->createMock(Socket::class);
         $socket->method('isClosed')->willReturn(true);
@@ -224,11 +245,11 @@ final class SocketConnectionTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Cannot write: connection is not open.');
 
-        $connection->writeLines(['PING']);
+        $connection->writeLine(['PING']);
     }
 
     #[Test]
-    public function writeLinesStopsSynchronouslyOnFailureWithoutRetryingOrSendingRemainingLines(): void
+    public function writeLineWithArrayStopsSynchronouslyOnFailureWithoutRetryingOrSendingRemainingLines(): void
     {
         $failure = new StreamException('Simulated batch failure');
         $sent = [];
@@ -248,7 +269,7 @@ final class SocketConnectionTest extends TestCase
         $fullLine = str_repeat('A', 16382);
 
         try {
-            $connection->writeLines([$fullLine, $fullLine, 'NEVER SENT']);
+            $connection->writeLine([$fullLine, $fullLine, 'NEVER SENT']);
             self::fail('Expected batch write failure');
         } catch (RuntimeException $exception) {
             self::assertSame('Failed to write to the IRC connection.', $exception->getMessage());
@@ -283,7 +304,7 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
-    public function writeLinesWaitsForSocketBackpressureBeforeTheNextChunk(): void
+    public function writeLineWithArrayWaitsForSocketBackpressureBeforeTheNextChunk(): void
     {
         $started = new DeferredFuture();
         $release = new DeferredFuture();
@@ -301,7 +322,7 @@ final class SocketConnectionTest extends TestCase
         $connection = $this->connectionWithSocket($socket);
         $fullLine = str_repeat('A', 16382);
         $writer = async(static function () use ($connection, $fullLine): void {
-            $connection->writeLines([$fullLine, 'SECOND']);
+            $connection->writeLine([$fullLine, 'SECOND']);
         });
 
         $started->getFuture()->await();
@@ -314,7 +335,7 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
-    public function writeLinesPreservesBytesWithALocalReceiver(): void
+    public function writeLineWithArrayPreservesBytesWithALocalReceiver(): void
     {
         $server = listen('127.0.0.1:0');
         $payload = "FIRST\r\n \r\nLAST\r\n";
@@ -338,7 +359,7 @@ final class SocketConnectionTest extends TestCase
 
         try {
             $connection->connect();
-            $connection->writeLines(['FIRST', ' ', 'LAST']);
+            $connection->writeLine(['FIRST', ' ', 'LAST']);
             self::assertSame($payload, $receiver->await());
         } finally {
             $connection->disconnect();
