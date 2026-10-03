@@ -132,6 +132,9 @@ $connection = new class implements ConnectionInterface {
 
     public function writeLine(string $data): void {}
 
+    /** @param list<string> $lines */
+    public function writeLines(array $lines): void {}
+
     public function readLine(): ?string
     {
         return null;

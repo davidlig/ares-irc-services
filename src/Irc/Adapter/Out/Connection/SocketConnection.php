@@ -17,11 +17,14 @@ use function Amp\Socket\connect;
 use function Amp\Socket\connectTls;
 use function rtrim;
 use function sprintf;
+use function strlen;
 use function strpos;
 use function substr;
 
 class SocketConnection implements ConnectionInterface
 {
+    private const int WRITE_CHUNK_BYTES = 16 * 1024;
+
     private ConnectionStatus $status = ConnectionStatus::Disconnected;
 
     private ?Socket $socket = null;
@@ -50,7 +53,8 @@ class SocketConnection implements ConnectionInterface
         $this->status = ConnectionStatus::Connecting;
 
         $connectContext = new ConnectContext()
-            ->withConnectTimeout((float) $this->timeoutSeconds);
+            ->withConnectTimeout((float) $this->timeoutSeconds)
+            ->withTcpNoDelay();
 
         if ($this->useTls) {
             $tlsContext = new ClientTlsContext($this->host);
@@ -104,11 +108,37 @@ class SocketConnection implements ConnectionInterface
 
     public function writeLine(string $data): void
     {
+        $this->writePayload($data . "\r\n");
+    }
+
+    /** @param list<string> $lines */
+    public function writeLines(array $lines): void
+    {
+        $chunk = '';
+        foreach ($lines as $line) {
+            $payload = $line . "\r\n";
+            if ('' !== $chunk && strlen($chunk) + strlen($payload) > self::WRITE_CHUNK_BYTES) {
+                $this->writePayload($chunk);
+                $chunk = '';
+            }
+
+            $chunk .= $payload;
+            if (strlen($chunk) >= self::WRITE_CHUNK_BYTES) {
+                $this->writePayload($chunk);
+                $chunk = '';
+            }
+        }
+
+        if ('' !== $chunk) {
+            $this->writePayload($chunk);
+        }
+    }
+
+    private function writePayload(string $payload): void
+    {
         if (!$this->isConnected()) {
             throw new RuntimeException('Cannot write: connection is not open.');
         }
-
-        $payload = $data . "\r\n";
 
         try {
             $this->socket?->write($payload);

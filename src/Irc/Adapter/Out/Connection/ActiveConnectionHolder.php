@@ -73,6 +73,12 @@ final class ActiveConnectionHolder implements ActiveProtocolModuleHolderInterfac
         $this->connection?->writeLine($line);
     }
 
+    /** @param list<string> $lines */
+    public function writeLines(array $lines): void
+    {
+        $this->connection?->writeLines($lines);
+    }
+
     public function isConnected(): bool
     {
         return null !== $this->connection && $this->connection->isConnected();

@@ -46,6 +46,7 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
         }
 
         $command = 'PRIVMSG' === $messageType ? 'PRIVMSG' : 'NOTICE';
+        $rawLines = [];
         foreach (explode("\n", $message) as $line) {
             if ('' === $line) {
                 continue;
@@ -57,8 +58,11 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
                 trailing: $line,
                 direction: MessageDirection::Outgoing,
             );
-            $rawLine = $handler->formatMessage($ircMessage);
-            $this->connectionHolder->writeLine($rawLine);
+            $rawLines[] = $handler->formatMessage($ircMessage);
+        }
+
+        if ([] !== $rawLines) {
+            $this->connectionHolder->writeLines($rawLines);
         }
     }
 
