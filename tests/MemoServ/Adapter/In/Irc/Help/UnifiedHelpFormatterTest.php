@@ -211,7 +211,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             foreach ($this->flattenStrings($helpTranslations) as $translation) {
                 preg_match_all('/\x03(\d{1,2})/', $translation, $matches);
                 foreach ($matches[1] as $color) {
-                    self::assertContains($color, ['03', '04', '06', '07', '10', '14'], $locale . ' uses non-canonical HELP color ' . $color);
+                    self::assertContains($color, ['03', '07', '10', '14'], $locale . ' uses non-canonical HELP color ' . $color);
                 }
             }
 
@@ -239,7 +239,7 @@ final class UnifiedHelpFormatterTest extends TestCase
                 self::assertDoesNotMatchRegularExpression('/%[^%]+%/', $renderedReply, $locale);
             }
 
-            self::assertStringContainsString("\x02\x0306● MemoServ\x03\x0F", $context->renderedTranslations[1], $locale);
+            self::assertStringContainsString("\x02\x0307● MemoServ\x03\x0F", $context->renderedTranslations[1], $locale);
             self::assertStringContainsString("\x0314─────────────────────────────\x03\x0F", $context->renderedTranslations[1], $locale);
 
             $commandRow = $this->renderedReplyFor($context, 'help.command_line');
@@ -252,7 +252,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             self::assertMatchesRegularExpression('/\x0310ℹ\x03\x0F.*\x0303\/msg MemoServ HELP IGNORE <[^>]+>\x03\x0F/u', $subcommandFooter, $locale);
 
             $syntax = $this->renderedReplyFor($context, 'help.syntax_label');
-            self::assertMatchesRegularExpression('/\x02\x0306.+\x03\x0F \x02\x0303.+\x03\x0F/u', $syntax, $locale);
+            self::assertMatchesRegularExpression('/\x02\x0307.+\x03\x0F \x02\x0303.+\x03\x0F/u', $syntax, $locale);
 
             $formatter->renderSubCommandHelp($context, 'IGNORE', [
                 'name' => 'ADD',
@@ -267,7 +267,7 @@ final class UnifiedHelpFormatterTest extends TestCase
                 }
             }
             self::assertIsString($subcommandHeader, $locale);
-            self::assertStringContainsString("\x02\x0306● HELP IGNORE ADD\x03\x0F", $subcommandHeader, $locale);
+            self::assertStringContainsString("\x02\x0307● HELP IGNORE ADD\x03\x0F", $subcommandHeader, $locale);
         }
     }
 
