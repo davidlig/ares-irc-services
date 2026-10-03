@@ -79,7 +79,7 @@ final class UnifiedHelpFormatterTest extends TestCase
                 $locale . ': every HELP color must reset',
             );
             self::assertSame([], array_diff($allColors[1], ['03', '04', '07', '10', '14']), $locale);
-            self::assertSame(1, count(array_filter($allColors[1], static fn (string $color): bool => '04' === $color)), $locale . ': red is reserved for the warning icon');
+            self::assertCount(1, array_filter($allColors[1], static fn (string $color): bool => '04' === $color), $locale . ': red is reserved for the warning icon');
         }
 
         $commandSource = file_get_contents($root . '/src/NickServ/Adapter/In/Irc/Command/HelpCommand.php');
