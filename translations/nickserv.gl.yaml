@@ -168,7 +168,7 @@ set:
   password:
     syntax:         "SET PASSWORD <novo_contrasinal>"
     short:          "Cambiar o contrasinal do seu alcume."
-    help:           "Cambia o contrasinal do seu alcume de NickServ. O novo contrasinal ten\nefecto inmediato. Escolla un contrasinal seguro de polo menos 6 caracteres\nque non use noutros servizos."
+    help:           "Cambia o contrasinal do seu alcume. O novo contrasinal ten\nefecto inmediato. Escolla un contrasinal seguro de polo menos 6 caracteres\nque non use noutros servizos."
     success:        "\x0303✔\x03 O seu contrasinal foi actualizado con éxito."
 
   email:
@@ -489,7 +489,7 @@ forbidvhost:
   short:            "Xestionar os patróns de vhost prohibidos."
   help:             |
     Xestiona os patróns que impiden que os usuarios establezan vhosts
-    coincidentes mediante NickServ SET VHOST.
+    coincidentes mediante %bot% SET VHOST.
 
     Comodíns: * coincide con calquera secuencia, ? coincide cun só carácter.
     Exemplo: *.pirateado.com bloquea calquera vhost que remate en .pirateado.com

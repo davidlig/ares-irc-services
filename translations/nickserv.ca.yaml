@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <new_password>"
     short:          "Canviar la contrasenya del vostre sobrenom."
-    help:           "Canvia la contrasenya del vostre sobrenom de NickServ. La nova contrasenya\nté efecte immediatament. Trieu una contrasenya forta d'almenys 6 caràcters\nque no utilitzeu en altres serveis."
+    help:           "Canvia la contrasenya del vostre sobrenom. La nova contrasenya\nté efecte immediatament. Trieu una contrasenya forta d'almenys 6 caràcters\nque no utilitzeu en altres serveis."
     success:        "\x0303✔\x03 La vostra contrasenya s'ha actualitzat correctament."
 
   email:
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gestionar els patrons de vhost prohibits."
   help:             |
     Gestiona els patrons que impedeixen als usuaris establir vhosts coincidents
-    mitjançant NickServ SET VHOST.
+    mitjançant %bot% SET VHOST.
 
     Comodins: * coincideix amb qualsevol seqüència, ? coincideix amb un sol caràcter.
     Exemple: *.pirated.com bloqueja qualsevol vhost que acabi amb .pirated.com

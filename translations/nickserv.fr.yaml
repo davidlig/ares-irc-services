@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <nouveau_motdepasse>"
     short:          "Changer le mot de passe de votre surnom."
-    help:           "Change le mot de passe de votre surnom NickServ. Le nouveau mot de passe\nprend effet immédiatement. Choisissez un mot de passe robuste d'au moins\n6 caractères que vous n'utilisez pas sur d'autres services."
+    help:           "Change le mot de passe de votre surnom. Le nouveau mot de passe\nprend effet immédiatement. Choisissez un mot de passe robuste d'au moins\n6 caractères que vous n'utilisez pas sur d'autres services."
     success:        "\x0303✔\x03 Votre mot de passe a été mis à jour avec succès."
 
   email:
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gérer les motifs de vhost interdits."
   help:             |
     Gère les motifs qui empêchent les utilisateurs de définir des vhosts
-    correspondants via NickServ SET VHOST.
+    correspondants via %bot% SET VHOST.
 
     Jokers : * correspond à toute séquence, ? correspond à un seul caractère.
     Exemple : *.pirate.com bloque tout vhost se terminant par .pirate.com

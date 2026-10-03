@@ -55,7 +55,7 @@ info:
   pending_deletion_status: "  14Estado             : 07En proceso de eliminación"
   pending_deletion_at: "  14Eliminado          : %date%"
   pending_deletion_until: "  14Elim. definitiva   : %date%"
-  pending_deletion_notice: "  07Esta canle está conxelada en ChanServ e non pode ser rexistrada."
+  pending_deletion_notice: "  07Esta canle está conxelada e non pode ser rexistrada."
 
 help:
   syntax:           "HELP [comando [subopción]]"
@@ -395,7 +395,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#canle> {ON|OFF}"
   short:            "Restrinxir unha canle aos operadores IRC."
-  help:             "Só os operadores IRC autorizados poden permanecer na canle. ChanServ entra e protexe o modo +O."
+  help:             "Só os operadores IRC autorizados poden permanecer na canle. %bot% entra e protexe o modo +O."
   on:               "IRCOPONLY activado en %channel%."
   off:              "IRCOPONLY desactivado en %channel%."
 

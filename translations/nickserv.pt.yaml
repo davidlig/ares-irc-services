@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <nova_palavra-passe>"
     short:          "Alterar a sua palavra-passe do nickname."
-    help:           "Altera a palavra-passe do seu nickname NickServ. A nova palavra-passe tem\nefeito imediato. Escolha uma palavra-passe forte de pelo menos 6 caracteres\nque não use noutros serviços."
+    help:           "Altera a palavra-passe do seu nickname. A nova palavra-passe tem\nefeito imediato. Escolha uma palavra-passe forte de pelo menos 6 caracteres\nque não use noutros serviços."
     success:        "\x0303✔\x03 A sua palavra-passe foi atualizada com sucesso."
 
   email:
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gerir padrões de vhost proibidos."
   help:             |
     Gere padrões que impedem os utilizadores de definir vhosts correspondentes
-    via NickServ SET VHOST.
+    via %bot% SET VHOST.
 
     Caracteres universais: * corresponde a qualquer sequência, ? corresponde a um único caractere.
     Exemplo: *.pirated.com bloqueia qualquer vhost que termine com .pirated.com

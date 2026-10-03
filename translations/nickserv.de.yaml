@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <neues_passwort>"
     short:          "Ihr Nickname-Passwort ändern."
-    help:           "Ändert das Passwort für Ihren NickServ-Nickname. Das neue Passwort wird\nsofort wirksam. Wählen Sie ein starkes Passwort mit mindestens 6 Zeichen,\ndas Sie nicht bei anderen Diensten verwenden."
+    help:           "Ändert das Passwort für Ihren Nickname. Das neue Passwort wird\nsofort wirksam. Wählen Sie ein starkes Passwort mit mindestens 6 Zeichen,\ndas Sie nicht bei anderen Diensten verwenden."
     success:        "\x0303✔\x03 Ihr Passwort wurde erfolgreich aktualisiert."
 
   email:
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gesperrte VHost-Muster verwalten."
   help:             |
     Verwaltet Muster, die Benutzer daran hindern, übereinstimmende VHosts
-    via NickServ SET VHOST festzulegen.
+    via %bot% SET VHOST festzulegen.
 
     Platzhalter: * entspricht einer beliebigen Sequenz, ? einem einzelnen Zeichen.
     Beispiel: *.raubkopien.de sperrt jeden VHost, der auf .raubkopien.de endet.

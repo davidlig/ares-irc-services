@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <new_password>"
     short:          "Change your nickname password."
-    help:           "Changes the password for your NickServ nickname. The new password takes\neffect immediately. Choose a strong password of at least 6 characters\nthat you do not use on other services."
+    help:           "Changes the password for your nickname. The new password takes\neffect immediately. Choose a strong password of at least 6 characters\nthat you do not use on other services."
     success:        "\x0303✔\x03 Your password has been updated successfully."
 
   email:
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Manage forbidden vhost patterns."
   help:             |
     Manages patterns that prevent users from setting matching vhosts
-    via NickServ SET VHOST.
+    via %bot% SET VHOST.
 
     Wildcards: * matches any sequence, ? matches single character.
     Example: *.pirated.com blocks any vhost ending with .pirated.com

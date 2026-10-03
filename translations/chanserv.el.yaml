@@ -55,7 +55,7 @@ info:
   pending_deletion_status: "  14Κατάσταση          : 07Σε εκκρεμότητα διαγραφής"
   pending_deletion_at: "  14Διαγράφηκε         : %date%"
   pending_deletion_until: "  14Οριστική διαγραφή  : %date%"
-  pending_deletion_notice: "  07Αυτό το κανάλι είναι παγωμένο στο ChanServ και δεν μπορεί να καταχωρηθεί."
+  pending_deletion_notice: "  07Αυτό το κανάλι είναι παγωμένο και δεν μπορεί να καταχωρηθεί."
 
 help:
   syntax:           "HELP [command [sub-option]]"
@@ -393,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#channel> {ON|OFF}"
   short:            "Περιορίστε ένα κανάλι στους χειριστές IRC."
-  help:             "Μόνο εξουσιοδοτημένοι χειριστές IRC μπορούν να παραμείνουν στο κανάλι. Το ChanServ εισέρχεται και προστατεύει το +O."
+  help:             "Μόνο εξουσιοδοτημένοι χειριστές IRC μπορούν να παραμείνουν στο κανάλι. Το %bot% εισέρχεται και προστατεύει το +O."
   on:               "Το IRCOPONLY ενεργοποιήθηκε στο %channel%."
   off:              "Το IRCOPONLY απενεργοποιήθηκε στο %channel%."
 

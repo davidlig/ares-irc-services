@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Shared\Translations;
 
+use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
+use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -11,6 +13,8 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;
 use SplFileInfo;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Component\Yaml\Yaml;
 
 use function array_flip;
@@ -25,6 +29,7 @@ use function is_dir;
 use function is_string;
 use function preg_match;
 use function preg_match_all;
+use function preg_replace;
 use function sort;
 use function sprintf;
 use function str_contains;
@@ -57,6 +62,92 @@ final class TranslationCatalogTest extends TestCase
         'MemoServ' => 'memoserv',
         'OperServ' => 'operserv',
     ];
+
+    #[Test]
+    public function serviceCatalogValuesDoNotHardcodeConfigurableNicknames(): void
+    {
+        foreach (self::SERVICE_DIRS as $domain) {
+            foreach (self::LOCALES as $locale) {
+                foreach (self::flatten(self::parseDomain($domain, $locale)) as $key => $value) {
+                    self::assertIsString($value);
+                    self::assertFalse(
+                        self::containsHardcodedServiceNickname($value),
+                        sprintf('Hardcoded service nickname in %s.%s [%s].', $domain, $key, $locale),
+                    );
+                }
+            }
+        }
+    }
+
+    #[Test]
+    public function nicknameGuardDistinguishesPlaceholdersAndPermissionTokensFromProse(): void
+    {
+        foreach (['%bot%', '%nickserv%', '%chanserv%', '%memoserv%', '%operserv%', 'chanserv.drop.force', 'nickserv.forbidvhost', 'operserv.kill'] as $token) {
+            self::assertFalse(self::containsHardcodedServiceNickname($token), $token);
+        }
+
+        foreach (['ChanServ', 'NICKSERV', 'memoserv', 'OperServ', 'ChanServ.', 'chanserv.drop.force then ChanServ', '%nickserv% then NickServ'] as $value) {
+            self::assertTrue(self::containsHardcodedServiceNickname($value), $value);
+        }
+    }
+
+    #[Test]
+    public function serviceTranslationsRenderConfiguredNicknamesInEveryLocale(): void
+    {
+        $nicknames = ['chanserv' => 'ChannelKeeper', 'nickserv' => 'IdentityKeeper', 'memoserv' => 'MemoKeeper', 'operserv' => 'NetworkKeeper'];
+        $providers = [];
+        foreach ($nicknames as $domain => $nickname) {
+            $provider = $this->createStub(ServiceNicknameProviderInterface::class);
+            $provider->method('getServiceKey')->willReturn($domain);
+            $provider->method('getNickname')->willReturn($nickname);
+            $providers[] = $provider;
+        }
+        $registry = new ServiceNicknameRegistry($providers);
+        $keys = [
+            'chanserv' => ['help.general_footer', 'ircoponly.help', 'info.pending_deletion_notice', 'error.not_identified', 'register.help'],
+            'nickserv' => ['help.general_footer', 'forbidvhost.help', 'set.password.help'],
+            'memoserv' => ['help.general_footer', 'error.not_identified'],
+            'operserv' => ['help.general_footer', 'error.not_identified'],
+        ];
+
+        foreach (self::LOCALES as $locale) {
+            $translator = new Translator($locale);
+            $translator->addLoader('array', new ArrayLoader());
+            foreach ($keys as $domain => $domainKeys) {
+                $catalog = self::flatten(self::parseDomain($domain, $locale));
+                $translator->addResource('array', $catalog, $locale, $domain);
+                $params = $registry->getAllPlaceholders($nicknames[$domain]);
+                $params['%marker%'] = 'ℹ';
+                $params['%syntax%'] = 'HELP <command>';
+
+                foreach ($domainKeys as $key) {
+                    $message = $translator->trans($key, $params, $domain, $locale);
+                    $label = sprintf('%s.%s [%s]', $domain, $key, $locale);
+                    self::assertNotSame($key, $message, $label);
+                    self::assertDoesNotMatchRegularExpression('/%[a-z_]+%/', $message, $label);
+                    self::assertFalse(self::containsHardcodedServiceNickname($message), $label);
+                    if (in_array($key, ['help.general_footer', 'ircoponly.help', 'forbidvhost.help'], true)) {
+                        self::assertStringContainsString($nicknames[$domain], $message, $label);
+                    }
+                    if (in_array($key, ['error.not_identified', 'register.help'], true)) {
+                        self::assertStringContainsString($nicknames['nickserv'], $message, $label);
+                    }
+                    if (in_array($key, ['info.pending_deletion_notice', 'set.password.help'], true)) {
+                        self::assertStringNotContainsString($nicknames[$domain], $message, $label);
+                    }
+                }
+            }
+        }
+    }
+
+    private static function containsHardcodedServiceNickname(string $value): bool
+    {
+        // Remove only individual dynamic tokens and canonical permission identifiers,
+        // never the surrounding prose: a permission must not conceal a hardcoded bot.
+        $prose = preg_replace('/%[a-z_]+%|\b(?:chanserv|nickserv|memoserv|operserv)\.[a-z_]+(?:\.[a-z_]+)*\b/', '', $value);
+
+        return 1 === preg_match('/\b(?:ChanServ|NickServ|MemoServ|OperServ)\b/i', $prose ?? $value);
+    }
 
     /** @var list<string> */
     private const array DYNAMIC_KEY_PATTERNS = [

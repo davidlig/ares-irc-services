@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <nuova_password>"
     short:          "Cambia la password del suo nickname."
-    help:           "Cambia la password per il suo nickname NickServ. La nuova password ha\neffetto immediato. Scelga una password sicura di almeno 6 caratteri\nche non usi su altri servizi."
+    help:           "Cambia la password per il suo nickname. La nuova password ha\neffetto immediato. Scelga una password sicura di almeno 6 caratteri\nche non usi su altri servizi."
     success:        "\x0303✔\x03 La sua password è stata aggiornata con successo."
 
   email:
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gestisce i pattern vhost vietati."
   help:             |
     Gestisce i pattern che impediscono agli utenti di impostare vhost corrispondenti
-    tramite NickServ SET VHOST.
+    tramite %bot% SET VHOST.
 
     Caratteri jolly: * corrisponde a qualsiasi sequenza, ? corrisponde a un singolo carattere.
     Esempio: *.pirata.com blocca qualsiasi vhost che termina con .pirata.com

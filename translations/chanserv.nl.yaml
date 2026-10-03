@@ -55,7 +55,7 @@ info:
   pending_deletion_status: "  14Status             : 07In afwachting van verwijdering"
   pending_deletion_at: "  14Verwijderd         : %date%"
   pending_deletion_until: "  14Definitief op      : %date%"
-  pending_deletion_notice: "  07Dit kanaal is bevroren in ChanServ en kan niet worden geregistreerd."
+  pending_deletion_notice: "  07Dit kanaal is bevroren en kan niet worden geregistreerd."
 
 help:
   syntax:           "HELP [commando [sub-optie]]"
@@ -393,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#kanaal> {ON|OFF}"
   short:            "Beperk een kanaal tot IRC-operators."
-  help:             "Alleen bevoegde IRC-operators mogen in het kanaal blijven. ChanServ komt binnen en beschermt modus +O."
+  help:             "Alleen bevoegde IRC-operators mogen in het kanaal blijven. %bot% komt binnen en beschermt modus +O."
   on:               "IRCOPONLY is ingeschakeld voor %channel%."
   off:              "IRCOPONLY is uitgeschakeld voor %channel%."
 

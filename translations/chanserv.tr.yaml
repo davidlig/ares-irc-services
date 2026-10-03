@@ -55,7 +55,7 @@ info:
   pending_deletion_status: "  14Durum              : 07Silinme bekleniyor"
   pending_deletion_at: "  14Silindi            : %date%"
   pending_deletion_until: "  14Kalıcı silinme     : %date%"
-  pending_deletion_notice: "  07Bu kanal ChanServ'de dondurulmuştur ve kaydedilemez."
+  pending_deletion_notice: "  07Bu kanal dondurulmuştur ve kaydedilemez."
 
 help:
   syntax:           "HELP [komut [alt-seçenek]]"
@@ -393,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#channel> {ON|OFF}"
   short:            "Bir kanalı IRC operatörleriyle sınırlandırın."
-  help:             "Yalnızca yetkili IRC operatörleri kanalda kalabilir. ChanServ katılır ve +O kipini korur."
+  help:             "Yalnızca yetkili IRC operatörleri kanalda kalabilir. %bot% katılır ve +O kipini korur."
   on:               "IRCOPONLY %channel% kanalında açıldı."
   off:              "IRCOPONLY %channel% kanalında kapatıldı."
 

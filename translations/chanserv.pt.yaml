@@ -55,7 +55,7 @@ info:
   pending_deletion_status: "  14Estado             : 07A aguardar eliminação"
   pending_deletion_at: "  14Eliminado          : %date%"
   pending_deletion_until: "  14Elim. definitiva   : %date%"
-  pending_deletion_notice: "  07Este canal está congelado no ChanServ e não pode ser registado."
+  pending_deletion_notice: "  07Este canal está congelado e não pode ser registado."
 
 help:
   syntax:           "HELP [comando [sub-opção]]"
@@ -393,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#canal> {ON|OFF}"
   short:            "Restringir um canal a operadores IRC."
-  help:             "Apenas operadores IRC autorizados podem permanecer no canal. ChanServ entra e protege o modo +O."
+  help:             "Apenas operadores IRC autorizados podem permanecer no canal. %bot% entra e protege o modo +O."
   on:               "IRCOPONLY ativado em %channel%."
   off:              "IRCOPONLY desativado em %channel%."
 

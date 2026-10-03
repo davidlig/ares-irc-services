@@ -55,7 +55,7 @@ info:
   pending_deletion_status: "  14Stare              : 07În așteptarea ștergerii"
   pending_deletion_at: "  14Șters              : %date%"
   pending_deletion_until: "  14Ștergere definitivă : %date%"
-  pending_deletion_notice: "  07Acest canal este înghețat în ChanServ și nu poate fi înregistrat."
+  pending_deletion_notice: "  07Acest canal este înghețat și nu poate fi înregistrat."
 
 help:
   syntax:           "HELP [comandă [sub-opțiune]]"
@@ -393,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#canal> {ON|OFF}"
   short:            "Restricționați un canal la operatorii IRC."
-  help:             "Doar operatorii IRC autorizați pot rămâne pe canal. ChanServ intră și protejează modul +O."
+  help:             "Doar operatorii IRC autorizați pot rămâne pe canal. %bot% intră și protejează modul +O."
   on:               "IRCOPONLY este activat pe %channel%."
   off:              "IRCOPONLY este dezactivat pe %channel%."
 

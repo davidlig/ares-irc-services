@@ -55,7 +55,7 @@ info:
   pending_deletion_status: "  14Egoera             : 07Ezabatzeke"
   pending_deletion_at: "  14Ezabatuta          : %date%"
   pending_deletion_until: "  14Behin betiko       : %date%"
-  pending_deletion_notice: "  07Kanal hau ChanServ-en izoztuta dago eta ezin da erregistratu."
+  pending_deletion_notice: "  07Kanal hau izoztuta dago eta ezin da erregistratu."
 
 help:
   syntax:           "HELP [komandoa [azpi-aukera]]"
@@ -393,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#kanala> {ON|OFF}"
   short:            "Mugatu kanal bat IRC operadoreetara."
-  help:             "Baimendutako IRC operadoreek bakarrik iraun dezakete kanalean. ChanServ sartzen da eta +O modua babesten du."
+  help:             "Baimendutako IRC operadoreek bakarrik iraun dezakete kanalean. %bot% sartzen da eta +O modua babesten du."
   on:               "IRCOPONLY aktibatuta dago %channel% kanalean."
   off:              "IRCOPONLY desaktibatuta dago %channel% kanalean."
 

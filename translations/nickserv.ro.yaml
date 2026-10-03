@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <parolă_nouă>"
     short:          "Schimbați parola poreclei dumneavoastră."
-    help:           "Schimbă parola pentru porecla dumneavoastră NickServ. Noua parolă intră în\nvigoare imediat. Alegeți o parolă puternică de cel puțin 6 caractere\npe care să nu o folosiți la alte servicii."
+    help:           "Schimbă parola pentru porecla dumneavoastră. Noua parolă intră în\nvigoare imediat. Alegeți o parolă puternică de cel puțin 6 caractere\npe care să nu o folosiți la alte servicii."
     success:        "\x0303✔\x03 Parola dumneavoastră a fost actualizată cu succes."
 
   email:
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gestionați modelele de vhost interzise."
   help:             |
     Gestionează modelele care împiedică utilizatorii să seteze vhosturi
-    corespunzătoare prin NickServ SET VHOST.
+    corespunzătoare prin %bot% SET VHOST.
 
     Metacaractere: * potrivește orice secvență, ? potrivește un singur caracter.
     Exemplu: *.pirated.com blochează orice vhost care se termină cu .pirated.com

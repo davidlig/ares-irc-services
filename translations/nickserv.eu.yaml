@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <pasahitz_berria>"
     short:          "Aldatu zure ezizenaren pasahitza."
-    help:           "Zure NickServ ezizenaren pasahitza aldatzen du. Pasahitz berriak\nberehala eragiten du. Aukeratu gutxienez 6 karaktereko pasahitz sendo bat\nbeste zerbitzuetan erabiltzen ez duzuna."
+    help:           "Zure ezizenaren pasahitza aldatzen du. Pasahitz berriak\nberehala eragiten du. Aukeratu gutxienez 6 karaktereko pasahitz sendo bat\nbeste zerbitzuetan erabiltzen ez duzuna."
     success:        "\x0303✔\x03 Zure pasahitza arrakastaz eguneratu da."
 
   email:
@@ -480,7 +480,7 @@ forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [eredua]"
   short:            "Kudeatu debekatutako vhost ereduak."
   help:             |
-    NickServ SET VHOST bidez bat datozen vhost-ak ezartzea
+    %bot% SET VHOST bidez bat datozen vhost-ak ezartzea
     eragozten duten ereduak kudeatzen ditu.
 
     Komodinek: * edozein segida bat dator, ? karaktere bakarra bat dator.

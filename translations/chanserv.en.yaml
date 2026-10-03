@@ -55,7 +55,7 @@ info:
   pending_deletion_status: "  14Status             : 07Pending deletion"
   pending_deletion_at: "  14Dropped            : %date%"
   pending_deletion_until: "  14Hard delete on     : %date%"
-  pending_deletion_notice: "  07This channel is frozen in ChanServ and cannot be registered."
+  pending_deletion_notice: "  07This channel is frozen and cannot be registered."
 
 help:
   syntax:           "HELP [command [sub-option]]"
@@ -393,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#channel> {ON|OFF}"
   short:            "Restrict a channel to IRC operators."
-  help:             "Only authorized IRC operators may remain in the channel. ChanServ joins and protects mode +O."
+  help:             "Only authorized IRC operators may remain in the channel. %bot% joins and protects mode +O."
   on:               "IRCOPONLY is now ON for %channel%."
   off:              "IRCOPONLY is now OFF for %channel%."
 

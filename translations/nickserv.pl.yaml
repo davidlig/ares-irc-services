@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <nowe_hasło>"
     short:          "Zmień hasło swojego nicka."
-    help:           "Zmienia hasło dla Twojego nicka NickServ. Nowe hasło obowiązuje\nnatychmiast. Wybierz silne hasło o długości co najmniej 6 znaków,\nktórego nie używasz w innych serwisach."
+    help:           "Zmienia hasło dla Twojego nicka. Nowe hasło obowiązuje\nnatychmiast. Wybierz silne hasło o długości co najmniej 6 znaków,\nktórego nie używasz w innych serwisach."
     success:        "\x0303✔\x03 Twoje hasło zostało pomyślnie zaktualizowane."
 
   email:
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Zarządzaj zabronionymi wzorcami vhost."
   help:             |
     Zarządza wzorcami, które uniemożliwiają użytkownikom ustawianie pasujących
-    vhostów przez NickServ SET VHOST.
+    vhostów przez %bot% SET VHOST.
 
     Symbole wieloznaczne: * pasuje do dowolnego ciągu, ? pasuje do pojedynczego znaku.
     Przykład: *.piracka.strona blokuje każdy vhost kończący się na .piracka.strona

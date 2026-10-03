@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <nieuw_wachtwoord>"
     short:          "Wijzig uw bijnaamwachtwoord."
-    help:           "Wijzigt het wachtwoord voor uw NickServ-bijnaam. Het nieuwe wachtwoord wordt\ndirect van kracht. Kies een sterk wachtwoord van minimaal 6 tekens\ndat u niet op andere services gebruikt."
+    help:           "Wijzigt het wachtwoord voor uw bijnaam. Het nieuwe wachtwoord wordt\ndirect van kracht. Kies een sterk wachtwoord van minimaal 6 tekens\ndat u niet op andere services gebruikt."
     success:        "\x0303✔\x03 Uw wachtwoord is succesvol bijgewerkt."
 
   email:
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Beheer verboden vhost-patronen."
   help:             |
     Beheert patronen die voorkomen dat gebruikers overeenkomende vhosts
-    instellen via NickServ SET VHOST.
+    instellen via %bot% SET VHOST.
 
     Wildcards: * komt overeen met elke reeks, ? komt overeen met één teken.
     Voorbeeld: *.pirated.com blokkeert elke vhost die eindigt op .pirated.com

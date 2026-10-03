@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <yeni_şifre>"
     short:          "Rumuz şifrenizi değiştirin."
-    help:           "NickServ rumuzunuzun şifresini değiştirir. Yeni şifre hemen geçerli olur.\nEn az 6 karakterden oluşan, başka hizmetlerde kullanmadığınız\ngüçlü bir şifre seçin."
+    help:           "Rumuzunuzun şifresini değiştirir. Yeni şifre hemen geçerli olur.\nEn az 6 karakterden oluşan, başka hizmetlerde kullanmadığınız\ngüçlü bir şifre seçin."
     success:        "\x0303✔\x03 Şifreniz başarıyla güncellendi."
 
   email:
@@ -480,7 +480,7 @@ forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [kalıp]"
   short:            "Yasaklı vhost kalıplarını yönetin."
   help:             |
-    Kullanıcıların NickServ SET VHOST ile eşleşen vhost'ları
+    Kullanıcıların %bot% SET VHOST ile eşleşen vhost'ları
     ayarlamalarını engelleyen kalıpları yönetir.
 
     Jokerler: * herhangi bir diziyi eşler, ? tek karakteri eşler.
