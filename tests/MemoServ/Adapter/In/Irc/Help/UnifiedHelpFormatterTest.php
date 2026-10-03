@@ -215,6 +215,19 @@ final class UnifiedHelpFormatterTest extends TestCase
                 }
             }
 
+            foreach (['general_header', 'options_header', 'ircop_header'] as $section) {
+                self::assertIsString($helpTranslations[$section]);
+                self::assertStringStartsWith("\x02 ■ ", $helpTranslations[$section], $locale);
+                self::assertStringEndsWith("\x02", $helpTranslations[$section], $locale);
+                self::assertStringNotContainsString("\x03", $helpTranslations[$section], $locale);
+            }
+            foreach (['group_header', 'subgroup_header'] as $group) {
+                self::assertSame("\x0310  ◆ %group%\x03\x0F", $helpTranslations[$group], $locale);
+            }
+            foreach (['command_line', 'subcommand_line'] as $row) {
+                self::assertSame("    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%", $helpTranslations[$row], $locale);
+            }
+
             $command = new MemoServHelpableCommand('IGNORE', 1, [[
                 'name' => 'ADD',
                 'desc_key' => 'ignore.add.short',
@@ -239,20 +252,20 @@ final class UnifiedHelpFormatterTest extends TestCase
                 self::assertDoesNotMatchRegularExpression('/%[^%]+%/', $renderedReply, $locale);
             }
 
-            self::assertStringContainsString("\x02\x0307● MemoServ\x03\x0F", $context->renderedTranslations[1], $locale);
+            self::assertStringContainsString("\x02\x0307🤖 MemoServ\x03\x0F", $context->renderedTranslations[1], $locale);
             self::assertStringContainsString("\x0314─────────────────────────────\x03\x0F", $context->renderedTranslations[1], $locale);
 
             $commandRow = $this->renderedReplyFor($context, 'help.command_line');
-            self::assertMatchesRegularExpression('/\x0310›\x03\x0F \x02\x0303IGNORE\s+\x03\x0F.+/u', $commandRow, $locale);
+            self::assertMatchesRegularExpression('/^    \x0310›\x03\x0F \x02\x0303IGNORE\s+\x03\x0F.+/u', $commandRow, $locale);
 
             $generalFooter = $this->renderedReplyFor($context, 'help.general_footer');
-            self::assertMatchesRegularExpression('/\x0310ℹ\x03\x0F.*\x0303\/msg MemoServ HELP.*\x03\x0F/u', $generalFooter, $locale);
+            self::assertMatchesRegularExpression('/\x0310ℹ\x03\x0F.*\/msg MemoServ \x02\x0303HELP.*\x03\x0F/u', $generalFooter, $locale);
 
             $subcommandFooter = $this->renderedReplyFor($context, 'help.set_sub_footer');
-            self::assertMatchesRegularExpression('/\x0310ℹ\x03\x0F.*\x0303\/msg MemoServ HELP IGNORE <[^>]+>\x03\x0F/u', $subcommandFooter, $locale);
+            self::assertMatchesRegularExpression('/\x0310ℹ\x03\x0F.*\/msg MemoServ \x02\x0303HELP IGNORE <[^>]+>\x03\x0F/u', $subcommandFooter, $locale);
 
             $syntax = $this->renderedReplyFor($context, 'help.syntax_label');
-            self::assertMatchesRegularExpression('/\x02\x0307.+\x03\x0F \x02\x0303.+\x03\x0F/u', $syntax, $locale);
+            self::assertMatchesRegularExpression('/^[^\x02\x03]+ \x02\x0303.+\x03\x0F$/u', $syntax, $locale);
 
             $formatter->renderSubCommandHelp($context, 'IGNORE', [
                 'name' => 'ADD',
@@ -267,7 +280,7 @@ final class UnifiedHelpFormatterTest extends TestCase
                 }
             }
             self::assertIsString($subcommandHeader, $locale);
-            self::assertStringContainsString("\x02\x0307● HELP IGNORE ADD\x03\x0F", $subcommandHeader, $locale);
+            self::assertStringContainsString("\x02\x0307🤖 HELP IGNORE ADD\x03\x0F", $subcommandHeader, $locale);
         }
     }
 
