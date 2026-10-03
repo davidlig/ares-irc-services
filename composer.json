@@ -95,7 +95,7 @@
         "deptrac/deptrac": "^4.7.2",
         "friendsofphp/php-cs-fixer": "^3.95.27",
         "phpstan/phpstan": "^2.2.16",
-        "phpstan/phpstan-phpunit": "^2.0.19",
-        "phpunit/phpunit": "^13.3.5"
+        "phpstan/phpstan-phpunit": "^2.0.21",
+        "phpunit/phpunit": "^13.4.0"
     }
 }
