@@ -63,7 +63,7 @@ help:
   help:             "Sen argumentos lista todos os comandos. Use \x0303HELP <comando>\x03 para axuda completa, ou \x0303HELP <comando> <opción>\x03 para subopcións de SET."
   header_title:     "%bot%"
   header: "\x02\x0307● %title%\x03\x0F \x0314%separator%\x03"
-  intro:            "Servizo de rexistro e xestión de canles para a rede de IRC."
+  intro:            "Servizo de rexistro e xestión de canles."
   general_header: "\x02\x0307Comandos dispoñibles:\x03\x0F"
   command_line: "  \x0310›\x03 \x0303%command%\x03%description%"
   subcommand_line: "  \x0310›\x03 \x0303%command%\x03%description%"

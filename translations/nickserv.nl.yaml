@@ -276,7 +276,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "Bijnaamregistratie- en beschermingsservice voor het IRC-netwerk."
+  intro:            "Beheer en bescherming van bijnamen."
   intro_expiration: "%marker% %label%: Nicknamen die langer dan %days% dagen niet zijn gebruikt, worden automatisch verwijderd."
   intro_expiration_label: "OPMERKING"
   general_header: "\x02\x0307Beschikbare opdrachten:\x03\x0F"

@@ -284,7 +284,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "Servizo de rexistro e protección de alcumes para a rede de IRC."
+  intro:            "Xestión e protección de alcumes."
   intro_expiration: "%marker% %label%: Os alcumes que non se utilicen durante máis de %days% días eliminaranse automaticamente."
   intro_expiration_label: "NOTA"
   general_header: "\x02\x0307Comandos dispoñibles:\x03\x0F"

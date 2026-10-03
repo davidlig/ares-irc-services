@@ -68,6 +68,91 @@ final class TranslationCatalogTest extends TestCase
     ];
 
     #[Test]
+    public function serviceHelpIntroductionsUseConciseLocalizedDescriptionsInEveryLocale(): void
+    {
+        $introductions = [
+            'ca' => [
+                'nickserv' => 'Gestió i protecció de sobrenoms.',
+                'operserv' => 'Servei de gestió de xarxa per a operadors.',
+                'chanserv' => 'Servei de registre i gestió de canals.',
+            ],
+            'de' => [
+                'nickserv' => 'Verwaltung und Schutz von Nicknames.',
+                'operserv' => 'Netzwerkverwaltungsdienst für Operatoren.',
+                'chanserv' => 'Channel-Registrierungs- und Verwaltungsdienst.',
+            ],
+            'el' => [
+                'nickserv' => 'Διαχείριση και προστασία ψευδωνύμων.',
+                'operserv' => 'Υπηρεσία διαχείρισης δικτύου για χειριστές.',
+                'chanserv' => 'Υπηρεσία καταχώρησης και διαχείρισης καναλιών.',
+            ],
+            'en' => [
+                'nickserv' => 'Nickname management and protection.',
+                'operserv' => 'Network management service for operators.',
+                'chanserv' => 'Channel registration and management service.',
+            ],
+            'es' => [
+                'nickserv' => 'Gestión y protección de apodos.',
+                'operserv' => 'Servicio de gestión de red para operadores.',
+                'chanserv' => 'Servicio de registro y gestión de canales.',
+            ],
+            'eu' => [
+                'nickserv' => 'Ezizenen kudeaketa eta babesa.',
+                'operserv' => 'Operadoreentzako sare kudeaketa zerbitzua.',
+                'chanserv' => 'Kanalak erregistratzeko eta kudeatzeko zerbitzua.',
+            ],
+            'fr' => [
+                'nickserv' => 'Gestion et protection des surnoms.',
+                'operserv' => 'Service de gestion du réseau pour les opérateurs.',
+                'chanserv' => 'Service d\'enregistrement et de gestion des canaux.',
+            ],
+            'gl' => [
+                'nickserv' => 'Xestión e protección de alcumes.',
+                'operserv' => 'Servizo de xestión da rede para operadores.',
+                'chanserv' => 'Servizo de rexistro e xestión de canles.',
+            ],
+            'it' => [
+                'nickserv' => 'Gestione e protezione dei nickname.',
+                'operserv' => 'Servizio di gestione della rete per operatori.',
+                'chanserv' => 'Servizio di registrazione e gestione dei canali.',
+            ],
+            'nl' => [
+                'nickserv' => 'Beheer en bescherming van bijnamen.',
+                'operserv' => 'Netwerkbeheerservice voor operators.',
+                'chanserv' => 'Kanaalregistratie- en beheerservice.',
+            ],
+            'pl' => [
+                'nickserv' => 'Zarządzanie nickami i ich ochrona.',
+                'operserv' => 'Usługa zarządzania siecią dla operatorów.',
+                'chanserv' => 'Usługa rejestracji i zarządzania kanałami.',
+            ],
+            'pt' => [
+                'nickserv' => 'Gestão e proteção de nicknames.',
+                'operserv' => 'Serviço de gestão da rede para operadores.',
+                'chanserv' => 'Serviço de registo e gestão de canais.',
+            ],
+            'ro' => [
+                'nickserv' => 'Gestionarea și protecția poreclelor.',
+                'operserv' => 'Serviciu de administrare a rețelei pentru operatori.',
+                'chanserv' => 'Serviciu de înregistrare și administrare a canalelor.',
+            ],
+            'tr' => [
+                'nickserv' => 'Rumuz yönetimi ve koruması.',
+                'operserv' => 'Operatörler için ağ yönetim hizmeti.',
+                'chanserv' => 'Kanal kaydı ve yönetim hizmeti.',
+            ],
+        ];
+
+        foreach (self::LOCALES as $locale) {
+            foreach ($introductions[$locale] as $domain => $expected) {
+                $catalog = self::flatten(self::parseDomain($domain, $locale));
+
+                self::assertSame($expected, $catalog['help.intro'] ?? null, $domain . '.' . $locale . ': help.intro');
+            }
+        }
+    }
+
+    #[Test]
     public function allLocalesDefineTheSameKeysPerDomain(): void
     {
         foreach (self::DOMAINS as $domain) {

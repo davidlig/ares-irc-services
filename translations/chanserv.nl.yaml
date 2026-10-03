@@ -63,7 +63,7 @@ help:
   help:             "Zonder argumenten toont alle commando's. Gebruik \x0303HELP <commando>\x03 voor volledige hulp, of \x0303HELP <commando> <optie>\x03 voor SET sub-opties."
   header_title:     "%bot%"
   header: "\x02\x0307● %title%\x03\x0F \x0314%separator%\x03"
-  intro:            "Kanaalregistratie- en beheerservice voor het IRC-netwerk."
+  intro:            "Kanaalregistratie- en beheerservice."
   general_header: "\x02\x0307Beschikbare opdrachten:\x03\x0F"
   command_line: "  \x0310›\x03 \x0303%command%\x03%description%"
   subcommand_line: "  \x0310›\x03 \x0303%command%\x03%description%"

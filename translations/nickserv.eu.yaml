@@ -276,7 +276,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "IRC sarearentzako ezizen erregistro eta babes zerbitzua."
+  intro:            "Ezizenen kudeaketa eta babesa."
   intro_expiration: "%marker% %label%: %days% egun baino gehiagoz erabiltzen ez diren ezizenak automatikoki ezabatuko dira."
   intro_expiration_label: "OHARRA"
   general_header: "\x02\x0307Komando erabilgarriak:\x03\x0F"

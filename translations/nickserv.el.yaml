@@ -276,7 +276,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "Υπηρεσία καταχώρησης και προστασίας ψευδωνύμων για το δίκτυο IRC."
+  intro:            "Διαχείριση και προστασία ψευδωνύμων."
   intro_expiration: "%marker% %label%: Τα ψευδώνυμα που δεν χρησιμοποιούνται για περισσότερες από %days% ημέρες διαγράφονται αυτόματα."
   intro_expiration_label: "ΣΗΜΕΙΩΣΗ"
   general_header: "\x02\x0307Διαθέσιμες εντολές:\x03\x0F"

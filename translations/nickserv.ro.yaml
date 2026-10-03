@@ -276,7 +276,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "Serviciu de înregistrare și protecție a poreclelor pentru rețeaua IRC."
+  intro:            "Gestionarea și protecția poreclelor."
   intro_expiration: "%marker% %label%: Poreclele nefolosite mai mult de %days% zile sunt eliminate automat."
   intro_expiration_label: "NOTĂ"
   general_header: "\x02\x0307Comenzi disponibile:\x03\x0F"

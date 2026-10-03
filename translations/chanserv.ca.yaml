@@ -63,7 +63,7 @@ help:
   help:             "Sense arguments llista totes les ordres. Utilitzeu \x0303HELP <command>\x03 per a l'ajuda completa, o \x0303HELP <command> <option>\x03 per a les subopcions de SET."
   header_title:     "%bot%"
   header: "\x02\x0307● %title%\x03\x0F \x0314%separator%\x03"
-  intro:            "Servei de registre i gestió de canals per a la xarxa IRC."
+  intro:            "Servei de registre i gestió de canals."
   general_header: "\x02\x0307Comandes disponibles:\x03\x0F"
   command_line: "  \x0310›\x03 \x0303%command%\x03%description%"
   subcommand_line: "  \x0310›\x03 \x0303%command%\x03%description%"

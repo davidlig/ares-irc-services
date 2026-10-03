@@ -276,7 +276,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "Servei de registre i protecció de sobrenoms per a la xarxa IRC."
+  intro:            "Gestió i protecció de sobrenoms."
   intro_expiration: "%marker% %label%: Els nicks no utilitzats durant més de %days% dies s’eliminen automàticament."
   intro_expiration_label: "NOTA"
   general_header: "\x02\x0307Comandes disponibles:\x03\x0F"

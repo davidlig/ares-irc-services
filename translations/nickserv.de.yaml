@@ -276,7 +276,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "Nickname-Registrierungs- und Schutz-Dienst für das IRC-Netzwerk."
+  intro:            "Verwaltung und Schutz von Nicknames."
   intro_expiration: "%marker% %label%: Nicknamen, die länger als %days% Tage ungenutzt bleiben, werden automatisch entfernt."
   intro_expiration_label: "HINWEIS"
   general_header: "\x02\x0307Verfügbare Befehle:\x03\x0F"

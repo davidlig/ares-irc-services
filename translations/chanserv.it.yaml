@@ -63,7 +63,7 @@ help:
   help:             "Senza argomenti elenca tutti i comandi. Usi \x0303HELP <comando>\x03 per l'aiuto completo, o \x0303HELP <comando> <opzione>\x03 per le sotto-opzioni di SET."
   header_title:     "%bot%"
   header: "\x02\x0307● %title%\x03\x0F \x0314%separator%\x03"
-  intro:            "Servizio di registrazione e gestione canali per la rete IRC."
+  intro:            "Servizio di registrazione e gestione dei canali."
   general_header: "\x02\x0307Comandi disponibili:\x03\x0F"
   command_line: "  \x0310›\x03 \x0303%command%\x03%description%"
   subcommand_line: "  \x0310›\x03 \x0303%command%\x03%description%"

@@ -276,7 +276,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "Usługa rejestracji i ochrony nicków dla sieci IRC."
+  intro:            "Zarządzanie nickami i ich ochrona."
   intro_expiration: "%marker% %label%: Nieużywane przez ponad %days% dni pseudonimy są automatycznie usuwane."
   intro_expiration_label: "UWAGA"
   general_header: "\x02\x0307Dostępne komendy:\x03\x0F"

@@ -276,7 +276,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "IRC ağı için rumuz kaydı ve koruma hizmeti."
+  intro:            "Rumuz yönetimi ve koruması."
   intro_expiration: "%marker% %label%: %days% günden uzun süre kullanılmayan takma adlar otomatik olarak silinir."
   intro_expiration_label: "NOT"
   general_header: "\x02\x0307Kullanılabilir komutlar:\x03\x0F"

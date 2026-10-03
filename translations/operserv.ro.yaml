@@ -18,7 +18,7 @@ help:
   help:             "Fără argumente listează toate comenzile. Folosiți \x0303HELP <comandă>\x03 pentru ajutor complet sau \x0303HELP <comandă> <opțiune>\x03 pentru sub-opțiuni."
   header_title:     "%bot%"
   header: "\x02\x0307● %title%\x03\x0F \x0314%separator%\x03\x0F"
-  intro:            "Serviciu de administrare a rețelei pentru operatorii IRC."
+  intro:            "Serviciu de administrare a rețelei pentru operatori."
   general_header: "\x02\x0307Comenzi disponibile:\x03\x0F"
   command_line: "  \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "  \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"

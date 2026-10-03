@@ -276,7 +276,7 @@ help:
   info_marker:       "\x0310ℹ\x03\x0F"
   error_marker:      "\x0307✗\x03\x0F"
   warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "Gestión y protección de apodos en la red IRC."
+  intro:            "Gestión y protección de apodos."
   intro_expiration: "%marker% %label%: Los nicks que no se utilicen durante más de %days% días se eliminarán automáticamente."
   intro_expiration_label: "NOTA"
   general_header: "\x02\x0307Comandos disponibles:\x03\x0F"

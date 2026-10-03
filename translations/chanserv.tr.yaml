@@ -63,7 +63,7 @@ help:
   help:             "Argüman olmadan tüm komutları listeler. Tam yardım için \x0303HELP <komut>\x03, SET alt seçenekleri için \x0303HELP <komut> <seçenek>\x03 kullanın."
   header_title:     "%bot%"
   header: "\x02\x0307● %title%\x03\x0F \x0314%separator%\x03"
-  intro:            "IRC ağı için kanal kaydı ve yönetim hizmeti."
+  intro:            "Kanal kaydı ve yönetim hizmeti."
   general_header: "\x02\x0307Kullanılabilir komutlar:\x03\x0F"
   command_line: "  \x0310›\x03 \x0303%command%\x03%description%"
   subcommand_line: "  \x0310›\x03 \x0303%command%\x03%description%"
