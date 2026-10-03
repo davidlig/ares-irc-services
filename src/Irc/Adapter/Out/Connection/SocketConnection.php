@@ -121,7 +121,7 @@ class SocketConnection implements ConnectionInterface
         foreach ($data as $line) {
             $lineLen = strlen($line) + 2;
             if (0 < $chunkLen && $chunkLen + $lineLen > self::WRITE_CHUNK_BYTES) {
-                $this->writePayload(implode("\r\n", $parts) . "\r\n");
+                $this->writeChunk($parts);
                 $parts = [];
                 $chunkLen = 0;
             }
@@ -129,15 +129,21 @@ class SocketConnection implements ConnectionInterface
             $parts[] = $line;
             $chunkLen += $lineLen;
             if ($chunkLen >= self::WRITE_CHUNK_BYTES) {
-                $this->writePayload(implode("\r\n", $parts) . "\r\n");
+                $this->writeChunk($parts);
                 $parts = [];
                 $chunkLen = 0;
             }
         }
 
         if (0 < $chunkLen) {
-            $this->writePayload(implode("\r\n", $parts) . "\r\n");
+            $this->writeChunk($parts);
         }
+    }
+
+    /** @param list<string> $parts */
+    private function writeChunk(array $parts): void
+    {
+        $this->writePayload(implode("\r\n", $parts) . "\r\n");
     }
 
     private function writePayload(string $payload): void

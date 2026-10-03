@@ -210,6 +210,20 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
+    public function writeLineWithEmptyStringImmediatelyWritesOneCrLf(): void
+    {
+        $socket = $this->createMock(Socket::class);
+        $socket->method('isClosed')->willReturn(false);
+        $socket->method('isReadable')->willReturn(true);
+        $socket->expects(self::once())->method('write')->with("\r\n");
+        $connection = $this->connectionWithSocket($socket);
+
+        $connection->writeLine('');
+
+        self::assertSame(ConnectionStatus::Connected, $connection->getStatus());
+    }
+
+    #[Test]
     public function writeLineRemainsImmediateAndDoesNotChunkAnOversizedLine(): void
     {
         $oversized = str_repeat('X', 32768);
