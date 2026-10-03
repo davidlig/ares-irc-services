@@ -31,6 +31,7 @@ use function str_contains;
 use function str_ends_with;
 use function str_replace;
 use function str_starts_with;
+use function strlen;
 
 use const PREG_SET_ORDER;
 
@@ -311,7 +312,7 @@ final class TranslationCatalogTest extends TestCase
     #[Test]
     public function serviceHelpTranslationsUseOnlyTheCanonicalStructuralPalette(): void
     {
-        $allowedColors = ['03', '04', '06', '07', '10', '14'];
+        $allowedColors = ['03', '04', '07', '10', '14'];
         $violations = [];
 
         foreach (self::SERVICE_DIRS as $domain) {
@@ -332,6 +333,15 @@ final class TranslationCatalogTest extends TestCase
                     preg_match_all('/\x03(\d{1,2})(?:,(\d{1,2}))?(?!\d)/', $value, $colorMatches, PREG_SET_ORDER);
                     foreach ($colorMatches as $colorMatch) {
                         foreach ([$colorMatch[1], $colorMatch[2] ?? ''] as $color) {
+                            if (
+                                '04' === $color
+                                // Preserve the generic palette guard on these non-HELP command errors.
+                                && !in_array($key, ['error.syntax', 'raw.protocol.syntax'], true)
+                                && (!in_array($domain, ['nickserv', 'chanserv'], true)
+                                    || !in_array($key, ['help.warning_marker', 'help.intro_expiration'], true))
+                            ) {
+                                $violations[] = sprintf('%s.%s [%s] uses red outside expiration presentation', $domain, $key, $locale);
+                            }
                             if ('' !== $color && !in_array($color, $allowedColors, true)) {
                                 $violations[] = sprintf('%s.%s [%s] uses structural color %s', $domain, $key, $locale, $color);
                             }
@@ -349,6 +359,80 @@ final class TranslationCatalogTest extends TestCase
     }
 
     #[Test]
+    public function serviceHelpTemplatesFollowTheCommandReferenceInEveryLocale(): void
+    {
+        $durationUnits = [
+            'ca' => 'dies', 'de' => 'Tage', 'el' => 'ημέρες', 'en' => 'days',
+            'es' => 'días', 'eu' => 'egun', 'fr' => 'jours', 'gl' => 'días',
+            'it' => 'giorni', 'nl' => 'dagen', 'pl' => 'dni', 'pt' => 'dias',
+            'ro' => 'zile', 'tr' => 'günden',
+        ];
+
+        foreach (self::SERVICE_DIRS as $domain) {
+            foreach (self::LOCALES as $locale) {
+                $catalog = self::flatten(self::parseDomain($domain, $locale));
+                $message = $domain . ':' . $locale;
+                $header = $catalog['help.header'];
+                self::assertIsString($header, $message);
+                self::assertStringStartsWith("\x02\x0307🤖 %title%\x03\x0F \x0314", $header, $message);
+                self::assertStringEndsWith("\x03\x0F", $header, $message);
+                self::assertSame("\x0314─────────────────────────────\x03\x0F", $catalog['help.footer'], $message);
+                foreach (['general_header', 'options_header', 'ircop_header'] as $section) {
+                    $value = $catalog['help.' . $section];
+                    self::assertIsString($value, $message);
+                    self::assertMatchesRegularExpression('/^\x02 ■ [^\x02\x03\x1F]+\x02$/u', $value, $message);
+                }
+                foreach (['group_header', 'subgroup_header'] as $group) {
+                    self::assertSame("\x0310  ◆ %group%\x03\x0F", $catalog['help.' . $group], $message);
+                }
+                $marker = $catalog['help.navigation_marker'] ?? "\x0310›\x03\x0F";
+                self::assertSame("\x0310›\x03\x0F", $marker, $message);
+                foreach (['command_line', 'subcommand_line'] as $row) {
+                    $value = $catalog['help.' . $row];
+                    self::assertIsString($value, $message);
+                    self::assertSame(
+                        "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%",
+                        str_replace('%marker%', $marker, $value),
+                        $message,
+                    );
+                }
+                $infoMarker = $catalog['help.info_marker'] ?? "\x0310ℹ\x03\x0F";
+                self::assertSame("\x0310ℹ\x03\x0F", $infoMarker, $message);
+                foreach (['general_footer', 'set_sub_footer'] as $hint) {
+                    $value = $catalog['help.' . $hint];
+                    self::assertIsString($value, $message);
+                    $value = str_replace('%marker%', $infoMarker, $value);
+                    self::assertStringStartsWith("\x0310ℹ\x03\x0F ", $value, $message);
+                    self::assertMatchesRegularExpression('/^[^\x02\x03\x1F]*\/msg %bot% \x02\x0303(?:HELP [^\x03]+|%syntax%)\x03\x0F[^\x02\x03\x1F]*$/u', substr($value, strlen($infoMarker) + 1), $message);
+                }
+                $syntax = $catalog['help.syntax_label'];
+                self::assertIsString($syntax, $message);
+                self::assertMatchesRegularExpression('/^[^\x02\x03\x1F]+ \x02\x0303%syntax%\x03\x0F$/u', $syntax, $message);
+
+                if (!in_array($domain, ['nickserv', 'chanserv'], true)) {
+                    continue;
+                }
+                $expiration = $catalog['help.intro_expiration'];
+                self::assertIsString($expiration, $message);
+                $duration = "\x1F\x0304%days% " . $durationUnits[$locale] . "\x03\x1F";
+                self::assertStringContainsString($duration, $expiration, $message . ': full localized duration is red and underlined');
+                self::assertSame(2, substr_count($expiration, "\x1F"), $message);
+                $warningMarker = $catalog['help.warning_marker'] ?? "\x0304⚠\x03\x0F";
+                self::assertSame("\x0304⚠\x03\x0F", $warningMarker, $message);
+                $label = $catalog['help.intro_expiration_label'] ?? '';
+                self::assertIsString($label, $message);
+                $expiration = str_replace(['%marker%', '%label%'], [$warningMarker, $label], $expiration);
+                self::assertStringStartsWith($warningMarker . ' ', $expiration, $message);
+                self::assertDoesNotMatchRegularExpression(
+                    '/[\x02\x03\x0F\x1F]/',
+                    str_replace([$warningMarker, $duration], '', $expiration),
+                    $message . ': expiration label and surrounding prose use the default foreground',
+                );
+            }
+        }
+    }
+
+    #[Test]
     public function serviceHelpCommandsKeepStyleMarkupAndMarkersInTranslations(): void
     {
         foreach (array_keys(self::SERVICE_DIRS) as $service) {
@@ -356,8 +440,8 @@ final class TranslationCatalogTest extends TestCase
             $source = file_get_contents($path);
             self::assertIsString($source, $path);
 
-            self::assertDoesNotMatchRegularExpression('/IrcHelpStyle|\\\\x03|\\\\x0F|[\x03\x0F]/u', $source, $path);
-            self::assertDoesNotMatchRegularExpression('/[›ℹ⚠✗●◆]/u', $source, $path);
+            self::assertDoesNotMatchRegularExpression('/IrcHelpStyle|\\\\x(?:02|03|0F|1F)|[\x02\x03\x0F\x1F]/u', $source, $path);
+            self::assertDoesNotMatchRegularExpression('/[›ℹ⚠✗●🤖■◆]/u', $source, $path);
         }
     }
 

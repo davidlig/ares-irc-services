@@ -1,56 +1,57 @@
 # IRC HELP Style
 
-Use this guide for HELP presentation in NickServ, ChanServ, MemoServ, OperServ, and every future
-service, command, or subcommand. HELP must remain readable on both light and dark IRC backgrounds.
+Apply the visual grammar of `plans/command.txt` to HELP in NickServ, ChanServ, MemoServ,
+OperServ, and future services. This contract covers existing `HELP`, `HELP <command>`, and
+`HELP <command> <subcommand>` output only; leave other service replies unchanged.
 
-## Canonical palette
+## Canonical visual grammar
 
-| Role | mIRC color | Use |
-|---|---:|---|
-| Title / normal section | `07` | Service titles and ordinary section headings |
-| Command / subcommand | `03` | Command names and actionable syntax tokens |
-| Marker / navigation | `10` | Short symbols such as `›`, `ℹ`, and small markers only |
-| Admin / error / danger | `07` | Restricted sections, denials, errors, and danger |
-| Warning / attention | `07` | Warning labels and pending actions |
-| Expiration warning icon | `04` | The `⚠` icon only in NickServ and ChanServ expiration notices |
+| Element | Color / emphasis | Layout |
+|---|---|---|
+| Header | `07`, bold | `🤖 <title>`, reset, then a `14` separator |
+| Section, options, restricted section | default foreground, bold | ` ■ <heading>` |
+| Group / subgroup | `10`, not bold | `  ◆ <heading>` |
+| Command / subcommand row | `10` marker; `03`, bold command | Four spaces before `›`, then padded command and default-color description |
+| Navigation hint | `10` icon; `03`, bold actionable syntax | `ℹ` then default prose and `/msg <bot>`; only `HELP …` is green and bold |
+| Syntax line | default label; `03`, bold syntax | `<label>: <syntax>` |
+| Expiration | `04` icon; `04`, underlined duration | `⚠`, default label/prose, red underlined full duration, default remaining prose |
 | Separator / decoration | `14` | Non-essential separators and secondary metadata |
-| Prose | default | Descriptions, paragraphs, and ordinary values |
+| HELP error / attention | `07` | Existing denial/error/warning fragments outside expiration |
+| Description / prose | default | Paragraphs, command descriptions, and ordinary values |
 
-Within HELP output, `07` replaces both previously used `04` and `06`, except for the single
-expiration warning icon described above. This policy applies only to HELP presentation; leave
-unrelated legacy colors in non-HELP service messages unchanged.
+Cyan `10` is approved for complete group/subgroup headings as well as navigation markers, not
+command names or ordinary paragraphs. Restricted section headings use the same uncolored bold
+square style as public sections. Information must remain understandable without color or decoration.
+Preserve existing command padding and header/separator width policies.
 
-Do not use `10` for headings, command names, paragraphs, or other long text. Essential information
-must remain understandable if color or decoration is not displayed.
+## Translation-owned controls and expiration
 
-## Translation-owned markup
+- Keep colors, emphasis, and marker glyphs in existing localized translation values, not PHP.
+  Supply dynamic values through placeholders; do not add a style/helper class or private palette.
+- Reset each fragment before default prose: colored/bold fragments use `\x03\x0F`; uncolored bold
+  headings close with `\x02`. The bold control `\x02` is not mIRC color `02`.
+- NickServ and ChanServ show their existing expiration notice only when expiration is configured.
+  Keep `⚠` red (`04`), then reset. Wrap the **complete localized duration**, including its unit,
+  as `\x1F\x0304%days% days\x03\x1F` (translate `days`). Both color and underline end before
+  the remaining prose. The NOTE label and all surrounding prose remain uncolored.
+- Red `04` is restricted to NickServ `help.warning_marker` / `help.intro_expiration` and ChanServ
+  `help.intro_expiration`. Do not introduce expiration behavior in MemoServ or OperServ.
+- Color `06` is retired from HELP. Other forbidden structural colors are `00`, `01`, `02`, `08`,
+  `09`, `11`, `12`, `13`, and `15`. These restrictions do not rewrite non-HELP legacy messages.
+- Preserve natural wording and placeholders in all 14 locales:
+  `ca de el en es eu fr gl it nl pl pt ro tr`.
 
-- Keep HELP colors and marker glyphs in existing localized HELP translation values, not PHP.
-- Do not add a color/style helper class or a private palette.
-- PHP may supply dynamic values through translation placeholders; do not assemble marker glyphs or
-  select colors in command code.
-- Keep descriptions and prose in the client's default foreground. Reset each styled fragment so
-  color and formatting cannot bleed into adjacent text.
-- The bold control `\x02` is allowed; it is not mIRC color `02`.
-- Keep natural wording translated in all 14 locales: `ca de el en es eu fr gl it nl pl pt ro tr`.
+## Maintenance checklist
 
-Color `04` is reserved only for the `⚠` icon in NickServ `help.warning_marker` and ChanServ
-`help.intro_expiration`; the localized NOTE label and all following prose must remain uncolored.
-Color `06` is retired from HELP. The following additional colors are not approved for new
-structural HELP styling because contrast varies with client background: `00`, `01`, `02`, `08`,
-`09`, `11`, `12`, `13`, and `15`. These restrictions apply only to HELP, not unrelated legacy
-service messages.
+Keep each service's formatter, presentation groups, and visibility policy inside that service.
+Do not invent HELP levels or subcommands for visual presentation, change permissions/Root access,
+or move IRC formatting into Domain/Application.
 
-## HELP hierarchy and maintenance
+For every HELP change, verify:
 
-Preserve the supported levels `HELP`, `HELP <command>`, and `HELP <command> <subcommand>`; do not
-invent levels for presentation. Keep permission visibility and command behavior unchanged.
+- the same keys/placeholders across all locales, with default-color prose;
+- exact header, section, group, command-row, and navigation roles, including resets;
+- full red/underlined expiration duration and uncolored surrounding prose in NickServ/ChanServ;
+- formatter, command, permission-visibility, and translation-alignment regressions.
 
-For each HELP change, verify that:
-
-- localized values define the same keys and placeholders in all 14 locales;
-- palette regression tests inspect HELP translation values and reject forbidden structural colors;
-- formatter, command, permission-visibility, and relevant translation-alignment tests pass;
-- every styled fragment resets before default-color prose begins.
-
-See [services.md](services.md) for the command and service completion checklists.
+See [services.md](services.md) for command and service completion checklists.
