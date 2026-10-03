@@ -10,6 +10,7 @@ use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
 
 use function array_find;
+use function implode;
 use function strtoupper;
 
 /**
@@ -76,8 +77,9 @@ final readonly class HelpCommand implements MemoServCommandInterface
     {
         if (empty($context->args)) {
             $adapter = new HelpFormatterContextAdapter($context);
-            $this->formatter->showGeneralHelp($adapter);
-            $context->reply('help.footer');
+            $lines = $this->formatter->renderGeneralHelp($adapter);
+            $lines[] = $context->trans('help.footer');
+            $context->replyRaw(implode("\n", $lines));
 
             return null;
         }
@@ -103,13 +105,13 @@ final readonly class HelpCommand implements MemoServCommandInterface
             $subCmd = $this->findSubCommand($handler, $subName);
 
             if (null !== $subCmd) {
-                $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
+                $context->replyRaw(implode("\n", $this->formatter->renderSubCommandHelp($adapter, $handler->getName(), $subCmd)));
 
                 return null;
             }
         }
 
-        $this->formatter->showCommandHelp($adapter, $handler);
+        $context->replyRaw(implode("\n", $this->formatter->renderCommandHelp($adapter, $handler)));
 
         return null;
     }

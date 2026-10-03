@@ -17,8 +17,10 @@ use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -69,9 +71,16 @@ final class HelpCommandTest extends TestCase
             $this->context([], [$help, $visible], $notifier, $this->authorization(true)),
         );
 
-        self::assertContains('help.general_header', $notifier->messages);
-        self::assertContains('help.command_line', $notifier->messages);
-        self::assertSame('help.footer', $notifier->messages[array_key_last($notifier->messages)]);
+        self::assertSame([implode("\n", [
+            'help.header',
+            'help.intro',
+            ' ',
+            'help.general_header',
+            ' ',
+            'help.general_footer',
+            'help.command_line',
+            'help.footer',
+        ])], $notifier->messages);
     }
 
     #[Test]
@@ -104,15 +113,18 @@ final class HelpCommandTest extends TestCase
         $authorization = $this->authorization(true);
 
         $command->execute($this->context(['target'], [$target], $notifier, $authorization));
-        self::assertContains('target.help', $notifier->messages);
+        self::assertCount(1, $notifier->messages);
+        self::assertContains('target.help', explode("\n", $notifier->messages[0]));
 
-        $notifier->messages = [];
+        $notifier = new HelpNotifier();
         $command->execute($this->context(['target', 'set'], [$target], $notifier, $authorization));
-        self::assertContains('target.set.help', $notifier->messages);
+        self::assertCount(1, $notifier->messages);
+        self::assertContains('target.set.help', explode("\n", $notifier->messages[0]));
 
-        $notifier->messages = [];
+        $notifier = new HelpNotifier();
         $command->execute($this->context(['target', 'unknown'], [$target], $notifier, $authorization));
-        self::assertContains('target.help', $notifier->messages);
+        self::assertCount(1, $notifier->messages);
+        self::assertContains('target.help', explode("\n", $notifier->messages[0]));
     }
 
     #[Test]
@@ -135,6 +147,69 @@ final class HelpCommandTest extends TestCase
         self::assertSame(['help.unknown_command'], $notifier->messages);
     }
 
+    /** @return iterable<string, array{list<string>}> */
+    public static function helpArguments(): iterable
+    {
+        yield 'general' => [[]];
+        yield 'command' => [['TARGET']];
+        yield 'subcommand' => [['TARGET', 'SET']];
+    }
+
+    /** @param list<string> $arguments */
+    #[Test]
+    #[DataProvider('helpArguments')]
+    public function renderingFailureSendsNoPartialHelp(array $arguments): void
+    {
+        $failure = new RuntimeException('Translation failed at the final footer.');
+        $notifier = new HelpNotifier();
+        $target = new HelpFixtureCommand('TARGET', subcommands: [[
+            'name' => 'SET',
+            'desc_key' => 'target.set.short',
+            'help_key' => 'target.set.help',
+            'syntax_key' => 'target.set.syntax',
+        ]]);
+        $context = $this->context(
+            $arguments,
+            [$target],
+            $notifier,
+            $this->authorization(true),
+            new HelpTranslation(failure: $failure),
+        );
+
+        try {
+            new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+            self::fail('The translation failure must propagate synchronously.');
+        } catch (RuntimeException $caught) {
+            self::assertSame($failure, $caught);
+        }
+        self::assertSame([], $notifier->messages);
+    }
+
+    /** @param list<string> $arguments */
+    #[Test]
+    #[DataProvider('helpArguments')]
+    public function transportFailurePropagatesSynchronously(array $arguments): void
+    {
+        $failure = new RuntimeException('Connection write failed.');
+        $notifier = new HelpNotifier();
+        $notifier->failure = $failure;
+        $target = new HelpFixtureCommand('TARGET', subcommands: [[
+            'name' => 'SET',
+            'desc_key' => 'target.set.short',
+            'help_key' => 'target.set.help',
+            'syntax_key' => 'target.set.syntax',
+        ]]);
+        $context = $this->context($arguments, [$target], $notifier, $this->authorization(true));
+
+        try {
+            new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+            self::fail('The send failure must propagate during HELP execution.');
+        } catch (RuntimeException $caught) {
+            self::assertSame($failure, $caught);
+        }
+        self::assertSame([], $notifier->messages);
+    }
+
     #[Test]
     public function rendersLocalizedHeaderRowsAndErrorsWithoutStylesInCommandPhp(): void
     {
@@ -150,17 +225,18 @@ final class HelpCommandTest extends TestCase
             $translation,
         ));
 
-        $generalHelp = implode("\n", $notifier->messages);
+        self::assertCount(1, $notifier->messages);
+        $generalHelp = $notifier->messages[0];
         self::assertSame(
             "\x02\x0306● OperServ\x03\x0F \x0314" . str_repeat('─', 29) . "\x03\x0F",
-            $notifier->messages[0],
+            explode("\n", $generalHelp)[0],
         );
         self::assertStringContainsString(
             "\x0310›\x03\x0F \x02\x0303ROLE        \x03\x0FManage operator roles.",
             $generalHelp,
         );
 
-        $notifier->messages = [];
+        $notifier = new HelpNotifier();
         $command->execute($this->context(['MISSING'], [], $notifier, $this->authorization(true), $translation));
         $error = implode("\n", $notifier->messages);
         self::assertStringContainsString("\x0304✗ Unknown command\x03\x0F \x02\x0303MISSING\x03\x0F", $error);
@@ -297,6 +373,8 @@ final readonly class HelpFixtureCommand implements OperServCommandInterface
 
 final class HelpNotifier implements OperServNotifierInterface
 {
+    public ?RuntimeException $failure = null;
+
     /** @var list<string> */
     public array $messages = [];
 
@@ -307,6 +385,9 @@ final class HelpNotifier implements OperServNotifierInterface
 
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
     {
+        if (null !== $this->failure) {
+            throw $this->failure;
+        }
         $this->messages[] = $message;
     }
 
@@ -329,11 +410,17 @@ final class HelpNotifier implements OperServNotifierInterface
 final class HelpTranslation implements TranslatorInterface
 {
     /** @param array<string, string> $translations */
-    public function __construct(private readonly array $translations = []) {}
+    public function __construct(
+        private readonly array $translations = [],
+        private readonly ?RuntimeException $failure = null,
+    ) {}
 
     /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
+        if ('help.footer' === $id && null !== $this->failure) {
+            throw $this->failure;
+        }
         $replacements = [];
         foreach ($parameters as $key => $value) {
             if (is_scalar($value)) {

@@ -15,8 +15,10 @@ use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Model\MemoAccountView;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -56,9 +58,14 @@ final class HelpCommandTest extends TestCase
         array $args,
         array &$replies = [],
         iterable $commands = [],
+        ?TranslatorInterface $translation = null,
+        ?RuntimeException $sendFailure = null,
     ): MemoServContext {
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$replies): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$replies, $sendFailure): void {
+            if (null !== $sendFailure) {
+                throw $sendFailure;
+            }
             $replies[] = $m;
         });
         $notifier->method('getNick')->willReturn('MemoServ');
@@ -84,7 +91,7 @@ final class HelpCommandTest extends TestCase
             command: 'HELP',
             args: $args,
             notifier: $notifier,
-            translator: $translator,
+            translator: $translation ?? $translator,
             language: 'en',
             timezone: 'UTC',
             messageType: 'NOTICE',
@@ -199,9 +206,9 @@ final class HelpCommandTest extends TestCase
         $context = $this->createContext($sender, null, [], $replies, [$cmd1, $cmd2, $command]);
         $command->execute($context);
 
-        self::assertNotEmpty($replies);
+        self::assertCount(1, $replies);
         self::assertStringContainsString('help.header_title', $replies[0]);
-        self::assertContains('help.footer', $replies);
+        self::assertSame('help.footer', array_last(explode("\n", $replies[0])));
     }
 
     #[Test]
@@ -248,7 +255,7 @@ final class HelpCommandTest extends TestCase
         $context = $this->createContext($sender, null, ['SEND'], $replies, [$targetCmd, $command]);
         $command->execute($context);
 
-        self::assertNotEmpty($replies);
+        self::assertCount(1, $replies);
         self::assertStringContainsString('SEND', $replies[0]);
     }
 
@@ -268,7 +275,7 @@ final class HelpCommandTest extends TestCase
         $context = $this->createContext($sender, null, ['IGNORE', 'ADD'], $replies, [$targetCmd, $command]);
         $command->execute($context);
 
-        self::assertNotEmpty($replies);
+        self::assertCount(1, $replies);
         self::assertStringContainsString('IGNORE ADD', $replies[0]);
     }
 
@@ -287,8 +294,86 @@ final class HelpCommandTest extends TestCase
         $context = $this->createContext($sender, null, ['IGNORE', 'UNKNOWN_SUB'], $replies, [$targetCmd, $command]);
         $command->execute($context);
 
-        self::assertNotEmpty($replies);
+        self::assertCount(1, $replies);
         self::assertStringContainsString('IGNORE', $replies[0]);
+    }
+
+    /** @return iterable<string, array{list<string>}> */
+    public static function helpArguments(): iterable
+    {
+        yield 'general' => [[]];
+        yield 'command' => [['IGNORE']];
+        yield 'subcommand' => [['IGNORE', 'ADD']];
+    }
+
+    /** @param list<string> $arguments */
+    #[Test]
+    #[DataProvider('helpArguments')]
+    public function renderingFailureSendsNoPartialHelp(array $arguments): void
+    {
+        $failure = new RuntimeException('Translation failed at the final footer.');
+        $translation = $this->createStub(TranslatorInterface::class);
+        $translation->method('trans')->willReturnCallback(static function (string $key) use ($failure): string {
+            if ('help.footer' === $key) {
+                throw $failure;
+            }
+
+            return $key;
+        });
+        $target = $this->createDummyCommand('IGNORE', subcommands: [[
+            'name' => 'ADD',
+            'desc_key' => 'ignore.add.short',
+            'help_key' => 'ignore.add.help',
+            'syntax_key' => 'ignore.add.syntax',
+        ]]);
+        $replies = [];
+        $context = $this->createContext(
+            new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip'),
+            null,
+            $arguments,
+            $replies,
+            [$target],
+            $translation,
+        );
+
+        try {
+            new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+            self::fail('The translation failure must propagate synchronously.');
+        } catch (RuntimeException $caught) {
+            self::assertSame($failure, $caught);
+        }
+        self::assertSame([], $replies);
+    }
+
+    /** @param list<string> $arguments */
+    #[Test]
+    #[DataProvider('helpArguments')]
+    public function transportFailurePropagatesSynchronously(array $arguments): void
+    {
+        $failure = new RuntimeException('Connection write failed.');
+        $target = $this->createDummyCommand('IGNORE', subcommands: [[
+            'name' => 'ADD',
+            'desc_key' => 'ignore.add.short',
+            'help_key' => 'ignore.add.help',
+            'syntax_key' => 'ignore.add.syntax',
+        ]]);
+        $replies = [];
+        $context = $this->createContext(
+            new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip'),
+            null,
+            $arguments,
+            $replies,
+            [$target],
+            sendFailure: $failure,
+        );
+
+        try {
+            new HelpCommand(new UnifiedHelpFormatter())->execute($context);
+            self::fail('The send failure must propagate during HELP execution.');
+        } catch (RuntimeException $caught) {
+            self::assertSame($failure, $caught);
+        }
+        self::assertSame([], $replies);
     }
 
     #[Test]

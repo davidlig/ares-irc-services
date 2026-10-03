@@ -7,6 +7,7 @@ namespace App\Tests\OperServ\Adapter\In\Irc\Help;
 use App\OperServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\OperServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\OperServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -39,10 +40,22 @@ final class UnifiedHelpFormatterTest extends TestCase
             visibleCommands: ['VISIBLE'],
         );
 
-        new UnifiedHelpFormatter()->showGeneralHelp($context);
+        $lines = new UnifiedHelpFormatter()->renderGeneralHelp($context);
+
+        self::assertSame([
+            'translated:help.header',
+            'translated:help.intro',
+            ' ',
+            'translated:help.general_header',
+            ' ',
+            'translated:help.group_header',
+            'translated:help.command_line',
+            ' ',
+            'translated:help.general_footer',
+        ], $lines);
 
         $renderedCommands = [];
-        foreach ($context->replies as $reply) {
+        foreach ($context->translationRequests as $reply) {
             if ('help.command_line' !== $reply['key']) {
                 continue;
             }
@@ -51,10 +64,10 @@ final class UnifiedHelpFormatterTest extends TestCase
             $renderedCommands[] = $reply['params']['command'];
         }
         self::assertSame(['VISIBLE     '], $renderedCommands);
-        self::assertNotContains('help.ircop_header', array_column($context->replies, 'key'));
-        self::assertSame('help.header', $context->replies[0]['key']);
-        self::assertSame('translated:help.header_title', $context->replies[0]['params']['title']);
-        self::assertContains('help.group_header', array_column($context->replies, 'key'));
+        self::assertNotContains('help.ircop_header', array_column($context->translationRequests, 'key'));
+        self::assertSame('help.header', $context->translationRequests[1]['key']);
+        self::assertSame('translated:help.header_title', $context->translationRequests[1]['params']['title']);
+        self::assertContains('help.group_header', array_column($context->translationRequests, 'key'));
     }
 
     #[Test]
@@ -75,17 +88,62 @@ final class UnifiedHelpFormatterTest extends TestCase
             ],
         );
 
-        new UnifiedHelpFormatter()->showGeneralHelp($context);
+        $lines = new UnifiedHelpFormatter()->renderGeneralHelp($context);
 
-        $keys = array_column($context->replies, 'key');
+        self::assertSame([
+            'translated:help.header',
+            'translated:help.intro',
+            ' ',
+            'translated:help.general_header',
+            ' ',
+            'translated:help.group_header',
+            'translated:help.command_line',
+            ' ',
+            'translated:help.general_footer',
+            ' ',
+            'translated:help.ircop_header',
+            ' ',
+            'translated:help.subgroup_header',
+            'translated:help.command_line',
+            'translated:help.command_line',
+        ], $lines);
+
+        $keys = array_column($context->translationRequests, 'key');
         self::assertContains('help.general_footer', $keys);
         self::assertContains('help.ircop_header', $keys);
         self::assertContains('help.subgroup_header', $keys);
         $commandLines = array_values(array_filter(
-            $context->replies,
+            $context->translationRequests,
             static fn (array $reply): bool => 'help.command_line' === $reply['key'],
         ));
         self::assertSame(['VISIBLE     ', 'IRCOP       ', 'FUTURE      '], array_column(array_column($commandLines, 'params'), 'command'));
+    }
+
+    #[Test]
+    public function sortsAndDeduplicatesGroupedCommandsAndPreservesUngroupedFallback(): void
+    {
+        $context = new OperServHelpFormatterContext(
+            commands: [
+                new OperServHelpableCommand('LATE', 2),
+                new OperServHelpableCommand('EARLY', 1),
+                new OperServHelpableCommand('FUTURE', 3),
+            ],
+            visibleCommands: ['LATE', 'EARLY', 'FUTURE'],
+            helpGroups: [
+                ['group_key' => 'help.group.commands', 'commands' => ['late', 'EARLY', 'LATE'], 'admin' => false, 'subgroup' => false],
+                ['group_key' => 'help.group.duplicate', 'commands' => ['EARLY', 'LATE'], 'admin' => false, 'subgroup' => false],
+            ],
+        );
+
+        $lines = new UnifiedHelpFormatter()->renderGeneralHelp($context);
+
+        $commandRequests = array_values(array_filter(
+            $context->translationRequests,
+            static fn (array $request): bool => 'help.command_line' === $request['key'],
+        ));
+        self::assertSame(['EARLY       ', 'LATE        ', 'FUTURE      '], array_column(array_column($commandRequests, 'params'), 'command'));
+        self::assertCount(1, array_filter($lines, static fn (string $line): bool => 'translated:help.group_header' === $line));
+        self::assertSame('translated:help.command_line', array_last($lines));
     }
 
     #[Test]
@@ -99,17 +157,30 @@ final class UnifiedHelpFormatterTest extends TestCase
             'syntax_key' => 'set.email.syntax',
         ]], ['service' => 'OperServ']);
 
-        new UnifiedHelpFormatter()->showCommandHelp($context, $command);
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp($context, $command);
 
-        self::assertContains(['key' => 'set.help', 'params' => ['service' => 'OperServ']], $context->replies);
+        self::assertSame([
+            'translated:help.header',
+            'translated:set.help',
+            ' ',
+            'translated:help.options_header',
+            'translated:help.subcommand_line',
+            ' ',
+            'translated:help.set_sub_footer',
+            ' ',
+            'translated:help.syntax_label',
+            'translated:help.footer',
+        ], $lines);
+
+        self::assertContains(['key' => 'set.help', 'params' => ['service' => 'OperServ']], $context->translationRequests);
         self::assertContains([
             'key' => 'help.subcommand_line',
             'params' => ['command' => 'EMAIL     ', 'description' => 'translated:set.email.short'],
-        ], $context->replies);
+        ], $context->translationRequests);
         self::assertContains([
             'key' => 'help.syntax_label',
             'params' => ['syntax' => 'translated:set.syntax'],
-        ], $context->replies);
+        ], $context->translationRequests);
     }
 
     #[Test]
@@ -117,7 +188,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     {
         $context = new OperServHelpFormatterContext();
 
-        new UnifiedHelpFormatter()->showSubCommandHelp($context, 'SET', [
+        $lines = new UnifiedHelpFormatter()->renderSubCommandHelp($context, 'SET', [
             'name' => 'EMAIL',
             'help_key' => 'set.email.help',
             'syntax_key' => 'set.email.syntax',
@@ -125,14 +196,30 @@ final class UnifiedHelpFormatterTest extends TestCase
         ]);
 
         self::assertSame([
-            'help.header',
-            'set.email.help',
-            'set.email.options',
-            'help.syntax_label',
-            'help.footer',
-        ], array_column($context->replies, 'key'));
-        self::assertSame('help.header', $context->replies[0]['key']);
-        self::assertSame('HELP SET EMAIL', $context->replies[0]['params']['title']);
+            'translated:help.header',
+            'translated:set.email.help',
+            ' ',
+            'translated:set.email.options',
+            ' ',
+            'translated:help.syntax_label',
+            'translated:help.footer',
+        ], $lines);
+        self::assertSame('help.header', $context->translationRequests[0]['key']);
+        self::assertSame('HELP SET EMAIL', $context->translationRequests[0]['params']['title']);
+    }
+
+    #[Test]
+    public function preservesMultibyteHeaderWidthAndDoesNotPadOverlongTitles(): void
+    {
+        $context = new OperServHelpFormatterContext();
+        $formatter = new UnifiedHelpFormatter();
+
+        self::assertSame('translated:help.header', $formatter->renderHeader($context, 'Áé🙂'));
+        self::assertSame('translated:help.header', $formatter->renderHeader($context, str_repeat('X', 50)));
+        self::assertSame([
+            ['key' => 'help.header', 'params' => ['title' => 'Áé🙂', 'separator' => str_repeat('─', 34)]],
+            ['key' => 'help.header', 'params' => ['title' => str_repeat('X', 50), 'separator' => '']],
+        ], $context->translationRequests);
     }
 
     #[Test]
@@ -234,10 +321,7 @@ final class UnifiedHelpFormatterTest extends TestCase
 final class OperServHelpFormatterContext implements HelpFormatterContextInterface
 {
     /** @var list<array{key: string, params: array<string, mixed>}> */
-    public array $replies = [];
-
-    /** @var list<string> */
-    public array $rawReplies = [];
+    public array $translationRequests = [];
 
     /**
      * @param list<HelpableCommandInterface>                                                           $commands
@@ -255,16 +339,18 @@ final class OperServHelpFormatterContext implements HelpFormatterContextInterfac
 
     public function reply(string $key, array $params = []): void
     {
-        $this->replies[] = ['key' => $key, 'params' => $params];
+        throw new LogicException('Rendering must not send translated replies.');
     }
 
     public function replyRaw(string $message): void
     {
-        $this->rawReplies[] = $message;
+        throw new LogicException('Rendering must not send raw replies.');
     }
 
     public function trans(string $key, array $params = []): string
     {
+        $this->translationRequests[] = ['key' => $key, 'params' => $params];
+
         return 'translated:' . $key;
     }
 

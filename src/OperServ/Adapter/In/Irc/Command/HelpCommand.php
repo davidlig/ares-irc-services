@@ -10,6 +10,7 @@ use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Adapter\In\Irc\OperServHelpFormatterContextAdapter;
 
 use function array_find;
+use function implode;
 use function strtoupper;
 
 final readonly class HelpCommand implements OperServCommandInterface
@@ -76,8 +77,9 @@ final readonly class HelpCommand implements OperServCommandInterface
 
         $formatterContext = new OperServHelpFormatterContextAdapter($context);
         if (empty($context->args)) {
-            $this->formatter->showGeneralHelp($formatterContext);
-            $context->reply('help.footer');
+            $lines = $this->formatter->renderGeneralHelp($formatterContext);
+            $lines[] = $context->trans('help.footer');
+            $context->replyRaw(implode("\n", $lines));
 
             return;
         }
@@ -94,12 +96,12 @@ final readonly class HelpCommand implements OperServCommandInterface
             ? array_find($command->getSubCommandHelp(), static fn (array $sub): bool => strtoupper($sub['name']) === strtoupper($context->args[1]))
             : null;
         if (null !== $subcommand) {
-            $this->formatter->showSubCommandHelp($formatterContext, $command->getName(), $subcommand);
+            $context->replyRaw(implode("\n", $this->formatter->renderSubCommandHelp($formatterContext, $command->getName(), $subcommand)));
 
             return;
         }
 
-        $this->formatter->showCommandHelp($formatterContext, $command);
+        $context->replyRaw(implode("\n", $this->formatter->renderCommandHelp($formatterContext, $command)));
     }
 
     private function canView(OperServContext $context, OperServCommandInterface $command): bool
