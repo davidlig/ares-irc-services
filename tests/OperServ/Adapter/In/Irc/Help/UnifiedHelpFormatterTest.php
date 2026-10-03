@@ -228,17 +228,17 @@ final class UnifiedHelpFormatterTest extends TestCase
         $root = dirname(__DIR__, 6);
         $colorRoles = [
             'help.header' => ['07', '14'],
-            'help.general_header' => ['07'],
-            'help.options_header' => ['07'],
+            'help.general_header' => [],
+            'help.options_header' => [],
             'help.command_line' => ['10', '03'],
             'help.subcommand_line' => ['10', '03'],
             'help.general_footer' => ['10', '03'],
             'help.set_sub_footer' => ['10', '03'],
             'help.syntax_label' => ['03'],
-            'help.group_header' => ['07'],
-            'help.subgroup_header' => ['07'],
+            'help.group_header' => ['10'],
+            'help.subgroup_header' => ['10'],
             'help.unknown_command' => ['07', '03'],
-            'help.ircop_header' => ['07'],
+            'help.ircop_header' => [],
             'help.intro_expiration' => ['07'],
             'help.footer' => ['14'],
         ];
@@ -297,6 +297,23 @@ final class UnifiedHelpFormatterTest extends TestCase
                 }
             }
 
+            self::assertSame("\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F", $entries['help.header'], $locale);
+            foreach (['general_header', 'options_header', 'ircop_header'] as $section) {
+                self::assertStringStartsWith("\x02 ■ ", $entries['help.' . $section], $locale);
+                self::assertStringEndsWith("\x02", $entries['help.' . $section], $locale);
+                self::assertStringNotContainsString("\x03", $entries['help.' . $section], $locale);
+            }
+            foreach (['group_header', 'subgroup_header'] as $group) {
+                self::assertSame("\x0310  ◆ %group%\x03\x0F", $entries['help.' . $group], $locale);
+            }
+            foreach (['command_line', 'subcommand_line'] as $row) {
+                self::assertSame("    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%", $entries['help.' . $row], $locale);
+            }
+            foreach (['general_footer', 'set_sub_footer'] as $hint) {
+                self::assertStringStartsWith("\x0310ℹ\x03\x0F ", $entries['help.' . $hint], $locale);
+                self::assertMatchesRegularExpression('/[^\x02\x03]*\/msg %bot% \x02\x0303HELP [^\x03]+\x03\x0F/u', $entries['help.' . $hint], $locale);
+            }
+
             foreach ($placeholderContracts as $key => $placeholders) {
                 self::assertArrayHasKey($key, $entries, $locale);
                 foreach ($placeholders as $placeholder) {
@@ -305,7 +322,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             }
 
             self::assertStringContainsString(
-                "\x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%",
+                "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%",
                 $entries['help.command_line'],
                 $locale . ': command descriptions return to the default foreground',
             );

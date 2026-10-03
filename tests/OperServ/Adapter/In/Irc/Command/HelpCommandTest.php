@@ -228,11 +228,11 @@ final class HelpCommandTest extends TestCase
         self::assertCount(1, $notifier->messages);
         $generalHelp = $notifier->messages[0];
         self::assertSame(
-            "\x02\x0307● OperServ\x03\x0F \x0314" . str_repeat('─', 29) . "\x03\x0F",
+            "\x02\x0307🤖 OperServ\x03\x0F \x0314" . str_repeat('─', 29) . "\x03\x0F",
             explode("\n", $generalHelp)[0],
         );
         self::assertStringContainsString(
-            "\x0310›\x03\x0F \x02\x0303ROLE        \x03\x0FManage operator roles.",
+            "    \x0310›\x03\x0F \x02\x0303ROLE        \x03\x0FManage operator roles.",
             $generalHelp,
         );
 
@@ -244,7 +244,7 @@ final class HelpCommandTest extends TestCase
 
         $commandSource = file_get_contents(dirname(__DIR__, 6) . '/src/OperServ/Adapter/In/Irc/Command/HelpCommand.php');
         self::assertIsString($commandSource);
-        foreach (['\\x03', '\\x02', '\\x0F', "\x03", "\x02", "\x0F", '●', '◆', '›', 'ℹ', '⚠', '✗', '─'] as $style) {
+        foreach (['\\x03', '\\x02', '\\x0F', "\x03", "\x02", "\x0F", '●', '🤖', '■', '◆', '›', 'ℹ', '⚠', '✗', '─'] as $style) {
             self::assertStringNotContainsString($style, $commandSource);
         }
     }
