@@ -72,7 +72,7 @@ help:
   set_sub_footer: "\x0303ℹ\x03 Usa /msg %bot% HELP %command% <opción> para obter máis información."
   syntax_label: "\x0303Sintaxe:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
-  intro_expiration: "\x0307⚠\x03 NOTA: As canles que non se utilicen durante máis de %days% días eliminaranse automaticamente."
+  intro_expiration: "\x0304⚠\x03 NOTA: As canles que non se utilicen durante máis de %days% días eliminaranse automaticamente."
   group_header: "\x02\x0307◆ %group%\x03\x0F"
   subgroup_header: "  \x02\x0307◆ %group%\x03\x0F"
   group:

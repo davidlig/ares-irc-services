@@ -72,7 +72,7 @@ help:
   set_sub_footer: "\x0303ℹ\x03 Folosește /msg %bot% HELP %command% <opțiune> pentru mai multe informații."
   syntax_label: "\x0303Sintaxă:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
-  intro_expiration: "\x0307⚠\x03 NOTĂ: Canalele nefolosite mai mult de %days% zile sunt eliminate automat."
+  intro_expiration: "\x0304⚠\x03 NOTĂ: Canalele nefolosite mai mult de %days% zile sunt eliminate automat."
   group_header: "\x02\x0307◆ %group%\x03\x0F"
   subgroup_header: "  \x02\x0307◆ %group%\x03\x0F"
   group:

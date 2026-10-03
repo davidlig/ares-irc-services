@@ -245,6 +245,12 @@ final class UnifiedHelpFormatterTest extends TestCase
         foreach (self::LOCALES as $locale) {
             $help = $this->loadHelpCatalog($locale);
             $this->assertHelpColorsAllowed($help, $locale);
+
+            $introExpiration = $help['intro_expiration'] ?? null;
+            self::assertIsString($introExpiration, $locale);
+            self::assertStringStartsWith("\x0304⚠\x03 ", $introExpiration, $locale);
+            preg_match_all('/\x03(?:[0-9]{1,2})?/', $introExpiration, $colorControls);
+            self::assertSame(["\x0304", "\x03"], $colorControls[0], $locale . ': only the warning icon is colored');
         }
     }
 
@@ -315,7 +321,7 @@ final class UnifiedHelpFormatterTest extends TestCase
 
         $introExpiration = $help['intro_expiration'] ?? null;
         self::assertIsString($introExpiration);
-        self::assertSame("\x0307⚠\x03 NOTE: Channels unused for more than 30 days are automatically removed.", $this->renderTemplate($introExpiration, ['days' => '30']));
+        self::assertSame("\x0304⚠\x03 NOTE: Channels unused for more than 30 days are automatically removed.", $this->renderTemplate($introExpiration, ['days' => '30']));
 
         $unknownCommand = $help['unknown_command'] ?? null;
         self::assertIsString($unknownCommand);
@@ -377,6 +383,11 @@ final class UnifiedHelpFormatterTest extends TestCase
             preg_match_all('/\x03([0-9]{1,2})/', $value, $matches);
             foreach ($matches[1] as $color) {
                 $color = str_pad($color, 2, '0', STR_PAD_LEFT);
+                if ('04' === $color) {
+                    self::assertSame('help.intro_expiration', $currentPath, sprintf('%s uses red outside the expiration warning icon', $locale . ':' . $currentPath));
+
+                    continue;
+                }
                 self::assertContains($color, self::ALLOWED_HELP_COLORS, sprintf('%s contains forbidden structural color %s', $locale . ':' . $currentPath, $color));
             }
         }

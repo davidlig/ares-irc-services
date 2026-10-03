@@ -31,8 +31,8 @@ final class UnifiedHelpFormatterTest extends TestCase
             'navigation_marker' => ['10'],
             'info_marker' => ['10'],
             'error_marker' => ['07'],
-            'warning_marker' => ['07'],
-            'intro_expiration' => ['07'],
+            'warning_marker' => ['04'],
+            'intro_expiration' => [],
             'general_header' => ['07'],
             'command_line' => ['03'],
             'subcommand_line' => ['03'],
@@ -78,7 +78,8 @@ final class UnifiedHelpFormatterTest extends TestCase
                 substr_count($helpText, "\x03\x0F"),
                 $locale . ': every HELP color must reset',
             );
-            self::assertSame([], array_diff($allColors[1], ['03', '07', '10', '14']), $locale);
+            self::assertSame([], array_diff($allColors[1], ['03', '04', '07', '10', '14']), $locale);
+            self::assertSame(1, count(array_filter($allColors[1], static fn (string $color): bool => '04' === $color)), $locale . ': red is reserved for the warning icon');
         }
 
         $commandSource = file_get_contents($root . '/src/NickServ/Adapter/In/Irc/Command/HelpCommand.php');

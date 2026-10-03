@@ -72,7 +72,7 @@ help:
   set_sub_footer: "\x0303ℹ\x03 Fes servir /msg %bot% HELP %command% <opció> per obtenir més informació."
   syntax_label: "\x0303Sintaxi:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
-  intro_expiration: "\x0307⚠\x03 NOTA: Els canals no utilitzats durant més de %days% dies s’eliminen automàticament."
+  intro_expiration: "\x0304⚠\x03 NOTA: Els canals no utilitzats durant més de %days% dies s’eliminen automàticament."
   group_header: "\x02\x0307◆ %group%\x03\x0F"
   subgroup_header: "  \x02\x0307◆ %group%\x03\x0F"
   group:

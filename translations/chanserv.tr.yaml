@@ -72,7 +72,7 @@ help:
   set_sub_footer: "\x0303ℹ\x03 Daha fazla bilgi için /msg %bot% HELP %command% <seçenek> kullanın."
   syntax_label: "\x0303Sözdizimi:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
-  intro_expiration: "\x0307⚠\x03 NOT: %days% günden uzun süre kullanılmayan kanallar otomatik olarak silinir."
+  intro_expiration: "\x0304⚠\x03 NOT: %days% günden uzun süre kullanılmayan kanallar otomatik olarak silinir."
   group_header: "\x02\x0307◆ %group%\x03\x0F"
   subgroup_header: "  \x02\x0307◆ %group%\x03\x0F"
   group:
