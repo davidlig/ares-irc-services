@@ -535,8 +535,6 @@ IRC color codes and formatting are handled via translation parameters — see th
 
 ## Docker Deployment
 
-For tested-main automatic deployment, see the [deployment installation and recovery guide](scripts/deploy/README.md).
-
 ### Quick Start
 
 ```bash
