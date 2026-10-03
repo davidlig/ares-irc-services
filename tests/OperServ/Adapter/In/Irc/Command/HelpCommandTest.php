@@ -228,7 +228,7 @@ final class HelpCommandTest extends TestCase
         self::assertCount(1, $notifier->messages);
         $generalHelp = $notifier->messages[0];
         self::assertSame(
-            "\x02\x0306● OperServ\x03\x0F \x0314" . str_repeat('─', 29) . "\x03\x0F",
+            "\x02\x0307● OperServ\x03\x0F \x0314" . str_repeat('─', 29) . "\x03\x0F",
             explode("\n", $generalHelp)[0],
         );
         self::assertStringContainsString(
@@ -239,7 +239,7 @@ final class HelpCommandTest extends TestCase
         $notifier = new HelpNotifier();
         $command->execute($this->context(['MISSING'], [], $notifier, $this->authorization(true), $translation));
         $error = implode("\n", $notifier->messages);
-        self::assertStringContainsString("\x0304✗ Unknown command\x03\x0F \x02\x0303MISSING\x03\x0F", $error);
+        self::assertStringContainsString("\x0307✗ Unknown command\x03\x0F \x02\x0303MISSING\x03\x0F", $error);
         self::assertStringContainsString("\x0303/msg OperServ HELP\x03\x0F", $error);
 
         $commandSource = file_get_contents(dirname(__DIR__, 6) . '/src/OperServ/Adapter/In/Irc/Command/HelpCommand.php');

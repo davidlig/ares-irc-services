@@ -26,7 +26,7 @@ final class UnifiedHelpFormatterTest extends TestCase
 {
     private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
 
-    private const array ALLOWED_COLORS = ['03', '04', '06', '07', '10', '14'];
+    private const array ALLOWED_COLORS = ['03', '07', '10', '14'];
 
     #[Test]
     public function rendersFilteredGroupedGeneralHelp(): void
@@ -227,18 +227,18 @@ final class UnifiedHelpFormatterTest extends TestCase
     {
         $root = dirname(__DIR__, 6);
         $colorRoles = [
-            'help.header' => ['06', '14'],
-            'help.general_header' => ['06'],
-            'help.options_header' => ['06'],
+            'help.header' => ['07', '14'],
+            'help.general_header' => ['07'],
+            'help.options_header' => ['07'],
             'help.command_line' => ['10', '03'],
             'help.subcommand_line' => ['10', '03'],
             'help.general_footer' => ['10', '03'],
             'help.set_sub_footer' => ['10', '03'],
             'help.syntax_label' => ['03'],
-            'help.group_header' => ['06'],
-            'help.subgroup_header' => ['04'],
-            'help.unknown_command' => ['04', '03'],
-            'help.ircop_header' => ['04'],
+            'help.group_header' => ['07'],
+            'help.subgroup_header' => ['07'],
+            'help.unknown_command' => ['07', '03'],
+            'help.ircop_header' => ['07'],
             'help.intro_expiration' => ['07'],
             'help.footer' => ['14'],
         ];
@@ -310,9 +310,9 @@ final class UnifiedHelpFormatterTest extends TestCase
                 $locale . ': command descriptions return to the default foreground',
             );
             self::assertMatchesRegularExpression(
-                '/\x0304✗ [^\x03]+\x03\x0F \x02\x0303%command%\x03\x0F/',
+                '/\x0307✗ [^\x03]+\x03\x0F \x02\x0303%command%\x03\x0F/',
                 $entries['help.unknown_command'],
-                $locale . ': error label and command use their semantic colors and reset',
+                $locale . ': HELP error label and command use their semantic colors and reset',
             );
         }
     }

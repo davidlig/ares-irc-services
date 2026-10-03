@@ -7,13 +7,16 @@ service, command, or subcommand. HELP must remain readable on both light and dar
 
 | Role | mIRC color | Use |
 |---|---:|---|
-| Title / normal section | `06` | Service titles and ordinary section headings |
+| Title / normal section | `07` | Service titles and ordinary section headings |
 | Command / subcommand | `03` | Command names and actionable syntax tokens |
 | Marker / navigation | `10` | Short symbols such as `›`, `ℹ`, and small markers only |
-| Admin / error / danger | `04` | Restricted sections, denials, errors, and danger |
+| Admin / error / danger | `07` | Restricted sections, denials, errors, and danger |
 | Warning / attention | `07` | Warning symbols, labels, and pending actions |
 | Separator / decoration | `14` | Non-essential separators and secondary metadata |
 | Prose | default | Descriptions, paragraphs, and ordinary values |
+
+Within HELP output, `07` replaces both previously used `04` and `06`. This policy applies only to
+HELP presentation; leave unrelated legacy colors in non-HELP service messages unchanged.
 
 Do not use `10` for headings, command names, paragraphs, or other long text. Essential information
 must remain understandable if color or decoration is not displayed.
@@ -29,9 +32,10 @@ must remain understandable if color or decoration is not displayed.
 - The bold control `\x02` is allowed; it is not mIRC color `02`.
 - Keep natural wording translated in all 14 locales: `ca de el en es eu fr gl it nl pl pt ro tr`.
 
-The following colors are forbidden for new structural HELP styling because contrast varies with
-client background: `00`, `01`, `02`, `08`, `09`, `11`, `12`, `13`, and `15`. This restriction is
-for HELP structure, not unrelated legacy service messages.
+Colors `04` and `06` are retired from HELP and must not appear there. The following additional
+colors are not approved for new structural HELP styling because contrast varies with client
+background: `00`, `01`, `02`, `08`, `09`, `11`, `12`, `13`, and `15`. These restrictions apply only
+to HELP, not unrelated legacy service messages.
 
 ## HELP hierarchy and maintenance
 
