@@ -79,7 +79,11 @@ help:
     registration_info: "Kayıt ve bilgi"
     access_levels: "Erişim ve seviyeler"
     ranks_entry: "Yetkiler ve giriş"
-    protection: "Koruma"
+  ircop_group:
+    channel_operations: "Kanal işlemleri"
+    channel_management: "Kanal yönetimi"
+    restrictions: "Kısıtlamalar"
+    lookup: Arama ve inceleme
   unknown_command:  "\x0307✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
   ircop_header: "\x02\x0307◆ IRC operatörleri için kullanılabilir komutlar:\x03\x0F"
 
@@ -553,7 +557,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <desen> [sayfa]"
-  short: "Bir desenle eşleşen kayıtlı kanalları listeler (yalnızca IRCop)."
+  short: "Bir desenle eşleşen kayıtlı kanalları listeler."
   help: "Belirtilen desenle eşleşen kayıtlı kanalları listeler. * joker karakteri herhangi bir karakter dizisiyle eşleşir. Sayfa isteğe bağlıdır ve 1'den başlar."
   header: "Kanal | Kurucu | Kayıt | Son kullanım | Durum"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

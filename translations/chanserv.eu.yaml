@@ -79,7 +79,11 @@ help:
     registration_info: "Erregistroa eta informazioa"
     access_levels: "Sarbidea eta mailak"
     ranks_entry: "Mailak eta sarrera"
-    protection: "Babesa"
+  ircop_group:
+    channel_operations: "Kanaleko eragiketak"
+    channel_management: "Kanalaren kudeaketa"
+    restrictions: "Murrizketak"
+    lookup: Bilaketa eta ikerketa
   unknown_command:  "\x0307✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02\x0307◆ IRC operadoreentzako komando erabilgarriak:\x03\x0F"
 
@@ -553,7 +557,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <eredua> [orria]"
-  short: "Eredu batekin bat datozen erregistratutako kanalak zerrendatu (IRCop-entzat soilik)."
+  short: "Eredu batekin bat datozen erregistratutako kanalak zerrendatu."
   help: "Emandako ereduarekin bat datozen erregistratutako kanalak zerrendatzen ditu. * komodinak edozein karaktere-sekuentzia adierazten du. Orria hautazkoa da eta 1etik hasten da."
   header: "Kanala | Sortzailea | Erregistroa | Azken erabilera | Egoera"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

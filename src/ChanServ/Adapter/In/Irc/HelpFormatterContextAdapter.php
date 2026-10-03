@@ -19,10 +19,12 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 {
     private const array HELP_GROUPS = [
         ['group_key' => 'help.group.registration_info', 'commands' => ['REGISTER', 'INFO', 'SET'], 'admin' => false, 'subgroup' => false],
-        ['group_key' => 'help.group.access_levels', 'commands' => ['ACCESS', 'DELACCESS', 'LEVELS'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.access_levels', 'commands' => ['ACCESS', 'DELACCESS', 'AKICK', 'LEVELS'], 'admin' => false, 'subgroup' => false],
         ['group_key' => 'help.group.ranks_entry', 'commands' => ['OP', 'DEOP', 'VOICE', 'DEVOICE', 'ADMIN', 'DEADMIN', 'HALFOP', 'DEHALFOP', 'INVITE'], 'admin' => false, 'subgroup' => false],
-        ['group_key' => 'help.group.protection', 'commands' => ['AKICK'], 'admin' => false, 'subgroup' => false],
-        ['group_key' => 'help.ircop_header', 'commands' => ['IRCOPONLY', 'DROP', 'SUSPEND', 'UNSUSPEND', 'FORBID', 'UNFORBID', 'NOEXPIRE', 'CLEARACCESS', 'CLEARUSERS', 'HISTORY', 'RESTORE', 'LIST'], 'admin' => true, 'subgroup' => false],
+        ['group_key' => 'help.ircop_group.channel_operations', 'commands' => ['CLEARUSERS', 'CLEARACCESS', 'IRCOPONLY'], 'admin' => true, 'subgroup' => true],
+        ['group_key' => 'help.ircop_group.channel_management', 'commands' => ['DROP', 'NOEXPIRE', 'RESTORE'], 'admin' => true, 'subgroup' => true],
+        ['group_key' => 'help.ircop_group.restrictions', 'commands' => ['SUSPEND', 'UNSUSPEND', 'FORBID', 'UNFORBID'], 'admin' => true, 'subgroup' => true],
+        ['group_key' => 'help.ircop_group.lookup', 'commands' => ['HISTORY', 'LIST'], 'admin' => true, 'subgroup' => true],
     ];
 
     /** Commands that require specific mode support to show (name => mode letter). */

@@ -79,7 +79,11 @@ help:
     registration_info: "Registrazione e informazioni"
     access_levels: "Accesso e livelli"
     ranks_entry: "Gradi e ingresso"
-    protection: "Protezione"
+  ircop_group:
+    channel_operations: "Operazioni del canale"
+    channel_management: "Gestione del canale"
+    restrictions: "Restrizioni"
+    lookup: Ricerca e indagine
   unknown_command:  "\x0307✗\x03 Comando sconosciuto \x02%command%\x02. Usi \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02\x0307◆ Comandi disponibili per gli IRCop:\x03\x0F"
 
@@ -553,7 +557,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <modello> [pagina]"
-  short: "Elenca i canali registrati che corrispondono a un modello (solo IRCop)."
+  short: "Elenca i canali registrati che corrispondono a un modello."
   help: "Elenca i canali registrati che corrispondono al modello indicato. Il carattere jolly * corrisponde a qualsiasi sequenza di caratteri. La pagina è facoltativa e parte da 1."
   header: "Canale | Fondatore | Registrazione | Ultimo utilizzo | Stato"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

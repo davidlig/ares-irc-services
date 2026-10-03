@@ -79,7 +79,11 @@ help:
     registration_info: "Înregistrare și informații"
     access_levels: "Acces și niveluri"
     ranks_entry: "Ranguri și intrare"
-    protection: "Protecție"
+  ircop_group:
+    channel_operations: "Operațiuni de canal"
+    channel_management: "Gestionarea canalului"
+    restrictions: "Restricții"
+    lookup: Căutare și investigare
   unknown_command:  "\x0307✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02\x0307◆ Comenzi disponibile pentru IRCops:\x03\x0F"
 
@@ -553,7 +557,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <model> [pagină]"
-  short: "Listează canalele înregistrate care corespund unui model (doar pentru IRCops)."
+  short: "Listează canalele înregistrate care corespund unui model."
   help: "Listează canalele înregistrate care corespund modelului indicat. Caracterul * se potrivește cu orice secvență de caractere. Pagina este opțională și începe de la 1."
   header: "Canal | Fondator | Înregistrare | Ultima utilizare | Stare"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

@@ -79,7 +79,11 @@ help:
     registration_info: "Registratie en informatie"
     access_levels: "Toegang en niveaus"
     ranks_entry: "Rangen en toegang"
-    protection: "Bescherming"
+  ircop_group:
+    channel_operations: "Kanaalbewerkingen"
+    channel_management: "Kanaalbeheer"
+    restrictions: "Beperkingen"
+    lookup: Opzoeken en onderzoek
   unknown_command:  "\x0307✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02\x0307◆ Beschikbare opdrachten voor IRC-operators:\x03\x0F"
 
@@ -553,7 +557,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <patroon> [pagina]"
-  short: "Toon geregistreerde kanalen die overeenkomen met een patroon (alleen IRCops)."
+  short: "Toon geregistreerde kanalen die overeenkomen met een patroon."
   help: "Toont geregistreerde kanalen die overeenkomen met het opgegeven patroon. De joker * staat voor een willekeurige reeks tekens. De pagina is optioneel en begint bij 1."
   header: "Kanaal | Oprichter | Registratie | Laatst gebruikt | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

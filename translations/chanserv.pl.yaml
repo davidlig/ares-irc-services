@@ -79,7 +79,11 @@ help:
     registration_info: "Rejestracja i informacje"
     access_levels: "Dostęp i poziomy"
     ranks_entry: "Rangi i wejście"
-    protection: "Ochrona"
+  ircop_group:
+    channel_operations: "Operacje kanału"
+    channel_management: "Zarządzanie kanałem"
+    restrictions: "Ograniczenia"
+    lookup: Wyszukiwanie i dochodzenie
   unknown_command:  "\x0307✗\x03 Nieznana komenda \x02%command%\x02. Użyj \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02\x0307◆ Dostępne komendy dla operatorów IRC:\x03\x0F"
 
@@ -553,7 +557,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <wzorzec> [strona]"
-  short: "Wyświetla zarejestrowane kanały pasujące do wzorca (tylko IRCop)."
+  short: "Wyświetla zarejestrowane kanały pasujące do wzorca."
   help: "Wyświetla zarejestrowane kanały pasujące do podanego wzorca. Symbol * dopasowuje dowolny ciąg znaków. Strona jest opcjonalna i zaczyna się od 1."
   header: "Kanał | Założyciel | Rejestracja | Ostatnie użycie | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

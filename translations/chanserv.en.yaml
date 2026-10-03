@@ -79,7 +79,11 @@ help:
     registration_info: "Registration and information"
     access_levels: "Access and levels"
     ranks_entry: "Ranks and entry"
-    protection: "Protection"
+  ircop_group:
+    channel_operations: "Channel operations"
+    channel_management: "Channel management"
+    restrictions: "Restrictions"
+    lookup: Lookup and investigation
   unknown_command:  "\x0307✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02\x0307◆ Available commands for IRC Operators:\x03\x0F"
 
@@ -553,7 +557,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <pattern> [page]"
-  short: "List registered channels matching a pattern (IRCop only)."
+  short: "List registered channels matching a pattern."
   help: "Lists registered channels matching the supplied pattern. The * wildcard matches any sequence of characters. The page is optional and starts at 1."
   header: "Channel | Founder | Registered | Last used | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

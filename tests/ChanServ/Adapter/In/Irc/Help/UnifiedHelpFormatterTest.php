@@ -91,6 +91,46 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function rendersEachChanServIrcopSubgroupAndItsCommands(): void
+    {
+        $groups = [
+            ['group_key' => 'help.ircop_group.channel_operations', 'commands' => ['CLEARUSERS', 'CLEARACCESS', 'IRCOPONLY'], 'admin' => true, 'subgroup' => true],
+            ['group_key' => 'help.ircop_group.channel_management', 'commands' => ['DROP', 'NOEXPIRE', 'RESTORE'], 'admin' => true, 'subgroup' => true],
+            ['group_key' => 'help.ircop_group.restrictions', 'commands' => ['SUSPEND', 'UNSUSPEND', 'FORBID', 'UNFORBID'], 'admin' => true, 'subgroup' => true],
+            ['group_key' => 'help.ircop_group.lookup', 'commands' => ['HISTORY', 'LIST'], 'admin' => true, 'subgroup' => true],
+        ];
+        $commandNames = array_merge(...array_column($groups, 'commands'));
+        $commands = [];
+        foreach ($commandNames as $order => $name) {
+            $commands[] = new ChanServHelpableCommand($name, $order);
+        }
+        $context = new ChanServHelpFormatterContext(
+            ircopCommands: $commands,
+            ircopAccess: true,
+            helpGroups: $groups,
+        );
+
+        new UnifiedHelpFormatter()->renderGeneralHelp($context);
+
+        $translatedKeys = array_column($context->translations, 'key');
+        $groupKeys = array_column($groups, 'group_key');
+        self::assertSame($groupKeys, array_values(array_filter(
+            $translatedKeys,
+            static fn (string $key): bool => in_array($key, $groupKeys, true),
+        )));
+        self::assertSame(4, count(array_filter($translatedKeys, static fn (string $key): bool => 'help.subgroup_header' === $key)));
+
+        $commandLines = array_values(array_filter(
+            $context->translations,
+            static fn (array $reply): bool => 'help.command_line' === $reply['key'],
+        ));
+        self::assertSame(
+            array_map(static fn (string $name): string => str_pad($name, 12), $commandNames),
+            array_column(array_column($commandLines, 'params'), 'command'),
+        );
+    }
+
+    #[Test]
     public function rendersUngroupedCommandAndGeneralFooterWithoutAdminCommands(): void
     {
         $command = new ChanServHelpableCommand('FUTURE', 1);
@@ -205,6 +245,36 @@ final class UnifiedHelpFormatterTest extends TestCase
         foreach (self::LOCALES as $locale) {
             $help = $this->loadHelpCatalog($locale);
             $this->assertHelpColorsAllowed($help, $locale);
+        }
+    }
+
+    #[Test]
+    public function definesChanServHelpGroupsAndLookupDescriptionsInEveryLocale(): void
+    {
+        $expectedPublicGroups = ['registration_info', 'access_levels', 'ranks_entry'];
+        $expectedIrcopGroups = ['channel_operations', 'channel_management', 'restrictions', 'lookup'];
+
+        foreach (self::LOCALES as $locale) {
+            $catalog = $this->loadCatalog($locale);
+            $help = $this->requireStringKeyedArray($catalog['help'] ?? null, $locale . ' must define the help subtree');
+            $publicGroups = $this->requireStringKeyedArray($help['group'] ?? null, $locale . ' must define public HELP groups');
+            $ircopGroups = $this->requireStringKeyedArray($help['ircop_group'] ?? null, $locale . ' must define IRCop HELP groups');
+            self::assertSame($expectedPublicGroups, array_keys($publicGroups), $locale);
+            self::assertSame($expectedIrcopGroups, array_keys($ircopGroups), $locale);
+            foreach ($ircopGroups as $label) {
+                self::assertIsString($label, $locale);
+                self::assertNotSame('', trim($label), $locale);
+            }
+
+            $nickServCatalog = Yaml::parseFile(dirname(__DIR__, 6) . '/translations/nickserv.' . $locale . '.yaml');
+            $nickServ = $this->requireStringKeyedArray($nickServCatalog, $locale . ' NickServ catalog must parse as a mapping');
+            $nickServHelp = $this->requireStringKeyedArray($nickServ['help'] ?? null, $locale . ' NickServ must define the help subtree');
+            $nickServIrcopGroups = $this->requireStringKeyedArray($nickServHelp['ircop_group'] ?? null, $locale . ' NickServ must define IRCop HELP groups');
+            self::assertSame($nickServIrcopGroups['lookup'] ?? null, $ircopGroups['lookup'] ?? null, $locale);
+
+            $list = $this->requireStringKeyedArray($catalog['list'] ?? null, $locale . ' must define the IRCop LIST command');
+            self::assertIsString($list['short'] ?? null, $locale);
+            self::assertDoesNotMatchRegularExpression('/\\([^)]*IRCops?[^)]*\\)\\.?$/iu', $list['short'], $locale);
         }
     }
 
@@ -362,12 +432,14 @@ final class ChanServHelpFormatterContext implements HelpFormatterContextInterfac
      * @param list<HelpableCommandInterface> $commands
      * @param list<HelpableCommandInterface> $ircopCommands
      * @param list<string>                   $visibleCommands
+     * @param list<array{group_key: string, commands: list<string>, admin: bool, subgroup: bool}> $helpGroups
      */
     public function __construct(
         private readonly array $commands = [],
         private readonly array $ircopCommands = [],
         private readonly array $visibleCommands = [],
         private readonly bool $ircopAccess = false,
+        private readonly array $helpGroups = [],
     ) {}
 
     public function reply(string $key, array $params = []): void
@@ -404,6 +476,10 @@ final class ChanServHelpFormatterContext implements HelpFormatterContextInterfac
 
     public function getHelpGroups(): array
     {
+        if ([] !== $this->helpGroups) {
+            return $this->helpGroups;
+        }
+
         return [
             ['group_key' => 'help.group.public', 'commands' => ['VISIBLE', 'HIDDEN'], 'admin' => false, 'subgroup' => false],
             ['group_key' => 'help.ircop_group.operations', 'commands' => ['EARLY', 'LATE'], 'admin' => true, 'subgroup' => true],

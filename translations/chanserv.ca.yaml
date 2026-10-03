@@ -79,7 +79,11 @@ help:
     registration_info: "Registre i informació"
     access_levels: "Accés i nivells"
     ranks_entry: "Rangs i entrada"
-    protection: "Protecció"
+  ircop_group:
+    channel_operations: "Operacions del canal"
+    channel_management: "Gestió del canal"
+    restrictions: "Restriccions"
+    lookup: Consulta i investigació
   unknown_command:  "\x0307✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02\x0307◆ Comandes disponibles per als IRCops:\x03\x0F"
 
@@ -553,7 +557,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <patró> [pàgina]"
-  short: "Llista canals registrats que coincideixen amb un patró (només IRCops)."
+  short: "Llista canals registrats que coincideixen amb un patró."
   help: "Llista els canals registrats que coincideixen amb el patró indicat. El comodí * coincideix amb qualsevol seqüència de caràcters. La pàgina és opcional i comença per 1."
   header: "Canal | Fundador | Registre | Últim ús | Estat"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

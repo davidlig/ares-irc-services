@@ -79,7 +79,11 @@ help:
     registration_info: "Inscription et informations"
     access_levels: "Accès et niveaux"
     ranks_entry: "Rangs et entrée"
-    protection: "Protection"
+  ircop_group:
+    channel_operations: "Opérations du canal"
+    channel_management: "Gestion du canal"
+    restrictions: "Restrictions"
+    lookup: Recherche et enquête
   unknown_command:  "\x0307✗\x03 Commande inconnue \x02%command%\x02. Utilisez \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02\x0307◆ Commandes disponibles pour les IRCops :\x03\x0F"
 
@@ -553,7 +557,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <motif> [page]"
-  short: "Lister les salons enregistrés correspondant à un motif (IRCops uniquement)."
+  short: "Lister les salons enregistrés correspondant à un motif."
   help: "Liste les salons enregistrés correspondant au motif fourni. Le caractère * correspond à toute séquence de caractères. La page est facultative et commence à 1."
   header: "Salon | Fondateur | Enregistrement | Dernière utilisation | État"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
