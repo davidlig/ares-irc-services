@@ -26,7 +26,7 @@ final class UnifiedHelpFormatterTest extends TestCase
 {
     private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
 
-    private const array ALLOWED_HELP_COLORS = ['03', '04', '06', '07', '10', '14'];
+    private const array ALLOWED_HELP_COLORS = ['03', '07', '10', '14'];
 
     #[Test]
     public function rendersFilteredGeneralHelpAndSortedIrcopSection(): void
@@ -192,7 +192,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'params' => ['title' => 'HELP SET EMAIL', 'separator' => str_repeat('─', 23)],
         ], $context->translations[0]);
 
-        $expectedTemplate = "\x02\x0306● %title%\x03\x0F \x0314%separator%\x03";
+        $expectedTemplate = "\x02\x0307● %title%\x03\x0F \x0314%separator%\x03";
         foreach (self::LOCALES as $locale) {
             $help = $this->loadHelpCatalog($locale);
             self::assertSame($expectedTemplate, $help['header'] ?? null, $locale);
@@ -221,11 +221,11 @@ final class UnifiedHelpFormatterTest extends TestCase
 
         $title = 'translated:help.header_title';
         self::assertSame(
-            "\x02\x0306● {$title}\x03\x0F \x0314" . str_repeat('─', max(0, 40 - 3 - mb_strlen($title))) . "\x03",
+            "\x02\x0307● {$title}\x03\x0F \x0314" . str_repeat('─', max(0, 40 - 3 - mb_strlen($title))) . "\x03",
             $this->renderReply($context->translations, $help, 'help.header'),
         );
-        self::assertSame("\x02\x0306Available commands:\x03\x0F", $this->renderReply($context->translations, $help, 'help.general_header'));
-        self::assertSame("\x02\x0306◆ translated:help.group.public\x03\x0F", $this->renderReply($context->translations, $help, 'help.group_header'));
+        self::assertSame("\x02\x0307Available commands:\x03\x0F", $this->renderReply($context->translations, $help, 'help.general_header'));
+        self::assertSame("\x02\x0307◆ translated:help.group.public\x03\x0F", $this->renderReply($context->translations, $help, 'help.group_header'));
 
         $renderedCommand = $this->renderReply($context->translations, $help, 'help.command_line');
         self::assertSame("  \x0310›\x03 \x0303VISIBLE     \x03translated:visible.short", $renderedCommand);
@@ -240,7 +240,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'help_key' => 'set.email.help',
             'syntax_key' => 'set.email.syntax',
         ]]));
-        self::assertSame("\x02\x0306◆ Options:\x03\x0F", $this->renderReply($setContext->translations, $help, 'help.options_header'));
+        self::assertSame("\x02\x0307◆ Options:\x03\x0F", $this->renderReply($setContext->translations, $help, 'help.options_header'));
         self::assertSame("  \x0310›\x03 \x0303EMAIL     \x03translated:set.email.short", $this->renderReply($setContext->translations, $help, 'help.subcommand_line'));
 
         $introExpiration = $help['intro_expiration'] ?? null;
@@ -249,7 +249,7 @@ final class UnifiedHelpFormatterTest extends TestCase
 
         $unknownCommand = $help['unknown_command'] ?? null;
         self::assertIsString($unknownCommand);
-        self::assertSame("\x0304✗\x03 Unknown command \x02FUTURE\x02. Use \x0303/msg ChanServ HELP\x03.", $this->renderTemplate($unknownCommand, ['command' => 'FUTURE', 'bot' => 'ChanServ']));
+        self::assertSame("\x0307✗\x03 Unknown command \x02FUTURE\x02. Use \x0303/msg ChanServ HELP\x03.", $this->renderTemplate($unknownCommand, ['command' => 'FUTURE', 'bot' => 'ChanServ']));
         self::assertSame("\x0314─────────────────────────────\x03", $help['footer']);
     }
 
