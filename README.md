@@ -24,6 +24,7 @@ A modular, protocol-agnostic IRC services daemon built with **PHP 8.5**, **Symfo
 - [Configuration Reference](#configuration-reference)
 - [IRCD Configuration](#ircd-configuration)
 - [Command Reference](#command-reference)
+  - [HELP and reply delivery](#help-and-reply-delivery)
 - [Running the Services](#running-the-services)
 - [Internationalization (i18n)](#internationalization-i18n)
 - [Docker Deployment](#docker-deployment)
@@ -86,11 +87,11 @@ With just 5 steps and a running IRCd you should see `NickServ`, `ChanServ`, `Mem
 
 Nickname registration with **email verification**. Users register a nick, confirm via email token, and then identify with a password. Registered nicks are protected — unauthenticated users are renamed to a configurable **guest prefix** (default `Ares-`).
 
-Key features: password identification, **brute-force lockout** after repeated failures, token-based **RECOVER**, custom **VHOST** with configurable suffix, forbidden nick/vhost lists, suspension with auto-expiry, inactivity-based expiry, and a full **action history** log.
+Key features: password identification, **brute-force lockout** after repeated failures, token-based **RECOVER**, custom **VHOST** with configurable suffix, forbidden nick/vhost lists, suspension with auto-expiry, inactivity-based expiry, a full **action history** log, and IRCop **WHOIP** / paginated **LIST** searches. Manually dropped registrations remain restorable by IRCops during a configurable grace period.
 
 ### ChanServ
 
-Channel registration with hierarchical **access lists** (founder → admin → op → halfop → voice). Supports **AKICK** (auto-kick with expiry), **MLOCK** (mode lock), **TOPICLOCK**, **SECURE** (+M enforcement), **ENTRYMSG** (greeting on join), forbidden channels (block registration + kick joiners), founder transfer via token, suspension/unsuspension, **CLEARUSERS** (channel purge), inactivity expiry with auto-drop, and per-channel **action history**.
+Channel registration with hierarchical **access lists** (founder → admin → op → halfop → voice). Supports **AKICK** (auto-kick with expiry), **MLOCK** (mode lock), **TOPICLOCK**, **SECURE** (+M enforcement), **ENTRYMSG** (greeting on join), forbidden channels (block registration + kick joiners), founder transfer via token, suspension/unsuspension, **CLEARUSERS** (channel purge), inactivity expiry with auto-drop, per-channel **action history**, privacy-controlled **INFO**, and paginated IRCop **LIST** searches. IRCops can **RESTORE** manually dropped channels during the deletion grace period.
 
 ### MemoServ
 
@@ -98,7 +99,7 @@ Offline messaging for users and channels. SEND notes that are delivered on next 
 
 ### OperServ
 
-IRC operator management with a role-based permission system. **IRCOP** ADD/DEL/LIST for registering IRC operators assigned to roles. **ROLE** system (ADD/DEL/LIST) with **PERMS** subcommand for fine-grained permissions (LIST/ADD/DEL/CLEAR with ALL shortcut), **MODES** for IRCOP user modes, and **VHOST** for forced vhost patterns. Protected default roles (ADMIN, OPER, PREOPER). Permissions auto-register from code into the database on first use. **GLINE** network-wide bans with duration and expiry. **MOTD** system (add/del/list/clean messages per bot with expiry). **GLOBAL** notices, **KILL** (force-disconnect), and **RAW** (arbitrary IRC command injection). Configurable **root users** have unrestricted access.
+IRC operator management with a role-based permission system. **IRCOP** ADD/DEL/LIST for registering IRC operators assigned to roles. **ROLE** system (ADD/DEL/LIST) with **PERMS** subcommand for fine-grained permissions (LIST/ADD/DEL/CLEAR with ALL shortcut), **MODES** for IRCOP user modes, and **VHOST** for forced vhost patterns. Protected default roles (ADMIN, OPER, PREOPER). Role **OPERCLASS** configuration is available on Unreal protocols. Permissions auto-register from code into the database on first use. **GLINE** network-wide bans with duration and expiry. **MOTD** system (add/del/list/clean messages per bot with expiry). **GLOBAL** notices, **KILL** (force-disconnect), and **RAW** (arbitrary IRC command injection). Configurable **root users** have unrestricted access.
 
 ---
 
@@ -111,9 +112,12 @@ IRC operator management with a role-based permission system. **IRCOP** ADD/DEL/L
 
 **Required PHP extensions:**
 
-`ext-ctype`, `ext-iconv`, `ext-sockets`, `ext-pdo`, `ext-pdo_mysql`, `ext-mbstring`, `ext-xml`, `ext-json`
-
-For SQLite (default): `ext-pdo_sqlite`. For PostgreSQL: `ext-pdo_pgsql`.
+Composer directly requires `ext-ctype`, `ext-iconv`, `ext-mbstring`, `ext-pdo_mysql`, and
+`ext-pdo_sqlite` (with PDO). Install both declared PDO drivers even if you use only one database.
+For PostgreSQL, also install `ext-pdo_pgsql`. Transitive dependencies and development tools may
+require additional extensions; use the platform check below for the installed dependency set.
+`ext-sockets` is not required by the Amp socket transport. Docker includes `pcntl` for graceful
+daemon signal handling.
 
 Verify your setup with:
 
@@ -227,6 +231,8 @@ DATABASE_URL="postgresql://user:pass@host:5432/db?serverVersion=16&charset=utf8"
 | `NICKSERV_RECOVER_TOKEN_TTL` | `3600` | RECOVER token TTL (seconds) |
 | `NICKSERV_RECOVER_MIN_INTERVAL` | `600` | Seconds between RECOVER attempts |
 | `NICKSERV_INACTIVITY_EXPIRY_DAYS` | `90` | Drop after days of inactivity (`0` = disabled) |
+| `NICKSERV_DROP_GRACE_DAYS` | `7` | Days a manually dropped nick remains restorable (`0` = deletion on maintenance) |
+| `NICKSERV_LIST_PAGE_SIZE` | `50` | Matching registrations per IRCop LIST page |
 | `NICKSERV_HISTORY_RETENTION_DAYS` | `30` | Days to keep action history (`0` = forever) |
 | `NICKSERV_HISTORY_VIEW_LIMIT` | `40` | Max history entries per page |
 
@@ -242,6 +248,8 @@ DATABASE_URL="postgresql://user:pass@host:5432/db?serverVersion=16&charset=utf8"
 | `CHANSERV_FOUNDER_TOKEN_TTL` | `3600` | SET FOUNDER token TTL |
 | `CHANSERV_FOUNDER_MIN_INTERVAL` | `600` | Seconds between SET FOUNDER attempts |
 | `CHANSERV_INACTIVITY_EXPIRY_DAYS` | `45` | Drop after days of inactivity (`0` = disabled) |
+| `CHANSERV_DROP_GRACE_DAYS` | `7` | Days a manually dropped channel remains restorable (`0` = deletion on maintenance) |
+| `CHANSERV_LIST_PAGE_SIZE` | `50` | Matching registrations per IRCop LIST page |
 | `CHANSERV_HISTORY_RETENTION_DAYS` | `30` | Days to keep action history (`0` = forever) |
 | `CHANSERV_HISTORY_VIEW_LIMIT` | `40` | Max history entries per page |
 
@@ -338,76 +346,106 @@ Ensure the `spanningtree` module is loaded.
 
 ## Command Reference
 
+### HELP and reply delivery
+
+Use `/msg <service> HELP` for grouped commands, `HELP <command>` for details, and
+`HELP <command> <option>` for supported subcommands (for example, `/msg ChanServ HELP SET PRIVATE`).
+All four services provide localized navigation in all 14 languages. Headers, sections, groups,
+command rows, and syntax use consistent IRC formatting; NickServ and ChanServ highlight the
+complete inactivity-expiration duration in red and underline it when expiry is enabled.
+
+Restricted commands are hidden from both general and direct HELP unless the caller meets the
+service's visibility policy, including identification and role permissions where required.
+Root access remains explicit; HELP visibility does not replace command execution authorization.
+NickServ and ChanServ group IRCop DROP/RESTORE under deletion and restoration.
+The tables below list the full command surface, not just what every user can execute.
+
+Multiline replies to users are formatted as separate IRC messages and submitted together to the
+connection writer, reducing write overhead while preserving line order and NOTICE/PRIVMSG delivery.
+
 ### NickServ
 
 | Command | Parameters | Description |
 |---------|------------|-------------|
 | `REGISTER` | `<password> <email>` | Register a nickname |
-| `VERIFY` | `<nick> <token>` | Confirm email verification |
-| `RESEND` | `<nick>` | Re-send verification email |
+| `VERIFY` | `<token>` | Confirm email verification |
+| `RESEND` | — | Re-send verification email |
 | `RECOVER` | `<nick> [token]` | Recover a registered nick |
-| `IDENTIFY` | `<password>` | Identify to your registered nick |
+| `IDENTIFY` | `<nick> <password>` | Identify to your registered nick |
 | `STATUS` | `<nick>` | Show nick registration status |
 | `INFO` | `<nick>` | Show nick registration details |
 | `SET PASSWORD` | `<new-password>` | Change your password |
-| `SET EMAIL` | `<email>` | Change your email address |
+| `SET EMAIL` | `<email> [token]` | Change your email address |
 | `SET LANGUAGE` | `<ca\|de\|el\|en\|es\|eu\|fr\|gl\|it\|nl\|pl\|pt\|ro\|tr>` | Set your preferred language |
 | `SET TIMEZONE` | `<tz>` | Set your timezone |
 | `SET PRIVATE` | `<on\|off>` | Hide registration in STATUS |
 | `SET MSG` | `<on\|off>` | Set NOTICE vs PRIVMSG delivery |
 | `SET VHOST` | `[vhost]` | Set or clear a custom virtual host |
 | `SASET` | `<nick> <option> <value>` | Admin SET on any nick |
-| `DROP` | `<nick>` | Drop a nickname registration |
-| `FORBID` | `<nick>` | Forbid a nickname from registration |
-| `FORBIDVHOST` | `<vhost>` | Forbid a vhost pattern |
+| `DROP` | `<nick> [FORCE]` | Mark a nick for deletion; FORCE permanently deletes a pending deletion (IRCops) |
+| `RESTORE` | `<nick>` | Restore a nick during its deletion grace period (IRCops) |
+| `FORBID` | `<nick> <reason>` | Forbid a nickname from registration |
+| `FORBIDVHOST` | `{ADD\|DEL\|LIST} [pattern]` | Forbid a vhost pattern |
 | `UNFORBID` | `<nick>` | Remove nick forbiddance |
-| `SUSPEND` | `<nick> [duration]` | Suspend a nickname registration |
+| `SUSPEND` | `<nick> <duration> <reason>` | Suspend a nickname registration |
 | `UNSUSPEND` | `<nick>` | Unsuspend a nickname |
-| `RENAME` | `<nick> <new-nick>` | Rename a registered nick |
-| `NOEXPIRE` | `<nick>` | Toggle no-expire flag |
+| `RENAME` | `<nick>` | Force an online user to a generated guest nick (IRCops) |
+| `NOEXPIRE` | `<nick> {ON\|OFF}` | Set inactivity-expiration protection (IRCops) |
 | `USERIP` | `<nick>` | Show IP address of a nick (IRCops only) |
-| `HISTORY` | `<nick> [page]` | View nickname action history |
-| `HELP` | `[command]` | Show command help |
+| `WHOIP` | `<ip>` | Find all nicks with the exact last identified IP (IRCops) |
+| `LIST` | `<pattern> [page]` | Search registrations with `*` wildcards; pages start at 1 (IRCops) |
+| `HISTORY` | `<nick> {ADD\|DEL\|VIEW\|CLEAR} [args]` | Manage history; VIEW accepts a page number or ALL (IRCops) |
+| `HELP` | `[command [option]]` | Show command help |
+
+For `unreal` and `inspircd`, identify with `/msg NickServ IDENTIFY <nick> <password>`.
+For `unrealudb`, authentication is native: use `/NICK <nick>:<password>` or
+`/NICK <nick>!<password>`; NickServ IDENTIFY only explains this native flow.
+VERIFY and RESEND apply to the sender's current nickname.
 
 ### ChanServ
+
+Channel settings use `SET <#channel> <option> [value]` (channel before option).
 
 | Command | Parameters | Description |
 |---------|------------|-------------|
 | `REGISTER` | `<#channel> <description>` | Register a channel |
 | `INFO` | `<#channel>` | Show channel registration details |
-| `SET FOUNDER` | `<#channel> <nick>` | Transfer channel founder |
-| `SET SUCCESSOR` | `<#channel> <nick>` | Set channel successor |
-| `SET DESC` | `<#channel> <desc>` | Set channel description |
-| `SET URL` | `<#channel> <url>` | Set channel URL |
-| `SET EMAIL` | `<#channel> <email>` | Set channel contact email |
-| `SET ENTRYMSG` | `<#channel> <msg>` | Set join greeting message |
-| `SET TOPICLOCK` | `<#channel> <on\|off>` | Lock the channel topic |
-| `SET MLOCK` | `<#channel> <modes>` | Set enforced channel modes |
-| `SET SECURE` | `<#channel> <on\|off>` | Enforce secure channel ranks; UDB stores the `SECURE_OPS` option |
+| `SET` | `<#channel> FOUNDER <nick> [token]` | Transfer channel founder |
+| `SET` | `<#channel> SUCCESSOR [nick]` | Set channel successor |
+| `SET` | `<#channel> DESC <desc>` | Set channel description |
+| `SET` | `<#channel> URL [url]` | Set channel URL |
+| `SET` | `<#channel> EMAIL <email\|none>` | Set channel contact email |
+| `SET` | `<#channel> ENTRYMSG <message\|none>` | Set join greeting message |
+| `SET` | `<#channel> TOPICLOCK <on\|off>` | Lock the channel topic |
+| `SET` | `<#channel> MLOCK {ON\|OFF}` | Lock current channel modes or disable the lock |
+| `SET` | `<#channel> SECURE <on\|off>` | Enforce secure channel ranks; UDB stores the `SECURE_OPS` option |
+| `SET` | `<#channel> PRIVATE {ON\|OFF}` | Restrict INFO to founder, ACCESS users, and IRC operators |
 | `IRCOPONLY` | `<#channel> {ON\|OFF}` | Restrict a registered channel to authorized IRC operators |
-| `ACCESS` | `<#channel> <nick> <level>` | Grant access to a nick |
-| `DELACCESS` | `<#channel> <nick>` | Remove access from a nick |
-| `LEVELS` | `<#channel> <type> <level>` | Configure privilege levels |
-| `OP` | `<#channel> [nick]` | Give +o in a channel |
-| `DEOP` | `<#channel> [nick]` | Remove +o in a channel |
-| `VOICE` | `<#channel> [nick]` | Give +v in a channel |
-| `DEVOICE` | `<#channel> [nick]` | Remove +v in a channel |
+| `ACCESS` | `<#channel> {ADD\|DEL\|LIST} [nick] [level]` | Manage channel access |
+| `DELACCESS` | `<#channel>` | Remove your own channel access |
+| `LEVELS` | `<#channel> {LIST\|SET\|RESET} [level] [value]` | Configure privilege levels |
+| `OP` | `<#channel> <nick>` | Give +o in a channel |
+| `DEOP` | `<#channel> <nick>` | Remove +o in a channel |
+| `VOICE` | `<#channel> <nick>` | Give +v in a channel |
+| `DEVOICE` | `<#channel> <nick>` | Remove +v in a channel |
 | `INVITE` | `<#channel>` | Invite yourself to a channel |
-| `ADMIN` | `<#channel> [nick]` | Give +a in a channel |
-| `DEADMIN` | `<#channel> [nick]` | Remove +a in a channel |
-| `HALFOP` | `<#channel> [nick]` | Give +h in a channel |
-| `DEHALFOP` | `<#channel> [nick]` | Remove +h in a channel |
-| `AKICK` | `<#channel> <nick\|mask> [duration] [reason]` | Manage auto-kick list |
-| `DROP` | `<#channel>` | Drop channel registration |
-| `SUSPEND` | `<#channel> [duration]` | Suspend a channel |
+| `ADMIN` | `<#channel> <nick>` | Give +a in a channel |
+| `DEADMIN` | `<#channel> <nick>` | Remove +a in a channel |
+| `HALFOP` | `<#channel> <nick>` | Give +h in a channel |
+| `DEHALFOP` | `<#channel> <nick>` | Remove +h in a channel |
+| `AKICK` | `<#channel> {ADD\|DEL\|LIST} [mask] [expiry] [reason]` | Manage auto-kick list |
+| `DROP` | `<#channel> [FORCE]` | Mark a channel for deletion; FORCE permanently deletes a pending deletion (IRCops) |
+| `RESTORE` | `<#channel>` | Restore a channel during its deletion grace period (IRCops) |
+| `SUSPEND` | `<#channel> <duration> <reason>` | Suspend a channel |
 | `UNSUSPEND` | `<#channel>` | Unsuspend a channel |
-| `FORBID` | `<#channel>` | Forbid a channel name |
+| `FORBID` | `<#channel> <reason>` | Forbid a channel name |
 | `UNFORBID` | `<#channel>` | Remove channel forbiddance |
-| `NOEXPIRE` | `<#channel>` | Toggle no-expire flag |
+| `NOEXPIRE` | `<#channel> {ON\|OFF}` | Set inactivity-expiration protection (IRCops) |
 | `CLEARACCESS` | `<#channel>` | Remove all access entries |
-| `CLEARUSERS` | `<#channel>` | Remove all non-privileged users |
-| `HISTORY` | `<#channel> [page]` | View channel action history |
-| `HELP` | `[command]` | Show command help |
+| `CLEARUSERS` | `<#channel> [reason]` | Kick users from the channel |
+| `LIST` | `<pattern> [page]` | Search registrations with `*` wildcards; pages start at 1 (IRCops) |
+| `HISTORY` | `<#channel> {ADD\|DEL\|VIEW\|CLEAR} [args]` | Manage history; VIEW accepts a page number or ALL |
+| `HELP` | `[command [option]]` | Show command help |
 
 `IRCOPONLY` appears in ChanServ's IRCop `HELP` section for identified operators whose role has
 `chanserv.ircoponly`. A Root user can grant it with
@@ -419,13 +457,13 @@ Ensure the `spanningtree` module is loaded.
 | Command | Parameters | Description |
 |---------|------------|-------------|
 | `SEND` | `<nick\|#channel> <message>` | Send a memo |
-| `READ` | `[number\|LAST\|NEW]` | Read memos |
-| `LIST` | | List your memos |
-| `DEL` | `<number\|ALL>` | Delete memos |
-| `IGNORE` | `<nick\|#channel> [ADD\|DEL\|LIST]` | Manage ignore list |
-| `ENABLE` | | Enable memo reception |
-| `DISABLE` | | Disable memo reception |
-| `HELP` | `[command]` | Show command help |
+| `READ` | `[#channel] <number>` | Read memos |
+| `LIST` | `[#channel]` | List nickname or channel memos |
+| `DEL` | `[#channel] <number>` | Delete memos |
+| `IGNORE` | `{ADD\|DEL\|LIST} [#channel] [nick]` | Manage ignore list |
+| `ENABLE` | `[#channel]` | Enable memo reception |
+| `DISABLE` | `[#channel]` | Disable memo reception |
+| `HELP` | `[command [option]]` | Show command help |
 
 ### OperServ
 
@@ -440,16 +478,16 @@ Ensure the `spanningtree` module is loaded.
 | `ROLE PERMS` | `<role> {LIST\|ADD\|DEL\|CLEAR} [permission\|ALL]` | Manage role permissions |
 | `ROLE MODES` | `<role> {VIEW\|SET} [modes]` | Manage IRCOP user modes for a role |
 | `ROLE VHOST` | `<role> {VIEW\|SET} [pattern]` | Manage forced vhost pattern for a role |
-| `ROLE OPERCLASS` | `<role> {VIEW\|SET} [operclass]` | Manage the Unreal operclass for a role |
-| `GLINE` | `ADD\|DEL\|LIST <mask> [duration] [reason]` | Manage G-lines |
-| `MOTD ADD` | `<bot> <type> <message> [expiry]` | Add a MOTD message |
-| `MOTD DEL` | `<bot> <id>` | Delete a MOTD message |
-| `MOTD LIST` | `[bot]` | List MOTD messages |
-| `MOTD CLEAN` | `[bot]` | Remove expired MOTD messages |
-| `GLOBAL` | `<message>` | Send a global notice |
+| `ROLE OPERCLASS` | `{LIST\|<role>} [{VIEW\|SET}] [operclass]` | Manage role operclasses (Unreal protocols only) |
+| `GLINE` | `{ADD\|DEL\|LIST} [mask] [expiry] [reason]` | Manage G-lines |
+| `MOTD ADD` | `{service\|nick!ident@vhost} {PRIVMSG\|NOTICE} <expiry> <message>` | Add a MOTD message |
+| `MOTD DEL` | `<id>` | Delete a MOTD message |
+| `MOTD LIST` | — | List MOTD messages |
+| `MOTD CLEAN` | — | Remove expired MOTD messages |
+| `GLOBAL` | `{service\|nick!ident@vhost} {PRIVMSG\|NOTICE} <message>` | Send a global message |
 | `KILL` | `<nick> <reason>` | Force-disconnect a user |
 | `RAW` | `<command>` | Send raw IRC command to IRCd |
-| `HELP` | `[command]` | Show command help |
+| `HELP` | `[command [option]]` | Show command help |
 
 ---
 
@@ -491,7 +529,7 @@ from different IRCd adapters in one daemon session.
 
 ## Internationalization (i18n)
 
-Ares ships with **14 languages**, defaulting to `es` (Spanish). Every translatable string exists in all languages.
+Ares ships with **14 languages**, defaulting to `en` (English). Every translatable string exists in all languages.
 
 | Code | Language |
 |------|---------|
@@ -575,7 +613,7 @@ the Doctrine Messenger transport also uses that database.
 | `make logs-tail` | Show last 100 log lines |
 | `make ps` | Show container status |
 | `make shell` | Open shell inside container |
-| `make health` | Check container health |
+| `make health` | Inspect Docker health status (no application healthcheck currently configured) |
 | `make db-migrate` | Run database migrations manually |
 | `make db-backup` | Backup SQLite DB to `backups/` |
 | `make db-restore` | Restore from backup (`FILE=backups/ares-*.db`) |
@@ -583,12 +621,15 @@ the Doctrine Messenger transport also uses that database.
 
 ### Container lifecycle
 
-The `entrypoint.sh` script runs at every container start:
+Production dependencies are installed in the builder stage of `docker/Dockerfile`, then copied
+into the runtime image. Startup does not run Composer; rebuild the image when dependencies change.
+
+The repository script `docker/entrypoint.sh` (installed as `/entrypoint.sh`) runs at every container start:
 
 1. Creates `.env.local` from `.env` if absent
 2. Auto-generates `APP_SECRET` if missing or `changeme`
-3. Syncs new keys from `.env` into `.env.local` via `sync-env.sh`
-4. Runs `composer install` (production, no-dev)
+3. Syncs new keys from `.env` into `.env.local` via `docker/sync-env.sh` (installed as `/app/docker/sync-env.sh`)
+4. Checks that `vendor/autoload.php` exists, failing with a rebuild instruction if absent
 5. Runs `doctrine:migrations:migrate`
 6. Starts `php bin/console irc:connect`
 
@@ -637,7 +678,7 @@ composer architecture                                   # Deptrac architecture b
 ./scripts/check-coverage.sh 100 --issues                 # tests + coverage floor (single run)
 ```
 
-Zero warnings, zero skipped, zero deprecated, zero incomplete required. Run `check-coverage.sh` only after the complete implementation; it runs the full PHPUnit suite WITH coverage exactly once. Do not run a standalone full suite immediately before or after it.
+Zero warnings, zero skipped, zero deprecated, zero incomplete required. Run `scripts/check-coverage.sh` only after the complete implementation; it runs the full PHPUnit suite WITH coverage exactly once. Do not run a standalone full suite immediately before or after it.
 
 ### Architecture
 
@@ -654,7 +695,7 @@ The target architecture uses five bounded contexts with hexagonal layers inside 
 
 `composer architecture` enforces this graph with Deptrac. The gate accepts only the final bounded-context topology and its declared dependency boundaries.
 
-Read `AGENTS.md` and `.agents/architecture.md` for the full architecture contract.
+Read [AGENTS.md](AGENTS.md) and [.agents/architecture.md](.agents/architecture.md) for the full architecture contract.
 
 ---
 

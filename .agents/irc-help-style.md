@@ -1,6 +1,6 @@
 # IRC HELP Style
 
-Apply the visual grammar of `plans/command.txt` to HELP in NickServ, ChanServ, MemoServ,
+Apply the self-contained visual grammar below to HELP in NickServ, ChanServ, MemoServ,
 OperServ, and future services. This contract covers existing `HELP`, `HELP <command>`, and
 `HELP <command> <subcommand>` output only; leave other service replies unchanged.
 
