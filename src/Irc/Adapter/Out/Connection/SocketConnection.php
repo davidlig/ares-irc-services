@@ -116,23 +116,27 @@ class SocketConnection implements ConnectionInterface
             return;
         }
 
-        $chunk = '';
+        $parts = [];
+        $chunkLen = 0;
         foreach ($data as $line) {
-            $payload = $line . "\r\n";
-            if ('' !== $chunk && strlen($chunk) + strlen($payload) > self::WRITE_CHUNK_BYTES) {
-                $this->writePayload($chunk);
-                $chunk = '';
+            $lineLen = strlen($line) + 2;
+            if (0 < $chunkLen && $chunkLen + $lineLen > self::WRITE_CHUNK_BYTES) {
+                $this->writePayload(implode("\r\n", $parts) . "\r\n");
+                $parts = [];
+                $chunkLen = 0;
             }
 
-            $chunk .= $payload;
-            if (strlen($chunk) >= self::WRITE_CHUNK_BYTES) {
-                $this->writePayload($chunk);
-                $chunk = '';
+            $parts[] = $line;
+            $chunkLen += $lineLen;
+            if ($chunkLen >= self::WRITE_CHUNK_BYTES) {
+                $this->writePayload(implode("\r\n", $parts) . "\r\n");
+                $parts = [];
+                $chunkLen = 0;
             }
         }
 
-        if ('' !== $chunk) {
-            $this->writePayload($chunk);
+        if (0 < $chunkLen) {
+            $this->writePayload(implode("\r\n", $parts) . "\r\n");
         }
     }
 

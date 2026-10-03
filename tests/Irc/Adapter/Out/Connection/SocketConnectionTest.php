@@ -151,6 +151,20 @@ final class SocketConnectionTest extends TestCase
             ['FIRST', '', ' ', 'THIRD'],
             ["FIRST\r\n\r\n \r\nTHIRD\r\n"],
         ];
+        yield 'consecutive empty lines retain every CRLF' => [
+            ['', '', ''],
+            ["\r\n\r\n\r\n"],
+        ];
+        $multibyteBoundary = str_repeat('é', 8191);
+        yield 'multibyte line reaches byte boundary before following line' => [
+            [$multibyteBoundary, 'TAIL'],
+            [$multibyteBoundary . "\r\n", "TAIL\r\n"],
+        ];
+        $multibyteOversized = str_repeat('é', 8192);
+        yield 'oversized multibyte line sent alone between ordinary lines' => [
+            ['FIRST', $multibyteOversized, 'LAST'],
+            ["FIRST\r\n", $multibyteOversized . "\r\n", "LAST\r\n"],
+        ];
         $half = str_repeat('A', 8190);
         yield 'exact 16 KiB block including CRLF' => [
             [$half, $half],
