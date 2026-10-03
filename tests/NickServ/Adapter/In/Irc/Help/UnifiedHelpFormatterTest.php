@@ -27,25 +27,25 @@ final class UnifiedHelpFormatterTest extends TestCase
         $root = dirname(__DIR__, 6);
         $locales = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
         $expectedColors = [
-            'header' => ['06', '14'],
+            'header' => ['07', '14'],
             'navigation_marker' => ['10'],
             'info_marker' => ['10'],
-            'error_marker' => ['04'],
+            'error_marker' => ['07'],
             'warning_marker' => ['07'],
             'intro_expiration' => ['07'],
-            'general_header' => ['06'],
+            'general_header' => ['07'],
             'command_line' => ['03'],
             'subcommand_line' => ['03'],
-            'options_header' => ['06'],
+            'options_header' => ['07'],
             'general_footer' => ['03'],
             'set_sub_footer' => ['03'],
             'syntax_label' => ['03'],
             'footer' => ['14'],
-            'group_header' => ['06'],
-            'subgroup_header' => ['04'],
-            'ircop_header' => ['04'],
+            'group_header' => ['07'],
+            'subgroup_header' => ['07'],
+            'ircop_header' => ['07'],
             'set_timezone.index_label' => ['03'],
-            'set_timezone.region_header' => ['06'],
+            'set_timezone.region_header' => ['07'],
             'set_timezone.region_unknown' => ['03'],
         ];
 
@@ -78,13 +78,45 @@ final class UnifiedHelpFormatterTest extends TestCase
                 substr_count($helpText, "\x03\x0F"),
                 $locale . ': every HELP color must reset',
             );
-            self::assertSame([], array_diff($allColors[1], ['03', '04', '06', '07', '10', '14']), $locale);
+            self::assertSame([], array_diff($allColors[1], ['03', '07', '10', '14']), $locale);
         }
 
         $commandSource = file_get_contents($root . '/src/NickServ/Adapter/In/Irc/Command/HelpCommand.php');
         self::assertIsString($commandSource);
         foreach (['IrcHelpStyle', "\x03", '›', 'ℹ', '⚠', '✗', '◆'] as $presentationToken) {
             self::assertStringNotContainsString($presentationToken, $commandSource);
+        }
+    }
+
+    #[Test]
+    public function nickServListShortDescriptionsOmitTheIrcopOnlyQualifierInEveryLocale(): void
+    {
+        $root = dirname(__DIR__, 6);
+        $locales = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
+        $qualifiers = [
+            'ca' => 'només IRCops',
+            'de' => 'nur IRCops',
+            'el' => 'μόνο για IRCops',
+            'en' => 'IRC Operators only',
+            'es' => 'solo IRCops',
+            'eu' => 'IRCopsentzat bakarrik',
+            'fr' => 'IRCops uniquement',
+            'gl' => 'só para IRCops',
+            'it' => 'solo IRCop',
+            'nl' => 'alleen IRCops',
+            'pl' => 'tylko IRCop',
+            'pt' => 'apenas IRCops',
+            'ro' => 'numai IRCops',
+            'tr' => 'yalnızca IRCop',
+        ];
+
+        foreach ($locales as $locale) {
+            $catalog = Yaml::parseFile($root . '/translations/nickserv.' . $locale . '.yaml');
+            self::assertIsArray($catalog, $locale);
+            self::assertIsArray($catalog['list'] ?? null, $locale . ': list');
+            $short = $catalog['list']['short'] ?? null;
+            self::assertIsString($short, $locale . ': list.short');
+            self::assertStringNotContainsString($qualifiers[$locale], $short, $locale . ': list.short');
         }
     }
 
