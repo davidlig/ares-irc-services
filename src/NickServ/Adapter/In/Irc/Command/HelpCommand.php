@@ -150,28 +150,29 @@ final readonly class HelpCommand implements NickServCommandInterface
                     return;
                 }
 
-                $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
+                $context->replyRaw(implode("\n", $this->formatter->renderSubCommandHelp($adapter, $handler->getName(), $subCmd)));
 
                 return;
             }
         }
 
-        $this->formatter->showCommandHelp($adapter, $handler);
+        $context->replyRaw(implode("\n", $this->formatter->renderCommandHelp($adapter, $handler)));
     }
 
     private function showGeneralHelp(NickServContext $context): void
     {
         $adapter = $this->createAdapter($context);
-        $this->formatter->showGeneralHelp($adapter);
+        $lines = $this->formatter->renderGeneralHelp($adapter);
         if ($this->inactivityExpiryDays > 0) {
-            $context->replyRaw(' ');
-            $context->reply('help.intro_expiration', [
+            $lines[] = ' ';
+            $lines[] = $context->trans('help.intro_expiration', [
                 'marker' => $context->trans('help.warning_marker'),
                 'label' => $context->trans('help.intro_expiration_label'),
                 'days' => $this->inactivityExpiryDays,
             ]);
         }
-        $this->formatter->sendFooter($adapter);
+        $lines[] = $this->formatter->renderFooter($adapter);
+        $context->replyRaw(implode("\n", $lines));
     }
 
     private function createAdapter(NickServContext $context): HelpFormatterContextAdapter
@@ -188,21 +189,22 @@ final readonly class HelpCommand implements NickServCommandInterface
     private function showTimezoneIndexHelp(NickServContext $context, string $parentName, array $sub): void
     {
         $adapter = $this->createAdapter($context);
-        $this->formatter->sendHeader($adapter, 'HELP ' . $parentName . ' ' . $sub['name']);
-        $context->reply($sub['help_key']);
-        $context->replyRaw(' ');
-        $context->reply('help.set_timezone.index_label', [
+        $lines = [$this->formatter->renderHeader($adapter, 'HELP ' . $parentName . ' ' . $sub['name'])];
+        $lines[] = $context->trans($sub['help_key']);
+        $lines[] = ' ';
+        $lines[] = $context->trans('help.set_timezone.index_label', [
             'syntax' => $context->trans('help.set_timezone.index_syntax'),
         ]);
         $regionsStr = implode(', ', $this->timezoneHelpProvider->getRegions());
         foreach ($this->chunkLine($regionsStr, self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
-            $context->replyRaw($line);
+            $lines[] = $line;
         }
-        $context->replyRaw(' ');
-        $context->reply('help.syntax_label', [
+        $lines[] = ' ';
+        $lines[] = $context->trans('help.syntax_label', [
             'syntax' => $context->trans($sub['syntax_key']),
         ]);
-        $this->formatter->sendFooter($adapter);
+        $lines[] = $this->formatter->renderFooter($adapter);
+        $context->replyRaw(implode("\n", $lines));
     }
 
     /**
@@ -238,25 +240,27 @@ final readonly class HelpCommand implements NickServCommandInterface
         $adapter = $this->createAdapter($context);
 
         if (null === $region) {
-            $this->formatter->sendHeader($adapter, 'HELP SET TIMEZONE ' . $regionArg);
-            $context->reply('help.set_timezone.region_unknown', [
+            $lines = [$this->formatter->renderHeader($adapter, 'HELP SET TIMEZONE ' . $regionArg)];
+            $lines[] = $context->trans('help.set_timezone.region_unknown', [
                 'marker' => $context->trans('help.error_marker'),
                 'syntax' => $context->trans('help.set_timezone.region_syntax'),
             ]);
-            $context->replyRaw(' ');
-            $this->formatter->sendFooter($adapter);
+            $lines[] = ' ';
+            $lines[] = $this->formatter->renderFooter($adapter);
+            $context->replyRaw(implode("\n", $lines));
 
             return;
         }
 
-        $this->formatter->sendHeader($adapter, 'HELP SET TIMEZONE ' . $region);
-        $context->replyRaw($context->trans('help.set_timezone.region_header', ['region' => $region]));
+        $lines = [$this->formatter->renderHeader($adapter, 'HELP SET TIMEZONE ' . $region)];
+        $lines[] = $context->trans('help.set_timezone.region_header', ['region' => $region]);
         $timezones = $this->timezoneHelpProvider->getTimezonesForRegion($region);
         foreach ($this->chunkLine(implode(', ', $timezones), self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
-            $context->replyRaw($line);
+            $lines[] = $line;
         }
-        $context->replyRaw(' ');
-        $this->formatter->sendFooter($adapter);
+        $lines[] = ' ';
+        $lines[] = $this->formatter->renderFooter($adapter);
+        $context->replyRaw(implode("\n", $lines));
     }
 
     /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */

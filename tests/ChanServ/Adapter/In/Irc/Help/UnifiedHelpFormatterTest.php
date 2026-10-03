@@ -45,10 +45,30 @@ final class UnifiedHelpFormatterTest extends TestCase
             ircopAccess: true,
         );
 
-        new UnifiedHelpFormatter()->showGeneralHelp($context);
+        $lines = new UnifiedHelpFormatter()->renderGeneralHelp($context);
+
+        self::assertSame([
+            'translated:help.header',
+            'translated:help.intro',
+            ' ',
+            'translated:help.general_header',
+            ' ',
+            'translated:help.group_header',
+            'translated:help.command_line',
+            ' ',
+            'translated:help.general_footer',
+            ' ',
+            'translated:help.ircop_header',
+            ' ',
+            'translated:help.subgroup_header',
+            'translated:help.command_line',
+            'translated:help.command_line',
+        ], $lines);
+        self::assertSame([], $context->replies);
+        self::assertSame([], $context->rawReplies);
 
         $renderedCommands = [];
-        foreach ($context->replies as $reply) {
+        foreach ($context->translations as $reply) {
             if ('help.command_line' !== $reply['key']) {
                 continue;
             }
@@ -61,11 +81,13 @@ final class UnifiedHelpFormatterTest extends TestCase
             'EARLY       ',
             'LATE        ',
         ], $renderedCommands);
-        self::assertContains('help.ircop_header', array_column($context->replies, 'key'));
-        self::assertSame('help.header', $context->replies[0]['key']);
-        self::assertSame('translated:help.header_title', $context->replies[0]['params']['title']);
-        self::assertContains('help.group_header', array_column($context->replies, 'key'));
-        self::assertContains('help.subgroup_header', array_column($context->replies, 'key'));
+        self::assertContains('help.ircop_header', array_column($context->translations, 'key'));
+        self::assertContains([
+            'key' => 'help.header',
+            'params' => ['title' => 'translated:help.header_title', 'separator' => str_repeat('─', 40 - 3 - mb_strlen('translated:help.header_title'))],
+        ], $context->translations);
+        self::assertContains('help.group_header', array_column($context->translations, 'key'));
+        self::assertContains('help.subgroup_header', array_column($context->translations, 'key'));
     }
 
     #[Test]
@@ -77,13 +99,13 @@ final class UnifiedHelpFormatterTest extends TestCase
             visibleCommands: ['FUTURE'],
         );
 
-        new UnifiedHelpFormatter()->showGeneralHelp($context);
+        $lines = new UnifiedHelpFormatter()->renderGeneralHelp($context);
 
-        $keys = array_column($context->replies, 'key');
+        $keys = array_column($context->translations, 'key');
         self::assertContains('help.general_footer', $keys);
         self::assertNotContains('help.ircop_header', $keys);
         $commandLines = array_values(array_filter(
-            $context->replies,
+            $context->translations,
             static fn (array $reply): bool => 'help.command_line' === $reply['key'],
         ));
         self::assertSame(['FUTURE      '], array_column(array_column($commandLines, 'params'), 'command'));
@@ -101,17 +123,32 @@ final class UnifiedHelpFormatterTest extends TestCase
             'syntax_key' => 'set.email.syntax',
         ]], ['service' => 'ChanServ']);
 
-        new UnifiedHelpFormatter()->showCommandHelp($context, $command);
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp($context, $command);
 
-        self::assertContains(['key' => 'set.help', 'params' => ['service' => 'ChanServ']], $context->replies);
+        self::assertSame([
+            'translated:help.header',
+            'translated:set.help',
+            ' ',
+            'translated:help.options_header',
+            'translated:help.subcommand_line',
+            ' ',
+            'translated:help.set_sub_footer',
+            ' ',
+            'translated:help.syntax_label',
+            'translated:help.footer',
+        ], $lines);
+        self::assertSame([], $context->replies);
+        self::assertSame([], $context->rawReplies);
+
+        self::assertContains(['key' => 'set.help', 'params' => ['service' => 'ChanServ']], $context->translations);
         self::assertContains([
             'key' => 'help.subcommand_line',
             'params' => ['command' => 'EMAIL     ', 'description' => 'translated:set.email.short'],
-        ], $context->replies);
+        ], $context->translations);
         self::assertContains([
             'key' => 'help.syntax_label',
             'params' => ['syntax' => 'translated:set.syntax'],
-        ], $context->replies);
+        ], $context->translations);
     }
 
     #[Test]
@@ -119,7 +156,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     {
         $context = new ChanServHelpFormatterContext();
 
-        new UnifiedHelpFormatter()->showSubCommandHelp($context, 'SET', [
+        $lines = new UnifiedHelpFormatter()->renderSubCommandHelp($context, 'SET', [
             'name' => 'EMAIL',
             'help_key' => 'set.email.help',
             'syntax_key' => 'set.email.syntax',
@@ -127,25 +164,33 @@ final class UnifiedHelpFormatterTest extends TestCase
         ]);
 
         self::assertSame([
-            'help.header',
-            'set.email.help',
-            'set.email.options',
-            'help.syntax_label',
-            'help.footer',
-        ], array_column($context->replies, 'key'));
-        self::assertSame('HELP SET EMAIL', $context->replies[0]['params']['title']);
+            'translated:help.header',
+            'translated:set.email.help',
+            ' ',
+            'translated:set.email.options',
+            ' ',
+            'translated:help.syntax_label',
+            'translated:help.footer',
+        ], $lines);
+        self::assertSame([], $context->replies);
+        self::assertSame([], $context->rawReplies);
+        self::assertSame('HELP SET EMAIL', $context->translations[0]['params']['title']);
     }
 
     #[Test]
     public function definesHeaderTemplateAndPlaceholdersInEveryLocale(): void
     {
         $context = new ChanServHelpFormatterContext();
-        new UnifiedHelpFormatter()->sendHeader($context, 'HELP SET EMAIL');
+        $header = new UnifiedHelpFormatter()->renderHeader($context, 'HELP SET EMAIL');
+
+        self::assertSame('translated:help.header', $header);
+        self::assertSame([], $context->replies);
+        self::assertSame([], $context->rawReplies);
 
         self::assertSame([
             'key' => 'help.header',
             'params' => ['title' => 'HELP SET EMAIL', 'separator' => str_repeat('─', 23)],
-        ], $context->replies[0]);
+        ], $context->translations[0]);
 
         $expectedTemplate = "\x02\x0306● %title%\x03\x0F \x0314%separator%\x03";
         foreach (self::LOCALES as $locale) {
@@ -172,31 +217,31 @@ final class UnifiedHelpFormatterTest extends TestCase
             visibleCommands: ['VISIBLE'],
         );
 
-        new UnifiedHelpFormatter()->showGeneralHelp($context);
+        $lines = new UnifiedHelpFormatter()->renderGeneralHelp($context);
 
         $title = 'translated:help.header_title';
         self::assertSame(
             "\x02\x0306● {$title}\x03\x0F \x0314" . str_repeat('─', max(0, 40 - 3 - mb_strlen($title))) . "\x03",
-            $this->renderReply($context->replies, $help, 'help.header'),
+            $this->renderReply($context->translations, $help, 'help.header'),
         );
-        self::assertSame("\x02\x0306Available commands:\x03\x0F", $this->renderReply($context->replies, $help, 'help.general_header'));
-        self::assertSame("\x02\x0306◆ translated:help.group.public\x03\x0F", $this->renderReply($context->replies, $help, 'help.group_header'));
+        self::assertSame("\x02\x0306Available commands:\x03\x0F", $this->renderReply($context->translations, $help, 'help.general_header'));
+        self::assertSame("\x02\x0306◆ translated:help.group.public\x03\x0F", $this->renderReply($context->translations, $help, 'help.group_header'));
 
-        $renderedCommand = $this->renderReply($context->replies, $help, 'help.command_line');
+        $renderedCommand = $this->renderReply($context->translations, $help, 'help.command_line');
         self::assertSame("  \x0310›\x03 \x0303VISIBLE     \x03translated:visible.short", $renderedCommand);
         $descriptionOffset = strpos($renderedCommand, 'translated:visible.short');
         self::assertNotFalse($descriptionOffset);
         self::assertSame('translated:visible.short', substr($renderedCommand, $descriptionOffset));
 
         $setContext = new ChanServHelpFormatterContext();
-        new UnifiedHelpFormatter()->showCommandHelp($setContext, new ChanServHelpableCommand('SET', 1, [[
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp($setContext, new ChanServHelpableCommand('SET', 1, [[
             'name' => 'EMAIL',
             'desc_key' => 'set.email.short',
             'help_key' => 'set.email.help',
             'syntax_key' => 'set.email.syntax',
         ]]));
-        self::assertSame("\x02\x0306◆ Options:\x03\x0F", $this->renderReply($setContext->replies, $help, 'help.options_header'));
-        self::assertSame("  \x0310›\x03 \x0303EMAIL     \x03translated:set.email.short", $this->renderReply($setContext->replies, $help, 'help.subcommand_line'));
+        self::assertSame("\x02\x0306◆ Options:\x03\x0F", $this->renderReply($setContext->translations, $help, 'help.options_header'));
+        self::assertSame("  \x0310›\x03 \x0303EMAIL     \x03translated:set.email.short", $this->renderReply($setContext->translations, $help, 'help.subcommand_line'));
 
         $introExpiration = $help['intro_expiration'] ?? null;
         self::assertIsString($introExpiration);
@@ -310,6 +355,9 @@ final class ChanServHelpFormatterContext implements HelpFormatterContextInterfac
     /** @var list<string> */
     public array $rawReplies = [];
 
+    /** @var list<array{key: string, params: array<string, mixed>}> */
+    public array $translations = [];
+
     /**
      * @param list<HelpableCommandInterface> $commands
      * @param list<HelpableCommandInterface> $ircopCommands
@@ -334,6 +382,8 @@ final class ChanServHelpFormatterContext implements HelpFormatterContextInterfac
 
     public function trans(string $key, array $params = []): string
     {
+        $this->translations[] = ['key' => $key, 'params' => $params];
+
         return 'translated:' . $key;
     }
 
