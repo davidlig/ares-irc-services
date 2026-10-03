@@ -1,3 +1,10 @@
+## [2.3.1] - 2026-10-03
+
+### Improvements
+
+- Color only the NickServ and ChanServ expiration warning icons red, leaving localized notice labels and prose uncolored.
+- Group NickServ and ChanServ IRCop `DROP`/`RESTORE` commands under localized deletion and restoration headings; keep ChanServ `NOEXPIRE` under channel management.
+
 ## [2.3.0] - 2026-09-29
 
 ### Features

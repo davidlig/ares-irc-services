@@ -128,27 +128,28 @@ final readonly class HelpCommand implements ChanServCommandInterface
             $subCmd = $this->findSubCommand($handler, $subName);
 
             if (null !== $subCmd) {
-                $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
+                $context->replyRaw(implode("\n", $this->formatter->renderSubCommandHelp($adapter, $handler->getName(), $subCmd)));
 
                 return;
             }
         }
 
-        $this->formatter->showCommandHelp($adapter, $handler);
+        $context->replyRaw(implode("\n", $this->formatter->renderCommandHelp($adapter, $handler)));
     }
 
     private function showGeneralHelp(ChanServContext $context): void
     {
         $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
-        $this->formatter->showGeneralHelp($adapter);
+        $lines = $this->formatter->renderGeneralHelp($adapter);
         if ($this->inactivityExpiryDays > 0) {
-            $context->replyRaw(' ');
-            $context->reply('help.intro_expiration', [
+            $lines[] = ' ';
+            $lines[] = $context->trans('help.intro_expiration', [
                 'label' => $context->trans('help.intro_expiration_label'),
                 'days' => $this->inactivityExpiryDays,
             ]);
         }
-        $this->formatter->sendFooter($adapter);
+        $lines[] = $this->formatter->renderFooter($adapter);
+        $context->replyRaw(implode("\n", $lines));
     }
 
     /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */

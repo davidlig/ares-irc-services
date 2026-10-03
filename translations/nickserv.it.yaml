@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <nuova_password>"
     short:          "Cambia la password del suo nickname."
-    help:           "Cambia la password per il suo nickname NickServ. La nuova password ha\neffetto immediato. Scelga una password sicura di almeno 6 caratteri\nche non usi su altri servizi."
+    help:           "Cambia la password per il suo nickname. La nuova password ha\neffetto immediato. Scelga una password sicura di almeno 6 caratteri\nche non usi su altri servizi."
     success:        "\x0303✔\x03 La sua password è stata aggiornata con successo."
 
   email:
@@ -271,26 +271,26 @@ help:
   short:            "Mostra l'aiuto per i comandi %nickserv%."
   help:             "Mostra l'aiuto generale di %nickserv% o informazioni dettagliate\nper un comando specifico."
   header_title:     "%bot%"
-  header:           "\x02\x0306● %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header:           "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
   navigation_marker: "\x0310›\x03\x0F"
   info_marker:       "\x0310ℹ\x03\x0F"
-  error_marker:      "\x0304✗\x03\x0F"
-  warning_marker:    "\x0307⚠\x03\x0F"
-  intro:            "Servizio di registrazione e protezione nickname per la rete IRC."
-  intro_expiration: "%marker% \x0307%label%\x03\x0F: I nickname non utilizzati per più di %days% giorni vengono rimossi automaticamente."
+  error_marker:      "\x0307✗\x03\x0F"
+  warning_marker:    "\x0304⚠\x03\x0F"
+  intro:            "Gestione e protezione dei nickname."
+  intro_expiration: "%marker% %label%: I nickname non utilizzati per più di \x1F\x0304%days% giorni\x03\x1F vengono rimossi automaticamente."
   intro_expiration_label: "NOTA"
-  general_header: "\x02\x0306Comandi disponibili:\x03\x0F"
-  command_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02\x0306◆ Opzioni:\x03\x0F"
+  general_header: "\x02 ■ Comandi disponibili:\x02"
+  command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Opzioni:\x02"
   general_syntax: "HELP <comando>"
   general_footer: "%marker% Usa /msg %bot% \x02\x0303%syntax%\x03\x0F per maggiori informazioni."
   set_sub_syntax: "HELP %command% <opzione>"
   set_sub_footer: "%marker% Usa /msg %bot% \x02\x0303%syntax%\x03\x0F per maggiori informazioni."
   syntax_label: "Sintassi: \x02\x0303%syntax%\x03\x0F"
   footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "\x02\x0304  ◆ %group%\x03\x0F"
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_auth: "Registrazione e autenticazione"
     account_security: "Account e sicurezza"
@@ -298,14 +298,14 @@ help:
     lookup: "Ricerca e indagine"
     account_management: "Gestione account"
     suspensions_bans: "Sospensioni e divieti"
-    deletion: "Eliminazione"
+    deletion: "Eliminazione e ripristino"
   unknown_command: "%marker% Nessun aiuto disponibile per \x02%command%\x0F."
-  ircop_header: "\x02\x0304◆ Comandi disponibili per gli IRCop:\x03\x0F"
+  ircop_header: "\x02 ■ Comandi disponibili per gli IRCop:\x02"
 
   set_timezone:
     index_label: "Regioni (usi \x02\x0303%syntax%\x03\x0F per l'elenco):"
     index_syntax:   "HELP SET TIMEZONE <regione>"
-    region_header: "\x02\x0306Fusi orari per %region%:\x03\x0F"
+    region_header: "\x02 ■ Fusi orari per %region%:\x02"
     region_unknown: "%marker% Regione sconosciuta. Usi \x02\x0303%syntax%\x03\x0F per l'indice."
     region_syntax:  "HELP SET TIMEZONE"
 
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gestisce i pattern vhost vietati."
   help:             |
     Gestisce i pattern che impediscono agli utenti di impostare vhost corrispondenti
-    tramite NickServ SET VHOST.
+    tramite %bot% SET VHOST.
 
     Caratteri jolly: * corrisponde a qualsiasi sequenza, ? corrisponde a un singolo carattere.
     Esempio: *.pirata.com blocca qualsiasi vhost che termina con .pirata.com
@@ -662,7 +662,7 @@ noexpire:
 # --- LIST (IRCOP) ------------------------------------------------------------
 list:
   syntax: "LIST <schema> [pagina]"
-  short: "Elenca i nickname registrati che corrispondono a uno schema (solo IRCop)."
+  short: "Elenca i nickname registrati che corrispondono a uno schema."
   help: "Elenca i nickname registrati che corrispondono allo schema indicato. Il carattere jolly * corrisponde a qualsiasi sequenza di caratteri. La pagina è facoltativa e parte da 1."
   header: "Nickname | Registrazione | Ultima connessione | IP | Stato"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"

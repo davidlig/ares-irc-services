@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <yeni_şifre>"
     short:          "Rumuz şifrenizi değiştirin."
-    help:           "NickServ rumuzunuzun şifresini değiştirir. Yeni şifre hemen geçerli olur.\nEn az 6 karakterden oluşan, başka hizmetlerde kullanmadığınız\ngüçlü bir şifre seçin."
+    help:           "Rumuzunuzun şifresini değiştirir. Yeni şifre hemen geçerli olur.\nEn az 6 karakterden oluşan, başka hizmetlerde kullanmadığınız\ngüçlü bir şifre seçin."
     success:        "\x0303✔\x03 Şifreniz başarıyla güncellendi."
 
   email:
@@ -271,26 +271,26 @@ help:
   short:            "%nickserv% komutları için yardım gösterin."
   help:             "Genel %nickserv% yardımını veya belirli bir komut için\nayrıntılı bilgi gösterir."
   header_title:     "%bot%"
-  header:           "\x02\x0306● %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header:           "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
   navigation_marker: "\x0310›\x03\x0F"
   info_marker:       "\x0310ℹ\x03\x0F"
-  error_marker:      "\x0304✗\x03\x0F"
-  warning_marker:    "\x0307⚠\x03\x0F"
-  intro:            "IRC ağı için rumuz kaydı ve koruma hizmeti."
-  intro_expiration: "%marker% \x0307%label%\x03\x0F: %days% günden uzun süre kullanılmayan takma adlar otomatik olarak silinir."
+  error_marker:      "\x0307✗\x03\x0F"
+  warning_marker:    "\x0304⚠\x03\x0F"
+  intro:            "Rumuz yönetimi ve koruması."
+  intro_expiration: "%marker% %label%: \x1F\x0304%days% günden\x03\x1F uzun süre kullanılmayan takma adlar otomatik olarak silinir."
   intro_expiration_label: "NOT"
-  general_header: "\x02\x0306Kullanılabilir komutlar:\x03\x0F"
-  command_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02\x0306◆ Seçenekler:\x03\x0F"
+  general_header: "\x02 ■ Kullanılabilir komutlar:\x02"
+  command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Seçenekler:\x02"
   general_syntax: "HELP <komut>"
   general_footer: "%marker% Daha fazla bilgi için /msg %bot% \x02\x0303%syntax%\x03\x0F kullanın."
   set_sub_syntax: "HELP %command% <seçenek>"
   set_sub_footer: "%marker% Daha fazla bilgi için /msg %bot% \x02\x0303%syntax%\x03\x0F kullanın."
   syntax_label: "Sözdizimi: \x02\x0303%syntax%\x03\x0F"
   footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "\x02\x0304  ◆ %group%\x03\x0F"
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_auth: "Kayıt ve kimlik doğrulama"
     account_security: "Hesap ve güvenlik"
@@ -298,14 +298,14 @@ help:
     lookup: "Arama ve inceleme"
     account_management: "Hesap yönetimi"
     suspensions_bans: "Askıya alma ve yasaklar"
-    deletion: "Silme"
+    deletion: "Silme ve geri yükleme"
   unknown_command: "%marker% \x02%command%\x0F için yardım bulunamadı."
-  ircop_header: "\x02\x0304◆ IRC operatörleri için kullanılabilir komutlar:\x03\x0F"
+  ircop_header: "\x02 ■ IRC operatörleri için kullanılabilir komutlar:\x02"
 
   set_timezone:
     index_label: "Bölgeler (\x02\x0303%syntax%\x03\x0F ile listeleyin):"
     index_syntax:   "HELP SET TIMEZONE <bölge>"
-    region_header: "\x02\x0306%region% için zaman dilimleri:\x03\x0F"
+    region_header: "\x02 ■ %region% için zaman dilimleri:\x02"
     region_unknown: "%marker% Bilinmeyen bölge. Dizin için \x02\x0303%syntax%\x03\x0F kullanın."
     region_syntax:  "HELP SET TIMEZONE"
 
@@ -480,7 +480,7 @@ forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [kalıp]"
   short:            "Yasaklı vhost kalıplarını yönetin."
   help:             |
-    Kullanıcıların NickServ SET VHOST ile eşleşen vhost'ları
+    Kullanıcıların %bot% SET VHOST ile eşleşen vhost'ları
     ayarlamalarını engelleyen kalıpları yönetir.
 
     Jokerler: * herhangi bir diziyi eşler, ? tek karakteri eşler.
@@ -662,7 +662,7 @@ noexpire:
 # --- LIST (IRCOP) ------------------------------------------------------------
 list:
   syntax: "LIST <desen> [sayfa]"
-  short: "Bir desenle eşleşen kayıtlı takma adları listeler (yalnızca IRCop)."
+  short: "Bir desenle eşleşen kayıtlı takma adları listeler."
   help: "Belirtilen desenle eşleşen kayıtlı takma adları listeler. * joker karakteri herhangi bir karakter dizisiyle eşleşir. Sayfa isteğe bağlıdır ve 1'den başlar."
   header: "Takma ad | Kayıt | Son bağlantı | IP | Durum"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"

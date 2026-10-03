@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <neues_passwort>"
     short:          "Ihr Nickname-Passwort ändern."
-    help:           "Ändert das Passwort für Ihren NickServ-Nickname. Das neue Passwort wird\nsofort wirksam. Wählen Sie ein starkes Passwort mit mindestens 6 Zeichen,\ndas Sie nicht bei anderen Diensten verwenden."
+    help:           "Ändert das Passwort für Ihren Nickname. Das neue Passwort wird\nsofort wirksam. Wählen Sie ein starkes Passwort mit mindestens 6 Zeichen,\ndas Sie nicht bei anderen Diensten verwenden."
     success:        "\x0303✔\x03 Ihr Passwort wurde erfolgreich aktualisiert."
 
   email:
@@ -271,26 +271,26 @@ help:
   short:            "Hilfe für %nickserv%-Befehle anzeigen."
   help:             "Zeigt die allgemeine %nickserv%-Hilfe oder detaillierte Informationen\nfür einen bestimmten Befehl an."
   header_title:     "%bot%"
-  header:           "\x02\x0306● %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header:           "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
   navigation_marker: "\x0310›\x03\x0F"
   info_marker:       "\x0310ℹ\x03\x0F"
-  error_marker:      "\x0304✗\x03\x0F"
-  warning_marker:    "\x0307⚠\x03\x0F"
-  intro:            "Nickname-Registrierungs- und Schutz-Dienst für das IRC-Netzwerk."
-  intro_expiration: "%marker% \x0307%label%\x03\x0F: Nicknamen, die länger als %days% Tage ungenutzt bleiben, werden automatisch entfernt."
+  error_marker:      "\x0307✗\x03\x0F"
+  warning_marker:    "\x0304⚠\x03\x0F"
+  intro:            "Verwaltung und Schutz von Nicknames."
+  intro_expiration: "%marker% %label%: Nicknamen, die länger als \x1F\x0304%days% Tage\x03\x1F ungenutzt bleiben, werden automatisch entfernt."
   intro_expiration_label: "HINWEIS"
-  general_header: "\x02\x0306Verfügbare Befehle:\x03\x0F"
-  command_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02\x0306◆ Optionen:\x03\x0F"
+  general_header: "\x02 ■ Verfügbare Befehle:\x02"
+  command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Optionen:\x02"
   general_syntax: "HELP <Befehl>"
   general_footer: "%marker% Verwende /msg %bot% \x02\x0303%syntax%\x03\x0F für weitere Informationen."
   set_sub_syntax: "HELP %command% <Option>"
   set_sub_footer: "%marker% Verwende /msg %bot% \x02\x0303%syntax%\x03\x0F für weitere Informationen."
   syntax_label: "Syntax: \x02\x0303%syntax%\x03\x0F"
   footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "\x02\x0304  ◆ %group%\x03\x0F"
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_auth: "Registrierung und Authentifizierung"
     account_security: "Konto und Sicherheit"
@@ -298,14 +298,14 @@ help:
     lookup: "Suche und Untersuchung"
     account_management: "Kontoverwaltung"
     suspensions_bans: "Sperren und Verbote"
-    deletion: "Löschung"
+    deletion: "Löschung und Wiederherstellung"
   unknown_command: "%marker% Keine Hilfe verfügbar für \x02%command%\x0F."
-  ircop_header: "\x02\x0304◆ Verfügbare Befehle für IRC-Operatoren:\x03\x0F"
+  ircop_header: "\x02 ■ Verfügbare Befehle für IRC-Operatoren:\x02"
 
   set_timezone:
     index_label: "Regionen (verwenden Sie \x02\x0303%syntax%\x03\x0F für Liste):"
     index_syntax:   "HELP SET TIMEZONE <Region>"
-    region_header: "\x02\x0306Zeitzonen für %region%:\x03\x0F"
+    region_header: "\x02 ■ Zeitzonen für %region%:\x02"
     region_unknown: "%marker% Unbekannte Region. Verwenden Sie \x02\x0303%syntax%\x03\x0F für den Index."
     region_syntax:  "HELP SET TIMEZONE"
 
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gesperrte VHost-Muster verwalten."
   help:             |
     Verwaltet Muster, die Benutzer daran hindern, übereinstimmende VHosts
-    via NickServ SET VHOST festzulegen.
+    via %bot% SET VHOST festzulegen.
 
     Platzhalter: * entspricht einer beliebigen Sequenz, ? einem einzelnen Zeichen.
     Beispiel: *.raubkopien.de sperrt jeden VHost, der auf .raubkopien.de endet.
@@ -662,7 +662,7 @@ noexpire:
 # --- LIST (IRCOP) ------------------------------------------------------------
 list:
   syntax: "LIST <Muster> [Seite]"
-  short: "Listet registrierte Nicknames nach Muster auf (nur IRCops)."
+  short: "Listet registrierte Nicknames nach Muster auf."
   help: "Listet registrierte Nicknames auf, die dem angegebenen Muster entsprechen. Das Platzhalterzeichen * steht für eine beliebige Zeichenfolge. Die Seite ist optional und beginnt bei 1."
   header: "Nickname | Registrierung | Letzte Verbindung | IP | Status"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"

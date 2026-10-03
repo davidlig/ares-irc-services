@@ -271,26 +271,26 @@ help:
   short:            "Muestra la ayuda de los comandos de %nickserv%."
   help:             "Muestra la ayuda general de %nickserv% o la información detallada\nde un comando concreto."
   header_title:     "%bot%"
-  header:           "\x02\x0306● %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header:           "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
   navigation_marker: "\x0310›\x03\x0F"
   info_marker:       "\x0310ℹ\x03\x0F"
-  error_marker:      "\x0304✗\x03\x0F"
-  warning_marker:    "\x0307⚠\x03\x0F"
-  intro:            "Gestión y protección de apodos en la red IRC."
-  intro_expiration: "%marker% \x0307%label%\x03\x0F: Los nicks que no se utilicen durante más de %days% días se eliminarán automáticamente."
+  error_marker:      "\x0307✗\x03\x0F"
+  warning_marker:    "\x0304⚠\x03\x0F"
+  intro:            "Gestión y protección de apodos."
+  intro_expiration: "%marker% %label%: Los nicks que no se utilicen durante más de \x1F\x0304%days% días\x03\x1F se eliminarán automáticamente."
   intro_expiration_label: "NOTA"
-  general_header: "\x02\x0306Comandos disponibles:\x03\x0F"
-  command_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02\x0306◆ Opciones:\x03\x0F"
+  general_header: "\x02 ■ Comandos disponibles:\x02"
+  command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Opciones:\x02"
   general_syntax: "HELP <comando>"
   general_footer: "%marker% Usa /msg %bot% \x02\x0303%syntax%\x03\x0F para más información."
   set_sub_syntax: "HELP %command% <opción>"
   set_sub_footer: "%marker% Usa /msg %bot% \x02\x0303%syntax%\x03\x0F para más información."
   syntax_label: "Sintaxis: \x02\x0303%syntax%\x03\x0F"
   footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "\x02\x0304  ◆ %group%\x03\x0F"
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_auth: "Registro y autenticación"
     account_security: "Cuenta y seguridad"
@@ -298,14 +298,14 @@ help:
     lookup: "Consulta e investigación"
     account_management: "Gestión de cuentas"
     suspensions_bans: "Suspensiones y prohibiciones"
-    deletion: "Eliminación"
+    deletion: "Eliminación y restauración"
   unknown_command: "%marker% No hay ayuda disponible para \x02%command%\x0F."
-  ircop_header: "\x02\x0304◆ Comandos disponibles para IRCops:\x03\x0F"
+  ircop_header: "\x02 ■ Comandos disponibles para IRCops:\x02"
 
   set_timezone:
     index_label: "Regiones (usa \x02\x0303%syntax%\x03\x0F para listar):"
     index_syntax:   "HELP SET TIMEZONE <región>"
-    region_header: "\x02\x0306Zonas horarias para %region%:\x03\x0F"
+    region_header: "\x02 ■ Zonas horarias para %region%:\x02"
     region_unknown: "%marker% Región desconocida. Usa \x02\x0303%syntax%\x03\x0F para ver el índice."
     region_syntax:  "HELP SET TIMEZONE"
 
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gestiona vhosts prohibidos."
   help:             |
     Gestiona patrones que impiden a los usuarios establecer vhosts
-    coincidentes vía NickServ SET VHOST.
+    coincidentes vía %bot% SET VHOST.
 
     Comodines: * coincide con cualquier secuencia, ? coincide con un caracter.
     Ejemplo: *.pirata.com bloquea cualquier vhost que termine en .pirata.com
@@ -662,7 +662,7 @@ noexpire:
 # --- LIST (IRCOP) ------------------------------------------------------------
 list:
   syntax: "LIST <patrón> [página]"
-  short: "Lista apodos registrados que coinciden con un patrón (solo IRCops)."
+  short: "Lista apodos registrados que coinciden con un patrón."
   help: "Lista los apodos registrados que coinciden con el patrón indicado. El comodín * coincide con cualquier secuencia de caracteres. La página es opcional y empieza en 1."
   header: "Apodo | Registro | Última conexión | IP | Estado"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"

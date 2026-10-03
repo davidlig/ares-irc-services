@@ -55,33 +55,38 @@ info:
   pending_deletion_status: "  14Durum              : 07Silinme bekleniyor"
   pending_deletion_at: "  14Silindi            : %date%"
   pending_deletion_until: "  14Kalıcı silinme     : %date%"
-  pending_deletion_notice: "  07Bu kanal ChanServ'de dondurulmuştur ve kaydedilemez."
+  pending_deletion_notice: "  07Bu kanal dondurulmuştur ve kaydedilemez."
 
 help:
   syntax:           "HELP [komut [alt-seçenek]]"
   short:            "Komutları listeleyin veya bir komut için yardım gösterin."
   help:             "Argüman olmadan tüm komutları listeler. Tam yardım için \x0303HELP <komut>\x03, SET alt seçenekleri için \x0303HELP <komut> <seçenek>\x03 kullanın."
   header_title:     "%bot%"
-  header: "\x02\x0306● %title%\x03\x0F \x0314%separator%\x03"
-  intro:            "IRC ağı için kanal kaydı ve yönetim hizmeti."
-  general_header: "\x02\x0306Kullanılabilir komutlar:\x03\x0F"
-  command_line: "  \x0310›\x03 \x0303%command%\x03%description%"
-  subcommand_line: "  \x0310›\x03 \x0303%command%\x03%description%"
-  options_header: "\x02\x0306◆ Seçenekler:\x03\x0F"
-  general_footer: "\x0303ℹ\x03 Daha fazla bilgi için /msg %bot% HELP <komut> kullanın."
-  set_sub_footer: "\x0303ℹ\x03 Daha fazla bilgi için /msg %bot% HELP %command% <seçenek> kullanın."
-  syntax_label: "\x0303Sözdizimi:\x03 \x02%syntax%\x02"
-  footer:           "\x0314─────────────────────────────\x03"
-  intro_expiration: "\x0307⚠\x03 NOT: %days% günden uzun süre kullanılmayan kanallar otomatik olarak silinir."
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "  \x02\x0304◆ %group%\x03\x0F"
+  header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
+  intro:            "Kanal kaydı ve yönetim hizmeti."
+  general_header: "\x02 ■ Kullanılabilir komutlar:\x02"
+  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Seçenekler:\x02"
+  general_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP <komut>\x03\x0F kullanın."
+  set_sub_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP %command% <seçenek>\x03\x0F kullanın."
+  syntax_label: "Sözdizimi: \x02\x0303%syntax%\x03\x0F"
+  footer:           "\x0314─────────────────────────────\x03\x0F"
+  intro_expiration: "\x0304⚠\x03\x0F NOT: \x1F\x0304%days% günden\x03\x1F uzun süre kullanılmayan kanallar otomatik olarak silinir."
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_info: "Kayıt ve bilgi"
     access_levels: "Erişim ve seviyeler"
     ranks_entry: "Yetkiler ve giriş"
-    protection: "Koruma"
-  unknown_command:  "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
-  ircop_header: "\x02\x0304◆ IRC operatörleri için kullanılabilir komutlar:\x03\x0F"
+  ircop_group:
+    channel_operations: "Kanal işlemleri"
+    channel_management: "Kanal yönetimi"
+    deletion: "Silme ve geri yükleme"
+    restrictions: "Kısıtlamalar"
+    lookup: Arama ve inceleme
+  unknown_command:  "\x0307✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
+  ircop_header: "\x02 ■ IRC operatörleri için kullanılabilir komutlar:\x02"
 
 op:
   syntax:           "OP <#channel> <nickname>"
@@ -388,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#channel> {ON|OFF}"
   short:            "Bir kanalı IRC operatörleriyle sınırlandırın."
-  help:             "Yalnızca yetkili IRC operatörleri kanalda kalabilir. ChanServ katılır ve +O kipini korur."
+  help:             "Yalnızca yetkili IRC operatörleri kanalda kalabilir. %bot% katılır ve +O kipini korur."
   on:               "IRCOPONLY %channel% kanalında açıldı."
   off:              "IRCOPONLY %channel% kanalında kapatıldı."
 
@@ -553,7 +558,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <desen> [sayfa]"
-  short: "Bir desenle eşleşen kayıtlı kanalları listeler (yalnızca IRCop)."
+  short: "Bir desenle eşleşen kayıtlı kanalları listeler."
   help: "Belirtilen desenle eşleşen kayıtlı kanalları listeler. * joker karakteri herhangi bir karakter dizisiyle eşleşir. Sayfa isteğe bağlıdır ve 1'den başlar."
   header: "Kanal | Kurucu | Kayıt | Son kullanım | Durum"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

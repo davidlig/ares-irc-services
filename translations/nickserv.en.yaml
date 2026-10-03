@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <new_password>"
     short:          "Change your nickname password."
-    help:           "Changes the password for your NickServ nickname. The new password takes\neffect immediately. Choose a strong password of at least 6 characters\nthat you do not use on other services."
+    help:           "Changes the password for your nickname. The new password takes\neffect immediately. Choose a strong password of at least 6 characters\nthat you do not use on other services."
     success:        "\x0303✔\x03 Your password has been updated successfully."
 
   email:
@@ -271,26 +271,26 @@ help:
   short:            "Display help for %nickserv% commands."
   help:             "Displays general %nickserv% help or detailed information\nfor a specific command."
   header_title:     "%bot%"
-  header:           "\x02\x0306● %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header:           "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
   navigation_marker: "\x0310›\x03\x0F"
   info_marker:       "\x0310ℹ\x03\x0F"
-  error_marker:      "\x0304✗\x03\x0F"
-  warning_marker:    "\x0307⚠\x03\x0F"
-  intro:            "Nickname registration and protection service for the IRC network."
-  intro_expiration: "%marker% \x0307%label%\x03\x0F: Nicknames unused for more than %days% days are automatically removed."
+  error_marker:      "\x0307✗\x03\x0F"
+  warning_marker:    "\x0304⚠\x03\x0F"
+  intro:            "Nickname management and protection."
+  intro_expiration: "%marker% %label%: Nicknames unused for more than \x1F\x0304%days% days\x03\x1F are automatically removed."
   intro_expiration_label: "NOTE"
-  general_header: "\x02\x0306Available commands:\x03\x0F"
-  command_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02\x0306◆ Options:\x03\x0F"
+  general_header: "\x02 ■ Available commands:\x02"
+  command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Options:\x02"
   general_syntax: "HELP <command>"
   general_footer: "%marker% Use /msg %bot% \x02\x0303%syntax%\x03\x0F for more information."
   set_sub_syntax: "HELP %command% <option>"
   set_sub_footer: "%marker% Use /msg %bot% \x02\x0303%syntax%\x03\x0F for more information."
   syntax_label: "Syntax: \x02\x0303%syntax%\x03\x0F"
   footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "\x02\x0304  ◆ %group%\x03\x0F"
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_auth: "Registration and authentication"
     account_security: "Account and security"
@@ -298,14 +298,14 @@ help:
     lookup: "Lookup and investigation"
     account_management: "Account management"
     suspensions_bans: "Suspensions and bans"
-    deletion: "Deletion"
+    deletion: "Deletion and restoration"
   unknown_command: "%marker% No help available for \x02%command%\x0F."
-  ircop_header: "\x02\x0304◆ Available commands for IRC Operators:\x03\x0F"
+  ircop_header: "\x02 ■ Available commands for IRC Operators:\x02"
 
   set_timezone:
     index_label: "Regions (use \x02\x0303%syntax%\x03\x0F for list):"
     index_syntax:   "HELP SET TIMEZONE <region>"
-    region_header: "\x02\x0306Timezones for %region%:\x03\x0F"
+    region_header: "\x02 ■ Timezones for %region%:\x02"
     region_unknown: "%marker% Unknown region. Use \x02\x0303%syntax%\x03\x0F for the index."
     region_syntax:  "HELP SET TIMEZONE"
 
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Manage forbidden vhost patterns."
   help:             |
     Manages patterns that prevent users from setting matching vhosts
-    via NickServ SET VHOST.
+    via %bot% SET VHOST.
 
     Wildcards: * matches any sequence, ? matches single character.
     Example: *.pirated.com blocks any vhost ending with .pirated.com
@@ -662,7 +662,7 @@ noexpire:
 # --- LIST (IRCOP) ------------------------------------------------------------
 list:
   syntax: "LIST <pattern> [page]"
-  short: "List registered nicknames matching a pattern (IRC Operators only)."
+  short: "List registered nicknames matching a pattern."
   help: "Lists registered nicknames matching the supplied pattern. The * wildcard matches any sequence of characters. The page is optional and starts at 1."
   header: "Nickname | Registration | Last connection | IP | Status"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"

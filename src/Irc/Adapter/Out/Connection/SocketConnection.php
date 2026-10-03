@@ -15,13 +15,17 @@ use Throwable;
 
 use function Amp\Socket\connect;
 use function Amp\Socket\connectTls;
+use function is_string;
 use function rtrim;
 use function sprintf;
+use function strlen;
 use function strpos;
 use function substr;
 
 class SocketConnection implements ConnectionInterface
 {
+    private const int WRITE_CHUNK_BYTES = 16 * 1024;
+
     private ConnectionStatus $status = ConnectionStatus::Disconnected;
 
     private ?Socket $socket = null;
@@ -50,7 +54,8 @@ class SocketConnection implements ConnectionInterface
         $this->status = ConnectionStatus::Connecting;
 
         $connectContext = new ConnectContext()
-            ->withConnectTimeout((float) $this->timeoutSeconds);
+            ->withConnectTimeout((float) $this->timeoutSeconds)
+            ->withTcpNoDelay();
 
         if ($this->useTls) {
             $tlsContext = new ClientTlsContext($this->host);
@@ -102,13 +107,50 @@ class SocketConnection implements ConnectionInterface
         ]);
     }
 
-    public function writeLine(string $data): void
+    /** @param string|list<string> $data */
+    public function writeLine(array|string $data): void
+    {
+        if (is_string($data)) {
+            $this->writePayload($data . "\r\n");
+
+            return;
+        }
+
+        $parts = [];
+        $chunkLen = 0;
+        foreach ($data as $line) {
+            $lineLen = strlen($line) + 2;
+            if (0 < $chunkLen && $chunkLen + $lineLen > self::WRITE_CHUNK_BYTES) {
+                $this->writeChunk($parts);
+                $parts = [];
+                $chunkLen = 0;
+            }
+
+            $parts[] = $line;
+            $chunkLen += $lineLen;
+            if ($chunkLen >= self::WRITE_CHUNK_BYTES) {
+                $this->writeChunk($parts);
+                $parts = [];
+                $chunkLen = 0;
+            }
+        }
+
+        if (0 < $chunkLen) {
+            $this->writeChunk($parts);
+        }
+    }
+
+    /** @param list<string> $parts */
+    private function writeChunk(array $parts): void
+    {
+        $this->writePayload(implode("\r\n", $parts) . "\r\n");
+    }
+
+    private function writePayload(string $payload): void
     {
         if (!$this->isConnected()) {
             throw new RuntimeException('Cannot write: connection is not open.');
         }
-
-        $payload = $data . "\r\n";
 
         try {
             $this->socket?->write($payload);

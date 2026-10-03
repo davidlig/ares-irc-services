@@ -55,33 +55,38 @@ info:
   pending_deletion_status: "  14Status             : 07Pending deletion"
   pending_deletion_at: "  14Dropped            : %date%"
   pending_deletion_until: "  14Hard delete on     : %date%"
-  pending_deletion_notice: "  07This channel is frozen in ChanServ and cannot be registered."
+  pending_deletion_notice: "  07This channel is frozen and cannot be registered."
 
 help:
   syntax:           "HELP [command [sub-option]]"
   short:            "List commands or show help for a command."
   help:             "Without arguments lists all commands. Use \x0303HELP <command>\x03 for full help, or \x0303HELP <command> <option>\x03 for SET sub-options."
   header_title:     "%bot%"
-  header: "\x02\x0306● %title%\x03\x0F \x0314%separator%\x03"
-  intro:            "Channel registration and management service for the IRC network."
-  general_header: "\x02\x0306Available commands:\x03\x0F"
-  command_line: "  \x0310›\x03 \x0303%command%\x03%description%"
-  subcommand_line: "  \x0310›\x03 \x0303%command%\x03%description%"
-  options_header: "\x02\x0306◆ Options:\x03\x0F"
-  general_footer: "\x0303ℹ\x03 Use /msg %bot% HELP <command> for more information."
-  set_sub_footer: "\x0303ℹ\x03 Use /msg %bot% HELP %command% <option> for more information."
-  syntax_label: "\x0303Syntax:\x03 \x02%syntax%\x02"
-  footer:           "\x0314─────────────────────────────\x03"
-  intro_expiration: "\x0307⚠\x03 NOTE: Channels unused for more than %days% days are automatically removed."
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "  \x02\x0304◆ %group%\x03\x0F"
+  header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
+  intro:            "Channel registration and management service."
+  general_header: "\x02 ■ Available commands:\x02"
+  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Options:\x02"
+  general_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP <command>\x03\x0F for more information."
+  set_sub_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP %command% <option>\x03\x0F for more information."
+  syntax_label: "Syntax: \x02\x0303%syntax%\x03\x0F"
+  footer:           "\x0314─────────────────────────────\x03\x0F"
+  intro_expiration: "\x0304⚠\x03\x0F NOTE: Channels unused for more than \x1F\x0304%days% days\x03\x1F are automatically removed."
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_info: "Registration and information"
     access_levels: "Access and levels"
     ranks_entry: "Ranks and entry"
-    protection: "Protection"
-  unknown_command:  "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
-  ircop_header: "\x02\x0304◆ Available commands for IRC Operators:\x03\x0F"
+  ircop_group:
+    channel_operations: "Channel operations"
+    channel_management: "Channel management"
+    deletion: "Deletion and restoration"
+    restrictions: "Restrictions"
+    lookup: Lookup and investigation
+  unknown_command:  "\x0307✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02 ■ Available commands for IRC Operators:\x02"
 
 op:
   syntax:           "OP <#channel> <nickname>"
@@ -388,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#channel> {ON|OFF}"
   short:            "Restrict a channel to IRC operators."
-  help:             "Only authorized IRC operators may remain in the channel. ChanServ joins and protects mode +O."
+  help:             "Only authorized IRC operators may remain in the channel. %bot% joins and protects mode +O."
   on:               "IRCOPONLY is now ON for %channel%."
   off:              "IRCOPONLY is now OFF for %channel%."
 
@@ -553,7 +558,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <pattern> [page]"
-  short: "List registered channels matching a pattern (IRCop only)."
+  short: "List registered channels matching a pattern."
   help: "Lists registered channels matching the supplied pattern. The * wildcard matches any sequence of characters. The page is optional and starts at 1."
   header: "Channel | Founder | Registered | Last used | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

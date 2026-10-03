@@ -631,7 +631,16 @@ final class HelpFormatterContextAdapterTest extends TestCase
         self::assertTrue($allowed->canViewCommandInHelp($public));
         self::assertTrue($allowed->canViewCommandInHelp($restricted));
         self::assertFalse($denied->canViewCommandInHelp($restricted));
-        self::assertSame('help.group.registration_info', $allowed->getHelpGroups()[0]['group_key']);
+        self::assertSame([
+            ['group_key' => 'help.group.registration_info', 'commands' => ['REGISTER', 'INFO', 'SET'], 'admin' => false, 'subgroup' => false],
+            ['group_key' => 'help.group.access_levels', 'commands' => ['ACCESS', 'DELACCESS', 'AKICK', 'LEVELS'], 'admin' => false, 'subgroup' => false],
+            ['group_key' => 'help.group.ranks_entry', 'commands' => ['OP', 'DEOP', 'VOICE', 'DEVOICE', 'ADMIN', 'DEADMIN', 'HALFOP', 'DEHALFOP', 'INVITE'], 'admin' => false, 'subgroup' => false],
+            ['group_key' => 'help.ircop_group.channel_operations', 'commands' => ['CLEARUSERS', 'CLEARACCESS', 'IRCOPONLY'], 'admin' => true, 'subgroup' => true],
+            ['group_key' => 'help.ircop_group.channel_management', 'commands' => ['NOEXPIRE'], 'admin' => true, 'subgroup' => true],
+            ['group_key' => 'help.ircop_group.deletion', 'commands' => ['DROP', 'RESTORE'], 'admin' => true, 'subgroup' => true],
+            ['group_key' => 'help.ircop_group.restrictions', 'commands' => ['SUSPEND', 'UNSUSPEND', 'FORBID', 'UNFORBID'], 'admin' => true, 'subgroup' => true],
+            ['group_key' => 'help.ircop_group.lookup', 'commands' => ['HISTORY', 'LIST'], 'admin' => true, 'subgroup' => true],
+        ], $allowed->getHelpGroups());
     }
 
     #[Test]

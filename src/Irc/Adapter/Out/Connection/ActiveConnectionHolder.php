@@ -68,9 +68,10 @@ final class ActiveConnectionHolder implements ActiveProtocolModuleHolderInterfac
         return $this->remoteServerSid;
     }
 
-    public function writeLine(string $line): void
+    /** @param string|list<string> $data */
+    public function writeLine(array|string $data): void
     {
-        $this->connection?->writeLine($line);
+        $this->connection?->writeLine($data);
     }
 
     public function isConnected(): bool

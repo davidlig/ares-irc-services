@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <parolă_nouă>"
     short:          "Schimbați parola poreclei dumneavoastră."
-    help:           "Schimbă parola pentru porecla dumneavoastră NickServ. Noua parolă intră în\nvigoare imediat. Alegeți o parolă puternică de cel puțin 6 caractere\npe care să nu o folosiți la alte servicii."
+    help:           "Schimbă parola pentru porecla dumneavoastră. Noua parolă intră în\nvigoare imediat. Alegeți o parolă puternică de cel puțin 6 caractere\npe care să nu o folosiți la alte servicii."
     success:        "\x0303✔\x03 Parola dumneavoastră a fost actualizată cu succes."
 
   email:
@@ -271,26 +271,26 @@ help:
   short:            "Afișați ajutorul pentru comenzile %nickserv%."
   help:             "Afișează ajutorul general %nickserv% sau informații detaliate\npentru o comandă specifică."
   header_title:     "%bot%"
-  header:           "\x02\x0306● %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header:           "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
   navigation_marker: "\x0310›\x03\x0F"
   info_marker:       "\x0310ℹ\x03\x0F"
-  error_marker:      "\x0304✗\x03\x0F"
-  warning_marker:    "\x0307⚠\x03\x0F"
-  intro:            "Serviciu de înregistrare și protecție a poreclelor pentru rețeaua IRC."
-  intro_expiration: "%marker% \x0307%label%\x03\x0F: Poreclele nefolosite mai mult de %days% zile sunt eliminate automat."
+  error_marker:      "\x0307✗\x03\x0F"
+  warning_marker:    "\x0304⚠\x03\x0F"
+  intro:            "Gestionarea și protecția poreclelor."
+  intro_expiration: "%marker% %label%: Poreclele nefolosite mai mult de \x1F\x0304%days% zile\x03\x1F sunt eliminate automat."
   intro_expiration_label: "NOTĂ"
-  general_header: "\x02\x0306Comenzi disponibile:\x03\x0F"
-  command_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02\x0306◆ Opțiuni:\x03\x0F"
+  general_header: "\x02 ■ Comenzi disponibile:\x02"
+  command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Opțiuni:\x02"
   general_syntax: "HELP <comandă>"
   general_footer: "%marker% Folosește /msg %bot% \x02\x0303%syntax%\x03\x0F pentru mai multe informații."
   set_sub_syntax: "HELP %command% <opțiune>"
   set_sub_footer: "%marker% Folosește /msg %bot% \x02\x0303%syntax%\x03\x0F pentru mai multe informații."
   syntax_label: "Sintaxă: \x02\x0303%syntax%\x03\x0F"
   footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "\x02\x0304  ◆ %group%\x03\x0F"
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_auth: "Înregistrare și autentificare"
     account_security: "Cont și securitate"
@@ -298,14 +298,14 @@ help:
     lookup: "Căutare și investigare"
     account_management: "Gestionarea conturilor"
     suspensions_bans: "Suspendări și interdicții"
-    deletion: "Ștergere"
+    deletion: "Ștergere și restaurare"
   unknown_command: "%marker% Nu există ajutor disponibil pentru \x02%command%\x0F."
-  ircop_header: "\x02\x0304◆ Comenzi disponibile pentru IRCops:\x03\x0F"
+  ircop_header: "\x02 ■ Comenzi disponibile pentru IRCops:\x02"
 
   set_timezone:
     index_label: "Regiuni (folosiți \x02\x0303%syntax%\x03\x0F pentru listă):"
     index_syntax:   "HELP SET TIMEZONE <regiune>"
-    region_header: "\x02\x0306Fusuri orare pentru %region%:\x03\x0F"
+    region_header: "\x02 ■ Fusuri orare pentru %region%:\x02"
     region_unknown: "%marker% Regiune necunoscută. Folosiți \x02\x0303%syntax%\x03\x0F pentru index."
     region_syntax:  "HELP SET TIMEZONE"
 
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gestionați modelele de vhost interzise."
   help:             |
     Gestionează modelele care împiedică utilizatorii să seteze vhosturi
-    corespunzătoare prin NickServ SET VHOST.
+    corespunzătoare prin %bot% SET VHOST.
 
     Metacaractere: * potrivește orice secvență, ? potrivește un singur caracter.
     Exemplu: *.pirated.com blochează orice vhost care se termină cu .pirated.com
@@ -662,7 +662,7 @@ noexpire:
 # --- LIST (IRCOP) ------------------------------------------------------------
 list:
   syntax: "LIST <model> [pagina]"
-  short: "Listează poreclele înregistrate care se potrivesc unui model (numai IRCops)."
+  short: "Listează poreclele înregistrate care se potrivesc unui model."
   help: "Listează poreclele înregistrate care se potrivesc modelului indicat. Caracterul * corespunde oricărei secvențe de caractere. Pagina este opțională și începe de la 1."
   header: "Poreclă | Înregistrare | Ultima conexiune | IP | Stare"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"

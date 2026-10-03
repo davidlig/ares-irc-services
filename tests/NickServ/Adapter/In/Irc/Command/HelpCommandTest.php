@@ -18,8 +18,10 @@ use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -90,9 +92,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -171,9 +173,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -252,9 +254,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
@@ -264,8 +266,8 @@ final class HelpCommandTest extends TestCase
 
                 $translation = match ($id) {
                     'help.intro_expiration_label' => 'NOTE',
-                    'help.warning_marker' => 'translated:help.warning_marker',
-                    'help.intro_expiration' => '%marker% %label%: Nicknames unused for more than %days% days are automatically removed.',
+                    'help.warning_marker' => "\x0304⚠\x03\x0F",
+                    'help.intro_expiration' => "%marker% %label%: Nicknames unused for more than \x1F\x0304%days% days\x03\x1F are automatically removed.",
                     default => $id,
                 };
 
@@ -340,14 +342,14 @@ final class HelpCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, [], $notifier, $translator, $registry));
 
         self::assertContains(
-            'translated:help.warning_marker NOTE: Nicknames unused for more than 30 days are automatically removed.',
+            "\x0304⚠\x03\x0F NOTE: Nicknames unused for more than \x1F\x030430 days\x03\x1F are automatically removed.",
             $messages,
         );
         self::assertContains([
             'id' => 'help.intro_expiration',
             'parameters' => [
                 ...self::SERVICE_NICKNAME_PLACEHOLDERS,
-                '%marker%' => 'translated:help.warning_marker',
+                '%marker%' => "\x0304⚠\x03\x0F",
                 '%label%' => 'NOTE',
                 '%days%' => 30,
             ],
@@ -363,9 +365,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false, '', '');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -444,9 +446,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -525,9 +527,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -613,9 +615,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
@@ -723,9 +725,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
@@ -839,9 +841,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
@@ -953,9 +955,9 @@ final class HelpCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -1112,6 +1114,65 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(0);
 
         self::assertSame([], $cmd->getHelpParams());
+    }
+
+    /** @param list<string> $args */
+    #[Test]
+    #[DataProvider('renderFailureScenarios')]
+    public function renderingFailureDoesNotSendPartialHelp(array $args): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $key): string {
+            if ('help.footer' === $key) {
+                throw new RuntimeException('Cannot render footer');
+            }
+
+            return $key;
+        });
+        $handler = $this->createStub(NickServCommandInterface::class);
+        $handler->method('getName')->willReturn($args[0] ?? 'INFO');
+        $handler->method('getHelpKey')->willReturn('command.help');
+        $handler->method('getSyntaxKey')->willReturn('command.syntax');
+        $handler->method('getSubCommandHelp')->willReturn([
+            ['name' => 'EMAIL', 'desc_key' => 'set.email.short', 'help_key' => 'set.email.help', 'syntax_key' => 'set.email.syntax'],
+            ['name' => 'TIMEZONE', 'desc_key' => 'set.timezone.short', 'help_key' => 'set.timezone.help', 'syntax_key' => 'set.timezone.syntax'],
+        ]);
+        $registry = new NickServCommandRegistry([$handler]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cannot render footer');
+
+        $this->createHelpCommand()->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $args, $notifier, $translator, $registry));
+    }
+
+    /** @return array<string, array{list<string>}> */
+    public static function renderFailureScenarios(): array
+    {
+        return [
+            'general' => [[]],
+            'command' => [['INFO']],
+            'subcommand' => [['SET', 'EMAIL']],
+            'timezone index' => [['SET', 'TIMEZONE']],
+            'timezone region' => [['SET', 'TIMEZONE', 'Europe']],
+            'timezone alias' => [['SET', 'TIMEZONE', 'Europe/Madrid']],
+            'timezone unknown' => [['SET', 'TIMEZONE', 'InvalidRegion']],
+        ];
+    }
+
+    #[Test]
+    public function completeHelpPropagatesSynchronousTransportFailure(): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willThrowException(new RuntimeException('Connection write failed'));
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Connection write failed');
+
+        $this->createHelpCommand()->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), [], $notifier, $translator, new NickServCommandRegistry([])));
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

@@ -55,33 +55,38 @@ info:
   pending_deletion_status: "  14Status             : 07Oczekuje na usunięcie"
   pending_deletion_at: "  14Usunięty           : %date%"
   pending_deletion_until: "  14Trwale usunięcie   : %date%"
-  pending_deletion_notice: "  07Ten kanał jest zamrożony w ChanServ i nie może zostać zarejestrowany."
+  pending_deletion_notice: "  07Ten kanał jest zamrożony i nie może zostać zarejestrowany."
 
 help:
   syntax:           "HELP [komenda [pod-opcja]]"
   short:            "Lista komend lub pomoc dla komendy."
   help:             "Bez argumentów wyświetla wszystkie komendy. Użyj \x0303HELP <komenda>\x03 aby uzyskać pełną pomoc, lub \x0303HELP <komenda> <opcja>\x03 dla pod-opcji SET."
   header_title:     "%bot%"
-  header: "\x02\x0306● %title%\x03\x0F \x0314%separator%\x03"
-  intro:            "Usługa rejestracji i zarządzania kanałami dla sieci IRC."
-  general_header: "\x02\x0306Dostępne komendy:\x03\x0F"
-  command_line: "  \x0310›\x03 \x0303%command%\x03%description%"
-  subcommand_line: "  \x0310›\x03 \x0303%command%\x03%description%"
-  options_header: "\x02\x0306◆ Opcje:\x03\x0F"
-  general_footer: "\x0303ℹ\x03 Użyj /msg %bot% HELP <komenda>, aby uzyskać więcej informacji."
-  set_sub_footer: "\x0303ℹ\x03 Użyj /msg %bot% HELP %command% <opcja>, aby uzyskać więcej informacji."
-  syntax_label: "\x0303Składnia:\x03 \x02%syntax%\x02"
-  footer:           "\x0314─────────────────────────────\x03"
-  intro_expiration: "\x0307⚠\x03 UWAGA: Nieużywane przez ponad %days% dni kanały są automatycznie usuwane."
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "  \x02\x0304◆ %group%\x03\x0F"
+  header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
+  intro:            "Usługa rejestracji i zarządzania kanałami."
+  general_header: "\x02 ■ Dostępne komendy:\x02"
+  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Opcje:\x02"
+  general_footer: "\x0310ℹ\x03\x0F Użyj /msg %bot% \x02\x0303HELP <komenda>\x03\x0F, aby uzyskać więcej informacji."
+  set_sub_footer: "\x0310ℹ\x03\x0F Użyj /msg %bot% \x02\x0303HELP %command% <opcja>\x03\x0F, aby uzyskać więcej informacji."
+  syntax_label: "Składnia: \x02\x0303%syntax%\x03\x0F"
+  footer:           "\x0314─────────────────────────────\x03\x0F"
+  intro_expiration: "\x0304⚠\x03\x0F UWAGA: Nieużywane przez ponad \x1F\x0304%days% dni\x03\x1F kanały są automatycznie usuwane."
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_info: "Rejestracja i informacje"
     access_levels: "Dostęp i poziomy"
     ranks_entry: "Rangi i wejście"
-    protection: "Ochrona"
-  unknown_command:  "\x0304✗\x03 Nieznana komenda \x02%command%\x02. Użyj \x0303/msg %bot% HELP\x03."
-  ircop_header: "\x02\x0304◆ Dostępne komendy dla operatorów IRC:\x03\x0F"
+  ircop_group:
+    channel_operations: "Operacje kanału"
+    channel_management: "Zarządzanie kanałem"
+    deletion: "Usuwanie i przywracanie"
+    restrictions: "Ograniczenia"
+    lookup: Wyszukiwanie i dochodzenie
+  unknown_command:  "\x0307✗\x03 Nieznana komenda \x02%command%\x02. Użyj \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02 ■ Dostępne komendy dla operatorów IRC:\x02"
 
 op:
   syntax:           "OP <#kanał> <nick>"
@@ -388,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#kanał> {ON|OFF}"
   short:            "Ogranicz kanał do operatorów IRC."
-  help:             "Tylko uprawnieni operatorzy IRC mogą pozostać na kanale. ChanServ dołącza i chroni tryb +O."
+  help:             "Tylko uprawnieni operatorzy IRC mogą pozostać na kanale. %bot% dołącza i chroni tryb +O."
   on:               "IRCOPONLY włączono na %channel%."
   off:              "IRCOPONLY wyłączono na %channel%."
 
@@ -553,7 +558,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <wzorzec> [strona]"
-  short: "Wyświetla zarejestrowane kanały pasujące do wzorca (tylko IRCop)."
+  short: "Wyświetla zarejestrowane kanały pasujące do wzorca."
   help: "Wyświetla zarejestrowane kanały pasujące do podanego wzorca. Symbol * dopasowuje dowolny ciąg znaków. Strona jest opcjonalna i zaczyna się od 1."
   header: "Kanał | Założyciel | Rejestracja | Ostatnie użycie | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

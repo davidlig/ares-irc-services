@@ -55,33 +55,38 @@ info:
   pending_deletion_status: "  14Estado             : 07A aguardar eliminação"
   pending_deletion_at: "  14Eliminado          : %date%"
   pending_deletion_until: "  14Elim. definitiva   : %date%"
-  pending_deletion_notice: "  07Este canal está congelado no ChanServ e não pode ser registado."
+  pending_deletion_notice: "  07Este canal está congelado e não pode ser registado."
 
 help:
   syntax:           "HELP [comando [sub-opção]]"
   short:            "Listar comandos ou mostrar ajuda de um comando."
   help:             "Sem argumentos lista todos os comandos. Use \x0303HELP <comando>\x03 para ajuda completa, ou \x0303HELP <comando> <opção>\x03 para sub-opções de SET."
   header_title:     "%bot%"
-  header: "\x02\x0306● %title%\x03\x0F \x0314%separator%\x03"
-  intro:            "Serviço de registo e gestão de canais para a rede IRC."
-  general_header: "\x02\x0306Comandos disponíveis:\x03\x0F"
-  command_line: "  \x0310›\x03 \x0303%command%\x03%description%"
-  subcommand_line: "  \x0310›\x03 \x0303%command%\x03%description%"
-  options_header: "\x02\x0306◆ Opções:\x03\x0F"
-  general_footer: "\x0303ℹ\x03 Use /msg %bot% HELP <comando> para mais informações."
-  set_sub_footer: "\x0303ℹ\x03 Use /msg %bot% HELP %command% <opção> para mais informações."
-  syntax_label: "\x0303Sintaxe:\x03 \x02%syntax%\x02"
-  footer:           "\x0314─────────────────────────────\x03"
-  intro_expiration: "\x0307⚠\x03 NOTA: Canais não utilizados por mais de %days% dias são removidos automaticamente."
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "  \x02\x0304◆ %group%\x03\x0F"
+  header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
+  intro:            "Serviço de registo e gestão de canais."
+  general_header: "\x02 ■ Comandos disponíveis:\x02"
+  command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Opções:\x02"
+  general_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP <comando>\x03\x0F para mais informações."
+  set_sub_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP %command% <opção>\x03\x0F para mais informações."
+  syntax_label: "Sintaxe: \x02\x0303%syntax%\x03\x0F"
+  footer:           "\x0314─────────────────────────────\x03\x0F"
+  intro_expiration: "\x0304⚠\x03\x0F NOTA: Canais não utilizados por mais de \x1F\x0304%days% dias\x03\x1F são removidos automaticamente."
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_info: "Registo e informação"
     access_levels: "Acesso e níveis"
     ranks_entry: "Categorias e entrada"
-    protection: "Proteção"
-  unknown_command:  "\x0304✗\x03 Comando desconhecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
-  ircop_header: "\x02\x0304◆ Comandos disponíveis para IRCops:\x03\x0F"
+  ircop_group:
+    channel_operations: "Operações do canal"
+    channel_management: "Gestão do canal"
+    deletion: "Eliminação e restauração"
+    restrictions: "Restrições"
+    lookup: Pesquisa e investigação
+  unknown_command:  "\x0307✗\x03 Comando desconhecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+  ircop_header: "\x02 ■ Comandos disponíveis para IRCops:\x02"
 
 op:
   syntax:           "OP <#canal> <nickname>"
@@ -388,7 +393,7 @@ debug_channel:
 ircoponly:
   syntax:           "IRCOPONLY <#canal> {ON|OFF}"
   short:            "Restringir um canal a operadores IRC."
-  help:             "Apenas operadores IRC autorizados podem permanecer no canal. ChanServ entra e protege o modo +O."
+  help:             "Apenas operadores IRC autorizados podem permanecer no canal. %bot% entra e protege o modo +O."
   on:               "IRCOPONLY ativado em %channel%."
   off:              "IRCOPONLY desativado em %channel%."
 
@@ -553,7 +558,7 @@ clearusers:
 # --- LIST (IRCop) ------------------------------------------------------------
 list:
   syntax: "LIST <padrão> [página]"
-  short: "Lista canais registados que correspondem a um padrão (apenas IRCops)."
+  short: "Lista canais registados que correspondem a um padrão."
   help: "Lista os canais registados que correspondem ao padrão indicado. O carácter * corresponde a qualquer sequência de caracteres. A página é opcional e começa em 1."
   header: "Canal | Fundador | Registo | Última utilização | Estado"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"

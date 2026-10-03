@@ -210,7 +210,7 @@ final class WhoipCommandTest extends TestCase
         $context = $this->createContext($this->sender(), $messages, ['WHOIP'], $translator, $locale);
         $adapter = new HelpFormatterContextAdapter($context, $this->createStub(NickServOperatorAccess::class));
 
-        new UnifiedHelpFormatter()->showCommandHelp($adapter, new WhoipCommand($handler));
+        $messages = new UnifiedHelpFormatter()->renderCommandHelp($adapter, new WhoipCommand($handler));
 
         $output = implode("\n", $messages);
         self::assertSame(1, substr_count($output, 'WHOIP <ip>'));

@@ -160,7 +160,7 @@ set:
   password:
     syntax:         "SET PASSWORD <nouveau_motdepasse>"
     short:          "Changer le mot de passe de votre surnom."
-    help:           "Change le mot de passe de votre surnom NickServ. Le nouveau mot de passe\nprend effet immédiatement. Choisissez un mot de passe robuste d'au moins\n6 caractères que vous n'utilisez pas sur d'autres services."
+    help:           "Change le mot de passe de votre surnom. Le nouveau mot de passe\nprend effet immédiatement. Choisissez un mot de passe robuste d'au moins\n6 caractères que vous n'utilisez pas sur d'autres services."
     success:        "\x0303✔\x03 Votre mot de passe a été mis à jour avec succès."
 
   email:
@@ -271,26 +271,26 @@ help:
   short:            "Afficher l'aide des commandes %nickserv%."
   help:             "Affiche l'aide générale de %nickserv% ou des informations détaillées\npour une commande spécifique."
   header_title:     "%bot%"
-  header:           "\x02\x0306● %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  header:           "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
   navigation_marker: "\x0310›\x03\x0F"
   info_marker:       "\x0310ℹ\x03\x0F"
-  error_marker:      "\x0304✗\x03\x0F"
-  warning_marker:    "\x0307⚠\x03\x0F"
-  intro:            "Service d'enregistrement et de protection des surnoms du réseau IRC."
-  intro_expiration: "%marker% \x0307%label%\x03\x0F : les pseudonymes inutilisés pendant plus de %days% jours sont automatiquement supprimés."
+  error_marker:      "\x0307✗\x03\x0F"
+  warning_marker:    "\x0304⚠\x03\x0F"
+  intro:            "Gestion et protection des surnoms."
+  intro_expiration: "%marker% %label% : les pseudonymes inutilisés pendant plus de \x1F\x0304%days% jours\x03\x1F sont automatiquement supprimés."
   intro_expiration_label: "NOTE"
-  general_header: "\x02\x0306Commandes disponibles :\x03\x0F"
-  command_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  subcommand_line: "  %marker% \x02\x0303%command%\x03\x0F%description%"
-  options_header: "\x02\x0306◆ Options :\x03\x0F"
+  general_header: "\x02 ■ Commandes disponibles :\x02"
+  command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
+  options_header: "\x02 ■ Options :\x02"
   general_syntax: "HELP <commande>"
   general_footer: "%marker% Utilisez /msg %bot% \x02\x0303%syntax%\x03\x0F pour plus d’informations."
   set_sub_syntax: "HELP %command% <option>"
   set_sub_footer: "%marker% Utilisez /msg %bot% \x02\x0303%syntax%\x03\x0F pour plus d’informations."
   syntax_label: "Syntaxe : \x02\x0303%syntax%\x03\x0F"
   footer: "\x0314─────────────────────────────\x03\x0F"
-  group_header: "\x02\x0306◆ %group%\x03\x0F"
-  subgroup_header: "\x02\x0304  ◆ %group%\x03\x0F"
+  group_header: "\x0310  ◆ %group%\x03\x0F"
+  subgroup_header: "\x0310  ◆ %group%\x03\x0F"
   group:
     registration_auth: "Inscription et authentification"
     account_security: "Compte et sécurité"
@@ -298,14 +298,14 @@ help:
     lookup: "Recherche et enquête"
     account_management: "Gestion des comptes"
     suspensions_bans: "Suspensions et interdictions"
-    deletion: "Suppression"
+    deletion: "Suppression et restauration"
   unknown_command: "%marker% Aucune aide disponible pour \x02%command%\x0F."
-  ircop_header: "\x02\x0304◆ Commandes disponibles pour les IRCops :\x03\x0F"
+  ircop_header: "\x02 ■ Commandes disponibles pour les IRCops :\x02"
 
   set_timezone:
     index_label: "Régions (utilisez \x02\x0303%syntax%\x03\x0F pour la liste) :"
     index_syntax:   "HELP SET TIMEZONE <région>"
-    region_header: "\x02\x0306Fuseaux horaires pour %region% :\x03\x0F"
+    region_header: "\x02 ■ Fuseaux horaires pour %region% :\x02"
     region_unknown: "%marker% Région inconnue. Utilisez \x02\x0303%syntax%\x03\x0F pour l'index."
     region_syntax:  "HELP SET TIMEZONE"
 
@@ -481,7 +481,7 @@ forbidvhost:
   short:            "Gérer les motifs de vhost interdits."
   help:             |
     Gère les motifs qui empêchent les utilisateurs de définir des vhosts
-    correspondants via NickServ SET VHOST.
+    correspondants via %bot% SET VHOST.
 
     Jokers : * correspond à toute séquence, ? correspond à un seul caractère.
     Exemple : *.pirate.com bloque tout vhost se terminant par .pirate.com
@@ -662,7 +662,7 @@ noexpire:
 # --- LIST (IRCOP) ------------------------------------------------------------
 list:
   syntax: "LIST <motif> [page]"
-  short: "Liste les pseudos enregistrés correspondant à un motif (IRCops uniquement)."
+  short: "Liste les pseudos enregistrés correspondant à un motif."
   help: "Liste les pseudos enregistrés correspondant au motif indiqué. Le caractère générique * correspond à toute séquence de caractères. La page est facultative et commence à 1."
   header: "Pseudo | Enregistrement | Dernière connexion | IP | État"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"

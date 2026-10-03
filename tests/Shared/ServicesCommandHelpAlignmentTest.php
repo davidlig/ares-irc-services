@@ -157,7 +157,9 @@ final class ServicesCommandHelpAlignmentTest extends TestCase
             ],
             'chanserv' => [
                 'help.group.registration_info', 'help.group.access_levels',
-                'help.group.ranks_entry', 'help.group.protection',
+                'help.group.ranks_entry',
+                'help.ircop_group.channel_operations', 'help.ircop_group.channel_management',
+                'help.ircop_group.deletion', 'help.ircop_group.restrictions', 'help.ircop_group.lookup',
             ],
             'memoserv' => ['help.group.messages', 'help.group.preferences'],
             'operserv' => [

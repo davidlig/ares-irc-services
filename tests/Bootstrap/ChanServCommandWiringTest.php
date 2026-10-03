@@ -67,10 +67,10 @@ final class ChanServCommandWiringTest extends KernelTestCase
         self::assertInstanceOf(ChanServCommandRegistry::class, $commands);
 
         $messages = [];
-        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void {
-            $messages[] = $message;
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void {
+            $messages = explode("\n", $message);
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $key, array $params): string {
