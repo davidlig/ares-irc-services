@@ -82,6 +82,7 @@ help:
   ircop_group:
     channel_operations: "Kanaleko eragiketak"
     channel_management: "Kanalaren kudeaketa"
+    deletion: "Ezabaketa eta leheneratzea"
     restrictions: "Murrizketak"
     lookup: Bilaketa eta ikerketa
   unknown_command:  "\x0307✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."

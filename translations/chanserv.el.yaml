@@ -82,6 +82,7 @@ help:
   ircop_group:
     channel_operations: "Λειτουργίες καναλιού"
     channel_management: "Διαχείριση καναλιού"
+    deletion: "Διαγραφή και επαναφορά"
     restrictions: "Περιορισμοί"
     lookup: Αναζήτηση και διερεύνηση
   unknown_command:  "\x0307✗\x03 Άγνωστη εντολή \x02%command%\x02. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03."

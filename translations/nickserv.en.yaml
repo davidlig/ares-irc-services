@@ -298,7 +298,7 @@ help:
     lookup: "Lookup and investigation"
     account_management: "Account management"
     suspensions_bans: "Suspensions and bans"
-    deletion: "Deletion"
+    deletion: "Deletion and restoration"
   unknown_command: "%marker% No help available for \x02%command%\x0F."
   ircop_header: "\x02\x0307◆ Available commands for IRC Operators:\x03\x0F"
 

@@ -95,7 +95,8 @@ final class UnifiedHelpFormatterTest extends TestCase
     {
         $groups = [
             ['group_key' => 'help.ircop_group.channel_operations', 'commands' => ['CLEARUSERS', 'CLEARACCESS', 'IRCOPONLY'], 'admin' => true, 'subgroup' => true],
-            ['group_key' => 'help.ircop_group.channel_management', 'commands' => ['DROP', 'NOEXPIRE', 'RESTORE'], 'admin' => true, 'subgroup' => true],
+            ['group_key' => 'help.ircop_group.channel_management', 'commands' => ['NOEXPIRE'], 'admin' => true, 'subgroup' => true],
+            ['group_key' => 'help.ircop_group.deletion', 'commands' => ['DROP', 'RESTORE'], 'admin' => true, 'subgroup' => true],
             ['group_key' => 'help.ircop_group.restrictions', 'commands' => ['SUSPEND', 'UNSUSPEND', 'FORBID', 'UNFORBID'], 'admin' => true, 'subgroup' => true],
             ['group_key' => 'help.ircop_group.lookup', 'commands' => ['HISTORY', 'LIST'], 'admin' => true, 'subgroup' => true],
         ];
@@ -118,7 +119,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             $translatedKeys,
             static fn (string $key): bool => in_array($key, $groupKeys, true),
         )));
-        self::assertCount(4, array_filter($translatedKeys, static fn (string $key): bool => 'help.subgroup_header' === $key));
+        self::assertCount(5, array_filter($translatedKeys, static fn (string $key): bool => 'help.subgroup_header' === $key));
 
         $commandLines = array_values(array_filter(
             $context->translations,
@@ -258,7 +259,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     public function definesChanServHelpGroupsAndLookupDescriptionsInEveryLocale(): void
     {
         $expectedPublicGroups = ['registration_info', 'access_levels', 'ranks_entry'];
-        $expectedIrcopGroups = ['channel_operations', 'channel_management', 'restrictions', 'lookup'];
+        $expectedIrcopGroups = ['channel_operations', 'channel_management', 'deletion', 'restrictions', 'lookup'];
 
         foreach (self::LOCALES as $locale) {
             $catalog = $this->loadCatalog($locale);
@@ -277,6 +278,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             $nickServHelp = $this->requireStringKeyedArray($nickServ['help'] ?? null, $locale . ' NickServ must define the help subtree');
             $nickServIrcopGroups = $this->requireStringKeyedArray($nickServHelp['ircop_group'] ?? null, $locale . ' NickServ must define IRCop HELP groups');
             self::assertSame($nickServIrcopGroups['lookup'] ?? null, $ircopGroups['lookup'] ?? null, $locale);
+            self::assertSame($nickServIrcopGroups['deletion'] ?? null, $ircopGroups['deletion'] ?? null, $locale);
 
             $list = $this->requireStringKeyedArray($catalog['list'] ?? null, $locale . ' must define the IRCop LIST command');
             self::assertIsString($list['short'] ?? null, $locale);

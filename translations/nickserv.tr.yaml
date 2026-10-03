@@ -298,7 +298,7 @@ help:
     lookup: "Arama ve inceleme"
     account_management: "Hesap yönetimi"
     suspensions_bans: "Askıya alma ve yasaklar"
-    deletion: "Silme"
+    deletion: "Silme ve geri yükleme"
   unknown_command: "%marker% \x02%command%\x0F için yardım bulunamadı."
   ircop_header: "\x02\x0307◆ IRC operatörleri için kullanılabilir komutlar:\x03\x0F"
 

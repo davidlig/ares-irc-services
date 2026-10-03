@@ -298,7 +298,7 @@ help:
     lookup: "Căutare și investigare"
     account_management: "Gestionarea conturilor"
     suspensions_bans: "Suspendări și interdicții"
-    deletion: "Ștergere"
+    deletion: "Ștergere și restaurare"
   unknown_command: "%marker% Nu există ajutor disponibil pentru \x02%command%\x0F."
   ircop_header: "\x02\x0307◆ Comenzi disponibile pentru IRCops:\x03\x0F"
 

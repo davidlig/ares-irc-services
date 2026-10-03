@@ -82,6 +82,7 @@ help:
   ircop_group:
     channel_operations: "Kanaloperationen"
     channel_management: "Kanalverwaltung"
+    deletion: "Löschung und Wiederherstellung"
     restrictions: "Einschränkungen"
     lookup: Suche und Untersuchung
   unknown_command:  "\x0307✗\x03 Unbekannter Befehl \x02%command%\x02. Verwenden Sie \x0303/msg %bot% HELP\x03."

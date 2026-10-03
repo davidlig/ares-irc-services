@@ -298,7 +298,7 @@ help:
     lookup: "Consulta i investigació"
     account_management: "Gestió de comptes"
     suspensions_bans: "Suspensions i prohibicions"
-    deletion: "Eliminació"
+    deletion: "Eliminació i restauració"
   unknown_command: "%marker% No hi ha ajuda disponible per a \x02%command%\x0F."
   ircop_header: "\x02\x0307◆ Comandes disponibles per als IRCops:\x03\x0F"
 

@@ -82,6 +82,7 @@ help:
   ircop_group:
     channel_operations: "Operacions del canal"
     channel_management: "Gestió del canal"
+    deletion: "Eliminació i restauració"
     restrictions: "Restriccions"
     lookup: Consulta i investigació
   unknown_command:  "\x0307✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."

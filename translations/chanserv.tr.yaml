@@ -82,6 +82,7 @@ help:
   ircop_group:
     channel_operations: "Kanal işlemleri"
     channel_management: "Kanal yönetimi"
+    deletion: "Silme ve geri yükleme"
     restrictions: "Kısıtlamalar"
     lookup: Arama ve inceleme
   unknown_command:  "\x0307✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."

@@ -298,7 +298,7 @@ help:
     lookup: "Αναζήτηση και διερεύνηση"
     account_management: "Διαχείριση λογαριασμών"
     suspensions_bans: "Αναστολές και απαγορεύσεις"
-    deletion: "Διαγραφή"
+    deletion: "Διαγραφή και επαναφορά"
   unknown_command: "%marker% Δεν υπάρχει βοήθεια για \x02%command%\x0F."
   ircop_header: "\x02\x0307◆ Διαθέσιμες εντολές για IRC operators:\x03\x0F"
 

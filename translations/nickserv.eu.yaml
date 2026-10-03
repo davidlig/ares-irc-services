@@ -298,7 +298,7 @@ help:
     lookup: "Bilaketa eta ikerketa"
     account_management: "Kontuen kudeaketa"
     suspensions_bans: "Etenak eta debekuak"
-    deletion: "Ezabaketa"
+    deletion: "Ezabaketa eta leheneratzea"
   unknown_command: "%marker% Ez dago laguntzarik \x02%command%\x0F komandoarentzat."
   ircop_header: "\x02\x0307◆ IRC operadoreentzako komando erabilgarriak:\x03\x0F"
 
