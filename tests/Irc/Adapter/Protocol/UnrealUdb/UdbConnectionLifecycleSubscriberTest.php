@@ -8,7 +8,6 @@ use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
-use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbConnectionLifecycleSubscriber;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionController;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
@@ -34,7 +33,7 @@ final class UdbConnectionLifecycleSubscriberTest extends TestCase
         $coordinator = new UdbSessionCoordinator(
             '002',
             $this->createStub(UdbBlockStateRepositoryInterface::class),
-            $this->createStub(UdbSnapshotProviderInterface::class),
+            new FakeUdbSnapshots(),
         );
         $subscriber = new UdbConnectionLifecycleSubscriber($coordinator);
 

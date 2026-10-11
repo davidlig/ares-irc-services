@@ -152,6 +152,179 @@ final class UdbSchema
         return null === $number ? $value : '*' . $number;
     }
 
+    /** Classifies the canonical leaf/container value contract for a path. */
+    /** @param list<string> $components */
+    public static function expectedValueKind(UdbBlock $block, array $components): string|UdbValueKind|null
+    {
+        $depth = count($components);
+        $key = strtolower($components[$depth - 1] ?? '');
+
+        if (0 === $depth) {
+            return null;
+        }
+
+        return match ($block) {
+            UdbBlock::Nicks => 1 === $depth ? UdbValueKind::None : (2 === $depth && in_array($key, self::NICK_KEYS, true) ? UdbValueKind::String : null),
+            UdbBlock::Channels => self::channelValueKind($components),
+            UdbBlock::Ips => 1 === $depth ? UdbValueKind::None : (2 === $depth ? ('clones' === $key ? UdbValueKind::Number : (in_array($key, self::IP_KEYS, true) ? UdbValueKind::String : null)) : null),
+            UdbBlock::Settings => 1 === $depth ? (in_array($key, ['clones'], true) ? UdbValueKind::Number : (in_array($key, self::SETTINGS_KEYS, true) ? UdbValueKind::String : null)) : null,
+            UdbBlock::Links => 1 === $depth ? UdbValueKind::None : (2 === $depth && 'options' === $key ? UdbValueKind::Number : null),
+            UdbBlock::Lines => self::lineValueKind($components),
+        };
+    }
+
+    /** @param list<string> $components */
+    public static function validateTyped(UdbBlock $block, array $components, UdbValue $value): bool
+    {
+        $expected = self::expectedValueKind($block, $components);
+        if (null === $expected) {
+            return false;
+        }
+        if (UdbValueKind::None === $expected) {
+            return UdbValueKind::None === $value->kind && self::validNoneContainer($block, $components);
+        }
+        if (UdbValueKind::Number === $expected) {
+            return UdbValueKind::Number === $value->kind && self::validate($block, $components, '*' . $value->value);
+        }
+        if ('any' === $expected) {
+            return match ($value->kind) {
+                UdbValueKind::String => '' !== $value->value && self::validate($block, $components, $value->value),
+                UdbValueKind::Number => self::validate($block, $components, '*' . $value->value),
+                UdbValueKind::None => false,
+            };
+        }
+
+        return UdbValueKind::String === $expected && UdbValueKind::String === $value->kind
+            && '' !== $value->value && self::validate($block, $components, $value->value);
+    }
+
+    /**
+     * Converts an existing SQL logical value using the canonical schema type
+     * for its path. A leading asterisk alone never makes a string numeric.
+     *
+     * @param list<string> $components
+     */
+    public static function typedValueFor(UdbBlock $block, array $components, string $logicalValue): ?UdbValue
+    {
+        $value = match (self::expectedValueKind($block, $components)) {
+            UdbValueKind::None => '' === $logicalValue ? UdbValue::none() : null,
+            UdbValueKind::String => UdbValue::string($logicalValue),
+            'any' => null !== self::numericValue($logicalValue)
+                ? self::numericValue($logicalValue)
+                : UdbValue::string($logicalValue),
+            UdbValueKind::Number => self::numericValue($logicalValue),
+            default => null,
+        };
+
+        return null !== $value && self::validateTyped($block, $components, $value) ? $value : null;
+    }
+
+    public static function typedValueForStoredRecord(string $blockLetter, string $encodedPath, string $logicalValue): ?UdbValue
+    {
+        $block = UdbBlock::tryFrom($blockLetter);
+        if (null === $block) {
+            return null;
+        }
+        $components = [];
+        foreach (explode('::', $encodedPath) as $encodedComponent) {
+            $component = UdbPathCodec::decodeComponent($encodedComponent);
+            if (null === $component) {
+                return null;
+            }
+            $components[] = $component;
+        }
+
+        return self::typedValueFor($block, $components, $logicalValue);
+    }
+
+    public static function matchesStoredRecordType(string $block, string $encodedPath, UdbValue $value): bool
+    {
+        $expected = self::typedValueForStoredRecord($block, $encodedPath, $value->logicalValue());
+
+        return null !== $expected && $expected->kind === $value->kind && $expected->value === $value->value;
+    }
+
+    private static function numericValue(string $logicalValue): ?UdbValue
+    {
+        if (!str_starts_with($logicalValue, '*')) {
+            return null;
+        }
+        $number = UdbUnsignedDecimal::parse(substr($logicalValue, 1));
+
+        return null === $number ? null : UdbValue::number($number);
+    }
+
+    /**
+     * @param list<string> $components
+     */
+    private static function channelValueKind(array $components): string|UdbValueKind|null
+    {
+        $depth = count($components);
+        $key = strtolower($components[$depth - 1] ?? '');
+        if (1 === $depth || (2 === $depth && 'access' === $key)) {
+            return UdbValueKind::None;
+        }
+        if (2 === $depth) {
+            return 'options' === $key
+                ? UdbValueKind::Number
+                : (in_array($key, self::CHANNEL_KEYS, true) && 'access' !== $key ? UdbValueKind::String : null);
+        }
+        if (3 === $depth && 'access' === strtolower($components[1])) {
+            return 'any';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<string> $components
+     */
+    private static function lineValueKind(array $components): ?UdbValueKind
+    {
+        $depth = count($components);
+        if (2 === $depth) {
+            return UdbValueKind::None;
+        }
+        if (3 !== $depth) {
+            return null;
+        }
+
+        return match (strtolower($components[2])) {
+            'expires', 'ban-time' => UdbValueKind::Number,
+            'reason', 'match-type', 'targets', 'action' => UdbValueKind::String,
+            default => null,
+        };
+    }
+
+    /**
+     * @param list<string> $components
+     */
+    private static function validNoneContainer(UdbBlock $block, array $components): bool
+    {
+        $depth = count($components);
+
+        return match ($block) {
+            UdbBlock::Nicks => 1 === $depth && self::nickName($components[0]),
+            UdbBlock::Channels => (1 === $depth && self::channelName($components[0]))
+                || (2 === $depth && self::channelName($components[0]) && 'access' === strtolower($components[1])),
+            UdbBlock::Ips => 1 === $depth && self::ipHostMask($components[0]),
+            UdbBlock::Links => 1 === $depth && self::serverName($components[0]),
+            UdbBlock::Lines => 2 === $depth && self::validLineContainer($components[0], $components[1]),
+            UdbBlock::Settings => false,
+        };
+    }
+
+    private static function validLineContainer(string $type, string $mask): bool
+    {
+        return match ($type) {
+            'G', 'S' => self::lineMask($mask),
+            'Z' => self::zlineMask($mask),
+            'Q' => self::qlineMask($mask),
+            'F' => self::spamfilterPattern($mask),
+            default => false,
+        };
+    }
+
     /**
      * Validates invariants that only become observable from a complete block.
      *
@@ -187,8 +360,8 @@ final class UdbSchema
 
             if (UdbBlock::Nicks === $block && 2 === count($decoded)) {
                 $nickProfiles[strtolower($decoded[0])][strtolower($decoded[1])] = $value;
-            } elseif (UdbBlock::Lines === $block && 'F' === $decoded[0]) {
-                $lineProfiles[$decoded[1]][$decoded[2]] = $value;
+            } elseif (UdbBlock::Lines === $block && 'f' === strtolower($decoded[0])) {
+                $lineProfiles[$decoded[1]][strtolower($decoded[2])] = $value;
             }
         }
 
@@ -216,6 +389,32 @@ final class UdbSchema
     }
 
     /**
+     * @param array<string, UdbValue> $records
+     */
+    public static function validateAggregateTyped(UdbBlock $block, array $records): bool
+    {
+        $logicalRecords = [];
+        foreach ($records as $path => $value) {
+            $components = [];
+            foreach (explode('::', $path) as $encodedComponent) {
+                $component = UdbPathCodec::decodeComponent($encodedComponent);
+                if (null === $component) {
+                    return false;
+                }
+                $components[] = $component;
+            }
+            if (!self::validateTyped($block, $components, $value)) {
+                return false;
+            }
+            if (UdbValueKind::None !== $value->kind) {
+                $logicalRecords[$path] = $value->logicalValue();
+            }
+        }
+
+        return self::validateAggregate($block, $logicalRecords);
+    }
+
+    /**
      * True when the record value must be redacted in logs and audit trails
      * (mirrors udb_mutation_value_is_secret).
      *
@@ -233,7 +432,9 @@ final class UdbSchema
         };
     }
 
-    /** @param list<string> $components */
+    /**
+     * @param list<string> $components
+     */
     private static function validateNicks(array $components, string $value): bool
     {
         $depth = count($components);
@@ -255,7 +456,9 @@ final class UdbSchema
         };
     }
 
-    /** @param list<string> $components */
+    /**
+     * @param list<string> $components
+     */
     private static function validateChannels(array $components, string $value): bool
     {
         $depth = count($components);
@@ -283,7 +486,9 @@ final class UdbSchema
             && ('*' === $value[0] ? self::numericRecord($value) : self::stringRecord($value));
     }
 
-    /** @param list<string> $components */
+    /**
+     * @param list<string> $components
+     */
     private static function validateIps(array $components, string $value): bool
     {
         $depth = count($components);
@@ -302,7 +507,9 @@ final class UdbSchema
         };
     }
 
-    /** @param list<string> $components */
+    /**
+     * @param list<string> $components
+     */
     private static function validateSettings(array $components, string $value): bool
     {
         if (1 !== count($components) || !in_array(strtolower($components[0]), self::SETTINGS_KEYS, true)) {
@@ -320,7 +527,9 @@ final class UdbSchema
         };
     }
 
-    /** @param list<string> $components */
+    /**
+     * @param list<string> $components
+     */
     private static function validateLinks(array $components, string $value): bool
     {
         $depth = count($components);
@@ -334,11 +543,13 @@ final class UdbSchema
             && self::numericRecord($value);
     }
 
-    /** @param list<string> $components */
+    /**
+     * @param list<string> $components
+     */
     private static function validateLines(array $components, string $value): bool
     {
         $depth = count($components);
-        $type = $components[0];
+        $type = strtoupper($components[0]);
 
         if ($depth < 2 || $depth > 3 || 1 !== strlen($type) || !in_array($type, self::TKL_TYPES, true)) {
             return false;
@@ -355,7 +566,7 @@ final class UdbSchema
             return false;
         }
 
-        return match ($components[2]) {
+        return match (strtolower($components[2])) {
             'reason' => self::nonEmptyNoStar($value),
             'expires' => self::positiveNumericRecord($value),
             default => false,
@@ -364,7 +575,7 @@ final class UdbSchema
 
     private static function spamfilterSubkey(string $subkey, string $value): bool
     {
-        return match ($subkey) {
+        return match (strtolower($subkey)) {
             'match-type' => in_array($value, ['regex', 'simple'], true),
             'targets' => self::spamfilterTargets($value),
             'action' => self::inArrayCaseInsensitive($value, self::BAN_ACTIONS),
@@ -376,16 +587,16 @@ final class UdbSchema
 
     // === Value validators ====================================================
 
-    /** UDB_VAL_STRING at depth 2 / block S: non-empty, no leading '*'. */
+    /** UDB_VAL_STRING fields are independent of the numeric marker spelling. */
     private static function stringRecord(string $value): bool
     {
-        return '' !== $value && !str_starts_with($value, '*');
+        return '' !== $value;
     }
 
-    /** Non-empty string that must not start with '*' (K root values and reasons). */
+    /** Non-empty logical string fields may begin with the numeric marker bytes. */
     private static function nonEmptyNoStar(string $value): bool
     {
-        return '' !== $value && !str_starts_with($value, '*');
+        return '' !== $value;
     }
 
     /** UDB_VAL_NUMERIC: '*' followed by a strict unsigned-long decimal. */
@@ -825,7 +1036,9 @@ final class UdbSchema
         return true;
     }
 
-    /** @param list<string> $haystack */
+    /**
+     * @param list<string> $haystack
+     */
     private static function inArrayCaseInsensitive(string $needle, array $haystack): bool
     {
         foreach ($haystack as $candidate) {

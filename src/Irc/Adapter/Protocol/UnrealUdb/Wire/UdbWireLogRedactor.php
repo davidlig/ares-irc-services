@@ -66,7 +66,9 @@ final class UdbWireLogRedactor
         return false;
     }
 
-    /** @return list<string>|null Raw components, or null when the encoded path is not canonical. */
+    /**
+     * @return list<string>|null raw components, or null when the encoded path is not canonical
+     */
     private static function components(string $encodedPath): ?array
     {
         $components = [];

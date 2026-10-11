@@ -30,6 +30,7 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
     {
         $this->records = new FakeUdbRecords();
         $this->sessionState = new RecordingSessionState(true);
+        $this->records->beginLocalStream($this->sessionState->streamOrigin());
         $this->written = [];
 
         $writer = new UnrealUdbRecordWriter($this->sessionState, $this->records);
@@ -162,7 +163,7 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
 
         self::assertTrue($result->success);
         self::assertSame('DB * DEL N::davidlig', $result->auditLine);
-        self::assertSame(['other::vhost' => 'v'], $this->records->blocks['N']);
+        self::assertSame(['other::vhost' => 'v'], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
         self::assertSame([], $this->written);
     }
 

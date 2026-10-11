@@ -42,8 +42,8 @@ final class UdbInboundFrameLogSubscriberTest extends TestCase
     #[Test]
     public function logsValidDbFramesWithSecretValuesRedacted(): void
     {
-        $secret = new IncomingIrcMessageEvent(IRCMessage::fromRawLine(':001 DB 002 PUT 7 N ab12 alice::pass :crypt:$2y$10$hash'));
-        $vhost = new IncomingIrcMessageEvent(IRCMessage::fromRawLine(':001 DB 002 PUT 7 N ab12 alice::vhost :a.example'));
+        $secret = new IncomingIrcMessageEvent(IRCMessage::fromRawLine(':001 DB 002 PUT 7 N ab12 N::alice::pass :!sY3J5cHQ6JDJ5JDEwJGhhc2g='));
+        $vhost = new IncomingIrcMessageEvent(IRCMessage::fromRawLine(':001 DB 002 PUT 7 N ab12 N::alice::vhost :!sYS5leGFtcGxl'));
 
         $this->subscriber->onIncomingMessage($secret);
         $this->subscriber->onIncomingMessage($vhost);
@@ -54,9 +54,9 @@ final class UdbInboundFrameLogSubscriberTest extends TestCase
         $records = $this->records->getRecords();
         self::assertCount(2, $records);
         self::assertSame('< DB', $records[0]->message);
-        self::assertSame(':001 DB 002 PUT 7 N ab12 alice::pass :<redacted>', $records[0]->context['raw']);
+        self::assertSame(':001 DB 002 PUT 7 N ab12 N::alice::pass :<redacted>', $records[0]->context['raw']);
         self::assertSame('< DB', $records[1]->message);
-        self::assertSame(':001 DB 002 PUT 7 N ab12 alice::vhost :a.example', $records[1]->context['raw']);
+        self::assertSame(':001 DB 002 PUT 7 N ab12 N::alice::vhost :!sYS5leGFtcGxl', $records[1]->context['raw']);
     }
 
     #[Test]
@@ -78,7 +78,7 @@ final class UdbInboundFrameLogSubscriberTest extends TestCase
         $dispatcher->addSubscriber(new UdbInboundFrameLogSubscriber(new Logger('udb', [$this->records])));
         $dispatcher->addSubscriber(new IRCEventSubscriber(new Logger('generic', [$genericRecords])));
 
-        $dispatcher->dispatch(new IncomingIrcMessageEvent(IRCMessage::fromRawLine(':001 DB 002 PUT 7 N ab12 alice::pass :crypt:$2y$10$hash')));
+        $dispatcher->dispatch(new IncomingIrcMessageEvent(IRCMessage::fromRawLine(':001 DB 002 PUT 7 N ab12 N::alice::pass :!sY3J5cHQ6JDJ5JDEwJGhhc2g=')));
         $dispatcher->dispatch(new IncomingIrcMessageEvent(IRCMessage::fromRawLine(':001 PING :token')));
 
         $udbRecords = $this->records->getRecords();

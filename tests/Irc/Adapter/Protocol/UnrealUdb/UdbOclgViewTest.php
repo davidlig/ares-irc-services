@@ -448,7 +448,9 @@ final class UdbOclgViewTest extends TestCase
         return new UdbFrame($kind, '001', '002', roundId: $generation, epoch: $epoch, status: $status, count: $count, checksum: $checksum, path: $path);
     }
 
-    /** @param array<string, string> $entries */
+    /**
+     * @param array<string, string> $entries
+     */
     private function commitReady(array $entries, int $generation = self::GENERATION): void
     {
         $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 1, checksum: UdbOclgViewDigest::fromEntries(true, $entries), generation: $generation));

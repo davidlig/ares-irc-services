@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Model;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
@@ -23,13 +24,20 @@ class UdbBlockState
 
     private DateTimeImmutable $modifiedAt;
 
+    private string $checksum;
+
     public function __construct(
         private readonly string $block,
-        private string $checksum,
+        ?string $checksum = null,
         ?DateTimeImmutable $modifiedAt = null,
         private int $recordCount = 0,
     ) {
-        self::assertChecksum($checksum);
+        $blockType = UdbBlock::fromLetter($block);
+        if (null === $blockType) {
+            throw new InvalidArgumentException('A UDB block state requires a canonical block letter.');
+        }
+        $this->checksum = $checksum ?? UdbChecksum::empty($blockType);
+        self::assertChecksum($this->checksum);
         self::assertRecordCount($recordCount);
         $this->modifiedAt = $modifiedAt ?? new DateTimeImmutable();
     }

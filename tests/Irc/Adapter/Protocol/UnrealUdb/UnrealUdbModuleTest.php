@@ -8,7 +8,6 @@ use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
-use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbChannelModeSupport;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbModule;
@@ -59,7 +58,7 @@ final class UnrealUdbModuleTest extends TestCase
         return new UdbSessionCoordinator(
             '001',
             $this->createStub(UdbBlockStateRepositoryInterface::class),
-            $this->createStub(UdbSnapshotProviderInterface::class),
+            new FakeUdbSnapshots(),
         );
     }
 

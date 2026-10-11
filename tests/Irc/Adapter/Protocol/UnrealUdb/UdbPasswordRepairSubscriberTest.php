@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbChannelSuspendReasonResolver;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbPasswordRepairSubscriber;
@@ -219,7 +220,7 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
         $nickRepository->method('all')->willReturn($nicks);
 
         $recordRepository = $this->createStub(UdbRecordRepositoryInterface::class);
-        $recordRepository->method('recordsByBlock')->willReturnMap([['N', $store]]);
+        $recordRepository->method('recordsByBlock')->willReturnMap([['N', UdbTestValues::typedMap(UdbBlock::Nicks, $store)]]);
 
         return new UdbPasswordRepairSubscriber(
             $nickRepository,

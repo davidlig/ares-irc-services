@@ -6,6 +6,10 @@ namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -14,6 +18,52 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(UdbSchema::class)]
 final class UdbSchemaTest extends TestCase
 {
+    #[Test]
+    public function aggregateSpamfilterTypeAndLeavesAreAsciiCaseInsensitiveWithoutFoldingPatterns(): void
+    {
+        $invalid = 'b64%3A' . base64_encode('[');
+        $profile = [
+            'f::' . $invalid . '::MATCH-TYPE' => 'regex',
+            'f::' . $invalid . '::Targets' => 'p',
+            'f::' . $invalid . '::ACTION' => 'block',
+            'f::' . $invalid . '::ReAsOn' => 'fixture',
+        ];
+        self::assertFalse(UdbSchema::validateAggregate(UdbBlock::Lines, $profile));
+        unset($profile['f::' . $invalid . '::ReAsOn']);
+        self::assertTrue(UdbSchema::validateAggregate(UdbBlock::Lines, $profile));
+
+        $upper = 'b64%3A' . base64_encode('ABC');
+        $lower = 'b64%3A' . base64_encode('abc');
+        $valid = [
+            'f::' . $upper . '::MATCH-TYPE' => 'simple',
+            'f::' . $upper . '::TARGETS' => 'p',
+            'f::' . $upper . '::ACTION' => 'block',
+            'f::' . $lower . '::REASON' => 'different pattern',
+        ];
+        // Different byte-sensitive patterns must not merge into one profile.
+        self::assertTrue(UdbSchema::validateAggregate(UdbBlock::Lines, $valid));
+        self::assertTrue(UdbSchema::validateAggregate(UdbBlock::Lines, $this->spamfilterProfile($upper, 'regex')));
+    }
+
+    #[Test]
+    public function typedSchemaDistinguishesImplicitContainersFromStoredLeaves(): void
+    {
+        self::assertSame(UdbValueKind::None, UdbSchema::expectedValueKind(UdbBlock::Nicks, ['david']));
+        self::assertSame(UdbValueKind::String, UdbSchema::expectedValueKind(UdbBlock::Nicks, ['david', 'pass']));
+        self::assertSame(UdbValueKind::None, UdbSchema::expectedValueKind(UdbBlock::Channels, ['#chan', 'access']));
+        self::assertSame(UdbValueKind::Number, UdbSchema::expectedValueKind(UdbBlock::Channels, ['#chan', 'options']));
+        self::assertSame(UdbValueKind::None, UdbSchema::expectedValueKind(UdbBlock::Lines, ['G', '*@host']));
+        self::assertSame(UdbValueKind::Number, UdbSchema::expectedValueKind(UdbBlock::Lines, ['G', '*@host', 'expires']));
+        self::assertSame(UdbValueKind::String, UdbSchema::expectedValueKind(UdbBlock::Lines, ['G', '*@host', 'reason']));
+        self::assertNull(UdbSchema::expectedValueKind(UdbBlock::Nicks, ['david', 'unknown']));
+
+        self::assertTrue(UdbSchema::validateTyped(UdbBlock::Nicks, ['david'], UdbValue::none()));
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Nicks, ['david'], UdbValue::string('')));
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Nicks, ['david', 'pass'], UdbValue::string('')));
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Nicks, ['david', 'pass'], UdbValue::none()));
+        self::assertTrue(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'options'], UdbValue::number(self::number('18446744073709551615'))));
+    }
+
     #[Test]
     public function emptyComponentListsAreRejected(): void
     {
@@ -54,7 +104,9 @@ final class UdbSchemaTest extends TestCase
         self::assertSame($expected, UdbSchema::validate(UdbBlock::Nicks, [$nick], 'value'));
     }
 
-    /** @return iterable<string, array{0: string, 1: bool}> */
+    /**
+     * @return iterable<string, array{0: string, 1: bool}>
+     */
     public static function nickRootProvider(): iterable
     {
         yield 'simple nick' => ['david', true];
@@ -76,11 +128,13 @@ final class UdbSchemaTest extends TestCase
         self::assertSame($expected, UdbSchema::validate(UdbBlock::Nicks, ['david', $key], $value));
     }
 
-    /** @return iterable<string, array{0: string, 1: string, 2: bool}> */
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: bool}>
+     */
     public static function nickSubkeyProvider(): iterable
     {
         yield 'access string' => ['access', '1.2.3.4', true];
-        yield 'access star rejected' => ['access', '*1', false];
+        yield 'access star string' => ['access', '*1', true];
         yield 'forbid string' => ['forbid', 'bad nick', true];
         yield 'suspend string' => ['suspend', 'reason', true];
         yield 'legacy suspended rejected' => ['suspended', 'reason', false];
@@ -158,7 +212,9 @@ final class UdbSchemaTest extends TestCase
         self::assertSame($expected, UdbSchema::validate(UdbBlock::Channels, [$channel], 'value'));
     }
 
-    /** @return iterable<string, array{0: string, 1: bool}> */
+    /**
+     * @return iterable<string, array{0: string, 1: bool}>
+     */
     public static function channelRootProvider(): iterable
     {
         yield 'hash channel' => ['#chan', true];
@@ -171,7 +227,9 @@ final class UdbSchemaTest extends TestCase
         yield 'too long' => ['#' . str_repeat('a', 32), false];
     }
 
-    /** @param list<string> $components */
+    /**
+     * @param list<string> $components
+     */
     #[Test]
     #[DataProvider('channelSubkeyProvider')]
     public function channelSubkeysAreValidated(array $components, string $value, bool $expected): void
@@ -179,7 +237,9 @@ final class UdbSchemaTest extends TestCase
         self::assertSame($expected, UdbSchema::validate(UdbBlock::Channels, $components, $value));
     }
 
-    /** @return iterable<string, array{0: list<string>, 1: string, 2: bool}> */
+    /**
+     * @return iterable<string, array{0: list<string>, 1: string, 2: bool}>
+     */
     public static function channelSubkeyProvider(): iterable
     {
         $chan = '#chan';
@@ -202,7 +262,7 @@ final class UdbSchemaTest extends TestCase
         yield 'modes minus only' => [[$chan, 'modes'], '-nt', true];
         yield 'modes too long' => [[$chan, 'modes'], '+' . str_repeat('n', 512), false];
         yield 'topic string' => [[$chan, 'topic'], 'Welcome here', true];
-        yield 'topic star rejected' => [[$chan, 'topic'], '*topic', false];
+        yield 'topic star string' => [[$chan, 'topic'], '*topic', true];
         yield 'forbid string' => [[$chan, 'forbid'], 'reason', true];
         yield 'suspend string' => [[$chan, 'suspend'], '1', true];
         yield 'legacy suspended rejected' => [[$chan, 'suspended'], '1', false];
@@ -229,7 +289,9 @@ final class UdbSchemaTest extends TestCase
         self::assertSame($expected, UdbSchema::validate(UdbBlock::Ips, [$mask], 'value'));
     }
 
-    /** @return iterable<string, array{0: string, 1: bool}> */
+    /**
+     * @return iterable<string, array{0: string, 1: bool}>
+     */
     public static function ipRootProvider(): iterable
     {
         yield 'ipv4' => ['1.2.3.4', true];
@@ -266,14 +328,16 @@ final class UdbSchemaTest extends TestCase
         self::assertSame($expected, UdbSchema::validate(UdbBlock::Settings, [$key], $value));
     }
 
-    /** @return iterable<string, array{0: string, 1: string, 2: bool}> */
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: bool}>
+     */
     public static function settingsProvider(): iterable
     {
         yield 'clones ok' => ['clones', '*100', true];
         yield 'clones zero' => ['clones', '*0', true];
         yield 'clones overflow' => ['clones', '*2147483648', false];
         yield 'quit ips' => ['quit_ips', 'too many connections', true];
-        yield 'quit ips star' => ['quit_ips', '*blocked', false];
+        yield 'quit ips star' => ['quit_ips', '*blocked', true];
         yield 'quit clones' => ['quit_clones', 'clone limit', true];
         yield 'encryption key' => ['encryption_key', str_repeat('a', 64), true];
         yield 'encryption key short' => ['encryption_key', str_repeat('a', 63), false];
@@ -357,7 +421,9 @@ final class UdbSchemaTest extends TestCase
         self::assertSame($expected, UdbSchema::validate(UdbBlock::Lines, [$type, $mask, 'reason'], 'reason'));
     }
 
-    /** @return iterable<string, array{0: string, 1: string, 2: bool}> */
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: bool}>
+     */
     public static function lineMaskProvider(): iterable
     {
         yield 'gline user host' => ['G', 'user@host', true];
@@ -392,7 +458,7 @@ final class UdbSchemaTest extends TestCase
     public function lineSubkeysAreValidated(): void
     {
         self::assertTrue(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'reason'], 'spam'));
-        self::assertFalse(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'reason'], '*spam'));
+        self::assertTrue(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'reason'], '*spam'));
         self::assertTrue(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'expires'], '*1700000000'));
         self::assertFalse(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'expires'], '*0'));
         self::assertFalse(UdbSchema::validate(UdbBlock::Lines, ['G', 'user@host', 'duration'], '*60'));
@@ -414,7 +480,9 @@ final class UdbSchemaTest extends TestCase
         self::assertSame($expected, UdbSchema::validate(UdbBlock::Lines, ['F', $pattern, $subkey], $value));
     }
 
-    /** @return iterable<string, array{0: string, 1: string, 2: string, 3: bool}> */
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: string, 3: bool}>
+     */
     public static function spamfilterProvider(): iterable
     {
         $b64 = 'b64:' . base64_encode('hello world');
@@ -477,7 +545,9 @@ final class UdbSchemaTest extends TestCase
         ]));
     }
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     private function spamfilterProfile(string $pattern, string $matchType): array
     {
         $prefix = 'F::' . $pattern . '::';
@@ -492,7 +562,9 @@ final class UdbSchemaTest extends TestCase
 
     // ---------- Secrets ----------
 
-    /** @param list<string> $components */
+    /**
+     * @param list<string> $components
+     */
     #[Test]
     #[DataProvider('secretProvider')]
     public function secretPathsAreDetected(string $block, array $components, bool $expected): void
@@ -502,7 +574,9 @@ final class UdbSchemaTest extends TestCase
         self::assertSame($expected, UdbSchema::isSecret($udbBlock, $components));
     }
 
-    /** @return iterable<string, array{0: string, 1: list<string>, 2: bool}> */
+    /**
+     * @return iterable<string, array{0: string, 1: list<string>, 2: bool}>
+     */
     public static function secretProvider(): iterable
     {
         yield 'nick pass' => ['N', ['nick', 'pass'], true];
@@ -517,5 +591,29 @@ final class UdbSchemaTest extends TestCase
         yield 'clones' => ['I', ['1.2.3.4', 'clones'], false];
         yield 'options' => ['L', ['hub', 'options'], false];
         yield 'access depth three' => ['C', ['#chan', 'access', 'nick'], false];
+    }
+
+    private static function number(string $decimal): UdbUnsignedDecimal
+    {
+        return UdbUnsignedDecimal::parse($decimal) ?? throw new LogicException('The test uint64 fixture must be valid.');
+    }
+
+    #[Test]
+    public function typedContainersAndStoredKindsRejectUnknownDepthMasksAndMalformedEncoding(): void
+    {
+        self::assertNull(UdbSchema::typedValueForStoredRecord('N', 'nick::bad%ZZ', 'value'));
+        self::assertFalse(UdbSchema::matchesStoredRecordType('N', 'nick::pass', UdbValue::none()));
+        self::assertNull(UdbSchema::expectedValueKind(UdbBlock::Channels, ['#chan', 'access', 'nick', 'extra']));
+        self::assertNull(UdbSchema::expectedValueKind(UdbBlock::Lines, ['G']));
+        foreach ([['G', '*@host'], ['S', '*@host'], ['Z', '192.0.2.1'], ['Q', 'badnick'], ['F', 'b64:YQ==']] as $parts) {
+            self::assertTrue(UdbSchema::validateTyped(UdbBlock::Lines, $parts, UdbValue::none()));
+        }
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Lines, ['?', '*@host'], UdbValue::none()));
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Lines, ['g', '*@host'], UdbValue::none()));
+        self::assertTrue(UdbSchema::validateTyped(UdbBlock::Links, ['server.test'], UdbValue::none()));
+        self::assertTrue(UdbSchema::validateTyped(UdbBlock::Ips, ['192.0.2.1'], UdbValue::none()));
+        self::assertTrue(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'access'], UdbValue::none()));
+        self::assertTrue(UdbSchema::validateAggregateTyped(UdbBlock::Nicks, ['nick' => UdbValue::none()]));
+        self::assertFalse(UdbSchema::validateAggregateTyped(UdbBlock::Nicks, ['nick::pass' => UdbValue::none()]));
     }
 }

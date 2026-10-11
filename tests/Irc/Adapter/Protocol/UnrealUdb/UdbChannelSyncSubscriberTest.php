@@ -91,7 +91,9 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         );
     }
 
-    /** @param array<string, string> $mlockParams */
+    /**
+     * @param array<string, string> $mlockParams
+     */
     private function createChannel(
         string $name = '#chan',
         int $founderNickId = 7,

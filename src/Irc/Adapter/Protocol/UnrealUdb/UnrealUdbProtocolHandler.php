@@ -20,6 +20,7 @@ use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
+use function count;
 use function implode;
 use function sprintf;
 use function str_starts_with;
@@ -124,8 +125,9 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
         $this->resetRemoteIdentity();
         $this->lock->acquire();
         try {
-            $this->sendHandshake($connection, $link);
             $this->coordinator->setOwnName((string) $link->serverName);
+            $this->coordinator->prepareLocalStream();
+            $this->sendHandshake($connection, $link);
         } catch (Throwable $e) {
             $this->lock->release();
             $this->coordinator->reset();
@@ -144,6 +146,12 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
         match ($message->command) {
             'ERROR' => $this->handleError($message),
             'PING' => $this->handlePing($message, $connection),
+            'PONG' => $this->coordinator->handlePong(
+                $message->prefix,
+                $message->trailing ?? ([] !== $message->params ? $message->params[array_key_last($message->params)] : null),
+                $connection,
+            ),
+            '402' => $this->handleTransportBarrier($message, $connection),
             'EOS' => $this->handleEosThenReady($message, $connection),
             'NETINFO' => $this->handleNetinfo($message, $connection),
             'PROTOCTL' => $this->handleProtoServerSid($message),
@@ -155,6 +163,14 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
         if ($handleBeforeTick) {
             $this->coordinator->tick($connection);
         }
+    }
+
+    private function handleTransportBarrier(IRCMessage $message, ConnectionInterface $connection): void
+    {
+        if (2 !== count($message->params) || null === $message->trailing) {
+            return;
+        }
+        $this->coordinator->handleTransportBarrier($message->prefix, $message->params[0], $message->params[1], $connection);
     }
 
     private function handleError(IRCMessage $message): void

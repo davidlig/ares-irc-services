@@ -1,0 +1,18 @@
+{
+  "contract": "UDB4 native logical digest independent vectors",
+  "empty_six": {
+    "N": "1d9124585ce3670eb18c8909eb3acee5c43b326ac17283a1ac6f58eb8cbab1a2",
+    "C": "565c10b58e8b98a4ac8a484f10a32fbac062787dbb0510d05f163c82dcaa1758",
+    "I": "ab9db99a3edd1e2d225335386fe08ae4f0da0bdda71e578386e85ca441529e1c",
+    "S": "546ff457e8dbdd2cb24c482c9e7ec2a68600215b6d9d7d5c19954d13ee494688",
+    "L": "a7c895b58c7f5e6b3580a1a1a66d9ee902a153dee326a7e0fd7f59a014e21986",
+    "K": "a0b2e1f79779e8e236f60f0b4d4f250a8426ac52b656c01c0783d780e7303186"
+  },
+  "radix_branch": {
+    "block": "K",
+    "entity_prefix": "G::shared",
+    "record_count": 4097,
+    "value_bytes": 4096,
+    "expected_digest": "c72b7644a3cc29bf7e660e1524d9e91f9b74f12a3ca92c61722c7f98b2ef536b"
+  }
+}

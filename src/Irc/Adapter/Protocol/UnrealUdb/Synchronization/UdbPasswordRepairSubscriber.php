@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Synchronization;
 
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
@@ -123,8 +124,8 @@ final readonly class UdbPasswordRepairSubscriber implements EventSubscriberInter
         $hashes = [];
         foreach ($this->records->recordsByBlock(self::BLOCK) as $path => $value) {
             $identity = strtolower($path);
-            if (str_ends_with($identity, '::pass')) {
-                $hashes[$identity] = $value;
+            if (str_ends_with($identity, '::pass') && UdbValueKind::String === $value->kind) {
+                $hashes[$identity] = $value->value;
             }
         }
 

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Persistence;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
+
 interface UdbRecordRepositoryInterface
 {
     /**
-     * All records of one block as a map of canonical encoded path => value.
-     *
-     * @return array<string, string>
+     * @return array<string, UdbValue> Canonical encoded path => typed value
      */
     public function recordsByBlock(string $block): array;
 
@@ -18,7 +18,7 @@ interface UdbRecordRepositoryInterface
      *
      * @return bool true when the authoritative store changed
      */
-    public function upsert(string $block, string $path, string $value): bool;
+    public function upsert(string $block, string $path, UdbValue $value): bool;
 
     /**
      * Deletes the record at the path and all of its descendants
@@ -29,11 +29,11 @@ interface UdbRecordRepositoryInterface
     public function deleteCascade(string $block, string $path): bool;
 
     /**
-     * Seeds one block from a path => value map inside a single transaction,
+     * Seeds one block from a path => typed value map inside a single transaction,
      * merging (upsert) with any records already present. Used once per block
      * by the store initializer so concurrent mutations are never lost.
      *
-     * @param array<string, string> $records Encoded path => value
+     * @param array<string, UdbValue> $records Encoded path => typed value
      */
     public function seedBlock(string $block, array $records): void;
 
@@ -43,6 +43,9 @@ interface UdbRecordRepositoryInterface
      * takeovers so the imported generation is never merged with stale rows.
      *
      * @param array<string, string> $records Encoded path => value
+     */
+    /**
+     * @param array<string, UdbValue> $records
      */
     public function replaceBlock(string $block, array $records): void;
 }

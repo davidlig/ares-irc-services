@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 
@@ -15,7 +16,12 @@ final class RecordingSessionState implements UdbSessionStateInterface
     /** @var list<UdbMutation> */
     public array $queue = [];
 
-    public function __construct(public bool $ready) {}
+    public function __construct(public bool $ready, private readonly UdbStreamOrigin $origin = new UdbStreamOrigin('002', '0123456789abcdef')) {}
+
+    public function streamOrigin(): UdbStreamOrigin
+    {
+        return $this->origin;
+    }
 
     public function isAuthorityReady(): bool
     {

@@ -26,12 +26,40 @@ The project requires 100% line coverage:
 ```
 
 Run the full coverage suite exactly once after implementation is complete.
+Require exact equality of covered statements and total statements; a rounded display of 100% is not
+proof of complete coverage. Do not lower thresholds, narrow the source filter or add exclusions to pass.
 
 During development use focused tests without coverage:
 
 ```bash
 ./vendor/bin/phpunit --no-coverage --display-all-issues tests/.../ChangedTest.php
 ```
+
+### Isolated UnrealUdb verification
+
+For isolated UDB checks, use the owned bootstrap below. It loads the autoloader and synthetic test
+configuration without Symfony Dotenv or repository `.env` files; do not substitute local credentials.
+The ordinary runner above remains appropriate for other project checks.
+
+```bash
+./vendor/bin/phpunit --no-coverage --display-all-issues \
+  --bootstrap tests/Irc/Adapter/Protocol/UnrealUdb/BootstrapIsolated.php \
+  tests/Irc/Adapter/Protocol/UnrealUdb/ChangedTest.php
+```
+
+Replace `ChangedTest.php` with the affected existing test path. At final isolated verification, run the
+full original gate once, retaining its project-wide source coverage and zero-issue requirements:
+
+```bash
+./scripts/check-coverage.sh 100 --issues \
+  --bootstrap tests/Irc/Adapter/Protocol/UnrealUdb/BootstrapIsolated.php
+```
+
+Cover coherent snapshot roots, typed schema/limits, independent native digest oracle vectors,
+service-operation regressions and malformed/duplicate/foreign/stale ACK and transport-barrier cases.
+Exercise the real handler route as well as coordinator boundaries. Preserve source and oracle semantics;
+do not shadow built-ins or manufacture impossible failures to satisfy coverage. Controlled disposable
+stream fixtures may exercise genuine I/O faults; restore wrappers/error handlers and retain failure assertions.
 
 ## 3. Test doubles
 
@@ -120,6 +148,28 @@ Live IRC/MariaDB checks are additive and only used when safe tooling exists.
 Never destructively test real user/channel resources.
 Never expose secrets in reports.
 Live checks do not replace PHPUnit/integration coverage.
+
+### Disposable native UDB integration
+
+Follow [unreal-udb.md](unreal-udb.md) for the native protocol contract. When native execution is explicitly
+authorized, `integration/udb4/run_native.py` accepts `--source-root` for the selected canonical UnrealIRCd
+tree and `--work-parent` for an external disposable workspace. Keep canonical source/configuration,
+binaries and index immutable; never compile or reconfigure in place. The harness uses copied native
+runtime artifacts and bubblewrap isolation with loopback-only fixtures and synthetic configuration.
+
+Never load real environment/data/credentials, use the installed runtime or `~/ircds`, contact an active
+network, or print secrets, hashes, tokens or raw sensitive wire values. Confirm source preservation and
+clean up disposable processes/resources. Documentation-only work does not authorize running this harness.
+
+Require actual inbound and outbound evidence: six-block data, correlated durable ACKs, native and Ares
+READY, service effects, ordered tail replay, imported-provenance reload, same-process reconnect and
+fresh-process epoch/reconciliation. A historical outbound-only run does not prove inbound takeover.
+Report commands, observed results and unavailable checks separately; success flags without assertions
+on actual native responses/data are insufficient.
+
+Direct protocol-harness proof is not full daemon startup/IRC-connect proof. SQLite, SQL parameter-type
+and binary-resource tests are not actual PostgreSQL integration proof; state the tested engine and any
+unavailable engine explicitly. Do not discover ambient database sessions or credentials to fill that gap.
 
 ## 9. Refactor test rule
 

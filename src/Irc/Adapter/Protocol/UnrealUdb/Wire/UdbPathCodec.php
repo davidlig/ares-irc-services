@@ -6,6 +6,7 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 
 use function array_map;
 use function chr;
+use function count;
 use function explode;
 use function hexdec;
 use function implode;
@@ -31,7 +32,8 @@ use const STR_PAD_LEFT;
  * are accepted, and embedded NUL bytes are rejected.
  *
  * Limits mirror udb_internal.h in the UnrealIRCd UDB module:
- *   UDB_RECORD_PATH_MAX 8192, UDB_COMPONENT_*_MAX 4608,
+ *   UDB_RECORD_PATH_MAX 8192, UDB_PATH_MAX_COMPONENTS 8,
+ *   UDB_COMPONENT_RAW_MAX 4608, UDB_COMPONENT_ENCODED_MAX 13824,
  *   UDB_RECORD_VALUE_MAX 4096, UDB_RECORD_LINE_MAX PATH+VALUE+32,
  *   UDB_TXID_MAX 31.
  */
@@ -41,37 +43,51 @@ final class UdbPathCodec
 
     public const int COMPONENT_RAW_MAX = 4608;
 
-    public const int COMPONENT_ENCODED_MAX = 4608;
+    public const int COMPONENT_ENCODED_MAX = 13824;
+
+    public const int PATH_COMPONENTS_MAX = 8;
 
     public const int VALUE_MAX = 4096;
 
     public const int RECORD_LINE_MAX = self::PATH_MAX + self::VALUE_MAX + 32;
+
+    public const int IRC_LINE_MAX = 16384;
+
+    public const int S2S_OVERHEAD_MAX = 256;
 
     public const int TXID_MAX = 31;
 
     /** Canonical percent-encoding of one path component. Returns null when the component cannot be represented. */
     public static function encodeComponent(string $raw): ?string
     {
+        return self::encodeWithinLimits($raw, self::COMPONENT_RAW_MAX, self::COMPONENT_ENCODED_MAX);
+    }
+
+    private static function encodeWithinLimits(string $raw, int $rawLimit, int $encodedLimit): ?string
+    {
         $encoded = '';
         $length = strlen($raw);
+        if ($length > $rawLimit || str_contains($raw, "\0")) {
+            return null;
+        }
         for ($i = 0; $i < $length; ++$i) {
             $byte = $raw[$i];
             $ord = ord($byte);
-            if (58 === $ord || 37 === $ord || $ord <= 32 || $ord >= 127) {
-                if (strlen($encoded) + 3 > self::COMPONENT_ENCODED_MAX) {
-                    return null;
-                }
-                $encoded .= sprintf('%%%02X', $ord);
-
-                continue;
-            }
-            if (strlen($encoded) + 1 > self::COMPONENT_ENCODED_MAX) {
+            $fragment = 58 === $ord || 37 === $ord || $ord <= 32 || $ord >= 127
+                ? sprintf('%%%02X', $ord) : $byte;
+            $next = self::appendEncoded($encoded, $fragment, $encodedLimit);
+            if (null === $next) {
                 return null;
             }
-            $encoded .= $byte;
+            $encoded = $next;
         }
 
         return $encoded;
+    }
+
+    private static function appendEncoded(string $encoded, string $fragment, int $limit): ?string
+    {
+        return strlen($encoded) + strlen($fragment) <= $limit ? $encoded . $fragment : null;
     }
 
     /** Strict canonical decode. Returns null for malformed, non-canonical or NUL-containing input. */
@@ -122,7 +138,7 @@ final class UdbPathCodec
      */
     public static function encodePath(array $components): ?string
     {
-        if ([] === $components) {
+        if ([] === $components || count($components) > self::PATH_COMPONENTS_MAX) {
             return null;
         }
 
@@ -166,11 +182,16 @@ final class UdbPathCodec
     /** Validates a canonical full path (every component decodes and re-encodes identically). */
     public static function isCanonicalPath(string $path): bool
     {
-        if ('' === $path) {
+        if ('' === $path || strlen($path) > self::PATH_MAX) {
             return false;
         }
 
-        foreach (explode('::', $path) as $component) {
+        $components = explode('::', $path);
+        if (count($components) > self::PATH_COMPONENTS_MAX) {
+            return false;
+        }
+
+        foreach ($components as $component) {
             if ('' === $component || strlen($component) > self::COMPONENT_ENCODED_MAX) {
                 return false;
             }
@@ -186,6 +207,14 @@ final class UdbPathCodec
         }
 
         return true;
+    }
+
+    /** Checks a complete UDB record line, including conservative framing and CRLF budget. */
+    public static function fitsWireLine(string $prefix, string $target, string $command, string $path, string $value): bool
+    {
+        $line = sprintf(':%s DB %s %s %s :%s', $prefix, $target, $command, $path, $value);
+
+        return strlen($line) + 2 + self::S2S_OVERHEAD_MAX <= self::IRC_LINE_MAX;
     }
 
     /** Strict txid validation (max 31 chars of [A-Za-z0-9_-]). */

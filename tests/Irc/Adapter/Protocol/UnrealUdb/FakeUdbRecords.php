@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbDatasetCheckpoint;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use RuntimeException;
 
 /**
@@ -18,12 +23,27 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
 
     public bool $fail = false;
 
-    public function recordsByBlock(string $block): array
+    private ?UdbStreamOrigin $origin = null;
+
+    private UdbUnsignedDecimal $watermark;
+
+    public function __construct()
     {
-        return $this->blocks[$block] ?? [];
+        $this->watermark = UdbUnsignedDecimal::fromInt(0);
     }
 
-    public function upsert(string $block, string $path, string $value): bool
+    public function recordsByBlock(string $block): array
+    {
+        $typed = [];
+        foreach ($this->blocks[$block] ?? [] as $path => $value) {
+            $typed[$path] = UdbSchema::typedValueForStoredRecord($block, $path, $value)
+                ?? throw new RuntimeException('Fake UDB row is not schema-valid.');
+        }
+
+        return $typed;
+    }
+
+    public function upsert(string $block, string $path, UdbValue $value): bool
     {
         if ($this->fail) {
             throw new RuntimeException('store unavailable');
@@ -35,23 +55,35 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
                 continue;
             }
 
-            if ($existing === $value) {
+            if ($existing === $value->logicalValue()) {
                 return false;
             }
 
-            $this->blocks[$block][$candidate] = $value;
+            $this->blocks[$block][$candidate] = $value->logicalValue();
 
             return true;
         }
 
-        $this->blocks[$block][$path] = $value;
+        $this->blocks[$block][$path] = $value->logicalValue();
 
         return true;
     }
 
-    public function upsertWithManifest(string $block, string $path, string $value): bool
+    public function beginLocalStream(UdbStreamOrigin $origin): UdbDatasetCheckpoint
     {
-        return $this->upsert($block, $path, $value);
+        $this->origin = $origin;
+        $this->watermark = UdbUnsignedDecimal::fromInt(0);
+
+        return new UdbDatasetCheckpoint($origin, $this->watermark);
+    }
+
+    public function upsertWithManifest(string $block, string $path, UdbValue $value, UdbStreamOrigin $origin): ?UdbUnsignedDecimal
+    {
+        if (!$this->upsert($block, $path, $value)) {
+            return null;
+        }
+
+        return $this->advance($origin);
     }
 
     public function deleteCascade(string $block, string $path): bool
@@ -74,15 +106,19 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
         return $deleted;
     }
 
-    public function deleteCascadeWithManifest(string $block, string $path): bool
+    public function deleteCascadeWithManifest(string $block, string $path, UdbStreamOrigin $origin): ?UdbUnsignedDecimal
     {
-        return $this->deleteCascade($block, $path);
+        if (!$this->deleteCascade($block, $path)) {
+            return null;
+        }
+
+        return $this->advance($origin);
     }
 
-    public function expireLineWithManifest(string $path, int $expectedExpires, int $now): bool
+    public function expireLineWithManifest(string $path, int $expectedExpires, int $now, UdbStreamOrigin $origin): ?UdbUnsignedDecimal
     {
         if ($expectedExpires > $now) {
-            return false;
+            return null;
         }
 
         $expiresPath = $path . '::expires';
@@ -92,10 +128,19 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
                 continue;
             }
 
-            return $this->deleteCascade('K', $path);
+            return $this->deleteCascade('K', $path) ? $this->advance($origin) : null;
         }
 
-        return false;
+        return null;
+    }
+
+    public function allocateBlockDropSequence(string $block, UdbStreamOrigin $origin): UdbUnsignedDecimal
+    {
+        if ($this->fail) {
+            throw new RuntimeException('store unavailable');
+        }
+
+        return $this->advance($origin);
     }
 
     public function seedBlock(string $block, array $records): void
@@ -105,7 +150,7 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
         }
 
         foreach ($records as $path => $value) {
-            $this->blocks[$block][$path] = $value;
+            $this->blocks[$block][$path] = $value->logicalValue();
         }
     }
 
@@ -115,6 +160,16 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface, UdbRecordMut
             throw new RuntimeException('store unavailable');
         }
 
-        $this->blocks[$block] = $records;
+        $this->blocks[$block] = array_map(static fn (string|UdbValue $value): string => $value->logicalValue(), $records);
+    }
+
+    private function advance(UdbStreamOrigin $origin): UdbUnsignedDecimal
+    {
+        if (null === $this->origin || $this->origin->sid !== $origin->sid || $this->origin->epoch !== $origin->epoch) {
+            throw new RuntimeException('Unexpected stream origin in fake UDB store.');
+        }
+        $this->watermark = $this->watermark->increment() ?? throw new RuntimeException('Fake UDB sequence overflow.');
+
+        return $this->watermark;
     }
 }

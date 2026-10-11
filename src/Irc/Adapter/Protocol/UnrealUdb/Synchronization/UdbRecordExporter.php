@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\In\ChannelProjection;
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\SystemUdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbClock;
 use App\Irc\Adapter\Protocol\UnrealUdb\UdbChannelModesFormatter;
@@ -21,7 +22,6 @@ use App\OperServ\Application\Port\In\GlineProjectionQuery;
 use App\OperServ\Application\Port\In\OperatorNetworkProjectionQuery;
 use RuntimeException;
 
-use function array_filter;
 use function explode;
 use function preg_match;
 use function sprintf;
@@ -135,11 +135,10 @@ final readonly class UdbRecordExporter
 
     /**
      * SQL-owned block rebuilt from the current SQL export, with encoded paths
-     * ready for the authoritative store (and for replaceBlock()). Empty values
-     * are filtered out: UDB rejects empty-value records and the store
-     * checksum must stay in sync with what reconciliation serves.
+     * ready for the authoritative store and protocol snapshot. Values are
+     * classified from the canonical block/path schema, never by their bytes.
      *
-     * @return array<string, string>
+     * @return array<string, UdbValue>
      *
      * @throws RuntimeException when the SQL export contains an invalid record
      */
@@ -156,14 +155,15 @@ final readonly class UdbRecordExporter
         foreach ($raw as $rawPath => $value) {
             $components = explode('::', $rawPath);
             $path = UdbPathCodec::encodePath($components);
-            if (null === $path || !UdbSchema::validate($block, $components, $value)) {
+            $typedValue = UdbSchema::typedValueFor($block, $components, $value);
+            if (null === $path || null === $typedValue) {
                 throw new RuntimeException(sprintf('Current SQL export contains an invalid %s-block record.', $block->letter()));
             }
 
-            $records[$path] = $value;
+            $records[$path] = $typedValue;
         }
 
-        return array_filter($records, static fn (string $value): bool => '' !== $value);
+        return $records;
     }
 
     /**

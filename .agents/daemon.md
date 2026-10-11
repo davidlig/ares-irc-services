@@ -67,7 +67,11 @@ Expected:
 - connect initializes;
 - operation mutates;
 - disconnect cancels timers/clears session state;
-- reconnect starts without stale correlation IDs/transfers/authority state.
+- reconnect starts without stale correlation IDs/transfers or transient peer authority negotiation.
 
 Persistent business/protocol projection state survives runtime reset unless owning semantics say
 otherwise.
+
+Do not confuse transient session reset with revoking durable approval or erasing imported provenance.
+For UnrealUdb, the same process retains its epoch/committed sequence across reconnect; a fresh process
+uses a fresh epoch and full reconciliation. See [the origin and process lifecycle contract](unreal-udb.md#13-origin-and-process-lifecycle).

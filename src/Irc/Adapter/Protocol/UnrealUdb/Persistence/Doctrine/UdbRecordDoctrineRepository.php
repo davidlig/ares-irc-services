@@ -6,9 +6,15 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
+use UnexpectedValueException;
+
+use function substr;
 
 final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryInterface
 {
@@ -18,35 +24,46 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
 
     public function recordsByBlock(string $block): array
     {
-        /** @var array<array{path: string, value: string}> $rows */
+        /** @var array<array{path: string, value: string, valueKind: int}> $rows */
         $rows = $this->em
-            ->createQuery('SELECT r.path, r.value FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord r WHERE r.block = :block')
+            ->createQuery('SELECT r.path, r.value, r.valueKind FROM App\\Irc\\Adapter\\Protocol\\UnrealUdb\\Model\\UdbRecord r WHERE r.block = :block')
             ->setParameter('block', $block)
             ->getArrayResult();
-
         $records = [];
         foreach ($rows as $row) {
-            $records[$row['path']] = $row['value'];
+            $kind = UdbValueKind::tryFrom($row['valueKind']);
+            if (null === $kind) {
+                throw new UnexpectedValueException('A persisted UDB record has an unknown value kind.');
+            }
+            $value = match ($kind) {
+                UdbValueKind::None => UdbValue::none(),
+                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($row['value'], 1)) ?? throw new UnexpectedValueException('A persisted numeric UDB value is malformed.')),
+                UdbValueKind::String => UdbValue::string($row['value']),
+            };
+            if ($value->kind !== $kind || $value->logicalValue() !== $row['value']) {
+                throw new UnexpectedValueException('A persisted UDB record value does not match its value kind.');
+            }
+            $records[$row['path']] = $value;
         }
 
         return $records;
     }
 
-    public function upsert(string $block, string $path, string $value): bool
+    public function upsert(string $block, string $path, UdbValue $value): bool
     {
-        $value = UdbSchema::canonicalizeValue($value);
+        if (!UdbSchema::matchesStoredRecordType($block, $path, $value)) {
+            throw new UnexpectedValueException('The typed UDB record does not match its canonical schema.');
+        }
+        $logical = $value->logicalValue();
         $existing = $this->findRecord($block, $path);
-
         if ($existing instanceof UdbRecord) {
-            if ($existing->getValue() === $value) {
+            if ($existing->getValue() === $logical && $existing->getValueKind() === $value->kind) {
                 return false;
             }
-
-            $existing->updateValue($value);
+            $existing->updateValue($logical, $value->kind);
         } else {
-            $this->em->persist(new UdbRecord($block, $path, $value));
+            $this->em->persist(new UdbRecord($block, $path, $logical, $value->kind));
         }
-
         $this->em->flush();
         $this->em->clear();
 
@@ -72,6 +89,7 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
         return true;
     }
 
+    /** @param array<string, mixed> $records Untrusted bulk rows are checked before persistence. */
     public function seedBlock(string $block, array $records): void
     {
         $this->em->wrapInTransaction(function () use ($block, $records): void {
@@ -81,16 +99,22 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
             }
 
             foreach ($records as $path => $value) {
+                if (!$value instanceof UdbValue) {
+                    throw new UnexpectedValueException('A typed UDB seed block contains an untyped value.');
+                }
+                if (!UdbSchema::matchesStoredRecordType($block, $path, $value)) {
+                    throw new UnexpectedValueException('A typed UDB seed block contains a schema-invalid value.');
+                }
                 $identity = UdbRecord::identity($path, $block);
                 $id = $existing[$identity] ?? null;
 
                 if (null !== $id) {
                     $record = $this->em->find(UdbRecord::class, $id);
                     if ($record instanceof UdbRecord) {
-                        $record->updateValue($value);
+                        $record->updateValue($value->logicalValue(), $value->kind);
                     }
                 } else {
-                    $this->em->persist(new UdbRecord($block, $path, $value));
+                    $this->em->persist(new UdbRecord($block, $path, $value->logicalValue(), $value->kind));
                 }
             }
 
@@ -100,21 +124,25 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
         $this->em->clear();
     }
 
+    /** @param array<string, mixed> $records Untrusted bulk rows are checked before persistence. */
     public function replaceBlock(string $block, array $records): void
     {
         $this->em->wrapInTransaction(function () use ($block, $records): void {
             $this->em
-                ->createQuery('DELETE FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord r WHERE r.block = :block')
+                ->createQuery('DELETE FROM App\\Irc\\Adapter\\Protocol\\UnrealUdb\\Model\\UdbRecord r WHERE r.block = :block')
                 ->setParameter('block', $block)
                 ->execute();
-
             foreach ($records as $path => $value) {
-                $this->em->persist(new UdbRecord($block, $path, $value));
+                if (!$value instanceof UdbValue) {
+                    throw new UnexpectedValueException('A typed UDB block contains an untyped value.');
+                }
+                if (!UdbSchema::matchesStoredRecordType($block, $path, $value)) {
+                    throw new UnexpectedValueException('A typed UDB block contains a schema-invalid value.');
+                }
+                $this->em->persist(new UdbRecord($block, $path, $value->logicalValue(), $value->kind));
             }
-
             $this->em->flush();
         });
-
         $this->em->clear();
     }
 
@@ -150,7 +178,9 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
         return $ids;
     }
 
-    /** @return array<string, int> identity path => record id */
+    /**
+     * @return array<string, int> identity path => record id
+     */
     private function blockIdentities(string $block): array
     {
         /** @var array<array{id: int, identityPath: string}> $rows */

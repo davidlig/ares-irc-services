@@ -58,7 +58,9 @@ final readonly class UdbUnsignedDecimal implements Stringable
         return $this->value === $other->value;
     }
 
-    /** @return -1|0|1 */
+    /**
+     * @return -1|0|1
+     */
     public function compare(self $other): int
     {
         $lengthComparison = strlen($this->value) <=> strlen($other->value);

@@ -30,7 +30,9 @@ final class UdbMutationQueue
         return $overflowed;
     }
 
-    /** @return list<UdbMutation> */
+    /**
+     * @return list<UdbMutation>
+     */
     public function drain(): array
     {
         $pending = $this->pending;
