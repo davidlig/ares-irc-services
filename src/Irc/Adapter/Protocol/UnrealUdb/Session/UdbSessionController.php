@@ -17,9 +17,18 @@ interface UdbSessionController
 
     public function onRemoteServer(string $sid, string $serverName): void;
 
+    /** Prepares SQL stream identity before burst callbacks, without sending HEL. */
+    public function prepareLocalStream(): void;
+
     public function onLinkReady(ConnectionInterface $connection): void;
 
     public function handleFrame(UdbFrame $frame, ConnectionInterface $connection): void;
+
+    /** Native PONG is not nonce-authenticated and cannot complete bootstrap. */
+    public function handlePong(?string $sourceSid, ?string $token, ConnectionInterface $connection): void;
+
+    /** A native nonce-echoing 402 is transport ordering only, never ACK credit. */
+    public function handleTransportBarrier(?string $source, string $target, string $nonce, ConnectionInterface $connection): void;
 
     public function tick(?ConnectionInterface $connection = null): void;
 

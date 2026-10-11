@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 
 use function is_int;
 
@@ -50,6 +51,9 @@ final readonly class UdbFrame
         int|UdbUnsignedDecimal|null $sequence = null,
         int|UdbUnsignedDecimal|null $watermark = null,
         public ?int $expectedExpires = null,
+        public ?UdbValue $typedValue = null,
+        public ?string $rootSid = null,
+        public ?string $rootEpoch = null,
     ) {
         $this->roundId = is_int($roundId) ? UdbUnsignedDecimal::fromInt($roundId) : $roundId;
         $this->sequence = is_int($sequence) ? UdbUnsignedDecimal::fromInt($sequence) : $sequence;

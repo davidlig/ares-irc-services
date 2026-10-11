@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
@@ -18,6 +19,11 @@ trait CreatesUdbRecordWriter
     private function createReadySessionState(): UdbSessionStateInterface
     {
         return new class implements UdbSessionStateInterface {
+            public function streamOrigin(): UdbStreamOrigin
+            {
+                return new UdbStreamOrigin('002', '0123456789abcdef');
+            }
+
             public function isAuthorityReady(): bool
             {
                 return true;

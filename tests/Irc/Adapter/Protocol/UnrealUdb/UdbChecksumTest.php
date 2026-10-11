@@ -4,32 +4,17 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function strlen;
+
 #[CoversClass(UdbChecksum::class)]
 final class UdbChecksumTest extends TestCase
 {
-    #[Test]
-    public function emptyRecordSetUsesTheStandardSha256Digest(): void
-    {
-        self::assertSame(hash('sha256', ''), UdbChecksum::EMPTY);
-        self::assertSame(UdbChecksum::EMPTY, UdbChecksum::fromRecords([]));
-        self::assertSame(UdbChecksum::EMPTY, UdbChecksum::fromLines([]));
-    }
-
-    #[Test]
-    public function logicalRecordsAreSortedBytewiseAndNewlineTerminated(): void
-    {
-        $expected = hash('sha256', "N::a::pass v1\nN::b::pass v2\n");
-
-        self::assertSame($expected, UdbChecksum::fromRecords([['N::b::pass', 'v2'], ['N::a::pass', 'v1']]));
-        self::assertSame($expected, UdbChecksum::fromLines(['N::a::pass v1', 'N::b::pass v2']));
-        self::assertNotSame(UdbChecksum::fromRecords([['a', '1']]), UdbChecksum::fromRecords([['a', '2']]));
-    }
-
     #[Test]
     public function parseAcceptsOnlyCanonicalLowercaseSha256(): void
     {
@@ -39,5 +24,21 @@ final class UdbChecksumTest extends TestCase
         self::assertNull(UdbChecksum::parse(str_repeat('a', 63)));
         self::assertNull(UdbChecksum::parse(str_repeat('g', 64)));
         self::assertNull(UdbChecksum::parse(''));
+    }
+
+    #[Test]
+    public function nativeEmptyDigestIsBlockSpecificAndStable(): void
+    {
+        $digests = [];
+        foreach (UdbBlock::all() as $block) {
+            $digest = UdbChecksum::empty($block);
+            self::assertSame(64, strlen($digest));
+            self::assertSame($digest, UdbChecksum::fromRecords($block, []));
+            self::assertSame($digest, UdbChecksum::empty($block));
+            $digests[] = $digest;
+        }
+
+        self::assertCount(6, array_unique($digests));
+        self::assertNotSame(hash('sha256', ''), $digests[0]);
     }
 }

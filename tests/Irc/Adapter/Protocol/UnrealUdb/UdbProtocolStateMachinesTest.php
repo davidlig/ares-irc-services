@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbReconciliationRound;
 use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbRoundTimeout;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\SystemUdbClock;
@@ -213,9 +215,9 @@ final class UdbProtocolStateMachinesTest extends TestCase
     public function mutationQueueDropsOnlyTheOldestAndDrainIsAtomic(): void
     {
         $queue = new UdbMutationQueue(2);
-        self::assertFalse($queue->enqueue(new UdbMutation('N', 'one', '1')));
-        self::assertFalse($queue->enqueue(new UdbMutation('N', 'two', '2')));
-        self::assertTrue($queue->enqueue(new UdbMutation('N', 'three', '3')));
+        self::assertFalse($queue->enqueue($this->mutation('one', '1', 1)));
+        self::assertFalse($queue->enqueue($this->mutation('two', '2', 2)));
+        self::assertTrue($queue->enqueue($this->mutation('three', '3', 3)));
 
         self::assertSame(['two', 'three'], array_map(
             static fn (UdbMutation $mutation): string => $mutation->encodedPath,
@@ -228,10 +230,10 @@ final class UdbProtocolStateMachinesTest extends TestCase
     public function mutationQueueDiscardsOnlySequencedMutationsThroughTheSnapshotWatermark(): void
     {
         $queue = new UdbMutationQueue();
-        $queue->enqueue(new UdbMutation('N', 'unsequenced', '0'));
-        $queue->enqueue(new UdbMutation('N', 'before', '1', UdbUnsignedDecimal::fromInt(4)));
-        $queue->enqueue(new UdbMutation('N', 'at-watermark', '2', UdbUnsignedDecimal::fromInt(5)));
-        $queue->enqueue(new UdbMutation('N', 'after', '3', UdbUnsignedDecimal::fromInt(6)));
+        $queue->enqueue(new UdbMutation('N', 'unsequenced', UdbValue::string('0')));
+        $queue->enqueue($this->mutation('before', '1', 4));
+        $queue->enqueue($this->mutation('at-watermark', '2', 5));
+        $queue->enqueue($this->mutation('after', '3', 6));
 
         $queue->discardThrough(UdbUnsignedDecimal::fromInt(5));
 
@@ -264,6 +266,14 @@ final class UdbProtocolStateMachinesTest extends TestCase
             txid: 'tx-1',
             checksum: 'ABCDEF12',
             watermark: 0,
+        );
+    }
+
+    private function mutation(string $path, string $value, int $sequence): UdbMutation
+    {
+        return new UdbMutation('N', $path, UdbValue::string($value))->assigned(
+            UdbUnsignedDecimal::fromInt($sequence),
+            new UdbStreamOrigin('002', '0123456789abcdef'),
         );
     }
 }

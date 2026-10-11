@@ -17,7 +17,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(UnrealUdbRawCommandInterceptor::class)]
 final class UnrealUdbRawCommandInterceptorTest extends TestCase
 {
-    /** @param list<string> $arguments */
+    /**
+     * @param list<string> $arguments
+     */
     #[Test]
     #[DataProvider('unhandledCommands')]
     public function ignoresCommandsOutsideItsGrammar(array $arguments): void
@@ -31,7 +33,9 @@ final class UnrealUdbRawCommandInterceptorTest extends TestCase
         self::assertSame(RawCommandInterceptionOutcome::NotHandled, $result->outcome);
     }
 
-    /** @return iterable<string, array{list<string>}> */
+    /**
+     * @return iterable<string, array{list<string>}>
+     */
     public static function unhandledCommands(): iterable
     {
         yield 'too few arguments' => [['DB', '*']];
@@ -49,7 +53,9 @@ final class UnrealUdbRawCommandInterceptorTest extends TestCase
         self::assertSame('001', $result->resourceIdentifier);
     }
 
-    /** @param list<string> $arguments */
+    /**
+     * @param list<string> $arguments
+     */
     #[Test]
     #[DataProvider('invalidSyntax')]
     public function rejectsInvalidMutationSyntax(array $arguments): void
@@ -60,7 +66,9 @@ final class UnrealUdbRawCommandInterceptorTest extends TestCase
         self::assertSame(RawCommandInterceptionFailure::SyntaxInvalid, $result->failure);
     }
 
-    /** @return iterable<string, array{list<string>}> */
+    /**
+     * @return iterable<string, array{list<string>}>
+     */
     public static function invalidSyntax(): iterable
     {
         yield 'insert without value' => [['DB', '*', 'INS', 'N::nick']];
@@ -70,7 +78,9 @@ final class UnrealUdbRawCommandInterceptorTest extends TestCase
         yield 'delete with blank path' => [['DB', '*', 'DEL', ' ']];
     }
 
-    /** @param list<string> $arguments */
+    /**
+     * @param list<string> $arguments
+     */
     #[Test]
     #[DataProvider('insertValues')]
     public function decodesAndDelegatesInsertValues(array $arguments, string $expectedValue): void
@@ -85,7 +95,9 @@ final class UnrealUdbRawCommandInterceptorTest extends TestCase
         self::assertSame('DB INS', $result->operation);
     }
 
-    /** @return iterable<string, array{list<string>, string}> */
+    /**
+     * @return iterable<string, array{list<string>, string}>
+     */
     public static function insertValues(): iterable
     {
         yield 'colon trailing parameter' => [['db', '*', 'ins', 'N::nick::vhost', ':cloak.example'], 'cloak.example'];
@@ -117,7 +129,9 @@ final class UnrealUdbRawCommandInterceptorTest extends TestCase
         self::assertSame(RawCommandInterceptionFailure::Unsupported, $result->failure);
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function unsupportedMutations(): iterable
     {
         yield 'drop' => ['DRP'];
@@ -150,7 +164,9 @@ final class UnrealUdbRawCommandInterceptorTest extends TestCase
         self::assertSame($expectedIdentifier, $result->resourceIdentifier);
     }
 
-    /** @return iterable<string, array{UdbRawCommandResult, RawCommandInterceptionFailure, ?string, ?string}> */
+    /**
+     * @return iterable<string, array{UdbRawCommandResult, RawCommandInterceptionFailure, ?string, ?string}>
+     */
     public static function handlerFailures(): iterable
     {
         yield 'block' => [UdbRawCommandResult::error('raw.udb.invalid_block', ['%block%' => 'X']), RawCommandInterceptionFailure::ResourceTypeInvalid, 'X', null];

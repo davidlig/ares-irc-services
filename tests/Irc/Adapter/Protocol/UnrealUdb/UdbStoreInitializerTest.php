@@ -25,7 +25,6 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UdbStoreInitializer::class)]
@@ -98,8 +97,8 @@ final class UdbStoreInitializerTest extends TestCase
             ['david::pass' => 'crypt:' . self::BCRYPT_HASH, 'david::vhost' => 'david.example.net'],
             $this->records->blocks['N'],
         );
-        self::assertSame(['#chan::founder' => 'david'], $this->records->recordsByBlock('C'));
-        self::assertSame(['G::*@bad.example::reason' => 'abuse'], $this->records->recordsByBlock('K'));
+        self::assertSame(['#chan::founder' => 'david'], UdbTestValues::logicalMap($this->records->recordsByBlock('C')));
+        self::assertSame(['G::*@bad.example::reason' => 'abuse'], UdbTestValues::logicalMap($this->records->recordsByBlock('K')));
         // I/S/L start empty and are never seeded from SQL.
         self::assertArrayNotHasKey('I', $this->records->blocks);
         self::assertArrayNotHasKey('S', $this->records->blocks);
@@ -111,10 +110,10 @@ final class UdbStoreInitializerTest extends TestCase
     public function alreadyInitializedStoreIsLeftUntouched(): void
     {
         foreach (UdbBlock::all() as $block) {
-            $this->states->upsert($block->letter(), UdbChecksum::EMPTY, 0);
+            $this->states->upsert($block->letter(), UdbChecksum::empty($block), 0);
         }
         $coordinator = $this->createMock(UdbStoreInitializationListener::class);
-        $coordinator->expects($this->never())->method('onStoreInitialized');
+        $coordinator->expects($this->once())->method('onStoreInitialized');
 
         $initializer = new UdbStoreInitializer($this->records, $this->states, $this->createExporter(), $coordinator);
 
@@ -130,7 +129,7 @@ final class UdbStoreInitializerTest extends TestCase
             '002',
         );
         $coordinator = $this->createMock(UdbStoreInitializationListener::class);
-        $coordinator->expects($this->once())->method('onStoreInitialized');
+        $coordinator->expects($this->exactly(2))->method('onStoreInitialized');
 
         $initializer = new UdbStoreInitializer($this->records, $this->states, $this->createExporter(), $coordinator);
         $initializer->onNetworkSyncComplete($event);
@@ -140,27 +139,12 @@ final class UdbStoreInitializerTest extends TestCase
     #[Test]
     public function partiallyInitializedStoreSeedsOnlyMissingBlocks(): void
     {
-        $this->states->upsert('N', UdbChecksum::EMPTY, 0);
+        $this->states->upsert('N', UdbChecksum::empty(UdbBlock::Nicks), 0);
 
         $initializer = new UdbStoreInitializer($this->records, $this->states, $this->createExporter(), $this->coordinator);
         $initializer->ensureInitialized();
 
         self::assertArrayNotHasKey('N', $this->records->blocks);
         self::assertCount(6, $this->states->states);
-    }
-
-    #[Test]
-    public function unencodableSeedPathsAreDroppedDuringEncoding(): void
-    {
-        $initializer = new UdbStoreInitializer($this->records, $this->states, $this->createExporter(), $this->coordinator);
-
-        $encode = new ReflectionMethod(UdbStoreInitializer::class, 'encodedRecords');
-        $result = $encode->invoke($initializer, [
-            'G::' . str_repeat('a', 5000) => 'x',
-            'G::*@bad.example::reason' => 'spam',
-            '#chan::topic' => '',
-        ]);
-
-        self::assertSame(['G::*@bad.example::reason' => 'spam'], $result);
     }
 }

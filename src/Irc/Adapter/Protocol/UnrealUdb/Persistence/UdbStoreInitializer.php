@@ -9,7 +9,6 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbStoreInitializationListener;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordExporter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
-use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -17,7 +16,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use function array_diff;
 use function array_keys;
 use function count;
-use function explode;
 use function implode;
 use function in_array;
 
@@ -65,6 +63,8 @@ final class UdbStoreInitializer implements EventSubscriberInterface
         );
 
         if ([] === $missing) {
+            $this->coordinator->onStoreInitialized();
+
             return false;
         }
 
@@ -86,61 +86,10 @@ final class UdbStoreInitializer implements EventSubscriberInterface
 
     private function seedBlock(UdbBlock $block): void
     {
-        $seed = match ($block) {
-            UdbBlock::Nicks => $this->encodedRecords($this->exporter->allNickRecords()),
-            UdbBlock::Channels => $this->encodedRecords($this->exporter->allChannelRecords()),
-            UdbBlock::Lines => $this->encodedRecords($this->exporter->allGlineRecords()),
-            // I/S/L start empty: the IRCd has nothing authoritative to give.
-            UdbBlock::Ips, UdbBlock::Settings, UdbBlock::Links => [],
-        };
+        $seed = $this->exporter->encodedBlockRecords($block);
 
         $this->records->seedBlock($block->letter(), $seed);
         $records = $this->records->recordsByBlock($block->letter());
-        $this->states->upsert($block->letter(), UdbChecksum::fromRecords(self::tuples($records)), count($records));
-    }
-
-    /**
-     * Encodes raw "a::b::c" paths into canonical wire paths, dropping records
-     * whose path cannot be represented.
-     *
-     * @param array<string, string> $records
-     *
-     * @return array<string, string>
-     */
-    private function encodedRecords(array $records): array
-    {
-        $encoded = [];
-        foreach ($records as $rawPath => $value) {
-            // Empty values are never valid UDB records.
-            if ('' === $value) {
-                continue;
-            }
-
-            $path = UdbPathCodec::encodePath(explode('::', $rawPath));
-            if (null !== $path) {
-                $encoded[$path] = $value;
-            } else {
-                $this->logger->warning('Skipping UDB seed record with unencodable path.', [
-                    'path' => $rawPath,
-                ]);
-            }
-        }
-
-        return $encoded;
-    }
-
-    /**
-     * @param array<string, string> $records
-     *
-     * @return list<array{0: string, 1: string}>
-     */
-    private static function tuples(array $records): array
-    {
-        $tuples = [];
-        foreach ($records as $path => $value) {
-            $tuples[] = [$path, $value];
-        }
-
-        return $tuples;
+        $this->states->upsert($block->letter(), UdbChecksum::fromMap($block, $records), count($records));
     }
 }

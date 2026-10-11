@@ -8,11 +8,17 @@ use App\Migrations\Version20260927000001;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
-use Doctrine\DBAL\Schema\Schema;
+use Doctrine\Migrations\Configuration\Configuration;
+use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
+use Doctrine\Migrations\Configuration\Migration\ExistingConfiguration;
+use Doctrine\Migrations\DependencyFactory;
+use Doctrine\Migrations\Metadata\MigrationPlan;
+use Doctrine\Migrations\Metadata\MigrationPlanList;
+use Doctrine\Migrations\MigratorConfiguration;
+use Doctrine\Migrations\Version\Version;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use Psr\Log\NullLogger;
 
 #[CoversNothing]
 #[Group('integration')]
@@ -51,18 +57,17 @@ final class WhoipIndexTest extends DoctrineIntegrationTestCase
         $this->entityManager->persist($nick);
         $this->flushAndClear();
         $storedNicks = $connection->fetchAllAssociative('SELECT * FROM registered_nicks');
-        $migration = new Version20260927000001($connection, new NullLogger());
 
-        $this->applySchemaChange($migration->up(...));
+        $this->applyMigration('up');
         $this->assertWhoipIndexExists();
         $this->assertWhoipQueryUsesIndex();
         self::assertSame($storedNicks, $connection->fetchAllAssociative('SELECT * FROM registered_nicks'));
 
-        $this->applySchemaChange($migration->down(...));
+        $this->applyMigration('down');
         self::assertFalse($connection->createSchemaManager()->introspectTable('registered_nicks')->hasIndex(self::INDEX_NAME));
         self::assertSame($storedNicks, $connection->fetchAllAssociative('SELECT * FROM registered_nicks'));
 
-        $this->applySchemaChange($migration->up(...));
+        $this->applyMigration('up');
         $this->assertWhoipIndexExists();
         self::assertSame($storedNicks, $connection->fetchAllAssociative('SELECT * FROM registered_nicks'));
     }
@@ -102,18 +107,14 @@ final class WhoipIndexTest extends DoctrineIntegrationTestCase
         self::assertSame(['last_connect_ip', 'nickname_lower', 'id'], $table->getIndex(self::INDEX_NAME)->getColumns());
     }
 
-    /** @param callable(Schema): void $change */
-    private function applySchemaChange(callable $change): void
+    private function applyMigration(string $direction): void
     {
         $connection = $this->entityManager->getConnection();
-        $schemaManager = $connection->createSchemaManager();
-        $before = $schemaManager->introspectSchema();
-        $after = clone $before;
-        $change($after);
-
-        $difference = $schemaManager->createComparator()->compareSchemas($before, $after);
-        foreach ($connection->getDatabasePlatform()->getAlterSchemaSQL($difference) as $sql) {
-            $connection->executeStatement($sql);
-        }
+        $factory = DependencyFactory::fromConnection(new ExistingConfiguration(new Configuration()), new ExistingConnection($connection));
+        $factory->getMetadataStorage()->ensureInitialized();
+        $class = Version20260927000001::class;
+        $migration = $factory->getMigrationFactory()->createVersion($class);
+        $plan = new MigrationPlan(new Version($class), $migration, $direction);
+        $factory->getMigrator()->migrate(new MigrationPlanList([$plan], $direction), new MigratorConfiguration());
     }
 }

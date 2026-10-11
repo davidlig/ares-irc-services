@@ -11,5 +11,11 @@
         <field name="approvedAt" type="datetimetz_immutable" column="approved_at" nullable="true"/>
         <field name="fingerprint" type="string" length="64" column="fingerprint" nullable="true"/>
         <field name="protocolRevision" type="string" length="40" column="protocol_revision" nullable="true"/>
+        <field name="originSid" type="string" length="3" column="origin_sid" nullable="true"/>
+        <field name="originEpoch" type="string" length="16" column="origin_epoch" nullable="true"/>
+        <field name="originWatermark" type="string" length="20" column="origin_watermark" nullable="true"/>
+        <field name="datasetSid" type="string" length="3" column="dataset_sid" nullable="true"/>
+        <field name="datasetEpoch" type="string" length="16" column="dataset_epoch" nullable="true"/>
+        <field name="datasetWatermark" type="string" length="20" column="dataset_watermark" nullable="true"/>
     </entity>
 </doctrine-mapping>

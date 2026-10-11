@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
@@ -49,7 +50,7 @@ final readonly class UnrealUdbNickReservation implements ServiceNickReservationI
     {
         $managed = [];
         foreach ($this->records->recordsByBlock(self::BLOCK) as $path => $value) {
-            if ($reason !== $value) {
+            if (UdbValueKind::String !== $value->kind || $reason !== $value->value) {
                 continue;
             }
 

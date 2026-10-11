@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbAuthorityStateDoctrineRepository;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbBlockStateDoctrineRepository;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbRecordDoctrineRepository;
@@ -14,9 +16,14 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterf
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\SchemaTool;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use UnexpectedValueException;
 
 use const DATE_ATOM;
 
@@ -41,137 +48,151 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function mappedBinaryValueHydratesEntityAndScalarProjectionWithoutByteLoss(): void
+    {
+        $bytes = "fixture\0\xff\x80\\x4142";
+        self::assertTrue($this->upsert('N', 'alice::swhois', $bytes));
+        $this->flushAndClear();
+        self::assertSame(['alice::swhois' => $bytes], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
+        $entity = $this->entityManager->getRepository(UdbRecord::class)->findOneBy(['path' => 'alice::swhois']);
+        self::assertInstanceOf(UdbRecord::class, $entity);
+        self::assertSame($bytes, $entity->getValue());
+        self::assertSame('binary', $this->entityManager->getClassMetadata(UdbRecord::class)->getTypeOfField('value'));
+        $rows = $this->entityManager->createQuery('SELECT r.value FROM App\\Irc\\Adapter\\Protocol\\UnrealUdb\\Model\\UdbRecord r')->getScalarResult();
+        self::assertSame([['value' => $bytes]], $rows);
+    }
+
+    #[Test]
     public function upsertInsertsAndUpdatesCaseInsensitively(): void
     {
-        self::assertTrue($this->records->upsert('N', 'DavidLig::vhost', 'first.example.net'));
-        self::assertTrue($this->records->upsert('N', 'davidlig::VHOST', 'second.example.net'));
-        self::assertFalse($this->records->upsert('N', 'DAVIDLIG::vhost', 'second.example.net'));
+        self::assertTrue($this->upsert('N', 'DavidLig::vhost', 'first.example.net'));
+        self::assertTrue($this->upsert('N', 'davidlig::VHOST', 'second.example.net'));
+        self::assertFalse($this->upsert('N', 'DAVIDLIG::vhost', 'second.example.net'));
         $this->flushAndClear();
 
-        self::assertSame(['DavidLig::vhost' => 'second.example.net'], $this->records->recordsByBlock('N'));
+        self::assertSame(['DavidLig::vhost' => 'second.example.net'], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
     }
 
     #[Test]
     public function kFilterPatternIdentityIsCaseSensitiveButItsLeafIsNot(): void
     {
-        self::assertTrue($this->records->upsert('K', 'F::b64:QWJj::reason', 'first'));
-        self::assertTrue($this->records->upsert('K', 'F::b64:qwjj::reason', 'second'));
-        self::assertTrue($this->records->upsert('K', 'f::b64:QWJj::REASON', 'updated'));
-        self::assertFalse($this->records->upsert('K', 'F::b64:QWJj::reason', 'updated'));
+        self::assertTrue($this->upsert('K', 'F::b64%3AQWJj::reason', 'first'));
+        self::assertTrue($this->upsert('K', 'F::b64%3AQWJk::reason', 'second'));
+        self::assertTrue($this->upsert('K', 'f::b64%3AQWJj::REASON', 'updated'));
+        self::assertFalse($this->upsert('K', 'F::b64%3AQWJj::reason', 'updated'));
         $this->flushAndClear();
 
         self::assertSame([
-            'F::b64:QWJj::reason' => 'updated',
-            'F::b64:qwjj::reason' => 'second',
-        ], $this->records->recordsByBlock('K'));
+            'F::b64%3AQWJj::reason' => 'updated',
+            'F::b64%3AQWJk::reason' => 'second',
+        ], UdbTestValues::logicalMap($this->records->recordsByBlock('K')));
 
-        self::assertTrue($this->records->deleteCascade('K', 'f::b64:QWJj'));
+        self::assertTrue($this->records->deleteCascade('K', 'f::b64%3AQWJj'));
         self::assertSame(
-            ['F::b64:qwjj::reason' => 'second'],
-            $this->records->recordsByBlock('K'),
+            ['F::b64%3AQWJk::reason' => 'second'],
+            UdbTestValues::logicalMap($this->records->recordsByBlock('K')),
         );
     }
 
     #[Test]
     public function recordsByBlockIsolatesBlocks(): void
     {
-        $this->records->upsert('N', 'nick::pass', 'sha256:abc');
-        $this->records->upsert('S', 'nickserv', 'NickServ!NickServ@services');
+        $this->upsert('N', 'nick::pass', 'crypt:sha256:abc');
+        $this->upsert('S', 'nickserv', 'NickServ!NickServ@services');
         $this->flushAndClear();
 
-        self::assertSame(['nick::pass' => 'sha256:abc'], $this->records->recordsByBlock('N'));
-        self::assertSame(['nickserv' => 'NickServ!NickServ@services'], $this->records->recordsByBlock('S'));
-        self::assertSame([], $this->records->recordsByBlock('L'));
+        self::assertSame(['nick::pass' => 'crypt:sha256:abc'], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
+        self::assertSame(['nickserv' => 'NickServ!NickServ@services'], UdbTestValues::logicalMap($this->records->recordsByBlock('S')));
+        self::assertSame([], UdbTestValues::logicalMap($this->records->recordsByBlock('L')));
     }
 
     #[Test]
     public function deleteCascadeRemovesTheRecordAndAllDescendants(): void
     {
-        $this->records->upsert('N', 'DavidLig::vhost', 'v');
-        $this->records->upsert('N', 'davidlig::pass', 'p');
-        $this->records->upsert('N', 'davidlig::pass::deep', 'd');
-        $this->records->upsert('N', 'other::vhost', 'v');
-        $this->records->upsert('C', '#chan::founder', 'DavidLig');
+        $this->upsert('N', 'DavidLig::vhost', 'v');
+        $this->upsert('N', 'davidlig::pass', 'crypt:p');
+        $this->upsert('N', 'other::vhost', 'v');
+        $this->upsert('C', '#chan::founder', 'DavidLig');
         $this->flushAndClear();
 
         self::assertTrue($this->records->deleteCascade('N', 'DAVIDLIG'));
         $this->flushAndClear();
 
-        self::assertSame(['other::vhost' => 'v'], $this->records->recordsByBlock('N'));
-        self::assertSame(['#chan::founder' => 'DavidLig'], $this->records->recordsByBlock('C'));
+        self::assertSame(['other::vhost' => 'v'], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
+        self::assertSame(['#chan::founder' => 'DavidLig'], UdbTestValues::logicalMap($this->records->recordsByBlock('C')));
     }
 
     #[Test]
     public function deleteCascadeOfUnknownPathsIsANoOp(): void
     {
-        $this->records->upsert('N', 'nick::vhost', 'v');
+        $this->upsert('N', 'nick::vhost', 'v');
         $this->flushAndClear();
 
         self::assertFalse($this->records->deleteCascade('N', 'missing'));
         $this->flushAndClear();
 
-        self::assertSame(['nick::vhost' => 'v'], $this->records->recordsByBlock('N'));
+        self::assertSame(['nick::vhost' => 'v'], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
     }
 
     #[Test]
     public function replaceBlockReplacesTheBlockWithoutTouchingOtherBlocks(): void
     {
-        $this->records->upsert('N', 'old::vhost', 'stale.example.net');
-        $this->records->upsert('N', 'old::pass', 'stale-hash');
-        $this->records->upsert('S', 'propagator', 'hub1.example');
+        $this->upsert('N', 'old::vhost', 'stale.example.net');
+        $this->upsert('N', 'old::pass', 'crypt:stale-hash');
+        $this->upsert('S', 'propagator', 'hub1.example');
         $this->flushAndClear();
 
-        $this->records->replaceBlock('N', ['fresh::vhost' => 'new.example.net']);
+        $this->replaceBlock('N', ['fresh::vhost' => 'new.example.net']);
         $this->flushAndClear();
 
-        self::assertSame(['fresh::vhost' => 'new.example.net'], $this->records->recordsByBlock('N'));
-        self::assertSame(['propagator' => 'hub1.example'], $this->records->recordsByBlock('S'));
+        self::assertSame(['fresh::vhost' => 'new.example.net'], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
+        self::assertSame(['propagator' => 'hub1.example'], UdbTestValues::logicalMap($this->records->recordsByBlock('S')));
     }
 
     #[Test]
     public function seedBlockMergesWithoutLosingExistingRecords(): void
     {
-        $this->records->upsert('N', 'nick::vhost', 'raw-value');
+        $this->upsert('N', 'nick::vhost', 'raw-value');
         $this->flushAndClear();
 
-        $this->records->seedBlock('N', ['nick::pass' => 'sha256:abc', 'nick::vhost' => 'seed-value']);
+        $this->seedBlock('N', ['nick::pass' => 'crypt:sha256:abc', 'nick::vhost' => 'seed-value']);
         $this->flushAndClear();
 
         self::assertSame([
             'nick::vhost' => 'seed-value',
-            'nick::pass' => 'sha256:abc',
-        ], $this->records->recordsByBlock('N'));
+            'nick::pass' => 'crypt:sha256:abc',
+        ], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
     }
 
     #[Test]
     public function seedBlockIsCaseInsensitiveOnIdentities(): void
     {
-        $this->records->upsert('N', 'Nick::Pass', 'old');
+        $this->upsert('N', 'Nick::Pass', 'crypt:old');
         $this->flushAndClear();
 
-        $this->records->seedBlock('N', ['nick::pass' => 'new']);
+        $this->seedBlock('N', ['nick::pass' => 'crypt:new']);
         $this->flushAndClear();
 
-        self::assertCount(1, $this->records->recordsByBlock('N'));
-        self::assertSame(['Nick::Pass' => 'new'], $this->records->recordsByBlock('N'));
+        self::assertCount(1, UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
+        self::assertSame(['Nick::Pass' => 'crypt:new'], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
     }
 
     #[Test]
     public function seedBlockPreservesDistinctKFilterPatterns(): void
     {
-        $this->records->upsert('K', 'F::b64:QWJj::reason', 'old');
+        $this->upsert('K', 'F::b64%3AQWJj::reason', 'old');
         $this->flushAndClear();
 
-        $this->records->seedBlock('K', [
-            'f::b64:QWJj::REASON' => 'updated',
-            'F::b64:qwjj::reason' => 'distinct',
+        $this->seedBlock('K', [
+            'f::b64%3AQWJj::REASON' => 'updated',
+            'F::b64%3AQWJk::reason' => 'distinct',
         ]);
         $this->flushAndClear();
 
         self::assertSame([
-            'F::b64:QWJj::reason' => 'updated',
-            'F::b64:qwjj::reason' => 'distinct',
-        ], $this->records->recordsByBlock('K'));
+            'F::b64%3AQWJj::reason' => 'updated',
+            'F::b64%3AQWJk::reason' => 'distinct',
+        ], UdbTestValues::logicalMap($this->records->recordsByBlock('K')));
     }
 
     #[Test]
@@ -196,7 +217,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function recordsPersistIdentityAndTimestamps(): void
     {
-        $this->records->upsert('I', '1.2.3.4::clones', '*5');
+        $this->upsert('I', '1.2.3.4::clones', '*5');
         $this->flushAndClear();
 
         $stored = $this->entityManager
@@ -224,5 +245,71 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
         $this->authority->revoke();
         self::assertFalse($this->authority->isApproved());
+    }
+
+    private function upsert(string $block, string $path, string $logicalValue): bool
+    {
+        return $this->records->upsert($block, $path, UdbTestValues::fromLogical(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $path, $logicalValue));
+    }
+
+    /**
+     * @param array<string, string> $records
+     */
+    private function seedBlock(string $block, array $records): void
+    {
+        $this->records->seedBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $records));
+    }
+
+    /**
+     * @param array<string, string> $records
+     */
+    private function replaceBlock(string $block, array $records): void
+    {
+        $this->records->replaceBlock($block, UdbTestValues::typedMap(UdbBlock::fromLetter($block) ?? throw new LogicException('Invalid fixture block.'), $records));
+    }
+
+    #[Test]
+    public function corruptSqlKindsAndMismatchedLogicalBytesAreRejected(): void
+    {
+        foreach ([[255, 'value'], [0, 'value'], [2, '*bad']] as [$kind, $raw]) {
+            $this->entityManager->getConnection()->executeStatement('DELETE FROM udb_records');
+            $this->entityManager->persist(new UdbRecord('N', 'nick::vhost', 'fixture.test'));
+            $this->entityManager->flush();
+            $this->entityManager->getConnection()->executeStatement('UPDATE udb_records SET value_kind = ?, value = ?', [$kind, $raw]);
+            $this->entityManager->clear();
+            try {
+                $this->records->recordsByBlock('N');
+                self::fail('Corrupt persisted logical values must not be returned.');
+            } catch (UnexpectedValueException $error) {
+                self::assertStringContainsString('persisted', $error->getMessage());
+            }
+        }
+    }
+
+    #[Test]
+    public function invalidTypedUpsertIsRejectedBeforeChangingSql(): void
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $this->records->upsert('N', 'nick::pass', UdbValue::none());
+    }
+
+    #[Test]
+    public function untrustedBulkSeedsAndReplacementsRejectUntypedAndSchemaInvalidRows(): void
+    {
+        foreach (['seedBlock', 'replaceBlock'] as $method) {
+            foreach (['raw', UdbValue::none()] as $value) {
+                $em = new EntityManager(DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]), $this->entityManager->getConfiguration());
+                new SchemaTool($em)->createSchema($em->getMetadataFactory()->getAllMetadata());
+                try {
+                    $repository = new UdbRecordDoctrineRepository($em);
+                    $repository->$method('N', ['nick::pass' => $value]);
+                    self::fail('Invalid seed must be rolled back.');
+                } catch (UnexpectedValueException $error) {
+                    self::assertStringContainsString('typed', $error->getMessage());
+                } finally {
+                    $em->getConnection()->close();
+                }
+            }
+        }
     }
 }

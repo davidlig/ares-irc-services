@@ -406,13 +406,13 @@ final class UdbRecordExporterTest extends TestCase
         $encoded = UdbPathCodec::encodePath(['davidlig', 'vhost']);
 
         self::assertNotNull($encoded);
-        self::assertSame([$encoded => 'david.tld'], $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
+        self::assertTrue(UdbTestValues::typedMap(UdbBlock::Nicks, [$encoded => 'david.tld']) == $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
     }
 
     #[Test]
     public function encodedBlockRecordsReturnsEmptyForWireOwnedBlock(): void
     {
-        self::assertSame([], $this->exporter->encodedBlockRecords(UdbBlock::Ips));
+        self::assertTrue([] == $this->exporter->encodedBlockRecords(UdbBlock::Ips));
     }
 
     #[Test]
@@ -424,7 +424,7 @@ final class UdbRecordExporterTest extends TestCase
         $encoded = UdbPathCodec::encodePath(['BadNick', 'forbid']);
 
         self::assertNotNull($encoded);
-        self::assertSame([$encoded => 'abuse'], $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
+        self::assertTrue(UdbTestValues::typedMap(UdbBlock::Nicks, [$encoded => 'abuse']) == $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
     }
 
     #[Test]
@@ -436,7 +436,7 @@ final class UdbRecordExporterTest extends TestCase
         $encoded = UdbPathCodec::encodePath(['Suspended', 'suspend']);
 
         self::assertNotNull($encoded);
-        self::assertSame([$encoded => 'abuse'], $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
+        self::assertTrue(UdbTestValues::typedMap(UdbBlock::Nicks, [$encoded => 'abuse']) == $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
     }
 
     #[Test]
@@ -449,9 +449,9 @@ final class UdbRecordExporterTest extends TestCase
         $secondSuspended = UdbPathCodec::encodePath(['#second', 'suspend']);
 
         self::assertNotNull($secondSuspended);
-        self::assertSame([
+        self::assertTrue(UdbTestValues::typedMap(UdbBlock::Channels, [
             $secondSuspended => 'abuse',
-        ], $this->exporter->encodedBlockRecords(UdbBlock::Channels));
+        ]) == $this->exporter->encodedBlockRecords(UdbBlock::Channels));
     }
 
     #[Test]
@@ -467,10 +467,10 @@ final class UdbRecordExporterTest extends TestCase
 
         self::assertNotNull($firstReason);
         self::assertNotNull($secondReason);
-        self::assertSame([
+        self::assertTrue(UdbTestValues::typedMap(UdbBlock::Lines, [
             $firstReason => 'first reason',
             $secondReason => 'second reason',
-        ], $this->exporter->encodedBlockRecords(UdbBlock::Lines));
+        ]) == $this->exporter->encodedBlockRecords(UdbBlock::Lines));
     }
 
     #[Test]

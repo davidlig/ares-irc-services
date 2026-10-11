@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNickReservation;
@@ -134,12 +135,12 @@ final class UnrealUdbNickReservationTest extends TestCase
         $calls = [];
         $records = $this->createMock(UdbRecordRepositoryInterface::class);
         $records->expects(self::once())->method('recordsByBlock')->with('N')->willReturn([
-            'OldNick::forbid' => 'Reserved for network services',
-            'NiCK::FoRbId' => 'Reserved for network services',
-            'Manual::forbid' => 'Operator action',
-            'Other::vhost' => 'Reserved for network services',
-            'Malformed::forbid::extra' => 'Reserved for network services',
-            '%ZZ::forbid' => 'Reserved for network services',
+            'OldNick::forbid' => UdbValue::string('Reserved for network services'),
+            'NiCK::FoRbId' => UdbValue::string('Reserved for network services'),
+            'Manual::forbid' => UdbValue::string('Operator action'),
+            'Other::vhost' => UdbValue::string('Reserved for network services'),
+            'Malformed::forbid::extra' => UdbValue::string('Reserved for network services'),
+            '%ZZ::forbid' => UdbValue::string('Reserved for network services'),
         ]);
 
         $reservation = new UnrealUdbNickReservation($this->writingWriter($calls, 0, 0), $records);
@@ -147,7 +148,9 @@ final class UnrealUdbNickReservationTest extends TestCase
         self::assertSame(['OldNick', 'NiCK'], $reservation->findManagedServiceNicks('Reserved for network services'));
     }
 
-    /** @return iterable<string, array{string, string, int, string}> */
+    /**
+     * @return iterable<string, array{string, string, int, string}>
+     */
     public static function failedMutationProvider(): iterable
     {
         yield 'reserve N record' => ['reserve', 'OperServ', 1, 'Could not reserve service nickname in UDB.'];

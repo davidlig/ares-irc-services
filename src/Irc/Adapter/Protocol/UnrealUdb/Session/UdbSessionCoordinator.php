@@ -6,10 +6,12 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Session;
 
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Projection\Oclg\UdbOclgView;
+use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbCapturedSnapshot;
 use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbReconciliationRound;
 use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbRoundTimeout;
 use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterface;
@@ -20,11 +22,9 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeoverOutcome;
 use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbWireTakeoverOutcomeKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Transfer\UdbOutboundTransferTracker;
 use App\Irc\Adapter\Protocol\UnrealUdb\Transfer\UdbTransferAcknowledgement;
-use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
-use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbStructuralNodeCount;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireLogRedactor;
@@ -41,12 +41,14 @@ use function array_filter;
 use function array_keys;
 use function array_map;
 use function bin2hex;
+use function count;
 use function in_array;
 use function is_int;
 use function max;
 use function min;
 use function random_bytes;
 use function sprintf;
+use function strcasecmp;
 use function strtoupper;
 use function substr;
 
@@ -115,16 +117,24 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private readonly UdbClock $clock;
 
-    /** @var array<string, array<string, string>> */
-    private array $roundSnapshotRecords = [];
-
     /** @var array<string, string> */
     private array $roundSnapshotDigests = [];
 
     /** @var array<string, int> */
-    private array $roundSnapshotNodeCounts = [];
+    private array $roundSnapshotRecordCounts = [];
 
     private ?UdbUnsignedDecimal $roundSnapshotWatermark = null;
+
+    /** @var list<array{block: UdbBlock, roundId: UdbUnsignedDecimal}> */
+    private array $queuedRes = [];
+
+    private ?UdbCapturedSnapshot $roundSnapshot = null;
+
+    private ?string $pendingTailBarrierToken = null;
+
+    private ?UdbUnsignedDecimal $pendingTailBarrierRound = null;
+
+    private ?ConnectionInterface $pendingTailBarrierConnection = null;
 
     private ?UdbUnsignedDecimal $manifestRoundId = null;
 
@@ -204,6 +214,11 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         return $this->epoch;
     }
 
+    public function streamOrigin(): UdbStreamOrigin
+    {
+        return new UdbStreamOrigin($this->sid, $this->epoch);
+    }
+
     public function queuedMutationCount(): int
     {
         return $this->mutationQueue->count();
@@ -217,9 +232,16 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->scheduleNextDeadlineTimer();
     }
 
+    public function prepareLocalStream(): void
+    {
+        $checkpoint = $this->mutations?->beginLocalStream($this->streamOrigin());
+        $this->mutationSequence = null !== $checkpoint ? $checkpoint->watermark : UdbUnsignedDecimal::fromInt(0);
+    }
+
     /** Called once the authoritative store finished (re)initializing. */
     public function onStoreInitialized(): void
     {
+        $this->prepareLocalStream();
         $this->storeReady = null;
         $this->maybeOfferReconciliation();
     }
@@ -277,7 +299,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         }
 
         if (null !== $this->manifestRoundDeadline && $now >= $this->manifestRoundDeadline) {
-            if ($this->transfers->isEmpty()) {
+            if ($this->transfers->isEmpty() && [] === $this->queuedRes) {
                 $this->logger->debug('UDB manifest round completed without divergence.');
                 $this->clearManifestRound();
             }
@@ -297,12 +319,14 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->storeReady = null;
         $this->reconciliation->reset();
         $this->transfers->reset();
+        $this->queuedRes = [];
         $this->clearRoundSnapshot();
         $this->clearManifestRound();
         $this->errReofferCount = 0;
         $this->approved = null;
         $this->oclgView->reset();
         $this->wireTakeover?->reset();
+        $this->revokeTailBarrier();
         $this->connection = null;
         // $this->mutationQueue is preserved: the store already holds every
         // queued change and the next reconciliation round recovers delivery.
@@ -407,6 +431,50 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         }
     }
 
+    public function handlePong(?string $sourceSid, ?string $token, ConnectionInterface $connection): void
+    {
+        // Native server PING rewrites origin; PONG cannot authenticate this nonce.
+    }
+
+    public function handleTransportBarrier(?string $source, string $target, string $token, ConnectionInterface $connection): void
+    {
+        $sourceSid = $source === $this->peer->remoteSid()
+            || (null !== $source && null !== $this->peer->remoteServerName() && 0 === strcasecmp($source, $this->peer->remoteServerName()))
+            ? $this->peer->remoteSid() : null;
+        if ($target !== $this->peer->ownName()) {
+            return;
+        }
+        $takeoverRoundId = $this->wireTakeover?->roundId();
+        if (null === $this->pendingTailBarrierToken
+            || $token !== $this->pendingTailBarrierToken
+            || null === $this->pendingTailBarrierRound
+            || null === $this->wireTakeover
+            || !$this->wireTakeover->isComplete()
+            || !$this->isWireBootstrapActive()
+            || !$this->helloBarrier->isConfirmed()
+            || !$this->peer->isAuthorized()
+            || null === $this->peer->remoteSid()
+            || null === $sourceSid
+            || $sourceSid !== $this->peer->remoteSid()
+            || $connection !== $this->pendingTailBarrierConnection
+            || null === $takeoverRoundId
+            || !$this->pendingTailBarrierRound->equals($takeoverRoundId)
+        ) {
+            return;
+        }
+
+        $this->revokeTailBarrier();
+        try {
+            $this->wireTakeover->markTailReplayComplete();
+            if ($this->wireTakeover->canPromote()) {
+                $this->completeWireBootstrap();
+            }
+        } catch (Throwable $exception) {
+            $this->logger->error('UDB imported generation tail replay failed; takeover remains unapproved.', ['error' => $exception->getMessage()]);
+            $this->retryWireBootstrap();
+        }
+    }
+
     public function isAuthorityReady(): bool
     {
         return !$this->isWireBootstrapActive()
@@ -415,21 +483,27 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             && $this->isStoreReady()
             && !$this->helloBarrier->hasPending()
             && $this->reconciliation->isCompleted()
-            && $this->transfers->isEmpty();
+            && $this->transfers->isEmpty()
+            && [] === $this->queuedRes;
     }
 
     public function enqueueMutation(UdbMutation $mutation): void
     {
-        $sequence = $this->mutationSequence->increment();
-        if (null === $sequence) {
-            $this->logger->error('UDB mutation sequence exhausted for the current epoch; a daemon restart is required.');
+        if (null === $mutation->sequence || null === $mutation->origin || $mutation->origin->sid !== $this->sid || $mutation->origin->epoch !== $this->epoch) {
+            $this->logger->error('Rejected UDB mutation without its committed process origin and sequence.');
             $this->resyncPending = true;
 
             return;
         }
-        $this->mutationSequence = $sequence;
+        if (0 >= $mutation->sequence->compare($this->mutationSequence)) {
+            $this->logger->error('Rejected duplicate or out-of-order committed UDB mutation sequence.');
+            $this->resyncPending = true;
 
-        if ($this->mutationQueue->enqueue($mutation->sequenced($sequence))) {
+            return;
+        }
+        $this->mutationSequence = $mutation->sequence;
+
+        if ($this->mutationQueue->enqueue($mutation)) {
             $this->logger->warning('UDB mutation queue overflow; recovering divergence via reconciliation.', [
                 'block' => $mutation->block,
             ]);
@@ -601,9 +675,10 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
                 $roundId,
                 $block,
                 $this->roundSnapshotDigests[$block->letter()],
-                $this->roundSnapshotNodeCounts[$block->letter()],
-                $now,
-                $this->roundSnapshotWatermark,
+                $this->roundSnapshotRecordCounts[$block->letter()],
+                $this->roundSnapshotWatermark ?? UdbUnsignedDecimal::fromInt(0),
+                $this->roundSnapshot?->checkpoint->origin->sid ?? $this->sid,
+                $this->roundSnapshot?->checkpoint->origin->epoch ?? $this->epoch,
             ));
         }
 
@@ -632,7 +707,14 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
-        $this->writeTakeoverOutcome($this->wireTakeover?->accept($frame) ?? UdbWireTakeoverOutcome::ignored(), $frame->sourceSid);
+        $outcome = $this->wireTakeover?->accept($frame) ?? UdbWireTakeoverOutcome::ignored();
+        $this->writeTakeoverOutcome($outcome, $frame->sourceSid);
+        if (UdbWireTakeoverOutcomeKind::Error === $outcome->kind) {
+            $this->retryWireBootstrap();
+
+            return;
+        }
+        $this->maybeBeginTailBarrier();
         $this->scheduleNextDeadlineTimer();
     }
 
@@ -680,7 +762,29 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
-        $this->serveBlock($block, $roundId);
+        if ($this->transfers->isEmpty()) {
+            $this->serveBlock($block, $roundId);
+        } elseif ($this->enqueueRes($block, $roundId)) {
+            // A bounded, unique request is retained until the active stage ACK.
+        } else {
+            $this->write(UdbWireCodec::err($this->sid, $frame->sourceSid, 'RES', 4, $roundId, $block));
+            $this->reofferWithinBudget();
+        }
+    }
+
+    private function enqueueRes(UdbBlock $block, UdbUnsignedDecimal $roundId): bool
+    {
+        if (count($this->queuedRes) >= count(UdbBlock::all())) {
+            return false;
+        }
+        foreach ($this->queuedRes as $request) {
+            if ($request['block'] === $block) {
+                return false;
+            }
+        }
+        $this->queuedRes[] = ['block' => $block, 'roundId' => $roundId];
+
+        return true;
     }
 
     /** Serves one block as a staged snapshot (BEGIN / PUT ... / END). */
@@ -692,14 +796,14 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
-        $records = $this->roundSnapshotRecords[$block->letter()] ?? $this->snapshots->recordsForBlock($block);
-        $digest = $this->roundSnapshotDigests[$block->letter()] ?? UdbChecksum::fromRecords(self::tuples($records));
-        $watermark = $this->roundSnapshotWatermark ?? $this->mutationSequence;
+        $snapshot = $this->roundSnapshot ??= $this->snapshots->capture();
+        $digest = $this->roundSnapshotDigests[$block->letter()] ?? $snapshot->digest($block);
+        $watermark = $this->roundSnapshotWatermark ?? $snapshot->checkpoint->watermark;
         ++$this->txidSequence;
         $txid = sprintf('%08x', $this->txidSequence);
 
-        foreach ($records as $path => $value) {
-            if (!UdbPathCodec::fitsLimits($path, $value)) {
+        foreach ($snapshot->records($block) as [$path, $value]) {
+            if (!UdbPathCodec::fitsLimits($path, $value->logicalValue())) {
                 $this->logger->error('Refusing to serve oversized UDB snapshot record.', [
                     'block' => $block->letter(),
                     'path' => $path,
@@ -721,7 +825,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         }
 
         $this->write(UdbWireCodec::begin($this->sid, $remoteSid, $roundId, $block, $txid, $digest, $watermark));
-        foreach ($records as $path => $value) {
+        foreach ($snapshot->records($block) as [$path, $value]) {
             $this->write(UdbWireCodec::put($this->sid, $remoteSid, $roundId, $block, $txid, $path, $value));
         }
         $this->write(UdbWireCodec::end($this->sid, $remoteSid, $roundId, $block, $txid, $digest, $watermark));
@@ -768,9 +872,13 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->writeTakeoverOutcome($outcome, $frame->sourceSid);
         $this->scheduleNextDeadlineTimer();
 
-        if (null !== $this->wireTakeover && $this->wireTakeover->isComplete()) {
-            $this->completeWireBootstrap();
+        if (UdbWireTakeoverOutcomeKind::Error === $outcome->kind) {
+            $this->retryWireBootstrap();
+
+            return;
         }
+
+        $this->maybeBeginTailBarrier();
     }
 
     private function writeTakeoverOutcome(UdbWireTakeoverOutcome $outcome, string $targetSid): void
@@ -792,6 +900,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         if ($reset) {
             $this->wireTakeover?->reset();
         }
+        $this->revokeTailBarrier();
         $this->sendHel(force: true);
         $this->scheduleNextDeadlineTimer();
     }
@@ -799,13 +908,14 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     /** Applies the adopted generation, approves the authority and renegotiates as the FQDN authority. */
     private function completeWireBootstrap(): void
     {
-        if (null === $this->wireTakeover || null === $this->authority) {
+        if (null === $this->wireTakeover || null === $this->authority || !$this->wireTakeover->canPromote()) {
             return;
         }
 
         try {
             $fingerprint = $this->wireTakeover->finalize();
             $this->authority->approve($fingerprint);
+            $this->mutations?->beginLocalStream($this->streamOrigin());
             $this->approved = true;
         } catch (Throwable $e) {
             $this->logger->error('UDB wire bootstrap finalization failed; the store stays unapproved.', [
@@ -858,6 +968,8 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
+        $this->serveNextQueuedRes();
+
         if (null !== $frame->block && null !== $frame->roundId) {
             $this->reconciliation->acknowledgeTransfer($frame->roundId, $frame->block, $this->clock->now());
         }
@@ -877,6 +989,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->restoreRecoveryDebt();
         $this->reconciliation->reset();
         $this->transfers->reset();
+        $this->queuedRes = [];
         $this->clearRoundSnapshot();
         $this->helloBarrier->abandonPending();
         if (++$this->errReofferCount > self::ERR_REOFFER_BUDGET) {
@@ -891,6 +1004,17 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     private function handleErr(UdbFrame $frame): void
     {
         if (!$this->isDirectPeerFrame($frame)) {
+            return;
+        }
+
+        $takeoverRoundId = $this->wireTakeover?->roundId();
+        if ($this->isWireBootstrapActive()
+            && null !== $takeoverRoundId
+            && null !== $frame->roundId
+            && $takeoverRoundId->equals($frame->roundId)
+        ) {
+            $this->retryWireBootstrap();
+
             return;
         }
 
@@ -915,6 +1039,16 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private function handleForbiddenMutation(UdbFrame $frame): void
     {
+        if ($this->isWireBootstrapActive() && $this->peer->isAuthorized() && '*' === $frame->target) {
+            $outcome = $this->wireTakeover?->acceptMutation($frame) ?? UdbWireTakeoverOutcome::ignored();
+            $this->writeTakeoverOutcome($outcome, $frame->sourceSid);
+            if (UdbWireTakeoverOutcomeKind::Error === $outcome->kind) {
+                $this->logger->warning('Rejected a non-contiguous or foreign-origin UDB bootstrap mutation.');
+                $this->retryWireBootstrap();
+            }
+
+            return;
+        }
         if (!$this->peer->isBroadcastFromPeer($frame)) {
             return;
         }
@@ -967,7 +1101,7 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
                 $frame->sourceSid,
                 $frame->roundId,
                 $block,
-                $this->roundSnapshotNodeCounts[$block->letter()],
+                $this->roundSnapshotRecordCounts[$block->letter()],
                 $this->roundSnapshotDigests[$block->letter()],
                 $watermark,
             ));
@@ -991,8 +1125,10 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
         $path = substr($frame->path, 3);
         try {
-            if ($this->mutations->expireLineWithManifest($path, $frame->expectedExpires, $this->clock->now())) {
-                $this->enqueueMutation(new UdbMutation(UdbBlock::Lines->letter(), $path, null));
+            $origin = $this->streamOrigin();
+            $sequence = $this->mutations->expireLineWithManifest($path, $frame->expectedExpires, $this->clock->now(), $origin);
+            if (null !== $sequence) {
+                $this->enqueueMutation(new UdbMutation(UdbBlock::Lines->letter(), $path, null)->assigned($sequence, $origin));
             }
         } catch (Throwable $exception) {
             $this->errorCorrelation = $this->errorCorrelation->incrementNonZero();
@@ -1093,7 +1229,12 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             if (null === $mutation->sequence) {
                 continue;
             }
-            if (null === $mutation->value) {
+            if ($mutation->blockDrop) {
+                $block = UdbBlock::fromLetter($mutation->block);
+                if (null !== $block && null !== $mutation->origin) {
+                    $this->write(UdbWireCodec::drp($mutation->origin->sid, $mutation->origin->epoch, $mutation->sequence, $block));
+                }
+            } elseif (null === $mutation->value) {
                 $this->write(UdbWireCodec::del($this->sid, $this->epoch, $mutation->sequence, $mutation->block, $mutation->encodedPath));
             } else {
                 $this->write(UdbWireCodec::ins($this->sid, $this->epoch, $mutation->sequence, $mutation->block, $mutation->encodedPath, $mutation->value));
@@ -1109,11 +1250,47 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->helloBarrier->reset();
         $this->reconciliation->reset();
         $this->transfers->reset();
+        $this->queuedRes = [];
         $this->clearRoundSnapshot();
         $this->clearManifestRound();
         $this->errReofferCount = 0;
         $this->oclgView->reset();
         $this->wireTakeover?->reset();
+        $this->revokeTailBarrier();
+    }
+
+    private function maybeBeginTailBarrier(): void
+    {
+        $roundId = $this->wireTakeover?->roundId();
+        if (null === $this->wireTakeover || !$this->wireTakeover->isComplete()
+            || $this->wireTakeover->canPromote()
+            || null !== $this->pendingTailBarrierToken
+            || !$this->isWireBootstrapActive()
+            || !$this->helloBarrier->isConfirmed()
+            || !$this->peer->isAuthorized()
+            || null === $this->connection
+            || null === $this->peer->remoteSid()
+            || null === $roundId
+        ) {
+            return;
+        }
+
+        $token = sprintf('UDB4-%s-%s', $roundId, bin2hex(random_bytes(16)));
+        $this->pendingTailBarrierRound = $roundId;
+        $this->pendingTailBarrierToken = $token;
+        $this->pendingTailBarrierConnection = $this->connection;
+        // Unreal returns 402 with this unknown destination unchanged. No token
+        // can round-trip in server PONG. A nonce has no dot, so cannot name an
+        // authenticated FQDN server, and is longer than every valid SID.
+        $this->write(sprintf('PING %s :%s', $this->peer->remoteSid(), $token));
+        $this->scheduleNextDeadlineTimer();
+    }
+
+    private function revokeTailBarrier(): void
+    {
+        $this->pendingTailBarrierToken = null;
+        $this->pendingTailBarrierRound = null;
+        $this->pendingTailBarrierConnection = null;
     }
 
     private function maybeOfferPendingReconciliation(): void
@@ -1142,30 +1319,30 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
 
     private function captureRoundSnapshot(): void
     {
-        $this->roundSnapshotRecords = [];
+        $this->clearRoundSnapshot();
+        $this->roundSnapshot = $this->snapshots->capture();
         $this->roundSnapshotDigests = [];
-        $this->roundSnapshotNodeCounts = [];
-        $this->roundSnapshotWatermark = $this->mutationSequence;
+        $this->roundSnapshotRecordCounts = [];
         foreach (UdbBlock::all() as $block) {
-            $records = $this->snapshots->recordsForBlock($block);
-            $this->roundSnapshotRecords[$block->letter()] = $records;
-            $this->roundSnapshotDigests[$block->letter()] = UdbChecksum::fromRecords(self::tuples($records));
-            $this->roundSnapshotNodeCounts[$block->letter()] = UdbStructuralNodeCount::fromRecords($block, $records);
+            $this->roundSnapshotDigests[$block->letter()] = $this->roundSnapshot->digest($block);
+            $this->roundSnapshotRecordCounts[$block->letter()] = $this->roundSnapshot->count($block);
         }
+        $this->roundSnapshotWatermark = $this->roundSnapshot->checkpoint->watermark;
     }
 
     private function clearRoundSnapshot(): void
     {
-        $this->roundSnapshotRecords = [];
+        $this->roundSnapshot?->close();
+        $this->roundSnapshot = null;
         $this->roundSnapshotDigests = [];
-        $this->roundSnapshotNodeCounts = [];
+        $this->roundSnapshotRecordCounts = [];
         $this->roundSnapshotWatermark = null;
     }
 
     private function completeReconciliationIfSettled(): void
     {
         if ($this->reconciliation->isActive()) {
-            if (!$this->reconciliation->completeIfSettled($this->transfers->isEmpty())) {
+            if (!$this->reconciliation->completeIfSettled($this->transfers->isEmpty() && [] === $this->queuedRes)) {
                 return;
             }
             if (null !== $this->roundSnapshotWatermark) {
@@ -1176,12 +1353,23 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
-        if (null !== $this->manifestRoundId && $this->transfers->isEmpty() && [] !== $this->manifestRequestedBlocks) {
+        if (null !== $this->manifestRoundId && $this->transfers->isEmpty() && [] === $this->queuedRes && [] !== $this->manifestRequestedBlocks) {
             if (null !== $this->roundSnapshotWatermark) {
                 $this->mutationQueue->discardThrough($this->roundSnapshotWatermark);
             }
             $this->clearManifestRound();
         }
+    }
+
+    /** Only a fully correlated ACK releases the next queued snapshot block. */
+    private function serveNextQueuedRes(): void
+    {
+        if (!$this->transfers->isEmpty() || [] === $this->queuedRes) {
+            return;
+        }
+
+        $next = array_shift($this->queuedRes);
+        $this->serveBlock($next['block'], $next['roundId']);
     }
 
     private function isManifestResAcceptable(UdbUnsignedDecimal $roundId, UdbBlock $block, int $now): bool
@@ -1203,24 +1391,6 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
         $this->manifestRoundDeadline = null;
         $this->manifestRequestedBlocks = [];
         $this->clearRoundSnapshot();
-    }
-
-    /**
-     * Converts a path => value map into the [path, value] tuple list the
-     * checksum builder consumes.
-     *
-     * @param array<string, string> $records
-     *
-     * @return list<array{0: string, 1: string}>
-     */
-    private static function tuples(array $records): array
-    {
-        $tuples = [];
-        foreach ($records as $path => $value) {
-            $tuples[] = [$path, $value];
-        }
-
-        return $tuples;
     }
 
     private function write(string $line): void

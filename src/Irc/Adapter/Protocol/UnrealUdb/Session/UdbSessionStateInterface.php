@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Session;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 
 /**
@@ -26,6 +27,9 @@ interface UdbSessionStateInterface
      * divergence via snapshots (the store already holds every change).
      */
     public function enqueueMutation(UdbMutation $mutation): void;
+
+    /** Process-scoped local stream identity used by atomic SQL mutation allocation. */
+    public function streamOrigin(): UdbStreamOrigin;
 
     /** True only when the latest complete OCLG projection contains the operclass. */
     public function isOperclassGloballyAvailable(string $operclass): bool;

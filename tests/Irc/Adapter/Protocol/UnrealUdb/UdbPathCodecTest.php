@@ -78,9 +78,9 @@ final class UdbPathCodecTest extends TestCase
     #[Test]
     public function encodeRejectsComponentsWhoseEscapedFormExceedsTheEncodedBudget(): void
     {
-        // 1536 escapes produce exactly COMPONENT_ENCODED_MAX bytes.
-        self::assertNotNull(UdbPathCodec::encodeComponent(str_repeat(':', 1536)));
-        self::assertNull(UdbPathCodec::encodeComponent(str_repeat(':', 1537)));
+        // 4608 escapes produce exactly COMPONENT_ENCODED_MAX bytes.
+        self::assertNotNull(UdbPathCodec::encodeComponent(str_repeat(':', 4608)));
+        self::assertNull(UdbPathCodec::encodeComponent(str_repeat(':', 4609)));
     }
 
     #[Test]
@@ -108,7 +108,7 @@ final class UdbPathCodecTest extends TestCase
         self::assertSame('a%3Ab::c', UdbPathCodec::encodePath(['a:b', 'c']));
         self::assertNull(UdbPathCodec::encodePath([]));
         self::assertNull(UdbPathCodec::encodePath(['']));
-        self::assertNull(UdbPathCodec::encodePath([str_repeat(':', 1600)]));
+        self::assertNull(UdbPathCodec::encodePath([str_repeat(':', UdbPathCodec::COMPONENT_RAW_MAX + 1)]));
     }
 
     #[Test]
@@ -130,6 +130,16 @@ final class UdbPathCodecTest extends TestCase
     {
         self::assertFalse(UdbPathCodec::isCanonicalPath(str_repeat('a', UdbPathCodec::PATH_MAX + 1)));
         self::assertFalse(UdbPathCodec::isCanonicalPath(str_repeat('a', UdbPathCodec::COMPONENT_ENCODED_MAX + 1) . '::b'));
+    }
+
+    #[Test]
+    public function canonicalPathLimitIncludesExactlyTheDeclaredMaximum(): void
+    {
+        $path = str_repeat('a', 4600) . '::' . str_repeat('b', UdbPathCodec::PATH_MAX - 4602);
+
+        self::assertSame(UdbPathCodec::PATH_MAX, strlen($path));
+        self::assertTrue(UdbPathCodec::isCanonicalPath($path));
+        self::assertFalse(UdbPathCodec::isCanonicalPath($path . 'a'));
     }
 
     #[Test]

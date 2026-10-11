@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +27,9 @@ final class UnrealUdbRecordWriterTest extends TestCase
     protected function setUp(): void
     {
         $this->records = new FakeUdbRecords();
-        $this->sessionState = new RecordingSessionState(false);
+        $origin = new UdbStreamOrigin('002', '0123456789abcdef');
+        $this->records->beginLocalStream($origin);
+        $this->sessionState = new RecordingSessionState(false, $origin);
         $this->written = [];
 
         $this->writer = $this->createWriter();
@@ -67,7 +72,20 @@ final class UnrealUdbRecordWriterTest extends TestCase
 
         self::assertSame(['G::*@host::expires' => '*20'], $this->records->blocks['K']);
         self::assertCount(1, $this->sessionState->queue);
-        self::assertSame('*20', $this->sessionState->queue[0]->value);
+        self::assertTrue(UdbValue::number(UdbUnsignedDecimal::fromInt(20)) == $this->sessionState->queue[0]->value);
+    }
+
+    #[Test]
+    public function schemaStringPathPreservesAsteriskPrefixedBytes(): void
+    {
+        // Schema says this access projection is a STRING; the old SQL marker
+        // prefix must not turn it into a NUMBER.
+        $projection = '*0';
+
+        self::assertTrue($this->writer->insert('N', 'nick::access', $projection));
+
+        self::assertSame(['nick::access' => $projection], $this->records->blocks['N']);
+        self::assertTrue(UdbValue::string($projection) == $this->sessionState->queue[0]->value);
     }
 
     #[Test]
@@ -172,7 +190,7 @@ final class UnrealUdbRecordWriterTest extends TestCase
         $result = $this->writer->delete('N', 'davidlig');
 
         self::assertTrue($result);
-        self::assertSame(['other::vhost' => 'v'], $this->records->blocks['N']);
+        self::assertSame(['other::vhost' => 'v'], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
         self::assertSame([], $this->written);
         self::assertCount(1, $this->sessionState->queue);
     }

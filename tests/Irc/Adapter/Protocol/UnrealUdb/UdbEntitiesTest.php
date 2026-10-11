@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbDatasetCheckpoint;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -32,20 +38,33 @@ final class UdbEntitiesTest extends TestCase
         self::assertSame('nickserv', $record->getPath());
         self::assertSame('nickserv', $record->getIdentityPath());
         self::assertSame('NickServ!NickServ@services', $record->getValue());
+        self::assertSame(UdbValueKind::String, $record->getValueKind());
+        self::assertSame('NickServ!NickServ@services', $record->getUdbValue()->value);
+    }
+
+    #[Test]
+    public function absentContainerAndExplicitEmptyStringRemainDifferentTypedRows(): void
+    {
+        $container = new UdbRecord('N', 'david', '', UdbValueKind::None);
+        $emptyString = new UdbRecord('N', 'david::pass', '', UdbValueKind::String);
+
+        self::assertSame(UdbValueKind::None, $container->getValueKind());
+        self::assertSame(UdbValueKind::String, $emptyString->getValueKind());
+        self::assertNotSame($container->getUdbValue()->kind, $emptyString->getUdbValue()->kind);
     }
 
     #[Test]
     public function recordIdentityIsCaseInsensitive(): void
     {
         self::assertSame('nick::pass', UdbRecord::identity('NICK::PASS'));
-        self::assertSame('nick::pass', new UdbRecord('N', 'Nick::Pass', 'v')->getIdentityPath());
-        self::assertSame('f::b64:QWJj::reason', new UdbRecord('K', 'F::b64:QWJj::REASON', 'v')->getIdentityPath());
-        self::assertSame('f::b64:QWJj::reason', UdbRecord::identity('F::b64:QWJj::REASON', 'K'));
+        self::assertSame('nick::pass', new UdbRecord('N', 'Nick::Pass', 'crypt:v')->getIdentityPath());
+        self::assertSame('f::b64%3AQWJj::reason', new UdbRecord('K', 'F::b64%3AQWJj::REASON', 'v')->getIdentityPath());
+        self::assertSame('f::b64%3AQWJj::reason', UdbRecord::identity('F::b64%3AQWJj::REASON', 'K'));
         self::assertSame('g::*@host::reason', UdbRecord::identity('G::*@HOST::REASON', 'K'));
-        self::assertSame('f::b64:qwjj::reason', UdbRecord::identity('F::b64:QWJj::REASON'));
+        self::assertSame('f::b64%3aqwjj::reason', UdbRecord::identity('F::b64%3AQWJj::REASON'));
         self::assertSame(
-            hash('sha256', 'f::b64:QWJj::reason', true),
-            new UdbRecord('K', 'F::b64:QWJj::REASON', 'v')->getIdentityHash(),
+            hash('sha256', 'f::b64%3AQWJj::reason', true),
+            new UdbRecord('K', 'F::b64%3AQWJj::REASON', 'v')->getIdentityHash(),
         );
     }
 
@@ -83,9 +102,9 @@ final class UdbEntitiesTest extends TestCase
     public function blockStateDefaultsSyncTimeToNow(): void
     {
         $before = new DateTimeImmutable();
-        $state = new UdbBlockState('L', str_repeat('0', 64));
+        $state = new UdbBlockState('L');
 
-        self::assertSame(str_repeat('0', 64), $state->getChecksum());
+        self::assertSame(UdbChecksum::empty(UdbBlock::Links), $state->getChecksum());
         self::assertSame(0, $state->getRecordCount());
         self::assertGreaterThanOrEqual($before->getTimestamp(), $state->getModifiedAt()->getTimestamp());
     }
@@ -145,6 +164,21 @@ final class UdbEntitiesTest extends TestCase
     }
 
     #[Test]
+    public function approvalRetainsImportedProvenanceIndependentlyOfLocalDataset(): void
+    {
+        $state = new UdbAuthorityState();
+        $imported = new UdbDatasetCheckpoint(new UdbStreamOrigin('001', str_repeat('1', 16)), UdbUnsignedDecimal::fromInt(17));
+        $state->recordImportedCheckpoint($imported);
+        $state->approve(str_repeat('a', 64));
+        $actual = $state->getImportedCheckpoint();
+        self::assertNotNull($actual);
+        self::assertSame($imported->origin->sid, $actual->origin->sid);
+        self::assertSame($imported->origin->epoch, $actual->origin->epoch);
+        self::assertSame((string) $imported->watermark, (string) $actual->watermark);
+        self::assertNull($state->getDatasetCheckpoint());
+    }
+
+    #[Test]
     public function authorityApprovalIsInvalidWhenItsPersistedRevisionIsStale(): void
     {
         $state = new UdbAuthorityState();
@@ -153,5 +187,20 @@ final class UdbEntitiesTest extends TestCase
 
         self::assertFalse($state->isApproved());
         self::assertSame(str_repeat('b', 40), $state->getProtocolRevision());
+    }
+
+    #[Test]
+    public function clearingImportedProvenanceDoesNotEraseTheLocalDataset(): void
+    {
+        $state = new UdbAuthorityState();
+        $imported = new UdbDatasetCheckpoint(new UdbStreamOrigin('001', str_repeat('1', 16)), UdbUnsignedDecimal::fromInt(9));
+        $state->recordImportedCheckpoint($imported);
+        $local = $state->startDatasetStream(new UdbStreamOrigin('002', str_repeat('2', 16)));
+        $state->clearImportedCheckpoint();
+        self::assertNull($state->getImportedCheckpoint());
+        $actual = $state->getDatasetCheckpoint();
+        self::assertNotNull($actual);
+        self::assertSame($local->origin->sid, $actual->origin->sid);
+        self::assertSame((string) $local->watermark, (string) $actual->watermark);
     }
 }

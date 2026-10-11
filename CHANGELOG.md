@@ -1,3 +1,15 @@
+## [2.4.0] - 2026-10-11
+
+### Improvements
+
+- Align UnrealUdb with the strict native UDB 4 contract: HEL 4, explicit typed values, canonical logical checksums, consistent snapshots and correlated durable ACKs.
+- Preserve imported origin and mutation checkpoints; retain stream identity on reconnect and use a fresh epoch with reconciliation after process restart.
+
+### Upgrade
+
+- Back up the services database and apply `Version20261011000001` before starting services to upgrade typed records and staged-generation/checkpoint storage.
+- The substituted UDB contract is no longer supported; no compatibility fallback is provided. Deploy the matching native UDB 4 module.
+
 ## [2.3.1] - 2026-10-03
 
 ### Improvements

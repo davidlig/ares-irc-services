@@ -6,11 +6,14 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionStateInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbRecordWriterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -62,7 +65,8 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
         }
 
         $components = explode('::', $path);
-        if (!UdbSchema::validate($blockEnum, $components, $value)) {
+        $typedValue = UdbSchema::typedValueFor($blockEnum, $components, $value);
+        if (null === $typedValue) {
             $this->logger->warning('Rejected UDB mutation failing schema validation.', [
                 'block' => $blockEnum->letter(),
                 'path' => $path,
@@ -75,15 +79,13 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
         // canonical encoding cannot fail here.
         $encodedPath = UdbPathCodec::encodePath($components);
         assert(null !== $encodedPath);
-        $value = UdbSchema::canonicalizeValue($value);
-
-        $changed = $this->persistInsert($blockEnum->letter(), $encodedPath, $value);
-        if (null === $changed) {
+        $sequence = null;
+        if (!$this->persistInsert($blockEnum->letter(), $encodedPath, $typedValue, $this->sessionState->streamOrigin(), $sequence)) {
             return false;
         }
 
-        if ($changed) {
-            $this->dispatch(new UdbMutation($blockEnum->letter(), $encodedPath, $value));
+        if (null !== $sequence) {
+            $this->dispatch(new UdbMutation($blockEnum->letter(), $encodedPath, $typedValue)->assigned($sequence, $this->sessionState->streamOrigin()));
         }
 
         return true;
@@ -111,13 +113,13 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
             return false;
         }
 
-        $changed = $this->persistDelete($blockEnum->letter(), $encodedPath);
-        if (null === $changed) {
+        $sequence = null;
+        if (!$this->persistDelete($blockEnum->letter(), $encodedPath, $this->sessionState->streamOrigin(), $sequence)) {
             return false;
         }
 
-        if ($changed) {
-            $this->dispatch(new UdbMutation($blockEnum->letter(), $encodedPath, null));
+        if (null !== $sequence) {
+            $this->dispatch(new UdbMutation($blockEnum->letter(), $encodedPath, null)->assigned($sequence, $this->sessionState->streamOrigin()));
         }
 
         return true;
@@ -128,11 +130,12 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
         $this->sessionState->enqueueMutation($mutation);
     }
 
-    /** @return ?bool null when persistence failed, otherwise whether it changed */
-    private function persistInsert(string $block, string $encodedPath, string $value): ?bool
+    private function persistInsert(string $block, string $encodedPath, UdbValue $value, UdbStreamOrigin $origin, ?UdbUnsignedDecimal &$sequence): bool
     {
         try {
-            return $this->mutations->upsertWithManifest($block, $encodedPath, $value);
+            $sequence = $this->mutations->upsertWithManifest($block, $encodedPath, $value, $origin);
+
+            return true;
         } catch (Throwable $exception) {
             $this->logger->error('UDB store insert failed; mutation not propagated.', [
                 'block' => $block,
@@ -140,15 +143,16 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
                 'exception' => $exception->getMessage(),
             ]);
 
-            return null;
+            return false;
         }
     }
 
-    /** @return ?bool null when persistence failed, otherwise whether it changed */
-    private function persistDelete(string $block, string $encodedPath): ?bool
+    private function persistDelete(string $block, string $encodedPath, UdbStreamOrigin $origin, ?UdbUnsignedDecimal &$sequence): bool
     {
         try {
-            return $this->mutations->deleteCascadeWithManifest($block, $encodedPath);
+            $sequence = $this->mutations->deleteCascadeWithManifest($block, $encodedPath, $origin);
+
+            return true;
         } catch (Throwable $exception) {
             $this->logger->error('UDB store delete failed; mutation not propagated.', [
                 'block' => $block,
@@ -156,7 +160,7 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
                 'exception' => $exception->getMessage(),
             ]);
 
-            return null;
+            return false;
         }
     }
 }

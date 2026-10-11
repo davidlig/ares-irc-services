@@ -17,7 +17,12 @@
         <field name="path" type="string" length="8192" column="path"/>
         <field name="identityPath" type="binary" length="8192" column="identity_path"/>
         <field name="identityHash" type="binary" length="32" column="identity_hash"/>
-        <field name="value" type="text" column="value"/>
+        <field name="value" type="binary" length="4096" column="value"/>
+        <field name="valueKind" type="smallint" column="value_kind">
+            <options>
+                <option name="default">1</option>
+            </options>
+        </field>
         <field name="updatedAt" type="datetimetz_immutable" column="updated_at"/>
     </entity>
 </doctrine-mapping>

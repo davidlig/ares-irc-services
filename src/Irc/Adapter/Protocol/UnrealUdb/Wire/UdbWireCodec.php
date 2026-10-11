@@ -6,6 +6,8 @@ namespace App\Irc\Adapter\Protocol\UnrealUdb\Wire;
 
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
+use InvalidArgumentException;
 
 use function array_slice;
 use function array_values;
@@ -16,29 +18,34 @@ use function in_array;
 use function preg_match;
 use function sprintf;
 use function str_starts_with;
+use function strlen;
 use function strpbrk;
 use function strpos;
 use function strtoupper;
 use function substr;
 
-/** Exact codec for the UDB 4 wire contract at upstream revision ac3b915. */
+/** Exact codec for the UDB 4 wire contract at upstream revision eff97e9f. */
 final class UdbWireCodec
 {
-    /** @param list<string> $capabilities */
+    /**
+     * @param list<string> $capabilities
+     */
     public static function hel(string $sid, string $targetSid, string $propagator, string $epoch, array $capabilities = ['OCL']): string
     {
         return sprintf(':%s DB %s HEL 4 %s %s %s', $sid, $targetSid, $propagator, $epoch, implode(' ', $capabilities));
     }
 
-    /** @param list<string> $capabilities */
+    /**
+     * @param list<string> $capabilities
+     */
     public static function helAck(string $sid, string $targetSid, string $propagator, string $epoch, array $capabilities = ['OCL']): string
     {
         return sprintf(':%s DB %s HEL 4 ACK %s %s %s', $sid, $targetSid, $propagator, $epoch, implode(' ', $capabilities));
     }
 
-    public static function inf(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $digest, int $recordCount, int $modifiedAt, int|UdbUnsignedDecimal|null $watermark = null): string
+    public static function inf(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $digest, int $recordCount, int|UdbUnsignedDecimal $watermark, string $rootSid, string $rootEpoch): string
     {
-        return sprintf(':%s DB %s INF %s %s %s %d %d%s', $sid, $targetSid, $roundId, $block->letter(), self::digestOrEmpty($digest), $recordCount, $modifiedAt, self::optionalDecimal($watermark));
+        return sprintf(':%s DB %s INF %s %s %s %d 0 %s %s %s', $sid, $targetSid, $roundId, $block->letter(), self::requireDigest($digest), $recordCount, $watermark, $rootSid, $rootEpoch);
     }
 
     public static function res(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block): string
@@ -46,22 +53,22 @@ final class UdbWireCodec
         return sprintf(':%s DB %s RES %s %s', $sid, $targetSid, $roundId, $block->letter());
     }
 
-    public static function begin(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $digest, int|UdbUnsignedDecimal|null $watermark = null): string
+    public static function begin(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $digest, int|UdbUnsignedDecimal $watermark): string
     {
         return self::stagedBoundary('BEGIN', $sid, $targetSid, $roundId, $block, $txid, $digest, $watermark);
     }
 
-    public static function put(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $encodedPath, string $value): string
+    public static function put(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $encodedPath, UdbValue $value): string
     {
-        return sprintf(':%s DB %s PUT %s %s %s %s :%s', $sid, $targetSid, $roundId, $block->letter(), $txid, $encodedPath, $value);
+        return self::line(sprintf(':%s DB %s PUT %s %s %s %s::%s :%s', $sid, $targetSid, $roundId, $block->letter(), $txid, $block->letter(), $encodedPath, self::encodeValue($value)));
     }
 
-    public static function end(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $digest, int|UdbUnsignedDecimal|null $watermark = null): string
+    public static function end(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $digest, int|UdbUnsignedDecimal $watermark): string
     {
         return self::stagedBoundary('END', $sid, $targetSid, $roundId, $block, $txid, $digest, $watermark);
     }
 
-    public static function ack(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $digest, int|UdbUnsignedDecimal|null $watermark = null): string
+    public static function ack(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $digest, int|UdbUnsignedDecimal $watermark): string
     {
         return self::stagedBoundary('ACK', $sid, $targetSid, $roundId, $block, $txid, $digest, $watermark);
     }
@@ -71,9 +78,9 @@ final class UdbWireCodec
         return sprintf(':%s DB %s ERR %s %d %s %s', $sid, $targetSid, $subcommand, $errorCode, $roundId, null !== $block ? $block->letter() : '0');
     }
 
-    public static function ins(string $sid, string $epoch, int|UdbUnsignedDecimal $sequence, string $blockLetter, string $encodedPath, string $value): string
+    public static function ins(string $sid, string $epoch, int|UdbUnsignedDecimal $sequence, string $blockLetter, string $encodedPath, UdbValue $value): string
     {
-        return sprintf(':%s DB * INS %s %s %s::%s :%s', $sid, $epoch, $sequence, $blockLetter, $encodedPath, $value);
+        return self::line(sprintf(':%s DB * INS %s %s %s::%s :%s', $sid, $epoch, $sequence, $blockLetter, $encodedPath, self::encodeValue($value)));
     }
 
     public static function del(string $sid, string $epoch, int|UdbUnsignedDecimal $sequence, string $blockLetter, string $encodedPath): string
@@ -98,7 +105,7 @@ final class UdbWireCodec
 
     public static function manifestAck(string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, int $recordCount, string $digest, int|UdbUnsignedDecimal $watermark): string
     {
-        return sprintf(':%s DB %s MANIFEST ACK %s %s %d %s %s', $sid, $targetSid, $roundId, $block->letter(), $recordCount, self::digestOrEmpty($digest), $watermark);
+        return sprintf(':%s DB %s MANIFEST ACK %s %s %d %s %s', $sid, $targetSid, $roundId, $block->letter(), $recordCount, self::requireDigest($digest), $watermark);
     }
 
     /** Returns null for any frame that does not match the current grammar exactly. */
@@ -153,20 +160,21 @@ final class UdbWireCodec
 
     private static function parseInf(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
     {
-        if (7 !== count($message->params) && 8 !== count($message->params)) {
+        if (10 !== count($message->params)) {
             return null;
         }
         $roundId = self::nonZeroUnsigned($message->params[2]);
         $block = UdbBlock::fromLetter(strtoupper($message->params[3]));
         $digest = UdbChecksum::parse($message->params[4]);
         $recordCount = UdbPathCodec::parseUnsignedInt($message->params[5], 4294967295);
-        $timestamp = UdbPathCodec::parseTimeT($message->params[6]);
-        $watermark = self::optionalUnsigned($message, 7);
-        if (null === $roundId || null === $block || null === $digest || null === $recordCount || null === $timestamp || false === $watermark) {
+        $rootSid = $message->params[8];
+        $rootEpoch = $message->params[9];
+        $watermark = UdbPathCodec::parseUnsigned($message->params[7]);
+        if (null === $roundId || null === $block || null === $digest || null === $recordCount || '0' !== $message->params[6] || null === $watermark || !self::validSid($rootSid) || !self::validEpoch($rootEpoch)) {
             return null;
         }
 
-        return new UdbFrame(UdbFrameKind::Inf, $sourceSid, $target, roundId: $roundId, block: $block, checksum: $digest, timestamp: $timestamp, count: $recordCount, watermark: $watermark);
+        return new UdbFrame(UdbFrameKind::Inf, $sourceSid, $target, roundId: $roundId, block: $block, checksum: $digest, timestamp: 0, count: $recordCount, watermark: $watermark, rootSid: $rootSid, rootEpoch: $rootEpoch);
     }
 
     private static function parseRes(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
@@ -182,13 +190,13 @@ final class UdbWireCodec
 
     private static function parseBoundary(UdbFrameKind $kind, string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
     {
-        if (6 !== count($message->params) && 7 !== count($message->params)) {
+        if (7 !== count($message->params)) {
             return null;
         }
         $header = self::parseStagedHeader($kind, $sourceSid, $target, $message);
         $digest = UdbChecksum::parse($message->params[5]);
-        $watermark = self::optionalUnsigned($message, 6);
-        if (null === $header || null === $digest || false === $watermark) {
+        $watermark = UdbPathCodec::parseUnsigned($message->params[6]);
+        if (null === $header || null === $digest || null === $watermark) {
             return null;
         }
 
@@ -202,12 +210,17 @@ final class UdbWireCodec
         }
         $header = self::parseStagedHeader(UdbFrameKind::Put, $sourceSid, $target, $message);
         $path = $message->params[5];
+        if (null === $header || null === $header->block || !str_starts_with($path, $header->block->letter() . '::')) {
+            return null;
+        }
+        $path = substr($path, 3);
         $value = $message->trailing ?? ($message->params[6] ?? null);
-        if (null === $header || '' === $path || !UdbPathCodec::isCanonicalPath($path) || null === $value || '' === $value || strpbrk($value, "\r\n")) {
+        $typedValue = null === $value ? null : UdbValueDecoder::decode($value);
+        if ('' === $path || !UdbPathCodec::isCanonicalPath($path) || null === $typedValue || strpbrk($value, "\r\n")) {
             return null;
         }
 
-        return new UdbFrame(UdbFrameKind::Put, $sourceSid, $target, roundId: $header->roundId, block: $header->block, txid: $header->txid, path: $path, value: $value);
+        return new UdbFrame(UdbFrameKind::Put, $sourceSid, $target, roundId: $header->roundId, block: $header->block, txid: $header->txid, path: $path, value: $value, typedValue: $typedValue);
     }
 
     private static function parseStagedHeader(UdbFrameKind $kind, string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
@@ -246,11 +259,12 @@ final class UdbWireCodec
         $sequence = self::nonZeroUnsigned($message->params[3]);
         $path = $message->params[4];
         $value = $message->trailing ?? ($message->params[5] ?? null);
-        if (!self::validEpoch($epoch) || null === $sequence || !self::isValidMutationPath($path) || null === $value || '' === $value || strpbrk($value, "\r\n")) {
+        $typedValue = null === $value ? null : UdbValueDecoder::decode($value);
+        if (!self::validEpoch($epoch) || null === $sequence || !self::isValidMutationPath($path) || null === $typedValue || strpbrk($value, "\r\n")) {
             return null;
         }
 
-        return new UdbFrame(UdbFrameKind::Ins, $sourceSid, $target, path: $path, value: $value, epoch: $epoch, sequence: $sequence);
+        return new UdbFrame(UdbFrameKind::Ins, $sourceSid, $target, path: $path, value: $value, epoch: $epoch, sequence: $sequence, typedValue: $typedValue);
     }
 
     private static function parseDel(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
@@ -348,19 +362,33 @@ final class UdbWireCodec
         return null;
     }
 
-    private static function stagedBoundary(string $verb, string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $digest, int|UdbUnsignedDecimal|null $watermark): string
+    private static function stagedBoundary(string $verb, string $sid, string $targetSid, int|UdbUnsignedDecimal $roundId, UdbBlock $block, string $txid, string $digest, int|UdbUnsignedDecimal $watermark): string
     {
-        return sprintf(':%s DB %s %s %s %s %s %s%s', $sid, $targetSid, $verb, $roundId, $block->letter(), $txid, self::digestOrEmpty($digest), self::optionalDecimal($watermark));
+        return sprintf(':%s DB %s %s %s %s %s %s %s', $sid, $targetSid, $verb, $roundId, $block->letter(), $txid, self::requireDigest($digest), $watermark);
     }
 
-    private static function optionalDecimal(int|UdbUnsignedDecimal|null $value): string
+    private static function encodeValue(UdbValue $value): string
     {
-        return null === $value ? '' : ' ' . $value;
+        return UdbValueEncoder::encode($value);
     }
 
-    private static function digestOrEmpty(string $digest): string
+    private static function line(string $line): string
     {
-        return UdbChecksum::parse($digest) ?? UdbChecksum::EMPTY;
+        if (strlen($line) + 2 > UdbPathCodec::IRC_LINE_MAX) {
+            throw new InvalidArgumentException('The serialized UDB frame exceeds the IRC line limit.');
+        }
+
+        return $line;
+    }
+
+    private static function validSid(string $sid): bool
+    {
+        return 1 === preg_match('/^[0-9A-Z]{3}$/D', $sid);
+    }
+
+    private static function requireDigest(string $digest): string
+    {
+        return UdbChecksum::parse($digest) ?? throw new InvalidArgumentException('A canonical UDB digest is required.');
     }
 
     private static function validEpoch(string $epoch): bool
@@ -373,15 +401,6 @@ final class UdbWireCodec
         $parsed = UdbPathCodec::parseUnsigned($value);
 
         return null === $parsed || $parsed->isZero() ? null : $parsed;
-    }
-
-    private static function optionalUnsigned(IRCMessage $message, int $offset): false|UdbUnsignedDecimal|null
-    {
-        if (!isset($message->params[$offset])) {
-            return null;
-        }
-
-        return UdbPathCodec::parseUnsigned($message->params[$offset]) ?? false;
     }
 
     /** Mutation paths must be "<block>::<canonical encoded remainder>". */

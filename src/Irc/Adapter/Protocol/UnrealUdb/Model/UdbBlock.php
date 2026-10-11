@@ -28,7 +28,9 @@ enum UdbBlock: string
         return $this->value;
     }
 
-    /** @return list<self> All six blocks in reconciliation order. */
+    /**
+     * @return list<self> all six blocks in reconciliation order
+     */
     public static function all(): array
     {
         return [self::Nicks, self::Channels, self::Ips, self::Settings, self::Links, self::Lines];

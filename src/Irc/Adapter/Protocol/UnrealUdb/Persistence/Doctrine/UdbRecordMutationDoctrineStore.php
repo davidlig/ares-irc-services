@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine;
 
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbDatasetCheckpoint;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordMutationStoreInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use Closure;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
@@ -29,29 +35,50 @@ use function strtoupper;
  * the independent record/state repositories, whose flush/clear boundaries are
  * intended for standalone bootstrap and takeover operations.
  */
-final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInterface
+final class UdbRecordMutationDoctrineStore implements UdbRecordMutationStoreInterface
 {
     public function __construct(
-        private EntityManagerInterface $em,
-        private ClockInterface $clock,
+        private readonly EntityManagerInterface $em,
+        private readonly ClockInterface $clock,
     ) {}
 
-    public function upsertWithManifest(string $block, string $path, string $value): bool
+    public function beginLocalStream(UdbStreamOrigin $origin): UdbDatasetCheckpoint
     {
-        $value = UdbSchema::canonicalizeValue($value);
+        $connection = $this->em->getConnection();
+        $connection->beginTransaction();
+        try {
+            $state = $this->authorityState();
+            $checkpoint = $state->startDatasetStream($origin);
+            $this->em->flush();
+            $connection->commit();
 
-        return $this->mutate($block, function () use ($block, $path, $value): bool {
+            return $checkpoint;
+        } catch (Throwable $exception) {
+            if ($connection->isTransactionActive()) {
+                $connection->rollBack();
+            }
+            throw $exception;
+        } finally {
+            if ($this->em->isOpen()) {
+                $this->em->clear();
+            }
+        }
+    }
+
+    public function upsertWithManifest(string $block, string $path, UdbValue $value, UdbStreamOrigin $origin): ?UdbUnsignedDecimal
+    {
+        return $this->mutate($block, $origin, function () use ($block, $path, $value): bool {
             $siblingIds = $this->nickForbidSiblingIds($block, $path);
             $record = $this->findRecord($block, $path);
             $changed = false;
 
             if ($record instanceof UdbRecord) {
-                if ($record->getValue() !== $value) {
-                    $record->updateValue($value);
+                if ($record->getValue() !== $value->logicalValue() || $record->getValueKind() !== $value->kind) {
+                    $record->updateValue($value->logicalValue(), $value->kind);
                     $changed = true;
                 }
             } else {
-                $this->em->persist(new UdbRecord($block, $path, $value));
+                $this->em->persist(new UdbRecord($block, $path, $value->logicalValue(), $value->kind));
                 $changed = true;
             }
 
@@ -67,9 +94,9 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
         });
     }
 
-    public function deleteCascadeWithManifest(string $block, string $path): bool
+    public function deleteCascadeWithManifest(string $block, string $path, UdbStreamOrigin $origin): ?UdbUnsignedDecimal
     {
-        return $this->mutate($block, function () use ($block, $path): bool {
+        return $this->mutate($block, $origin, function () use ($block, $path): bool {
             $ids = $this->descendantIds($block, UdbRecord::identity($path, $block));
             if ([] === $ids) {
                 return false;
@@ -84,9 +111,9 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
         });
     }
 
-    public function expireLineWithManifest(string $path, int $expectedExpires, int $now): bool
+    public function expireLineWithManifest(string $path, int $expectedExpires, int $now, UdbStreamOrigin $origin): ?UdbUnsignedDecimal
     {
-        return $this->mutate('K', function () use ($path, $expectedExpires, $now): bool {
+        return $this->mutate('K', $origin, function () use ($path, $expectedExpires, $now): bool {
             if ($expectedExpires > $now) {
                 return false;
             }
@@ -106,8 +133,35 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
         });
     }
 
-    /** @param Closure(): bool $operation */
-    private function mutate(string $block, Closure $operation): bool
+    public function allocateBlockDropSequence(string $block, UdbStreamOrigin $origin): UdbUnsignedDecimal
+    {
+        if (null === UdbBlock::tryFrom($block)) {
+            throw new UnexpectedValueException('A UDB block drop requires a canonical block.');
+        }
+        $connection = $this->em->getConnection();
+        $connection->beginTransaction();
+        try {
+            $checkpoint = $this->authorityState()->advanceDatasetCheckpoint($origin);
+            $this->em->flush();
+            $connection->commit();
+
+            return $checkpoint->watermark;
+        } catch (Throwable $exception) {
+            if ($connection->isTransactionActive()) {
+                $connection->rollBack();
+            }
+            throw $exception;
+        } finally {
+            if ($this->em->isOpen()) {
+                $this->em->clear();
+            }
+        }
+    }
+
+    /**
+     * @param Closure(): bool $operation
+     */
+    private function mutate(string $block, UdbStreamOrigin $origin, Closure $operation): ?UdbUnsignedDecimal
     {
         $connection = $this->em->getConnection();
         $connection->beginTransaction();
@@ -116,7 +170,7 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
             if (!$operation()) {
                 $connection->commit();
 
-                return false;
+                return null;
             }
 
             // Materialize inserts/updates before deriving and validating the
@@ -124,14 +178,15 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
             $this->em->flush();
             $records = $this->recordsByBlock($block);
             $blockType = UdbBlock::tryFrom($block);
-            if (null === $blockType || !UdbSchema::validateAggregate($blockType, $records)) {
+            if (null === $blockType || !UdbSchema::validateAggregateTyped($blockType, $records)) {
                 throw new UnexpectedValueException('The UDB mutation would create an invalid block aggregate.');
             }
             $this->refreshManifest($block, $records);
+            $checkpoint = $this->authorityState()->advanceDatasetCheckpoint($origin);
             $this->em->flush();
             $connection->commit();
 
-            return true;
+            return $checkpoint->watermark;
         } catch (Throwable $exception) {
             if ($connection->isTransactionActive()) {
                 $connection->rollBack();
@@ -145,6 +200,18 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
         }
     }
 
+    private function authorityState(): UdbAuthorityState
+    {
+        $state = $this->em->find(UdbAuthorityState::class, 1);
+        if ($state instanceof UdbAuthorityState) {
+            return $state;
+        }
+        $state = new UdbAuthorityState();
+        $this->em->persist($state);
+
+        return $state;
+    }
+
     private function findRecord(string $block, string $path): ?UdbRecord
     {
         $record = $this->em
@@ -156,7 +223,9 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
         return $record instanceof UdbRecord ? $record : null;
     }
 
-    /** @return list<int> */
+    /**
+     * @return list<int>
+     */
     private function descendantIds(string $block, string $identity): array
     {
         $ids = [];
@@ -177,7 +246,9 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
         return $ids;
     }
 
-    /** @return list<int> */
+    /**
+     * @return list<int>
+     */
     private function nickForbidSiblingIds(string $block, string $path): array
     {
         if ('N' !== strtoupper($block)) {
@@ -207,32 +278,40 @@ final readonly class UdbRecordMutationDoctrineStore implements UdbRecordMutation
         return $ids;
     }
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, UdbValue>
+     */
     private function recordsByBlock(string $block): array
     {
-        /** @var array<array{path: string, value: string}> $rows */
+        /** @var array<array{path: string, value: string, valueKind: int}> $rows */
         $rows = $this->em
-            ->createQuery('SELECT r.path, r.value FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord r WHERE r.block = :block')
+            ->createQuery('SELECT r.path, r.value, r.valueKind FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord r WHERE r.block = :block')
             ->setParameter('block', $block)
             ->getArrayResult();
 
         $records = [];
         foreach ($rows as $row) {
-            $records[$row['path']] = $row['value'];
+            $kind = UdbValueKind::tryFrom($row['valueKind']);
+            if (null === $kind) {
+                throw new UnexpectedValueException('A persisted UDB record has an unknown value kind.');
+            }
+            $records[$row['path']] = match ($kind) {
+                UdbValueKind::None => UdbValue::none(),
+                UdbValueKind::String => UdbValue::string($row['value']),
+                UdbValueKind::Number => UdbValue::number(UdbUnsignedDecimal::parse(substr($row['value'], 1)) ?? throw new UnexpectedValueException('A persisted numeric UDB value is malformed.')),
+            };
         }
 
         return $records;
     }
 
-    /** @param array<string, string> $records */
+    /**
+     * @param array<string, UdbValue> $records
+     */
     private function refreshManifest(string $block, array $records): void
     {
-        $digestRecords = [];
-        foreach ($records as $path => $value) {
-            $digestRecords[] = [$path, $value];
-        }
-
-        $digest = UdbChecksum::fromRecords($digestRecords);
+        $blockType = UdbBlock::fromLetter($block) ?? throw new UnexpectedValueException('An unknown UDB block cannot have a manifest.');
+        $digest = UdbChecksum::fromMap($blockType, $records);
         $modifiedAt = $this->clock->now();
         $state = $this->em
             ->createQuery('SELECT s FROM App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlockState s WHERE s.block = :block')

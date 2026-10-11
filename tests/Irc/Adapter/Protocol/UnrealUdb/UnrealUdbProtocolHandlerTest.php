@@ -9,15 +9,15 @@ use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
+use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbStreamOrigin;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
-use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProviderInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionController;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
-use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutation;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutationQueue;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Domain\Server\ServerLink;
 use App\Irc\Domain\ValueObject\Hostname;
@@ -78,7 +78,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $coordinator = new UdbSessionCoordinator(
             $sid,
             $this->createStub(UdbBlockStateRepositoryInterface::class),
-            $this->createStub(UdbSnapshotProviderInterface::class),
+            new FakeUdbSnapshots(),
         );
 
         return new UnrealUdbProtocolHandler($sid, $coordinator, eventDispatcher: $eventDispatcher);
@@ -120,7 +120,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
                 new UdbSessionCoordinator(
                     '002',
                     $this->createStub(UdbBlockStateRepositoryInterface::class),
-                    $this->createStub(UdbSnapshotProviderInterface::class),
+                    new FakeUdbSnapshots(),
                 ),
                 new UdbSessionLock($directory),
             );
@@ -143,7 +143,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
             new UdbSessionCoordinator(
                 '002',
                 $this->createStub(UdbBlockStateRepositoryInterface::class),
-                $this->createStub(UdbSnapshotProviderInterface::class),
+                new FakeUdbSnapshots(),
             ),
             logger: $logger,
         );
@@ -177,7 +177,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
                 new UdbSessionCoordinator(
                     '002',
                     $this->createStub(UdbBlockStateRepositoryInterface::class),
-                    $this->createStub(UdbSnapshotProviderInterface::class),
+                    new FakeUdbSnapshots(),
                 ),
                 new UdbSessionLock($directory),
             );
@@ -482,7 +482,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $this->written = [];
 
         foreach ([
-            ':001 DB * INS 0123456789abcdef 1 S::nickserv :mask value',
+            ':001 DB * INS 0123456789abcdef 1 S::nickserv :!sbWFzayB2YWx1ZQ==',
             ':001 DB * DEL 0123456789abcdef 2 K::G::user@host',
             ':001 DB * DRP 0123456789abcdef 3 I',
         ] as $line) {
@@ -532,18 +532,12 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     #[Test]
     public function realRoundTrafficDefersOverflowRecoveryUntilTheActiveBarrierCompletes(): void
     {
+        $digest = UdbTestValues::digest(UdbBlock::Ips, ['1.2.3.4::clones' => '*5']);
         $states = new FakeBlockStates();
         foreach (UdbBlock::all() as $block) {
-            $states->upsert($block->letter(), UdbChecksum::EMPTY, 0);
+            $states->upsert($block->letter(), UdbChecksum::empty($block), 0);
         }
-        $snapshots = $this->createStub(UdbSnapshotProviderInterface::class);
-        $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
-        $snapshots->method('checksumForBlock')->willReturnCallback(
-            static fn (UdbBlock $block): string => UdbBlock::Ips === $block ? $digest : UdbChecksum::EMPTY,
-        );
-        $snapshots->method('recordsForBlock')->willReturnCallback(
-            static fn (UdbBlock $block): array => UdbBlock::Ips === $block ? ['1.2.3.4::clones' => '*5'] : [],
-        );
+        $snapshots = new FakeUdbSnapshots(['I' => ['1.2.3.4::clones' => '*5']]);
         $coordinator = new UdbSessionCoordinator('002', $states, $snapshots, mutationQueue: new UdbMutationQueue(2));
         $handler = new UnrealUdbProtocolHandler('002', $coordinator);
         $connection = $this->createConnection();
@@ -564,13 +558,13 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $txid = $beginMatch[1];
         self::assertSame([
             ':002 DB 001 BEGIN ' . $roundId . ' I ' . $txid . ' ' . $digest . ' 0',
-            ':002 DB 001 PUT ' . $roundId . ' I ' . $txid . ' 1.2.3.4::clones :*5',
+            ':002 DB 001 PUT ' . $roundId . ' I ' . $txid . ' I::1.2.3.4::clones :!u5',
             ':002 DB 001 END ' . $roundId . ' I ' . $txid . ' ' . $digest . ' 0',
         ], $this->written);
         $this->written = [];
 
         for ($index = 0; 3 > $index; ++$index) {
-            $coordinator->enqueueMutation(new UdbMutation('N', 'nick' . $index, 'value'));
+            $coordinator->enqueueMutation(UdbTestValues::mutation('N', 'nick' . $index . '::vhost', 'value')->assigned(UdbUnsignedDecimal::fromInt($index + 1), new UdbStreamOrigin('002', $coordinator->epoch())));
         }
         self::assertSame([], $this->written);
         self::assertSame((int) $roundId, $coordinator->activeRoundId());
@@ -596,7 +590,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $coordinator = new UdbSessionCoordinator(
             '002',
             $this->createStub(UdbBlockStateRepositoryInterface::class),
-            $this->createStub(UdbSnapshotProviderInterface::class),
+            new FakeUdbSnapshots(),
             $logger,
         );
         $handler = new UnrealUdbProtocolHandler('002', $coordinator, logger: $logger);
@@ -655,6 +649,21 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     }
 
     #[Test]
+    public function pongRoutesItsSourceAndTrailingTokenToTheOrderingGate(): void
+    {
+        $connection = $this->createConnection();
+        $controller = $this->createMock(UdbSessionController::class);
+        $controller->expects(self::once())->method('tick')->with($connection);
+        $controller->expects(self::once())->method('handlePong')->with('001', 'UDB4-1-token', $connection);
+        $handler = new UnrealUdbProtocolHandler('002', $controller);
+
+        $handler->handleIncoming(
+            new IRCMessage(command: 'PONG', prefix: '001', params: ['002'], trailing: 'UDB4-1-token'),
+            $connection,
+        );
+    }
+
+    #[Test]
     public function errorIsLoggedAndStillTicksTheCoordinator(): void
     {
         $this->written = [];
@@ -680,5 +689,18 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->setEventPump($pump);
         $handler->setEventPump(null);
         $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function exactNativeNoSuchServerNumericIsDispatchedAsTransportOrderingOnly(): void
+    {
+        $connection = $this->createConnection();
+        $controller = $this->createMock(UdbSessionController::class);
+        $controller->expects(self::once())->method('handleTransportBarrier')
+            ->with('ircd.example.net', 'services.test.local', 'UDB4-1-nonce', $connection);
+        $handler = new UnrealUdbProtocolHandler('002', $controller);
+        $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 services.test.local UDB4-1-nonce :No such server'), $connection);
+        $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 services.test.local :No such server'), $connection);
+        $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 services.test.local UDB4-1-nonce extra :No such server'), $connection);
     }
 }
