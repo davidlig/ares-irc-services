@@ -1,3 +1,12 @@
+## [2.4.1] - 2026-10-12
+
+### Bug Fixes
+
+- Redact complete channel mode values in UDB wire logs, RAW command logs and audit records, including embedded channel keys, without changing transmitted values.
+- Align UDB validation with native channel mode restrictions, typed access values (including NONE and explicit strings), K-line insertion versus subtree deletion, and native spamfilter target ordering. Preserve stored value kinds and bytes, reject NUL strings, and fail closed on invalid stored records.
+- Accept native HEL propagator selectors, including `?`, while preserving direct-peer authorization and handshake confirmation requirements.
+- Retain bounded provisional UDB mutations before inventory arrives, bind them atomically to the snapshot identity, and prune snapshot-covered entries without retries. Preserve import deadlines, durable acknowledgement rules and the authenticated promotion barrier.
+
 ## [2.4.0] - 2026-10-11
 
 ### Improvements
