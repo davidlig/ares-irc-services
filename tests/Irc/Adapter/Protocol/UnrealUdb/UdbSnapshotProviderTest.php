@@ -64,7 +64,7 @@ final class UdbSnapshotProviderTest extends TestCase
     #[Test]
     public function directSqlByteaResourceBecomesLogicalBytesBeforeSnapshotValidation(): void
     {
-        $bytes = "fixture\0\xff";
+        $bytes = "fixture\x01\xff";
         $stream = fopen('php://temp', 'w+');
         self::assertIsResource($stream);
         fwrite($stream, $bytes);
@@ -88,7 +88,7 @@ final class UdbSnapshotProviderTest extends TestCase
     #[Test]
     public function binaryLogicalValueIsCapturedWithoutTextOrByteaEscapeInterpretation(): void
     {
-        $bytes = "fixture\0\xff\x80\\x4142";
+        $bytes = "fixture\x01\xff\x80\\x4142";
         $this->connection->insert('udb_records', ['id' => 1, 'block' => 'N', 'path' => 'alice::swhois', 'value' => $bytes, 'value_kind' => 1], ['value' => Types::BINARY]);
         $snapshot = new UdbSnapshotProvider($this->connection)->capture();
         try {
@@ -97,6 +97,59 @@ final class UdbSnapshotProviderTest extends TestCase
         } finally {
             $snapshot->close();
         }
+    }
+
+    #[Test]
+    public function coherentSnapshotPreservesChannelAccessKindsAndBytes(): void
+    {
+        $rows = [
+            '#chan::access::alice' => UdbValue::none(),
+            '#chan::access::bob' => UdbValue::string('*1'),
+            '#chan::access::carol' => UdbValue::number(UdbUnsignedDecimal::fromInt(1)),
+            '#chan::access::dave' => UdbValue::string('*level'),
+        ];
+        $id = 0;
+        foreach ($rows as $path => $value) {
+            $this->connection->insert('udb_records', ['id' => ++$id, 'block' => 'C', 'path' => $path, 'value' => $value->logicalValue(), 'value_kind' => $value->kind->value]);
+        }
+        $snapshot = new UdbSnapshotProvider($this->connection)->capture();
+        try {
+            self::assertSame(4, $snapshot->count(UdbBlock::Channels));
+            self::assertSame(UdbChecksum::fromMap(UdbBlock::Channels, $rows), $snapshot->digest(UdbBlock::Channels));
+            foreach ($snapshot->records(UdbBlock::Channels) as [$path, $value]) {
+                self::assertSame($rows[$path]->kind, $value->kind);
+                self::assertSame($rows[$path]->value, $value->value);
+            }
+            self::assertSame('7', (string) $snapshot->checkpoint->watermark);
+        } finally {
+            $snapshot->close();
+        }
+    }
+
+    /** @return iterable<string, array{string, string, string, int}> */
+    public static function invalidNativeSchemaRows(): iterable
+    {
+        yield 'forbidden channel modes' => ['C', '#chan::modes', '+P', 1];
+        yield 'nul string' => ['N', 'nick::swhois', "synthetic\0payload", 1];
+        yield 'none line prefix' => ['K', 'G::*@host', '', 0];
+    }
+
+    #[Test]
+    #[DataProvider('invalidNativeSchemaRows')]
+    public function invalidExistingNativeRowsCannotCaptureAndRemainUnchanged(string $block, string $path, string $raw, int $kind): void
+    {
+        $this->connection->insert('udb_records', ['id' => 1, 'block' => $block, 'path' => $path, 'value' => $raw, 'value_kind' => $kind], ['value' => Types::BINARY]);
+        $before = $this->connection->fetchAllAssociative('SELECT * FROM udb_records');
+        $spools = glob(sys_get_temp_dir() . '/ares-udb4-*');
+        try {
+            new UdbSnapshotProvider($this->connection)->capture();
+            self::fail('Invalid native rows must not produce a snapshot.');
+        } catch (UnexpectedValueException $error) {
+            self::assertSame('A persisted UDB row does not match the canonical schema.', $error->getMessage());
+            self::assertFalse($this->connection->isTransactionActive());
+        }
+        self::assertSame($before, $this->connection->fetchAllAssociative('SELECT * FROM udb_records'));
+        self::assertSame($spools, glob(sys_get_temp_dir() . '/ares-udb4-*'));
     }
 
     #[Test]

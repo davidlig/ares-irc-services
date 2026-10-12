@@ -97,8 +97,8 @@ final class UdbSchema
         'viruschan', 'soft-viruschan', 'warn', 'soft-warn',
     ];
 
-    /** Channel modes carrying their rank parameter (CMODE_MEMBER). */
-    private const array CHAN_MEMBER_MODES = ['q', 'a', 'o', 'h', 'v'];
+    /** Protected and member channel modes forbidden by native row admission. */
+    private const array CHAN_FORBIDDEN_MODES = ['r', 'P', 'O', 'q', 'a', 'o', 'h', 'v'];
 
     /** Channel modes taking a parameter when added (incl. list modes b/e/I). */
     private const array CHAN_PARAM_ON_ADD = ['k', 'l', 'f', 'L', 'F', 'H', 'b', 'e', 'I'];
@@ -123,7 +123,7 @@ final class UdbSchema
             return false;
         }
 
-        if ('' === $value || strlen($value) > 4096 || str_contains($value, "\r") || str_contains($value, "\n")) {
+        if (!self::validStringValue($value)) {
             return false;
         }
 
@@ -187,11 +187,11 @@ final class UdbSchema
             return UdbValueKind::Number === $value->kind && self::validate($block, $components, '*' . $value->value);
         }
         if ('any' === $expected) {
-            return match ($value->kind) {
-                UdbValueKind::String => '' !== $value->value && self::validate($block, $components, $value->value),
-                UdbValueKind::Number => self::validate($block, $components, '*' . $value->value),
-                UdbValueKind::None => false,
-            };
+            if (!self::channelName($components[0]) || !self::nickName($components[2])) {
+                return false;
+            }
+
+            return UdbValueKind::String !== $value->kind || self::validStringValue($value->value);
         }
 
         return UdbValueKind::String === $expected && UdbValueKind::String === $value->kind
@@ -206,7 +206,12 @@ final class UdbSchema
      */
     public static function typedValueFor(UdbBlock $block, array $components, string $logicalValue): ?UdbValue
     {
-        $value = match (self::expectedValueKind($block, $components)) {
+        $expected = self::expectedValueKind($block, $components);
+        // Legacy logical access input retains its numeric-marker conversion rules.
+        if ('any' === $expected && !self::validate($block, $components, $logicalValue)) {
+            return null;
+        }
+        $value = match ($expected) {
             UdbValueKind::None => '' === $logicalValue ? UdbValue::none() : null,
             UdbValueKind::String => UdbValue::string($logicalValue),
             'any' => null !== self::numericValue($logicalValue)
@@ -239,9 +244,20 @@ final class UdbSchema
 
     public static function matchesStoredRecordType(string $block, string $encodedPath, UdbValue $value): bool
     {
-        $expected = self::typedValueForStoredRecord($block, $encodedPath, $value->logicalValue());
+        $blockEnum = UdbBlock::tryFrom($block);
+        if (null === $blockEnum) {
+            return false;
+        }
+        $components = [];
+        foreach (explode('::', $encodedPath) as $encodedComponent) {
+            $component = UdbPathCodec::decodeComponent($encodedComponent);
+            if (null === $component) {
+                return false;
+            }
+            $components[] = $component;
+        }
 
-        return null !== $expected && $expected->kind === $value->kind && $expected->value === $value->value;
+        return self::validateTyped($blockEnum, $components, $value);
     }
 
     private static function numericValue(string $logicalValue): ?UdbValue
@@ -282,9 +298,6 @@ final class UdbSchema
     private static function lineValueKind(array $components): ?UdbValueKind
     {
         $depth = count($components);
-        if (2 === $depth) {
-            return UdbValueKind::None;
-        }
         if (3 !== $depth) {
             return null;
         }
@@ -309,19 +322,8 @@ final class UdbSchema
                 || (2 === $depth && self::channelName($components[0]) && 'access' === strtolower($components[1])),
             UdbBlock::Ips => 1 === $depth && self::ipHostMask($components[0]),
             UdbBlock::Links => 1 === $depth && self::serverName($components[0]),
-            UdbBlock::Lines => 2 === $depth && self::validLineContainer($components[0], $components[1]),
+            UdbBlock::Lines => false,
             UdbBlock::Settings => false,
-        };
-    }
-
-    private static function validLineContainer(string $type, string $mask): bool
-    {
-        return match ($type) {
-            'G', 'S' => self::lineMask($mask),
-            'Z' => self::zlineMask($mask),
-            'Q' => self::qlineMask($mask),
-            'F' => self::spamfilterPattern($mask),
-            default => false,
         };
     }
 
@@ -587,6 +589,12 @@ final class UdbSchema
 
     // === Value validators ====================================================
 
+    private static function validStringValue(string $value): bool
+    {
+        return '' !== $value && strlen($value) <= 4096
+            && !str_contains($value, "\0") && !str_contains($value, "\r") && !str_contains($value, "\n");
+    }
+
     /** UDB_VAL_STRING fields are independent of the numeric marker spelling. */
     private static function stringRecord(string $value): bool
     {
@@ -721,14 +729,12 @@ final class UdbSchema
                 continue;
             }
 
-            if (!self::isChannelModeLetter($char)) {
+            if (in_array($char, self::CHAN_FORBIDDEN_MODES, true) || !self::isChannelModeLetter($char)) {
                 return false;
             }
 
             ++$modeLetters;
-            if (in_array($char, self::CHAN_MEMBER_MODES, true)) {
-                ++$expectedParams;
-            } elseif (('add' === $what && in_array($char, self::CHAN_PARAM_ON_ADD, true))
+            if (('add' === $what && in_array($char, self::CHAN_PARAM_ON_ADD, true))
                 || ('del' === $what && in_array($char, self::CHAN_UNSET_WITH_PARAM, true))) {
                 ++$expectedParams;
             }
@@ -751,8 +757,7 @@ final class UdbSchema
 
     private static function isChannelModeLetter(string $char): bool
     {
-        return in_array($char, self::CHAN_MEMBER_MODES, true)
-            || in_array($char, self::CHAN_PARAM_ON_ADD, true)
+        return in_array($char, self::CHAN_PARAM_ON_ADD, true)
             || in_array($char, self::CHAN_SIMPLE_MODES, true);
     }
 
@@ -917,17 +922,15 @@ final class UdbSchema
     private static function spamfilterTargets(string $value): bool
     {
         $offset = -1;
-        $previous = null;
         foreach (str_split($value) as $target) {
             $next = strpos(self::SPAMFILTER_TARGETS, $target);
-            if (false === $next || $next <= $offset || (null !== $previous && ord($previous) >= ord($target))) {
+            if (false === $next || $next <= $offset) {
                 return false;
             }
             $offset = $next;
-            $previous = $target;
         }
 
-        return true;
+        return '' !== $value;
     }
 
     // === Name / path component validators ===================================

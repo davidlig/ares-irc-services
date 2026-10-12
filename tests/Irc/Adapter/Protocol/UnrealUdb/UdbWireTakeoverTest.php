@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\ChanServ\Application\Port\In\ChannelProjectionQuery;
+use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbAuthorityState;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbBlock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbSchema;
@@ -24,6 +25,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbStructuralNodeCount;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\NickServ\Application\Port\In\NickProjectionQuery;
@@ -80,7 +82,7 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
     public function fullNativeTxidAndBinaryStringSurviveCorrelatedTransferAndPromotion(): void
     {
         $txid = str_repeat('t', 31);
-        $bytes = "fixture\0\xff\x80\\x4142";
+        $bytes = "fixture\x01\xff\x80\\x4142";
         $records = ['quit_ips' => $bytes];
         $outcome = $this->stagedTransferFor(UdbBlock::Settings, $txid, $records);
         $this->assertAcknowledgement($outcome, UdbBlock::Settings, 1, $txid, UdbTestValues::digest(UdbBlock::Settings, $records));
@@ -91,6 +93,78 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
         $this->takeover->finalize();
         $this->em->clear();
         self::assertSame($records, UdbTestValues::logicalMap($this->records->recordsByBlock('S')));
+    }
+
+    #[Test]
+    public function realTypedChannelAccessTransferAcknowledgesCanonicalDigestAndCount(): void
+    {
+        $block = UdbBlock::Channels;
+        $rows = [
+            '#chan::access::alice' => UdbValue::none(),
+            '#chan::access::bob' => UdbValue::string('*1'),
+            '#chan::access::carol' => UdbValue::number(UdbUnsignedDecimal::fromInt(1)),
+            '#chan::access::dave' => UdbValue::string('*level'),
+        ];
+        $digest = UdbChecksum::fromMap($block, $rows);
+        $this->assertRequest($this->inventory($block, digest: $digest, count: count($rows)), $block, 1);
+        $this->assertIgnored($this->begin($block, 'typed', $digest));
+        foreach ($rows as $path => $value) {
+            $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(UdbWireCodec::put('001', '002', 1, $block, 'typed', $path, $value)));
+            self::assertNotNull($frame);
+            $this->assertIgnored($this->takeover->accept($frame));
+        }
+        $stored = $this->em->getConnection()->fetchAllAssociative('SELECT path, value, value_kind FROM udb_staged_records ORDER BY id');
+        self::assertCount(4, $stored);
+        foreach ($stored as $row) {
+            self::assertIsString($row['path']);
+            self::assertSame($rows[$row['path']]->kind->value, $row['value_kind']);
+            self::assertSame($rows[$row['path']]->logicalValue(), $row['value']);
+        }
+        $this->assertAcknowledgement($this->end($block, 'typed', $digest), $block, 1, 'typed', $digest);
+        self::assertSame(['C'], $this->takeover->completedBlocks());
+        self::assertFalse($this->takeover->canPromote());
+        self::assertSame([], $this->records->recordsByBlock('C'));
+    }
+
+    /** @return iterable<string, array{UdbBlock, string, UdbValue}> */
+    public static function nativeRejectedRows(): iterable
+    {
+        yield 'channel protected mode' => [UdbBlock::Channels, '#chan::modes', UdbValue::string('+P')];
+        yield 'channel member mode' => [UdbBlock::Channels, '#chan::modes', UdbValue::string('-q nick')];
+        foreach (['G' => '*@host', 'Z' => '192.0.2.1', 'S' => '*@host', 'Q' => 'badnick', 'F' => 'b64%3AYQ=='] as $type => $mask) {
+            yield 'line prefix ' . $type => [UdbBlock::Lines, $type . '::' . $mask, UdbValue::none()];
+        }
+    }
+
+    #[Test]
+    #[DataProvider('nativeRejectedRows')]
+    public function schemaInvalidTypedPutDiscardsStageWithoutAcknowledgementOrPromotion(UdbBlock $block, string $path, UdbValue $value): void
+    {
+        $this->inventory($block);
+        $this->begin($block, 'invalid');
+        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(UdbWireCodec::put('001', '002', 1, $block, 'invalid', $path, $value)));
+        self::assertNotNull($frame);
+        $this->assertError($this->takeover->accept($frame), $block, 1, 'PUT', 2);
+        self::assertSame([], $this->takeover->completedBlocks());
+        self::assertFalse($this->takeover->canPromote());
+        self::assertSame([], $this->records->recordsByBlock($block->letter()));
+        $count = $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_records');
+        self::assertIsInt($count);
+        self::assertSame(0, $count);
+    }
+
+    #[Test]
+    #[DataProvider('nativeRejectedRows')]
+    public function schemaInvalidTypedInsCannotStageOrPromote(UdbBlock $block, string $path, UdbValue $value): void
+    {
+        $this->inventory($block);
+        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(UdbWireCodec::ins('001', '1111111111111111', 1, $block->letter(), $path, $value)));
+        self::assertNotNull($frame);
+        $this->assertError($this->takeover->acceptMutation($frame), $block, 1, 'INS', 2);
+        self::assertFalse($this->takeover->canPromote());
+        $count = $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations');
+        self::assertIsInt($count);
+        self::assertSame(0, $count);
     }
 
     #[Test]

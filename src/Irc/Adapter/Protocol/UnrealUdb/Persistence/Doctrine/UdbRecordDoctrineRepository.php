@@ -43,6 +43,9 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
             if ($value->kind !== $kind || $value->logicalValue() !== $row['value']) {
                 throw new UnexpectedValueException('A persisted UDB record value does not match its value kind.');
             }
+            if (!UdbSchema::matchesStoredRecordType($block, $row['path'], $value)) {
+                throw new UnexpectedValueException('A persisted UDB record does not match its canonical schema.');
+            }
             $records[$row['path']] = $value;
         }
 

@@ -14,6 +14,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbRecordDoctrineRep
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use Doctrine\DBAL\DriverManager;
@@ -21,9 +22,12 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use UnexpectedValueException;
+
+use function count;
 
 use const DATE_ATOM;
 
@@ -50,7 +54,7 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     #[Test]
     public function mappedBinaryValueHydratesEntityAndScalarProjectionWithoutByteLoss(): void
     {
-        $bytes = "fixture\0\xff\x80\\x4142";
+        $bytes = "fixture\x01\xff\x80\\x4142";
         self::assertTrue($this->upsert('N', 'alice::swhois', $bytes));
         $this->flushAndClear();
         self::assertSame(['alice::swhois' => $bytes], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
@@ -60,6 +64,67 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertSame('binary', $this->entityManager->getClassMetadata(UdbRecord::class)->getTypeOfField('value'));
         $rows = $this->entityManager->createQuery('SELECT r.value FROM App\\Irc\\Adapter\\Protocol\\UnrealUdb\\Model\\UdbRecord r')->getScalarResult();
         self::assertSame([['value' => $bytes]], $rows);
+    }
+
+    #[Test]
+    public function channelAccessUpsertSeedAndReplacePreserveExplicitKindsAndBytes(): void
+    {
+        $rows = [
+            '#chan::access::alice' => UdbValue::none(),
+            '#chan::access::bob' => UdbValue::string('*1'),
+            '#chan::access::carol' => UdbValue::number(UdbUnsignedDecimal::fromInt(1)),
+            '#chan::access::dave' => UdbValue::string('*level'),
+        ];
+        foreach (['upsert', 'seedBlock', 'replaceBlock'] as $method) {
+            $this->entityManager->getConnection()->executeStatement('DELETE FROM udb_records');
+            if ('upsert' === $method) {
+                foreach ($rows as $path => $value) {
+                    self::assertTrue($this->records->upsert('C', $path, $value));
+                }
+            } else {
+                $this->records->$method('C', $rows);
+            }
+            $this->entityManager->clear();
+            $loaded = $this->records->recordsByBlock('C');
+            self::assertCount(count($rows), $loaded);
+            foreach ($rows as $path => $value) {
+                self::assertSame($value->kind, $loaded[$path]->kind);
+                self::assertSame($value->value, $loaded[$path]->value);
+                self::assertSame($value->logicalValue(), $loaded[$path]->logicalValue());
+            }
+        }
+        self::assertTrue($this->records->upsert('C', '#chan::access::bob', UdbValue::number(UdbUnsignedDecimal::fromInt(1))));
+        self::assertSame(UdbValue::number(UdbUnsignedDecimal::fromInt(1))->kind, $this->records->recordsByBlock('C')['#chan::access::bob']->kind);
+    }
+
+    /** @return iterable<string, array{string, string, string, int}> */
+    public static function invalidPersistedSchemaRows(): iterable
+    {
+        yield 'forbidden modes' => ['C', '#chan::modes', '+r', 1];
+        yield 'nul string' => ['N', 'nick::swhois', "synthetic\0payload", 1];
+        yield 'kind incompatible with path' => ['N', 'nick::pass', '*1', 2];
+        yield 'none line prefix' => ['K', 'G::*@host', '', 0];
+        yield 'invalid key' => ['N', 'nick::unknown', 'synthetic-payload', 1];
+        yield 'noncanonical path' => ['N', 'ni%63k::swhois', 'synthetic-payload', 1];
+    }
+
+    #[Test]
+    #[DataProvider('invalidPersistedSchemaRows')]
+    public function readbackRejectsInvalidExistingRowsWithoutChangingSql(string $block, string $path, string $raw, int $kind): void
+    {
+        $connection = $this->entityManager->getConnection();
+        $this->entityManager->persist(new UdbRecord('N', 'nick::swhois', 'valid fixture'));
+        $this->entityManager->flush();
+        $connection->executeStatement('UPDATE udb_records SET block = ?, path = ?, value = ?, value_kind = ?', [$block, $path, $raw, $kind]);
+        $this->entityManager->clear();
+        $before = $connection->fetchAllAssociative('SELECT * FROM udb_records');
+        try {
+            $this->records->recordsByBlock($block);
+            self::fail('Invalid persisted schema rows must not be returned.');
+        } catch (UnexpectedValueException $error) {
+            self::assertSame('A persisted UDB record does not match its canonical schema.', $error->getMessage());
+        }
+        self::assertSame($before, $connection->fetchAllAssociative('SELECT * FROM udb_records'));
     }
 
     #[Test]

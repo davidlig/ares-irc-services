@@ -9,6 +9,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValueKind;
 use InvalidArgumentException;
 
 use function base64_encode;
+use function str_contains;
 use function strlen;
 
 final class UdbValueEncoder
@@ -17,6 +18,10 @@ final class UdbValueEncoder
     {
         if (UdbValueKind::String === $value->kind && strlen($value->value) > UdbPathCodec::VALUE_MAX) {
             throw new InvalidArgumentException('A UDB string value exceeds the canonical limit.');
+        }
+
+        if (UdbValueKind::String === $value->kind && str_contains($value->value, "\0")) {
+            throw new InvalidArgumentException('A UDB string value contains NUL.');
         }
 
         return match ($value->kind) {

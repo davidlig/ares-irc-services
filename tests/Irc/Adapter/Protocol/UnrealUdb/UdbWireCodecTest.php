@@ -29,11 +29,15 @@ final class UdbWireCodecTest extends TestCase
         $txid = str_repeat('t', 31);
         foreach ([
             UdbWireCodec::begin('001', '002', 1, UdbBlock::Settings, $txid, self::DIGEST, 0),
-            UdbWireCodec::put('001', '002', 1, UdbBlock::Settings, $txid, 'quit_ips', UdbValue::string("fixture\0\xff")),
+            UdbWireCodec::put('001', '002', 1, UdbBlock::Settings, $txid, 'quit_ips', UdbValue::string("fixture\t\xff")),
             UdbWireCodec::end('001', '002', 1, UdbBlock::Settings, $txid, self::DIGEST, 0),
             UdbWireCodec::ack('001', '002', 1, UdbBlock::Settings, $txid, self::DIGEST, 0),
         ] as $line) {
-            self::assertSame($txid, $this->parse($line)->txid);
+            $frame = $this->parse($line);
+            self::assertSame($txid, $frame->txid);
+            if (UdbFrameKind::Put === $frame->kind) {
+                self::assertSame("fixture\t\xff", $frame->typedValue?->value);
+            }
         }
         $invalid = IRCMessage::fromRawLine(':001 DB 002 BEGIN 1 S ' . $txid . 't ' . self::DIGEST . ' 0');
         self::assertNull(UdbWireCodec::parse($invalid));

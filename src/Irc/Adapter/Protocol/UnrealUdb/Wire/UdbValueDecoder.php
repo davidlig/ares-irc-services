@@ -9,6 +9,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbValue;
 use function base64_decode;
 use function base64_encode;
 use function preg_match;
+use function str_contains;
 use function str_starts_with;
 use function strlen;
 use function substr;
@@ -40,7 +41,7 @@ final class UdbValueDecoder
             return null;
         }
         $decoded = base64_decode($encoded, true);
-        if (false === $decoded || strlen($decoded) > UdbPathCodec::VALUE_MAX || base64_encode($decoded) !== $encoded) {
+        if (false === $decoded || str_contains($decoded, "\0") || strlen($decoded) > UdbPathCodec::VALUE_MAX || base64_encode($decoded) !== $encoded) {
             return null;
         }
 

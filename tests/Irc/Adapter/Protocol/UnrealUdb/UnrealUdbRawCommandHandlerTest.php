@@ -241,6 +241,31 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
     }
 
     #[Test]
+    public function rawRejectsForbiddenChannelModesButRetainsKeyAndLimitSemantics(): void
+    {
+        foreach (['+r', '-P', '+ntO', '+q nick', '-v nick'] as $value) {
+            $result = $this->handler->ins('C::#chan::modes', $value);
+            self::assertFalse($result->success);
+            self::assertSame('raw.udb.invalid_value', $result->errorKey);
+            self::assertSame(['%path%' => 'C::#chan::modes <redacted>'], $result->errorParams);
+        }
+        foreach (['+k synthetic-key', '-k synthetic-key', '+l 10', '-l', '+beI a b c', '-beI a b c'] as $value) {
+            self::assertTrue($this->handler->ins('C::#chan::modes', $value)->success);
+        }
+    }
+
+    #[Test]
+    public function rawRejectsLinePrefixInsertionButSubtreeDeletionStillCascades(): void
+    {
+        $this->records->blocks['K'] = ['G::*@host::reason' => 'synthetic reason', 'G::*@host::expires' => '*1', 'G::*@other::reason' => 'retained'];
+        $result = $this->handler->ins('K::G::*@host', 'synthetic reason');
+        self::assertFalse($result->success);
+        self::assertSame('raw.udb.invalid_value', $result->errorKey);
+        self::assertTrue($this->handler->del('K::G::*@host')->success);
+        self::assertSame(['G::*@other::reason' => 'retained'], UdbTestValues::logicalMap($this->records->recordsByBlock('K')));
+    }
+
+    #[Test]
     public function delCascadesAndPropagates(): void
     {
         $this->records->blocks['N'] = ['davidlig::vhost' => 'v', 'other::vhost' => 'v'];
