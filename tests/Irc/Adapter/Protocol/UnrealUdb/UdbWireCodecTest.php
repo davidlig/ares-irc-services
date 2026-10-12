@@ -14,6 +14,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -29,11 +30,15 @@ final class UdbWireCodecTest extends TestCase
         $txid = str_repeat('t', 31);
         foreach ([
             UdbWireCodec::begin('001', '002', 1, UdbBlock::Settings, $txid, self::DIGEST, 0),
-            UdbWireCodec::put('001', '002', 1, UdbBlock::Settings, $txid, 'quit_ips', UdbValue::string("fixture\0\xff")),
+            UdbWireCodec::put('001', '002', 1, UdbBlock::Settings, $txid, 'quit_ips', UdbValue::string("fixture\t\xff")),
             UdbWireCodec::end('001', '002', 1, UdbBlock::Settings, $txid, self::DIGEST, 0),
             UdbWireCodec::ack('001', '002', 1, UdbBlock::Settings, $txid, self::DIGEST, 0),
         ] as $line) {
-            self::assertSame($txid, $this->parse($line)->txid);
+            $frame = $this->parse($line);
+            self::assertSame($txid, $frame->txid);
+            if (UdbFrameKind::Put === $frame->kind) {
+                self::assertSame("fixture\t\xff", $frame->typedValue?->value);
+            }
         }
         $invalid = IRCMessage::fromRawLine(':001 DB 002 BEGIN 1 S ' . $txid . 't ' . self::DIGEST . ' 0');
         self::assertNull(UdbWireCodec::parse($invalid));
@@ -153,6 +158,50 @@ final class UdbWireCodecTest extends TestCase
             'netadmin' => str_repeat('b', 64),
         ]));
         self::assertTrue(UdbOclgViewDigest::isValid($sorted));
+    }
+
+    /** @return iterable<string, array{string, bool}> */
+    public static function propagatorSelectors(): iterable
+    {
+        yield 'question mark' => ['?', true];
+        yield 'unselected' => ['-', true];
+        yield 'normal name' => ['services.example.net', true];
+        yield 'native non-DNS characters' => ['node_1:port/path.example', true];
+        yield 'native dot-only name' => ['.', true];
+        yield 'maximum 63 bytes' => [str_repeat('a', 61) . '.x', true];
+        yield '64 bytes' => [str_repeat('a', 62) . '.x', false];
+        yield 'empty' => ['', false];
+        yield 'no dot' => ['services', false];
+        yield 'slash without dot' => ['bad/name', false];
+        yield 'whitespace' => ['bad name.example', false];
+        yield 'tab' => ["bad\tname.example", false];
+        yield 'newline' => ["bad.example\n", false];
+        yield 'non-ASCII' => ["bad\xff.example", false];
+        yield 'NUL' => ["bad\0.example", false];
+        yield 'wildcard' => ['*.example', false];
+        yield 'invalid punctuation' => ['bad@name.example', false];
+    }
+
+    #[Test]
+    #[DataProvider('propagatorSelectors')]
+    public function helAndAckEnforceNativePropagatorGrammar(string $selector, bool $valid): void
+    {
+        foreach ([false, true] as $ack) {
+            $params = ['002', 'HEL', '4'];
+            if ($ack) {
+                $params[] = 'ACK';
+            }
+            $frame = UdbWireCodec::parse(new IRCMessage(command: 'DB', prefix: '001', params: [...$params, $selector, '0123456789abcdef', 'OCL', 'OCLG']));
+            if ($valid) {
+                self::assertNotNull($frame);
+                self::assertSame($selector, $frame->propagator);
+                self::assertSame($ack ? UdbFrameKind::HelAck : UdbFrameKind::Hel, $frame->kind);
+                self::assertSame(['OCL', 'OCLG'], $frame->capabilities);
+            } else {
+                self::assertNull($frame);
+            }
+        }
+        self::assertSame($valid, UdbWireCodec::isValidPropagator($selector));
     }
 
     #[Test]

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb\Session;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 
 use function in_array;
 use function preg_match;
@@ -72,6 +73,7 @@ final class UdbPeerSession
     public function observeAdvertisement(UdbFrame $frame, bool $bootstrap): UdbPeerAdvertisementChange
     {
         if (null === $frame->propagator
+            || !UdbWireCodec::isValidPropagator($frame->propagator)
             || null === $frame->epoch
             || 1 !== preg_match('/^[0-9a-f]{16}$/D', $frame->epoch)
             || !in_array($frame->capabilities, [['OCL'], ['OCL', 'OCLG']], true)
@@ -82,6 +84,7 @@ final class UdbPeerSession
         $changed = null !== $this->remoteEpoch && $this->remoteEpoch !== $frame->epoch;
         $this->remoteEpoch = $frame->epoch;
         $this->authorized = $bootstrap
+            || '?' === $frame->propagator
             || (null !== $this->ownName && '' !== $this->ownName && 0 === strcasecmp($frame->propagator, $this->ownName));
 
         return $changed ? UdbPeerAdvertisementChange::NewInstance : UdbPeerAdvertisementChange::SameInstance;

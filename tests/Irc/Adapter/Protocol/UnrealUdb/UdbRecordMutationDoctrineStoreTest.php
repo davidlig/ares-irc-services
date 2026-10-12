@@ -14,6 +14,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbRecordDoctrineRep
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbRecordMutationDoctrineStore;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbBlockStateRepositoryInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbRecordRepositoryInterface;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
@@ -60,13 +61,39 @@ final class UdbRecordMutationDoctrineStoreTest extends DoctrineIntegrationTestCa
     #[Test]
     public function binaryMutationManifestAndReloadUseTheSameLogicalBytes(): void
     {
-        $bytes = "fixture\0\xff\x80\\x4142";
+        $bytes = "fixture\x01\xff\x80\\x4142";
         self::assertSame('1', (string) $this->upsert('N', 'alice::swhois', $bytes));
         $before = $this->states->all()['N']->getChecksum();
         $this->entityManager->clear();
         self::assertSame(['alice::swhois' => $bytes], UdbTestValues::logicalMap($this->records->recordsByBlock('N')));
         self::assertSame($before, $this->states->all()['N']->getChecksum());
         self::assertNull($this->upsert('N', 'ALICE::SWHOIS', $bytes));
+    }
+
+    #[Test]
+    public function channelAccessMutationManifestRetainsExplicitKindsAndBytes(): void
+    {
+        $rows = [
+            '#chan::access::alice' => UdbValue::none(),
+            '#chan::access::bob' => UdbValue::string('*1'),
+            '#chan::access::carol' => UdbValue::number(UdbUnsignedDecimal::fromInt(1)),
+            '#chan::access::dave' => UdbValue::string('*level'),
+        ];
+        $sequence = 0;
+        foreach ($rows as $path => $value) {
+            self::assertSame((string) ++$sequence, (string) $this->mutations->upsertWithManifest('C', $path, $value, $this->origin));
+        }
+        $this->entityManager->clear();
+        $loaded = $this->records->recordsByBlock('C');
+        self::assertCount(4, $loaded);
+        foreach ($rows as $path => $value) {
+            self::assertSame($value->kind, $loaded[$path]->kind);
+            self::assertSame($value->value, $loaded[$path]->value);
+        }
+        $manifest = $this->states->all()['C'];
+        self::assertSame(4, $manifest->getRecordCount());
+        self::assertSame(UdbChecksum::fromMap(UdbBlock::Channels, $rows), $manifest->getChecksum());
+        self::assertNull($this->mutations->upsertWithManifest('C', '#chan::access::bob', UdbValue::string('*1'), $this->origin));
     }
 
     #[Test]

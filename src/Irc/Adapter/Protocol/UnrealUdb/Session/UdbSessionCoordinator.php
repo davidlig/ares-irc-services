@@ -707,7 +707,14 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
             return;
         }
 
-        $outcome = $this->wireTakeover?->accept($frame) ?? UdbWireTakeoverOutcome::ignored();
+        try {
+            $outcome = $this->wireTakeover?->accept($frame) ?? UdbWireTakeoverOutcome::ignored();
+        } catch (Throwable) {
+            $this->logger->error('UDB bootstrap inventory persistence failed; requesting a fresh inventory.');
+            $this->retryWireBootstrap();
+
+            return;
+        }
         $this->writeTakeoverOutcome($outcome, $frame->sourceSid);
         if (UdbWireTakeoverOutcomeKind::Error === $outcome->kind) {
             $this->retryWireBootstrap();
@@ -1040,11 +1047,20 @@ final class UdbSessionCoordinator implements UdbSessionStateInterface, UdbSessio
     private function handleForbiddenMutation(UdbFrame $frame): void
     {
         if ($this->isWireBootstrapActive() && $this->peer->isAuthorized() && '*' === $frame->target) {
-            $outcome = $this->wireTakeover?->acceptMutation($frame) ?? UdbWireTakeoverOutcome::ignored();
+            try {
+                $outcome = $this->wireTakeover?->acceptMutation($frame) ?? UdbWireTakeoverOutcome::ignored();
+            } catch (Throwable) {
+                $this->logger->error('UDB bootstrap mutation persistence failed; requesting a fresh inventory.');
+                $this->retryWireBootstrap();
+
+                return;
+            }
             $this->writeTakeoverOutcome($outcome, $frame->sourceSid);
             if (UdbWireTakeoverOutcomeKind::Error === $outcome->kind) {
                 $this->logger->warning('Rejected a non-contiguous or foreign-origin UDB bootstrap mutation.');
                 $this->retryWireBootstrap();
+            } else {
+                $this->scheduleNextDeadlineTimer();
             }
 
             return;

@@ -11,6 +11,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireLogRedactor;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -34,6 +35,31 @@ final class UdbWireLogRedactorTest extends TestCase
             ':002 DB * INS 0123456789abcdef 2 S::encryption_key :<redacted>',
             UdbWireLogRedactor::redact(UdbWireCodec::ins('002', '0123456789abcdef', 2, 'S', 'encryption_key', UdbValue::string('super-secret'))),
         );
+    }
+
+    #[Test]
+    #[DataProvider('channelModesProvider')]
+    public function redactsWholeChannelModesValuesWithoutChangingWire(string $key, string $value): void
+    {
+        $typedValue = UdbValue::string($value);
+        $ins = UdbWireCodec::ins('002', '0123456789abcdef', 1, 'C', '#chan::' . $key, $typedValue);
+        $put = UdbWireCodec::put('002', '001', 1000, UdbBlock::Channels, 'ab12', '#chan::' . $key, $typedValue);
+
+        self::assertSame(':002 DB * INS 0123456789abcdef 1 C::#chan::' . $key . ' :<redacted>', UdbWireLogRedactor::redact($ins));
+        self::assertSame(':002 DB 001 PUT 1000 C ab12 C::#chan::' . $key . ' :<redacted>', UdbWireLogRedactor::redact($put));
+        self::assertSame($ins, UdbWireCodec::ins('002', '0123456789abcdef', 1, 'C', '#chan::' . $key, $typedValue));
+        self::assertStringEndsWith(':!s' . base64_encode($value), $ins);
+        self::assertStringEndsWith(':!s' . base64_encode($value), $put);
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function channelModesProvider(): iterable
+    {
+        foreach (['modes', 'MoDeS'] as $key) {
+            yield $key . ' with channel key' => [$key, '+ntk synthetic-channel-key'];
+            yield $key . ' without channel key' => [$key, '+nt'];
+            yield $key . ' invalid mode parameters' => [$key, '+nt synthetic-extra-parameter'];
+        }
     }
 
     #[Test]
@@ -62,6 +88,8 @@ final class UdbWireLogRedactorTest extends TestCase
     public function logsNonSecretRecordValuesVerbatim(): void
     {
         $unchanged = [
+            UdbWireCodec::put('002', '001', 1000, UdbBlock::Channels, 'ab12', '#chan::topic', UdbValue::string('Visible topic')),
+            UdbWireCodec::ins('002', '0123456789abcdef', 6, 'C', '#chan::ToPiC', UdbValue::string('Visible topic')),
             UdbWireCodec::put('002', '001', 1000, UdbBlock::Nicks, 'ab12', 'alice::vhost', UdbValue::string('a.example')),
             UdbWireCodec::put('002', '001', 1000, UdbBlock::Nicks, 'ab12', 'alice::access::carol', UdbValue::string('a.example')),
             UdbWireCodec::ins('002', '0123456789abcdef', 6, 'C', 'alice::vhost', UdbValue::string('a.example')),

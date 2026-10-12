@@ -17,6 +17,7 @@ use function implode;
 use function in_array;
 use function preg_match;
 use function sprintf;
+use function str_contains;
 use function str_starts_with;
 use function strlen;
 use function strpbrk;
@@ -151,7 +152,7 @@ final class UdbWireCodec
         $propagator = $message->params[$argumentOffset] ?? '';
         $epoch = $message->params[$argumentOffset + 1] ?? '';
         $capabilities = self::parseHelCapabilities(array_values(array_slice($message->params, $capabilityOffset)));
-        if ('' === $propagator || !self::validEpoch($epoch) || null === $capabilities) {
+        if (!self::isValidPropagator($propagator) || !self::validEpoch($epoch) || null === $capabilities) {
             return null;
         }
 
@@ -379,6 +380,13 @@ final class UdbWireCodec
         }
 
         return $line;
+    }
+
+    /** Native valid_server_name uses non-strict host characters, not DNS syntax. */
+    public static function isValidPropagator(string $propagator): bool
+    {
+        return '?' === $propagator || '-' === $propagator
+            || (str_contains($propagator, '.') && 1 === preg_match('/^[A-Za-z0-9_\-.:\/]{1,63}\z/', $propagator));
     }
 
     private static function validSid(string $sid): bool

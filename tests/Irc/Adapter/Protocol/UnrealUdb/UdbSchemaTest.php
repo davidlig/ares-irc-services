@@ -15,6 +15,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function in_array;
+
 #[CoversClass(UdbSchema::class)]
 final class UdbSchemaTest extends TestCase
 {
@@ -52,7 +54,7 @@ final class UdbSchemaTest extends TestCase
         self::assertSame(UdbValueKind::String, UdbSchema::expectedValueKind(UdbBlock::Nicks, ['david', 'pass']));
         self::assertSame(UdbValueKind::None, UdbSchema::expectedValueKind(UdbBlock::Channels, ['#chan', 'access']));
         self::assertSame(UdbValueKind::Number, UdbSchema::expectedValueKind(UdbBlock::Channels, ['#chan', 'options']));
-        self::assertSame(UdbValueKind::None, UdbSchema::expectedValueKind(UdbBlock::Lines, ['G', '*@host']));
+        self::assertNull(UdbSchema::expectedValueKind(UdbBlock::Lines, ['G', '*@host']));
         self::assertSame(UdbValueKind::Number, UdbSchema::expectedValueKind(UdbBlock::Lines, ['G', '*@host', 'expires']));
         self::assertSame(UdbValueKind::String, UdbSchema::expectedValueKind(UdbBlock::Lines, ['G', '*@host', 'reason']));
         self::assertNull(UdbSchema::expectedValueKind(UdbBlock::Nicks, ['david', 'unknown']));
@@ -62,6 +64,62 @@ final class UdbSchemaTest extends TestCase
         self::assertFalse(UdbSchema::validateTyped(UdbBlock::Nicks, ['david', 'pass'], UdbValue::string('')));
         self::assertFalse(UdbSchema::validateTyped(UdbBlock::Nicks, ['david', 'pass'], UdbValue::none()));
         self::assertTrue(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'options'], UdbValue::number(self::number('18446744073709551615'))));
+    }
+
+    #[Test]
+    #[DataProvider('forbiddenChannelModes')]
+    public function channelRecordRejectsNativeForbiddenModes(string $value): void
+    {
+        self::assertFalse(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'modes'], $value));
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'MoDeS'], UdbValue::string($value)));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function forbiddenChannelModes(): iterable
+    {
+        foreach (['r', 'P', 'O', 'q', 'a', 'o', 'h', 'v'] as $mode) {
+            $parameter = in_array($mode, ['q', 'a', 'o', 'h', 'v'], true) ? ' nick' : '';
+            foreach (['+', '-', '+nt+', '+nt-'] as $signs) {
+                yield $signs . $mode => [$signs . $mode . $parameter];
+            }
+        }
+    }
+
+    #[Test]
+    public function explicitChannelAccessKindsRemainAuthoritative(): void
+    {
+        $components = ['#chan', 'AcCeSs', 'nick'];
+        $values = [UdbValue::none(), UdbValue::number(self::number('0')), UdbValue::number(self::number('18446744073709551615')),
+            UdbValue::string('5'), UdbValue::string('*1'), UdbValue::string('*level')];
+        foreach ($values as $value) {
+            self::assertTrue(UdbSchema::validateTyped(UdbBlock::Channels, $components, $value));
+            self::assertTrue(UdbSchema::matchesStoredRecordType('C', '#chan::AcCeSs::nick', $value));
+            self::assertTrue(UdbSchema::validateAggregateTyped(UdbBlock::Channels, ['#chan::AcCeSs::nick' => $value]));
+            foreach ([['chan', 'access', 'nick'], ['#chan', 'access', '9bad'], ['#chan', 'access', 'nick', 'extra'], ['#chan', 'topic', 'nick']] as $invalid) {
+                self::assertFalse(UdbSchema::validateTyped(UdbBlock::Channels, $invalid, $value));
+            }
+        }
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Channels, $components, UdbValue::string('')));
+        self::assertNull(UdbSchema::typedValueFor(UdbBlock::Channels, $components, ''));
+        self::assertNull(UdbSchema::typedValueFor(UdbBlock::Channels, $components, '*level'));
+        self::assertSame(UdbValueKind::Number, UdbSchema::typedValueFor(UdbBlock::Channels, $components, '*1')?->kind);
+        self::assertFalse(UdbSchema::matchesStoredRecordType('?', '#chan::access::nick', UdbValue::none()));
+        self::assertFalse(UdbSchema::matchesStoredRecordType('C', '#chan::access::ni%63k', UdbValue::none()));
+    }
+
+    #[Test]
+    public function nulStringsFailSchemaWithoutProhibitingOtherNativeBytes(): void
+    {
+        foreach ([['nick', 'swhois'], ['nick', 'pass']] as $components) {
+            self::assertFalse(UdbSchema::validate(UdbBlock::Nicks, $components, "fixture\0tail"));
+            self::assertFalse(UdbSchema::validateTyped(UdbBlock::Nicks, $components, UdbValue::string("fixture\0tail")));
+        }
+        foreach (["fixture\0tail", "fixture\r", "fixture\n", str_repeat('x', 4097)] as $invalid) {
+            self::assertFalse(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'access', 'nick'], UdbValue::string($invalid)));
+        }
+        foreach (["\x01\xff\x80", '*level'] as $bytes) {
+            self::assertTrue(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'access', 'nick'], UdbValue::string($bytes)));
+        }
     }
 
     #[Test]
@@ -183,10 +241,10 @@ final class UdbSchemaTest extends TestCase
         self::assertTrue(UdbSchema::validate(UdbBlock::Nicks, ['david', 'modes'], '+' . implode('', UdbSchema::USER_MODES)));
         self::assertFalse(UdbSchema::validate(UdbBlock::Nicks, ['david', 'modes'], '+X'));
 
-        foreach (['q', 'a', 'o', 'h', 'v', 'k', 'l', 'f', 'L', 'F', 'H', 'b', 'e', 'I'] as $mode) {
+        foreach (['k', 'l', 'f', 'L', 'F', 'H', 'b', 'e', 'I'] as $mode) {
             self::assertTrue(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'modes'], '+' . $mode . ' value'), $mode);
         }
-        foreach (['i', 's', 'p', 'm', 'n', 't', 'c', 'C', 'D', 'G', 'K', 'M', 'N', 'O', 'Q', 'R', 'S', 'T', 'V', 'z', 'Z', 'r', 'P'] as $mode) {
+        foreach (['i', 's', 'p', 'm', 'n', 't', 'c', 'C', 'D', 'G', 'K', 'M', 'N', 'Q', 'R', 'S', 'T', 'V', 'z', 'Z'] as $mode) {
             self::assertTrue(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'modes'], '+' . $mode), $mode);
         }
         self::assertFalse(UdbSchema::validate(UdbBlock::Channels, ['#chan', 'modes'], '+x'));
@@ -253,7 +311,7 @@ final class UdbSchemaTest extends TestCase
         yield 'modes limit add' => [[$chan, 'modes'], '+l 50', true];
         yield 'modes limit del' => [[$chan, 'modes'], '-l', true];
         yield 'modes ban add' => [[$chan, 'modes'], '+b *!bad@host', true];
-        yield 'modes member add' => [[$chan, 'modes'], '+q david', true];
+        yield 'modes member add forbidden' => [[$chan, 'modes'], '+q david', false];
         yield 'modes extra param rejected' => [[$chan, 'modes'], '+nt 5', false];
         yield 'modes missing param rejected' => [[$chan, 'modes'], '+k', false];
         yield 'modes empty param rejected' => [[$chan, 'modes'], '+k ', false];
@@ -490,9 +548,14 @@ final class UdbSchemaTest extends TestCase
         yield 'match regex' => [$b64, 'match-type', 'regex', true];
         yield 'match simple' => [$b64, 'match-type', 'simple', true];
         yield 'match case sensitive' => [$b64, 'match-type', 'Regex', false];
-        yield 'targets canonical and ASCII ascending' => [$b64, 'targets', 'cp', true];
-        yield 'targets native order but ASCII descending' => [$b64, 'targets', 'pn', false];
-        yield 'targets previously accepted mixed case' => [$b64, 'targets', 'cpNqR', false];
+        yield 'targets canonical' => [$b64, 'targets', 'cp', true];
+        yield 'targets native order' => [$b64, 'targets', 'pn', true];
+        yield 'targets native order mixed case' => [$b64, 'targets', 'cpNqR', true];
+        yield 'targets full native table' => [$b64, 'targets', 'cpnNPqduatTR', true];
+        yield 'targets mixed case pair' => [$b64, 'targets', 'pN', true];
+        yield 'targets native middle' => [$b64, 'targets', 'qdu', true];
+        yield 'targets reverse pair' => [$b64, 'targets', 'np', false];
+        yield 'targets unknown' => [$b64, 'targets', 'cx', false];
         yield 'targets empty' => [$b64, 'targets', '', false];
         yield 'targets out of order' => [$b64, 'targets', 'pc', false];
         yield 'targets duplicate' => [$b64, 'targets', 'cc', false];
@@ -584,6 +647,15 @@ final class UdbSchemaTest extends TestCase
         yield 'nick root' => ['N', ['nick'], false];
         yield 'channel pass removed' => ['C', ['#chan', 'pass'], false];
         yield 'channel challenge removed' => ['C', ['#chan', 'challenge'], false];
+        yield 'channel modes' => ['C', ['#chan', 'modes'], true];
+        yield 'channel mixed-case modes' => ['C', ['#chan', 'MoDeS'], true];
+        yield 'channel modes root is not secret' => ['C', ['modes'], false];
+        yield 'channel modes child is not secret' => ['C', ['#chan', 'modes', 'nick'], false];
+        yield 'channel other child named modes is not secret' => ['C', ['#chan', 'access', 'modes'], false];
+        yield 'channel modes suffix is not secret' => ['C', ['#chan', 'modes_extra'], false];
+        yield 'channel topic is not secret' => ['C', ['#chan', 'topic'], false];
+        yield 'nick modes is not secret' => ['N', ['nick', 'modes'], false];
+        yield 'empty channel path is not secret' => ['C', [], false];
         yield 'channel founder' => ['C', ['#chan', 'founder'], false];
         yield 'encryption key' => ['S', ['encryption_key'], true];
         yield 'nickserv mask' => ['S', ['nickserv'], false];
@@ -606,13 +678,16 @@ final class UdbSchemaTest extends TestCase
         self::assertNull(UdbSchema::expectedValueKind(UdbBlock::Channels, ['#chan', 'access', 'nick', 'extra']));
         self::assertNull(UdbSchema::expectedValueKind(UdbBlock::Lines, ['G']));
         foreach ([['G', '*@host'], ['S', '*@host'], ['Z', '192.0.2.1'], ['Q', 'badnick'], ['F', 'b64:YQ==']] as $parts) {
-            self::assertTrue(UdbSchema::validateTyped(UdbBlock::Lines, $parts, UdbValue::none()));
+            self::assertFalse(UdbSchema::validateTyped(UdbBlock::Lines, $parts, UdbValue::none()));
         }
         self::assertFalse(UdbSchema::validateTyped(UdbBlock::Lines, ['?', '*@host'], UdbValue::none()));
         self::assertFalse(UdbSchema::validateTyped(UdbBlock::Lines, ['g', '*@host'], UdbValue::none()));
         self::assertTrue(UdbSchema::validateTyped(UdbBlock::Links, ['server.test'], UdbValue::none()));
         self::assertTrue(UdbSchema::validateTyped(UdbBlock::Ips, ['192.0.2.1'], UdbValue::none()));
         self::assertTrue(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'access'], UdbValue::none()));
+        self::assertTrue(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan'], UdbValue::none()));
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'topic'], UdbValue::none()));
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Settings, ['nickserv'], UdbValue::none()));
         self::assertTrue(UdbSchema::validateAggregateTyped(UdbBlock::Nicks, ['nick' => UdbValue::none()]));
         self::assertFalse(UdbSchema::validateAggregateTyped(UdbBlock::Nicks, ['nick::pass' => UdbValue::none()]));
     }

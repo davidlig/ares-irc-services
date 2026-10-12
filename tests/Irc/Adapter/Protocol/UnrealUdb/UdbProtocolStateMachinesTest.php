@@ -102,6 +102,37 @@ final class UdbProtocolStateMachinesTest extends TestCase
     }
 
     #[Test]
+    public function malformedConstructedAdvertisementsDoNotMutatePeerStateEvenDuringBootstrap(): void
+    {
+        foreach ([false, true] as $bootstrap) {
+            $peer = new UdbPeerSession();
+            $peer->setOwnName('services.example.net');
+            $peer->captureRemote('001', 'ircd.example.net');
+            $peer->observeAdvertisement($this->hel(), $bootstrap);
+            foreach (['', 'no-dot', 'bad/name', 'bad@name.example', str_repeat('a', 62) . '.x', "bad\xff.example", 'bad name.example'] as $selector) {
+                $frame = new UdbFrame(UdbFrameKind::HelAck, '001', '002', propagator: $selector, epoch: '2222222222222222', capabilities: ['OCL']);
+                self::assertSame(UdbPeerAdvertisementChange::Invalid, $peer->observeAdvertisement($frame, $bootstrap));
+                self::assertSame('1111111111111111', $peer->remoteEpoch());
+                self::assertTrue($peer->isAuthorized());
+            }
+        }
+    }
+
+    #[Test]
+    public function peerSelectionDistinguishesApprovedDownstreamFromAuthorizedUpstreamBootstrap(): void
+    {
+        $peer = new UdbPeerSession();
+        $peer->setOwnName('services.example.net');
+        foreach (['?' => true, 'SERVICES.EXAMPLE.NET' => true, '-' => false, 'other.example.net' => false] as $selector => $authorized) {
+            $frame = new UdbFrame(UdbFrameKind::Hel, '001', '002', propagator: $selector, epoch: '1111111111111111', capabilities: ['OCL']);
+            self::assertSame(UdbPeerAdvertisementChange::SameInstance, $peer->observeAdvertisement($frame, false));
+            self::assertSame($authorized, $peer->isAuthorized());
+            self::assertSame(UdbPeerAdvertisementChange::SameInstance, $peer->observeAdvertisement($frame, true));
+            self::assertTrue($peer->isAuthorized());
+        }
+    }
+
+    #[Test]
     public function reconciliationTracksOnlyCorrelatedProgressAndHasAnAbsoluteDeadline(): void
     {
         $round = new UdbReconciliationRound(inactivityTimeout: 10, absoluteTimeout: 30);
