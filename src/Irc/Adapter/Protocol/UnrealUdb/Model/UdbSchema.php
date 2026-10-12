@@ -322,8 +322,7 @@ final class UdbSchema
                 || (2 === $depth && self::channelName($components[0]) && 'access' === strtolower($components[1])),
             UdbBlock::Ips => 1 === $depth && self::ipHostMask($components[0]),
             UdbBlock::Links => 1 === $depth && self::serverName($components[0]),
-            UdbBlock::Lines => false,
-            UdbBlock::Settings => false,
+            default => false,
         };
     }
 

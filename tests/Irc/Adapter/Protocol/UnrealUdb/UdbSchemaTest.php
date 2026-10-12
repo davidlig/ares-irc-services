@@ -685,6 +685,9 @@ final class UdbSchemaTest extends TestCase
         self::assertTrue(UdbSchema::validateTyped(UdbBlock::Links, ['server.test'], UdbValue::none()));
         self::assertTrue(UdbSchema::validateTyped(UdbBlock::Ips, ['192.0.2.1'], UdbValue::none()));
         self::assertTrue(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'access'], UdbValue::none()));
+        self::assertTrue(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan'], UdbValue::none()));
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Channels, ['#chan', 'topic'], UdbValue::none()));
+        self::assertFalse(UdbSchema::validateTyped(UdbBlock::Settings, ['nickserv'], UdbValue::none()));
         self::assertTrue(UdbSchema::validateAggregateTyped(UdbBlock::Nicks, ['nick' => UdbValue::none()]));
         self::assertFalse(UdbSchema::validateAggregateTyped(UdbBlock::Nicks, ['nick::pass' => UdbValue::none()]));
     }
