@@ -28,6 +28,7 @@ use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -71,6 +72,12 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         });
 
         return $connection;
+    }
+
+    /** @return list<string> Latest transport writes after callback-driven dispatch. */
+    private function writtenLines(): array
+    {
+        return $this->written;
     }
 
     private function createHandler(string $sid = '002', ?EventDispatcherInterface $eventDispatcher = null): UnrealUdbProtocolHandler
@@ -449,6 +456,56 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         self::assertNotFalse($requestPosition);
         self::assertNotFalse($ackPosition);
         self::assertLessThan($ackPosition, $requestPosition);
+    }
+
+    #[Test]
+    public function malformedOrForeignHelloLinesProduceNoHandlerSideEffects(): void
+    {
+        $handler = $this->createHandler();
+        $connection = $this->createConnection();
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming($handler->parseRawLine('PROTOCTL SID=001'), $connection);
+        $handler->handleIncoming($handler->parseRawLine('SERVER ircd.example.net 1 :IRCd'), $connection);
+        $this->written = [];
+        foreach ([
+            ':001 DB 002 HEL 4 invalid 0123456789abcdef OCL OCLG',
+            ':001 DB 002 HEL 4 ACK bad/name 0123456789abcdef OCL OCLG',
+            ':999 DB 002 HEL 4 ACK ? 0123456789abcdef OCL OCLG',
+            ':001 DB 999 HEL 4 ACK ? 0123456789abcdef OCL OCLG',
+        ] as $line) {
+            $handler->handleIncoming($handler->parseRawLine($line), $connection);
+        }
+        self::assertSame([], $this->writtenLines());
+    }
+
+    /** @return iterable<string, array{string, int}> */
+    public static function downstreamSelectors(): iterable
+    {
+        yield 'question mark' => ['?', 6];
+        yield 'case-insensitive own name' => ['SERVICES.TEST.LOCAL', 6];
+        yield 'unselected' => ['-', 0];
+        yield 'unrelated server' => ['other.example.net', 0];
+    }
+
+    #[Test]
+    #[DataProvider('downstreamSelectors')]
+    public function realHelloDispatchOffersInventoryOnlyForAuthorizedConfirmedPeer(string $selector, int $inventoryCount): void
+    {
+        $states = new FakeBlockStates();
+        foreach (UdbBlock::all() as $block) {
+            $states->upsert($block->letter(), UdbChecksum::empty($block), 0);
+        }
+        $coordinator = new UdbSessionCoordinator('002', $states, new FakeUdbSnapshots(), scheduler: new DeterministicLoopScheduler(), clock: new MutableUdbClock());
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $connection = $this->createConnection();
+        $handler->performHandshake($connection, $this->createServerLink());
+        $handler->handleIncoming($handler->parseRawLine('PROTOCTL SID=001'), $connection);
+        $handler->handleIncoming($handler->parseRawLine('SERVER ircd.example.net 1 :IRCd'), $connection);
+        $this->written = [];
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 ' . $selector . ' 0123456789abcdef OCL OCLG'), $connection);
+        self::assertCount(0, array_filter($this->writtenLines(), static fn (string $line): bool => str_contains($line, ' INF ')));
+        $handler->handleIncoming($handler->parseRawLine(':001 DB 002 HEL 4 ACK ' . $selector . ' 0123456789abcdef OCL OCLG'), $connection);
+        self::assertCount($inventoryCount, array_filter($this->writtenLines(), static fn (string $line): bool => str_contains($line, ' INF ')));
     }
 
     #[Test]

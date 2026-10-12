@@ -239,15 +239,80 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
-    public function questionMarkPropagatorDoesNotAuthorizeUs(): void
+    public function questionMarkPropagatorOffersSixBlocksOnlyAfterDirectHelloConfirmation(): void
     {
         $this->seedStore();
         $this->prepareLink();
 
+        $this->written = [];
+        $this->handle($this->peerHel('?', sourceSid: '999'));
+        $this->handle($this->peerHel('?', target: '999'));
+        self::assertSame([], $this->written);
         $this->handle($this->peerHel('?'));
+        self::assertSame([$this->helAck()], $this->written);
+        self::assertNull($this->coordinator->activeRoundId());
+        $this->written = [];
+        $this->handle($this->peerHelAck('?', sourceSid: '999'));
+        $this->handle($this->peerHelAck('?', target: '999'));
+        self::assertSame([], $this->written);
         $this->handle($this->peerHelAck('?'));
-
+        self::assertCount(6, array_filter($this->written, static fn (string $line): bool => str_contains($line, ' INF ')));
+        self::assertNotNull($this->coordinator->activeRoundId());
         self::assertFalse($this->coordinator->isAuthorityReady());
+        $this->handle($this->peerHelAck('?'));
+        self::assertTrue($this->coordinator->isAuthorityReady());
+    }
+
+    #[Test]
+    public function invalidConstructedSelectorsPreserveConfirmedEpochAndAuthorization(): void
+    {
+        $peer = new UdbPeerSession();
+        $barrier = new UdbHelloBarrier();
+        $this->coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, scheduler: $this->scheduler, clock: $this->clock, peer: $peer, helloBarrier: $barrier);
+        $this->makeReady();
+        self::assertTrue($barrier->isConfirmed());
+        $this->written = [];
+        foreach ([$this->peerHel('invalid', epoch: '2222222222222222'), $this->peerHelAck('bad/name', epoch: '2222222222222222')] as $invalid) {
+            $this->handle($invalid);
+            self::assertSame(self::PEER_EPOCH, $peer->remoteEpoch());
+            self::assertTrue($peer->isAuthorized());
+            self::assertTrue($barrier->isConfirmed());
+            self::assertTrue($this->coordinator->isAuthorityReady());
+            self::assertSame([], $this->written);
+        }
+    }
+
+    #[Test]
+    public function bootstrapRejectsMalformedSelectorBeforeConfirmationOrInventoryAdmission(): void
+    {
+        $takeover = $this->createWireTakeover();
+        $coordinator = $this->bootstrapCoordinator($takeover);
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $connection = $this->captureConnection($coordinator);
+        $coordinator->onLinkReady($connection);
+        $this->written = [];
+        $coordinator->handleFrame($this->peerHelAck('bad/name'), $connection);
+        $coordinator->handleFrame($this->inventoryFrame(UdbBlock::Ips, hash('sha256', 'synthetic snapshot'), 1, 1), $connection);
+        self::assertSame([], $this->written);
+        self::assertNull($takeover->roundId());
+        self::assertFalse($coordinator->isAuthorityReady());
+    }
+
+    #[Test]
+    public function authorizedUpstreamBootstrapKeepsValidNonselectingAdvertisements(): void
+    {
+        $takeover = $this->createWireTakeover();
+        $coordinator = $this->bootstrapCoordinator($takeover);
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $connection = $this->captureConnection($coordinator);
+        $coordinator->onLinkReady($connection);
+        $coordinator->handleFrame($this->peerHelAck('-'), $connection);
+        $this->written = [];
+        $coordinator->handleFrame($this->inventoryFrame(UdbBlock::Ips, hash('sha256', 'synthetic snapshot'), 1, 1), $connection);
+        self::assertSame([':002 DB 001 RES 1 I'], $this->written);
+        self::assertNotNull($takeover->roundId());
     }
 
     #[Test]
