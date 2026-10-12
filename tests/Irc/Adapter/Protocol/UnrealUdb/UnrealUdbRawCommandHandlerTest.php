@@ -9,8 +9,10 @@ use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRawCommandHandler;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbRawCommandResult;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 #[CoversClass(UnrealUdbRawCommandHandler::class)]
 #[CoversClass(UdbRawCommandResult::class)]
@@ -128,6 +130,90 @@ final class UnrealUdbRawCommandHandlerTest extends TestCase
         self::assertTrue($result->success);
         self::assertSame('DB * INS N::davidlig::pass <redacted>', $result->auditLine);
         self::assertSame(['sha256:' . str_repeat('a', 64)], [$this->records->blocks['N']['davidlig::pass']]);
+    }
+
+    #[Test]
+    #[DataProvider('channelModesProvider')]
+    public function insRedactsChannelModesInLogsAndAuditButPreservesMutation(string $key, string $value): void
+    {
+        $path = 'C::#chan::' . $key;
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info')->with('UDB RAW INS applied by operator.', [
+            'path' => $path,
+            'value' => '<redacted>',
+        ]);
+        $handler = new UnrealUdbRawCommandHandler(new UnrealUdbRecordWriter($this->sessionState, $this->records), $logger);
+
+        $result = $handler->ins($path, $value);
+
+        self::assertTrue($result->success);
+        self::assertSame('DB * INS ' . $path . ' <redacted>', $result->auditLine);
+        self::assertSame($value, $this->records->blocks['C']['#chan::' . $key]);
+        self::assertCount(1, $this->sessionState->queue);
+        self::assertSame($value, $this->sessionState->queue[0]->value?->value);
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function channelModesProvider(): iterable
+    {
+        foreach (['modes', 'MoDeS'] as $key) {
+            yield $key . ' with channel key' => [$key, '+ntk synthetic-channel-key'];
+            yield $key . ' without channel key' => [$key, '+nt'];
+        }
+    }
+
+    #[Test]
+    public function insRedactsRejectedChannelModesValues(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('info');
+        $handler = new UnrealUdbRawCommandHandler(new UnrealUdbRecordWriter($this->sessionState, $this->records), $logger);
+
+        foreach (['modes', 'MoDeS'] as $key) {
+            foreach (['', '+nt synthetic-extra-parameter', "+k synthetic-channel-key\n"] as $value) {
+                $path = 'C::#chan::' . $key;
+                $result = $handler->ins($path, $value);
+
+                self::assertFalse($result->success);
+                self::assertSame('raw.udb.invalid_value', $result->errorKey);
+                self::assertSame(['%path%' => $path . ' <redacted>'], $result->errorParams);
+                self::assertNull($result->auditLine);
+            }
+        }
+        self::assertSame([], $this->records->blocks);
+        self::assertSame([], $this->sessionState->queue);
+    }
+
+    #[Test]
+    public function storeFailuresRedactChannelModesForInsertAndDelete(): void
+    {
+        $this->records->fail = true;
+        foreach (['modes', 'MoDeS'] as $key) {
+            $path = 'C::#chan::' . $key;
+            foreach ([$this->handler->ins($path, '+k synthetic-channel-key'), $this->handler->del($path)] as $result) {
+                self::assertFalse($result->success);
+                self::assertSame('raw.udb.error', $result->errorKey);
+                self::assertSame(['%path%' => $path . ' <redacted>'], $result->errorParams);
+                self::assertNull($result->auditLine);
+            }
+        }
+        self::assertSame([], $this->sessionState->queue);
+    }
+
+    #[Test]
+    public function insKeepsNonSecretTopicVisibleInLogsAndAudit(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info')->with('UDB RAW INS applied by operator.', [
+            'path' => 'C::#chan::topic',
+            'value' => 'Visible topic',
+        ]);
+        $handler = new UnrealUdbRawCommandHandler(new UnrealUdbRecordWriter($this->sessionState, $this->records), $logger);
+
+        $result = $handler->ins('C::#chan::topic', 'Visible topic');
+
+        self::assertTrue($result->success);
+        self::assertSame('DB * INS C::#chan::topic Visible topic', $result->auditLine);
     }
 
     #[Test]

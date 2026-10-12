@@ -426,7 +426,7 @@ final class UdbSchema
 
         return match ($block) {
             UdbBlock::Nicks => 2 === count($components) && 'pass' === $key,
-            UdbBlock::Channels => false,
+            UdbBlock::Channels => 2 === count($components) && 'modes' === $key,
             UdbBlock::Settings => 1 === count($components) && 'encryption_key' === $key,
             default => false,
         };

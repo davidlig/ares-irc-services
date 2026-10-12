@@ -584,6 +584,15 @@ final class UdbSchemaTest extends TestCase
         yield 'nick root' => ['N', ['nick'], false];
         yield 'channel pass removed' => ['C', ['#chan', 'pass'], false];
         yield 'channel challenge removed' => ['C', ['#chan', 'challenge'], false];
+        yield 'channel modes' => ['C', ['#chan', 'modes'], true];
+        yield 'channel mixed-case modes' => ['C', ['#chan', 'MoDeS'], true];
+        yield 'channel modes root is not secret' => ['C', ['modes'], false];
+        yield 'channel modes child is not secret' => ['C', ['#chan', 'modes', 'nick'], false];
+        yield 'channel other child named modes is not secret' => ['C', ['#chan', 'access', 'modes'], false];
+        yield 'channel modes suffix is not secret' => ['C', ['#chan', 'modes_extra'], false];
+        yield 'channel topic is not secret' => ['C', ['#chan', 'topic'], false];
+        yield 'nick modes is not secret' => ['N', ['nick', 'modes'], false];
+        yield 'empty channel path is not secret' => ['C', [], false];
         yield 'channel founder' => ['C', ['#chan', 'founder'], false];
         yield 'encryption key' => ['S', ['encryption_key'], true];
         yield 'nickserv mask' => ['S', ['nickserv'], false];

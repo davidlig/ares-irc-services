@@ -17,8 +17,9 @@ use function substr;
  *
  * The wire grammar and its validation live only in UdbWireCodec: a line is
  * parsed with the same codec used on the wire, and the parsed record identity
- * decides whether the value is secret. UdbSchema marks N::<nick>::pass and
- * S::encryption_key as secret, so those values are replaced by the redaction
+ * decides whether the value is secret. UdbSchema marks N::<nick>::pass,
+ * C::<channel>::modes and S::encryption_key as secret, replacing whole values
+ * (including channel modes without a key) with the redaction
  * marker. Frames without a record value (HEL, INF, RES, BEGIN/END/ACK, ERR,
  * DEL, DRP, EXP, MANIFEST, OCLG) stay fully visible.
  *
