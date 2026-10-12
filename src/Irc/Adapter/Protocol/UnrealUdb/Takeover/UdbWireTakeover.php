@@ -24,6 +24,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbPathCodec;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbValueEncoder;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
@@ -47,6 +48,7 @@ use function in_array;
 use function is_bool;
 use function is_int;
 use function is_string;
+use function preg_match;
 use function random_bytes;
 use function str_starts_with;
 use function strlen;
@@ -61,6 +63,11 @@ final class UdbWireTakeover
     private const int MAX_STAGE_RECORDS = 500000;
 
     private const int MAX_STAGE_BYTES = 67108864;
+
+    private const int MAX_PROVISIONAL_RECORDS = 4096;
+
+    /** Canonical wire bytes including CRLF, not PHP/native allocator accounting. */
+    private const int MAX_PROVISIONAL_BYTES = 8388608;
 
     private const int INACTIVITY_TIMEOUT = 60;
 
@@ -105,6 +112,15 @@ final class UdbWireTakeover
     private ?int $roundInactivityDeadline = null;
 
     private ?int $roundAbsoluteDeadline = null;
+
+    /** @var array<string, array{frame: UdbFrame, block: UdbBlock, path: string, value: ?UdbValue, wire: string}> */
+    private array $provisional = [];
+
+    private ?UdbStreamOrigin $provisionalOrigin = null;
+
+    private ?UdbUnsignedDecimal $provisionalSequence = null;
+
+    private int $provisionalBytes = 0;
 
     public function __construct(
         private readonly UdbRecordRepositoryInterface $records,
@@ -155,6 +171,7 @@ final class UdbWireTakeover
         $this->inventory = [];
         $this->roundInactivityDeadline = null;
         $this->roundAbsoluteDeadline = null;
+        $this->clearProvisional();
     }
 
     public function expire(): bool
@@ -213,34 +230,35 @@ final class UdbWireTakeover
         };
     }
 
-    /** Stores an authorized post-inventory mutation without touching live service state. */
+    /** Retains validated pre-INF traffic provisionally, then stages the bound tail durably. */
     public function acceptMutation(UdbFrame $frame): UdbWireTakeoverOutcome
     {
-        if (null === $this->generationId || null === $this->rootSid || null === $this->rootEpoch
-            || null === $this->tailWatermark || null === $frame->sequence || $this->tailReplayComplete
-            || $frame->sourceSid !== $this->rootSid || $frame->epoch !== $this->rootEpoch
-        ) {
-            return UdbWireTakeoverOutcome::error($frame->block ?? UdbBlock::Nicks, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
+        $mutation = $this->validatedMutation($frame);
+        if (null === $mutation) {
+            $errorBlock = $frame->block ?? UdbBlock::fromLetter(strtoupper($frame->path[0] ?? '')) ?? UdbBlock::Nicks;
+
+            return UdbWireTakeoverOutcome::error($errorBlock, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 2);
+        }
+        $block = $mutation['block'];
+        if ($this->expire()) {
+            return UdbWireTakeoverOutcome::error($block, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
+        }
+        if (null === $this->generationId) {
+            return $this->retainProvisional($mutation);
+        }
+        if ($frame->sourceSid !== $this->rootSid || $frame->epoch !== $this->rootEpoch || null === $this->tailWatermark) {
+            return UdbWireTakeoverOutcome::error($block, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
+        }
+        if (null !== $this->roundWatermark && null !== $frame->sequence && $frame->sequence->compare($this->roundWatermark) <= 0) {
+            return UdbWireTakeoverOutcome::ignored();
         }
 
-        $block = $frame->block;
-        $path = $frame->path ?? '';
-        $value = $frame->typedValue;
-        if (in_array($frame->kind, [UdbFrameKind::Ins, UdbFrameKind::Del], true)) {
-            $separator = strpos($path, '::');
-            if (false === $separator) {
-                return UdbWireTakeoverOutcome::error(UdbBlock::Nicks, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 2);
-            }
-            $block = UdbBlock::fromLetter(strtoupper(substr($path, 0, $separator)));
-            $path = substr($path, $separator + 2);
-        }
-        if (null === $block || !in_array($frame->kind, [UdbFrameKind::Ins, UdbFrameKind::Del, UdbFrameKind::Drp], true)
-            || (UdbFrameKind::Ins === $frame->kind && (null === $value || !$this->validTypedPath($block, $path, $value)))
-            || (UdbFrameKind::Del === $frame->kind && '' === $path)
-        ) {
-            return UdbWireTakeoverOutcome::error($block ?? UdbBlock::Nicks, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 2);
+        if ($this->tailReplayComplete) {
+            return UdbWireTakeoverOutcome::error($block, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
         }
 
+        $path = $mutation['path'];
+        $value = $mutation['value'];
         $connection = $this->em->getConnection();
         $prior = $connection->fetchAssociative('SELECT block, operation, path, value, value_kind FROM udb_staged_mutations WHERE generation_id = ? AND sequence = ?', [$this->generationId, (string) $frame->sequence]);
         if (false !== $prior) {
@@ -254,7 +272,7 @@ final class UdbWireTakeover
         }
 
         $expected = $this->tailWatermark->increment();
-        if (null === $expected || !$expected->equals($frame->sequence)) {
+        if (null === $expected || null === $frame->sequence || !$expected->equals($frame->sequence)) {
             return UdbWireTakeoverOutcome::error($block, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
         }
         $count = self::sqlInt($connection->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations WHERE generation_id = ?', [$this->generationId]));
@@ -262,18 +280,106 @@ final class UdbWireTakeover
         if ($count >= self::MAX_STAGE_RECORDS || $bytes + strlen($path) + strlen($value?->logicalValue() ?? '') > self::MAX_STAGE_BYTES) {
             return UdbWireTakeoverOutcome::error($block, $this->roundId ?? UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 2);
         }
-        $this->stageInsert('udb_staged_mutations', [
-            'generation_id' => $this->generationId,
-            'sequence' => (string) $frame->sequence,
-            'block' => $block->letter(),
-            'operation' => $frame->kind->value,
-            'path' => $path,
-            'value' => null !== $value ? $value->logicalValue() : null,
-            'value_kind' => null !== $value ? $value->kind->value : null,
-        ]);
+        $this->insertMutation($this->generationId, $mutation);
         $this->tailWatermark = $frame->sequence;
+        $this->touchRound();
 
         return UdbWireTakeoverOutcome::ignored();
+    }
+
+    /** @return array{frame: UdbFrame, block: UdbBlock, path: string, value: ?UdbValue, wire: string}|null */
+    private function validatedMutation(UdbFrame $frame): ?array
+    {
+        if (null === $frame->sequence || $frame->sequence->isZero() || '*' !== $frame->target
+            || 1 !== preg_match('/^[0-9A-Z]{3}\z/', $frame->sourceSid)
+            || null === $frame->epoch || 1 !== preg_match('/^[0-9a-f]{16}\z/', $frame->epoch)
+            || !in_array($frame->kind, [UdbFrameKind::Ins, UdbFrameKind::Del, UdbFrameKind::Drp], true)
+        ) {
+            return null;
+        }
+        $block = $frame->block;
+        $path = $frame->path ?? '';
+        $value = $frame->typedValue;
+        if (UdbFrameKind::Drp !== $frame->kind) {
+            if (1 !== strpos($path, '::')) {
+                return null;
+            }
+            $block = UdbBlock::fromLetter(strtoupper($path[0]));
+            $path = substr($path, 3);
+        }
+        if (null === $block
+            || (UdbFrameKind::Ins === $frame->kind && (null === $value || !$this->validTypedPath($block, $path, $value)))
+            || (UdbFrameKind::Del === $frame->kind && !UdbPathCodec::fitsLimits($path, null))
+            || (UdbFrameKind::Ins !== $frame->kind && (null !== $value || null !== $frame->value))
+            || (UdbFrameKind::Drp === $frame->kind && '' !== $path)
+        ) {
+            return null;
+        }
+        // Typed schema and path limits proved these canonical frames fit the IRC line budget.
+        $wire = match ($frame->kind) {
+            UdbFrameKind::Ins => UdbWireCodec::ins($frame->sourceSid, $frame->epoch, $frame->sequence, $block->letter(), $path, $value),
+            UdbFrameKind::Del => UdbWireCodec::del($frame->sourceSid, $frame->epoch, $frame->sequence, $block->letter(), $path),
+            default => UdbWireCodec::drp($frame->sourceSid, $frame->epoch, $frame->sequence, $block),
+        };
+
+        return ['frame' => $frame, 'block' => $block, 'path' => $path, 'value' => $value, 'wire' => $wire];
+    }
+
+    /** @param array{frame: UdbFrame, block: UdbBlock, path: string, value: ?UdbValue, wire: string} $mutation */
+    private function retainProvisional(array $mutation): UdbWireTakeoverOutcome
+    {
+        $frame = $mutation['frame'];
+        $block = $mutation['block'];
+        if (null !== $this->provisionalOrigin && ($frame->sourceSid !== $this->provisionalOrigin->sid || $frame->epoch !== $this->provisionalOrigin->epoch)) {
+            return UdbWireTakeoverOutcome::error($block, UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
+        }
+        // The origin prefix prevents PHP from interpreting a uint64 sequence as an integer key.
+        $key = $frame->sourceSid . ':' . $frame->epoch . ':' . $frame->sequence;
+        if (isset($this->provisional[$key])) {
+            return $this->provisional[$key]['wire'] === $mutation['wire']
+                ? UdbWireTakeoverOutcome::ignored()
+                : UdbWireTakeoverOutcome::error($block, UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
+        }
+        if (null !== $this->provisionalSequence && (null === $frame->sequence || !$this->provisionalSequence->increment()?->equals($frame->sequence))) {
+            return UdbWireTakeoverOutcome::error($block, UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 5);
+        }
+        $bytes = strlen($mutation['wire']) + 2;
+        if (count($this->provisional) >= self::MAX_PROVISIONAL_RECORDS || $this->provisionalBytes + $bytes > self::MAX_PROVISIONAL_BYTES) {
+            return UdbWireTakeoverOutcome::error($block, UdbUnsignedDecimal::fromInt(1), $frame->kind->value, 2);
+        }
+        $this->provisional[$key] = $mutation;
+        $this->provisionalOrigin ??= new UdbStreamOrigin($frame->sourceSid, $frame->epoch ?? '');
+        $this->provisionalSequence = $frame->sequence;
+        $this->provisionalBytes += $bytes;
+        $now = $this->clock->now();
+        $this->roundAbsoluteDeadline ??= $now + self::ABSOLUTE_TIMEOUT;
+        $this->roundInactivityDeadline = $now + self::INACTIVITY_TIMEOUT;
+
+        return UdbWireTakeoverOutcome::ignored();
+    }
+
+    private function clearProvisional(): void
+    {
+        $this->provisional = [];
+        $this->provisionalOrigin = null;
+        $this->provisionalSequence = null;
+        $this->provisionalBytes = 0;
+    }
+
+    /** @param array{frame: UdbFrame, block: UdbBlock, path: string, value: ?UdbValue, wire: string} $mutation */
+    private function insertMutation(string $generationId, array $mutation): void
+    {
+        $frame = $mutation['frame'];
+        $value = $mutation['value'];
+        $this->stageInsert('udb_staged_mutations', [
+            'generation_id' => $generationId,
+            'sequence' => (string) $frame->sequence,
+            'block' => $mutation['block']->letter(),
+            'operation' => $frame->kind->value,
+            'path' => $mutation['path'],
+            'value' => $value?->logicalValue(),
+            'value_kind' => $value?->kind->value,
+        ]);
     }
 
     public function finalize(): string
@@ -319,21 +425,48 @@ final class UdbWireTakeover
     private function inventory(UdbFrame $frame, UdbBlock $block): UdbWireTakeoverOutcome
     {
         assert(null !== $frame->roundId);
-        if (null === $frame->checksum || null === $frame->count || null === $frame->watermark || null === $frame->rootSid || null === $frame->rootEpoch) {
+        if (null === $frame->checksum || null === $frame->count || null === $frame->watermark || null === $frame->rootSid || null === $frame->rootEpoch
+            || 1 !== preg_match('/^[0-9A-Z]{3}\z/', $frame->rootSid) || 1 !== preg_match('/^[0-9a-f]{16}\z/', $frame->rootEpoch)
+        ) {
             return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 2);
         }
         if (null === $this->roundId) {
-            $now = $this->clock->now();
+            if ($this->expire()) {
+                return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 5);
+            }
+            foreach ($this->provisional as $mutation) {
+                if ($mutation['frame']->sourceSid !== $frame->rootSid || $mutation['frame']->epoch !== $frame->rootEpoch) {
+                    $this->reset();
+
+                    return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 5);
+                }
+            }
+            $survivors = [];
+            $tail = $frame->watermark;
+            foreach ($this->provisional as $mutation) {
+                $sequence = $mutation['frame']->sequence;
+                if (null !== $sequence && $sequence->compare($frame->watermark) <= 0) {
+                    continue;
+                }
+                if (null === $sequence || !$tail->increment()?->equals($sequence)) {
+                    $this->reset();
+
+                    return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 5);
+                }
+                $survivors[] = $mutation;
+                $tail = $sequence;
+            }
+            $generationId = bin2hex(random_bytes(16));
+            $this->createGeneration($frame, $generationId, $survivors);
+            // Adopt the agreed snapshot and tail only after the complete SQL transaction commits.
             $this->roundId = $frame->roundId;
-            $this->roundInactivityDeadline = $now + self::INACTIVITY_TIMEOUT;
-            $this->roundAbsoluteDeadline = $now + self::ABSOLUTE_TIMEOUT;
+            $this->roundAbsoluteDeadline ??= $this->clock->now() + self::ABSOLUTE_TIMEOUT;
             $this->roundWatermark = $frame->watermark;
-            $this->tailWatermark = $frame->watermark;
+            $this->tailWatermark = $tail;
             $this->rootSid = $frame->rootSid;
             $this->rootEpoch = $frame->rootEpoch;
-            $this->generationId = bin2hex(random_bytes(16));
-            $this->clearStagedGenerations();
-            $this->createGeneration($frame);
+            $this->generationId = $generationId;
+            $this->clearProvisional();
         } elseif (!$this->roundId->equals($frame->roundId)) {
             return UdbWireTakeoverOutcome::error($block, $frame->roundId, 'INF', 5);
         } elseif (null === $this->roundWatermark || !$this->roundWatermark->equals($frame->watermark) || $this->rootSid !== $frame->rootSid || $this->rootEpoch !== $frame->rootEpoch) {
@@ -677,20 +810,25 @@ final class UdbWireTakeover
         }
     }
 
-    private function createGeneration(UdbFrame $frame): void
+    /** @param list<array{frame: UdbFrame, block: UdbBlock, path: string, value: ?UdbValue, wire: string}> $survivors */
+    private function createGeneration(UdbFrame $frame, string $generationId, array $survivors): void
     {
         $connection = $this->em->getConnection();
         $connection->beginTransaction();
         try {
+            $this->clearStagedGenerations();
             $this->stageInsert('udb_staged_generations', [
-                'generation_id' => $this->generationId,
+                'generation_id' => $generationId,
                 'round_id' => (string) $frame->roundId,
-                'root_sid' => $this->rootSid,
-                'root_epoch' => $this->rootEpoch,
-                'watermark' => (string) $this->roundWatermark,
+                'root_sid' => $frame->rootSid,
+                'root_epoch' => $frame->rootEpoch,
+                'watermark' => (string) $frame->watermark,
                 'created_at' => $this->clock->now(),
                 'promoted' => false,
             ]);
+            foreach ($survivors as $mutation) {
+                $this->insertMutation($generationId, $mutation);
+            }
             $connection->commit();
         } catch (Throwable $exception) {
             if ($connection->isTransactionActive()) {

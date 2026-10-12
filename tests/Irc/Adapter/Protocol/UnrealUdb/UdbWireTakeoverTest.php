@@ -79,6 +79,390 @@ final class UdbWireTakeoverTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function provisionalInsertDeleteAndDropBindDurablyWithoutLiveVisibilityOrCredit(): void
+    {
+        $frames = [
+            $this->provisionalIns(41),
+            new UdbFrame(UdbFrameKind::Del, '001', '*', epoch: '1111111111111111', sequence: 42, path: 'I::192.0.2.2'),
+            new UdbFrame(UdbFrameKind::Drp, '001', '*', block: UdbBlock::Settings, epoch: '1111111111111111', sequence: 43),
+        ];
+        foreach ($frames as $frame) {
+            $this->assertIgnored($this->takeover->acceptMutation($frame));
+            $this->assertIgnored($this->takeover->acceptMutation($frame));
+        }
+        self::assertNull($this->takeover->roundId());
+        self::assertSame(0, $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_generations'));
+        self::assertSame(0, $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+        self::assertFalse($this->takeover->canPromote());
+        self::assertSame([], $this->records->recordsByBlock('I'));
+        $this->assertIgnored($this->bindProvisional(40));
+        $rows = $this->em->getConnection()->fetchAllAssociative('SELECT sequence, operation, path, value, value_kind FROM udb_staged_mutations ORDER BY id');
+        self::assertSame([
+            ['sequence' => '41', 'operation' => 'INS', 'path' => '192.0.2.1::clones', 'value' => '*1', 'value_kind' => 2],
+            ['sequence' => '42', 'operation' => 'DEL', 'path' => '192.0.2.2', 'value' => null, 'value_kind' => null],
+            ['sequence' => '43', 'operation' => 'DRP', 'path' => '', 'value' => null, 'value_kind' => null],
+        ], $rows);
+        foreach ($frames as $frame) {
+            $this->assertIgnored($this->takeover->acceptMutation($frame));
+        }
+        self::assertSame(3, $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+        self::assertSame([], $this->records->recordsByBlock('I'));
+        self::assertFalse($this->takeover->canPromote());
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(44)));
+        self::assertSame('40', $this->em->getConnection()->fetchOne('SELECT watermark FROM udb_staged_generations'));
+    }
+
+    #[Test]
+    public function bindingPrunesCoveredPrefixButPreservesOriginalSnapshotWatermark(): void
+    {
+        foreach ([40, 41, 42] as $sequence) {
+            $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns($sequence)));
+        }
+        $this->assertIgnored($this->bindProvisional(41));
+        self::assertSame(['42'], $this->em->getConnection()->fetchFirstColumn('SELECT sequence FROM udb_staged_mutations'));
+        $this->clock->advance(59);
+        $deadline = $this->takeover->nextDeadline();
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(40)));
+        self::assertSame($deadline, $this->takeover->nextDeadline());
+        self::assertSame(['42'], $this->em->getConnection()->fetchFirstColumn('SELECT sequence FROM udb_staged_mutations'));
+        $this->assertIgnored($this->bindProvisional(41, block: UdbBlock::Settings));
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(43)));
+        self::assertSame('41', $this->em->getConnection()->fetchOne('SELECT watermark FROM udb_staged_generations'));
+    }
+
+    #[Test]
+    public function coveredOnlyQueueAndLaterCoveredTrafficHaveNoDurableWritesOrDeadlineExtension(): void
+    {
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(10)));
+        $this->assertIgnored($this->bindProvisional(41));
+        $deadline = $this->takeover->nextDeadline();
+        $this->clock->advance(59);
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(41)));
+        self::assertSame($deadline, $this->takeover->nextDeadline());
+        self::assertSame(0, $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+        $this->clock->advance(1);
+        self::assertTrue($this->takeover->expire());
+        self::assertNull($this->takeover->nextDeadline());
+    }
+
+    #[Test]
+    public function relayedProvisionalRootBindsAndReplaysOnlyAfterAllSixSnapshots(): void
+    {
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(42, sid: '003')));
+        foreach (UdbBlock::all() as $block) {
+            $this->assertIgnored($this->bindProvisional(41, sid: '003', block: $block));
+        }
+        self::assertTrue($this->takeover->isComplete());
+        self::assertFalse($this->takeover->canPromote());
+        self::assertSame([], $this->records->recordsByBlock('I'));
+        $this->takeover->markTailReplayComplete();
+        self::assertTrue($this->takeover->canPromote());
+        $this->takeover->finalize();
+        self::assertSame(['192.0.2.1::clones' => '*1'], UdbTestValues::logicalMap($this->records->recordsByBlock('I')));
+        $checkpoint = $this->em->find(UdbAuthorityState::class, 1)?->getImportedCheckpoint();
+        self::assertNotNull($checkpoint);
+        self::assertSame('003', $checkpoint->origin->sid);
+        self::assertSame('42', (string) $checkpoint->watermark);
+    }
+
+    #[Test]
+    public function provisionalAndDurableDuplicatesCompareTypedKindAndBytesWithoutRefresh(): void
+    {
+        $string = new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', sequence: 1, path: 'C::#chan::access::nick', typedValue: UdbValue::string('*1'));
+        $number = new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', sequence: 1, path: 'C::#chan::access::nick', typedValue: UdbValue::number(UdbUnsignedDecimal::fromInt(1)));
+        $this->assertIgnored($this->takeover->acceptMutation($string));
+        $deadline = $this->takeover->nextDeadline();
+        $this->clock->advance(20);
+        $this->assertIgnored($this->takeover->acceptMutation($string));
+        $this->assertError($this->takeover->acceptMutation($number), UdbBlock::Channels, 1, 'INS', 5);
+        self::assertSame($deadline, $this->takeover->nextDeadline());
+        $this->assertIgnored($this->bindProvisional());
+        $deadline = $this->takeover->nextDeadline();
+        $this->clock->advance(20);
+        $this->assertIgnored($this->takeover->acceptMutation($string));
+        $this->assertError($this->takeover->acceptMutation($number), UdbBlock::Channels, 1, 'INS', 5);
+        $changed = new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', sequence: 1, path: 'C::#chan::access::nick', typedValue: UdbValue::string('*2'));
+        $this->assertError($this->takeover->acceptMutation($changed), UdbBlock::Channels, 1, 'INS', 5);
+        self::assertSame($deadline, $this->takeover->nextDeadline());
+        self::assertSame([['value' => '*1', 'value_kind' => 1]], $this->em->getConnection()->fetchAllAssociative('SELECT value, value_kind FROM udb_staged_mutations'));
+    }
+
+    #[Test]
+    public function foreignOriginsAndGapsFailBeforeCoveredPruningOrAdoption(): void
+    {
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(41)));
+        $deadline = $this->takeover->nextDeadline();
+        foreach ([$this->provisionalIns(42, sid: '003'), $this->provisionalIns(42, epoch: '2222222222222222'), $this->provisionalIns(43)] as $invalid) {
+            $this->assertError($this->takeover->acceptMutation($invalid), UdbBlock::Ips, 1, 'INS', 5);
+        }
+        self::assertSame($deadline, $this->takeover->nextDeadline());
+        $this->assertError($this->bindProvisional(100, sid: '003'), UdbBlock::Ips, 1, 'INF', 5);
+        self::assertNull($this->takeover->roundId());
+        self::assertNull($this->takeover->nextDeadline());
+        self::assertSame(0, $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_generations'));
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(43)));
+        $this->assertError($this->bindProvisional(41), UdbBlock::Ips, 1, 'INF', 5);
+        $this->assertIgnored($this->bindProvisional(41));
+        $this->assertError($this->takeover->acceptMutation($this->provisionalIns(40, sid: '003')), UdbBlock::Ips, 1, 'INS', 5);
+        $this->assertError($this->takeover->acceptMutation($this->provisionalIns(40, epoch: '2222222222222222')), UdbBlock::Ips, 1, 'INS', 5);
+        $invalidCovered = new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', sequence: 40, path: 'I::192.0.2.1::clones', typedValue: UdbValue::string('invalid'));
+        $this->assertError($this->takeover->acceptMutation($invalidCovered), UdbBlock::Ips, 1, 'INS', 2);
+    }
+
+    #[Test]
+    public function malformedInventoryOriginsCannotBindEvenWithoutProvisionalTraffic(): void
+    {
+        foreach ([['bad', '1111111111111111'], ['001', 'bad']] as [$sid, $epoch]) {
+            $this->assertError($this->bindProvisional(sid: $sid, epoch: $epoch), UdbBlock::Ips, 1, 'INF', 2);
+            self::assertNull($this->takeover->roundId());
+            self::assertSame(0, $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_generations'));
+        }
+    }
+
+    #[Test]
+    public function coveredProvisionalEpochMismatchFailsBindingBeforeAnyPruning(): void
+    {
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(1)));
+        $this->assertError($this->bindProvisional(100, epoch: '2222222222222222'), UdbBlock::Ips, 1, 'INF', 5);
+        self::assertNull($this->takeover->roundId());
+        self::assertNull($this->takeover->nextDeadline());
+        self::assertSame(0, $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_generations'));
+    }
+
+    #[Test]
+    public function malformedProvisionalFramesCannotEstablishAnOriginOrDeadline(): void
+    {
+        $invalid = [
+            $this->provisionalIns(0), $this->provisionalIns(1, sid: 'bad!'), $this->provisionalIns(1, epoch: 'bad'),
+            new UdbFrame(UdbFrameKind::Put, '001', '*', epoch: '1111111111111111', sequence: 1),
+            new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', sequence: 1, path: 'I::192.0.2.1::clones'),
+            new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', sequence: 1, path: 'missingseparator', typedValue: UdbValue::none()),
+            new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', sequence: 1, path: '?::unknown', typedValue: UdbValue::none()),
+            new UdbFrame(UdbFrameKind::Del, '001', '*', epoch: '1111111111111111', sequence: 1, path: 'I::bad%ZZ'),
+            new UdbFrame(UdbFrameKind::Del, '001', '*', epoch: '1111111111111111', sequence: 1, path: 'I::'),
+            new UdbFrame(UdbFrameKind::Drp, '001', '*', epoch: '1111111111111111', sequence: 1),
+            new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', path: 'I::192.0.2.1::clones', typedValue: UdbValue::number(UdbUnsignedDecimal::fromInt(1))),
+            new UdbFrame(UdbFrameKind::Ins, '001', '002', epoch: '1111111111111111', sequence: 1, path: 'I::192.0.2.1::clones', typedValue: UdbValue::number(UdbUnsignedDecimal::fromInt(1))),
+            new UdbFrame(UdbFrameKind::Del, '001', '*', epoch: '1111111111111111', sequence: 1, path: 'N::nick', typedValue: UdbValue::none()),
+            new UdbFrame(UdbFrameKind::Drp, '001', '*', block: UdbBlock::Nicks, epoch: '1111111111111111', sequence: 1, path: 'N::nick'),
+        ];
+        foreach ($invalid as $frame) {
+            self::assertSame(UdbWireTakeoverOutcomeKind::Error, $this->takeover->acceptMutation($frame)->kind);
+            self::assertNull($this->takeover->nextDeadline());
+            self::assertNull($this->takeover->roundId());
+        }
+    }
+
+    #[Test]
+    public function unsignedMaximumSequencesDoNotBecomeNumericArrayKeysOrWrap(): void
+    {
+        $maximum = UdbUnsignedDecimal::parse(UdbUnsignedDecimal::MAX);
+        $before = UdbUnsignedDecimal::parse('18446744073709551614');
+        self::assertNotNull($maximum);
+        self::assertNotNull($before);
+        $frame = $this->provisionalIns($maximum);
+        $this->assertIgnored($this->takeover->acceptMutation($frame));
+        $this->assertIgnored($this->takeover->acceptMutation($frame));
+        $this->assertError($this->takeover->acceptMutation($this->provisionalIns(1)), UdbBlock::Ips, 1, 'INS', 5);
+        $this->assertIgnored($this->bindProvisional($before));
+        self::assertSame([UdbUnsignedDecimal::MAX], $this->em->getConnection()->fetchFirstColumn('SELECT sequence FROM udb_staged_mutations'));
+        $this->assertIgnored($this->takeover->acceptMutation($frame));
+        // A low sequence is covered by the original snapshot, never a wrapped new admission.
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(1)));
+        self::assertSame([UdbUnsignedDecimal::MAX], $this->em->getConnection()->fetchFirstColumn('SELECT sequence FROM udb_staged_mutations'));
+    }
+
+    #[Test]
+    public function firstInventoryDoesNotRestartAbsoluteProvisionalLifetime(): void
+    {
+        for ($sequence = 1; $sequence <= 6; ++$sequence) {
+            $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns($sequence)));
+            if (6 !== $sequence) {
+                $this->clock->advance(50);
+            }
+        }
+        $this->clock->advance(30);
+        self::assertSame(320, $this->takeover->nextDeadline());
+        $this->assertIgnored($this->bindProvisional());
+        self::assertSame(320, $this->takeover->nextDeadline());
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(7)));
+        self::assertSame(320, $this->takeover->nextDeadline());
+        $this->clock->advance(20);
+        self::assertTrue($this->takeover->expire());
+        self::assertNull($this->takeover->nextDeadline());
+        self::assertSame(0, $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+    }
+
+    #[Test]
+    public function expiredFirstInventoryCannotRestartTheProvisionalDeadline(): void
+    {
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(1)));
+        $this->clock->advance(60);
+        $this->assertError($this->bindProvisional(), UdbBlock::Ips, 1, 'INF', 5);
+        self::assertNull($this->takeover->roundId());
+        self::assertNull($this->takeover->nextDeadline());
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(10, sid: '003')));
+    }
+
+    #[Test]
+    public function aSealedTailRejectsNewMutationButCoveredTrafficRemainsAnInertDiscard(): void
+    {
+        foreach (UdbBlock::all() as $block) {
+            $this->assertIgnored($this->bindProvisional(10, block: $block));
+        }
+        $this->takeover->markTailReplayComplete();
+        self::assertTrue($this->takeover->canPromote());
+        $deadline = $this->takeover->nextDeadline();
+        $this->assertError($this->takeover->acceptMutation($this->provisionalIns(11)), UdbBlock::Ips, 1, 'INS', 5);
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(10)));
+        self::assertSame($deadline, $this->takeover->nextDeadline());
+        self::assertSame(0, $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+    }
+
+    #[Test]
+    public function failedDurableAdmissionDoesNotAdvanceTailWatermarkOrDeadline(): void
+    {
+        $this->assertIgnored($this->bindProvisional());
+        $deadline = $this->takeover->nextDeadline();
+        $connection = $this->em->getConnection();
+        $connection->executeStatement("CREATE TRIGGER reject_tail BEFORE INSERT ON udb_staged_mutations BEGIN SELECT RAISE(ABORT, 'controlled admission failure'); END");
+        $this->clock->advance(20);
+        try {
+            $this->takeover->acceptMutation($this->provisionalIns(1));
+            self::fail('A failed durable mutation must not advance its watermark.');
+        } catch (Exception $error) {
+            self::assertStringContainsString('controlled admission failure', $error->getMessage());
+        }
+        self::assertSame($deadline, $this->takeover->nextDeadline());
+        self::assertSame(0, $connection->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+        $this->assertError($this->takeover->acceptMutation($this->provisionalIns(2)), UdbBlock::Ips, 1, 'INS', 5);
+        $connection->executeStatement('DROP TRIGGER reject_tail');
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(1)));
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(2)));
+        self::assertSame(['1', '2'], $connection->fetchFirstColumn('SELECT sequence FROM udb_staged_mutations ORDER BY id'));
+        self::assertSame(100, $this->takeover->nextDeadline());
+    }
+
+    #[Test]
+    public function duplicateTrafficCannotKeepProvisionalStateAliveAndResetClearsOrigin(): void
+    {
+        $frame = $this->provisionalIns(10);
+        $this->assertIgnored($this->takeover->acceptMutation($frame));
+        $this->clock->advance(59);
+        $this->assertIgnored($this->takeover->acceptMutation($frame));
+        self::assertSame(80, $this->takeover->nextDeadline());
+        $this->clock->advance(1);
+        $this->assertError($this->takeover->acceptMutation($frame), UdbBlock::Ips, 1, 'INS', 5);
+        self::assertNull($this->takeover->nextDeadline());
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(41, sid: '003')));
+        $this->takeover->reset();
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(10)));
+        self::assertNull($this->takeover->roundId());
+    }
+
+    #[Test]
+    #[DataProvider('bindingFailureTables')]
+    public function generationAndSurvivorsCommitAtomicallyWithoutAdoptingFailedState(string $table): void
+    {
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(1)));
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(2)));
+        $connection = $this->em->getConnection();
+        $condition = 'udb_staged_mutations' === $table ? "WHEN NEW.sequence = '2' " : '';
+        $connection->executeStatement('CREATE TRIGGER reject_binding BEFORE INSERT ON ' . $table . ' ' . $condition . "BEGIN SELECT RAISE(ABORT, 'controlled binding failure'); END");
+        try {
+            $this->bindProvisional();
+            self::fail('A failed generation or survivor write must not adopt provisional state.');
+        } catch (Exception $error) {
+            self::assertStringContainsString('controlled binding failure', $error->getMessage());
+        }
+        self::assertFalse($connection->isTransactionActive());
+        self::assertNull($this->takeover->roundId());
+        self::assertFalse($this->takeover->canPromote());
+        self::assertSame(0, $connection->fetchOne('SELECT COUNT(*) FROM udb_staged_generations'));
+        self::assertSame(0, $connection->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+        $connection->executeStatement('DROP TRIGGER reject_binding');
+        $this->assertIgnored($this->bindProvisional());
+        self::assertSame(['1', '2'], $connection->fetchFirstColumn('SELECT sequence FROM udb_staged_mutations ORDER BY id'));
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(3)));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function bindingFailureTables(): iterable
+    {
+        yield 'generation failure' => ['udb_staged_generations'];
+        yield 'second survivor failure' => ['udb_staged_mutations'];
+    }
+
+    #[Test]
+    public function provisionalEntryLimitChargesUniqueFramesAndResetReleasesAllCapacity(): void
+    {
+        for ($sequence = 1; $sequence <= 4096; ++$sequence) {
+            $last = new UdbFrame(UdbFrameKind::Del, '001', '*', epoch: '1111111111111111', sequence: $sequence, path: 'N::nick');
+            $this->assertIgnored($this->takeover->acceptMutation($last));
+        }
+        $this->assertIgnored($this->takeover->acceptMutation($last));
+        $overflow = new UdbFrame(UdbFrameKind::Del, '001', '*', epoch: '1111111111111111', sequence: 4097, path: 'N::nick');
+        $this->assertError($this->takeover->acceptMutation($overflow), UdbBlock::Nicks, 1, 'DEL', 2);
+        $this->takeover->reset();
+        $this->assertIgnored($this->takeover->acceptMutation($this->provisionalIns(1, sid: '003')));
+    }
+
+    #[Test]
+    public function provisionalByteLimitUsesActualCanonicalWirePlusCrlfAtTheExactBoundary(): void
+    {
+        $limit = 8388608;
+        $bytes = 0;
+        $sequence = 1;
+        $value = UdbValue::string(str_repeat('x', 4096));
+        while (true) {
+            $line = UdbWireCodec::ins('001', '1111111111111111', $sequence, 'N', 'nick::swhois', $value);
+            $size = strlen($line) + 2;
+            if ($bytes + $size > $limit - 256) {
+                break;
+            }
+            $frame = new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', sequence: $sequence++, path: 'N::nick::swhois', typedValue: $value);
+            $this->assertIgnored($this->takeover->acceptMutation($frame));
+            $bytes += $size;
+        }
+        $maxLast = strlen(UdbWireCodec::ins('001', '1111111111111111', $sequence, 'N', 'n::swhois', $value)) + 2;
+        while ($limit - $bytes > $maxLast) {
+            $frame = new UdbFrame(UdbFrameKind::Del, '001', '*', epoch: '1111111111111111', sequence: $sequence, path: 'N::nick');
+            $this->assertIgnored($this->takeover->acceptMutation($frame));
+            $bytes += strlen(UdbWireCodec::del('001', '1111111111111111', $sequence++, 'N', 'nick')) + 2;
+        }
+        $last = null;
+        for ($length = 1; $length <= 30; ++$length) {
+            $path = str_repeat('n', $length) . '::swhois';
+            $base = strlen(UdbWireCodec::ins('001', '1111111111111111', $sequence, 'N', $path, UdbValue::string(''))) + 2;
+            $encodedLength = $limit - $bytes - $base;
+            if ($encodedLength > 0 && 0 === $encodedLength % 4 && $encodedLength <= 5464) {
+                $value = UdbValue::string(str_repeat('x', min(4096, intdiv($encodedLength, 4) * 3)));
+                $line = UdbWireCodec::ins('001', '1111111111111111', $sequence, 'N', $path, $value);
+                self::assertSame($limit, $bytes + strlen($line) + 2);
+                $last = new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: '1111111111111111', sequence: $sequence++, path: 'N::' . $path, typedValue: $value);
+                break;
+            }
+        }
+        self::assertNotNull($last);
+        $this->assertIgnored($this->takeover->acceptMutation($last));
+        $this->assertIgnored($this->takeover->acceptMutation($last));
+        $overflow = new UdbFrame(UdbFrameKind::Del, '001', '*', epoch: '1111111111111111', sequence: $sequence, path: 'N::nick');
+        $this->assertError($this->takeover->acceptMutation($overflow), UdbBlock::Nicks, 1, 'DEL', 2);
+        $this->takeover->reset();
+        $this->assertIgnored($this->takeover->acceptMutation($last));
+    }
+
+    private function provisionalIns(int|UdbUnsignedDecimal $sequence, string $sid = '001', string $epoch = '1111111111111111'): UdbFrame
+    {
+        return new UdbFrame(UdbFrameKind::Ins, $sid, '*', epoch: $epoch, sequence: $sequence, path: 'I::192.0.2.1::clones', typedValue: UdbValue::number(UdbUnsignedDecimal::fromInt(1)));
+    }
+
+    private function bindProvisional(int|UdbUnsignedDecimal $watermark = 0, string $sid = '001', string $epoch = '1111111111111111', UdbBlock $block = UdbBlock::Ips): UdbWireTakeoverOutcome
+    {
+        return $this->takeover->accept(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: $block, checksum: UdbChecksum::empty($block), count: 0, watermark: $watermark, rootSid: $sid, rootEpoch: $epoch));
+    }
+
+    #[Test]
     public function fullNativeTxidAndBinaryStringSurviveCorrelatedTransferAndPromotion(): void
     {
         $txid = str_repeat('t', 31);

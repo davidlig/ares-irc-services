@@ -17,6 +17,8 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Synchronization\UdbMutationQueue;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbChecksum;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrame;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
 use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Domain\Server\ServerLink;
@@ -524,6 +526,33 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         self::assertNotEmpty($this->written);
         self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.test\.local [0-9a-f]{16} OCL OCLG$/', $this->writtenLine(0));
         self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/', $this->writtenLine(1));
+    }
+
+    #[Test]
+    public function relayedMutationDispatchPreservesUnsignedSequenceAndExplicitTypedBytes(): void
+    {
+        $received = [];
+        $coordinator = $this->createMock(UdbSessionController::class);
+        $coordinator->expects(self::exactly(3))->method('handleFrame')->willReturnCallback(static function (UdbFrame $frame) use (&$received): void {
+            $received[] = $frame;
+        });
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $connection = $this->createConnection();
+        foreach ([
+            ':003 DB * INS 1111111111111111 18446744073709551613 C::#chan::access::nick :!sKjE=',
+            ':003 DB * DEL 1111111111111111 18446744073709551614 N::nick',
+            ':003 DB * DRP 1111111111111111 18446744073709551615 I',
+        ] as $line) {
+            $handler->handleIncoming(IRCMessage::fromRawLine($line), $connection);
+        }
+        self::assertCount(3, $received);
+        self::assertSame('003', $received[0]->sourceSid);
+        self::assertSame(UdbFrameKind::Ins, $received[0]->kind);
+        self::assertSame('*1', $received[0]->typedValue?->value);
+        self::assertSame('18446744073709551613', (string) $received[0]->sequence);
+        self::assertSame(UdbFrameKind::Del, $received[1]->kind);
+        self::assertSame(UdbFrameKind::Drp, $received[2]->kind);
+        self::assertSame('18446744073709551615', (string) $received[2]->sequence);
     }
 
     #[Test]

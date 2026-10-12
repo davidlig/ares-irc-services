@@ -33,6 +33,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbFrameKind;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbOclgViewDigest;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbStructuralNodeCount;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbUnsignedDecimal;
+use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Application\Port\In\ActiveChannelModeSupportProviderInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
@@ -2107,6 +2108,127 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function realHandlerPreInventoryTailBindsPrunesAndPromotesOnlyAtExactTransportBarrier(): void
+    {
+        $authority = $this->createMock(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(false);
+        $authority->expects(self::once())->method('approve');
+        $takeover = new UdbWireTakeover($this->records, $this->blockStates, $this->entityManager, $this->createEmptyExporter(), clock: $this->clock);
+        $coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, wireTakeover: $takeover, authority: $authority, scheduler: $this->scheduler, clock: $this->clock);
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $connection = $this->captureConnection($coordinator);
+        $coordinator->onLinkReady($connection);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $handler->handleIncoming(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ACK services.example.net ' . self::PEER_EPOCH . ' OCL OCLG'), $connection);
+        self::assertNull($coordinator->getDeadlineWatcherId());
+        $this->written = [];
+        $rootEpoch = '3333333333333333';
+        foreach ([
+            ':003 DB * INS ' . $rootEpoch . ' 40 I::192.0.2.1::clones :!u8',
+            ':003 DB * DEL ' . $rootEpoch . ' 41 I::192.0.2.2',
+            ':003 DB * INS ' . $rootEpoch . ' 42 I::192.0.2.1::clones :!u1',
+        ] as $line) {
+            $handler->handleIncoming(IRCMessage::fromRawLine($line), $connection);
+        }
+        self::assertNotNull($coordinator->getDeadlineWatcherId());
+        self::assertNull($takeover->roundId());
+        self::assertSame([], $this->capturedWrites());
+        self::assertSame(0, $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+        $blocks = UdbBlock::all();
+        foreach (array_slice($blocks, 0, 5) as $block) {
+            $handler->handleIncoming(IRCMessage::fromRawLine(UdbWireCodec::inf('001', '002', 1, $block, UdbChecksum::empty($block), 0, 41, '003', $rootEpoch)), $connection);
+        }
+        self::assertFalse($takeover->canPromote());
+        self::assertSame([], new UdbRecordDoctrineRepository($this->entityManager)->recordsByBlock('I'));
+        self::assertSame(['42'], $this->entityManager->getConnection()->fetchFirstColumn('SELECT sequence FROM udb_staged_mutations'));
+        $handler->handleIncoming(IRCMessage::fromRawLine(':003 DB * INS ' . $rootEpoch . ' 41 I::192.0.2.1::clones :!u9'), $connection);
+        $last = $blocks[5];
+        $handler->handleIncoming(IRCMessage::fromRawLine(UdbWireCodec::inf('001', '002', 1, $last, UdbChecksum::empty($last), 0, 41, '003', $rootEpoch)), $connection);
+        preg_match('/^PING 001 :(UDB4-1-[0-9a-f]{32})$/m', implode("\n", $this->written), $ping);
+        self::assertArrayHasKey(1, $ping);
+        $handler->handleIncoming(IRCMessage::fromRawLine(':001 PONG 002 :' . $ping[1]), $connection);
+        $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 ' . self::OWN_NAME . ' UDB4-1-stale :No such server'), $connection);
+        $response = IRCMessage::fromRawLine(':ircd.example.net 402 ' . self::OWN_NAME . ' ' . $ping[1] . ' :No such server');
+        $foreign = $this->createStub(ConnectionInterface::class);
+        $handler->handleIncoming($response, $foreign);
+        self::assertFalse($takeover->canPromote());
+        self::assertSame([], new UdbRecordDoctrineRepository($this->entityManager)->recordsByBlock('I'));
+        $handler->handleIncoming($response, $connection);
+        self::assertSame(['192.0.2.1::clones' => '*1'], UdbTestValues::logicalMap(new UdbRecordDoctrineRepository($this->entityManager)->recordsByBlock('I')));
+        $checkpoint = $this->entityManager->find(UdbAuthorityState::class, 1)?->getImportedCheckpoint();
+        self::assertNotNull($checkpoint);
+        self::assertSame('003', $checkpoint->origin->sid);
+        self::assertSame($rootEpoch, $checkpoint->origin->epoch);
+        self::assertSame('42', (string) $checkpoint->watermark);
+        self::assertDoesNotMatchRegularExpression('/ DB .* ERR |HEL 4 \?/', implode("\n", $this->written));
+    }
+
+    #[Test]
+    public function provisionalExpiryDisconnectAndEpochChangeClearBufferedOrigins(): void
+    {
+        $takeover = $this->createWireTakeover();
+        $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(false);
+        $coordinator = new UdbSessionCoordinator('002', $this->blockStates, $this->snapshots, wireTakeover: $takeover, authority: $authority, scheduler: $this->scheduler, clock: $this->clock);
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $connection = $this->captureConnection($coordinator);
+        $coordinator->onLinkReady($connection);
+        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $mutation = new UdbFrame(UdbFrameKind::Del, '003', '*', epoch: self::PEER_EPOCH, sequence: 40, path: 'N::nick');
+        $coordinator->handleFrame($mutation, $connection);
+        self::assertSame(80, $takeover->nextDeadline());
+        $coordinator->handleFrame($this->peerHel(epoch: '2222222222222222'), $connection);
+        self::assertNull($takeover->nextDeadline());
+        $coordinator->handleFrame($this->peerHelAck(epoch: '2222222222222222'), $connection);
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Del, '004', '*', epoch: '2222222222222222', sequence: 10, path: 'N::nick'), $connection);
+        self::assertSame(80, $takeover->nextDeadline());
+        $coordinator->reset();
+        self::assertNull($takeover->nextDeadline());
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $coordinator->onLinkReady($connection);
+        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($mutation, $connection);
+        $this->clock->advance(60);
+        $this->written = [];
+        $this->scheduler->runNext();
+        self::assertNull($takeover->nextDeadline());
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 \? /', $this->firstWrittenLine());
+    }
+
+    #[Test]
+    public function provisionalBindingAndPostInventorySqlFailuresRecoverWithoutPartialCredit(): void
+    {
+        $takeover = $this->createWireTakeover();
+        $coordinator = $this->bootstrapCoordinator($takeover);
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+        $connection = $this->captureConnection($coordinator);
+        $coordinator->onLinkReady($connection);
+        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $mutation = new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: self::PEER_EPOCH, sequence: 1, path: 'I::192.0.2.1::clones', typedValue: UdbValue::number(UdbUnsignedDecimal::fromInt(1)));
+        $coordinator->handleFrame($mutation, $connection);
+        $sql = $this->entityManager->getConnection();
+        $sql->executeStatement("CREATE TRIGGER reject_tail BEFORE INSERT ON udb_staged_mutations BEGIN SELECT RAISE(ABORT, 'controlled tail failure'); END");
+        $this->written = [];
+        $coordinator->handleFrame($this->inventoryFrame(UdbBlock::Ips, UdbChecksum::empty(UdbBlock::Ips), 1, 0), $connection);
+        self::assertNull($takeover->roundId());
+        self::assertSame(0, $sql->fetchOne('SELECT COUNT(*) FROM udb_staged_generations'));
+        self::assertSame(0, $sql->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 \? /', $this->firstWrittenLine());
+        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->inventoryFrame(UdbBlock::Ips, UdbChecksum::empty(UdbBlock::Ips), 2, 0), $connection);
+        $this->written = [];
+        $coordinator->handleFrame($mutation, $connection);
+        self::assertNull($takeover->roundId());
+        self::assertFalse($takeover->canPromote());
+        self::assertSame(0, $sql->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 \? /', $this->firstWrittenLine());
+    }
+
+    #[Test]
     public function wireBootstrapReplaysAContiguousRelayedRootTailBeforePromotion(): void
     {
         $authority = $this->createMock(UdbAuthorityStateRepositoryInterface::class);
@@ -2470,6 +2592,12 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
             typedValue: UdbTestValues::fromLogical($block, $path, $logicalValue),
         ), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: $block, txid: 'tx', checksum: $digest, watermark: $watermark), $connection);
+    }
+
+    /** @return list<string> Latest writes from callback-driven transport dispatch. */
+    private function capturedWrites(): array
+    {
+        return $this->written;
     }
 
     private function captureConnection(UdbSessionCoordinator $coordinator): ConnectionInterface
