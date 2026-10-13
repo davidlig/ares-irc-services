@@ -10,7 +10,6 @@ final readonly class SaregisterResult
         public SaregisterOutcome $outcome,
         public ?string $nickname = null,
         public ?string $email = null,
-        public ?int $maxNicksPerEmail = null,
     ) {}
 
     public static function registered(string $nickname): self
@@ -21,15 +20,6 @@ final readonly class SaregisterResult
     public static function invalidEmail(): self
     {
         return new self(SaregisterOutcome::InvalidEmail);
-    }
-
-    public static function emailAlreadyUsed(string $email, int $maxNicksPerEmail): self
-    {
-        return new self(
-            SaregisterOutcome::EmailAlreadyUsed,
-            email: $email,
-            maxNicksPerEmail: $maxNicksPerEmail,
-        );
     }
 
     public static function alreadyRegistered(string $nickname): self

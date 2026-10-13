@@ -110,13 +110,6 @@ final readonly class SaregisterCommand implements NickServCommandInterface
                 $context->reply('register.invalid_email');
 
                 return CommandOutcome::rejected();
-            case SaregisterOutcome::EmailAlreadyUsed:
-                $context->reply('register.email_already_used', [
-                    'email' => $result->email ?? '',
-                    'max' => (string) ($result->maxNicksPerEmail ?? 0),
-                ]);
-
-                return CommandOutcome::rejected();
             case SaregisterOutcome::AlreadyRegistered:
                 $context->reply('register.already_registered', ['%nickname%' => $result->nickname ?? '']);
 

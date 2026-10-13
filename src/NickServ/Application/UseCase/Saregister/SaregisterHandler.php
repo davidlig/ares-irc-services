@@ -18,9 +18,10 @@ use const FILTER_VALIDATE_EMAIL;
  * Registers a nickname on behalf of another user, at staff request.
  *
  * Deliberately skips the e-mail verification policy, the verification token and
- * the registration throttle: that is the entire point of the command. It does NOT
- * skip validation — the address still has to be well formed and unused, and the
- * nickname still has to be available.
+ * the registration throttle: that is the entire point of the command. It also
+ * skips the per-address limit, because that is an anti-abuse measure for
+ * self-service registration and staff registration is the documented escape
+ * hatch. Format validation and nickname availability still apply.
  */
 final readonly class SaregisterHandler implements SaregisterHandlerInterface
 {
@@ -28,19 +29,12 @@ final readonly class SaregisterHandler implements SaregisterHandlerInterface
         private RegisterNickRepository $nickRepository,
         private PasswordHasher $passwordHasher,
         private Clock $clock,
-        private int $maxNicksPerEmail,
     ) {}
 
     public function handle(Saregister $command): SaregisterResult
     {
         if (false === filter_var($command->email, FILTER_VALIDATE_EMAIL)) {
             return SaregisterResult::invalidEmail();
-        }
-
-        if (0 < $this->maxNicksPerEmail
-            && $this->nickRepository->countByEmail($command->email) >= $this->maxNicksPerEmail
-        ) {
-            return SaregisterResult::emailAlreadyUsed($command->email, $this->maxNicksPerEmail);
         }
 
         $existing = $this->nickRepository->findByNick($command->nickname);

@@ -56,12 +56,13 @@ final class SaregisterHandlerTest extends TestCase
     }
 
     #[Test]
-    public function allowsAnyNumberOfNicksWhenTheLimitIsDisabled(): void
+    public function ignoresThePerAddressLimitBecauseStaffRegistrationOverridesIt(): void
     {
         $saved = null;
 
         $repository = $this->createMock(RegisterNickRepository::class);
-        $repository->method('countByEmail')->willReturn(99);   // far beyond any limit
+        // The address is shared far beyond any configured limit, and it still registers.
+        $repository->method('countByEmail')->willReturn(99);
         $repository->method('findByNick')->willReturn(null);
         $repository->expects(self::once())->method('save')->willReturnCallback(
             static function (RegisteredNick $nick) use (&$saved): void {
@@ -69,8 +70,7 @@ final class SaregisterHandlerTest extends TestCase
             },
         );
 
-        // maxNicksPerEmail = 0 disables the limit, as in Anope's maxemails.
-        $result = $this->handler($repository, maxNicksPerEmail: 0)->handle($this->command());
+        $result = $this->handler($repository)->handle($this->command());
 
         self::assertSame(SaregisterOutcome::Registered, $result->outcome);
         self::assertInstanceOf(RegisteredNick::class, $saved);
@@ -85,19 +85,6 @@ final class SaregisterHandlerTest extends TestCase
         $result = $this->handler($repository)->handle($this->command(email: 'not-an-address'));
 
         self::assertSame(SaregisterOutcome::InvalidEmail, $result->outcome);
-    }
-
-    #[Test]
-    public function rejectsAnEmailAlreadyInUse(): void
-    {
-        $repository = $this->createMock(RegisterNickRepository::class);
-        $repository->method('countByEmail')->willReturn(3);
-        $repository->expects(self::never())->method('save');
-
-        $result = $this->handler($repository)->handle($this->command());
-
-        self::assertSame(SaregisterOutcome::EmailAlreadyUsed, $result->outcome);
-        self::assertSame('user@example.com', $result->email);
     }
 
     #[Test]
@@ -145,7 +132,7 @@ final class SaregisterHandlerTest extends TestCase
         return $this->handler($repository)->handle($this->command());
     }
 
-    private function handler(RegisterNickRepository $repository, int $maxNicksPerEmail = 3): SaregisterHandler
+    private function handler(RegisterNickRepository $repository): SaregisterHandler
     {
         $hasher = $this->createStub(PasswordHasher::class);
         $hasher->method('hash')->willReturn('hashed-password');
@@ -153,7 +140,7 @@ final class SaregisterHandlerTest extends TestCase
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn($this->now);
 
-        return new SaregisterHandler($repository, $hasher, $clock, $maxNicksPerEmail);
+        return new SaregisterHandler($repository, $hasher, $clock);
     }
 
     private function command(string $email = 'user@example.com'): Saregister

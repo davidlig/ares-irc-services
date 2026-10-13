@@ -8,7 +8,6 @@ enum SaregisterOutcome
 {
     case Registered;
     case InvalidEmail;
-    case EmailAlreadyUsed;
     case AlreadyRegistered;
     case AlreadyPending;
     case Forbidden;

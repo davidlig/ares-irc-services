@@ -1610,10 +1610,6 @@ services:
             $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
             $guestPrefix: '%services.guest_prefix%'
 
-    App\NickServ\Application\UseCase\Saregister\SaregisterHandler:
-        arguments:
-            $maxNicksPerEmail: '%nickserv.max_nicks_per_email%'
-
     App\NickServ\Application\UseCase\Set\SetNickSettingHandler:
         arguments:
             $maxNicksPerEmail: '%nickserv.max_nicks_per_email%'
