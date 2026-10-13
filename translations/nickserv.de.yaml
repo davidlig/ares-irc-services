@@ -681,3 +681,9 @@ debug:
   action_with_value: "%operator% führt Befehl %command% auf %target% aus. Option: %option%=%value%. %reason%"
   action_duration: "%operator% führt Befehl %command% auf %target% aus. Dauer: %duration%. %reason%"
   prefix_reason: "Grund: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <Nickname> <Passwort> <E-Mail>"
+  short:            "Registriert einen Nickname für einen anderen Benutzer."
+  help:             "Registriert einen Nickname im Auftrag eines anderen Benutzers. Das Konto wird\nsofort aktiv: E-Mail-Verifizierung und Registrierungsdrossel entfallen.\nDie Adresse wird weiterhin geprüft und muss frei sein.\nDieser Befehl erfordert eine Operator-Berechtigung."
+  done:             "\x0303✔\x03 Der Nickname \x02%nickname%\x02 wurde registriert."

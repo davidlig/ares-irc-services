@@ -568,3 +568,9 @@ list:
   status_suspended: "Suspendat"
   status_pending_deletion: "Ștergere în așteptare"
   status_forbidden: "Interzis"
+
+saregister:
+  syntax:           "SAREGISTER <#canal> [descriere]"
+  short:            "Înregistrează un canal fără a fi în el."
+  help:             "Înregistrează un canal la cererea staffului. Operatorul nu trebuie să fie în\ncanal, iar canalul nu trebuie să existe încă în rețea.\nAceastă comandă necesită permisiune de operator."
+  done:             "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."

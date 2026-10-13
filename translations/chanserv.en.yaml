@@ -568,3 +568,9 @@ list:
   status_suspended: "Suspended"
   status_pending_deletion: "Pending deletion"
   status_forbidden: "Forbidden"
+
+saregister:
+  syntax:           "SAREGISTER <#channel> [description]"
+  short:            "Register a channel without being in it."
+  help:             "Registers a channel at staff request. The operator does not need to be in\nthe channel, and the channel does not need to exist on the network yet.\nThis command requires an operator permission."
+  done:             "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."

@@ -44,7 +44,7 @@ final readonly class RegisterChannelHandler implements RegisterChannelHandlerInt
             throw ChannelAlreadyRegisteredException::forChannel($command->channelName);
         }
 
-        if (!$command->channelExistsOnNetwork) {
+        if (!$command->channelExistsOnNetwork && !$command->force) {
             return RegisterChannelResult::channelNotOnNetwork();
         }
 

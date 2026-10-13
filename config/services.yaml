@@ -1296,6 +1296,9 @@ services:
     App\ChanServ\Adapter\In\Irc\Command\RegisterCommand:
         tags: ['chanserv.command']
 
+    App\ChanServ\Adapter\In\Irc\Command\SaregisterCommand:
+        tags: ['chanserv.command']
+
     App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandler:
         arguments:
             $dropGraceDays: '%chanserv.drop_grace_days%'
@@ -2015,6 +2018,12 @@ services:
 
     App\NickServ\Application\Port\In\EmailVerificationPolicyInterface:
         alias: App\NickServ\Adapter\Out\Policy\EmailVerificationPolicy
+
+    App\NickServ\Application\UseCase\Saregister\SaregisterHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Saregister\SaregisterHandler
+
+    App\NickServ\Adapter\In\Irc\Command\SaregisterCommand:
+        tags: ['nickserv.command']
 
     # --- UserMessageTypeResolver — NOTICE vs PRIVMSG preference -----------------
 

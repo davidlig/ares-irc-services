@@ -681,3 +681,9 @@ debug:
   action_with_value: "%operator% exécute la commande %command% sur %target%. Option : %option%=%value%. %reason%"
   action_duration: "%operator% exécute la commande %command% sur %target%. Durée : %duration%. %reason%"
   prefix_reason: "Raison : %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <pseudonyme> <mot de passe> <email>"
+  short:            "Enregistre un pseudonyme pour un autre utilisateur."
+  help:             "Enregistre un pseudonyme pour le compte d un autre utilisateur. Le compte est\ncréé actif : la vérification e-mail et la limite de fréquence sont ignorées.\nL adresse reste validée et doit être libre.\nCette commande nécessite une permission opérateur."
+  done:             "\x0303✔\x03 Le pseudonyme \x02%nickname%\x02 a été enregistré."

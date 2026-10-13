@@ -568,3 +568,9 @@ list:
   status_suspended: "Geschorst"
   status_pending_deletion: "Verwijdering in behandeling"
   status_forbidden: "Verboden"
+
+saregister:
+  syntax:           "SAREGISTER <#kanaal> [beschrijving]"
+  short:            "Registreert een kanaal zonder erin te zijn."
+  help:             "Registreert een kanaal op verzoek van het staff. De operator hoeft niet in het\nkanaal te zijn, en het kanaal hoeft nog niet op het netwerk te bestaan.\nDit commando vereist een operator-recht."
+  done:             "\x0303✔\x03 Het kanaal \x02%channel%\x02 is geregistreerd."

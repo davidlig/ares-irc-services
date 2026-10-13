@@ -568,3 +568,9 @@ list:
   status_suspended: "Suspendu"
   status_pending_deletion: "Suppression en attente"
   status_forbidden: "Interdit"
+
+saregister:
+  syntax:           "SAREGISTER <#canal> [description]"
+  short:            "Enregistre un canal sans y être."
+  help:             "Enregistre un canal à la demande du staff. L opérateur n a pas besoin d être\ndans le canal, et le canal n a pas besoin d exister encore sur le réseau.\nCette commande nécessite une permission opérateur."
+  done:             "\x0303✔\x03 Le canal \x02%channel%\x02 a été enregistré."

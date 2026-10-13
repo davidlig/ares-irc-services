@@ -681,3 +681,9 @@ debug:
   action_with_value: "%operator% wykonuje komendę %command% na %target%. Opcja: %option%=%value%. %reason%"
   action_duration: "%operator% wykonuje komendę %command% na %target%. Czas trwania: %duration%. %reason%"
   prefix_reason: "Powód: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <pseudonim> <hasło> <email>"
+  short:            "Rejestruje pseudonim w imieniu innego użytkownika."
+  help:             "Rejestruje pseudonim w imieniu innego użytkownika. Konto powstaje od razu\naktywne: weryfikacja e-mail i limit częstotliwości są pomijane.\nAdres jest nadal sprawdzany i musi być wolny.\nTo polecenie wymaga uprawnienia operatora."
+  done:             "\x0303✔\x03 Pseudonim \x02%nickname%\x02 został zarejestrowany."

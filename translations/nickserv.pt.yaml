@@ -681,3 +681,9 @@ debug:
   action_with_value: "%operator% executa o comando %command% em %target%. Opção: %option%=%value%. %reason%"
   action_duration: "%operator% executa o comando %command% em %target%. Duração: %duration%. %reason%"
   prefix_reason: "Motivo: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <alcunha> <palavra-passe> <email>"
+  short:            "Registra uma alcunha em nome de outro utilizador."
+  help:             "Registra uma alcunha em nome de outro utilizador. A conta é criada já ativa:\na verificação por e-mail e o limite de frequência são ignorados.\nO endereço continua a ser validado e tem de estar livre.\nEste comando requer permissão de operador."
+  done:             "\x0303✔\x03 A alcunha \x02%nickname%\x02 foi registada."

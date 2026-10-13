@@ -681,3 +681,9 @@ debug:
   action_with_value: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%=%value%. %reason%"
   action_duration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
   prefix_reason: "Sebep: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <takma ad> <parola> <email>"
+  short:            "Başka bir kullanıcı için takma ad kaydeder."
+  help:             "Başka bir kullanıcı adına takma ad kaydeder. Hesap doğrudan etkin oluşturulur:\ne-posta doğrulaması ve kayıt hız sınırı atlanır.\nAdres yine doğrulanır ve boş olmalıdır.\nBu komut operatör izni gerektirir."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 takma adı kaydedildi."

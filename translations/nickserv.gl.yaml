@@ -691,3 +691,9 @@ debug:
   action_with_value: "%operator% executa o comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
   action_duration: "%operator% executa o comando %command% sobre %target%. Duración: %duration%. %reason%"
   prefix_reason: "Motivo: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <alcume> <contrasinal> <email>"
+  short:            "Rexistra un alcume no nome doutro usuario."
+  help:             "Rexistra un alcume no nome doutro usuario. A conta créase xa activa:\nsáltanse a verificación por correo e o límite de frecuencia.\nO enderezo séguise validando e debe estar libre.\nEsta orde require permiso de operador."
+  done:             "\x0303✔\x03 O alcume \x02%nickname%\x02 foi rexistrado."

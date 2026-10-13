@@ -681,3 +681,9 @@ debug:
   action_with_value: "%operator% voert commando %command% uit op %target%. Optie: %option%=%value%. %reason%"
   action_duration: "%operator% voert commando %command% uit op %target%. Duur: %duration%. %reason%"
   prefix_reason: "Reden: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <nicknaam> <wachtwoord> <email>"
+  short:            "Registreert een nicknaam voor een andere gebruiker."
+  help:             "Registreert een nicknaam namens een andere gebruiker. Het account wordt direct\nactief: e-mailverificatie en de registratielimiet worden overgeslagen.\nHet adres wordt nog steeds gevalideerd en moet vrij zijn.\nDit commando vereist een operator-recht."
+  done:             "\x0303✔\x03 De nicknaam \x02%nickname%\x02 is geregistreerd."

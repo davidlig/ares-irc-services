@@ -681,3 +681,9 @@ debug:
   action_with_value: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Aukera: %option%=%value%. %reason%"
   action_duration: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Iraupena: %duration%. %reason%"
   prefix_reason: "Arrazoia: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <ezizena> <pasahitza> <email>"
+  short:            "Beste erabiltzaile baten izenean ezizen bat erregistratzen du."
+  help:             "Beste erabiltzaile baten izenean ezizen bat erregistratzen du. Kontua aktibo\nsortzen da: posta-egiaztapena eta maiztasun-muga saltatzen dira.\nHelbidea oraindik balioztatzen da eta libre egon behar du.\nKomando honek operadore-baimena behar du."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ezizena erregistratu da."

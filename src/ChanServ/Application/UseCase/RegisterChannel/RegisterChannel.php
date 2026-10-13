@@ -18,5 +18,6 @@ final readonly class RegisterChannel
         public bool $channelExistsOnNetwork,
         public bool $hasRequiredChannelRank,
         public DateTimeImmutable $occurredAt,
+        public bool $force = false,
     ) {}
 }

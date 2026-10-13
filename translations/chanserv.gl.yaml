@@ -570,3 +570,9 @@ list:
   status_suspended: "Suspendida"
   status_pending_deletion: "Pendente de eliminación"
   status_forbidden: "Prohibida"
+
+saregister:
+  syntax:           "SAREGISTER <#canle> [descrición]"
+  short:            "Rexistra unha canle sen estar dentro."
+  help:             "Rexistra unha canle a petición do staff. O operador non necesita estar na\ncanle, e a canle non necesita existir aínda na rede.\nEsta orde require permiso de operador."
+  done:             "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada."

@@ -30,6 +30,9 @@ final readonly class ChanServPermission
 
     public const string LIST = 'chanserv.list';
 
+    /** IRCop permission to register a channel on behalf of another user, without being in it. */
+    public const string SAREGISTER = 'chanserv.saregister';
+
     /**
      * @return list<string>
      */
@@ -48,6 +51,7 @@ final readonly class ChanServPermission
             self::HISTORY,
             self::CLEARUSERS,
             self::LIST,
+            self::SAREGISTER,
         ];
     }
 

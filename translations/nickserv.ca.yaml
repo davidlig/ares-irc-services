@@ -681,3 +681,9 @@ debug:
   action_with_value: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%=%value%. %reason%"
   action_duration: "%operator% executa l'ordre %command% sobre %target%. Durada: %duration%. %reason%"
   prefix_reason: "Motiu: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <sobrenom> <contrasenya> <email>"
+  short:            "Registra un sobrenom en nom d un altre usuari."
+  help:             "Registra un sobrenom en nom d un altre usuari. El compte es crea ja actiu:\nes salten la verificació per correu i el límit de freqüència.\nL adreça continua validant-se i ha d estar lliure.\nAquesta ordre requereix permís d operador."
+  done:             "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat registrat."

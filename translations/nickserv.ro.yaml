@@ -681,3 +681,9 @@ debug:
   action_with_value: "%operator% execută comanda %command% asupra %target%. Opțiune: %option%=%value%. %reason%"
   action_duration: "%operator% execută comanda %command% asupra %target%. Durată: %duration%. %reason%"
   prefix_reason: "Motiv: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <pseudonim> <parolă> <email>"
+  short:            "Înregistrează un pseudonim pentru alt utilizator."
+  help:             "Înregistrează un pseudonim în numele altui utilizator. Contul este creat\nactiv: verificarea e-mail și limita de frecvență sunt sărite.\nAdresa este totuși validată și trebuie să fie liberă.\nAceastă comandă necesită permisiune de operator."
+  done:             "\x0303✔\x03 Pseudonimul \x02%nickname%\x02 a fost înregistrat."
