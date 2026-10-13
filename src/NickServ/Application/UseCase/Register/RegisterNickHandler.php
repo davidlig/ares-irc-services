@@ -33,6 +33,7 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         private RegistrationMailSender $mailSender,
         private EmailVerificationSettingRepositoryInterface $emailVerificationSettings,
         private int $minimumIntervalSeconds,
+        private int $maxNicksPerEmail,
         private int $verificationTokenTtlSeconds = 3600,
         private string $guestPrefix = 'Guest-',
     ) {}
@@ -58,8 +59,10 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
             return RegisterNickResult::invalidEmail();
         }
 
-        if (null !== $this->nickRepository->findByEmail($command->email)) {
-            return RegisterNickResult::emailAlreadyUsed($command->email);
+        if (0 < $this->maxNicksPerEmail
+            && $this->nickRepository->countByEmail($command->email) >= $this->maxNicksPerEmail
+        ) {
+            return RegisterNickResult::emailAlreadyUsed($command->email, $this->maxNicksPerEmail);
         }
 
         $existing = $this->nickRepository->findByNick($command->nickname);

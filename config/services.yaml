@@ -50,6 +50,9 @@ parameters:
     # Minimum seconds between REGISTER attempts per host/IP (default 300 = 5 minutes, anti-bot)
     nickserv.register_min_interval_default: 300
     nickserv.register_min_interval: '%env(int:default:nickserv.register_min_interval_default:NICKSERV_REGISTER_MIN_INTERVAL)%'
+
+    nickserv.max_nicks_per_email_default: 3
+    nickserv.max_nicks_per_email: '%env(int:default:nickserv.max_nicks_per_email_default:NICKSERV_MAX_NICKS_PER_EMAIL)%'
     nickserv.verification_token_ttl_seconds: 3600
     # IDENTIFY lockout after repeated failures (anti brute-force)
     nickserv.identify_max_failed_attempts_default: 5
@@ -1603,8 +1606,17 @@ services:
     App\NickServ\Application\UseCase\Register\RegisterNickHandler:
         arguments:
             $minimumIntervalSeconds: '%nickserv.register_min_interval%'
+            $maxNicksPerEmail: '%nickserv.max_nicks_per_email%'
             $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
             $guestPrefix: '%services.guest_prefix%'
+
+    App\NickServ\Application\UseCase\Saregister\SaregisterHandler:
+        arguments:
+            $maxNicksPerEmail: '%nickserv.max_nicks_per_email%'
+
+    App\NickServ\Application\UseCase\Set\SetNickSettingHandler:
+        arguments:
+            $maxNicksPerEmail: '%nickserv.max_nicks_per_email%'
 
     App\NickServ\Adapter\In\Irc\Command\RegisterCommand:
         tags: ['nickserv.command']

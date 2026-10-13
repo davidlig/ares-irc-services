@@ -28,6 +28,7 @@ final readonly class SaregisterHandler implements SaregisterHandlerInterface
         private RegisterNickRepository $nickRepository,
         private PasswordHasher $passwordHasher,
         private Clock $clock,
+        private int $maxNicksPerEmail,
     ) {}
 
     public function handle(Saregister $command): SaregisterResult
@@ -36,8 +37,10 @@ final readonly class SaregisterHandler implements SaregisterHandlerInterface
             return SaregisterResult::invalidEmail();
         }
 
-        if (null !== $this->nickRepository->findByEmail($command->email)) {
-            return SaregisterResult::emailAlreadyUsed($command->email);
+        if (0 < $this->maxNicksPerEmail
+            && $this->nickRepository->countByEmail($command->email) >= $this->maxNicksPerEmail
+        ) {
+            return SaregisterResult::emailAlreadyUsed($command->email, $this->maxNicksPerEmail);
         }
 
         $existing = $this->nickRepository->findByNick($command->nickname);

@@ -32,7 +32,7 @@ register:
   forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être enregistré sur ce réseau."
   pending_deletion: "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de suppression et ne peut pas être enregistré."
   invalid_email:    "\x0304✗\x03 L'adresse e-mail fournie n'est pas valide."
-  email_already_used: "\x0304✗\x03 L'e-mail \x02%email%\x02 est déjà utilisé par un autre surnom. Utilisez une adresse différente."
+  email_already_used: "\x0304✗\x03 L adresse \x02%email%\x02 est déjà utilisée par le maximum de \x02%max%\x02 pseudonymes. Utilisez une autre adresse."
   throttled:          "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de réessayer l'enregistrement."
   guest_prefix_forbidden: "\x0304✗\x03 Vous ne pouvez pas enregistrer un surnom commençant par \x02%prefix%\x02."
 

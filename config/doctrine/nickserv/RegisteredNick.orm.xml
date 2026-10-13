@@ -17,7 +17,7 @@
         <field name="nicknameLower" type="string" length="32" unique="true" column="nickname_lower"/>
         <field name="status" type="string" length="20" enum-type="App\NickServ\Domain\ValueObject\NickStatus"/>
         <field name="passwordHash" type="string" length="255" nullable="true" column="password_hash"/>
-        <field name="email" type="string" length="255" nullable="true" unique="true" column="email"/>
+        <field name="email" type="string" length="255" nullable="true" column="email"/>
         <field name="language" type="string" length="10" column="language"/>
         <field name="registeredAt" type="datetime_immutable" nullable="true" column="registered_at"/>
         <field name="expiresAt" type="datetime_immutable" nullable="true" column="expires_at"/>

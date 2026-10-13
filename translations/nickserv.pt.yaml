@@ -32,7 +32,7 @@ register:
   forbidden:        "\x0304✗\x03 O nickname \x02%nickname%\x02 não pode ser registado nesta rede."
   pending_deletion: "\x0304✗\x03 O nickname \x02%nickname%\x02 está pendente de eliminação e não pode ser registado."
   invalid_email:    "\x0304✗\x03 O endereço de email fornecido não é válido."
-  email_already_used: "\x0304✗\x03 O email \x02%email%\x02 já está em uso por outro nickname. Use um endereço diferente."
+  email_already_used: "\x0304✗\x03 O e-mail \x02%email%\x02 já está em uso pelo máximo de \x02%max%\x02 alcunhas. Usa outro endereço."
   throttled:          "\x0304✗\x03 Deve aguardar \x02%minutes%\x02 minuto(s) antes de tentar registar novamente."
   guest_prefix_forbidden: "\x0304✗\x03 Não pode registar um nick que começa com \x02%prefix%\x02."
 

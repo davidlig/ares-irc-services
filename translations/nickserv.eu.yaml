@@ -32,7 +32,7 @@ register:
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erregistratu."
   pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ezabatzearen zain dago eta ezin da erregistratu."
   invalid_email:    "\x0304✗\x03 Emandako posta elektronikoko helbidea ez da baliozkoa."
-  email_already_used: "\x0304✗\x03 \x02%email%\x02 posta jada beste ezizen batek erabiltzen du. Erabili beste helbide bat."
+  email_already_used: "\x0304✗\x03 \x02%email%\x02 helbidea jada \x02%max%\x02 ezizeneko maximoak erabiltzen du. Erabili beste helbide bat."
   throttled:          "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar duzu berriro erregistratzen saiatu aurretik."
   guest_prefix_forbidden: "\x0304✗\x03 Ezin duzu \x02%prefix%\x02 aurrizkiarekin hasten den ezizenik erregistratu."
 

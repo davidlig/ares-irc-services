@@ -55,6 +55,7 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
         private NickNetworkActions $networkActions,
         private ForcedVhostCheckerInterface $forcedVhostChecker,
         private ForbiddenVhostRepositoryInterface $forbiddenVhosts,
+        private int $maxNicksPerEmail = 3,
     ) {}
 
     public function handle(SetNickSetting $input): SetNickSettingResult
@@ -224,9 +225,17 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
 
     private function emailBelongsToAnotherAccount(string $email, RegisteredNick $account): bool
     {
-        $existing = $this->nickRepository->findByEmail($email);
+        // Re-setting the same address is not a change.
+        if (0 === strcasecmp((string) $account->getEmail(), $email)) {
+            return false;
+        }
 
-        return null !== $existing && $existing->getId() !== $account->getId();
+        // 0 disables the limit entirely, matching Anope's maxemails semantics.
+        if (0 === $this->maxNicksPerEmail) {
+            return false;
+        }
+
+        return $this->nickRepository->countByEmail($email) >= $this->maxNicksPerEmail;
     }
 
     private function changeLanguage(SetNickSetting $input, RegisteredNick $account): SetNickSettingResult

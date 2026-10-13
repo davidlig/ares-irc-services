@@ -32,7 +32,7 @@ register:
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kaydedilemez."
   pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi bekliyor ve kaydedilemez."
   invalid_email:    "\x0304✗\x03 Sağlanan e-posta adresi geçerli değil."
-  email_already_used: "\x0304✗\x03 \x02%email%\x02 e-postası zaten başka bir rumuz tarafından kullanılıyor. Farklı bir adres kullanın."
+  email_already_used: "\x0304✗\x03 \x02%email%\x02 adresi zaten en fazla \x02%max%\x02 takma ad tarafından kullanılıyor. Başka bir adres kullan."
   throttled:          "\x0304✗\x03 Tekrar kayıt olmayı denemeden önce \x02%minutes%\x02 dakika beklemelisiniz."
   guest_prefix_forbidden: "\x0304✗\x03 \x02%prefix%\x02 ile başlayan bir rumuzu kaydedemezsiniz."
 

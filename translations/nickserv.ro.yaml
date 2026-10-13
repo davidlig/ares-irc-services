@@ -32,7 +32,7 @@ register:
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi înregistrată în această rețea."
   pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptare de ștergere și nu poate fi înregistrată."
   invalid_email:    "\x0304✗\x03 Adresa de e-mail furnizată nu este validă."
-  email_already_used: "\x0304✗\x03 E-mailul \x02%email%\x02 este deja folosit de o altă poreclă. Folosiți o adresă diferită."
+  email_already_used: "\x0304✗\x03 Adresa \x02%email%\x02 este deja folosită de maximum \x02%max%\x02 pseudonime. Folosește altă adresă."
   throttled:          "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a încerca să vă înregistrați din nou."
   guest_prefix_forbidden: "\x0304✗\x03 Nu puteți înregistra o poreclă care începe cu \x02%prefix%\x02."
 

@@ -81,7 +81,7 @@ final class SaregisterCommandTest extends TestCase
     {
         yield 'registered' => [SaregisterResult::registered('NewNick'), 'saregister.done', true];
         yield 'invalid email' => [SaregisterResult::invalidEmail(), 'register.invalid_email', false];
-        yield 'email used' => [SaregisterResult::emailAlreadyUsed('a@b.test'), 'register.email_already_used', false];
+        yield 'email used' => [SaregisterResult::emailAlreadyUsed('a@b.test', 3), 'register.email_already_used', false];
         yield 'already registered' => [SaregisterResult::alreadyRegistered('Nick'), 'register.already_registered', false];
         yield 'already pending' => [SaregisterResult::alreadyPending('Nick'), 'register.already_pending', false];
         yield 'forbidden' => [SaregisterResult::forbidden('Nick'), 'register.forbidden', false];

@@ -32,7 +32,7 @@ register:
   forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden geregistreerd op dit netwerk."
   pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat op het punt verwijderd te worden en kan niet worden geregistreerd."
   invalid_email:    "\x0304✗\x03 Het opgegeven e-mailadres is niet geldig."
-  email_already_used: "\x0304✗\x03 De e-mail \x02%email%\x02 is al in gebruik door een andere bijnaam. Gebruik een ander adres."
+  email_already_used: "\x0304✗\x03 Het adres \x02%email%\x02 is al in gebruik door het maximum van \x02%max%\x02 nicknamen. Gebruik een ander adres."
   throttled:          "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u opnieuw probeert te registreren."
   guest_prefix_forbidden: "\x0304✗\x03 U kunt geen bijnaam registreren die begint met \x02%prefix%\x02."
 

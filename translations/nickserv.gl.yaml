@@ -40,7 +40,7 @@ register:
   forbidden:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non se pode rexistrar nesta rede."
   pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 está pendente de eliminación e non se pode rexistrar."
   invalid_email:    "\x0304✗\x03 O enderezo de correo electrónico proporcionado non é válido."
-  email_already_used: "\x0304✗\x03 O correo electrónico \x02%email%\x02 xa está en uso por outro alcume. Use un enderezo diferente."
+  email_already_used: "\x0304✗\x03 O correo \x02%email%\x02 xa está en uso polo máximo de \x02%max%\x02 alcumes. Usa outro enderezo."
   throttled:          "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de tentar rexistrarse de novo."
   guest_prefix_forbidden: "\x0304✗\x03 Non pode rexistrar un alcume que comece con \x02%prefix%\x02."
 

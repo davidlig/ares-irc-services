@@ -121,8 +121,7 @@ final class SetNickSettingHandlerTest extends TestCase
         self::assertSame(SetNickSettingOutcome::MissingValue, $handler->handle($this->input(SetNickSettingOption::Email, '', true))->outcome);
         self::assertSame(SetNickSettingOutcome::InvalidEmail, $handler->handle($this->input(SetNickSettingOption::Email, 'bad', true))->outcome);
 
-        $other = $this->account('Other', 2);
-        $repository->method('findByEmail')->willReturn($other);
+        $repository->method('countByEmail')->willReturn(3);   // limit reached
         self::assertSame(SetNickSettingOutcome::EmailAlreadyUsed, $handler->handle(
             $this->input(SetNickSettingOption::Email, 'other@example.com', true),
         )->outcome);
@@ -136,7 +135,7 @@ final class SetNickSettingHandlerTest extends TestCase
     {
         $account = $this->account();
         $repository = $this->repositoryReturning($account);
-        $repository->method('findByEmail')->willReturn(null);
+        $repository->method('countByEmail')->willReturn(0);
         $result = $this->handler($repository)->handle($this->input(SetNickSettingOption::Email, 'new@example.com', true));
 
         self::assertSame(SetNickSettingOutcome::Changed, $result->outcome);
@@ -154,7 +153,7 @@ final class SetNickSettingHandlerTest extends TestCase
     {
         $account = $this->account();
         $repository = $this->repositoryReturning($account);
-        $repository->method('findByEmail')->willReturn(null);
+        $repository->method('countByEmail')->willReturn(0);
         $pending = $this->createMock(PendingEmailChangeStore::class);
         $pending->expects(self::once())->method('store')->with('TestNick', 'new@example.com', 'TOKEN', self::isInstanceOf(DateTimeImmutable::class));
         $tokens = $this->createStub(VerificationTokenGenerator::class);
@@ -182,7 +181,7 @@ final class SetNickSettingHandlerTest extends TestCase
     {
         $account = $this->account();
         $repository = $this->repositoryReturning($account);
-        $repository->method('findByEmail')->willReturn(null);
+        $repository->method('countByEmail')->willReturn(0);
         $tokens = $this->createStub(VerificationTokenGenerator::class);
         $tokens->method('generate')->willReturn('TOKEN');
         $mailer = $this->createStub(EmailChangeMailSender::class);

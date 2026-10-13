@@ -113,7 +113,10 @@ final readonly class RegisterCommand implements NickServCommandInterface
                 $context->reply('register.invalid_email');
                 break;
             case RegisterNickOutcome::EmailAlreadyUsed:
-                $context->reply('register.email_already_used', ['email' => $result->email]);
+                $context->reply('register.email_already_used', [
+                    'email' => $result->email,
+                    'max' => (string) ($result->maxNicksPerEmail ?? 0),
+                ]);
                 break;
             case RegisterNickOutcome::AlreadyPending:
                 $context->reply('register.already_pending', ['nickname' => $result->nickname]);

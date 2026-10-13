@@ -32,7 +32,7 @@ register:
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot registrar en aquesta xarxa."
   pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no pot ser registrat."
   invalid_email:    "\x0304✗\x03 L'adreça de correu proporcionada no és vàlida."
-  email_already_used: "\x0304✗\x03 El correu \x02%email%\x02 ja està en ús per un altre sobrenom. Utilitzeu una adreça diferent."
+  email_already_used: "\x0304✗\x03 El correu \x02%email%\x02 ja està en ús pel màxim de \x02%max%\x02 sobrenoms. Fes servir una altra adreça."
   throttled:          "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans d'intentar registrar-vos de nou."
   guest_prefix_forbidden: "\x0304✗\x03 No podeu registrar un sobrenom que comenci amb \x02%prefix%\x02."
 
