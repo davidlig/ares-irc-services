@@ -26,6 +26,7 @@ register:
   short:            "Registra il suo nickname con i servizi."
   help:             "Avvia la registrazione del suo nickname attuale. Un token di verifica\nsarà inviato all'indirizzo email fornito. Completi la registrazione\neseguendo \x0303/msg %bot% VERIFY <token>\x03. Il token scade in 1 ora.\nSe non arriva, controlli la cartella spam o usi \x0303RESEND\x03."
   pending:          "\x0307→\x03 Un token di verifica è stato inviato a \x02%email%\x02.\n  Esegua \x0303/msg %bot% VERIFY <token>\x03 per completare la registrazione.\n  Non l'ha ricevuto? Controlli lo spam o usi \x0303/msg %bot% RESEND\x03\n  Il token scadrà in \x021 ora\x02."
+  registered:       "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato registrato."
   already_registered: "\x0304✗\x03 Il nickname \x02%nickname%\x02 è già registrato."
   already_pending:  "\x0304✗\x03 Il nickname \x02%nickname%\x02 ha già una verifica in sospeso.\n  Usi \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Il nickname \x02%nickname%\x02 non può essere registrato su questa rete."

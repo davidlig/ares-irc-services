@@ -26,6 +26,7 @@ register:
   short:            "Erregistratu zure ezizena zerbitzuetan."
   help:             "Zure uneko ezizenaren erregistroa hasten du. Egiaztapen token bat\nemandako posta elektronikoko helbidera bidaliko da. Osatu\n\x0303/msg %bot% VERIFY <token>\x03 exekutatuz. Tokena ordubetean iraungitzen da.\nHeldu ez bada, egiaztatu spam karpeta edo erabili \x0303RESEND\x03."
   pending:          "\x0307→\x03 Egiaztapen token bat bidali da \x02%email%\x02 helbidera.\n  Exekutatu \x0303/msg %bot% VERIFY <token>\x03 erregistroa osatzeko.\n  Ez duzu jaso? Egiaztatu spam-a edo erabili \x0303/msg %bot% RESEND\x03\n  Tokena \x021 ordu\x02 barru iraungiko da."
+  registered:       "\x0303✔\x03 \x02%nickname%\x02 ezizena erregistratu da."
   already_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena jada erregistratuta dago."
   already_pending:  "\x0304✗\x03 \x02%nickname%\x02 ezizenak jada egiaztapen bat zain du.\n  Erabili \x0303/msg %bot% VERIFY <token>\x03 edo \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erregistratu."

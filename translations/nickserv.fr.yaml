@@ -26,6 +26,7 @@ register:
   short:            "Enregistrer votre surnom auprès des services."
   help:             "Démarre l'enregistrement de votre surnom actuel. Un jeton de vérification\nsera envoyé à l'adresse e-mail fournie. Terminez l'enregistrement\nen exécutant \x0303/msg %bot% VERIFY <jeton>\x03. Le jeton expire dans 1 heure.\nS'il n'arrive pas, vérifiez vos spams ou utilisez \x0303RESEND\x03."
   pending:          "\x0307→\x03 Un jeton de vérification a été envoyé à \x02%email%\x02.\n  Exécutez \x0303/msg %bot% VERIFY <jeton>\x03 pour terminer l'enregistrement.\n  Vous ne l'avez pas reçu ? Vérifiez vos spams ou utilisez \x0303/msg %bot% RESEND\x03\n  Le jeton expirera dans \x021 heure\x02."
+  registered:       "\x0303✔\x03 Le pseudonyme \x02%nickname%\x02 a été enregistré."
   already_registered: "\x0304✗\x03 Le surnom \x02%nickname%\x02 est déjà enregistré."
   already_pending:  "\x0304✗\x03 Le surnom \x02%nickname%\x02 a déjà une vérification en attente.\n  Utilisez \x0303/msg %bot% VERIFY <jeton>\x03 ou \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être enregistré sur ce réseau."

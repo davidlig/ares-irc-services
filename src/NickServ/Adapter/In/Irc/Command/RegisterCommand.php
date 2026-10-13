@@ -98,6 +98,9 @@ final readonly class RegisterCommand implements NickServCommandInterface
             case RegisterNickOutcome::VerificationRequired:
                 $context->reply('register.pending', ['email' => $result->email]);
                 break;
+            case RegisterNickOutcome::RegisteredWithoutVerification:
+                $context->reply('register.registered', ['nickname' => $result->nickname]);
+                break;
             case RegisterNickOutcome::Throttled:
                 $context->reply('register.throttled', [
                     'minutes' => (string) (int) ceil($result->retryAfterSeconds / 60),

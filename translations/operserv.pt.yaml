@@ -303,3 +303,27 @@ motd:
     none:           "\x0303✓\x03 Nenhuma entrada MOTD expirada para remover."
   debug:
     finalized:      "A mensagem MOTD #%id% terminou: [%type%] %message% | %date% | %shown_count%"
+
+emailverify:
+  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
+  short:            "Ativa ou desativa a verificação de e-mail no registo de alcunhas."
+  help:             "Controla se registar uma alcunha exige confirmar o endereço de e-mail.\nON exige verificação: a alcunha fica pendente até o token ser confirmado.\nOFF registra a alcunha de imediato; o endereço continua a ser guardado para recuperar a conta.\nSTATUS mostra a política atual.\nEste comando requer acesso root."
+  on:
+    syntax:         "EMAILVERIFY ON"
+    short:          "Exigir verificação de e-mail no registo."
+    help:           "Exige que os novos registos confirmem o endereço de e-mail antes de a alcunha ficar ativa."
+  off:
+    syntax:         "EMAILVERIFY OFF"
+    short:          "Registar alcunhas sem verificação de e-mail."
+    help:           "Registra as novas alcunhas de imediato. O endereço de e-mail continua a ser obrigatório e guardado, porque é o canal de recuperação da conta."
+  status:
+    syntax:         "EMAILVERIFY STATUS"
+    short:          "Mostrar a política de verificação atual."
+    help:           "Mostra se atualmente é exigida verificação de e-mail no registo."
+  enabled:          "\x0303✓\x03 A verificação de e-mail é agora \x02obrigatória\x02 no registo."
+  disabled:         "\x0303✓\x03 A verificação de e-mail está agora \x02desativada\x02; as alcunhas registam-se de imediato."
+  already_enabled:  "\x0304✗\x03 A verificação de e-mail já é obrigatória."
+  already_disabled: "\x0304✗\x03 A verificação de e-mail já está desativada."
+  status_on:        "A verificação de e-mail está atualmente \x0303ativada\x03 no registo."
+  status_off:       "A verificação de e-mail está atualmente \x0304desativada\x03; as alcunhas registam-se de imediato."
+  unknown_sub:      "\x0304✗\x03 Subcomando desconhecido. Uso: \x02%syntax%\x02"

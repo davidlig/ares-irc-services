@@ -26,6 +26,7 @@ register:
   short:            "Înregistrați-vă porecla la servicii."
   help:             "Inițiază înregistrarea poreclei dumneavoastră actuale. Un token de verificare\nva fi trimis la adresa de e-mail furnizată. Finalizați înregistrarea\nexecutând \x0303/msg %bot% VERIFY <token>\x03. Tokenul expiră într-o oră.\nDacă nu sosește, verificați folderul de spam sau folosiți \x0303RESEND\x03."
   pending:          "\x0307→\x03 Un token de verificare a fost trimis la \x02%email%\x02.\n  Executați \x0303/msg %bot% VERIFY <token>\x03 pentru a finaliza înregistrarea.\n  Nu l-ați primit? Verificați spamul sau folosiți \x0303/msg %bot% RESEND\x03\n  Tokenul va expira în \x021 oră\x02."
+  registered:       "\x0303✔\x03 Pseudonimul \x02%nickname%\x02 a fost înregistrat."
   already_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja înregistrată."
   already_pending:  "\x0304✗\x03 Porecla \x02%nickname%\x02 are deja o verificare în așteptare.\n  Folosiți \x0303/msg %bot% VERIFY <token>\x03 sau \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi înregistrată în această rețea."

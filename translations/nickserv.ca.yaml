@@ -26,6 +26,7 @@ register:
   short:            "Registrar el vostre sobrenom amb els serveis."
   help:             "Inicia el registre del vostre sobrenom actual. S'enviarà un token de\nverificació a l'adreça de correu proporcionada. Completeu el registre\nexecutant \x0303/msg %bot% VERIFY <token>\x03. El token expira en 1 hora.\nSi no arriba, comproveu la carpeta de correu brossa o utilitzeu \x0303RESEND\x03."
   pending:          "\x0307→\x03 S'ha enviat un token de verificació a \x02%email%\x02.\n  Executeu \x0303/msg %bot% VERIFY <token>\x03 per completar el registre.\n  No l'heu rebut? Comproveu el correu brossa o utilitzeu \x0303/msg %bot% RESEND\x03\n  El token expirarà en \x021 hora\x02."
+  registered:       "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat registrat."
   already_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està registrat."
   already_pending:  "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja té una verificació pendent.\n  Utilitzeu \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot registrar en aquesta xarxa."

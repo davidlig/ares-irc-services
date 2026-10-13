@@ -19,6 +19,11 @@ final readonly class RegisterNickResult
         return new self(RegisterNickOutcome::VerificationRequired, email: $email);
     }
 
+    public static function registeredWithoutVerification(string $nickname): self
+    {
+        return new self(RegisterNickOutcome::RegisteredWithoutVerification, nickname: $nickname);
+    }
+
     public static function throttled(int $retryAfterSeconds): self
     {
         return new self(RegisterNickOutcome::Throttled, retryAfterSeconds: $retryAfterSeconds);

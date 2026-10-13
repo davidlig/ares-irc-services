@@ -26,6 +26,7 @@ register:
   short:            "Ihren Nickname bei den Services registrieren."
   help:             "Startet die Registrierung Ihres aktuellen Nicknames. Ein Verifizierungs-Token\nwird an die angegebene E-Mail-Adresse gesendet. Schließen Sie die Registrierung\nmit \x0303/msg %bot% VERIFY <Token>\x03 ab. Das Token läuft in 1 Stunde ab.\nWenn es nicht ankommt, prüfen Sie Ihren Spam-Ordner oder verwenden Sie \x0303RESEND\x03."
   pending:          "\x0307→\x03 Ein Verifizierungs-Token wurde an \x02%email%\x02 gesendet.\n  Führen Sie \x0303/msg %bot% VERIFY <Token>\x03 aus, um die Registrierung abzuschließen.\n  Nicht erhalten? Prüfen Sie Spam oder verwenden Sie \x0303/msg %bot% RESEND\x03\n  Das Token läuft in \x021 Stunde\x02 ab."
+  registered:       "\x0303✔\x03 Der Nickname \x02%nickname%\x02 wurde registriert."
   already_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist bereits registriert."
   already_pending:  "\x0304✗\x03 Nickname \x02%nickname%\x02 hat bereits eine ausstehende Verifizierung.\n  Verwenden Sie \x0303/msg %bot% VERIFY <Token>\x03 oder \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 kann in diesem Netzwerk nicht registriert werden."

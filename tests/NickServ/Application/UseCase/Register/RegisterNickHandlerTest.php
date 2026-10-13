@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Application\UseCase\Register;
 
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\EmailVerificationSettingRepositoryInterface;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
@@ -198,6 +199,46 @@ final class RegisterNickHandlerTest extends TestCase
         return new RegisterNick($nickname, 'plain-password', $email, 'es', 'ip:client');
     }
 
+    #[Test]
+    public function registersImmediatelyWhenVerificationIsNotRequired(): void
+    {
+        $saved = null;
+
+        $repository = $this->createMock(RegisterNickRepository::class);
+        $repository->method('findByEmail')->willReturn(null);
+        $repository->method('findByNick')->willReturn(null);
+        $repository->expects(self::once())->method('save')->willReturnCallback(
+            static function (RegisteredNick $nick) use (&$saved): void {
+                $saved = $nick;
+            },
+        );
+
+        $mail = $this->createMock(RegistrationMailSender::class);
+        $mail->expects(self::never())->method('sendVerification');
+
+        $store = $this->createMock(RegistrationVerificationStore::class);
+        $store->expects(self::never())->method('store');
+
+        $throttle = $this->createMock(RegistrationThrottle::class);
+        $throttle->method('remainingCooldownSeconds')->willReturn(0);
+        $throttle->expects(self::once())->method('recordAttempt');
+
+        $result = $this->handler(
+            repository: $repository,
+            verificationStore: $store,
+            throttle: $throttle,
+            mail: $mail,
+            emailVerificationSettings: $this->emailVerificationSettings(false),
+        )->handle($this->input());
+
+        self::assertSame(RegisterNickOutcome::RegisteredWithoutVerification, $result->outcome);
+        self::assertSame('NewNick', $result->nickname);
+        self::assertInstanceOf(RegisteredNick::class, $saved);
+        self::assertSame(NickStatus::Registered, $saved->getStatus());
+        self::assertNull($saved->getExpiresAt());
+        self::assertSame('user@example.com', $saved->getEmail());
+    }
+
     private function handler(
         ?RegisterNickRepository $repository = null,
         ?PasswordHasher $passwordHasher = null,
@@ -207,6 +248,7 @@ final class RegisterNickHandlerTest extends TestCase
         ?RegistrationMailSender $mail = null,
         int $tokenTtl = 3600,
         string $guestPrefix = 'Guest-',
+        ?EmailVerificationSettingRepositoryInterface $emailVerificationSettings = null,
     ): RegisterNickHandler {
         if (null === $repository) {
             $repository = $this->createStub(RegisterNickRepository::class);
@@ -227,6 +269,7 @@ final class RegisterNickHandlerTest extends TestCase
             $verificationStore ?? $this->createStub(RegistrationVerificationStore::class),
             $throttle,
             $mail ?? $this->createStub(RegistrationMailSender::class),
+            $emailVerificationSettings ?? $this->emailVerificationSettings(),
             300,
             $tokenTtl,
             $guestPrefix,
@@ -239,6 +282,14 @@ final class RegisterNickHandlerTest extends TestCase
         $clock->method('now')->willReturn($this->now);
 
         return $clock;
+    }
+
+    private function emailVerificationSettings(bool $required = true): EmailVerificationSettingRepositoryInterface
+    {
+        $settings = $this->createStub(EmailVerificationSettingRepositoryInterface::class);
+        $settings->method('isVerificationRequired')->willReturn($required);
+
+        return $settings;
     }
 
     private function passwordHasher(): PasswordHasher
