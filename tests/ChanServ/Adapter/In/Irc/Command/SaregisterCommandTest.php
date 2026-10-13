@@ -119,7 +119,10 @@ final class SaregisterCommandTest extends TestCase
         self::assertSame(['error.invalid_channel'], $messages);
     }
 
-    /** @param list<string> $messages */
+    /**
+     * @param list<string>  $messages
+     * @param array<string> $args
+     */
     private function context(array &$messages, bool $withSender, array $args = ['#SitioChat', 'descripción']): ChanServContext
     {
         $translator = $this->createStub(TranslatorInterface::class);

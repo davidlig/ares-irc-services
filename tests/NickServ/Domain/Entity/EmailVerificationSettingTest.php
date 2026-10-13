@@ -16,8 +16,8 @@ final class EmailVerificationSettingTest extends TestCase
     #[Test]
     public function exposesTheConstructedPolicy(): void
     {
-        self::assertTrue((new EmailVerificationSetting(true))->isRequired());
-        self::assertFalse((new EmailVerificationSetting(false))->isRequired());
+        self::assertTrue(new EmailVerificationSetting(true)->isRequired());
+        self::assertFalse(new EmailVerificationSetting(false)->isRequired());
     }
 
     #[Test]
