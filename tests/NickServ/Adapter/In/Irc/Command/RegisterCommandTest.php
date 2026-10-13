@@ -116,6 +116,7 @@ final class RegisterCommandTest extends TestCase
     public static function presentations(): iterable
     {
         yield 'verification required' => [RegisterNickResult::verificationRequired('a@b.test'), 'register.pending', ['%email%' => 'a@b.test']];
+        yield 'registered without verification' => [RegisterNickResult::registeredWithoutVerification('Nick'), 'register.registered', ['%nickname%' => 'Nick']];
         yield 'throttled rounds up minutes' => [RegisterNickResult::throttled(61), 'register.throttled', ['%minutes%' => '2']];
         yield 'guest prefix' => [RegisterNickResult::guestPrefixForbidden('Guest-'), 'register.guest_prefix_forbidden', ['%prefix%' => 'Guest-']];
         yield 'invalid email' => [RegisterNickResult::invalidEmail(), 'register.invalid_email', []];

@@ -303,3 +303,27 @@ motd:
     none:           "\x0303✓\x03 No expired MOTD entries to remove."
   debug:
     finalized:      "MOTD message #%id% has ended: [%type%] %message% | %date% | %shown_count%"
+
+emailverify:
+  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
+  short:            "Enable or disable e-mail verification for nickname registration."
+  help:             "Controls whether registering a nickname requires confirming the e-mail address.\nON requires verification: the nickname stays pending until the token is confirmed.\nOFF registers the nickname immediately; the address is still stored for account recovery.\nSTATUS shows the current policy.\nThis command requires root access."
+  on:
+    syntax:         "EMAILVERIFY ON"
+    short:          "Require e-mail verification on registration."
+    help:           "Requires new registrations to confirm the e-mail address before the nickname becomes active."
+  off:
+    syntax:         "EMAILVERIFY OFF"
+    short:          "Register nicknames without e-mail verification."
+    help:           "Registers new nicknames immediately. The e-mail address is still required and stored, because it is the account recovery channel."
+  status:
+    syntax:         "EMAILVERIFY STATUS"
+    short:          "Show the current verification policy."
+    help:           "Shows whether e-mail verification is currently required for registration."
+  enabled:          "\x0303✓\x03 E-mail verification is now \x02required\x02 for registration."
+  disabled:         "\x0303✓\x03 E-mail verification is now \x02disabled\x02; nicknames register immediately."
+  already_enabled:  "\x0304✗\x03 E-mail verification is already required."
+  already_disabled: "\x0304✗\x03 E-mail verification is already disabled."
+  status_on:        "E-mail verification is currently \x0303required\x03 for registration."
+  status_off:       "E-mail verification is currently \x0304disabled\x03; nicknames register immediately."
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand. Usage: \x02%syntax%\x02"

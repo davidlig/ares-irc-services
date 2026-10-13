@@ -303,3 +303,27 @@ motd:
     none:           "\x0303✓\x03 Ez dago kentzeko iraungitako MOTD sarrerarik."
   debug:
     finalized:      "#%id% MOTD mezua amaitu da: [%type%] %message% | %date% | %shown_count%"
+
+emailverify:
+  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
+  short:            "Ezizenen erregistroan posta elektronikoaren egiaztapena gaitu edo desgaitu."
+  help:             "Ezizen bat erregistratzeko posta helbidea berretsi behar den kontrolatzen du.\nON aukerak egiaztapena eskatzen du: ezizena zain geratzen da tokena berretsi arte.\nOFF aukerak ezizena berehala erregistratzen du; helbidea kontua berreskuratzeko gordetzen da oraindik.\nSTATUS aukerak uneko politika erakusten du.\nKomando honek root sarbidea behar du."
+  on:
+    syntax:         "EMAILVERIFY ON"
+    short:          "Erregistratzean posta egiaztapena eskatu."
+    help:           "Erregistro berriek posta helbidea berretsi behar dute ezizena aktibo izan aurretik."
+  off:
+    syntax:         "EMAILVERIFY OFF"
+    short:          "Ezizenak posta egiaztapenik gabe erregistratu."
+    help:           "Ezizen berriak berehala erregistratzen ditu. Posta helbidea derrigorrezkoa eta gordea izaten jarraitzen du, kontua berreskuratzeko bidea baita."
+  status:
+    syntax:         "EMAILVERIFY STATUS"
+    short:          "Uneko egiaztapen-politika erakutsi."
+    help:           "Erregistratzeko posta egiaztapena une honetan beharrezkoa den erakusten du."
+  enabled:          "\x0303✓\x03 Posta egiaztapena orain \x02derrigorrezkoa\x02 da erregistratzeko."
+  disabled:         "\x0303✓\x03 Posta egiaztapena orain \x02desgaituta\x02 dago; ezizenak berehala erregistratzen dira."
+  already_enabled:  "\x0304✗\x03 Posta egiaztapena jada derrigorrezkoa da."
+  already_disabled: "\x0304✗\x03 Posta egiaztapena jada desgaituta dago."
+  status_on:        "Posta egiaztapena une honetan \x0303derrigorrezkoa\x03 da erregistratzeko."
+  status_off:       "Posta egiaztapena une honetan \x0304desgaituta\x03 dago; ezizenak berehala erregistratzen dira."
+  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna. Erabilera: \x02%syntax%\x02"

@@ -303,3 +303,27 @@ motd:
     none:           "\x0303✓\x03 Brak wygasłych wpisów MOTD do usunięcia."
   debug:
     finalized:      "Wiadomość MOTD #%id% zakończyła się: [%type%] %message% | %date% | %shown_count%"
+
+emailverify:
+  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
+  short:            "Włącz lub wyłącz weryfikację e-mail przy rejestracji pseudonimu."
+  help:             "Decyduje, czy rejestracja pseudonimu wymaga potwierdzenia adresu e-mail.\nON wymaga weryfikacji: pseudonim pozostaje oczekujący do potwierdzenia tokenu.\nOFF rejestruje pseudonim natychmiast; adres nadal jest zapisywany na potrzeby odzyskiwania konta.\nSTATUS pokazuje bieżącą politykę.\nTo polecenie wymaga dostępu root."
+  on:
+    syntax:         "EMAILVERIFY ON"
+    short:          "Wymagaj weryfikacji e-mail przy rejestracji."
+    help:           "Wymaga, aby nowe rejestracje potwierdziły adres e-mail, zanim pseudonim stanie się aktywny."
+  off:
+    syntax:         "EMAILVERIFY OFF"
+    short:          "Rejestruj pseudonimy bez weryfikacji e-mail."
+    help:           "Rejestruje nowe pseudonimy natychmiast. Adres e-mail nadal jest wymagany i zapisywany, ponieważ służy do odzyskiwania konta."
+  status:
+    syntax:         "EMAILVERIFY STATUS"
+    short:          "Pokaż bieżącą politykę weryfikacji."
+    help:           "Pokazuje, czy weryfikacja e-mail jest obecnie wymagana przy rejestracji."
+  enabled:          "\x0303✓\x03 Weryfikacja e-mail jest teraz \x02wymagana\x02 przy rejestracji."
+  disabled:         "\x0303✓\x03 Weryfikacja e-mail jest teraz \x02wyłączona\x02; pseudonimy rejestrują się natychmiast."
+  already_enabled:  "\x0304✗\x03 Weryfikacja e-mail jest już wymagana."
+  already_disabled: "\x0304✗\x03 Weryfikacja e-mail jest już wyłączona."
+  status_on:        "Weryfikacja e-mail jest obecnie \x0303wymagana\x03 przy rejestracji."
+  status_off:       "Weryfikacja e-mail jest obecnie \x0304wyłączona\x03; pseudonimy rejestrują się natychmiast."
+  unknown_sub:      "\x0304✗\x03 Nieznane podpolecenie. Użycie: \x02%syntax%\x02"

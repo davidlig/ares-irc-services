@@ -303,3 +303,27 @@ motd:
     none:           "\x0303✓\x03 Geen verlopen MOTD-vermeldingen om te verwijderen."
   debug:
     finalized:      "MOTD-bericht #%id% is beëindigd: [%type%] %message% | %date% | %shown_count%"
+
+emailverify:
+  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
+  short:            "E-mailverificatie bij nicknaamregistratie in- of uitschakelen."
+  help:             "Bepaalt of het registreren van een nicknaam bevestiging van het e-mailadres vereist.\nON vereist verificatie: de nicknaam blijft in behandeling tot het token is bevestigd.\nOFF registreert de nicknaam onmiddellijk; het adres wordt nog steeds bewaard voor accountherstel.\nSTATUS toont het huidige beleid.\nDit commando vereist root-toegang."
+  on:
+    syntax:         "EMAILVERIFY ON"
+    short:          "E-mailverificatie bij registratie vereisen."
+    help:           "Vereist dat nieuwe registraties het e-mailadres bevestigen voordat de nicknaam actief wordt."
+  off:
+    syntax:         "EMAILVERIFY OFF"
+    short:          "Nicknamen registreren zonder e-mailverificatie."
+    help:           "Registreert nieuwe nicknamen onmiddellijk. Het e-mailadres blijft verplicht en wordt bewaard, omdat het de weg voor accountherstel is."
+  status:
+    syntax:         "EMAILVERIFY STATUS"
+    short:          "Het huidige verificatiebeleid tonen."
+    help:           "Toont of e-mailverificatie momenteel vereist is voor registratie."
+  enabled:          "\x0303✓\x03 E-mailverificatie is nu \x02verplicht\x02 voor registratie."
+  disabled:         "\x0303✓\x03 E-mailverificatie is nu \x02uitgeschakeld\x02; nicknamen worden onmiddellijk geregistreerd."
+  already_enabled:  "\x0304✗\x03 E-mailverificatie is al verplicht."
+  already_disabled: "\x0304✗\x03 E-mailverificatie is al uitgeschakeld."
+  status_on:        "E-mailverificatie is momenteel \x0303verplicht\x03 voor registratie."
+  status_off:       "E-mailverificatie is momenteel \x0304uitgeschakeld\x03; nicknamen worden onmiddellijk geregistreerd."
+  unknown_sub:      "\x0304✗\x03 Onbekend subcommando. Gebruik: \x02%syntax%\x02"

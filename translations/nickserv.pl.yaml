@@ -26,6 +26,7 @@ register:
   short:            "Zarejestruj swój nick w serwisach."
   help:             "Rozpoczyna rejestrację Twojego obecnego nicka. Token weryfikacyjny\nzostanie wysłany na podany adres e-mail. Zakończ rejestrację\nużywając \x0303/msg %bot% VERIFY <token>\x03. Token wygasa za 1 godzinę.\nJeśli nie dotarł, sprawdź folder spam lub użyj \x0303RESEND\x03."
   pending:          "\x0307→\x03 Token weryfikacyjny został wysłany na \x02%email%\x02.\n  Uruchom \x0303/msg %bot% VERIFY <token>\x03 aby zakończyć rejestrację.\n  Nie otrzymałeś? Sprawdź spam lub użyj \x0303/msg %bot% RESEND\x03\n  Token wygaśnie za \x021 godzinę\x02."
+  registered:       "\x0303✔\x03 Pseudonim \x02%nickname%\x02 został zarejestrowany."
   already_registered: "\x0304✗\x03 Nick \x02%nickname%\x02 jest już zarejestrowany."
   already_pending:  "\x0304✗\x03 Nick \x02%nickname%\x02 ma już oczekującą weryfikację.\n  Użyj \x0303/msg %bot% VERIFY <token>\x03 lub \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Nick \x02%nickname%\x02 nie może być zarejestrowany w tej sieci."
