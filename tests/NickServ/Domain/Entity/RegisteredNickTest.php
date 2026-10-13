@@ -78,6 +78,31 @@ final class RegisteredNickTest extends TestCase
     }
 
     #[Test]
+    public function createActiveRegistersTheAccountImmediately(): void
+    {
+        $registeredAt = new DateTimeImmutable();
+
+        $nick = RegisteredNick::createActive(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            $registeredAt,
+        );
+
+        self::assertSame(NickStatus::Registered, $nick->getStatus());
+        self::assertTrue($nick->isRegistered());
+        self::assertFalse($nick->isPending());
+        self::assertNull($nick->getExpiresAt());
+        self::assertSame('Nick', $nick->getNickname());
+        self::assertSame('nick', $nick->getNicknameLower());
+        self::assertSame('hash', $nick->getPasswordHash());
+        self::assertSame('user@example.com', $nick->getEmail());
+        self::assertSame('en', $nick->getLanguage());
+        self::assertSame($registeredAt, $nick->getRegisteredAt());
+    }
+
+    #[Test]
     public function activateTransitionsFromPendingToRegistered(): void
     {
         $nick = RegisteredNick::createPending(

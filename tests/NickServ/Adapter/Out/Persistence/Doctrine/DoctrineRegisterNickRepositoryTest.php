@@ -50,4 +50,31 @@ final class DoctrineRegisterNickRepositoryTest extends DoctrineIntegrationTestCa
         self::assertNull($this->repository->findByNick('missing'));
         self::assertNull($this->repository->findByEmail('missing@example.com'));
     }
+
+    #[Test]
+    public function countsNicksPerEmailCaseInsensitivelyIgnoringNullEmails(): void
+    {
+        $this->repository->save(RegisteredNick::createPending(
+            'CountOne',
+            'hash',
+            'User@Example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable(),
+        ));
+        $this->repository->save(RegisteredNick::createPending(
+            'CountTwo',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+            new DateTimeImmutable(),
+        ));
+        $this->repository->save(RegisteredNick::createForbidden('CountForbidden', 'reserved'));
+        $this->flushAndClear();
+
+        self::assertSame(2, $this->repository->countByEmail('user@example.com'));
+        self::assertSame(2, $this->repository->countByEmail('USER@EXAMPLE.COM'));
+        self::assertSame(0, $this->repository->countByEmail('missing@example.com'));
+    }
 }

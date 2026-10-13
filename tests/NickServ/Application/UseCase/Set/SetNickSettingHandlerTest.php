@@ -195,6 +195,38 @@ final class SetNickSettingHandlerTest extends TestCase
     }
 
     #[Test]
+    public function reSettingTheAccountsOwnAddressIsNeverTreatedAsTaken(): void
+    {
+        $account = $this->account();
+        $repository = $this->repositoryReturning($account);
+        // A limit reached would block any different address; the account's own
+        // address must short-circuit before the repository count is consulted.
+        $repository->method('countByEmail')->willReturn(3);
+        $handler = $this->handler($repository);
+
+        $result = $handler->handle($this->input(SetNickSettingOption::Email, 'testnick@example.com', true));
+
+        self::assertSame(SetNickSettingOutcome::Changed, $result->outcome);
+        self::assertSame('testnick@example.com', $account->getEmail());
+    }
+
+    #[Test]
+    public function aZeroPerEmailLimitDisablesTheCountCheckEntirely(): void
+    {
+        $account = $this->account();
+        $repository = $this->repositoryReturning($account);
+        // With the limit disabled (0), any count would still be >= 0, so the
+        // outcome only stays Changed if the count is never consulted.
+        $repository->method('countByEmail')->willReturn(1);
+        $handler = $this->handler($repository, maxEmails: 0);
+
+        $result = $handler->handle($this->input(SetNickSettingOption::Email, 'other@example.com', true));
+
+        self::assertSame(SetNickSettingOutcome::Changed, $result->outcome);
+        self::assertSame('other@example.com', $account->getEmail());
+    }
+
+    #[Test]
     public function changesLanguageAndTimezone(): void
     {
         $account = $this->account();
@@ -320,6 +352,7 @@ final class SetNickSettingHandlerTest extends TestCase
         ?ForcedVhostCheckerInterface $forced = null,
         ?ForbiddenVhostRepositoryInterface $forbidden = null,
         ?VhostDisplayResolver $display = null,
+        ?int $maxEmails = null,
     ): SetNickSettingHandler {
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-09 12:00:00 UTC'));
@@ -340,6 +373,7 @@ final class SetNickSettingHandlerTest extends TestCase
             $network ?? $this->createStub(NickNetworkActions::class),
             $forced ?? $this->createStub(ForcedVhostCheckerInterface::class),
             $forbidden ?? $this->createStub(ForbiddenVhostRepositoryInterface::class),
+            $maxEmails ?? 3,
         );
     }
 

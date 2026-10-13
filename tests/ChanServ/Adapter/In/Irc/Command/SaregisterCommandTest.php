@@ -105,8 +105,22 @@ final class SaregisterCommandTest extends TestCase
         self::assertSame(['error.not_identified'], $messages);
     }
 
+    #[Test]
+    public function rejectsAnInvalidChannelNameBeforeConsultingTheHandler(): void
+    {
+        $handler = $this->createMock(RegisterChannelHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $messages = [];
+
+        new SaregisterCommand($handler)->execute(
+            $this->context($messages, withSender: true, args: ['SitioChat', 'descripción']),
+        );
+
+        self::assertSame(['error.invalid_channel'], $messages);
+    }
+
     /** @param list<string> $messages */
-    private function context(array &$messages, bool $withSender): ChanServContext
+    private function context(array &$messages, bool $withSender, array $args = ['#SitioChat', 'descripción']): ChanServContext
     {
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $key) use (&$messages): string {
@@ -121,7 +135,7 @@ final class SaregisterCommandTest extends TestCase
             $withSender ? new SenderView('UID1', 'Oper', 'i', 'h', 'c', 'ip', true, true) : null,
             $withSender ? new ChanAccountView(1, 'Oper', 'en') : null,
             'SAREGISTER',
-            ['#SitioChat', 'descripción'],
+            $args,
             $notifier,
             $translator,
             'en',
