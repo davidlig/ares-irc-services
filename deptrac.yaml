@@ -86,6 +86,26 @@ deptrac:
         - type: classNameRegex
           value: '#^App\\MemoServ\\Adapter(?:\\|$)#'
 
+    - name: CRegServ Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\CRegServ\\Domain\\#'
+
+    - name: CRegServ Application Public
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\CRegServ\\Application\\(?:Port\\In|PublishedEvent)(?:\\|$)#'
+
+    - name: CRegServ Application Internal
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\CRegServ\\Application\\(?!(?:Port\\In|PublishedEvent)(?:\\|$))#'
+
+    - name: CRegServ Adapter
+      collectors:
+        - type: classNameRegex
+          value: '#^App\\CRegServ\\Adapter(?:\\|$)#'
+
     - name: OperServ Domain
       collectors:
         - type: classNameRegex
@@ -234,6 +254,29 @@ deptrac:
       - Shared Application
       - External
 
+    CRegServ Domain:
+      - Shared Domain
+    CRegServ Application Public:
+      - CRegServ Domain
+      - Shared Domain
+      - Shared Application
+    CRegServ Application Internal:
+      - CRegServ Domain
+      - CRegServ Application Public
+      - Shared Domain
+      - Shared Application
+    CRegServ Adapter:
+      - CRegServ Domain
+      - CRegServ Application Public
+      - CRegServ Application Internal
+      - Irc Application Public
+      - NickServ Application Public
+      - ChanServ Application Public
+      - OperServ Application Public
+      - Shared Domain
+      - Shared Application
+      - External
+
     OperServ Domain:
       - Shared Domain
     OperServ Application Public:
@@ -314,6 +357,10 @@ deptrac:
       - MemoServ Application Public
       - MemoServ Application Internal
       - MemoServ Adapter
+      - CRegServ Domain
+      - CRegServ Application Public
+      - CRegServ Application Internal
+      - CRegServ Adapter
       - OperServ Domain
       - OperServ Application Public
       - OperServ Application Internal

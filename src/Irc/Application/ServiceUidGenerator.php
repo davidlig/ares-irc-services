@@ -47,6 +47,7 @@ final class ServiceUidGenerator implements ServiceUidGeneratorInterface
             'nickserv' => 'A',
             'chanserv' => 'B',
             'memoserv' => 'C',
+            'cregserv' => 'D',
             'operserv' => 'E',
             default => 'Z',
         };

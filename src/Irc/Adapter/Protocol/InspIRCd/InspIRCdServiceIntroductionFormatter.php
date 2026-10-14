@@ -16,6 +16,7 @@ final readonly class InspIRCdServiceIntroductionFormatter
         'nickserv' => '+oBIkN',
         'chanserv' => '+oBIkN',
         'memoserv' => '+oBIkNR',
+        'cregserv' => '+oBIkN',
         'operserv' => '+oBIkNR',
     ];
 
