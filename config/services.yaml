@@ -1515,6 +1515,21 @@ services:
         arguments:
             $commands: !tagged_iterator cregserv.command
 
+    App\CRegServ\Application\Port\Out\RegisteredChannelLookupPort:
+        alias: App\CRegServ\Adapter\Out\ChanServ\ChanServRegisteredChannelLookupAdapter
+
+    App\CRegServ\Application\UseCase\RequestChannelRegistration\RequestChannelRegistrationHandlerInterface:
+        alias: App\CRegServ\Application\UseCase\RequestChannelRegistration\RequestChannelRegistrationHandler
+
+    App\CRegServ\Application\UseCase\GetChannelRegistrationStatus\GetChannelRegistrationStatusHandlerInterface:
+        alias: App\CRegServ\Application\UseCase\GetChannelRegistrationStatus\GetChannelRegistrationStatusHandler
+
+    App\CRegServ\Adapter\In\Irc\Command\RegistraCommand:
+        tags: ['cregserv.command']
+
+    App\CRegServ\Adapter\In\Irc\Command\EstadoCommand:
+        tags: ['cregserv.command']
+
     App\MemoServ\Adapter\In\Irc\MemoServService:
         arguments:
             $serviceNicks: '@App\Irc\Application\Port\In\ServiceNicknameRegistry'
