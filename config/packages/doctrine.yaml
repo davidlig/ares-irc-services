@@ -36,6 +36,12 @@ doctrine:
                 prefix: 'App\ChanServ\Domain\Entity'
                 alias: ChanServ
                 type: xml
+            CRegServ:
+                is_bundle: false
+                dir: '%kernel.project_dir%/config/doctrine/cregserv'
+                prefix: 'App\CRegServ\Domain\Entity'
+                alias: CRegServ
+                type: xml
             UnrealUdb:
                 is_bundle: false
                 dir: '%kernel.project_dir%/config/doctrine/unreal_udb'

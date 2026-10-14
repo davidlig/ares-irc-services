@@ -1508,6 +1508,9 @@ services:
     App\CRegServ\Application\Port\Out\CRegServUserAccountPort:
         alias: App\CRegServ\Adapter\Out\NickServ\NickServCRegServUserAccountAdapter
 
+    App\CRegServ\Application\Port\Out\ChannelRegistrationRequestRepositoryInterface:
+        alias: App\CRegServ\Adapter\Out\Persistence\Doctrine\ChannelRegistrationRequestDoctrineRepository
+
     App\CRegServ\Adapter\In\Irc\CRegServCommandRegistry:
         arguments:
             $commands: !tagged_iterator cregserv.command
