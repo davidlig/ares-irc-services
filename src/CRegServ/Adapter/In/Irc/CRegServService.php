@@ -100,6 +100,12 @@ final readonly class CRegServService
     private function dispatchToHandler(CRegServContext $context, CRegServCommandInterface $handler, SenderView $sender, string $cmdName): void
     {
         try {
+            if ($handler->isOperOnly() && !$sender->isOper) {
+                $context->reply('error.permission_denied');
+
+                return;
+            }
+
             $requiredPermission = $handler->getRequiredPermission();
             if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
                 $context->reply('IDENTIFIED' === $requiredPermission ? 'error.not_identified' : 'error.permission_denied');
