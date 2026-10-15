@@ -165,6 +165,11 @@ final class RegistraCommandTest extends TestCase
     {
         return [
             'invalid channel' => [RequestChannelRegistrationResult::invalidChannel(), 'registra.invalid_channel'],
+            'channel too long' => [RequestChannelRegistrationResult::channelTooLong(), 'registra.channel_too_long'],
+            'description too long' => [
+                RequestChannelRegistrationResult::descriptionTooLong(),
+                'registra.description_too_long',
+            ],
             'already registered' => [RequestChannelRegistrationResult::alreadyRegistered(), 'registra.already_registered'],
             'duplicate request' => [RequestChannelRegistrationResult::duplicateRequest(), 'registra.duplicate'],
             'request denied' => [RequestChannelRegistrationResult::requestDenied(), 'registra.denied'],

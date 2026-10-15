@@ -4,6 +4,9 @@
                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
     <entity name="App\CRegServ\Domain\Entity\ChannelRegistrationRequest" table="channel_registration_requests">
+        <unique-constraints>
+            <unique-constraint name="uniq_channel_registration_channel" columns="channel_lower"/>
+        </unique-constraints>
         <indexes>
             <index name="idx_channel_registration_requester" columns="requester_account_id,status"/>
             <index name="idx_channel_registration_status" columns="status"/>
@@ -12,7 +15,7 @@
             <generator strategy="IDENTITY"/>
         </id>
         <field name="channel" type="string" length="64" column="channel"/>
-        <field name="channelLower" type="string" length="64" unique="true" column="channel_lower"/>
+        <field name="channelLower" type="string" length="64" column="channel_lower"/>
         <field name="requesterAccountId" type="integer" column="requester_account_id"/>
         <field name="requesterNick" type="string" length="32" column="requester_nick"/>
         <field name="description" type="string" length="255" column="description"/>

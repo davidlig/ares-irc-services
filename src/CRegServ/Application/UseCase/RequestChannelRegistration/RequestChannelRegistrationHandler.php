@@ -7,9 +7,11 @@ namespace App\CRegServ\Application\UseCase\RequestChannelRegistration;
 use App\CRegServ\Application\Port\Out\ChannelRegistrationRequestRepositoryInterface;
 use App\CRegServ\Application\Port\Out\RegisteredChannelLookupPort;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
+use App\CRegServ\Domain\Exception\ChannelRegistrationConflictException;
 
 use function ceil;
 use function str_starts_with;
+use function strlen;
 
 /**
  * Files a channel registration request and leaves it waiting for a services oper.
@@ -22,6 +24,12 @@ use function str_starts_with;
  */
 final readonly class RequestChannelRegistrationHandler implements RequestChannelRegistrationHandlerInterface
 {
+    /** Size of the channel and channel_lower columns. */
+    private const MAX_CHANNEL_LENGTH = 64;
+
+    /** Size of the description column. */
+    private const MAX_DESCRIPTION_LENGTH = 255;
+
     public function __construct(
         private ChannelRegistrationRequestRepositoryInterface $requestRepository,
         private RegisteredChannelLookupPort $channelLookup,
@@ -32,6 +40,16 @@ final readonly class RequestChannelRegistrationHandler implements RequestChannel
     {
         if (!str_starts_with($command->channelName, '#')) {
             return RequestChannelRegistrationResult::invalidChannel();
+        }
+
+        // The columns hold 64 and 255 characters and IRC hands the input over unbounded, so a
+        // longer value would either be rejected by the database at write time or silently cut.
+        if (strlen($command->channelName) > self::MAX_CHANNEL_LENGTH) {
+            return RequestChannelRegistrationResult::channelTooLong();
+        }
+
+        if (strlen($command->description) > self::MAX_DESCRIPTION_LENGTH) {
+            return RequestChannelRegistrationResult::descriptionTooLong();
         }
 
         if ($this->channelLookup->existsByChannelName($command->channelName)) {
@@ -58,13 +76,19 @@ final readonly class RequestChannelRegistrationHandler implements RequestChannel
             }
         }
 
-        $this->requestRepository->save(ChannelRegistrationRequest::request(
-            requestedAt: $command->occurredAt,
-            channelName: $command->channelName,
-            requesterAccountId: $command->requesterAccountId,
-            requesterNick: $command->requesterNickname,
-            description: $command->description,
-        ));
+        try {
+            $this->requestRepository->save(ChannelRegistrationRequest::request(
+                requestedAt: $command->occurredAt,
+                channelName: $command->channelName,
+                requesterAccountId: $command->requesterAccountId,
+                requesterNick: $command->requesterNickname,
+                description: $command->description,
+            ));
+        } catch (ChannelRegistrationConflictException) {
+            // The duplicate guard above is read-then-write, so a concurrent request for the
+            // same channel can win the unique index first. That is a duplicate, not a crash.
+            return RequestChannelRegistrationResult::duplicateRequest();
+        }
 
         return RequestChannelRegistrationResult::requested();
     }

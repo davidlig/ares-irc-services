@@ -15,6 +15,8 @@ registra:
   help: "Ask for a channel to be registered. A services operator evaluates the request and approves or denies it; the channel is only registered once approved. You must be identified with %nickserv%."
   requested: "\x0303✔\x03 You have requested the registration of channel \x02%channel%\x02. A services operator will evaluate the request."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
+  channel_too_long: "\x0304✗\x03 The channel name is too long: at most \x0264\x02 characters including \x02#\x02."
+  description_too_long: "\x0304✗\x03 The description is too long: at most \x02255\x02 characters."
   already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
   duplicate: "\x0304✗\x03 A registration request for \x02%channel%\x02 is already waiting for approval. Use \x0303/msg %bot% ESTADO %channel%\x03."
   denied: "\x0304✗\x03 The registration of \x02%channel%\x02 was denied."

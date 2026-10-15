@@ -7,10 +7,10 @@ namespace App\Tests\CRegServ\Adapter\Out\Persistence\Doctrine;
 use App\CRegServ\Adapter\Out\Persistence\Doctrine\ChannelRegistrationRequestDoctrineRepository;
 use App\CRegServ\Application\Port\Out\ChannelRegistrationRequestRepositoryInterface;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
+use App\CRegServ\Domain\Exception\ChannelRegistrationConflictException;
 use App\CRegServ\Domain\ValueObject\ChannelRegistrationStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -76,14 +76,15 @@ final class ChannelRegistrationRequestDoctrineRepositoryTest extends DoctrineInt
     }
 
     #[Test]
-    public function savingTheSameChannelTwiceViolatesTheUniqueConstraint(): void
+    public function reportsALostUniqueRaceInDomainTermsSoTheUseCaseCanCatchIt(): void
     {
         $this->repository->save($this->makeRequest());
         $this->flushAndClear();
 
         $duplicate = $this->makeRequest(channel: '#SITIOCHAT');
 
-        $this->expectException(UniqueConstraintViolationException::class);
+        $this->expectException(ChannelRegistrationConflictException::class);
+        $this->expectExceptionMessage('#sitiochat');
 
         $this->repository->save($duplicate);
     }
