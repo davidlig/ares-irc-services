@@ -1,0 +1,88 @@
+# CReG translations — Catalan
+# Domain: cregserv
+
+unknown_command: "\x0304✗\x03 Comand desconegut \x02%command%\x02. Utilitza \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Aquest comand està restringit als operadors d'IRC."
+  not_identified: "\x0304✗\x03 No estàs identificat. Utilitza \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permís denegat. No tens accés a aquest comand."
+
+registra:
+  syntax: "REGISTRA <#channel> <descripció>"
+  short: "Sol·licita l'aprovació del registre d'un canal."
+  help: "Demana que un canal sigui registrat. Un operador de serveis avalua la sol·licitud i l'aprova o la denega; el canal només es registra un cop aprovada. Has d'estar identificat amb %nickserv%."
+  requested: "\x0303✔\x03 Has sol·licitat el registre del canal \x02%channel%\x02. Un operador de serveis avaluarà la sol·licitud."
+  invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
+  channel_too_long: "\x0304✗\x03 El nom del canal és massa llarg: com a màxim \x0264\x02 caràcters incloent el \x02#\x02."
+  description_too_long: "\x0304✗\x03 La descripció és massa llarga: com a màxim \x02255\x02 caràcters."
+  already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat."
+  duplicate: "\x0304✗\x03 Ja existeix una sol·licitud de registre per a \x02%channel%\x02 a l'espera d'aprovació. Utilitza \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 La sol·licitud de registre de \x02%channel%\x02 ha estat denegada."
+  throttled: "\x0304✗\x03 Has d'esperar \x02%minutes%\x02 minut(s) abans de sol·licitar un altre canal."
+
+estado:
+  syntax: "ESTADO <#channel>"
+  short: "Mostra l'estat de registre d'un canal."
+  help: "Indica en quin punt es troba un canal dins del procés de registre: registrat, en procés o denegat."
+  registered: "\x0303✔\x03 El canal \x02%channel%\x02 ja està registrat."
+  pending: "\x0303◌\x03 El canal \x02%channel%\x02 està en procés, a l'espera que un operador de serveis el revisi (sol·licitat el %date%)."
+  denied: "\x0304✗\x03 El canal \x02%channel%\x02 està denegat des del %date%. Motiu: %reason%"
+  no_request: "\x0304✗\x03 El canal \x02%channel%\x02 no té cap procés de registre."
+
+aprobar:
+  syntax: "APROBAR <#channel>"
+  short: "Aprova una sol·licitud de registre de canal pendent."
+  help: "Registra un canal la sol·licitud del qual està a l'espera de revisió. El canal es registra a nom de qui la va sol·licitar; cap dels dos ha d'estar a dins. Necessites el permís \x02cregserv.aprobar\x02."
+  approved: "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat correctament per a \x02%founder%\x02."
+  invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
+  no_pending: "\x0304✗\x03 El canal \x02%channel%\x02 no està en procés de registre."
+  already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat amb \x02ChanServ\x02."
+  already_approved: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat."
+  already_denied: "\x0304✗\x03 El canal \x02%channel%\x02 no pot ser registrat perquè està marcat com a \x0304DENEGAT\x03."
+  failed: "\x0304✗\x03 No s'ha pogut completar el registre del canal \x02%channel%\x02."
+
+denegar:
+  syntax: "DENEGAR <#channel> <reason>"
+  short: "Denega una sol·licitud de registre de canal pendent."
+  help: "Rebutja una sol·licitud de registre deixant lliure el nom del canal. El motiu és obligatori i el mostra DENEGADOS. Necessites el permís \x02cregserv.denegar\x02."
+  denied: "\x0303✔\x03 S'ha denegat el registre del canal \x02%channel%\x02."
+  invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
+  no_pending: "\x0304✗\x03 El canal \x02%channel%\x02 no té cap procés de registre."
+  already_approved: "\x0304✗\x03 No es poden denegar canals ja registrats i aprovats."
+  already_denied: "\x0304✗\x03 El canal \x02%channel%\x02 ja està denegat."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "Llista les sol·licituds de registre de canal pendents de revisió."
+  help: "Mostra cada sol·licitud a l'espera que un operador de serveis l'avaluï, amb el canal, qui la va demanar, la data i la descripció. Necessites el permís \x02cregserv.pendientes\x02."
+  empty: "No hi ha canals pendents de revisió."
+  line: "\x02Canal:\x02 %channel%, \x02Sol·licitat per:\x02 %requester%, \x02Data:\x02 %date%, \x02Descripció:\x02 %description%"
+  end: "Fi de la llista."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Llista les sol·licituds de registre de canal que han estat denegades."
+  help: "Mostra cada sol·licitud denegada juntament amb el motiu pel qual es va denegar. Necessites el permís \x02cregserv.denegados\x02."
+  empty: "No hi ha canals denegats."
+  line: "\x02Canal:\x02 %channel%, \x02Motiu:\x02 %reason%"
+  end: "Fi de la llista."
+
+drop:
+  syntax: "DROP <#channel>"
+  short: "Elimina el registre de canal que \x02%bot%\x02 guarda per a un canal."
+  help: "Elimina el registre que \x02%bot%\x02 guarda per a un canal, sigui quin sigui el seu estat. Un canal ja aprovat segueix registrat amb \x02ChanServ\x02: el que allibera aquí és el nom, perquè un canal denegat pugui tornar-se a sol·licitar. Necessites el permís \x02cregserv.drop\x02."
+  dropped: "\x0303✔\x03 El registre del canal \x02%channel%\x02 ha estat eliminat de \x02%bot%\x02."
+  invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
+  no_request: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat amb \x02%bot%\x02."
+
+saregister:
+  syntax: "SAREGISTER <#channel> [descripció]"
+  short: "Registra un canal sense estar a dins."
+  help: "Registra un canal a petició del staff. L'operador no necessita estar al\ncanal, i el canal no necessita existir encara a la xarxa.\nAquest comand requereix permís d'operador."
+  done: "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat."
+  invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
+  pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 està pendent d'eliminació i no pot ser registrat."
+  already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat."
+  failed: "\x0304✗\x03 No s'ha pogut completar el registre del canal \x02%channel%\x02."

@@ -1,0 +1,88 @@
+# CReG translations — Turkish
+# Domain: cregserv
+
+unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. Kullan: \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Bu komut IRC operatörlerine özeldir."
+  not_identified: "\x0304✗\x03 Kimliğin doğrulanmamış. Kullan: \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 İzin verilmedi. Bu komuta erişimin yok."
+
+registra:
+  syntax: "REGISTRA <#channel> <açıklama>"
+  short: "Bir kanal kaydının onaylanmasını talep eder."
+  help: "Bir kanalın kaydedilmesini talep et. Bir hizmet operatörü talebi değerlendirir ve onaylar ya da reddeder; kanal yalnızca onaylandıktan sonra kaydedilir. %nickserv% ile kimliğin doğrulanmış olmalı."
+  requested: "\x0303✔\x03 \x02%channel%\x02 kanalının kaydını talep ettin. Bir hizmet operatörü talebi değerlendirecek."
+  invalid_channel: "\x0304✗\x03 Kanal adı bir \x02#\x02 ile başlamalıdır."
+  channel_too_long: "\x0304✗\x03 Kanal adı çok uzun: en fazla \x0264\x02 karakter, \x02#\x02 dahil."
+  description_too_long: "\x0304✗\x03 Açıklama çok uzun: en fazla \x02255\x02 karakter."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
+  duplicate: "\x0304✗\x03 \x02%channel%\x02 için onay bekleyen bir kayıt talebi zaten var. Kullan: \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 \x02%channel%\x02 kanalının kayıt talebi reddedildi."
+  throttled: "\x0304✗\x03 Başka bir kanal talep etmeden önce \x02%minutes%\x02 dakika beklemelisin."
+
+estado:
+  syntax: "ESTADO <#channel>"
+  short: "Bir kanalın kayıt durumunu gösterir."
+  help: "Bir kanalın kayıt sürecinin hangi aşamasında olduğunu bildirir: kayıtlı, süreçte veya reddedilmiş."
+  registered: "\x0303✔\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
+  pending: "\x0303◌\x03 \x02%channel%\x02 kanalı süreçte, bir hizmet operatörünün incelemesini bekliyor (%date% tarihinde talep edildi)."
+  denied: "\x0304✗\x03 \x02%channel%\x02 kanalı %date% tarihinden beri reddedilmiş. Sebep: %reason%"
+  no_request: "\x0304✗\x03 \x02%channel%\x02 kanalının hiçbir kayıt süreci yok."
+
+aprobar:
+  syntax: "APROBAR <#channel>"
+  short: "Bekleyen bir kanal kayıt talebini onaylar."
+  help: "Talebi inceleme bekleyen bir kanalı kaydeder. Kanal, talep eden kullanıcı adına kaydedilir; ikinizin de içeride olmasına gerek yok. \x02cregserv.aprobar\x02 iznine ihtiyacın var."
+  approved: "\x0303✔\x03 \x02%channel%\x02 kanalı \x02%founder%\x02 için başarıyla kaydedildi."
+  invalid_channel: "\x0304✗\x03 Kanal adı bir \x02#\x02 ile başlamalıdır."
+  no_pending: "\x0304✗\x03 \x02%channel%\x02 kanalı bir kayıt sürecinde değil."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten \x02ChanServ\x02 üzerinde kayıtlı."
+  already_approved: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
+  already_denied: "\x0304✗\x03 \x02%channel%\x02 kanalı \x0304REDDEDİLDİ\x03 olarak işaretlendiği için kaydedilemez."
+  failed: "\x0304✗\x03 \x02%channel%\x02 kanalının kaydı tamamlanamadı."
+
+denegar:
+  syntax: "DENEGAR <#channel> <sebep>"
+  short: "Bekleyen bir kanal kayıt talebini reddeder."
+  help: "Kanal adını boş bırakarak bir kayıt talebini geri çevirir. Sebep zorunludur ve DENEGADOS tarafından gösterilir. \x02cregserv.denegar\x02 iznine ihtiyacın var."
+  denied: "\x0303✔\x03 \x02%channel%\x02 kanalının kaydı reddedildi."
+  invalid_channel: "\x0304✗\x03 Kanal adı bir \x02#\x02 ile başlamalıdır."
+  no_pending: "\x0304✗\x03 \x02%channel%\x02 kanalının hiçbir kayıt süreci yok."
+  already_approved: "\x0304✗\x03 Zaten kayıtlı ve onaylanmış kanallar reddedilemez."
+  already_denied: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten reddedilmiş."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "İnceleme bekleyen kanal kayıt taleplerini listeler."
+  help: "Bir hizmet operatörünün değerlendirmesini bekleyen her talebi kanalı, talep edeni, tarihi ve açıklamasıyla birlikte gösterir. \x02cregserv.pendientes\x02 iznine ihtiyacın var."
+  empty: "İnceleme bekleyen kanal yok."
+  line: "\x02Kanal:\x02 %channel%, \x02Talep eden:\x02 %requester%, \x02Tarih:\x02 %date%, \x02Açıklama:\x02 %description%"
+  end: "Liste sonu."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Reddedilen kanal kayıt taleplerini listeler."
+  help: "Her reddedilen talebi, reddedilme sebebiyle birlikte gösterir. \x02cregserv.denegados\x02 iznine ihtiyacın var."
+  empty: "Reddedilmiş kanal yok."
+  line: "\x02Kanal:\x02 %channel%, \x02Sebep:\x02 %reason%"
+  end: "Liste sonu."
+
+drop:
+  syntax: "DROP <#channel>"
+  short: "\x02%bot%\x02'ün bir kanal için tuttuğu kayıt kaydını siler."
+  help: "\x02%bot%\x02'ün bir kanal için, hangi durumda olursa olsun tuttuğu kaydı siler. Zaten onaylanmış bir kanal \x02ChanServ\x02 üzerinde kayıtlı kalır: burada serbest bırakılan şey kanal adıdır; böylece reddedilmiş bir kanal yeniden talep edilebilir. \x02cregserv.drop\x02 iznine ihtiyacın var."
+  dropped: "\x0303✔\x03 \x02%channel%\x02 kanalının kayıt kaydı \x02%bot%\x02 üzerinden silindi."
+  invalid_channel: "\x0304✗\x03 Kanal adı bir \x02#\x02 ile başlamalıdır."
+  no_request: "\x0304✗\x03 \x02%channel%\x02 kanalı \x02%bot%\x02 üzerinde kayıtlı değil."
+
+saregister:
+  syntax: "SAREGISTER <#channel> [açıklama]"
+  short: "Kanalın içinde olmadan kanal kaydeder."
+  help: "Staff talebi üzerine bir kanal kaydeder. Operatörün kanalın içinde olması gerekmez,\nve kanalın henüz ağda var olması gerekmez.\nBu komut bir operatör izni gerektirir."
+  done: "\x0303✔\x03 \x02%channel%\x02 kanalı kaydedildi."
+  invalid_channel: "\x0304✗\x03 Kanal adı bir \x02#\x02 ile başlamalıdır."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı silinmeyi bekliyor ve kaydedilemez."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
+  failed: "\x0304✗\x03 \x02%channel%\x02 kanalının kaydı tamamlanamadı."

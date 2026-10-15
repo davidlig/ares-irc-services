@@ -1,0 +1,88 @@
+# CReG translations — Dutch
+# Domain: cregserv
+
+unknown_command: "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Dit commando is voorbehouden aan IRC-operatoren."
+  not_identified: "\x0304✗\x03 Je bent niet geïdentificeerd. Gebruik \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Toegang geweigerd. Je hebt geen toegang tot dit commando."
+
+registra:
+  syntax: "REGISTRA <#kanaal> <beschrijving>"
+  short: "Vraagt goedkeuring aan voor de registratie van een kanaal."
+  help: "Vraag de registratie van een kanaal aan. Een services-operator beoordeelt het verzoek en keurt het goed of wijst het af; het kanaal wordt pas geregistreerd nadat het is goedgekeurd. Je moet geïdentificeerd zijn met %nickserv%."
+  requested: "\x0303✔\x03 Je hebt de registratie van kanaal \x02%channel%\x02 aangevraagd. Een services-operator zal het verzoek beoordelen."
+  invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
+  channel_too_long: "\x0304✗\x03 De kanaalnaam is te lang: maximaal \x0264\x02 tekens inclusief de \x02#\x02."
+  description_too_long: "\x0304✗\x03 De beschrijving is te lang: maximaal \x02255\x02 tekens."
+  already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
+  duplicate: "\x0304✗\x03 Er wacht al een registratieverzoek voor \x02%channel%\x02 op goedkeuring. Gebruik \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 Het registratieverzoek voor \x02%channel%\x02 is afgewezen."
+  throttled: "\x0304✗\x03 Je moet \x02%minutes%\x02 minuut/minuten wachten voordat je nog een kanaal aanvraagt."
+
+estado:
+  syntax: "ESTADO <#kanaal>"
+  short: "Toont de registratiestatus van een kanaal."
+  help: "Geeft aan waar een kanaal staat in het registratieproces: geregistreerd, in behandeling of afgewezen."
+  registered: "\x0303✔\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
+  pending: "\x0303◌\x03 Kanaal \x02%channel%\x02 is in behandeling en wacht op beoordeling door een services-operator (aangevraagd op %date%)."
+  denied: "\x0304✗\x03 Kanaal \x02%channel%\x02 is afgewezen sinds %date%. Reden: %reason%"
+  no_request: "\x0304✗\x03 Kanaal \x02%channel%\x02 heeft geen registratieproces."
+
+aprobar:
+  syntax: "APROBAR <#kanaal>"
+  short: "Keurt een openstaand registratieverzoek voor een kanaal goed."
+  help: "Registreert een kanaal waarvan het verzoek op beoordeling wacht. Het kanaal wordt geregistreerd op naam van de gebruiker die het heeft aangevraagd; jullie hoeven er geen van beiden in te zijn. Je hebt de machtiging \x02cregserv.aprobar\x02 nodig."
+  approved: "\x0303✔\x03 Kanaal \x02%channel%\x02 is succesvol geregistreerd voor \x02%founder%\x02."
+  invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
+  no_pending: "\x0304✗\x03 Kanaal \x02%channel%\x02 bevindt zich niet in een registratieproces."
+  already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd bij \x02ChanServ\x02."
+  already_approved: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
+  already_denied: "\x0304✗\x03 Kanaal \x02%channel%\x02 kan niet worden geregistreerd omdat het gemarkeerd staat als \x0304GEWEIGERD\x03."
+  failed: "\x0304✗\x03 De registratie van kanaal \x02%channel%\x02 kon niet worden voltooid."
+
+denegar:
+  syntax: "DENEGAR <#kanaal> <reden>"
+  short: "Wijst een openstaand registratieverzoek voor een kanaal af."
+  help: "Wijs een registratieverzoek af en laat de kanaalnaam vrij. De reden is verplicht en wordt getoond door DENEGADOS. Je hebt de machtiging \x02cregserv.denegar\x02 nodig."
+  denied: "\x0303✔\x03 De registratie van kanaal \x02%channel%\x02 is afgewezen."
+  invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
+  no_pending: "\x0304✗\x03 Kanaal \x02%channel%\x02 heeft geen registratieproces."
+  already_approved: "\x0304✗\x03 Al geregistreerde en goedgekeurde kanalen kunnen niet worden afgewezen."
+  already_denied: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al afgewezen."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "Toont de registratieverzoeken voor kanalen die op beoordeling wachten."
+  help: "Toont elk verzoek dat wacht op beoordeling door een services-operator, met het kanaal, wie het heeft aangevraagd, de datum en de beschrijving. Je hebt de machtiging \x02cregserv.pendientes\x02 nodig."
+  empty: "Er wachten geen kanalen op beoordeling."
+  line: "\x02Kanaal:\x02 %channel%, \x02Aangevraagd door:\x02 %requester%, \x02Datum:\x02 %date%, \x02Beschrijving:\x02 %description%"
+  end: "Einde van de lijst."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Toont de registratieverzoeken voor kanalen die zijn afgewezen."
+  help: "Toont elk afgewezen verzoek samen met de reden van de afwijzing. Je hebt de machtiging \x02cregserv.denegados\x02 nodig."
+  empty: "Er zijn geen afgewezen kanalen."
+  line: "\x02Kanaal:\x02 %channel%, \x02Reden:\x02 %reason%"
+  end: "Einde van de lijst."
+
+drop:
+  syntax: "DROP <#kanaal>"
+  short: "Verwijdert het registratierecord dat \x02%bot%\x02 voor een kanaal bewaart."
+  help: "Verwijdert het record dat \x02%bot%\x02 voor een kanaal bewaart, in welke staat het ook verkeert. Een al goedgekeurd kanaal blijft geregistreerd bij \x02ChanServ\x02: wat hier wordt vrijgegeven is de naam, zodat een afgewezen kanaal opnieuw kan worden aangevraagd. Je hebt de machtiging \x02cregserv.drop\x02 nodig."
+  dropped: "\x0303✔\x03 Het registratierecord van kanaal \x02%channel%\x02 is verwijderd uit \x02%bot%\x02."
+  invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
+  no_request: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat niet geregistreerd bij \x02%bot%\x02."
+
+saregister:
+  syntax: "SAREGISTER <#kanaal> [beschrijving]"
+  short: "Registreert een kanaal zonder erin te zijn."
+  help: "Registreert een kanaal op verzoek van de staff. De operator hoeft niet in het\nkanaal aanwezig te zijn, en het kanaal hoeft nog niet op het netwerk te bestaan.\nDit commando vereist een operatormachtiging."
+  done: "\x0303✔\x03 Kanaal \x02%channel%\x02 is geregistreerd."
+  invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
+  pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat in de wachtrij voor verwijdering en kan niet worden geregistreerd."
+  already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
+  failed: "\x0304✗\x03 De registratie van kanaal \x02%channel%\x02 kon niet worden voltooid."

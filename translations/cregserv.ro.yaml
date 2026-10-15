@@ -1,0 +1,88 @@
+# CReG translations — Romanian
+# Domain: cregserv
+
+unknown_command: "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosește \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
+  not_identified: "\x0304✗\x03 Nu ești identificat. Folosește \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permisiune refuzată. Nu ai acces la această comandă."
+
+registra:
+  syntax: "REGISTRA <#canal> <descriere>"
+  short: "Cere aprobarea înregistrării unui canal."
+  help: "Cere înregistrarea unui canal. Un operator de servicii evaluează cererea și o aprobă sau o respinge; canalul se înregistrează doar după aprobare. Trebuie să fii identificat cu %nickserv%."
+  requested: "\x0303✔\x03 Ai cerut înregistrarea canalului \x02%channel%\x02. Un operator de servicii va evalua cererea."
+  invalid_channel: "\x0304✗\x03 Numele canalului trebuie să înceapă cu un \x02#\x02."
+  channel_too_long: "\x0304✗\x03 Numele canalului este prea lung: cel mult \x0264\x02 caractere, inclusiv \x02#\x02."
+  description_too_long: "\x0304✗\x03 Descrierea este prea lungă: cel mult \x02255\x02 caractere."
+  already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
+  duplicate: "\x0304✗\x03 Există deja o cerere de înregistrare pentru \x02%channel%\x02 în așteptarea aprobării. Folosește \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 Cererea de înregistrare pentru \x02%channel%\x02 a fost respinsă."
+  throttled: "\x0304✗\x03 Trebuie să aștepți \x02%minutes%\x02 minut(e) înainte de a cere alt canal."
+
+estado:
+  syntax: "ESTADO <#canal>"
+  short: "Arată starea de înregistrare a unui canal."
+  help: "Indică în ce punct se află un canal în procesul de înregistrare: înregistrat, în curs sau respins."
+  registered: "\x0303✔\x03 Canalul \x02%channel%\x02 este deja înregistrat."
+  pending: "\x0303◌\x03 Canalul \x02%channel%\x02 este în curs, în așteptarea verificării de către un operator de servicii (cerut la %date%)."
+  denied: "\x0304✗\x03 Canalul \x02%channel%\x02 este respins din %date%. Motiv: %reason%"
+  no_request: "\x0304✗\x03 Canalul \x02%channel%\x02 nu are niciun proces de înregistrare."
+
+aprobar:
+  syntax: "APROBAR <#canal>"
+  short: "Aprobă o cerere de înregistrare a unui canal în așteptare."
+  help: "Înregistrează un canal a cărui cerere așteaptă verificarea. Canalul se înregistrează pe numele utilizatorului care l-a cerut; niciunul dintre voi nu trebuie să fie înăuntru. Ai nevoie de permisiunea \x02cregserv.aprobar\x02."
+  approved: "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat cu succes pentru \x02%founder%\x02."
+  invalid_channel: "\x0304✗\x03 Numele canalului trebuie să înceapă cu un \x02#\x02."
+  no_pending: "\x0304✗\x03 Canalul \x02%channel%\x02 nu se află într-un proces de înregistrare."
+  already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat la \x02ChanServ\x02."
+  already_approved: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
+  already_denied: "\x0304✗\x03 Canalul \x02%channel%\x02 nu poate fi înregistrat deoarece este marcat ca \x0304RESPINS\x03."
+  failed: "\x0304✗\x03 Înregistrarea canalului \x02%channel%\x02 nu a putut fi finalizată."
+
+denegar:
+  syntax: "DENEGAR <#canal> <motiv>"
+  short: "Respinge o cerere de înregistrare a unui canal în așteptare."
+  help: "Respinge o cerere de înregistrare, lăsând numele canalului liber. Motivul este obligatoriu și este afișat de DENEGADOS. Ai nevoie de permisiunea \x02cregserv.denegar\x02."
+  denied: "\x0303✔\x03 Înregistrarea canalului \x02%channel%\x02 a fost respinsă."
+  invalid_channel: "\x0304✗\x03 Numele canalului trebuie să înceapă cu un \x02#\x02."
+  no_pending: "\x0304✗\x03 Canalul \x02%channel%\x02 nu are niciun proces de înregistrare."
+  already_approved: "\x0304✗\x03 Canalele deja înregistrate și aprobate nu pot fi respinse."
+  already_denied: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja respins."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "Listează cererile de înregistrare a canalelor în așteptarea verificării."
+  help: "Afișează fiecare cerere în așteptarea evaluării unui operator de servicii, cu canalul, cine a cerut, data și descrierea. Ai nevoie de permisiunea \x02cregserv.pendientes\x02."
+  empty: "Nu există canale în așteptarea verificării."
+  line: "\x02Canal:\x02 %channel%, \x02Cerut de:\x02 %requester%, \x02Data:\x02 %date%, \x02Descriere:\x02 %description%"
+  end: "Sfârșitul listei."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Listează cererile de înregistrare a canalelor care au fost respinse."
+  help: "Afișează fiecare cerere respinsă împreună cu motivul pentru care a fost respinsă. Ai nevoie de permisiunea \x02cregserv.denegados\x02."
+  empty: "Nu există canale respinse."
+  line: "\x02Canal:\x02 %channel%, \x02Motiv:\x02 %reason%"
+  end: "Sfârșitul listei."
+
+drop:
+  syntax: "DROP <#canal>"
+  short: "Elimină înregistrarea pe care \x02%bot%\x02 o păstrează pentru un canal."
+  help: "Elimină înregistrarea pe care \x02%bot%\x02 o păstrează pentru un canal, indiferent de starea sa. Un canal deja aprobat rămâne înregistrat la \x02ChanServ\x02: ceea ce se eliberează aici este numele, astfel încât un canal respins poată fi cerut din nou. Ai nevoie de permisiunea \x02cregserv.drop\x02."
+  dropped: "\x0303✔\x03 Înregistrarea canalului \x02%channel%\x02 a fost eliminată din \x02%bot%\x02."
+  invalid_channel: "\x0304✗\x03 Numele canalului trebuie să înceapă cu un \x02#\x02."
+  no_request: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat la \x02%bot%\x02."
+
+saregister:
+  syntax: "SAREGISTER <#canal> [descriere]"
+  short: "Înregistrează un canal fără a fi înăuntru."
+  help: "Înregistrează un canal la cererea staff-ului. Operatorul nu trebuie să fie în\ncanal, iar canalul nu trebuie să existe încă în rețea.\nAceastă comandă necesită o permisiune de operator."
+  done: "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."
+  invalid_channel: "\x0304✗\x03 Numele canalului trebuie să înceapă cu un \x02#\x02."
+  pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este în așteptarea ștergerii și nu poate fi înregistrat."
+  already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
+  failed: "\x0304✗\x03 Înregistrarea canalului \x02%channel%\x02 nu a putut fi finalizată."

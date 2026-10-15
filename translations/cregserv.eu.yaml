@@ -1,0 +1,88 @@
+# CReG itzulpenak — Euskara
+# Eremua: cregserv
+
+unknown_command: "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Komando hau IRC eragileenentzat bakarrik dago."
+  not_identified: "\x0304✗\x03 Ez zaude identifikatuta. Erabili \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Baimena ukatuta. Ez duzu komando honetarako sarbidea."
+
+registra:
+  syntax: "REGISTRA <#kanala> <deskribapena>"
+  short: "Kanal baten erregistroaren onarpena eskatzen du."
+  help: "Eskatu kanal bat erregistratzea. Zerbitzuetako operadore batek eskaera ebaluatu eta onartu edo ukatzen du; kanala onartu ostean bakarrik erregistratzen da. %nickserv% bidez identifikatuta egon behar duzu."
+  requested: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistroa eskatu duzu. Zerbitzuetako operadore batek ebaluatuko du eskaera."
+  invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
+  channel_too_long: "\x0304✗\x03 Kanalaren izena luzeegia da: gehienez \x0264\x02 karaktere \x02#\x02 barne."
+  description_too_long: "\x0304✗\x03 Deskribapena luzeegia da: gehienez \x02255\x02 karaktere."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko erregistratuta dago."
+  duplicate: "\x0304✗\x03 \x02%channel%\x02-rako erregistro eskaera bat dagoeneko onarpenaren zain dago. Erabili \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 \x02%channel%\x02 kanalaren erregistroa ukatu da."
+  throttled: "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar dituzu beste kanal bat eskatu aurretik."
+
+estado:
+  syntax: "ESTADO <#kanala>"
+  short: "Kanal baten erregistro egoera erakusten du."
+  help: "Kanal bat erregistro-prozesuan non dagoen adierazten du: erregistratuta, prozesuan edo ukatuta."
+  registered: "\x0303✔\x03 \x02%channel%\x02 kanala dagoeneko erregistratuta dago."
+  pending: "\x0303◌\x03 \x02%channel%\x02 kanala prozesuan dago, zerbitzuetako operadore baten azterketa zain (%date% eskatuta)."
+  denied: "\x0304✗\x03 \x02%channel%\x02 kanala ukatuta dago, %date% dataz. Arrazoia: %reason%"
+  no_request: "\x0304✗\x03 \x02%channel%\x02 kanalak ez du erregistro-prozesurik."
+
+aprobar:
+  syntax: "APROBAR <#kanala>"
+  short: "Kanal-erregistro eskaera bat onartzen du."
+  help: "Azterketa zain dagoen eskaera duen kanal bat erregistratzen du. Kanala eskatu zuen erabiltzailearen izenean erregistratzen da; ez duzu kanalean egon behar. \x02cregserv.aprobar\x02 baimena behar duzu."
+  approved: "\x0303✔\x03 \x02%channel%\x02 kanala ondo erregistratu da \x02%founder%\x02(r)entzat."
+  invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
+  no_pending: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistro-prozesuan."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko \x02ChanServ\x02(e)n erregistratuta dago."
+  already_approved: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko erregistratuta dago."
+  already_denied: "\x0304✗\x03 \x02%channel%\x02 kanala ezin da erregistratu \x0304UKATUTA\x03 gisa markatuta baitago."
+  failed: "\x0304✗\x03 \x02%channel%\x02 kanalaren erregistroa ezin da burutu."
+
+denegar:
+  syntax: "DENEGAR <#kanala> <arrazoia>"
+  short: "Kanal-erregistro eskaera bat ukatzen du."
+  help: "Erregistro eskaera bat errefusatzen du, kanalaren izena libre utziz. Arrazoia derrigorrezkoa da eta DENEGADOS-ek erakusten du. \x02cregserv.denegar\x02 baimena behar duzu."
+  denied: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistroa ukatu da."
+  invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
+  no_pending: "\x0304✗\x03 \x02%channel%\x02 kanalak ez du erregistro-prozesurik."
+  already_approved: "\x0304✗\x03 Dagoeneko erregistratuta eta onartutako kanalak ezin dira ukatu."
+  already_denied: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko ukatuta dago."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "Azterketa zain dauden kanal-erregistro eskaerak zerrendatzen ditu."
+  help: "Zerbitzuetako operadore batek ebaluatuko zain dagoen eskaera bakoitza erakusten du, kanalarekin, nork eskatu zuen, data eta deskribapenarekin. \x02cregserv.pendientes\x02 baimena behar duzu."
+  empty: "Ez dago azterketa zain dagoen kanalik."
+  line: "\x02Kanala:\x02 %channel%, \x02Eskatuta:\x02 %requester%, \x02Data:\x02 %date%, \x02Deskribapena:\x02 %description%"
+  end: "Zerrendaren amaiera."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Ukatutako kanal-erregistro eskaerak zerrendatzen ditu."
+  help: "Ukatutako eskaera bakoitza erakusten du, ukatzeko arrazoiarekin batera. \x02cregserv.denegados\x02 baimena behar duzu."
+  empty: "Ez dago ukatutako kanalik."
+  line: "\x02Kanala:\x02 %channel%, \x02Arrazoia:\x02 %reason%"
+  end: "Zerrendaren amaiera."
+
+drop:
+  syntax: "DROP <#kanala>"
+  short: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du."
+  help: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du, egoera edozein dela ere. Dagoeneko onartutako kanal batek \x02ChanServ\x02(e)n jarraitzen du erregistratuta: hemen askatzen dena izena da, ukatutako kanal bat berriro esketu ahal izan dadin. \x02cregserv.drop\x02 baimena behar duzu."
+  dropped: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistroa kendu da \x02%bot%\x02(e)tik."
+  invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
+  no_request: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago \x02%bot%\x02(e)n erregistratuta."
+
+saregister:
+  syntax: "SAREGISTER <#kanala> [deskribapena]"
+  short: "Kanala erregistratzen du barnean egon gabe."
+  help: "Staffaren eskaeraz kanal bat erregistratzen du. Eragileak ez du kanalean egon behar,\neta kanalak ez du oraindik sarean existitu behar.\nKomando honek eragile-baimena eskatzen du."
+  done: "\x0303✔\x03 \x02%channel%\x02 kanala erregistratu da."
+  invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ezabatzeko zain dago eta ezin da erregistratu."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko erregistratuta dago."
+  failed: "\x0304✗\x03 \x02%channel%\x02 kanalaren erregistroa ezin da burutu."

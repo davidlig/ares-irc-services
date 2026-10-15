@@ -50,7 +50,7 @@ final class TranslationCatalogTest extends TestCase
     private const string ROOT = __DIR__ . '/../../..';
 
     /** @var list<string> */
-    private const array DOMAINS = ['chanserv', 'nickserv', 'memoserv', 'operserv', 'common', 'mail'];
+    private const array DOMAINS = ['chanserv', 'nickserv', 'memoserv', 'operserv', 'cregserv', 'common', 'mail'];
 
     /** @var list<string> */
     private const array LOCALES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];

@@ -1,0 +1,88 @@
+# CReG translations — Polski
+# Domain: cregserv
+
+unknown_command: "\x0304✗\x03 Nieznane polecenie \x02%command%\x02. Użyj \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Nieprawidłowa składnia. Użycie: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 To polecenie jest zarezerwowane dla operatorów IRC."
+  not_identified: "\x0304✗\x03 Nie jesteś zidentyfikowany. Użyj \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Brak uprawnienia. Nie masz dostępu do tego polecenia."
+
+registra:
+  syntax: "REGISTRA <#kanał> <opis>"
+  short: "Prosi o zatwierdzenie rejestracji kanału."
+  help: "Poproś o rejestrację kanału. Operator usług ocenia prośbę i ją zatwierdza lub odrzuca; kanał jest rejestrowany dopiero po zatwierdzeniu. Musisz być zidentyfikowany z %nickserv%."
+  requested: "\x0303✔\x03 Poprosiłeś o rejestrację kanału \x02%channel%\x02. Operator usług oceni tę prośbę."
+  invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
+  channel_too_long: "\x0304✗\x03 Nazwa kanału jest za długa: maksymalnie \x0264\x02 znaki wraz z \x02#\x02."
+  description_too_long: "\x0304✗\x03 Opis jest za długi: maksymalnie \x02255\x02 znaków."
+  already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
+  duplicate: "\x0304✗\x03 Prośba o rejestrację \x02%channel%\x02 już czeka na zatwierdzenie. Użyj \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 Prośba o rejestrację \x02%channel%\x02 została odrzucona."
+  throttled: "\x0304✗\x03 Musisz poczekać \x02%minutes%\x02 minut(y), zanim poprosisz o kolejny kanał."
+
+estado:
+  syntax: "ESTADO <#kanał>"
+  short: "Pokazuje stan rejestracji kanału."
+  help: "Wskazuje, na jakim etapie jest kanał w procesie rejestracji: zarejestrowany, w trakcie lub odrzucony."
+  registered: "\x0303✔\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
+  pending: "\x0303◌\x03 Kanał \x02%channel%\x02 jest w trakcie i czeka na sprawdzenie przez operatora usług (poproszono %date%)."
+  denied: "\x0304✗\x03 Kanał \x02%channel%\x02 jest odrzucony od %date%. Powód: %reason%"
+  no_request: "\x0304✗\x03 Kanał \x02%channel%\x02 nie ma procesu rejestracji."
+
+aprobar:
+  syntax: "APROBAR <#kanał>"
+  short: "Zatwierdza oczekującą prośbę o rejestrację kanału."
+  help: "Rejestruje kanał, którego prośba czeka na sprawdzenie. Kanał jest rejestrowany na osobę, która ją złożyła; żadne z was nie musi być w środku. Potrzebujesz uprawnienia \x02cregserv.aprobar\x02."
+  approved: "\x0303✔\x03 Kanał \x02%channel%\x02 został poprawnie zarejestrowany dla \x02%founder%\x02."
+  invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
+  no_pending: "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest w procesie rejestracji."
+  already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany w \x02ChanServ\x02."
+  already_approved: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
+  already_denied: "\x0304✗\x03 Kanału \x02%channel%\x02 nie można zarejestrować, ponieważ jest oznaczony jako \x0304ODRZUCONE\x03."
+  failed: "\x0304✗\x03 Nie udało się zakończyć rejestracji kanału \x02%channel%\x02."
+
+denegar:
+  syntax: "DENEGAR <#kanał> <powód>"
+  short: "Odrzuca oczekującą prośbę o rejestrację kanału."
+  help: "Odrzuca prośbę o rejestrację, pozostawiając nazwę kanału wolną. Powód jest obowiązkowy i jest pokazywany przez DENEGADOS. Potrzebujesz uprawnienia \x02cregserv.denegar\x02."
+  denied: "\x0303✔\x03 Rejestracja kanału \x02%channel%\x02 została odrzucona."
+  invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
+  no_pending: "\x0304✗\x03 Kanał \x02%channel%\x02 nie ma procesu rejestracji."
+  already_approved: "\x0304✗\x03 Już zarejestrowanych i zatwierdzonych kanałów nie można odrzucić."
+  already_denied: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już odrzucony."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "Wyświetla prośby o rejestrację kanałów oczekujących na sprawdzenie."
+  help: "Wyświetla każdą prośbę oczekującą na ocenę przez operatora usług, wraz z kanałem, kto ją złożył, datą i opisem. Potrzebujesz uprawnienia \x02cregserv.pendientes\x02."
+  empty: "Brak kanałów oczekujących na sprawdzenie."
+  line: "\x02Kanał:\x02 %channel%, \x02Zgłoszono przez:\x02 %requester%, \x02Data:\x02 %date%, \x02Opis:\x02 %description%"
+  end: "Koniec listy."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Wyświetla prośby o rejestrację kanałów, które zostały odrzucone."
+  help: "Wyświetla każdą odrzuconą prośbę wraz z powodem odrzucenia. Potrzebujesz uprawnienia \x02cregserv.denegados\x02."
+  empty: "Brak odrzuconych kanałów."
+  line: "\x02Kanał:\x02 %channel%, \x02Powód:\x02 %reason%"
+  end: "Koniec listy."
+
+drop:
+  syntax: "DROP <#kanał>"
+  short: "Usuwa wpis o rejestracji, który \x02%bot%\x02 przechowuje dla kanału."
+  help: "Usuwa wpis, który \x02%bot%\x02 przechowuje dla kanału, w jakimkolwiek jest stanie. Już zatwierdzony kanał pozostaje zarejestrowany w \x02ChanServ\x02: to, co jest tutaj zwalniane, to nazwa, dzięki czemu odrzucony kanał może zostać zgłoszony ponownie. Potrzebujesz uprawnienia \x02cregserv.drop\x02."
+  dropped: "\x0303✔\x03 Wpis o rejestracji kanału \x02%channel%\x02 został usunięty z \x02%bot%\x02."
+  invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
+  no_request: "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest zarejestrowany w \x02%bot%\x02."
+
+saregister:
+  syntax: "SAREGISTER <#kanał> [opis]"
+  short: "Rejestruje kanał, nie będąc w środku."
+  help: "Rejestruje kanał na prośbę staffu. Operator nie musi znajdować się w kanale,\na kanał nie musi jeszcze istnieć w sieci.\nTo polecenie wymaga uprawnienia operatora."
+  done: "\x0303✔\x03 Kanał \x02%channel%\x02 został zarejestrowany."
+  invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
+  pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 oczekuje na usunięcie i nie może być zarejestrowany."
+  already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
+  failed: "\x0304✗\x03 Nie udało się zakończyć rejestracji kanału \x02%channel%\x02."
