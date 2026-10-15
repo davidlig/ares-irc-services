@@ -16,10 +16,10 @@ error:
   mail_failed: "\x0304✗\x03 Kon geen e-mail verzenden. Probeer het later opnieuw."
 
 register:
-  syntax:           "REGISTER <#kanaal> <beschrijving>"
-  short:            "Registreer een kanaal."
-  help:             "Registreer en koppel een kanaal aan uw bijnaam. U moet geïdentificeerd zijn bij %nickserv%."
-  success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is geregistreerd."
+  syntax:           "REGISTER"
+  short:            "Kanaalregistratie is verplaatst naar %cregserv%."
+  help:             "Kanaalregistratie is verplaatst naar %cregserv% en vereist nu goedkeuring van een operator. Stuur \x0303/msg %cregserv% REGISTRA <#kanaal> <beschrijving>\x03; u moet geïdentificeerd zijn bij %nickserv%."
+  disabled:         "\x0304✗\x03 Kanaalregistratie is verplaatst naar \x02%cregserv%\x02. Gebruik \x0303/msg %cregserv% REGISTRA <#kanaal> <beschrijving>\x03."
   already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
   channel_not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 bestaat niet op het netwerk."
   pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat op het punt verwijderd te worden en kan niet worden geregistreerd."

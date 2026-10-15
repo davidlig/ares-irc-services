@@ -16,10 +16,10 @@ error:
   mail_failed: "\x0304✗\x03 Impossible d'envoyer l'e-mail. Veuillez réessayer plus tard."
 
 register:
-  syntax:           "REGISTER <#canal> <description>"
-  short:            "Enregistrer un canal."
-  help:             "Enregistre et associe un canal à votre surnom. Vous devez être identifié auprès de %nickserv%."
-  success:          "\x0303✔\x03 Le canal \x02%channel%\x02 a été enregistré."
+  syntax:           "REGISTER"
+  short:            "L'enregistrement des canaux a été déplacé vers %cregserv%."
+  help:             "L'enregistrement des canaux a été déplacé vers %cregserv% et nécessite désormais l'approbation d'un opérateur. Envoyez \x0303/msg %cregserv% REGISTRA <#canal> <description>\x03 ; vous devez être identifié auprès de %nickserv%."
+  disabled:         "\x0304✗\x03 L'enregistrement des canaux a été déplacé vers \x02%cregserv%\x02. Utilisez \x0303/msg %cregserv% REGISTRA <#canal> <description>\x03."
   already_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré."
   channel_not_on_network: "\x0304✗\x03 Le canal \x02%channel%\x02 n'existe pas sur le réseau."
   pending_deletion: "\x0304✗\x03 Le canal \x02%channel%\x02 est en attente de suppression et ne peut pas être enregistré."

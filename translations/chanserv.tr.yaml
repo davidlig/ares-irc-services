@@ -16,10 +16,10 @@ error:
   mail_failed: "\x0304✗\x03 E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin."
 
 register:
-  syntax:           "REGISTER <#channel> <açıklama>"
-  short:            "Bir kanalı kaydedin."
-  help:             "Bir kanalı kaydedin ve rumuzunuza bağlayın. %nickserv% ile kimliğiniz doğrulanmış olmalıdır."
-  success:          "\x0303✔\x03 \x02%channel%\x02 kanalı kaydedildi."
+  syntax:           "REGISTER"
+  short:            "Kanal kaydı %cregserv% servisine taşındı."
+  help:             "Kanal kaydı %cregserv% servisine taşındı ve artık bir operatörün onayını gerektiriyor. \x0303/msg %cregserv% REGISTRA <#channel> <açıklama>\x03 komutunu gönderin; %nickserv% ile kimliğiniz doğrulanmış olmalıdır."
+  disabled:         "\x0304✗\x03 Kanal kaydı \x02%cregserv%\x02 servisine taşındı. \x0303/msg %cregserv% REGISTRA <#channel> <açıklama>\x03 komutunu kullanın."
   already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanalı ağda mevcut değil."
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı silinmeyi bekliyor ve kaydedilemez."

@@ -94,7 +94,7 @@ final class TranslationCatalogTest extends TestCase
     #[Test]
     public function serviceTranslationsRenderConfiguredNicknamesInEveryLocale(): void
     {
-        $nicknames = ['chanserv' => 'ChannelKeeper', 'nickserv' => 'IdentityKeeper', 'memoserv' => 'MemoKeeper', 'operserv' => 'NetworkKeeper'];
+        $nicknames = ['chanserv' => 'ChannelKeeper', 'nickserv' => 'IdentityKeeper', 'memoserv' => 'MemoKeeper', 'operserv' => 'NetworkKeeper', 'cregserv' => 'RegistrationKeeper'];
         $providers = [];
         foreach ($nicknames as $domain => $nickname) {
             $provider = $this->createStub(ServiceNicknameProviderInterface::class);
