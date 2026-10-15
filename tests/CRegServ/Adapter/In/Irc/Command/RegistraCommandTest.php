@@ -176,6 +176,7 @@ final class RegistraCommandTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('outcomeReplyProvider')]
     public function repliesTheMatchingMessageForTheUseCaseOutcome(
         RequestChannelRegistrationResult $result,

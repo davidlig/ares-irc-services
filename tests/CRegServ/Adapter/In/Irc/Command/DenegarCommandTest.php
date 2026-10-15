@@ -128,6 +128,7 @@ final class DenegarCommandTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('outcomeReplyProvider')]
     public function repliesTheMatchingMessageForTheUseCaseOutcome(
         DenyChannelRegistrationResult $result,

@@ -48,6 +48,7 @@ final class ChanServChannelApprovalAdapterTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('outcomeProvider')]
     public function mapsEveryChanServOutcomeOntoTheApprovalOutcome(
         ChannelRegistrationOutcome $given,

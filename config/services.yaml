@@ -1536,6 +1536,15 @@ services:
     App\CRegServ\Adapter\In\Irc\Command\DenegarCommand:
         tags: ['cregserv.command']
 
+    App\CRegServ\Adapter\In\Irc\Command\PendientesCommand:
+        tags: ['cregserv.command']
+
+    App\CRegServ\Adapter\In\Irc\Command\DenegadosCommand:
+        tags: ['cregserv.command']
+
+    App\CRegServ\Adapter\In\Irc\Command\DropCommand:
+        tags: ['cregserv.command']
+
     App\CRegServ\Application\Port\Out\ChannelApprovalPort:
         alias: App\CRegServ\Adapter\Out\ChanServ\ChanServChannelApprovalAdapter
 
@@ -1544,6 +1553,12 @@ services:
 
     App\CRegServ\Application\UseCase\DenyChannelRegistration\DenyChannelRegistrationHandlerInterface:
         alias: App\CRegServ\Application\UseCase\DenyChannelRegistration\DenyChannelRegistrationHandler
+
+    App\CRegServ\Application\UseCase\ListChannelRegistrations\ListChannelRegistrationsHandlerInterface:
+        alias: App\CRegServ\Application\UseCase\ListChannelRegistrations\ListChannelRegistrationsHandler
+
+    App\CRegServ\Application\UseCase\DropChannelRegistration\DropChannelRegistrationHandlerInterface:
+        alias: App\CRegServ\Application\UseCase\DropChannelRegistration\DropChannelRegistrationHandler
 
     App\ChanServ\Application\Port\In\ChannelRegistration:
         alias: App\ChanServ\Application\Service\ApprovedChannelRegistrationService
