@@ -1327,9 +1327,6 @@ services:
     App\ChanServ\Adapter\In\Irc\Command\RegisterCommand:
         tags: ['chanserv.command']
 
-    App\ChanServ\Adapter\In\Irc\Command\SaregisterCommand:
-        tags: ['chanserv.command']
-
     App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandler:
         arguments:
             $dropGraceDays: '%chanserv.drop_grace_days%'
@@ -1543,6 +1540,9 @@ services:
         tags: ['cregserv.command']
 
     App\CRegServ\Adapter\In\Irc\Command\DropCommand:
+        tags: ['cregserv.command']
+
+    App\CRegServ\Adapter\In\Irc\Command\SaregisterCommand:
         tags: ['cregserv.command']
 
     App\CRegServ\Application\Port\Out\ChannelApprovalPort:

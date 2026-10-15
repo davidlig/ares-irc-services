@@ -76,3 +76,13 @@ drop:
   dropped: "\x0303✔\x03 The registration record of channel \x02%channel%\x02 has been removed from \x02%bot%\x02."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
   no_request: "\x0304✗\x03 The channel \x02%channel%\x02 is not recorded with \x02%bot%\x02."
+
+saregister:
+  syntax: "SAREGISTER <#channel> [description]"
+  short: "Register a channel without being in it."
+  help: "Registers a channel at staff request. The operator does not need to be in\nthe channel, and the channel does not need to exist on the network yet.\nThis command requires an operator permission."
+  done: "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
+  invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
+  pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."
+  already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
+  failed: "\x0304✗\x03 The registration of channel \x02%channel%\x02 could not be completed."

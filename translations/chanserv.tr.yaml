@@ -21,11 +21,6 @@ register:
   help:             "Kanal kaydı %cregserv% servisine taşındı ve artık bir operatörün onayını gerektiriyor. \x0303/msg %cregserv% REGISTRA <#channel> <açıklama>\x03 komutunu gönderin; %nickserv% ile kimliğiniz doğrulanmış olmalıdır."
   disabled:         "\x0304✗\x03 Kanal kaydı \x02%cregserv%\x02 servisine taşındı. \x0303/msg %cregserv% REGISTRA <#channel> <açıklama>\x03 komutunu kullanın."
   already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
-  channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanalı ağda mevcut değil."
-  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı silinmeyi bekliyor ve kaydedilemez."
-  insufficient_channel_rank: "\x0304✗\x03 Bu kanalı kaydetmek için \x02%channel%\x02 üzerinde en az operatör durumunda olmalısınız."
-  limit_exceeded: "\x0304✗\x03 Maksimum %max% kayıtlı kanal sınırına ulaştınız."
-  throttled: "\x0304✗\x03 Başka bir kanal kaydetmeden önce \x02%minutes%\x02 dakika beklemelisiniz."
 
 info:
   syntax:           "INFO <#channel>"
@@ -568,9 +563,3 @@ list:
   status_suspended: "Askıya alındı"
   status_pending_deletion: "Silinmeyi bekliyor"
   status_forbidden: "Yasaklandı"
-
-saregister:
-  syntax:           "SAREGISTER <#kanal> [açıklama]"
-  short:            "İçinde olmadan bir kanal kaydeder."
-  help:             "Staff isteğiyle bir kanal kaydeder. Operatörün kanalda olması gerekmez ve\nkanalın ağda henüz var olması gerekmez.\nBu komut operatör izni gerektirir."
-  done:             "\x0303✔\x03 \x02%channel%\x02 kanalı kaydedildi."

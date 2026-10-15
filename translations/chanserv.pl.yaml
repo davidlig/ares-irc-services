@@ -21,11 +21,6 @@ register:
   help:             "Rejestracja kanałów została przeniesiona do %cregserv% i wymaga teraz zatwierdzenia przez operatora. Wyślij \x0303/msg %cregserv% REGISTRA <#kanał> <opis>\x03; musisz być zidentyfikowany z %nickserv%."
   disabled:         "\x0304✗\x03 Rejestracja kanałów została przeniesiona do \x02%cregserv%\x02. Użyj \x0303/msg %cregserv% REGISTRA <#kanał> <opis>\x03."
   already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
-  channel_not_on_network: "\x0304✗\x03 Kanał \x02%channel%\x02 nie istnieje w sieci."
-  pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 oczekuje na usunięcie i nie może być zarejestrowany."
-  insufficient_channel_rank: "\x0304✗\x03 Musisz mieć co najmniej status operatora na \x02%channel%\x02, aby zarejestrować kanał."
-  limit_exceeded: "\x0304✗\x03 Osiągnąłeś maksymalną liczbę %max% zarejestrowanych kanałów."
-  throttled: "\x0304✗\x03 Musisz poczekać \x02%minutes%\x02 minut(y) przed zarejestrowaniem kolejnego kanału."
 
 info:
   syntax:           "INFO <#kanał>"
@@ -568,9 +563,3 @@ list:
   status_suspended: "Zawieszony"
   status_pending_deletion: "Oczekuje na usunięcie"
   status_forbidden: "Zabroniony"
-
-saregister:
-  syntax:           "SAREGISTER <#kanał> [opis]"
-  short:            "Rejestruje kanał bez przebywania w nim."
-  help:             "Rejestruje kanał na wniosek obsługi. Operator nie musi być na kanale,\na kanał nie musi jeszcze istnieć w sieci.\nTo polecenie wymaga uprawnienia operatora."
-  done:             "\x0303✔\x03 Kanał \x02%channel%\x02 został zarejestrowany."

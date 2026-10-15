@@ -24,6 +24,12 @@ final readonly class CRegServPermission
     public const string DROP = 'cregserv.drop';
 
     /**
+     * Moved from ChanServ (chanserv.saregister): the oper's force-registration path
+     * follows the rest of the CReG command set over to this service.
+     */
+    public const string SAREGISTER = 'cregserv.saregister';
+
+    /**
      * @return list<string>
      */
     public static function allIrcop(): array
@@ -34,6 +40,7 @@ final readonly class CRegServPermission
             self::PENDIENTES,
             self::DENEGADOS,
             self::DROP,
+            self::SAREGISTER,
         ];
     }
 

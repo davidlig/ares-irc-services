@@ -76,3 +76,13 @@ drop:
   dropped: "\x0303✔\x03 El registro del canal \x02%channel%\x02 ha sido eliminado de \x02%bot%\x02."
   invalid_channel: "\x0304✗\x03 El nombre del canal debe empezar por un \x02#\x02."
   no_request: "\x0304✗\x03 El canal \x02%channel%\x02 no se encuentra registrado con \x02%bot%\x02."
+
+saregister:
+  syntax: "SAREGISTER <#canal> [descripción]"
+  short: "Registra un canal sin estar dentro."
+  help: "Registra un canal a petición del staff. El operador no necesita estar en el\ncanal, y el canal no necesita existir todavía en la red.\nEste comando requiere permiso de operador."
+  done: "\x0303✔\x03 El canal \x02%channel%\x02 ha sido registrado."
+  invalid_channel: "\x0304✗\x03 El nombre del canal debe empezar por un \x02#\x02."
+  pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 está pendiente de eliminación y no puede ser registrado."
+  already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ya se encuentra registrado."
+  failed: "\x0304✗\x03 No se ha podido completar el registro del canal \x02%channel%\x02."

@@ -21,11 +21,6 @@ register:
   help:             "O rexistro de canles mudou a %cregserv% e agora require a aprobación dun operador. Envíe \x0303/msg %cregserv% REGISTRA <#canle> <descrición>\x03; debe estar identificado con %nickserv%."
   disabled:         "\x0304✗\x03 O rexistro de canles mudou a \x02%cregserv%\x02. Use \x0303/msg %cregserv% REGISTRA <#canle> <descrición>\x03."
   already_registered: "\x0304✗\x03 O canal \x02%channel%\x02 xa está rexistrado."
-  channel_not_on_network: "\x0304✗\x03 A canle \x02%channel%\x02 non existe na rede."
-  pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 está pendente de eliminación e non se pode rexistrar."
-  insufficient_channel_rank: "\x0304✗\x03 Debes ter polo menos estado de operador en \x02%channel%\x02 para rexistrala."
-  limit_exceeded: "\x0304✗\x03 Alcanzou o máximo de %max% canles rexistradas."
-  throttled: "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de rexistrar outra canle."
 
 info:
   syntax:           "INFO <#canle>"
@@ -570,9 +565,3 @@ list:
   status_suspended: "Suspendida"
   status_pending_deletion: "Pendente de eliminación"
   status_forbidden: "Prohibida"
-
-saregister:
-  syntax:           "SAREGISTER <#canle> [descrición]"
-  short:            "Rexistra unha canle sen estar dentro."
-  help:             "Rexistra unha canle a petición do staff. O operador non necesita estar na\ncanle, e a canle non necesita existir aínda na rede.\nEsta orde require permiso de operador."
-  done:             "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada."
