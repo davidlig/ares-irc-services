@@ -16,10 +16,10 @@ error:
   mail_failed: "\x0304✗\x03 Could not send email. Please try again later."
 
 register:
-  syntax:           "REGISTER <#channel> <description>"
-  short:            "Register a channel."
-  help:             "Register and associate a channel to your nickname. You must be identified with %nickserv%."
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
+  syntax:           "REGISTER"
+  short:            "Channel registration moved to %cregserv%."
+  help:             "Channel registration moved to %cregserv% and now needs operator approval. Send \x0303/msg %cregserv% REGISTRA <#channel> <description>\x03; you must be identified with %nickserv%."
+  disabled:         "\x0304✗\x03 Channel registration moved to \x02%cregserv%\x02. Use \x0303/msg %cregserv% REGISTRA <#channel> <description>\x03."
   already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
   pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."

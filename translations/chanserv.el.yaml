@@ -16,10 +16,10 @@ error:
   mail_failed: "\x0304✗\x03 Αδυναμία αποστολής email. Παρακαλώ δοκιμάστε αργότερα."
 
 register:
-  syntax:           "REGISTER <#channel> <description>"
-  short:            "Καταχώρηση καναλιού."
-  help:             "Καταχωρήστε και συσχετίστε ένα κανάλι με το ψευδώνυμό σας. Πρέπει να είστε ταυτοποιημένοι με το %nickserv%."
-  success:          "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει καταχωρηθεί."
+  syntax:           "REGISTER"
+  short:            "Η καταχώρηση καναλιών μεταφέρθηκε στο %cregserv%."
+  help:             "Η καταχώρηση καναλιών μεταφέρθηκε στο %cregserv% και απαιτεί πλέον έγκριση από συντελεστή. Στείλτε \x0303/msg %cregserv% REGISTRA <#channel> <description>\x03. Πρέπει να είστε ταυτοποιημένοι με το %nickserv%."
+  disabled:         "\x0304✗\x03 Η καταχώρηση καναλιών μεταφέρθηκε στο \x02%cregserv%\x02. Χρησιμοποιήστε \x0303/msg %cregserv% REGISTRA <#channel> <description>\x03."
   already_registered: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη καταχωρημένο."
   channel_not_on_network: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν υπάρχει στο δίκτυο."
   pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναμονή διαγραφής και δεν μπορεί να καταχωρηθεί."

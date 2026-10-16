@@ -16,10 +16,10 @@ error:
   mail_failed: "\x0304✗\x03 Nu s-a putut trimite e-mailul. Vă rugăm să încercați mai târziu."
 
 register:
-  syntax:           "REGISTER <#canal> <descriere>"
-  short:            "Înregistrați un canal."
-  help:             "Înregistrați și asociați un canal cu porecla dumneavoastră. Trebuie să fiți identificat cu %nickserv%."
-  success:          "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."
+  syntax:           "REGISTER"
+  short:            "Înregistrarea canalelor a fost mutată la %cregserv%."
+  help:             "Înregistrarea canalelor a fost mutată la %cregserv% și acum necesită aprobarea unui operator. Trimiteți \x0303/msg %cregserv% REGISTRA <#canal> <descriere>\x03; trebuie să fiți identificat cu %nickserv%."
+  disabled:         "\x0304✗\x03 Înregistrarea canalelor a fost mutată la \x02%cregserv%\x02. Folosiți \x0303/msg %cregserv% REGISTRA <#canal> <descriere>\x03."
   already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
   channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu există în rețea."
   pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este în așteptare de ștergere și nu poate fi înregistrat."

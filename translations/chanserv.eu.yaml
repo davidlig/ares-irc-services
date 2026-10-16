@@ -16,10 +16,10 @@ error:
   mail_failed: "\x0304✗\x03 Ezin izan da posta elektronikoa bidali. Saiatu berriro geroago."
 
 register:
-  syntax:           "REGISTER <#kanala> <deskribapena>"
-  short:            "Erregistratu kanal bat."
-  help:             "Erregistratu eta lotu kanal bat zure ezizenarekin. %nickserv% zerbitzuan identifikatuta egon behar duzu."
-  success:          "\x0303✔\x03 \x02%channel%\x02 kanala erregistratu da."
+  syntax:           "REGISTER"
+  short:            "Kanalen erregistroa %cregserv% zerbitzura pasatu da."
+  help:             "Kanalen erregistroa %cregserv% zerbitzura pasatu da eta orain operadore baten onarpena behar du. Bidali \x0303/msg %cregserv% REGISTRA <#kanala> <deskribapena>\x03; %nickserv% zerbitzuan identifikatuta egon behar duzu."
+  disabled:         "\x0304✗\x03 Kanalen erregistroa \x02%cregserv%\x02 zerbitzura pasatu da. Erabili \x0303/msg %cregserv% REGISTRA <#kanala> <deskribapena>\x03."
   already_registered: "\x0304✗\x03 \x02%channel%\x02 kanala jada erregistratuta dago."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago sarean."
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ezabatzearen zain dago eta ezin da erregistratu."

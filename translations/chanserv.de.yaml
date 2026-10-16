@@ -16,10 +16,10 @@ error:
   mail_failed: "\x0304✗\x03 E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es später erneut."
 
 register:
-  syntax:           "REGISTER <#channel> <Beschreibung>"
-  short:            "Einen Channel registrieren."
-  help:             "Registriert und verknüpft einen Channel mit Ihrem Nickname. Sie müssen bei %nickserv% identifiziert sein."
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 wurde registriert."
+  syntax:           "REGISTER"
+  short:            "Die Channel-Registrierung ist zu %cregserv% gewechselt."
+  help:             "Die Channel-Registrierung ist zu %cregserv% gewechselt und erfordert jetzt die Freigabe eines Operators. Senden Sie \x0303/msg %cregserv% REGISTRA <#channel> <Beschreibung>\x03; Sie müssen bei %nickserv% identifiziert sein."
+  disabled:         "\x0304✗\x03 Die Channel-Registrierung ist zu \x02%cregserv%\x02 gewechselt. Nutzen Sie \x0303/msg %cregserv% REGISTRA <#channel> <Beschreibung>\x03."
   already_registered: "\x0304✗\x03 Der Channel \x02%channel%\x02 ist bereits registriert."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 existiert nicht im Netzwerk."
   pending_deletion: "\x0304✗\x03 Der Channel \x02%channel%\x02 steht zur Löschung an und kann nicht registriert werden."
