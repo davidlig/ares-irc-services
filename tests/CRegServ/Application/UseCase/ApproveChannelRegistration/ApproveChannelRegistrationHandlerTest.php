@@ -107,6 +107,32 @@ final class ApproveChannelRegistrationHandlerTest extends DoctrineIntegrationTes
     }
 
     #[Test]
+    public function marksTheRequestApprovedEvenWhenTheNestedRegistrationClearsTheEntityManager(): void
+    {
+        // The real ChanServ registration writes the UDB C block, and that nested
+        // write clears the shared EntityManager. The handler must still persist the
+        // approved status instead of re-inserting the (now detached) request row.
+        $this->approvals = new RecordingChannelApproval(entityManagerToClear: $this->entityManager);
+        $this->handler = new ApproveChannelRegistrationHandler(
+            $this->repository,
+            $this->channelLookup,
+            $this->approvals,
+        );
+        $this->queueRequest();
+
+        $result = $this->handler->handle($this->command());
+
+        self::assertSame(ApproveChannelRegistrationOutcome::Approved, $result->outcome);
+        self::assertSame('JuanJo_Jaen', $result->founderNickname);
+
+        $this->flushAndClear();
+        $stored = $this->repository->findByChannel('#sitiochat');
+        self::assertNotNull($stored);
+        self::assertSame(ChannelRegistrationStatus::Approved, $stored->getStatus());
+        self::assertSame('NetAdmin', $stored->getApprovedByNick());
+    }
+
+    #[Test]
     public function refusesAChannelNameWithoutHashPrefix(): void
     {
         $result = $this->handler->handle($this->command(channelName: 'SitioChat'));

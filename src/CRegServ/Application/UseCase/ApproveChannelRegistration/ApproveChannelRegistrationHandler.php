@@ -75,6 +75,14 @@ final readonly class ApproveChannelRegistrationHandler implements ApproveChannel
         ChannelRegistrationRequest $request,
         ApproveChannelRegistration $command,
     ): ApproveChannelRegistrationResult {
+        // The approval hands the channel to ChanServ, which writes the UDB C block;
+        // that nested write clears the shared EntityManager and detaches $request.
+        // Re-fetch a managed copy so save() updates the row instead of re-inserting it.
+        $managed = $this->requestRepository->findByChannel($request->getChannelLower());
+        if (null !== $managed) {
+            $request = $managed;
+        }
+
         $request->approve($command->approverNickname, $command->occurredAt);
         $this->requestRepository->save($request);
 

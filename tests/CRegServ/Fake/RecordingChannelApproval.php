@@ -7,6 +7,7 @@ namespace App\Tests\CRegServ\Fake;
 use App\CRegServ\Application\Port\Out\ChannelApprovalOutcome;
 use App\CRegServ\Application\Port\Out\ChannelApprovalPort;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Stands in for ChanServ: records what APROBAR handed over and answers a canned outcome.
@@ -18,6 +19,8 @@ final class RecordingChannelApproval implements ChannelApprovalPort
 
     public function __construct(
         private ChannelApprovalOutcome $outcome = ChannelApprovalOutcome::Approved,
+        /** Cleared on every approve() call to mirror the real ChanServ/UDB write. */
+        private ?EntityManagerInterface $entityManagerToClear = null,
     ) {}
 
     public function approve(
@@ -33,6 +36,8 @@ final class RecordingChannelApproval implements ChannelApprovalPort
             'requesterAccountId' => $requesterAccountId,
             'approverNickname' => $approverNickname,
         ];
+
+        $this->entityManagerToClear?->clear();
 
         return $this->outcome;
     }
