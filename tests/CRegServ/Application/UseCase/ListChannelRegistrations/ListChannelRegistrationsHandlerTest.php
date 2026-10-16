@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\CRegServ\Application\UseCase\ListChannelRegistrations;
 
 use App\CRegServ\Adapter\Out\Persistence\Doctrine\ChannelRegistrationRequestDoctrineRepository;
+use App\CRegServ\Application\UseCase\ListChannelRegistrations\ChannelRegistrationRow;
 use App\CRegServ\Application\UseCase\ListChannelRegistrations\ListChannelRegistrations;
 use App\CRegServ\Application\UseCase\ListChannelRegistrations\ListChannelRegistrationsHandler;
+use App\CRegServ\Application\UseCase\ListChannelRegistrations\ListChannelRegistrationsResult;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
 use App\CRegServ\Domain\ValueObject\ChannelRegistrationStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
@@ -21,6 +23,9 @@ use PHPUnit\Framework\Attributes\Test;
  * the same read over the other status, each one showing only the fields the oper needs.
  */
 #[CoversClass(ListChannelRegistrationsHandler::class)]
+#[CoversClass(ListChannelRegistrations::class)]
+#[CoversClass(ListChannelRegistrationsResult::class)]
+#[CoversClass(ChannelRegistrationRow::class)]
 #[Group('integration')]
 final class ListChannelRegistrationsHandlerTest extends DoctrineIntegrationTestCase
 {

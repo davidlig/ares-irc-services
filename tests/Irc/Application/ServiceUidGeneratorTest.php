@@ -69,6 +69,17 @@ final class ServiceUidGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function generateUidUsesLetterDForCRegServ(): void
+    {
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $generator = new ServiceUidGenerator($connectionHolder);
+
+        self::assertSame('001D00001', $generator->generateUid('cregserv'));
+    }
+
+    #[Test]
     public function generateUidUsesDefaultLetterForUnknownService(): void
     {
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);

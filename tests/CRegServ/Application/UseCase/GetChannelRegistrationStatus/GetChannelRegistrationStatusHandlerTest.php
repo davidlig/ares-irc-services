@@ -9,6 +9,7 @@ use App\CRegServ\Application\Port\Out\ChannelRegistrationRequestRepositoryInterf
 use App\CRegServ\Application\UseCase\GetChannelRegistrationStatus\GetChannelRegistrationStatus;
 use App\CRegServ\Application\UseCase\GetChannelRegistrationStatus\GetChannelRegistrationStatusHandler;
 use App\CRegServ\Application\UseCase\GetChannelRegistrationStatus\GetChannelRegistrationStatusOutcome;
+use App\CRegServ\Application\UseCase\GetChannelRegistrationStatus\GetChannelRegistrationStatusResult;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
 use App\Tests\CRegServ\Fake\ArrayRegisteredChannelLookup;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
@@ -22,6 +23,8 @@ use PHPUnit\Framework\Attributes\Test;
  * state of a channel name and gets "already registered", "in process", "denied" or "none".
  */
 #[CoversClass(GetChannelRegistrationStatusHandler::class)]
+#[CoversClass(GetChannelRegistrationStatus::class)]
+#[CoversClass(GetChannelRegistrationStatusResult::class)]
 #[Group('integration')]
 final class GetChannelRegistrationStatusHandlerTest extends DoctrineIntegrationTestCase
 {
@@ -63,6 +66,24 @@ final class GetChannelRegistrationStatusHandlerTest extends DoctrineIntegrationT
         $this->flushAndClear();
 
         $this->channelLookup->registered['#sitiochat'] = true;
+
+        $result = $this->handler->handle(new GetChannelRegistrationStatus('#sitiochat'));
+
+        self::assertSame(GetChannelRegistrationStatusOutcome::Registered, $result->outcome);
+    }
+
+    #[Test]
+    public function reportsRegisteredFromTheApprovedRecordWhenTheChannelLookupLagsBehind(): void
+    {
+        $request = ChannelRegistrationRequest::request(
+            requestedAt: new DateTimeImmutable('2026-10-14 10:00:00'),
+            channelName: '#SitioChat',
+            requesterAccountId: 1,
+            requesterNick: 'JuanJo_Jaen',
+        );
+        $request->approve('OperNick', new DateTimeImmutable('2026-10-14 11:00:00'));
+        $this->repository->save($request);
+        $this->flushAndClear();
 
         $result = $this->handler->handle(new GetChannelRegistrationStatus('#sitiochat'));
 

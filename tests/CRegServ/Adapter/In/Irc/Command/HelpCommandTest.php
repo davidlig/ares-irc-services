@@ -168,6 +168,14 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $help = $this->createHelpCommand([]);
+
+        self::assertSame([], $help->getSubCommandHelp());
+    }
+
+    #[Test]
     public function generalHelpListsUserCommandsAndHidesTheOperOnesFromAPlainUser(): void
     {
         $registra = $this->createCommandStub('REGISTRA', 1, false, 'IDENTIFIED');
