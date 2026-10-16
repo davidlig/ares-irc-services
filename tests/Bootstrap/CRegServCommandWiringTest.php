@@ -11,6 +11,7 @@ use App\CRegServ\Adapter\In\Irc\Command\DropCommand;
 use App\CRegServ\Adapter\In\Irc\Command\EstadoCommand;
 use App\CRegServ\Adapter\In\Irc\Command\PendientesCommand;
 use App\CRegServ\Adapter\In\Irc\Command\RegistraCommand;
+use App\CRegServ\Adapter\In\Irc\Command\SaregisterCommand;
 use App\CRegServ\Adapter\In\Irc\CRegServCommandInterface;
 use App\CRegServ\Adapter\In\Irc\CRegServCommandRegistry;
 use App\CRegServ\Application\Security\CRegServPermission;
@@ -45,6 +46,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
             'PENDIENTES' => [PendientesCommand::class, 'PENDIENTES'],
             'DENEGADOS' => [DenegadosCommand::class, 'DENEGADOS'],
             'DROP' => [DropCommand::class, 'DROP'],
+            'SAREGISTER' => [SaregisterCommand::class, 'SAREGISTER'],
         ];
     }
 
@@ -64,7 +66,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
     }
 
     #[Test]
-    public function theRegistryHoldsExactlyTheSevenPortedCommands(): void
+    public function theRegistryHoldsExactlyTheEightPortedCommands(): void
     {
         self::bootKernel();
 
@@ -78,7 +80,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
         sort($names);
 
         self::assertSame(
-            ['APROBAR', 'DENEGADOS', 'DENEGAR', 'DROP', 'ESTADO', 'PENDIENTES', 'REGISTRA'],
+            ['APROBAR', 'DENEGADOS', 'DENEGAR', 'DROP', 'ESTADO', 'PENDIENTES', 'REGISTRA', 'SAREGISTER'],
             $names,
         );
     }
@@ -94,13 +96,15 @@ final class CRegServCommandWiringTest extends KernelTestCase
             'PENDIENTES' => ['PENDIENTES', PendientesCommand::class, CRegServPermission::PENDIENTES],
             'DENEGADOS' => ['DENEGADOS', DenegadosCommand::class, CRegServPermission::DENEGADOS],
             'DROP' => ['DROP', DropCommand::class, CRegServPermission::DROP],
+            'SAREGISTER' => ['SAREGISTER', SaregisterCommand::class, CRegServPermission::SAREGISTER],
         ];
     }
 
     /**
      * The oper half of pulsar's table: APROBAR, DENEGAR, PENDIENTES and DENEGADOS are
      * guarded by is_services_oper and DROP by is_services_admin, which is an IRCop
-     * permission here because ares has no services-admin tier of its own.
+     * permission here because ares has no services-admin tier of its own. SAREGISTER is
+     * not pulsar's — it is the legacy ChanServ command ported here by S2.
      *
      * @param class-string<CRegServCommandInterface> $class
      */
@@ -165,7 +169,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
     }
 
     #[Test]
-    public function theFiveOperPermissionsArePublishedUnderTheCRegServService(): void
+    public function theSixOperPermissionsArePublishedUnderTheCRegServService(): void
     {
         self::bootKernel();
 
@@ -179,5 +183,6 @@ final class CRegServCommandWiringTest extends KernelTestCase
         self::assertContains(CRegServPermission::PENDIENTES, $published);
         self::assertContains(CRegServPermission::DENEGADOS, $published);
         self::assertContains(CRegServPermission::DROP, $published);
+        self::assertContains(CRegServPermission::SAREGISTER, $published);
     }
 }

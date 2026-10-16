@@ -21,11 +21,6 @@ register:
   help:             "Die Channel-Registrierung ist zu %cregserv% gewechselt und erfordert jetzt die Freigabe eines Operators. Senden Sie \x0303/msg %cregserv% REGISTRA <#channel> <Beschreibung>\x03; Sie müssen bei %nickserv% identifiziert sein."
   disabled:         "\x0304✗\x03 Die Channel-Registrierung ist zu \x02%cregserv%\x02 gewechselt. Nutzen Sie \x0303/msg %cregserv% REGISTRA <#channel> <Beschreibung>\x03."
   already_registered: "\x0304✗\x03 Der Channel \x02%channel%\x02 ist bereits registriert."
-  channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 existiert nicht im Netzwerk."
-  pending_deletion: "\x0304✗\x03 Der Channel \x02%channel%\x02 steht zur Löschung an und kann nicht registriert werden."
-  insufficient_channel_rank: "\x0304✗\x03 Du musst mindestens Operator-Status in \x02%channel%\x02 haben, um den Channel zu registrieren."
-  limit_exceeded: "\x0304✗\x03 Sie haben das Maximum von %max% registrierten Channels erreicht."
-  throttled: "\x0304✗\x03 Sie müssen \x02%minutes%\x02 Minute(n) warten, bevor Sie einen weiteren Channel registrieren."
 
 info:
   syntax:           "INFO <#channel>"
@@ -568,9 +563,3 @@ list:
   status_suspended: "Gesperrt"
   status_pending_deletion: "Löschung ausstehend"
   status_forbidden: "Verboten"
-
-saregister:
-  syntax:           "SAREGISTER <#Channel> [Beschreibung]"
-  short:            "Registriert einen Channel, ohne darin zu sein."
-  help:             "Registriert einen Channel auf Anfrage des Staffs. Der Operator muss nicht im\nChannel sein, und der Channel muss noch nicht im Netz existieren.\nDieser Befehl erfordert eine Operator-Berechtigung."
-  done:             "\x0303✔\x03 Der Channel \x02%channel%\x02 wurde registriert."

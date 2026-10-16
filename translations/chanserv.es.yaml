@@ -21,11 +21,6 @@ register:
   help:             "El registro de canales se ha trasladado a %cregserv% y ahora requiere la aprobación de un operador. Envía \x0303/msg %cregserv% REGISTRA <#canal> <descripción>\x03; debes estar identificado con %nickserv%."
   disabled:         "\x0304✗\x03 El registro de canales se ha trasladado a \x02%cregserv%\x02. Usa \x0303/msg %cregserv% REGISTRA <#canal> <descripción>\x03."
   already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ya está registrado."
-  channel_not_on_network: "\x0304✗\x03 El canal \x02%channel%\x02 no existe en la red."
-  pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 está pendiente de eliminación y no puede ser registrado."
-  insufficient_channel_rank: "\x0304✗\x03 Debes tener al menos estado de operador en \x02%channel%\x02 para registrarlo."
-  limit_exceeded: "\x0304✗\x03 Has alcanzado el máximo de %max% canales registrados."
-  throttled: "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de registrar otro canal."
 
 info:
   syntax:           "INFO <#canal>"
@@ -568,9 +563,3 @@ list:
   status_suspended: "Suspendido"
   status_pending_deletion: "Pendiente de eliminación"
   status_forbidden: "Prohibido"
-
-saregister:
-  syntax:           "SAREGISTER <#canal> [descripción]"
-  short:            "Registra un canal sin estar dentro."
-  help:             "Registra un canal a petición del staff. El operador no necesita estar en el\ncanal, y el canal no necesita existir todavía en la red.\nEste comando requiere permiso de operador."
-  done:             "\x0303✔\x03 El canal \x02%channel%\x02 ha sido registrado."

@@ -21,11 +21,6 @@ register:
   help:             "Kanaalregistratie is verplaatst naar %cregserv% en vereist nu goedkeuring van een operator. Stuur \x0303/msg %cregserv% REGISTRA <#kanaal> <beschrijving>\x03; u moet geïdentificeerd zijn bij %nickserv%."
   disabled:         "\x0304✗\x03 Kanaalregistratie is verplaatst naar \x02%cregserv%\x02. Gebruik \x0303/msg %cregserv% REGISTRA <#kanaal> <beschrijving>\x03."
   already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
-  channel_not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 bestaat niet op het netwerk."
-  pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat op het punt verwijderd te worden en kan niet worden geregistreerd."
-  insufficient_channel_rank: "\x0304✗\x03 Je moet minstens operatorstatus hebben op \x02%channel%\x02 om het kanaal te registreren."
-  limit_exceeded: "\x0304✗\x03 U heeft het maximum van %max% geregistreerde kanalen bereikt."
-  throttled: "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een ander kanaal registreert."
 
 info:
   syntax:           "INFO <#kanaal>"
@@ -568,9 +563,3 @@ list:
   status_suspended: "Geschorst"
   status_pending_deletion: "Verwijdering in behandeling"
   status_forbidden: "Verboden"
-
-saregister:
-  syntax:           "SAREGISTER <#kanaal> [beschrijving]"
-  short:            "Registreert een kanaal zonder erin te zijn."
-  help:             "Registreert een kanaal op verzoek van het staff. De operator hoeft niet in het\nkanaal te zijn, en het kanaal hoeft nog niet op het netwerk te bestaan.\nDit commando vereist een operator-recht."
-  done:             "\x0303✔\x03 Het kanaal \x02%channel%\x02 is geregistreerd."

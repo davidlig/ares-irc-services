@@ -21,11 +21,6 @@ register:
   help:             "El registre de canals s'ha traslladat a %cregserv% i ara requereix l'aprovació d'un operador. Envieu \x0303/msg %cregserv% REGISTRA <#channel> <descripció>\x03; heu d'estar identificat amb %nickserv%."
   disabled:         "\x0304✗\x03 El registre de canals s'ha traslladat a \x02%cregserv%\x02. Useu \x0303/msg %cregserv% REGISTRA <#channel> <descripció>\x03."
   already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat."
-  channel_not_on_network: "\x0304✗\x03 El canal \x02%channel%\x02 no existeix a la xarxa."
-  pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 està pendent d'eliminació i no pot ser registrat."
-  insufficient_channel_rank: "\x0304✗\x03 Heu de tenir com a mínim estat d'operador a \x02%channel%\x02 per registrar-lo."
-  limit_exceeded: "\x0304✗\x03 Heu assolit el màxim de %max% canals registrats."
-  throttled: "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de registrar un altre canal."
 
 info:
   syntax:           "INFO <#channel>"
@@ -568,9 +563,3 @@ list:
   status_suspended: "Suspès"
   status_pending_deletion: "Pendent d'eliminació"
   status_forbidden: "Prohibit"
-
-saregister:
-  syntax:           "SAREGISTER <#canal> [descripció]"
-  short:            "Registra un canal sense ser-hi dins."
-  help:             "Registra un canal a petició del staff. L operador no cal que sigui dins\ndel canal, i el canal no cal que existeixi encara a la xarxa.\nAquesta ordre requereix permís d operador."
-  done:             "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat."

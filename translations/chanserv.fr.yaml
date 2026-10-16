@@ -21,11 +21,6 @@ register:
   help:             "L'enregistrement des canaux a été déplacé vers %cregserv% et nécessite désormais l'approbation d'un opérateur. Envoyez \x0303/msg %cregserv% REGISTRA <#canal> <description>\x03 ; vous devez être identifié auprès de %nickserv%."
   disabled:         "\x0304✗\x03 L'enregistrement des canaux a été déplacé vers \x02%cregserv%\x02. Utilisez \x0303/msg %cregserv% REGISTRA <#canal> <description>\x03."
   already_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré."
-  channel_not_on_network: "\x0304✗\x03 Le canal \x02%channel%\x02 n'existe pas sur le réseau."
-  pending_deletion: "\x0304✗\x03 Le canal \x02%channel%\x02 est en attente de suppression et ne peut pas être enregistré."
-  insufficient_channel_rank: "\x0304✗\x03 Vous devez avoir au moins le statut d'opérateur sur \x02%channel%\x02 pour l'enregistrer."
-  limit_exceeded: "\x0304✗\x03 Vous avez atteint la limite maximale de %max% canaux enregistrés."
-  throttled: "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant d'enregistrer un autre canal."
 
 info:
   syntax:           "INFO <#canal>"
@@ -568,9 +563,3 @@ list:
   status_suspended: "Suspendu"
   status_pending_deletion: "Suppression en attente"
   status_forbidden: "Interdit"
-
-saregister:
-  syntax:           "SAREGISTER <#canal> [description]"
-  short:            "Enregistre un canal sans y être."
-  help:             "Enregistre un canal à la demande du staff. L opérateur n a pas besoin d être\ndans le canal, et le canal n a pas besoin d exister encore sur le réseau.\nCette commande nécessite une permission opérateur."
-  done:             "\x0303✔\x03 Le canal \x02%channel%\x02 a été enregistré."

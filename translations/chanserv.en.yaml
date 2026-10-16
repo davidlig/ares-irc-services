@@ -21,11 +21,6 @@ register:
   help:             "Channel registration moved to %cregserv% and now needs operator approval. Send \x0303/msg %cregserv% REGISTRA <#channel> <description>\x03; you must be identified with %nickserv%."
   disabled:         "\x0304✗\x03 Channel registration moved to \x02%cregserv%\x02. Use \x0303/msg %cregserv% REGISTRA <#channel> <description>\x03."
   already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
-  channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
-  pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."
-  insufficient_channel_rank: "\x0304✗\x03 You must have at least operator status on \x02%channel%\x02 to register it."
-  limit_exceeded: "\x0304✗\x03 You have reached the maximum of %max% registered channels."
-  throttled: "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before registering another channel."
 
 info:
   syntax:           "INFO <#channel>"
@@ -568,9 +563,3 @@ list:
   status_suspended: "Suspended"
   status_pending_deletion: "Pending deletion"
   status_forbidden: "Forbidden"
-
-saregister:
-  syntax:           "SAREGISTER <#channel> [description]"
-  short:            "Register a channel without being in it."
-  help:             "Registers a channel at staff request. The operator does not need to be in\nthe channel, and the channel does not need to exist on the network yet.\nThis command requires an operator permission."
-  done:             "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."

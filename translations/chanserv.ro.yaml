@@ -21,11 +21,6 @@ register:
   help:             "Înregistrarea canalelor a fost mutată la %cregserv% și acum necesită aprobarea unui operator. Trimiteți \x0303/msg %cregserv% REGISTRA <#canal> <descriere>\x03; trebuie să fiți identificat cu %nickserv%."
   disabled:         "\x0304✗\x03 Înregistrarea canalelor a fost mutată la \x02%cregserv%\x02. Folosiți \x0303/msg %cregserv% REGISTRA <#canal> <descriere>\x03."
   already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
-  channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu există în rețea."
-  pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este în așteptare de ștergere și nu poate fi înregistrat."
-  insufficient_channel_rank: "\x0304✗\x03 Trebuie să ai cel puțin statut de operator pe \x02%channel%\x02 pentru a-l înregistra."
-  limit_exceeded: "\x0304✗\x03 Ați atins limita maximă de %max% canale înregistrate."
-  throttled: "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a înregistra alt canal."
 
 info:
   syntax:           "INFO <#canal>"
@@ -568,9 +563,3 @@ list:
   status_suspended: "Suspendat"
   status_pending_deletion: "Ștergere în așteptare"
   status_forbidden: "Interzis"
-
-saregister:
-  syntax:           "SAREGISTER <#canal> [descriere]"
-  short:            "Înregistrează un canal fără a fi în el."
-  help:             "Înregistrează un canal la cererea staffului. Operatorul nu trebuie să fie în\ncanal, iar canalul nu trebuie să existe încă în rețea.\nAceastă comandă necesită permisiune de operator."
-  done:             "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."
