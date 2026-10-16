@@ -13,4 +13,6 @@ namespace App\CRegServ\Application\Port\Out;
 interface RegisteredChannelLookupPort
 {
     public function existsByChannelName(string $channelName): bool;
+
+    public function isPendingDeletion(string $channelName): bool;
 }

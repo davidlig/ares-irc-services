@@ -11,6 +11,7 @@ enum RequestChannelRegistrationOutcome
     case ChannelTooLong;
     case DescriptionTooLong;
     case AlreadyRegistered;
+    case PendingDeletion;
     case DuplicateRequest;
     case RequestDenied;
     case Throttled;

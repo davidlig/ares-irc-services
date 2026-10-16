@@ -36,6 +36,11 @@ final readonly class RequestChannelRegistrationResult
         return new self(RequestChannelRegistrationOutcome::AlreadyRegistered);
     }
 
+    public static function pendingDeletion(): self
+    {
+        return new self(RequestChannelRegistrationOutcome::PendingDeletion);
+    }
+
     public static function duplicateRequest(): self
     {
         return new self(RequestChannelRegistrationOutcome::DuplicateRequest);

@@ -78,4 +78,39 @@ final class ChanServRegisteredChannelLookupAdapterTest extends TestCase
         self::assertFalse($adapter->existsByChannelName('#SitioChat'));
         self::assertSame(['#SitioChat'], $asked);
     }
+
+    #[Test]
+    public function reportsAChannelPendingDeletionAsPendingDeletion(): void
+    {
+        $query = $this->createStub(ChannelProjectionQuery::class);
+        $query->method('findByName')->willReturn(new ChannelProjection(
+            id: 11,
+            name: '#SitioChat',
+            founderNickId: 7,
+            topic: null,
+            mlockActive: false,
+            mlock: '',
+            mlockParams: [],
+            topicLock: false,
+            forbidden: false,
+            forbiddenReason: null,
+            suspended: false,
+            pendingDeletion: true,
+        ));
+
+        $adapter = new ChanServRegisteredChannelLookupAdapter($query);
+
+        self::assertTrue($adapter->isPendingDeletion('#SitioChat'));
+    }
+
+    #[Test]
+    public function reportsAChannelNotPendingDeletionAsNotPendingDeletion(): void
+    {
+        $query = $this->createStub(ChannelProjectionQuery::class);
+        $query->method('findByName')->willReturn(self::projection('#SitioChat'));
+
+        $adapter = new ChanServRegisteredChannelLookupAdapter($query);
+
+        self::assertFalse($adapter->isPendingDeletion('#SitioChat'));
+    }
 }

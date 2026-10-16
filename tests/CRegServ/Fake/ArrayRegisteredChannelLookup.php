@@ -15,8 +15,16 @@ final class ArrayRegisteredChannelLookup implements RegisteredChannelLookupPort
     /** @var array<string, bool> keyed by lowercased channel name */
     public array $registered = [];
 
+    /** @var array<string, bool> keyed by lowercased channel name */
+    public array $pendingDeletion = [];
+
     public function existsByChannelName(string $channelName): bool
     {
         return $this->registered[strtolower($channelName)] ?? false;
+    }
+
+    public function isPendingDeletion(string $channelName): bool
+    {
+        return $this->pendingDeletion[strtolower($channelName)] ?? false;
     }
 }

@@ -101,6 +101,7 @@ final readonly class RegistraCommand implements CRegServCommandInterface
             RequestChannelRegistrationOutcome::ChannelTooLong => $context->reply('registra.channel_too_long'),
             RequestChannelRegistrationOutcome::DescriptionTooLong => $context->reply('registra.description_too_long'),
             RequestChannelRegistrationOutcome::AlreadyRegistered => $context->reply('registra.already_registered', ['channel' => $channel]),
+            RequestChannelRegistrationOutcome::PendingDeletion => $context->reply('registra.pending_deletion', ['channel' => $channel]),
             RequestChannelRegistrationOutcome::DuplicateRequest => $context->reply('registra.duplicate', ['channel' => $channel]),
             RequestChannelRegistrationOutcome::RequestDenied => $context->reply('registra.denied', ['channel' => $channel]),
             RequestChannelRegistrationOutcome::Throttled => $context->reply('registra.throttled', ['minutes' => $result->remainingMinutes ?? 0]),

@@ -18,6 +18,7 @@ registra:
   channel_too_long: "\x0304✗\x03 Numele canalului este prea lung: cel mult \x0264\x02 caractere, inclusiv \x02#\x02."
   description_too_long: "\x0304✗\x03 Descrierea este prea lungă: cel mult \x02255\x02 caractere."
   already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
+  pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este în curs de ștergere și nu poate fi înregistrat până la finalizarea ștergerii."
   duplicate: "\x0304✗\x03 Există deja o cerere de înregistrare pentru \x02%channel%\x02 în așteptarea aprobării. Folosește \x0303/msg %bot% ESTADO %channel%\x03."
   denied: "\x0304✗\x03 Cererea de înregistrare pentru \x02%channel%\x02 a fost respinsă."
   throttled: "\x0304✗\x03 Trebuie să aștepți \x02%minutes%\x02 minut(e) înainte de a cere alt canal."
@@ -74,7 +75,7 @@ drop:
   short: "Elimină înregistrarea pe care \x02%bot%\x02 o păstrează pentru un canal."
   help: "Elimină înregistrarea pe care \x02%bot%\x02 o păstrează pentru un canal și, dacă acesta este înregistrat acolo, îl scoate și din \x02ChanServ\x02. Ai nevoie de permisiunea \x02cregserv.drop\x02."
   dropped: "\x0303✔\x03 Înregistrarea canalului \x02%channel%\x02 a fost eliminată din \x02%bot%\x02."
-  dropped_channel: "\x0303✔\x03 Canalul \x02%channel%\x02 a fost eliminat și înregistrarea sa ștearsă."
+  dropped_channel: "\x0303✔\x03 Canalul \x02%channel%\x02 a fost eliminat și intră acum în perioada de grație a ștergerii."
   invalid_channel: "\x0304✗\x03 Numele canalului trebuie să înceapă cu un \x02#\x02."
   no_request: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat la \x02%bot%\x02."
 

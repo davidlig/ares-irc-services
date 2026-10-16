@@ -18,6 +18,7 @@ registra:
   channel_too_long: "\x0304✗\x03 Nazwa kanału jest za długa: maksymalnie \x0264\x02 znaki wraz z \x02#\x02."
   description_too_long: "\x0304✗\x03 Opis jest za długi: maksymalnie \x02255\x02 znaków."
   already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
+  pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 jest właśnie usuwany i nie może być zarejestrowany do czasu zakończenia usuwania."
   duplicate: "\x0304✗\x03 Prośba o rejestrację \x02%channel%\x02 już czeka na zatwierdzenie. Użyj \x0303/msg %bot% ESTADO %channel%\x03."
   denied: "\x0304✗\x03 Prośba o rejestrację \x02%channel%\x02 została odrzucona."
   throttled: "\x0304✗\x03 Musisz poczekać \x02%minutes%\x02 minut(y), zanim poprosisz o kolejny kanał."
@@ -74,7 +75,7 @@ drop:
   short: "Usuwa wpis o rejestracji, który \x02%bot%\x02 przechowuje dla kanału."
   help: "Usuwa wpis, który \x02%bot%\x02 przechowuje dla kanału, a jeśli kanał jest tam zarejestrowany, wyrejestrowuje go również z \x02ChanServ\x02. Potrzebujesz uprawnienia \x02cregserv.drop\x02."
   dropped: "\x0303✔\x03 Wpis o rejestracji kanału \x02%channel%\x02 został usunięty z \x02%bot%\x02."
-  dropped_channel: "\x0303✔\x03 Kanał \x02%channel%\x02 został usunięty, a jego wpis o rejestracji skasowany."
+  dropped_channel: "\x0303✔\x03 Kanał \x02%channel%\x02 został usunięty i wchodzi teraz w okres karencji usuwania."
   invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
   no_request: "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest zarejestrowany w \x02%bot%\x02."
 

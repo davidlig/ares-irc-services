@@ -22,4 +22,9 @@ final readonly class ChanServRegisteredChannelLookupAdapter implements Registere
     {
         return null !== $this->channelProjections->findByName($channelName);
     }
+
+    public function isPendingDeletion(string $channelName): bool
+    {
+        return $this->channelProjections->findByName($channelName)->pendingDeletion ?? false;
+    }
 }

@@ -18,6 +18,7 @@ registra:
   channel_too_long: "\x0304✗\x03 Kanalaren izena luzeegia da: gehienez \x0264\x02 karaktere \x02#\x02 barne."
   description_too_long: "\x0304✗\x03 Deskribapena luzeegia da: gehienez \x02255\x02 karaktere."
   already_registered: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko erregistratuta dago."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ezabatzen ari da eta ezin da erregistratu ezabaketa amaitu arte."
   duplicate: "\x0304✗\x03 \x02%channel%\x02-rako erregistro eskaera bat dagoeneko onarpenaren zain dago. Erabili \x0303/msg %bot% ESTADO %channel%\x03."
   denied: "\x0304✗\x03 \x02%channel%\x02 kanalaren erregistroa ukatu da."
   throttled: "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar dituzu beste kanal bat eskatu aurretik."
@@ -74,7 +75,7 @@ drop:
   short: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du."
   help: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du eta, kanala han erregistratuta badago, \x02ChanServ\x02(e)tik ere kentzen du. \x02cregserv.drop\x02 baimena behar duzu."
   dropped: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistroa kendu da \x02%bot%\x02(e)tik."
-  dropped_channel: "\x0303✔\x03 \x02%channel%\x02 kanala kendu da eta haren erregistroa ezabatu da."
+  dropped_channel: "\x0303✔\x03 \x02%channel%\x02 kanala kendu da eta orain ezabaketa grazia-aldian sartzen da."
   invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
   no_request: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago \x02%bot%\x02(e)n erregistratuta."
 

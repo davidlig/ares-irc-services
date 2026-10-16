@@ -119,6 +119,21 @@ final class RequestChannelRegistrationHandlerTest extends DoctrineIntegrationTes
     }
 
     #[Test]
+    public function reportsAChannelChanServIsDeletingAsPendingDeletion(): void
+    {
+        $this->channelLookup->registered['#sitiochat'] = true;
+        $this->channelLookup->pendingDeletion['#sitiochat'] = true;
+
+        $result = $this->handler->handle($this->command());
+
+        self::assertSame(RequestChannelRegistrationOutcome::PendingDeletion, $result->outcome);
+
+        $this->flushAndClear();
+
+        self::assertNull($this->repository->findByChannel('#sitiochat'));
+    }
+
+    #[Test]
     public function rejectsADuplicatePendingRequestForTheSameChannel(): void
     {
         $this->handler->handle($this->command());

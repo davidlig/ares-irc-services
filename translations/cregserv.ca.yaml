@@ -18,6 +18,7 @@ registra:
   channel_too_long: "\x0304✗\x03 El nom del canal és massa llarg: com a màxim \x0264\x02 caràcters incloent el \x02#\x02."
   description_too_long: "\x0304✗\x03 La descripció és massa llarga: com a màxim \x02255\x02 caràcters."
   already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat."
+  pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 s'està eliminant i no pot ser registrat fins que es completi l'eliminació."
   duplicate: "\x0304✗\x03 Ja existeix una sol·licitud de registre per a \x02%channel%\x02 a l'espera d'aprovació. Utilitza \x0303/msg %bot% ESTADO %channel%\x03."
   denied: "\x0304✗\x03 La sol·licitud de registre de \x02%channel%\x02 ha estat denegada."
   throttled: "\x0304✗\x03 Has d'esperar \x02%minutes%\x02 minut(s) abans de sol·licitar un altre canal."
@@ -74,7 +75,7 @@ drop:
   short: "Elimina el registre de canal que \x02%bot%\x02 guarda per a un canal."
   help: "Elimina el registre que \x02%bot%\x02 guarda per a un canal i, si el canal està registrat allà, el dona de baixa de \x02ChanServ\x02. Necessites el permís \x02cregserv.drop\x02."
   dropped: "\x0303✔\x03 El registre del canal \x02%channel%\x02 ha estat eliminat de \x02%bot%\x02."
-  dropped_channel: "\x0303✔\x03 El canal \x02%channel%\x02 s'ha eliminat i se n'ha suprimit el registre."
+  dropped_channel: "\x0303✔\x03 El canal \x02%channel%\x02 s'ha eliminat i ara entra en el període de gràcia d'eliminació."
   invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
   no_request: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat amb \x02%bot%\x02."
 

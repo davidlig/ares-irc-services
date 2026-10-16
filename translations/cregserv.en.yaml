@@ -18,6 +18,7 @@ registra:
   channel_too_long: "\x0304✗\x03 The channel name is too long: at most \x0264\x02 characters including \x02#\x02."
   description_too_long: "\x0304✗\x03 The description is too long: at most \x02255\x02 characters."
   already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
+  pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is being deleted and cannot be registered until the deletion completes."
   duplicate: "\x0304✗\x03 A registration request for \x02%channel%\x02 is already waiting for approval. Use \x0303/msg %bot% ESTADO %channel%\x03."
   denied: "\x0304✗\x03 The registration of \x02%channel%\x02 was denied."
   throttled: "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another channel."
@@ -74,7 +75,7 @@ drop:
   short: "Remove the registration record \x02%bot%\x02 keeps for a channel."
   help: "Removes the record \x02%bot%\x02 keeps for a channel and, when the channel is registered there, unregisters it from \x02ChanServ\x02 too. You need the \x02cregserv.drop\x02 permission."
   dropped: "\x0303✔\x03 The registration record of channel \x02%channel%\x02 has been removed from \x02%bot%\x02."
-  dropped_channel: "\x0303✔\x03 Channel \x02%channel%\x02 has been dropped and its registration record removed."
+  dropped_channel: "\x0303✔\x03 Channel \x02%channel%\x02 has been dropped and now enters the deletion grace period."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
   no_request: "\x0304✗\x03 The channel \x02%channel%\x02 is not recorded with \x02%bot%\x02."
 

@@ -211,6 +211,7 @@ final class RegistraCommandTest extends TestCase
                 'registra.description_too_long',
             ],
             'already registered' => [RequestChannelRegistrationResult::alreadyRegistered(), 'registra.already_registered'],
+            'pending deletion' => [RequestChannelRegistrationResult::pendingDeletion(), 'registra.pending_deletion'],
             'duplicate request' => [RequestChannelRegistrationResult::duplicateRequest(), 'registra.duplicate'],
             'request denied' => [RequestChannelRegistrationResult::requestDenied(), 'registra.denied'],
         ];

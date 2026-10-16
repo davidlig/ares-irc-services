@@ -18,6 +18,7 @@ registra:
   channel_too_long: "\x0304✗\x03 El nombre del canal es demasiado largo: como máximo \x0264\x02 caracteres incluido el \x02#\x02."
   description_too_long: "\x0304✗\x03 La descripción es demasiado larga: como máximo \x02255\x02 caracteres."
   already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ya se encuentra registrado."
+  pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 se está eliminando y no puede registrarse hasta que se complete la eliminación."
   duplicate: "\x0304✗\x03 Ya existe una solicitud de registro para \x02%channel%\x02 a la espera de aprobación. Usa \x0303/msg %bot% ESTADO %channel%\x03."
   denied: "\x0304✗\x03 La solicitud de registro de \x02%channel%\x02 fue denegada."
   throttled: "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar otro canal."
@@ -74,7 +75,7 @@ drop:
   short: "Elimina el registro de canal que \x02%bot%\x02 guarda para un canal."
   help: "Elimina el registro que \x02%bot%\x02 guarda para un canal y, si el canal está registrado allí, también lo da de baja de \x02ChanServ\x02. Necesitas el permiso \x02cregserv.drop\x02."
   dropped: "\x0303✔\x03 El registro del canal \x02%channel%\x02 ha sido eliminado de \x02%bot%\x02."
-  dropped_channel: "\x0303✔\x03 El canal \x02%channel%\x02 ha sido eliminado y su registro suprimido."
+  dropped_channel: "\x0303✔\x03 El canal \x02%channel%\x02 ha sido eliminado y ahora entra en el periodo de gracia de eliminación."
   invalid_channel: "\x0304✗\x03 El nombre del canal debe empezar por un \x02#\x02."
   no_request: "\x0304✗\x03 El canal \x02%channel%\x02 no se encuentra registrado con \x02%bot%\x02."
 

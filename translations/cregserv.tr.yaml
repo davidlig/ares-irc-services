@@ -18,6 +18,7 @@ registra:
   channel_too_long: "\x0304✗\x03 Kanal adı çok uzun: en fazla \x0264\x02 karakter, \x02#\x02 dahil."
   description_too_long: "\x0304✗\x03 Açıklama çok uzun: en fazla \x02255\x02 karakter."
   already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı siliniyor ve silme işlemi tamamlanana kadar kaydedilemez."
   duplicate: "\x0304✗\x03 \x02%channel%\x02 için onay bekleyen bir kayıt talebi zaten var. Kullan: \x0303/msg %bot% ESTADO %channel%\x03."
   denied: "\x0304✗\x03 \x02%channel%\x02 kanalının kayıt talebi reddedildi."
   throttled: "\x0304✗\x03 Başka bir kanal talep etmeden önce \x02%minutes%\x02 dakika beklemelisin."
@@ -74,7 +75,7 @@ drop:
   short: "\x02%bot%\x02'ün bir kanal için tuttuğu kayıt kaydını siler."
   help: "\x02%bot%\x02'ün bir kanal için tuttuğu kaydı siler ve kanal orada kayıtlıysa \x02ChanServ\x02'den de çıkarır. \x02cregserv.drop\x02 iznine ihtiyacın var."
   dropped: "\x0303✔\x03 \x02%channel%\x02 kanalının kayıt kaydı \x02%bot%\x02 üzerinden silindi."
-  dropped_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı silindi ve kayıt kaydı kaldırıldı."
+  dropped_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı silindi ve artık silme bekleme süresine giriyor."
   invalid_channel: "\x0304✗\x03 Kanal adı bir \x02#\x02 ile başlamalıdır."
   no_request: "\x0304✗\x03 \x02%channel%\x02 kanalı \x02%bot%\x02 üzerinde kayıtlı değil."
 

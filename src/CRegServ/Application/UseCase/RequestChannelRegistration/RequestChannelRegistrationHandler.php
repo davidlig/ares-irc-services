@@ -53,6 +53,10 @@ final readonly class RequestChannelRegistrationHandler implements RequestChannel
         }
 
         if ($this->channelLookup->existsByChannelName($command->channelName)) {
+            if ($this->channelLookup->isPendingDeletion($command->channelName)) {
+                return RequestChannelRegistrationResult::pendingDeletion();
+            }
+
             return RequestChannelRegistrationResult::alreadyRegistered();
         }
 

@@ -18,6 +18,7 @@ registra:
   channel_too_long: "\x0304✗\x03 O nome da canle é demasiado longo: como máximo \x0264\x02 caracteres incluído o \x02#\x02."
   description_too_long: "\x0304✗\x03 A descrición é demasiado longa: como máximo \x02255\x02 caracteres."
   already_registered: "\x0304✗\x03 A canle \x02%channel%\x02 xa está rexistrada."
+  pending_deletion: "\x0304✗\x03 A canle \x02%channel%\x02 estase eliminando e non pode ser rexistrada ata que se complete a eliminación."
   duplicate: "\x0304✗\x03 Xa existe unha solicitude de rexistro para \x02%channel%\x02 á espera de aprobación. Usa \x0303/msg %bot% ESTADO %channel%\x03."
   denied: "\x0304✗\x03 A solicitude de rexistro de \x02%channel%\x02 foi denegada."
   throttled: "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar outra canle."
@@ -74,7 +75,7 @@ drop:
   short: "Elimina o rexistro de canle que \x02%bot%\x02 garda para unha canle."
   help: "Elimina o rexistro que \x02%bot%\x02 garda para unha canle e, se a canle está rexistrada alí, tamén a dá de baixa de \x02ChanServ\x02. Necesitas o permiso \x02cregserv.drop\x02."
   dropped: "\x0303✔\x03 O rexistro da canle \x02%channel%\x02 foi eliminado de \x02%bot%\x02."
-  dropped_channel: "\x0303✔\x03 A canle \x02%channel%\x02 foi eliminada e o seu rexistro suprimido."
+  dropped_channel: "\x0303✔\x03 A canle \x02%channel%\x02 foi eliminada e agora entra no período de graza de eliminación."
   invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
   no_request: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada con \x02%bot%\x02."
 
