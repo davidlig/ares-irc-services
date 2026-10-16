@@ -8,6 +8,7 @@ use App\CRegServ\Adapter\Out\Persistence\Doctrine\ChannelRegistrationRequestDoct
 use App\CRegServ\Application\UseCase\DropChannelRegistration\DropChannelRegistration;
 use App\CRegServ\Application\UseCase\DropChannelRegistration\DropChannelRegistrationHandler;
 use App\CRegServ\Application\UseCase\DropChannelRegistration\DropChannelRegistrationOutcome;
+use App\CRegServ\Application\UseCase\DropChannelRegistration\DropChannelRegistrationResult;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
 use App\CRegServ\Domain\ValueObject\ChannelRegistrationStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
@@ -22,6 +23,8 @@ use PHPUnit\Framework\Attributes\Test;
  * dropping a denied request has to leave the name free for a fresh REGISTRA.
  */
 #[CoversClass(DropChannelRegistrationHandler::class)]
+#[CoversClass(DropChannelRegistration::class)]
+#[CoversClass(DropChannelRegistrationResult::class)]
 #[Group('integration')]
 final class DropChannelRegistrationHandlerTest extends DoctrineIntegrationTestCase
 {

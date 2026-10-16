@@ -9,6 +9,7 @@ use App\CRegServ\Application\Port\Out\ChannelApprovalOutcome;
 use App\CRegServ\Application\UseCase\ApproveChannelRegistration\ApproveChannelRegistration;
 use App\CRegServ\Application\UseCase\ApproveChannelRegistration\ApproveChannelRegistrationHandler;
 use App\CRegServ\Application\UseCase\ApproveChannelRegistration\ApproveChannelRegistrationOutcome;
+use App\CRegServ\Application\UseCase\ApproveChannelRegistration\ApproveChannelRegistrationResult;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
 use App\CRegServ\Domain\ValueObject\ChannelRegistrationStatus;
 use App\Tests\CRegServ\Fake\ArrayRegisteredChannelLookup;
@@ -26,6 +27,8 @@ use PHPUnit\Framework\Attributes\Test;
  * are all refused.
  */
 #[CoversClass(ApproveChannelRegistrationHandler::class)]
+#[CoversClass(ApproveChannelRegistration::class)]
+#[CoversClass(ApproveChannelRegistrationResult::class)]
 #[Group('integration')]
 final class ApproveChannelRegistrationHandlerTest extends DoctrineIntegrationTestCase
 {

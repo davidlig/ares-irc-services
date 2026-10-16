@@ -109,6 +109,38 @@ final class EstadoCommandTest extends TestCase
         self::assertSame('IDENTIFIED', $command->getRequiredPermission());
     }
 
+    #[Test]
+    public function getSyntaxKeyReturnsCorrectKey(): void
+    {
+        $command = $this->createCommand(GetChannelRegistrationStatusResult::noRequest());
+
+        self::assertSame('estado.syntax', $command->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsCorrectKey(): void
+    {
+        $command = $this->createCommand(GetChannelRegistrationStatusResult::noRequest());
+
+        self::assertSame('estado.help', $command->getHelpKey());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsCorrectKey(): void
+    {
+        $command = $this->createCommand(GetChannelRegistrationStatusResult::noRequest());
+
+        self::assertSame('estado.short', $command->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $command = $this->createCommand(GetChannelRegistrationStatusResult::noRequest());
+
+        self::assertSame([], $command->getSubCommandHelp());
+    }
+
     /**
      * @return array<string, array{GetChannelRegistrationStatusResult, string}>
      */

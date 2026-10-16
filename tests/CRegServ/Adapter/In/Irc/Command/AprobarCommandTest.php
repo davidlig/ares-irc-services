@@ -111,6 +111,14 @@ final class AprobarCommandTest extends TestCase
         self::assertSame([], $command->getSubCommandHelp());
     }
 
+    #[Test]
+    public function getHelpKeyReturnsCorrectKey(): void
+    {
+        $command = $this->createCommand(ApproveChannelRegistrationResult::invalidChannel('#SitioChat'));
+
+        self::assertSame('aprobar.help', $command->getHelpKey());
+    }
+
     /**
      * @return array<string, array{ApproveChannelRegistrationResult, string}>
      */

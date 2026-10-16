@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Migrations;
 
 use App\Bootstrap\Adapter\Out\Persistence\Migration\EditedSchemaMigration;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Index\IndexType;
 use Doctrine\DBAL\Schema\Schema;
@@ -55,8 +56,14 @@ final class Version20261013000002 extends AbstractMigration implements EditedSch
 
             // Through the comparator SQLite would rebuild the whole table, which
             // also reshuffles the query planner's index choice. A plain DROP INDEX
-            // reaches the same schema without touching anything else.
-            $this->addSql('DROP INDEX ' . self::EMAIL_UNIQUE_INDEX);
+            // reaches the same schema without touching anything else. MySQL and
+            // MariaDB reject the bare form, so they qualify it with the table.
+            $dropIndex = 'DROP INDEX ' . self::EMAIL_UNIQUE_INDEX;
+            if ($this->platform instanceof AbstractMySQLPlatform) {
+                $dropIndex .= ' ON ' . self::TABLE;
+            }
+
+            $this->addSql($dropIndex);
         }
 
         $this->editedSchema = clone $editor->create();

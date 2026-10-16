@@ -154,6 +154,13 @@ final class ChannelRegistrationRequestDoctrineRepositoryTest extends DoctrineInt
     }
 
     #[Test]
+    public function findByChannelsReturnsEmptyArrayWithoutChannelsOrStatuses(): void
+    {
+        self::assertSame([], $this->repository->findByChannels([], [ChannelRegistrationStatus::Pending]));
+        self::assertSame([], $this->repository->findByChannels(['#SitioChat'], []));
+    }
+
+    #[Test]
     public function findByChannelsIndexesRequestsByChannelLower(): void
     {
         $pending = $this->makeRequest(channel: '#Pendiente');

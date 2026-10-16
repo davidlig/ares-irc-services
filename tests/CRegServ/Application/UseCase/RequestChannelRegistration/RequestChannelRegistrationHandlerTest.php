@@ -9,6 +9,7 @@ use App\CRegServ\Application\Port\Out\ChannelRegistrationRequestRepositoryInterf
 use App\CRegServ\Application\UseCase\RequestChannelRegistration\RequestChannelRegistration;
 use App\CRegServ\Application\UseCase\RequestChannelRegistration\RequestChannelRegistrationHandler;
 use App\CRegServ\Application\UseCase\RequestChannelRegistration\RequestChannelRegistrationOutcome;
+use App\CRegServ\Application\UseCase\RequestChannelRegistration\RequestChannelRegistrationResult;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
 use App\CRegServ\Domain\Exception\ChannelRegistrationConflictException;
 use App\Tests\CRegServ\Fake\ArrayRegisteredChannelLookup;
@@ -23,6 +24,8 @@ use PHPUnit\Framework\Attributes\Test;
  * services database and the channel is only registered once a services oper approves it.
  */
 #[CoversClass(RequestChannelRegistrationHandler::class)]
+#[CoversClass(RequestChannelRegistration::class)]
+#[CoversClass(RequestChannelRegistrationResult::class)]
 #[Group('integration')]
 final class RequestChannelRegistrationHandlerTest extends DoctrineIntegrationTestCase
 {
@@ -130,6 +133,24 @@ final class RequestChannelRegistrationHandlerTest extends DoctrineIntegrationTes
         $stored = $this->repository->findByChannel('#sitiochat');
         self::assertNotNull($stored);
         self::assertSame('JuanJo_Jaen', $stored->getRequesterNick());
+    }
+
+    #[Test]
+    public function rejectsWhenAStoredRequestIsAlreadyApproved(): void
+    {
+        $approved = ChannelRegistrationRequest::request(
+            requestedAt: new DateTimeImmutable('2026-10-14 10:00:00'),
+            channelName: '#SitioChat',
+            requesterAccountId: 9,
+            requesterNick: 'Anterior',
+        );
+        $approved->approve('OperNick', new DateTimeImmutable('2026-10-14 11:00:00'));
+        $this->repository->save($approved);
+        $this->flushAndClear();
+
+        $result = $this->handler->handle($this->command());
+
+        self::assertSame(RequestChannelRegistrationOutcome::AlreadyRegistered, $result->outcome);
     }
 
     #[Test]

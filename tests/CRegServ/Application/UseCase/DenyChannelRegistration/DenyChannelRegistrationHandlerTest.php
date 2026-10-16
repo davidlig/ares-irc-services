@@ -8,6 +8,7 @@ use App\CRegServ\Adapter\Out\Persistence\Doctrine\ChannelRegistrationRequestDoct
 use App\CRegServ\Application\UseCase\DenyChannelRegistration\DenyChannelRegistration;
 use App\CRegServ\Application\UseCase\DenyChannelRegistration\DenyChannelRegistrationHandler;
 use App\CRegServ\Application\UseCase\DenyChannelRegistration\DenyChannelRegistrationOutcome;
+use App\CRegServ\Application\UseCase\DenyChannelRegistration\DenyChannelRegistrationResult;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
 use App\CRegServ\Domain\ValueObject\ChannelRegistrationStatus;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
@@ -22,6 +23,8 @@ use PHPUnit\Framework\Attributes\Test;
  * one already denied. The channel name stays free afterwards.
  */
 #[CoversClass(DenyChannelRegistrationHandler::class)]
+#[CoversClass(DenyChannelRegistration::class)]
+#[CoversClass(DenyChannelRegistrationResult::class)]
 #[Group('integration')]
 final class DenyChannelRegistrationHandlerTest extends DoctrineIntegrationTestCase
 {

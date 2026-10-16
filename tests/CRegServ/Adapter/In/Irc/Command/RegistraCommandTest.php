@@ -125,6 +125,46 @@ final class RegistraCommandTest extends TestCase
     }
 
     #[Test]
+    public function getSyntaxKeyReturnsCorrectKey(): void
+    {
+        $messages = [];
+        $captured = [];
+        $command = $this->createCommand(RequestChannelRegistrationResult::requested(), $messages, $captured);
+
+        self::assertSame('registra.syntax', $command->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsCorrectKey(): void
+    {
+        $messages = [];
+        $captured = [];
+        $command = $this->createCommand(RequestChannelRegistrationResult::requested(), $messages, $captured);
+
+        self::assertSame('registra.help', $command->getHelpKey());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsCorrectKey(): void
+    {
+        $messages = [];
+        $captured = [];
+        $command = $this->createCommand(RequestChannelRegistrationResult::requested(), $messages, $captured);
+
+        self::assertSame('registra.short', $command->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $messages = [];
+        $captured = [];
+        $command = $this->createCommand(RequestChannelRegistrationResult::requested(), $messages, $captured);
+
+        self::assertSame([], $command->getSubCommandHelp());
+    }
+
+    #[Test]
     public function repliesNotIdentifiedWhenTheSenderHasNoAccount(): void
     {
         $messages = [];
