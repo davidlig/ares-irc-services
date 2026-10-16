@@ -1530,6 +1530,24 @@ services:
     App\CRegServ\Adapter\In\Irc\Command\EstadoCommand:
         tags: ['cregserv.command']
 
+    App\CRegServ\Adapter\In\Irc\Command\AprobarCommand:
+        tags: ['cregserv.command']
+
+    App\CRegServ\Adapter\In\Irc\Command\DenegarCommand:
+        tags: ['cregserv.command']
+
+    App\CRegServ\Application\Port\Out\ChannelApprovalPort:
+        alias: App\CRegServ\Adapter\Out\ChanServ\ChanServChannelApprovalAdapter
+
+    App\CRegServ\Application\UseCase\ApproveChannelRegistration\ApproveChannelRegistrationHandlerInterface:
+        alias: App\CRegServ\Application\UseCase\ApproveChannelRegistration\ApproveChannelRegistrationHandler
+
+    App\CRegServ\Application\UseCase\DenyChannelRegistration\DenyChannelRegistrationHandlerInterface:
+        alias: App\CRegServ\Application\UseCase\DenyChannelRegistration\DenyChannelRegistrationHandler
+
+    App\ChanServ\Application\Port\In\ChannelRegistration:
+        alias: App\ChanServ\Application\Service\ApprovedChannelRegistrationService
+
     App\MemoServ\Adapter\In\Irc\MemoServService:
         arguments:
             $serviceNicks: '@App\Irc\Application\Port\In\ServiceNicknameRegistry'
@@ -1933,6 +1951,9 @@ services:
         tags: ['permission.provider']
 
     App\Bootstrap\Security\MemoServPermissionProvider:
+        tags: ['permission.provider']
+
+    App\Bootstrap\Security\CRegServPermissionProvider:
         tags: ['permission.provider']
 
     App\OperServ\Application\Security\OperServIrcopPermission:

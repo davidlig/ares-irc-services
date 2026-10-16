@@ -6,7 +6,9 @@ namespace App\CRegServ\Adapter\Out\Persistence\Doctrine;
 
 use App\CRegServ\Application\Port\Out\ChannelRegistrationRequestRepositoryInterface;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
+use App\CRegServ\Domain\Exception\ChannelRegistrationConflictException;
 use App\CRegServ\Domain\ValueObject\ChannelRegistrationStatus;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 
 use function array_map;
@@ -18,8 +20,14 @@ final readonly class ChannelRegistrationRequestDoctrineRepository implements Cha
 
     public function save(ChannelRegistrationRequest $request): void
     {
-        $this->em->persist($request);
-        $this->em->flush();
+        try {
+            $this->em->persist($request);
+            $this->em->flush();
+        } catch (UniqueConstraintViolationException $exception) {
+            // channel_lower is the only unique index on this table, so a violation here is
+            // always two requests racing for the same channel, never a different integrity error.
+            throw ChannelRegistrationConflictException::forChannel($request->getChannelLower(), $exception);
+        }
     }
 
     public function findByChannel(string $channelLower): ?ChannelRegistrationRequest

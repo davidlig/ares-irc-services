@@ -8,6 +8,8 @@ enum RequestChannelRegistrationOutcome
 {
     case Requested;
     case InvalidChannel;
+    case ChannelTooLong;
+    case DescriptionTooLong;
     case AlreadyRegistered;
     case DuplicateRequest;
     case RequestDenied;

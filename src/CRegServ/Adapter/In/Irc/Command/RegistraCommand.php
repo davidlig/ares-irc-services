@@ -98,6 +98,8 @@ final readonly class RegistraCommand implements CRegServCommandInterface
         match ($result->outcome) {
             RequestChannelRegistrationOutcome::Requested => $context->reply('registra.requested', ['channel' => $channel]),
             RequestChannelRegistrationOutcome::InvalidChannel => $context->reply('registra.invalid_channel'),
+            RequestChannelRegistrationOutcome::ChannelTooLong => $context->reply('registra.channel_too_long'),
+            RequestChannelRegistrationOutcome::DescriptionTooLong => $context->reply('registra.description_too_long'),
             RequestChannelRegistrationOutcome::AlreadyRegistered => $context->reply('registra.already_registered', ['channel' => $channel]),
             RequestChannelRegistrationOutcome::DuplicateRequest => $context->reply('registra.duplicate', ['channel' => $channel]),
             RequestChannelRegistrationOutcome::RequestDenied => $context->reply('registra.denied', ['channel' => $channel]),

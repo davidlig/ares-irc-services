@@ -21,6 +21,16 @@ final readonly class RequestChannelRegistrationResult
         return new self(RequestChannelRegistrationOutcome::InvalidChannel);
     }
 
+    public static function channelTooLong(): self
+    {
+        return new self(RequestChannelRegistrationOutcome::ChannelTooLong);
+    }
+
+    public static function descriptionTooLong(): self
+    {
+        return new self(RequestChannelRegistrationOutcome::DescriptionTooLong);
+    }
+
     public static function alreadyRegistered(): self
     {
         return new self(RequestChannelRegistrationOutcome::AlreadyRegistered);

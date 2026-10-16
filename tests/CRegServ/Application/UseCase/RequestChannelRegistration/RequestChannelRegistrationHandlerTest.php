@@ -10,6 +10,7 @@ use App\CRegServ\Application\UseCase\RequestChannelRegistration\RequestChannelRe
 use App\CRegServ\Application\UseCase\RequestChannelRegistration\RequestChannelRegistrationHandler;
 use App\CRegServ\Application\UseCase\RequestChannelRegistration\RequestChannelRegistrationOutcome;
 use App\CRegServ\Domain\Entity\ChannelRegistrationRequest;
+use App\CRegServ\Domain\Exception\ChannelRegistrationConflictException;
 use App\Tests\CRegServ\Fake\ArrayRegisteredChannelLookup;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
@@ -230,5 +231,75 @@ final class RequestChannelRegistrationHandlerTest extends DoctrineIntegrationTes
         );
 
         self::assertSame(RequestChannelRegistrationOutcome::Requested, $result->outcome);
+    }
+
+    /**
+     * R3-1 / R1-creg-description-length: the columns hold 64 and 255 characters and IRC hands
+     * the input over unbounded, so the row must never be built from input the column cannot hold.
+     */
+    #[Test]
+    public function acceptsAChannelNameExactlyAsLongAsTheColumn(): void
+    {
+        $channel = '#' . str_repeat('a', 63);
+
+        $result = $this->handler->handle($this->command(channelName: $channel));
+
+        self::assertSame(RequestChannelRegistrationOutcome::Requested, $result->outcome);
+    }
+
+    #[Test]
+    public function rejectsAChannelNameTheColumnCannotHold(): void
+    {
+        $channel = '#' . str_repeat('a', 64);
+
+        $result = $this->handler->handle($this->command(channelName: $channel));
+
+        self::assertSame(RequestChannelRegistrationOutcome::ChannelTooLong, $result->outcome);
+        $this->assertNoRequestWasStored();
+    }
+
+    #[Test]
+    public function acceptsADescriptionExactlyAsLongAsTheColumn(): void
+    {
+        $result = $this->handler->handle($this->command(description: str_repeat('x', 255)));
+
+        self::assertSame(RequestChannelRegistrationOutcome::Requested, $result->outcome);
+    }
+
+    #[Test]
+    public function rejectsADescriptionTheColumnCannotHold(): void
+    {
+        $result = $this->handler->handle($this->command(description: str_repeat('x', 256)));
+
+        self::assertSame(RequestChannelRegistrationOutcome::DescriptionTooLong, $result->outcome);
+        $this->assertNoRequestWasStored();
+    }
+
+    /**
+     * R3-2: the duplicate guard is read-then-write, so two requests racing for the same channel
+     * both get past it and the loser hits the unique index. That is a duplicate, not a crash.
+     */
+    #[Test]
+    public function reportsADuplicateWhenTheUniqueIndexIsLostAsARace(): void
+    {
+        $repository = $this->createStub(ChannelRegistrationRequestRepositoryInterface::class);
+        $repository->method('findByChannel')->willReturn(null);
+        $repository->method('save')
+            ->willThrowException(ChannelRegistrationConflictException::forChannel('#sitiochat'));
+
+        $handler = new RequestChannelRegistrationHandler($repository, $this->channelLookup);
+
+        $result = $handler->handle($this->command(actorIrcOperator: true));
+
+        self::assertSame(RequestChannelRegistrationOutcome::DuplicateRequest, $result->outcome);
+    }
+
+    private function assertNoRequestWasStored(): void
+    {
+        $this->flushAndClear();
+
+        $stored = $this->entityManager->getRepository(ChannelRegistrationRequest::class)->count([]);
+
+        self::assertSame(0, $stored, 'Rejected input must never reach the table.');
     }
 }
