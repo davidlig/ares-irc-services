@@ -51,6 +51,13 @@ final readonly class DropChannelRegistrationHandler implements DropChannelRegist
             );
         }
 
+        // The nested ChanServ drop clears the shared EntityManager, detaching $request.
+        // Re-fetch a managed copy so delete() can remove the row.
+        $managed = $this->requestRepository->findByChannel($command->channelName);
+        if (null !== $managed) {
+            $request = $managed;
+        }
+
         $this->requestRepository->delete($request);
 
         return $unregistered

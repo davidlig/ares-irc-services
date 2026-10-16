@@ -191,6 +191,27 @@ final class DropChannelRegistrationHandlerTest extends DoctrineIntegrationTestCa
     }
 
     #[Test]
+    public function removesTheRecordEvenWhenTheNestedDropClearsTheEntityManager(): void
+    {
+        // The real ChanServ drop writes the UDB suspend and clears the shared
+        // EntityManager, detaching the request. The handler must still remove the row.
+        $this->drops = new RecordingChannelDrop(entityManagerToClear: $this->entityManager);
+        $this->handler = new DropChannelRegistrationHandler(
+            $this->repository,
+            $this->channelLookup,
+            $this->drops,
+        );
+        $this->queue();
+        $this->channelLookup->registered['#sitiochat'] = true;
+
+        $result = $this->handler->handle($this->command());
+
+        self::assertSame(DropChannelRegistrationOutcome::DroppedAndUnregistered, $result->outcome);
+        self::assertCount(1, $this->drops->calls);
+        $this->assertChannelNameIsFree();
+    }
+
+    #[Test]
     public function refusesAChannelNameWithoutHashPrefix(): void
     {
         $result = $this->handler->handle($this->command(channelName: 'SitioChat'));
