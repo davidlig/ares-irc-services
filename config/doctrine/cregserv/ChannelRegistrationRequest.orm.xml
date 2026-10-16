@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\CRegServ\Domain\Entity\ChannelRegistrationRequest" table="channel_registration_requests">
+        <indexes>
+            <index name="idx_channel_registration_requester" columns="requester_account_id,status"/>
+            <index name="idx_channel_registration_status" columns="status"/>
+        </indexes>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="channel" type="string" length="64" column="channel"/>
+        <field name="channelLower" type="string" length="64" unique="true" column="channel_lower"/>
+        <field name="requesterAccountId" type="integer" column="requester_account_id"/>
+        <field name="requesterNick" type="string" length="32" column="requester_nick"/>
+        <field name="description" type="string" length="255" column="description"/>
+        <field name="status" column="status" type="string" length="16" enum-type="App\CRegServ\Domain\ValueObject\ChannelRegistrationStatus">
+            <options>
+                <option name="default">pending</option>
+            </options>
+        </field>
+        <field name="createdAt" type="datetime_immutable" column="created_at"/>
+        <field name="approvedAt" type="datetime_immutable" nullable="true" column="approved_at"/>
+        <field name="approvedByNick" type="string" length="32" nullable="true" column="approved_by_nick"/>
+        <field name="deniedAt" type="datetime_immutable" nullable="true" column="denied_at"/>
+        <field name="deniedByNick" type="string" length="32" nullable="true" column="denied_by_nick"/>
+        <field name="deniedReason" type="text" nullable="true" column="denied_reason"/>
+    </entity>
+</doctrine-mapping>

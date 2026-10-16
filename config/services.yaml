@@ -115,6 +115,14 @@ parameters:
     chanserv.drop_grace_days: '%env(int:default:chanserv.drop_grace_days_default:CHANSERV_DROP_GRACE_DAYS)%'
 
     # MemoServ pseudo-client
+    # CReG pseudo-client (channel registration with manual approval)
+    cregserv.nick_default: 'CReG'
+    cregserv.nick: '%env(string:default:cregserv.nick_default:CREGSERV_NICK)%'
+    cregserv.ident_default: 'CReG'
+    cregserv.ident: '%env(string:default:cregserv.ident_default:CREGSERV_IDENT)%'
+    cregserv.realname_default: 'Channel Registration Requests'
+    cregserv.realname: '%env(string:default:cregserv.realname_default:CREGSERV_REALNAME)%'
+
     memoserv.nick_default: 'MemoServ'
     memoserv.nick: '%env(string:default:memoserv.nick_default:MEMOSERV_NICK)%'
     memoserv.ident_default: 'MemoServ'
@@ -885,6 +893,11 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
 
+    App\CRegServ\Adapter\In\Irc\Subscriber\CRegServCommandListener:
+        arguments:
+            $logger: '@monolog.logger.irc'
+        tags: ['service_command_listener']
+
     App\MemoServ\Adapter\In\Irc\Subscriber\MemoServCommandListener:
         arguments:
             $logger: '@monolog.logger.irc'
@@ -1137,6 +1150,21 @@ services:
 
     App\Irc\Application\Port\In\ChannelServiceActionsPort:
         alias: App\ChanServ\Adapter\In\Irc\Bot\ChanServBot
+
+    # --- CReG Bot pseudo-client ---------------------------------------------
+
+    App\CRegServ\Adapter\In\Irc\Bot\CRegServBot:
+        arguments:
+            $uidGenerator: '@App\Irc\Application\Port\In\ServiceUidGeneratorInterface'
+            $servicesVhost: '%services.vhost%'
+            $cregservNick: '%cregserv.nick%'
+            $cregservIdent: '%cregserv.ident%'
+            $cregservRealname: '%cregserv.realname%'
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
+
+    App\CRegServ\Adapter\In\Irc\CRegServNotifierInterface:
+        alias: App\CRegServ\Adapter\In\Irc\Bot\CRegServBot
 
     # --- MemoServ Bot pseudo-client ---------------------------------------------
 
@@ -1452,6 +1480,40 @@ services:
         tags: ['kernel.event_subscriber']
 
     # --- MemoServ Service -------------------------------------------------------
+
+    App\CRegServ\Adapter\In\Irc\CRegServService:
+        arguments:
+            $serviceNicks: '@App\Irc\Application\Port\In\ServiceNicknameRegistry'
+            $languageResolver: '@App\CRegServ\Adapter\In\Irc\CRegServUserPresentationPreferences'
+            $messageTypeResolver: '@App\CRegServ\Adapter\In\Irc\CRegServUserPresentationPreferences'
+            $authorizationContext: '@App\CRegServ\Adapter\In\Irc\CRegServAuthorizationContextInterface'
+            $authorizationChecker: '@App\CRegServ\Adapter\In\Irc\CRegServAuthorizationCheckerInterface'
+            $defaultLanguage: '%services.default_language%'
+            $defaultTimezone: '%services.default_timezone%'
+            $logger: '@monolog.logger.irc'
+
+    App\CRegServ\Adapter\In\Irc\CRegServAuthorizationContextInterface:
+        alias: App\CRegServ\Adapter\Out\Security\NickServCRegServAuthorizationContextAdapter
+
+    App\CRegServ\Adapter\Out\Security\SymfonyCRegServAuthorizationCheckerAdapter:
+        arguments:
+            $authorizationChecker: '@Symfony\Component\Security\Core\Authorization\AuthorizationChecker'
+
+    App\CRegServ\Adapter\In\Irc\CRegServAuthorizationCheckerInterface:
+        alias: App\CRegServ\Adapter\Out\Security\SymfonyCRegServAuthorizationCheckerAdapter
+
+    App\CRegServ\Adapter\In\Irc\CRegServUserPresentationPreferences:
+        alias: App\CRegServ\Adapter\Out\NickServ\NickServCRegServUserPreferencesAdapter
+
+    App\CRegServ\Application\Port\Out\CRegServUserAccountPort:
+        alias: App\CRegServ\Adapter\Out\NickServ\NickServCRegServUserAccountAdapter
+
+    App\CRegServ\Application\Port\Out\ChannelRegistrationRequestRepositoryInterface:
+        alias: App\CRegServ\Adapter\Out\Persistence\Doctrine\ChannelRegistrationRequestDoctrineRepository
+
+    App\CRegServ\Adapter\In\Irc\CRegServCommandRegistry:
+        arguments:
+            $commands: !tagged_iterator cregserv.command
 
     App\MemoServ\Adapter\In\Irc\MemoServService:
         arguments:

@@ -53,7 +53,7 @@ final class LayerDependencyTest extends TestCase
     private const string ROOT = __DIR__ . '/../..';
 
     /** @var list<string> */
-    private const array BOUNDED_CONTEXTS = ['Irc', 'NickServ', 'ChanServ', 'MemoServ', 'OperServ'];
+    private const array BOUNDED_CONTEXTS = ['Irc', 'NickServ', 'ChanServ', 'MemoServ', 'OperServ', 'CRegServ'];
 
     #[Test]
     public function applicationDoesNotImportInfrastructureOrFrameworks(): void
@@ -149,6 +149,7 @@ final class LayerDependencyTest extends TestCase
         $allowedRoots = [
             'Bootstrap',
             'ChanServ',
+            'CRegServ',
             'Irc',
             'Kernel.php',
             'MemoServ',

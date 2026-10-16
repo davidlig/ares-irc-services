@@ -16,6 +16,7 @@ final readonly class UnrealStandaloneServiceIntroductionFormatter
         'nickserv' => '+dIopqS',
         'chanserv' => '+dIopqS',
         'memoserv' => '+dIopqRS',
+        'cregserv' => '+dIopqS',
         'operserv' => '+dIopqRS',
     ];
 

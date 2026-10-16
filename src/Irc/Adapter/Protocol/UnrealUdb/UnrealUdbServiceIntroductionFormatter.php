@@ -16,6 +16,7 @@ final readonly class UnrealUdbServiceIntroductionFormatter
         'nickserv' => '+dIopqS',
         'chanserv' => '+dIopqS',
         'memoserv' => '+dIopqRS',
+        'cregserv' => '+dIopqS',
         'operserv' => '+dIopqRS',
     ];
 
