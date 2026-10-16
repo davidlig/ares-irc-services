@@ -1545,6 +1545,9 @@ services:
     App\CRegServ\Adapter\In\Irc\Command\SaregisterCommand:
         tags: ['cregserv.command']
 
+    App\CRegServ\Adapter\In\Irc\Command\HelpCommand:
+        tags: ['cregserv.command']
+
     App\CRegServ\Application\Port\Out\ChannelApprovalPort:
         alias: App\CRegServ\Adapter\Out\ChanServ\ChanServChannelApprovalAdapter
 

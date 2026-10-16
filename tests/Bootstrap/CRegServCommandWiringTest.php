@@ -9,6 +9,7 @@ use App\CRegServ\Adapter\In\Irc\Command\DenegadosCommand;
 use App\CRegServ\Adapter\In\Irc\Command\DenegarCommand;
 use App\CRegServ\Adapter\In\Irc\Command\DropCommand;
 use App\CRegServ\Adapter\In\Irc\Command\EstadoCommand;
+use App\CRegServ\Adapter\In\Irc\Command\HelpCommand;
 use App\CRegServ\Adapter\In\Irc\Command\PendientesCommand;
 use App\CRegServ\Adapter\In\Irc\Command\RegistraCommand;
 use App\CRegServ\Adapter\In\Irc\Command\SaregisterCommand;
@@ -47,6 +48,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
             'DENEGADOS' => [DenegadosCommand::class, 'DENEGADOS'],
             'DROP' => [DropCommand::class, 'DROP'],
             'SAREGISTER' => [SaregisterCommand::class, 'SAREGISTER'],
+            'HELP' => [HelpCommand::class, 'HELP'],
         ];
     }
 
@@ -66,7 +68,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
     }
 
     #[Test]
-    public function theRegistryHoldsExactlyTheEightPortedCommands(): void
+    public function theRegistryHoldsExactlyTheNinePortedCommands(): void
     {
         self::bootKernel();
 
@@ -80,7 +82,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
         sort($names);
 
         self::assertSame(
-            ['APROBAR', 'DENEGADOS', 'DENEGAR', 'DROP', 'ESTADO', 'PENDIENTES', 'REGISTRA', 'SAREGISTER'],
+            ['APROBAR', 'DENEGADOS', 'DENEGAR', 'DROP', 'ESTADO', 'HELP', 'PENDIENTES', 'REGISTRA', 'SAREGISTER'],
             $names,
         );
     }
