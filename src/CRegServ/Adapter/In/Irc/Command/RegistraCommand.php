@@ -75,6 +75,11 @@ final readonly class RegistraCommand implements CRegServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'registra.example';
+    }
+
     public function execute(CRegServContext $context): ?CommandOutcome
     {
         $senderAccount = $context->getSenderAccount();

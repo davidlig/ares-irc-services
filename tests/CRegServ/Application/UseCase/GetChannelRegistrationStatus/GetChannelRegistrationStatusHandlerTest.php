@@ -132,6 +132,17 @@ final class GetChannelRegistrationStatusHandlerTest extends DoctrineIntegrationT
     }
 
     #[Test]
+    public function reportsPendingDeletionWhileTheChannelIsStillInItsGracePeriod(): void
+    {
+        $this->channelLookup->registered['#sitiochat'] = true;
+        $this->channelLookup->pendingDeletion['#sitiochat'] = true;
+
+        $result = $this->handler->handle(new GetChannelRegistrationStatus('#SitioChat'));
+
+        self::assertSame(GetChannelRegistrationStatusOutcome::PendingDeletion, $result->outcome);
+    }
+
+    #[Test]
     public function reportsNoRequestWhenTheChannelIsUnknown(): void
     {
         $result = $this->handler->handle(new GetChannelRegistrationStatus('#NoExiste'));

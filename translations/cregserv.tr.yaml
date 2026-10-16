@@ -12,7 +12,8 @@ error:
 registra:
   syntax: "REGISTRA <#channel> <açıklama>"
   short: "Bir kanal kaydının onaylanmasını talep eder."
-  help: "Bir kanalın kaydedilmesini talep et. Bir hizmet operatörü talebi değerlendirir ve onaylar ya da reddeder; kanal yalnızca onaylandıktan sonra kaydedilir. %nickserv% ile kimliğin doğrulanmış olmalı."
+  help: "Yeni bir kanalın kaydedilmesini talep et. Bir hizmet operatörü talebi değerlendirir ve onaylar ya da reddeder; kanal yalnızca onaylandıktan sonra kaydedilir. %nickserv% ile kimliğin doğrulanmış olmalı.\n\n\x02#channel:\x02 Kaydedilecek kanal. # ile başlamalı, henüz kayıtlı olmamalı (ESTADO komutuyla kontrol et) ve # dahil en fazla 64 karakter olmalı.\n\n\x02açıklama:\x02 Kanalın teması veya amacı, en fazla 255 karakter. Operatör talebi değerlendirirken bunu dikkate alır.\n\nGönderildikten sonra talep, bir hizmet operatörü onaylayana ya da reddedene kadar bekler. 24 saatte bir talep gönderebilirsin."
+  example: "/msg CReG REGISTRA #mychannel sohbet etmek için bir yer"
   requested: "\x0303✔\x03 \x02%channel%\x02 kanalının kaydını talep ettin. Bir hizmet operatörü talebi değerlendirecek."
   invalid_channel: "\x0304✗\x03 Kanal adı bir \x02#\x02 ile başlamalıdır."
   channel_too_long: "\x0304✗\x03 Kanal adı çok uzun: en fazla \x0264\x02 karakter, \x02#\x02 dahil."
@@ -26,11 +27,24 @@ registra:
 estado:
   syntax: "ESTADO <#channel>"
   short: "Bir kanalın kayıt durumunu gösterir."
-  help: "Bir kanalın kayıt sürecinin hangi aşamasında olduğunu bildirir: kayıtlı, süreçte veya reddedilmiş."
+  help: "Bir kanalın kayıt sürecinin hangi aşamasında olduğunu bildirir.\n\nOlası durumlar şunlardır:\n    \x02KAYITLI\x02: kanal zaten ChanServ'e kayıtlı.\n    \x02İNCELEMEDE\x02: bir kayıt talebi bir hizmet operatörünün onaylamasını veya reddetmesini bekliyor.\n    \x02REDDEDİLDİ\x02: kayıt talebi reddedildi.\n    \x02SİLİNİYOR\x02: kanal düşürüldü ve silme bekleme döneminde; silme tamamlanana kadar yeniden kaydedilemez.\n    \x02SÜREÇ YOK\x02: kanalın kayıt süreci yok."
+  example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı siliniyor ve silme işlemi tamamlanana kadar kaydedilemez."
   pending: "\x0303◌\x03 \x02%channel%\x02 kanalı süreçte, bir hizmet operatörünün incelemesini bekliyor (%date% tarihinde talep edildi)."
   denied: "\x0304✗\x03 \x02%channel%\x02 kanalı %date% tarihinden beri reddedilmiş. Sebep: %reason%"
   no_request: "\x0304✗\x03 \x02%channel%\x02 kanalının hiçbir kayıt süreci yok."
+
+cancel:
+  syntax: "CANCEL <#channel>"
+  short: "Bir kanalın bekleyen kayıt talebini iptal eder."
+  help: "Henüz onaylanmamış ya da reddedilmemiş bir kanal kayıt talebini iptal eder. Yalnızca kendi bekleyen taleplerini iptal edebilirsin.\n\n\x02#channel:\x02 Talebini iptal etmek istediğin kanal. Talep senin gönderdiğin ve hâlâ bekleyen bir talep olmalıdır.\n\nİptal edildikten sonra talep kaldırılır ve kanal adı boşalır."
+  example: "/msg CReG CANCEL #mychannel"
+  cancelled: "\x0303✔\x03 \x02%channel%\x02 kanalı için kayıt talebin iptal edildi ve kanal adı yeniden boş."
+  invalid_channel: "\x0304✗\x03 Kanal adı \x02#\x02 ile başlamalıdır."
+  no_request: "\x0304✗\x03 \x02%channel%\x02 kanalının kayıt süreci yok."
+  not_yours: "\x0304✗\x03 \x02%channel%\x02 kanalının kayıt talebi sana ait değil."
+  not_pending: "\x0304✗\x03 \x02%channel%\x02 kanalının kayıt talebi zaten onaylandı ya da reddedildi ve iptal edilemez."
 
 aprobar:
   syntax: "APROBAR <#channel>"
@@ -103,6 +117,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP <komut>\x03\x0F kullanın."
   set_sub_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP %command% <seçenek>\x03\x0F kullanın."
   syntax_label: "Sözdizimi: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Örnek: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"

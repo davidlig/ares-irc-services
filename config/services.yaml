@@ -1527,6 +1527,9 @@ services:
     App\CRegServ\Adapter\In\Irc\Command\EstadoCommand:
         tags: ['cregserv.command']
 
+    App\CRegServ\Adapter\In\Irc\Command\CancelChannelRegistrationCommand:
+        tags: ['cregserv.command']
+
     App\CRegServ\Adapter\In\Irc\Command\AprobarCommand:
         tags: ['cregserv.command']
 

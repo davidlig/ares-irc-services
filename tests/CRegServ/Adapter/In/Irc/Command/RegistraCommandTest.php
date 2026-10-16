@@ -165,6 +165,16 @@ final class RegistraCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $messages = [];
+        $captured = [];
+        $command = $this->createCommand(RequestChannelRegistrationResult::requested(), $messages, $captured);
+
+        self::assertSame('registra.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function repliesNotIdentifiedWhenTheSenderHasNoAccount(): void
     {
         $messages = [];

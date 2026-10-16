@@ -20,6 +20,11 @@ final readonly class GetChannelRegistrationStatusResult
         return new self(GetChannelRegistrationStatusOutcome::Registered);
     }
 
+    public static function pendingDeletion(): self
+    {
+        return new self(GetChannelRegistrationStatusOutcome::PendingDeletion);
+    }
+
     public static function pending(DateTimeImmutable $requestedAt): self
     {
         return new self(GetChannelRegistrationStatusOutcome::Pending, requestedAt: $requestedAt);

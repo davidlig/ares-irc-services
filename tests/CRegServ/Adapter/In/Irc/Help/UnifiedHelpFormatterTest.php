@@ -12,6 +12,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
+use function count;
 use function dirname;
 use function in_array;
 use function is_array;
@@ -192,6 +193,38 @@ final class UnifiedHelpFormatterTest extends TestCase
             'translated:help.syntax_label',
             'translated:help.footer',
         ], $withoutOptions);
+    }
+
+    #[Test]
+    public function rendersTheExampleLineOnlyForCommandsExposingAnExampleKey(): void
+    {
+        $formatter = new UnifiedHelpFormatter();
+
+        $withExampleContext = new CRegServHelpFormatterContext();
+        $withExample = $formatter->renderCommandHelp($withExampleContext, new CRegServHelpableCommandWithExample('CANCEL', 3));
+
+        self::assertSame([
+            'translated:help.header',
+            'translated:cancel.help',
+            ' ',
+            'translated:help.syntax_label',
+            ' ',
+            'translated:help.example_label',
+            'translated:help.footer',
+        ], $withExample);
+
+        $exampleLabels = array_values(array_filter(
+            $withExampleContext->translations,
+            static fn (array $entry): bool => 'help.example_label' === $entry['key'],
+        ));
+        self::assertCount(1, $exampleLabels);
+        self::assertSame(['example' => 'translated:cancel.example'], $exampleLabels[0]['params']);
+
+        $withoutExampleContext = new CRegServHelpFormatterContext();
+        $withoutExample = $formatter->renderCommandHelp($withoutExampleContext, new CRegServHelpableCommand('REGISTRA', 1));
+
+        self::assertNotContains('translated:help.example_label', $withoutExample);
+        self::assertSame('translated:help.syntax_label', $withoutExample[count($withoutExample) - 2]);
     }
 
     #[Test]
@@ -453,5 +486,54 @@ final readonly class CRegServHelpableCommand implements HelpableCommandInterface
     public function getHelpParams(): array
     {
         return $this->helpParams;
+    }
+}
+
+/** A command that opts into the HELP example line, mirroring Registra/Estado/CANCEL. */
+final readonly class CRegServHelpableCommandWithExample implements HelpableCommandInterface
+{
+    public function __construct(
+        private string $name,
+        private int $order,
+    ) {}
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getOrder(): int
+    {
+        return $this->order;
+    }
+
+    public function getShortDescKey(): string
+    {
+        return strtolower($this->name) . '.short';
+    }
+
+    public function getSyntaxKey(): string
+    {
+        return strtolower($this->name) . '.syntax';
+    }
+
+    public function getHelpKey(): string
+    {
+        return strtolower($this->name) . '.help';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
+    public function isOperOnly(): bool
+    {
+        return false;
+    }
+
+    public function getExampleKey(): string
+    {
+        return strtolower($this->name) . '.example';
     }
 }

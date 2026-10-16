@@ -11,8 +11,9 @@ use App\CRegServ\Application\Port\Out\RegisteredChannelLookupPort;
  * Reports where a channel name stands in the registration workflow.
  *
  * Mirrors pulsar's do_estado (modules/cregserv/main.c:534-577): a channel already held by
- * ChanServ wins over any queued request, otherwise the queued record answers "in process",
- * "denied" (with the oper's reason) or "no registration process at all".
+ * ChanServ wins over any queued request — unless it is in its deletion grace period, which
+ * answers as its own state —, otherwise the queued record answers "in process", "denied"
+ * (with the oper's reason) or "no registration process at all".
  */
 final readonly class GetChannelRegistrationStatusHandler implements GetChannelRegistrationStatusHandlerInterface
 {
@@ -24,6 +25,10 @@ final readonly class GetChannelRegistrationStatusHandler implements GetChannelRe
     public function handle(GetChannelRegistrationStatus $command): GetChannelRegistrationStatusResult
     {
         if ($this->channelLookup->existsByChannelName($command->channelName)) {
+            if ($this->channelLookup->isPendingDeletion($command->channelName)) {
+                return GetChannelRegistrationStatusResult::pendingDeletion();
+            }
+
             return GetChannelRegistrationStatusResult::registered();
         }
 

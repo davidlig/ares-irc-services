@@ -141,6 +141,14 @@ final class EstadoCommandTest extends TestCase
         self::assertSame([], $command->getSubCommandHelp());
     }
 
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = $this->createCommand(GetChannelRegistrationStatusResult::noRequest());
+
+        self::assertSame('estado.example', $command->getExampleKey());
+    }
+
     /**
      * @return array<string, array{GetChannelRegistrationStatusResult, string}>
      */
@@ -148,6 +156,7 @@ final class EstadoCommandTest extends TestCase
     {
         return [
             'registered' => [GetChannelRegistrationStatusResult::registered(), 'estado.registered'],
+            'pending deletion' => [GetChannelRegistrationStatusResult::pendingDeletion(), 'estado.pending_deletion'],
             'pending' => [
                 GetChannelRegistrationStatusResult::pending(new DateTimeImmutable('2026-10-15 10:00:00')),
                 'estado.pending',

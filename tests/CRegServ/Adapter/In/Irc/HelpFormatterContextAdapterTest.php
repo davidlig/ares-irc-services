@@ -155,7 +155,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $groups = $adapter->getHelpGroups();
 
         self::assertSame([
-            ['group_key' => 'help.group.requests', 'commands' => ['REGISTRA', 'ESTADO'], 'admin' => false, 'subgroup' => false],
+            ['group_key' => 'help.group.requests', 'commands' => ['REGISTRA', 'ESTADO', 'CANCEL'], 'admin' => false, 'subgroup' => false],
             ['group_key' => 'help.ircop_group.approval', 'commands' => ['APROBAR', 'DENEGAR'], 'admin' => true, 'subgroup' => true],
             ['group_key' => 'help.ircop_group.queue', 'commands' => ['PENDIENTES', 'DENEGADOS', 'DROP'], 'admin' => true, 'subgroup' => true],
             ['group_key' => 'help.ircop_group.forced', 'commands' => ['SAREGISTER'], 'admin' => true, 'subgroup' => true],

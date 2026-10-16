@@ -12,7 +12,8 @@ error:
 registra:
   syntax: "REGISTRA <#channel> <description>"
   short: "Request the approval of a channel registration."
-  help: "Ask for a channel to be registered. A services operator evaluates the request and approves or denies it; the channel is only registered once approved. You must be identified with %nickserv%."
+  help: "Requests registration of a new channel. A services oper reviews the request and approves or denies it; the channel is only registered once approved. You must be identified with %nickserv%.\n\n\x02#channel:\x02 The channel to register. It must start with #, must not already be registered (check with the ESTADO command), and must be at most 64 characters including the #.\n\n\x02description:\x02 The channel's theme or purpose, up to 255 characters. This is what the oper weighs when reviewing the request.\n\nOnce submitted, the request stays pending until a services oper approves or denies it. You can only send one request every 24 hours."
+  example: "/msg CReG REGISTRA #mychannel a place to chat"
   requested: "\x0303✔\x03 You have requested the registration of channel \x02%channel%\x02. A services operator will evaluate the request."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
   channel_too_long: "\x0304✗\x03 The channel name is too long: at most \x0264\x02 characters including \x02#\x02."
@@ -26,11 +27,24 @@ registra:
 estado:
   syntax: "ESTADO <#channel>"
   short: "Show the registration state of a channel."
-  help: "Report where a channel stands in the registration workflow: registered, in process or denied."
+  help: "Reports where a channel stands in the registration process.\n\nThe possible states are:\n    \x02REGISTERED\x02: the channel is already registered with ChanServ.\n    \x02IN REVIEW\x02: a registration request is waiting for a services oper to approve or deny it.\n    \x02DENIED\x02: the registration request was denied.\n    \x02BEING DELETED\x02: the channel was dropped and is in its deletion grace period; it cannot be registered again until deletion completes.\n    \x02NO PROCESS\x02: the channel has no registration process."
+  example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Channel \x02%channel%\x02 is already registered."
+  pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is being deleted and cannot be registered until the deletion completes."
   pending: "\x0303◌\x03 Channel \x02%channel%\x02 is in process, waiting for a services operator to review it (requested %date%)."
   denied: "\x0304✗\x03 Channel \x02%channel%\x02 was denied on %date%. Reason: %reason%"
   no_request: "\x0304✗\x03 Channel \x02%channel%\x02 has no registration process."
+
+cancel:
+  syntax: "CANCEL <#channel>"
+  short: "Cancel your pending registration request for a channel."
+  help: "Cancels a channel registration request that has not yet been approved or denied. You can only cancel your own pending requests.\n\n\x02#channel:\x02 The channel whose request you want to cancel. The request must be one you submitted and that is still pending.\n\nOnce cancelled, the request is removed and the channel name is freed."
+  example: "/msg CReG CANCEL #mychannel"
+  cancelled: "\x0303✔\x03 Your registration request for channel \x02%channel%\x02 has been cancelled and the channel name is free again."
+  invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
+  no_request: "\x0304✗\x03 Channel \x02%channel%\x02 has no registration process."
+  not_yours: "\x0304✗\x03 The registration request of \x02%channel%\x02 does not belong to you."
+  not_pending: "\x0304✗\x03 The registration request of \x02%channel%\x02 was already approved or denied and cannot be cancelled."
 
 aprobar:
   syntax: "APROBAR <#channel>"
@@ -103,6 +117,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP <command>\x03\x0F for more information."
   set_sub_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP %command% <option>\x03\x0F for more information."
   syntax_label: "Syntax: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Example: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"

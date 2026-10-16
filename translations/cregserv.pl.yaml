@@ -12,7 +12,8 @@ error:
 registra:
   syntax: "REGISTRA <#kanał> <opis>"
   short: "Prosi o zatwierdzenie rejestracji kanału."
-  help: "Poproś o rejestrację kanału. Operator usług ocenia prośbę i ją zatwierdza lub odrzuca; kanał jest rejestrowany dopiero po zatwierdzeniu. Musisz być zidentyfikowany z %nickserv%."
+  help: "Prosi o rejestrację nowego kanału. Operator usług sprawdza prośbę i ją zatwierdza lub odrzuca; kanał jest rejestrowany dopiero po zatwierdzeniu. Musisz być zidentyfikowany z %nickserv%.\n\n\x02#kanał:\x02 Kanał do rejestracji. Musi zaczynać się od #, nie może być już zarejestrowany (sprawdź to komendą ESTADO) i może mieć najwyżej 64 znaki razem z #.\n\n\x02opis:\x02 Temat lub cel kanału, do 255 znaków. To operator bierze pod uwagę, sprawdzając prośbę.\n\nPo wysłaniu prośba pozostaje oczekująca, aż operator usług ją zatwierdzi lub odrzuci. Możesz wysłać jedną prośbę na 24 godziny."
+  example: "/msg CReG REGISTRA #mychannel miejsce do rozmów"
   requested: "\x0303✔\x03 Poprosiłeś o rejestrację kanału \x02%channel%\x02. Operator usług oceni tę prośbę."
   invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
   channel_too_long: "\x0304✗\x03 Nazwa kanału jest za długa: maksymalnie \x0264\x02 znaki wraz z \x02#\x02."
@@ -26,11 +27,24 @@ registra:
 estado:
   syntax: "ESTADO <#kanał>"
   short: "Pokazuje stan rejestracji kanału."
-  help: "Wskazuje, na jakim etapie jest kanał w procesie rejestracji: zarejestrowany, w trakcie lub odrzucony."
+  help: "Wskazuje, na jakim etapie jest kanał w procesie rejestracji.\n\nMożliwe stany to:\n    \x02ZAREJESTROWANY\x02: kanał jest już zarejestrowany w ChanServ.\n    \x02W TRAKCIE SPRAWDZENIA\x02: prośba o rejestrację czeka na zatwierdzenie lub odrzucenie przez operatora usług.\n    \x02ODRZUCONY\x02: prośba o rejestrację została odrzucona.\n    \x02JEST USUWANY\x02: kanał został wyrejestrowany i znajduje się w okresie karencji usuwania; nie można go zarejestrować ponownie do czasu zakończenia usuwania.\n    \x02BRAK PROCESU\x02: kanał nie ma procesu rejestracji."
+  example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
+  pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 jest właśnie usuwany i nie może być zarejestrowany do czasu zakończenia usuwania."
   pending: "\x0303◌\x03 Kanał \x02%channel%\x02 jest w trakcie i czeka na sprawdzenie przez operatora usług (poproszono %date%)."
   denied: "\x0304✗\x03 Kanał \x02%channel%\x02 jest odrzucony od %date%. Powód: %reason%"
   no_request: "\x0304✗\x03 Kanał \x02%channel%\x02 nie ma procesu rejestracji."
+
+cancel:
+  syntax: "CANCEL <#kanał>"
+  short: "Anuluje twoją oczekującą prośbę o rejestrację kanału."
+  help: "Anuluje prośbę o rejestrację kanału, która nie została jeszcze zatwierdzona ani odrzucona. Możesz anulować tylko własne prośby oczekujące.\n\n\x02#kanał:\x02 Kanał, którego prośbę chcesz anulować. Prośba musi być twoja i nadal musi być oczekująca.\n\nPo anulowaniu prośba zostaje usunięta, a nazwa kanału staje się wolna."
+  example: "/msg CReG CANCEL #mychannel"
+  cancelled: "\x0303✔\x03 Twoja prośba o rejestrację kanału \x02%channel%\x02 została anulowana, a nazwa kanału znów jest wolna."
+  invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
+  no_request: "\x0304✗\x03 Kanał \x02%channel%\x02 nie ma procesu rejestracji."
+  not_yours: "\x0304✗\x03 Prośba o rejestrację \x02%channel%\x02 nie należy do ciebie."
+  not_pending: "\x0304✗\x03 Prośba o rejestrację \x02%channel%\x02 została już zatwierdzona lub odrzucona i nie można jej anulować."
 
 aprobar:
   syntax: "APROBAR <#kanał>"
@@ -103,6 +117,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Użyj /msg %bot% \x02\x0303HELP <komenda>\x03\x0F, aby uzyskać więcej informacji."
   set_sub_footer: "\x0310ℹ\x03\x0F Użyj /msg %bot% \x02\x0303HELP %command% <opcja>\x03\x0F, aby uzyskać więcej informacji."
   syntax_label: "Składnia: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Przykład: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"

@@ -12,7 +12,8 @@ error:
 registra:
   syntax: "REGISTRA <#canal> <descrição>"
   short: "Pede a aprovação do registo de um canal."
-  help: "Pede que um canal seja registado. Um operador de serviços avalia o pedido e aprova-o ou rejeita-o; o canal só é registado depois de aprovado. Tens de estar identificado com %nickserv%."
+  help: "Pede o registo de um canal novo. Um operador de serviços analisa o pedido e aprova-o ou rejeita-o; o canal só é registado depois de aprovado. Tens de estar identificado com %nickserv%.\n\n\x02#canal:\x02 O canal a registar. Tem de começar por #, não pode já estar registado (verifica com o comando ESTADO) e pode ter no máximo 64 caracteres incluindo o #.\n\n\x02descrição:\x02 O tema ou o propósito do canal, até 255 caracteres. É o que o operador tem em conta ao analisar o pedido.\n\nDepois de enviado, o pedido fica pendente até um operador de serviços o aprovar ou rejeitar. Só podes enviar um pedido a cada 24 horas."
+  example: "/msg CReG REGISTRA #mychannel um lugar para conversar"
   requested: "\x0303✔\x03 Pediste o registo do canal \x02%channel%\x02. Um operador de serviços vai avaliar o pedido."
   invalid_channel: "\x0304✗\x03 O nome do canal tem de começar por um \x02#\x02."
   channel_too_long: "\x0304✗\x03 O nome do canal é demasiado longo: no máximo \x0264\x02 caracteres incluindo o \x02#\x02."
@@ -26,11 +27,24 @@ registra:
 estado:
   syntax: "ESTADO <#canal>"
   short: "Mostra o estado de registo de um canal."
-  help: "Indica em que ponto está um canal no processo de registo: registado, em curso ou negado."
+  help: "Indica em que ponto está um canal no processo de registo.\n\nOs estados possíveis são:\n    \x02REGISTADO\x02: o canal já está registado no ChanServ.\n    \x02EM ANÁLISE\x02: um pedido de registo espera que um operador de serviços o aprove ou o rejeite.\n    \x02NEGADO\x02: o pedido de registo foi negado.\n    \x02A SER REMOVIDO\x02: o canal foi dado de baixa e está no seu período de carência de remoção; não pode ser registado de novo até a remoção terminar.\n    \x02SEM PROCESSO\x02: o canal não tem processo de registo."
+  example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 O canal \x02%channel%\x02 já está registado."
+  pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 está a ser removido e não pode ser registado até que a remoção termine."
   pending: "\x0303◌\x03 O canal \x02%channel%\x02 está em curso, à espera da revisão de um operador de serviços (pedido a %date%)."
   denied: "\x0304✗\x03 O canal \x02%channel%\x02 está negado desde %date%. Motivo: %reason%"
   no_request: "\x0304✗\x03 O canal \x02%channel%\x02 não tem qualquer processo de registo."
+
+cancel:
+  syntax: "CANCEL <#canal>"
+  short: "Cancela o teu pedido de registo pendente de um canal."
+  help: "Cancela um pedido de registo de canal que ainda não foi aprovado nem negado. Só podes cancelar os teus próprios pedidos pendentes.\n\n\x02#canal:\x02 O canal cujo pedido queres cancelar. O pedido tem de ser o que tu enviaste e tem de continuar pendente.\n\nDepois de cancelado, o pedido é removido e o nome do canal fica livre."
+  example: "/msg CReG CANCEL #mychannel"
+  cancelled: "\x0303✔\x03 O teu pedido de registo do canal \x02%channel%\x02 foi cancelado e o nome do canal volta a estar livre."
+  invalid_channel: "\x0304✗\x03 O nome do canal tem de começar por \x02#\x02."
+  no_request: "\x0304✗\x03 O canal \x02%channel%\x02 não tem processo de registo."
+  not_yours: "\x0304✗\x03 O pedido de registo de \x02%channel%\x02 não é teu."
+  not_pending: "\x0304✗\x03 O pedido de registo de \x02%channel%\x02 já foi aprovado ou negado e não pode ser cancelado."
 
 aprobar:
   syntax: "APROBAR <#canal>"
@@ -103,6 +117,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP <comando>\x03\x0F para mais informações."
   set_sub_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP %command% <opção>\x03\x0F para mais informações."
   syntax_label: "Sintaxe: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Exemplo: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"

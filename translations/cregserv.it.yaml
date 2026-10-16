@@ -12,7 +12,8 @@ error:
 registra:
   syntax: "REGISTRA <#canale> <descrizione>"
   short: "Richiede l'approvazione della registrazione di un canale."
-  help: "Chiedi la registrazione di un canale. Un operatore dei servizi valuta la richiesta e la approva o la nega; il canale viene registrato solo una volta approvata. Devi essere identificato con %nickserv%."
+  help: "Chiedi la registrazione di un canale nuovo. Un operatore dei servizi esamina la richiesta e la approva o la nega; il canale viene registrato solo una volta approvata. Devi essere identificato con %nickserv%.\n\n\x02#canale:\x02 Il canale da registrare. Deve iniziare con #, non deve essere già registrato (verifica con il comando ESTADO) e deve avere al massimo 64 caratteri compreso il #.\n\n\x02descrizione:\x02 Il tema o lo scopo del canale, fino a 255 caratteri. È ciò che l'operatore valuta nell'esaminare la richiesta.\n\nUna volta inviata, la richiesta resta in attesa che un operatore dei servizi la approvi o la neghi. Puoi inviare solo una richiesta ogni 24 ore."
+  example: "/msg CReG REGISTRA #mychannel un posto per chiacchierare"
   requested: "\x0303✔\x03 Hai richiesto la registrazione del canale \x02%channel%\x02. Un operatore dei servizi valuterà la richiesta."
   invalid_channel: "\x0304✗\x03 Il nome del canale deve iniziare con un \x02#\x02."
   channel_too_long: "\x0304✗\x03 Il nome del canale è troppo lungo: al massimo \x0264\x02 caratteri compreso il \x02#\x02."
@@ -26,11 +27,24 @@ registra:
 estado:
   syntax: "ESTADO <#canale>"
   short: "Mostra lo stato di registrazione di un canale."
-  help: "Indica a che punto si trova un canale nel processo di registrazione: registrato, in corso o negato."
+  help: "Indica a che punto si trova un canale nel processo di registrazione.\n\nGli stati possibili sono:\n    \x02REGISTRATO\x02: il canale è già registrato con ChanServ.\n    \x02IN REVISIONE\x02: una richiesta di registrazione attende che un operatore dei servizi la approvi o la neghi.\n    \x02NEGATO\x02: la richiesta di registrazione è stata negata.\n    \x02IN ELIMINAZIONE\x02: il canale è stato dismesso ed è nel suo periodo di grazia di eliminazione; non può essere registrato di nuovo fino al completamento dell'eliminazione.\n    \x02NESSUN PROCESSO\x02: il canale non ha alcun processo di registrazione."
+  example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Il canale \x02%channel%\x02 è già registrato."
+  pending_deletion: "\x0304✗\x03 Il canale \x02%channel%\x02 è in fase di eliminazione e non può essere registrato fino al completamento dell'eliminazione."
   pending: "\x0303◌\x03 Il canale \x02%channel%\x02 è in corso, in attesa della revisione di un operatore dei servizi (richiesto il %date%)."
   denied: "\x0304✗\x03 Il canale \x02%channel%\x02 è negato dal %date%. Motivo: %reason%"
   no_request: "\x0304✗\x03 Il canale \x02%channel%\x02 non ha alcun processo di registrazione."
+
+cancel:
+  syntax: "CANCEL <#canale>"
+  short: "Annulla la tua richiesta di registrazione pendente per un canale."
+  help: "Annulla una richiesta di registrazione di canale che non è stata ancora approvata né negata. Puoi annullare solo le tue richieste pendenti.\n\n\x02#canale:\x02 Il canale di cui vuoi annullare la richiesta. La richiesta deve essere quella che hai inviato tu e deve essere ancora in attente.\n\nUna volta annullata, la richiesta viene rimossa e il nome del canale torna libero."
+  example: "/msg CReG CANCEL #mychannel"
+  cancelled: "\x0303✔\x03 La tua richiesta di registrazione del canale \x02%channel%\x02 è stata annullata e il nome del canale è di nuovo libero."
+  invalid_channel: "\x0304✗\x03 Il nome del canale deve iniziare con \x02#\x02."
+  no_request: "\x0304✗\x03 Il canale \x02%channel%\x02 non ha alcun processo di registrazione."
+  not_yours: "\x0304✗\x03 La richiesta di registrazione di \x02%channel%\x02 non ti appartiene."
+  not_pending: "\x0304✗\x03 La richiesta di registrazione di \x02%channel%\x02 è già stata approvata o negata e non può essere annullata."
 
 aprobar:
   syntax: "APROBAR <#canale>"
@@ -103,6 +117,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Usa /msg %bot% \x02\x0303HELP <comando>\x03\x0F per maggiori informazioni."
   set_sub_footer: "\x0310ℹ\x03\x0F Usa /msg %bot% \x02\x0303HELP %command% <opzione>\x03\x0F per maggiori informazioni."
   syntax_label: "Sintassi: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Esempio: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"

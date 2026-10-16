@@ -12,7 +12,8 @@ error:
 registra:
   syntax: "REGISTRA <#canle> <descrición>"
   short: "Solicita a aprobación do rexistro dunha canle."
-  help: "Pide que sexa rexistrada unha canle. Un operador de servizos avalía a solicitude e a aproba ou a denega; a canle só se rexistra unha vez aprobada. Debes estar identificado con %nickserv%."
+  help: "Solicita o rexistro dunha canle nova. Un operador de servizos revisa a solicitude e a aproba ou a denega; a canle só se rexistra unha vez aprobada. Debes estar identificado con %nickserv%.\n\n\x02#canle:\x02 A canle a rexistrar. Debe comezar por #, non pode estar xa rexistrada (comproba coa orde ESTADO) e debe ter como máximo 64 caracteres incluíndo o #.\n\n\x02descrición:\x02 O tema ou o propósito da canle, ata 255 caracteres. É o que o operador ten en conta ao revisar a solicitude.\n\nUnha vez enviada, a solicitude queda pendente até que un operador de servizos a aprove ou a denegue. Só podes enviar unha solicitude cada 24 horas."
+  example: "/msg CReG REGISTRA #mychannel un lugar para conversar"
   requested: "\x0303✔\x03 Solicitaches o rexistro da canle \x02%channel%\x02. Un operador de servizos avaliará a solicitude."
   invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
   channel_too_long: "\x0304✗\x03 O nome da canle é demasiado longo: como máximo \x0264\x02 caracteres incluído o \x02#\x02."
@@ -26,11 +27,24 @@ registra:
 estado:
   syntax: "ESTADO <#canle>"
   short: "Amosa o estado de rexistro dunha canle."
-  help: "Indica en que punto se atopa unha canle dentro do proceso de rexistro: rexistrada, en proceso ou denegada."
+  help: "Indica en que punto se atopa unha canle dentro do proceso de rexistro.\n\nOs estados posibles son:\n    \x02REXISTRADA\x02: a canle xa está rexistrada con ChanServ.\n    \x02EN REVISIÓN\x02: unha solicitude de rexistro espera a que un operador de servizos a aprove ou a denegue.\n    \x02DENEGADA\x02: a solicitude de rexistro foi denegada.\n    \x02EN ELIMINACIÓN\x02: a canle foi dada de baixa e está no seu período de graza de eliminación; non pode rexistrarse de novo até que remate a eliminación.\n    \x02SEN PROCESO\x02: a canle non ten ningún proceso de rexistro."
+  example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 A canle \x02%channel%\x02 xa está rexistrada."
+  pending_deletion: "\x0304✗\x03 A canle \x02%channel%\x02 estase eliminando e non pode ser rexistrada ata que se complete a eliminación."
   pending: "\x0303◌\x03 A canle \x02%channel%\x02 está en proceso, á espera da revisión dun operador de servizos (solicitada o %date%)."
   denied: "\x0304✗\x03 A canle \x02%channel%\x02 está denegada desde o %date%. Motivo: %reason%"
   no_request: "\x0304✗\x03 A canle \x02%channel%\x02 non ten ningún proceso de rexistro."
+
+cancel:
+  syntax: "CANCEL <#canle>"
+  short: "Cancela a túa solicitude de rexistro pendente dunha canle."
+  help: "Cancela unha solicitude de rexistro de canle que aínda non foi aprobada nin denegada. Só podes cancelar as túas propias solicitudes pendentes.\n\n\x02#canle:\x02 A canle da solicitude que queres cancelar. A solicitude debe ser a que ti enviaches e debe seguir pendente.\n\nUnha vez cancelada, a solicitude elimínase e o nome da canle queda libre."
+  example: "/msg CReG CANCEL #mychannel"
+  cancelled: "\x0303✔\x03 A túa solicitude de rexistro da canle \x02%channel%\x02 foi cancelada e o nome da canle volve estar libre."
+  invalid_channel: "\x0304✗\x03 O nome da canle debe comezar por \x02#\x02."
+  no_request: "\x0304✗\x03 A canle \x02%channel%\x02 non ten ningún proceso de rexistro."
+  not_yours: "\x0304✗\x03 A solicitude de rexistro de \x02%channel%\x02 non é túa."
+  not_pending: "\x0304✗\x03 A solicitude de rexistro de \x02%channel%\x02 xa foi aprobada ou denegada e non pode cancelarse."
 
 aprobar:
   syntax: "APROBAR <#canle>"
@@ -103,6 +117,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Usa /msg %bot% \x02\x0303HELP <comando>\x03\x0F para obter máis información."
   set_sub_footer: "\x0310ℹ\x03\x0F Usa /msg %bot% \x02\x0303HELP %command% <opción>\x03\x0F para obter máis información."
   syntax_label: "Sintaxe: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Exemplo: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"

@@ -12,7 +12,8 @@ error:
 registra:
   syntax: "REGISTRA <#canal> <descriere>"
   short: "Cere aprobarea înregistrării unui canal."
-  help: "Cere înregistrarea unui canal. Un operator de servicii evaluează cererea și o aprobă sau o respinge; canalul se înregistrează doar după aprobare. Trebuie să fii identificat cu %nickserv%."
+  help: "Cere înregistrarea unui canal nou. Un operator de servicii verifică cererea și o aprobă sau o respinge; canalul se înregistrează doar după aprobare. Trebuie să fii identificat cu %nickserv%.\n\n\x02#canal:\x02 Canalul de înregistrat. Trebuie să înceapă cu #, să nu fie deja înregistrat (verifică-l cu comanda ESTADO) și să aibă cel mult 64 de caractere inclusiv #.\n\n\x02descriere:\x02 Tema sau scopul canalului, până la 255 de caractere. Aceasta este ceea ce operatorul ia în considerare la verificarea cererii.\n\nDupă trimitere, cererea rămâne în așteptare până când un operator de servicii o aprobă sau o respinge. Poți trimite o singură cerere la 24 de ore."
+  example: "/msg CReG REGISTRA #mychannel un loc de conversație"
   requested: "\x0303✔\x03 Ai cerut înregistrarea canalului \x02%channel%\x02. Un operator de servicii va evalua cererea."
   invalid_channel: "\x0304✗\x03 Numele canalului trebuie să înceapă cu un \x02#\x02."
   channel_too_long: "\x0304✗\x03 Numele canalului este prea lung: cel mult \x0264\x02 caractere, inclusiv \x02#\x02."
@@ -26,11 +27,24 @@ registra:
 estado:
   syntax: "ESTADO <#canal>"
   short: "Arată starea de înregistrare a unui canal."
-  help: "Indică în ce punct se află un canal în procesul de înregistrare: înregistrat, în curs sau respins."
+  help: "Indică în ce punct se află un canal în procesul de înregistrare.\n\nStările posibile sunt:\n    \x02ÎNREGISTRAT\x02: canalul este deja înregistrat la ChanServ.\n    \x02ÎN VERIFICARE\x02: o cerere de înregistrare așteaptă ca un operator de servicii să o aprobe sau să o respingă.\n    \x02RESPINS\x02: cererea de înregistrare a fost respinsă.\n    \x02ÎN CURS DE ȘTERGERE\x02: canalul a fost dezafiliat și se află în perioada de grație a ștergerii; nu poate fi înregistrat din nou până la finalizarea ștergerii.\n    \x02FĂRĂ PROCES\x02: canalul nu are niciun proces de înregistrare."
+  example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Canalul \x02%channel%\x02 este deja înregistrat."
+  pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este în curs de ștergere și nu poate fi înregistrat până la finalizarea ștergerii."
   pending: "\x0303◌\x03 Canalul \x02%channel%\x02 este în curs, în așteptarea verificării de către un operator de servicii (cerut la %date%)."
   denied: "\x0304✗\x03 Canalul \x02%channel%\x02 este respins din %date%. Motiv: %reason%"
   no_request: "\x0304✗\x03 Canalul \x02%channel%\x02 nu are niciun proces de înregistrare."
+
+cancel:
+  syntax: "CANCEL <#canal>"
+  short: "Anulează cererea ta de înregistrare în așteptare pentru un canal."
+  help: "Anulează o cerere de înregistrare a unui canal care nu a fost încă aprobată sau respinsă. Poți anula doar cererile tale proprii în așteptare.\n\n\x02#canal:\x02 Canalul a cărui cerere vrei să o anulezi. Cererea trebuie să fie cea pe care ai trimis-o tu și trebuie să fie încă în așteptare.\n\nDupă anulare, cererea este eliminată, iar numele canalului devine liber."
+  example: "/msg CReG CANCEL #mychannel"
+  cancelled: "\x0303✔\x03 Cererea ta de înregistrare pentru canalul \x02%channel%\x02 a fost anulată, iar numele canalului este din nou liber."
+  invalid_channel: "\x0304✗\x03 Numele canalului trebuie să înceapă cu \x02#\x02."
+  no_request: "\x0304✗\x03 Canalul \x02%channel%\x02 nu are niciun proces de înregistrare."
+  not_yours: "\x0304✗\x03 Cererea de înregistrare pentru \x02%channel%\x02 nu îți aparține."
+  not_pending: "\x0304✗\x03 Cererea de înregistrare pentru \x02%channel%\x02 a fost deja aprobată sau respinsă și nu poate fi anulată."
 
 aprobar:
   syntax: "APROBAR <#canal>"
@@ -103,6 +117,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Folosește /msg %bot% \x02\x0303HELP <comandă>\x03\x0F pentru mai multe informații."
   set_sub_footer: "\x0310ℹ\x03\x0F Folosește /msg %bot% \x02\x0303HELP %command% <opțiune>\x03\x0F pentru mai multe informații."
   syntax_label: "Sintaxă: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Exemplu: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"

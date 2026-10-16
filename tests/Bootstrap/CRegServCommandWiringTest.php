@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Bootstrap;
 
 use App\CRegServ\Adapter\In\Irc\Command\AprobarCommand;
+use App\CRegServ\Adapter\In\Irc\Command\CancelChannelRegistrationCommand;
 use App\CRegServ\Adapter\In\Irc\Command\DenegadosCommand;
 use App\CRegServ\Adapter\In\Irc\Command\DenegarCommand;
 use App\CRegServ\Adapter\In\Irc\Command\DropCommand;
@@ -42,6 +43,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
         return [
             'REGISTRA' => [RegistraCommand::class, 'REGISTRA'],
             'ESTADO' => [EstadoCommand::class, 'ESTADO'],
+            'CANCEL' => [CancelChannelRegistrationCommand::class, 'CANCEL'],
             'APROBAR' => [AprobarCommand::class, 'APROBAR'],
             'DENEGAR' => [DenegarCommand::class, 'DENEGAR'],
             'PENDIENTES' => [PendientesCommand::class, 'PENDIENTES'],
@@ -68,7 +70,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
     }
 
     #[Test]
-    public function theRegistryHoldsExactlyTheNinePortedCommands(): void
+    public function theRegistryHoldsExactlyTheTenPortedCommands(): void
     {
         self::bootKernel();
 
@@ -82,7 +84,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
         sort($names);
 
         self::assertSame(
-            ['APROBAR', 'DENEGADOS', 'DENEGAR', 'DROP', 'ESTADO', 'HELP', 'PENDIENTES', 'REGISTRA', 'SAREGISTER'],
+            ['APROBAR', 'CANCEL', 'DENEGADOS', 'DENEGAR', 'DROP', 'ESTADO', 'HELP', 'PENDIENTES', 'REGISTRA', 'SAREGISTER'],
             $names,
         );
     }
@@ -137,8 +139,8 @@ final class CRegServCommandWiringTest extends KernelTestCase
     }
 
     /**
-     * The user half: REGISTRA and ESTADO are for anyone with a registered nick, which is why
-     * they are not oper-only and ask for IDENTIFIED rather than an IRCop permission.
+     * The user half: REGISTRA, ESTADO and CANCEL are for anyone with a registered nick, which
+     * is why they are not oper-only and ask for IDENTIFIED rather than an IRCop permission.
      *
      * @param class-string<CRegServCommandInterface> $class
      */
@@ -167,6 +169,7 @@ final class CRegServCommandWiringTest extends KernelTestCase
         return [
             'REGISTRA' => ['REGISTRA', RegistraCommand::class],
             'ESTADO' => ['ESTADO', EstadoCommand::class],
+            'CANCEL' => ['CANCEL', CancelChannelRegistrationCommand::class],
         ];
     }
 

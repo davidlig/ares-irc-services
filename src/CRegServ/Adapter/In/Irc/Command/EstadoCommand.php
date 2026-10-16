@@ -14,8 +14,8 @@ use App\Irc\Application\Port\In\Command\CommandOutcome;
 /**
  * ESTADO <#channel>.
  *
- * Reports where a channel name stands: already registered with ChanServ, queued and waiting
- * for an oper, denied, or with no registration process at all.
+ * Reports where a channel name stands: already registered with ChanServ, in its deletion
+ * grace period, queued and waiting for an oper, denied, or with no registration process.
  */
 final readonly class EstadoCommand implements CRegServCommandInterface
 {
@@ -71,6 +71,11 @@ final readonly class EstadoCommand implements CRegServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'estado.example';
+    }
+
     public function execute(CRegServContext $context): ?CommandOutcome
     {
         $senderAccount = $context->getSenderAccount();
@@ -86,6 +91,7 @@ final readonly class EstadoCommand implements CRegServCommandInterface
 
         match ($result->outcome) {
             GetChannelRegistrationStatusOutcome::Registered => $context->reply('estado.registered', ['channel' => $channel]),
+            GetChannelRegistrationStatusOutcome::PendingDeletion => $context->reply('estado.pending_deletion', ['channel' => $channel]),
             GetChannelRegistrationStatusOutcome::Pending => $context->reply('estado.pending', [
                 'channel' => $channel,
                 'date' => $context->formatDate($result->requestedAt),

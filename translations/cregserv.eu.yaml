@@ -12,7 +12,8 @@ error:
 registra:
   syntax: "REGISTRA <#kanala> <deskribapena>"
   short: "Kanal baten erregistroaren onarpena eskatzen du."
-  help: "Eskatu kanal bat erregistratzea. Zerbitzuetako operadore batek eskaera ebaluatu eta onartu edo ukatzen du; kanala onartu ostean bakarrik erregistratzen da. %nickserv% bidez identifikatuta egon behar duzu."
+  help: "Eskatu kanal berri baten erregistroa. Zerbitzuetako operadore batek eskaera aztertu eta onartu edo ukatzen du; kanala onartu ostean bakarrik erregistratzen da. %nickserv% bidez identifikatuta egon behar duzu.\n\n\x02#kanala:\x02 Erregistratu beharreko kanala. #-ekin hasi behar du, ezin da erregistratuta egon (egiaztatu ESTADO komandoaz) eta gehienez 64 karaktere izan ditzake #-ekin batera.\n\n\x02deskribapena:\x02 Kanalaren gai edo helburua, gehienez 255 karaktere. Hau da operadoreak eskaera aztertzean kontuan hartzen duena.\n\nBidali ondoren, eskaera zain geratzen da zerbitzuetako operadore batek onartu edo ukatu arte. 24 orduro eskaera bat baino ezin duzu bidali."
+  example: "/msg CReG REGISTRA #mychannel hitz egiteko lekua"
   requested: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistroa eskatu duzu. Zerbitzuetako operadore batek ebaluatuko du eskaera."
   invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
   channel_too_long: "\x0304✗\x03 Kanalaren izena luzeegia da: gehienez \x0264\x02 karaktere \x02#\x02 barne."
@@ -26,11 +27,24 @@ registra:
 estado:
   syntax: "ESTADO <#kanala>"
   short: "Kanal baten erregistro egoera erakusten du."
-  help: "Kanal bat erregistro-prozesuan non dagoen adierazten du: erregistratuta, prozesuan edo ukatuta."
+  help: "Kanal bat erregistro-prozesuan non dagoen adierazten du.\n\nEgongo diren egoerak hauek dira:\n    \x02ERREGISTRATUTA\x02: kanala dagoeneko erregistratuta dago ChanServ-en.\n    \x02AZTERKETAN\x02: erregistro eskaera batek zerbitzuetako operadore baten zain dago onartu edo ukatu dezan.\n    \x02UKATUTA\x02: erregistro eskaera ukatua izan zen.\n    \x02EZABATZEN\x02: kanala baja emanda dago eta ezabaketaren epe-grazian; ezin da berriro erregistratu ezabaketa amaitu arte.\n    \x02PROZESURIK GABE\x02: kanalak ez du erregistro-prozesurik."
+  example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 \x02%channel%\x02 kanala dagoeneko erregistratuta dago."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ezabatzen ari da eta ezin da erregistratu ezabaketa amaitu arte."
   pending: "\x0303◌\x03 \x02%channel%\x02 kanala prozesuan dago, zerbitzuetako operadore baten azterketa zain (%date% eskatuta)."
   denied: "\x0304✗\x03 \x02%channel%\x02 kanala ukatuta dago, %date% dataz. Arrazoia: %reason%"
   no_request: "\x0304✗\x03 \x02%channel%\x02 kanalak ez du erregistro-prozesurik."
+
+cancel:
+  syntax: "CANCEL <#kanala>"
+  short: "Kanal baten zain dagoen erregistro eskaera bertan behera uzten du."
+  help: "Oraindik onartu edo ukatu ez den kanal baten erregistro eskaera bertan behera uzten du. Zure eskaera propioak bakarrik bertan behera uzten dituzu.\n\n\x02#kanala:\x02 Bertan behera uzten nahi duzun eskaeraren kanala. Eskaera zuk bidalitakoa izan behar du eta oraindik zain egon behar du.\n\nBertan behera utzi ondoren, eskaera kentzen da eta kanalaren izena libre geratzen da."
+  example: "/msg CReG CANCEL #mychannel"
+  cancelled: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistro eskaera bertan behera utzi da eta kanalaren izena berriro libre dago."
+  invalid_channel: "\x0304✗\x03 Kanalaren izenak #-ekin hasi behar du."
+  no_request: "\x0304✗\x03 \x02%channel%\x02 kanalak ez du erregistro-prozesurik."
+  not_yours: "\x0304✗\x03 \x02%channel%\x02 kanalaren erregistro eskaera ez da zurea."
+  not_pending: "\x0304✗\x03 \x02%channel%\x02 kanalaren erregistro eskaera dagoeneko onartu edo ukatu da eta ezin da bertan behera utzi."
 
 aprobar:
   syntax: "APROBAR <#kanala>"
@@ -103,6 +117,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Erabili /msg %bot% \x02\x0303HELP <komandoa>\x03\x0F informazio gehiago lortzeko."
   set_sub_footer: "\x0310ℹ\x03\x0F Erabili /msg %bot% \x02\x0303HELP %command% <aukera>\x03\x0F informazio gehiago lortzeko."
   syntax_label: "Sintaxia: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Adibidea: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"

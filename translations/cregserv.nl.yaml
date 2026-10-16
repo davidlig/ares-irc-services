@@ -12,7 +12,8 @@ error:
 registra:
   syntax: "REGISTRA <#kanaal> <beschrijving>"
   short: "Vraagt goedkeuring aan voor de registratie van een kanaal."
-  help: "Vraag de registratie van een kanaal aan. Een services-operator beoordeelt het verzoek en keurt het goed of wijst het af; het kanaal wordt pas geregistreerd nadat het is goedgekeurd. Je moet geïdentificeerd zijn met %nickserv%."
+  help: "Vraag de registratie van een nieuw kanaal aan. Een services-operator beoordeelt het verzoek en keurt het goed of wijst het af; het kanaal wordt pas geregistreerd nadat het is goedgekeurd. Je moet geïdentificeerd zijn met %nickserv%.\n\n\x02#kanaal:\x02 Het te registreren kanaal. Het moet met # beginnen, mag nog niet geregistreerd zijn (controleer dat met het commando ESTADO) en mag maximaal 64 tekens inclusief # zijn.\n\n\x02beschrijving:\x02 Het thema of doel van het kanaal, tot 255 tekens. Dit is wat de operator meeweegt bij het beoordelen van het verzoek.\n\nNa verzending blijft het verzoek openstaan tot een services-operator het goedkeurt of afwijst. Je kunt eens per 24 uur één verzoek versturen."
+  example: "/msg CReG REGISTRA #mychannel een plek om te kletsen"
   requested: "\x0303✔\x03 Je hebt de registratie van kanaal \x02%channel%\x02 aangevraagd. Een services-operator zal het verzoek beoordelen."
   invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
   channel_too_long: "\x0304✗\x03 De kanaalnaam is te lang: maximaal \x0264\x02 tekens inclusief de \x02#\x02."
@@ -26,11 +27,24 @@ registra:
 estado:
   syntax: "ESTADO <#kanaal>"
   short: "Toont de registratiestatus van een kanaal."
-  help: "Geeft aan waar een kanaal staat in het registratieproces: geregistreerd, in behandeling of afgewezen."
+  help: "Geeft aan waar een kanaal staat in het registratieproces.\n\nDe mogelijke statussen zijn:\n    \x02GEREGISTREERD\x02: het kanaal is al geregistreerd bij ChanServ.\n    \x02IN BEORDELING\x02: een registratieverzoek wacht op goedkeuring of afwijzing door een services-operator.\n    \x02AFGEWEZEN\x02: het registratieverzoek is afgewezen.\n    \x02WORDT VERWIJDERD\x02: het kanaal is uitgeschreven en bevindt zich in de uitstelperiode voor verwijdering; het kan pas opnieuw worden geregistreerd nadat de verwijdering is voltooid.\n    \x02GEEN PROCES\x02: het kanaal heeft geen registratieproces."
+  example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
+  pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 wordt momenteel verwijderd en kan pas worden geregistreerd nadat de verwijdering is voltooid."
   pending: "\x0303◌\x03 Kanaal \x02%channel%\x02 is in behandeling en wacht op beoordeling door een services-operator (aangevraagd op %date%)."
   denied: "\x0304✗\x03 Kanaal \x02%channel%\x02 is afgewezen sinds %date%. Reden: %reason%"
   no_request: "\x0304✗\x03 Kanaal \x02%channel%\x02 heeft geen registratieproces."
+
+cancel:
+  syntax: "CANCEL <#kanaal>"
+  short: "Annuleert je openstaande registratieverzoek voor een kanaal."
+  help: "Annuleert een registratieverzoek voor een kanaal dat nog niet is goedgekeurd of afgewezen. Je kunt alleen je eigen openstaande verzoeken annuleren.\n\n\x02#kanaal:\x02 Het kanaal waarvan je het verzoek wilt annuleren. Het verzoek moet door jou zijn verstuurd en nog openstaan.\n\nNa annulering wordt het verzoek verwijderd en komt de kanaalnaam vrij."
+  example: "/msg CReG CANCEL #mychannel"
+  cancelled: "\x0303✔\x03 Je registratieverzoek voor kanaal \x02%channel%\x02 is geannuleerd en de kanaalnaam is weer vrij."
+  invalid_channel: "\x0304✗\x03 De kanaalnaam moet met \x02#\x02 beginnen."
+  no_request: "\x0304✗\x03 Kanaal \x02%channel%\x02 heeft geen registratieproces."
+  not_yours: "\x0304✗\x03 Het registratieverzoek van \x02%channel%\x02 is niet van jou."
+  not_pending: "\x0304✗\x03 Het registratieverzoek van \x02%channel%\x02 is al goedgekeurd of afgewezen en kan niet worden geannuleerd."
 
 aprobar:
   syntax: "APROBAR <#kanaal>"
@@ -103,6 +117,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP <opdracht>\x03\x0F voor meer informatie."
   set_sub_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP %command% <optie>\x03\x0F voor meer informatie."
   syntax_label: "Syntaxis: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Voorbeeld: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"
