@@ -1,5 +1,5 @@
-# Traducciones CReG — Español
-# Dominio: cregserv
+# CReG translations — Español
+# Domain: cregserv
 
 unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
 

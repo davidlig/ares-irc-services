@@ -1,0 +1,88 @@
+# CReG translations — Galician
+# Domain: cregserv
+
+unknown_command: "\x0304✗\x03 Comando descoñecido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Sintaxe incorrecta. Uso: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Este comando está restrinxido aos operadores de IRC."
+  not_identified: "\x0304✗\x03 Non estás identificado. Usa \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permiso denegado. Non tes acceso a este comando."
+
+registra:
+  syntax: "REGISTRA <#canle> <descrición>"
+  short: "Solicita a aprobación do rexistro dunha canle."
+  help: "Pide que sexa rexistrada unha canle. Un operador de servizos avalía a solicitude e a aproba ou a denega; a canle só se rexistra unha vez aprobada. Debes estar identificado con %nickserv%."
+  requested: "\x0303✔\x03 Solicitaches o rexistro da canle \x02%channel%\x02. Un operador de servizos avaliará a solicitude."
+  invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
+  channel_too_long: "\x0304✗\x03 O nome da canle é demasiado longo: como máximo \x0264\x02 caracteres incluído o \x02#\x02."
+  description_too_long: "\x0304✗\x03 A descrición é demasiado longa: como máximo \x02255\x02 caracteres."
+  already_registered: "\x0304✗\x03 A canle \x02%channel%\x02 xa está rexistrada."
+  duplicate: "\x0304✗\x03 Xa existe unha solicitude de rexistro para \x02%channel%\x02 á espera de aprobación. Usa \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 A solicitude de rexistro de \x02%channel%\x02 foi denegada."
+  throttled: "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar outra canle."
+
+estado:
+  syntax: "ESTADO <#canle>"
+  short: "Amosa o estado de rexistro dunha canle."
+  help: "Indica en que punto se atopa unha canle dentro do proceso de rexistro: rexistrada, en proceso ou denegada."
+  registered: "\x0303✔\x03 A canle \x02%channel%\x02 xa está rexistrada."
+  pending: "\x0303◌\x03 A canle \x02%channel%\x02 está en proceso, á espera da revisión dun operador de servizos (solicitada o %date%)."
+  denied: "\x0304✗\x03 A canle \x02%channel%\x02 está denegada desde o %date%. Motivo: %reason%"
+  no_request: "\x0304✗\x03 A canle \x02%channel%\x02 non ten ningún proceso de rexistro."
+
+aprobar:
+  syntax: "APROBAR <#canle>"
+  short: "Aprueba unha solicitude de rexistro de canle pendente."
+  help: "Rexistra unha canle cuxa solicitude está á espera de revisión. A canle rexístrase a nome de quen a solicitou; ningún dos dous ten que estar dentro. Necesitas o permiso \x02cregserv.aprobar\x02."
+  approved: "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada correctamente para \x02%founder%\x02."
+  invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
+  no_pending: "\x0304✗\x03 A canle \x02%channel%\x02 non está en proceso de rexistro."
+  already_registered: "\x0304✗\x03 A canle \x02%channel%\x02 xa está rexistrada con \x02ChanServ\x02."
+  already_approved: "\x0304✗\x03 A canle \x02%channel%\x02 xa está rexistrada."
+  already_denied: "\x0304✗\x03 A canle \x02%channel%\x02 non pode ser rexistrada porque está marcada como \x0304DENEGADO\x03."
+  failed: "\x0304✗\x03 Non se puido completar o rexistro da canle \x02%channel%\x02."
+
+denegar:
+  syntax: "DENEGAR <#canle> <motivo>"
+  short: "Denega unha solicitude de rexistro de canle pendente."
+  help: "Rexeita unha solicitude de rexistro deixando libre o nome da canle. O motivo é obrigatorio e móstrase en DENEGADOS. Necesitas o permiso \x02cregserv.denegar\x02."
+  denied: "\x0303✔\x03 Denegouse o rexistro da canle \x02%channel%\x02."
+  invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
+  no_pending: "\x0304✗\x03 A canle \x02%channel%\x02 non ten ningún proceso de rexistro."
+  already_approved: "\x0304✗\x03 Non se poden denegar canles xa rexistradas e aprobadas."
+  already_denied: "\x0304✗\x03 A canle \x02%channel%\x02 xa está denegada."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "Lista as solicitudes de rexistro de canle pendentes de revisión."
+  help: "Amosa cada solicitude á espera de que un operador de servizos a evalúe, coa canle, quen a pediu, a data e a descrición. Necesitas o permiso \x02cregserv.pendientes\x02."
+  empty: "Non hai canles pendentes de revisión."
+  line: "\x02Canle:\x02 %channel%, \x02Solicitada por:\x02 %requester%, \x02Data:\x02 %date%, \x02Descrición:\x02 %description%"
+  end: "Fin da lista."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Lista as solicitudes de rexistro de canle que foron denegadas."
+  help: "Amosa cada solicitude denegada xunto co motivo polo que se denegou. Necesitas o permiso \x02cregserv.denegados\x02."
+  empty: "Non hai canles denegadas."
+  line: "\x02Canle:\x02 %channel%, \x02Motivo:\x02 %reason%"
+  end: "Fin da lista."
+
+drop:
+  syntax: "DROP <#canle>"
+  short: "Elimina o rexistro de canle que \x02%bot%\x02 garda para unha canle."
+  help: "Elimina o rexistro que \x02%bot%\x02 garda para unha canle, sexa cal sexa o seu estado. Unha canle xa aprobada segue rexistrada en \x02ChanServ\x02: o que se libera aquí é o nome, para que unha canle denegada poida volver solicitarse. Necesitas o permiso \x02cregserv.drop\x02."
+  dropped: "\x0303✔\x03 O rexistro da canle \x02%channel%\x02 foi eliminado de \x02%bot%\x02."
+  invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
+  no_request: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada con \x02%bot%\x02."
+
+saregister:
+  syntax: "SAREGISTER <#canle> [descrición]"
+  short: "Rexistra unha canle sen estar dentro."
+  help: "Rexistra unha canle a petición do staff. O operador non necesita estar na\ncanle, e a canle non necesita existir aínda na rede.\nEste comando require permiso de operador."
+  done: "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada."
+  invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
+  pending_deletion: "\x0304✗\x03 A canle \x02%channel%\x02 está pendente de eliminación e non pode ser rexistrada."
+  already_registered: "\x0304✗\x03 A canle \x02%channel%\x02 xa está rexistrada."
+  failed: "\x0304✗\x03 Non se puido completar o rexistro da canle \x02%channel%\x02."

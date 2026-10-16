@@ -1,0 +1,88 @@
+# CReG translations — Français
+# Domaine : cregserv
+
+unknown_command: "\x0304✗\x03 Commande inconnue \x02%command%\x02. Utilisez \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Syntaxe incorrecte. Utilisation : \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Cette commande est réservée aux opérateurs IRC."
+  not_identified: "\x0304✗\x03 Vous n'êtes pas identifié. Utilisez \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permission refusée. Vous n'avez pas accès à cette commande."
+
+registra:
+  syntax: "REGISTRA <#canal> <description>"
+  short: "Demande l'approbation de l'enregistrement d'un canal."
+  help: "Demandez l'enregistrement d'un canal. Un opérateur de services évalue la demande et l'approuve ou la refuse ; le canal n'est enregistré qu'une fois approuvée. Vous devez être identifié avec %nickserv%."
+  requested: "\x0303✔\x03 Vous avez demandé l'enregistrement du canal \x02%channel%\x02. Un opérateur de services évaluera la demande."
+  invalid_channel: "\x0304✗\x03 Le nom du canal doit commencer par un \x02#\x02."
+  channel_too_long: "\x0304✗\x03 Le nom du canal est trop long : \x0264\x02 caractères maximum, \x02#\x02 compris."
+  description_too_long: "\x0304✗\x03 La description est trop longue : \x02255\x02 caractères maximum."
+  already_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré."
+  duplicate: "\x0304✗\x03 Une demande d'enregistrement pour \x02%channel%\x02 attend déjà une approbation. Utilisez \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 La demande d'enregistrement de \x02%channel%\x02 a été refusée."
+  throttled: "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de demander un autre canal."
+
+estado:
+  syntax: "ESTADO <#canal>"
+  short: "Affiche l'état d'enregistrement d'un canal."
+  help: "Indique à quelle étape en est un canal dans le processus d'enregistrement : enregistré, en cours ou refusé."
+  registered: "\x0303✔\x03 Le canal \x02%channel%\x02 est déjà enregistré."
+  pending: "\x0303◌\x03 Le canal \x02%channel%\x02 est en cours, en attente de l'examen d'un opérateur de services (demandé le %date%)."
+  denied: "\x0304✗\x03 Le canal \x02%channel%\x02 est refusé depuis le %date%. Motif : %reason%"
+  no_request: "\x0304✗\x03 Le canal \x02%channel%\x02 n'a aucun processus d'enregistrement."
+
+aprobar:
+  syntax: "APROBAR <#canal>"
+  short: "Approuve une demande d'enregistrement de canal en attente."
+  help: "Enregistre un canal dont la demande est en attente d'examen. Le canal est enregistré au nom de l'utilisateur qui l'a demandé ; aucun de vous deux n'a besoin d'y être. Vous avez besoin de la permission \x02cregserv.aprobar\x02."
+  approved: "\x0303✔\x03 Le canal \x02%channel%\x02 a été enregistré avec succès pour \x02%founder%\x02."
+  invalid_channel: "\x0304✗\x03 Le nom du canal doit commencer par un \x02#\x02."
+  no_pending: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas en cours d'enregistrement."
+  already_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré auprès de \x02ChanServ\x02."
+  already_approved: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré."
+  already_denied: "\x0304✗\x03 Le canal \x02%channel%\x02 ne peut pas être enregistré car il est marqué \x0304REFUSÉ\x03."
+  failed: "\x0304✗\x03 L'enregistrement du canal \x02%channel%\x02 n'a pas pu aboutir."
+
+denegar:
+  syntax: "DENEGAR <#canal> <motif>"
+  short: "Refuse une demande d'enregistrement de canal en attente."
+  help: "Rejette une demande d'enregistrement en laissant le nom du canal libre. Le motif est obligatoire et est affiché par DENEGADOS. Vous avez besoin de la permission \x02cregserv.denegar\x02."
+  denied: "\x0303✔\x03 L'enregistrement du canal \x02%channel%\x02 a été refusé."
+  invalid_channel: "\x0304✗\x03 Le nom du canal doit commencer par un \x02#\x02."
+  no_pending: "\x0304✗\x03 Le canal \x02%channel%\x02 n'a aucun processus d'enregistrement."
+  already_approved: "\x0304✗\x03 Les canaux déjà enregistrés et approuvés ne peuvent pas être refusés."
+  already_denied: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà refusé."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "Liste les demandes d'enregistrement de canal en attente d'examen."
+  help: "Affiche chaque demande en attente de l'évaluation d'un opérateur de services, avec le canal, qui l'a demandée, la date et la description. Vous avez besoin de la permission \x02cregserv.pendientes\x02."
+  empty: "Aucun canal n'attend d'examen."
+  line: "\x02Canal :\x02 %channel%, \x02Demandé par :\x02 %requester%, \x02Date :\x02 %date%, \x02Description :\x02 %description%"
+  end: "Fin de la liste."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Liste les demandes d'enregistrement de canal qui ont été refusées."
+  help: "Affiche chaque demande refusée avec le motif du refus. Vous avez besoin de la permission \x02cregserv.denegados\x02."
+  empty: "Aucun canal n'est refusé."
+  line: "\x02Canal :\x02 %channel%, \x02Motif :\x02 %reason%"
+  end: "Fin de la liste."
+
+drop:
+  syntax: "DROP <#canal>"
+  short: "Supprime l'enregistrement que \x02%bot%\x02 conserve pour un canal."
+  help: "Supprime l'enregistrement que \x02%bot%\x02 conserve pour un canal, quel que soit son état. Un canal déjà approuvé reste enregistré auprès de \x02ChanServ\x02 : ce qui est libéré ici est le nom, pour qu'un canal refusé puisse être redemandé. Vous avez besoin de la permission \x02cregserv.drop\x02."
+  dropped: "\x0303✔\x03 L'enregistrement du canal \x02%channel%\x02 a été supprimé de \x02%bot%\x02."
+  invalid_channel: "\x0304✗\x03 Le nom du canal doit commencer par un \x02#\x02."
+  no_request: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré auprès de \x02%bot%\x02."
+
+saregister:
+  syntax: "SAREGISTER <#canal> [description]"
+  short: "Enregistre un canal sans s'y trouver."
+  help: "Enregistre un canal à la demande du staff. L'opérateur n'a pas besoin d'être dans le\ncanal, et le canal n'a pas besoin d'exister encore sur le réseau.\nCette commande requiert une permission d'opérateur."
+  done: "\x0303✔\x03 Le canal \x02%channel%\x02 a été enregistré."
+  invalid_channel: "\x0304✗\x03 Le nom du canal doit commencer par un \x02#\x02."
+  pending_deletion: "\x0304✗\x03 Le canal \x02%channel%\x02 est en attente de suppression et ne peut pas être enregistré."
+  already_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré."
+  failed: "\x0304✗\x03 L'enregistrement du canal \x02%channel%\x02 n'a pas pu aboutir."

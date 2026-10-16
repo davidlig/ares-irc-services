@@ -1,0 +1,88 @@
+# CReG-Übersetzungen — Deutsch
+# Domain: cregserv
+
+unknown_command: "\x0304✗\x03 Unbekannter Befehl \x02%command%\x02. Benutze \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Falsche Syntax. Verwendung: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Dieser Befehl ist IRC-Operatoren vorbehalten."
+  not_identified: "\x0304✗\x03 Du bist nicht identifiziert. Benutze \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Keine Berechtigung. Du hast keinen Zugriff auf diesen Befehl."
+
+registra:
+  syntax: "REGISTRA <#channel> <Beschreibung>"
+  short: "Beantragt die Genehmigung einer Kanalregistrierung."
+  help: "Fordere die Registrierung eines Kanals an. Ein Services-Operator prüft die Anfrage und genehmigt oder lehnt sie ab; der Kanal wird erst nach der Genehmigung registriert. Du musst mit %nickserv% identifiziert sein."
+  requested: "\x0303✔\x03 Du hast die Registrierung des Kanals \x02%channel%\x02 beantragt. Ein Services-Operator wird die Anfrage prüfen."
+  invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
+  channel_too_long: "\x0304✗\x03 Der Kanalname ist zu lang: höchstens \x0264\x02 Zeichen einschließlich \x02#\x02."
+  description_too_long: "\x0304✗\x03 Die Beschreibung ist zu lang: höchstens \x02255\x02 Zeichen."
+  already_registered: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist bereits registriert."
+  duplicate: "\x0304✗\x03 Für \x02%channel%\x02 wartet bereits eine Registrierungsanfrage auf Genehmigung. Benutze \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 Die Registrierung von \x02%channel%\x02 wurde abgelehnt."
+  throttled: "\x0304✗\x03 Du musst \x02%minutes%\x02 Minute(n) warten, bevor du einen weiteren Kanal beantragst."
+
+estado:
+  syntax: "ESTADO <#channel>"
+  short: "Zeigt den Registrierungsstatus eines Kanals."
+  help: "Zeigt, an welcher Stelle ein Kanal im Registrierungsprozess steht: registriert, in Bearbeitung oder abgelehnt."
+  registered: "\x0303✔\x03 Der Kanal \x02%channel%\x02 ist bereits registriert."
+  pending: "\x0303◌\x03 Der Kanal \x02%channel%\x02 befindet sich in Bearbeitung und wartet auf die Prüfung durch einen Services-Operator (beantragt am %date%)."
+  denied: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist seit dem %date% abgelehnt. Grund: %reason%"
+  no_request: "\x0304✗\x03 Der Kanal \x02%channel%\x02 hat keinen Registrierungsprozess."
+
+aprobar:
+  syntax: "APROBAR <#channel>"
+  short: "Genehmigt eine ausstehende Kanalregistrierungsanfrage."
+  help: "Registriert einen Kanal, dessen Anfrage auf Prüfung wartet. Der Kanal wird auf den Benutzer registriert, der ihn beantragt hat; keiner von euch beiden muss sich darin befinden. Du brauchst die Berechtigung \x02cregserv.aprobar\x02."
+  approved: "\x0303✔\x03 Der Kanal \x02%channel%\x02 wurde erfolgreich für \x02%founder%\x02 registriert."
+  invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
+  no_pending: "\x0304✗\x03 Der Kanal \x02%channel%\x02 befindet sich nicht in einem Registrierungsprozess."
+  already_registered: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist bereits bei \x02ChanServ\x02 registriert."
+  already_approved: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist bereits registriert."
+  already_denied: "\x0304✗\x03 Der Kanal \x02%channel%\x02 kann nicht registriert werden, da er als \x0304ABGELEHNT\x03 markiert ist."
+  failed: "\x0304✗\x03 Die Registrierung des Kanals \x02%channel%\x02 konnte nicht abgeschlossen werden."
+
+denegar:
+  syntax: "DENEGAR <#channel> <Grund>"
+  short: "Lehnt eine ausstehende Kanalregistrierungsanfrage ab."
+  help: "Weist eine Registrierungsanfrage zurück und lässt den Kanalnamen frei. Der Grund ist Pflicht und wird von DENEGADOS angezeigt. Du brauchst die Berechtigung \x02cregserv.denegar\x02."
+  denied: "\x0303✔\x03 Die Registrierung des Kanals \x02%channel%\x02 wurde abgelehnt."
+  invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
+  no_pending: "\x0304✗\x03 Der Kanal \x02%channel%\x02 hat keinen Registrierungsprozess."
+  already_approved: "\x0304✗\x03 Bereits registrierte und genehmigte Kanäle können nicht abgelehnt werden."
+  already_denied: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist bereits abgelehnt."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "Listet die auf Prüfung wartenden Kanalregistrierungsanfragen auf."
+  help: "Zeigt jede Anfrage, die auf die Prüfung durch einen Services-Operator wartet, mit Kanal, Antragsteller, Datum und Beschreibung. Du brauchst die Berechtigung \x02cregserv.pendientes\x02."
+  empty: "Es warten keine Kanäle auf Prüfung."
+  line: "\x02Kanal:\x02 %channel%, \x02Beantragt von:\x02 %requester%, \x02Datum:\x02 %date%, \x02Beschreibung:\x02 %description%"
+  end: "Ende der Liste."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Listet die abgelehnten Kanalregistrierungsanfragen auf."
+  help: "Zeigt jede abgelehnte Anfrage zusammen mit dem Grund der Ablehnung. Du brauchst die Berechtigung \x02cregserv.denegados\x02."
+  empty: "Es gibt keine abgelehnten Kanäle."
+  line: "\x02Kanal:\x02 %channel%, \x02Grund:\x02 %reason%"
+  end: "Ende der Liste."
+
+drop:
+  syntax: "DROP <#channel>"
+  short: "Entfernt den Registrierungseintrag, den \x02%bot%\x02 für einen Kanal speichert."
+  help: "Entfernt den Eintrag, den \x02%bot%\x02 für einen Kanal speichert, in welchem Zustand er auch ist. Ein bereits genehmigter Kanal bleibt bei \x02ChanServ\x02 registriert: freigegeben wird hier der Kanalname, damit ein abgelehnter Kanal erneut beantragt werden kann. Du brauchst die Berechtigung \x02cregserv.drop\x02."
+  dropped: "\x0303✔\x03 Der Registrierungseintrag des Kanals \x02%channel%\x02 wurde aus \x02%bot%\x02 entfernt."
+  invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
+  no_request: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist nicht bei \x02%bot%\x02 erfasst."
+
+saregister:
+  syntax: "SAREGISTER <#channel> [Beschreibung]"
+  short: "Registriert einen Kanal, ohne sich darin zu befinden."
+  help: "Registriert einen Kanal auf Anforderung des Staffs. Der Operator muss sich nicht im\nKanal befinden, und der Kanal muss noch nicht im Netzwerk existieren.\nDieser Befehl erfordert eine Operatorberechtigung."
+  done: "\x0303✔\x03 Der Kanal \x02%channel%\x02 wurde registriert."
+  invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
+  pending_deletion: "\x0304✗\x03 Der Kanal \x02%channel%\x02 steht auf der Löschliste und kann nicht registriert werden."
+  already_registered: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist bereits registriert."
+  failed: "\x0304✗\x03 Die Registrierung des Kanals \x02%channel%\x02 konnte nicht abgeschlossen werden."
