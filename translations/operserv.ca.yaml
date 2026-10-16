@@ -303,3 +303,27 @@ motd:
     none:           "\x0303✓\x03 No hi ha entrades MOTD expirades per treure."
   debug:
     finalized:      "El missatge MOTD #%id% ha finalitzat: [%type%] %message% | %date% | %shown_count%"
+
+emailverify:
+  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
+  short:            "Activa o desactiva la verificació de correu en el registre de sobrenoms."
+  help:             "Controla si registrar un sobrenom exigeix confirmar l'adreça de correu.\nON exigeix verificació: el sobrenom queda pendent fins a confirmar el testimoni.\nOFF registra el sobrenom immediatament; l'adreça es continua guardant per recuperar el compte.\nSTATUS mostra la política actual.\nAquesta ordre requereix accés root."
+  on:
+    syntax:         "EMAILVERIFY ON"
+    short:          "Exigir verificació de correu en registrar-se."
+    help:           "Exigeix que els registres nous confirmin l'adreça de correu abans que el sobrenom quedi actiu."
+  off:
+    syntax:         "EMAILVERIFY OFF"
+    short:          "Registrar sobrenoms sense verificació de correu."
+    help:           "Registra els sobrenoms nous immediatament. L'adreça de correu continua sent obligatòria i es guarda, perquè és el canal de recuperació del compte."
+  status:
+    syntax:         "EMAILVERIFY STATUS"
+    short:          "Mostrar la política de verificació actual."
+    help:           "Mostra si actualment s'exigeix verificació de correu per registrar-se."
+  enabled:          "\x0303✓\x03 La verificació de correu ara és \x02obligatòria\x02 per registrar-se."
+  disabled:         "\x0303✓\x03 La verificació de correu està ara \x02desactivada\x02; els sobrenoms es registren immediatament."
+  already_enabled:  "\x0304✗\x03 La verificació de correu ja és obligatòria."
+  already_disabled: "\x0304✗\x03 La verificació de correu ja està desactivada."
+  status_on:        "La verificació de correu està actualment \x0303activada\x03 per registrar-se."
+  status_off:       "La verificació de correu està actualment \x0304desactivada\x03; els sobrenoms es registren immediatament."
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda. Ús: \x02%syntax%\x02"

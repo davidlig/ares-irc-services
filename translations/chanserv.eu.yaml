@@ -568,3 +568,9 @@ list:
   status_suspended: "Etena"
   status_pending_deletion: "Ezabatzeko zain"
   status_forbidden: "Debekatua"
+
+saregister:
+  syntax:           "SAREGISTER <#kanala> [deskribapena]"
+  short:            "Kanala erregistratzen du bertan egon gabe."
+  help:             "Kanala erregistratzen du staffak eskatuta. Operadoreak ez du kanalean egon\nbehar, eta kanalak ez du oraindik sarean existitu behar.\nKomando honek operadore-baimena behar du."
+  done:             "\x0303✔\x03 \x02%channel%\x02 kanala erregistratu da."

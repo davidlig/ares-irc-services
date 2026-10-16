@@ -19,6 +19,7 @@ use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannel;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandler;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandlerInterface;
+use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelOutcome;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelResult;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
@@ -158,6 +159,46 @@ final class RegisterCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.channel_not_on_network'], $messages);
+    }
+
+    #[Test]
+    public function forceBypassesTheNetworkExistenceRequirement(): void
+    {
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('existsByChannelName')->willReturn(false);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredChannel $channel): void {
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
+            $ref->setValue($channel, 7);
+        });
+        $events = $this->createMock(EventBusInterface::class);
+        $events->expects(self::once())->method('dispatch')->with(self::isInstanceOf(ChannelRegisteredEvent::class));
+
+        $handler = new RegisterChannelHandler(
+            $channelRepo,
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(ChannelAkickRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+            $events,
+            $this->createNonRootRegistry(),
+            3,
+            0,
+        );
+
+        $result = $handler->handle(new RegisterChannel(
+            channelName: '#nuevo',
+            description: 'forzado',
+            accountId: 1,
+            actorNickname: 'Oper',
+            actorIdentified: true,
+            actorIrcOperator: true,
+            channelExistsOnNetwork: false,
+            hasRequiredChannelRank: true,
+            occurredAt: new DateTimeImmutable(),
+            force: true,
+        ));
+
+        self::assertSame(RegisterChannelOutcome::Registered, $result->outcome);
     }
 
     #[Test]

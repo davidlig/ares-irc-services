@@ -26,12 +26,13 @@ register:
   short:            "Erregistratu zure ezizena zerbitzuetan."
   help:             "Zure uneko ezizenaren erregistroa hasten du. Egiaztapen token bat\nemandako posta elektronikoko helbidera bidaliko da. Osatu\n\x0303/msg %bot% VERIFY <token>\x03 exekutatuz. Tokena ordubetean iraungitzen da.\nHeldu ez bada, egiaztatu spam karpeta edo erabili \x0303RESEND\x03."
   pending:          "\x0307→\x03 Egiaztapen token bat bidali da \x02%email%\x02 helbidera.\n  Exekutatu \x0303/msg %bot% VERIFY <token>\x03 erregistroa osatzeko.\n  Ez duzu jaso? Egiaztatu spam-a edo erabili \x0303/msg %bot% RESEND\x03\n  Tokena \x021 ordu\x02 barru iraungiko da."
+  registered:       "\x0303✔\x03 \x02%nickname%\x02 ezizena erregistratu da."
   already_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena jada erregistratuta dago."
   already_pending:  "\x0304✗\x03 \x02%nickname%\x02 ezizenak jada egiaztapen bat zain du.\n  Erabili \x0303/msg %bot% VERIFY <token>\x03 edo \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erregistratu."
   pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ezabatzearen zain dago eta ezin da erregistratu."
   invalid_email:    "\x0304✗\x03 Emandako posta elektronikoko helbidea ez da baliozkoa."
-  email_already_used: "\x0304✗\x03 \x02%email%\x02 posta jada beste ezizen batek erabiltzen du. Erabili beste helbide bat."
+  email_already_used: "\x0304✗\x03 \x02%email%\x02 helbidea jada \x02%max%\x02 ezizeneko maximoak erabiltzen du. Erabili beste helbide bat."
   throttled:          "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar duzu berriro erregistratzen saiatu aurretik."
   guest_prefix_forbidden: "\x0304✗\x03 Ezin duzu \x02%prefix%\x02 aurrizkiarekin hasten den ezizenik erregistratu."
 
@@ -680,3 +681,9 @@ debug:
   action_with_value: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Aukera: %option%=%value%. %reason%"
   action_duration: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Iraupena: %duration%. %reason%"
   prefix_reason: "Arrazoia: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <ezizena> <pasahitza> <email>"
+  short:            "Beste erabiltzaile baten izenean ezizen bat erregistratzen du."
+  help:             "Beste erabiltzaile baten izenean ezizen bat erregistratzen du. Kontua aktibo\nsortzen da: posta-egiaztapena eta maiztasun-muga saltatzen dira.\nHelbidea oraindik balioztatzen da eta libre egon behar du.\nKomando honek operadore-baimena behar du."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ezizena erregistratu da."

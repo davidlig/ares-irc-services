@@ -26,12 +26,13 @@ register:
   short:            "Rumuzunuzu hizmetlere kaydedin."
   help:             "Mevcut rumuzunuzun kaydını başlatır. Sağlanan e-posta adresine bir doğrulama tokenı\ngönderilecektir. Kaydı \x0303/msg %bot% VERIFY <token>\x03 komutunu çalıştırarak\ntamamlayın. Token 1 saat içinde sona erer.\nGelmezse, spam klasörünüzü kontrol edin veya \x0303RESEND\x03 kullanın."
   pending:          "\x0307→\x03 \x02%email%\x02 adresine bir doğrulama tokenı gönderildi.\n  Kaydı tamamlamak için \x0303/msg %bot% VERIFY <token>\x03 komutunu çalıştırın.\n  Almadınız mı? Spam'i kontrol edin veya \x0303/msg %bot% RESEND\x03 kullanın.\n  Token \x021 saat\x02 içinde sona erecek."
+  registered:       "\x0303✔\x03 \x02%nickname%\x02 takma adı kaydedildi."
   already_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu zaten kayıtlı."
   already_pending:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu için zaten bekleyen bir doğrulama var.\n  \x0303/msg %bot% VERIFY <token>\x03 veya \x0303/msg %bot% RESEND\x03 kullanın."
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kaydedilemez."
   pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi bekliyor ve kaydedilemez."
   invalid_email:    "\x0304✗\x03 Sağlanan e-posta adresi geçerli değil."
-  email_already_used: "\x0304✗\x03 \x02%email%\x02 e-postası zaten başka bir rumuz tarafından kullanılıyor. Farklı bir adres kullanın."
+  email_already_used: "\x0304✗\x03 \x02%email%\x02 adresi zaten en fazla \x02%max%\x02 takma ad tarafından kullanılıyor. Başka bir adres kullan."
   throttled:          "\x0304✗\x03 Tekrar kayıt olmayı denemeden önce \x02%minutes%\x02 dakika beklemelisiniz."
   guest_prefix_forbidden: "\x0304✗\x03 \x02%prefix%\x02 ile başlayan bir rumuzu kaydedemezsiniz."
 
@@ -680,3 +681,9 @@ debug:
   action_with_value: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%=%value%. %reason%"
   action_duration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
   prefix_reason: "Sebep: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <takma ad> <parola> <email>"
+  short:            "Başka bir kullanıcı için takma ad kaydeder."
+  help:             "Başka bir kullanıcı adına takma ad kaydeder. Hesap doğrudan etkin oluşturulur:\ne-posta doğrulaması ve kayıt hız sınırı atlanır.\nAdres yine doğrulanır ve boş olmalıdır.\nBu komut operatör izni gerektirir."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 takma adı kaydedildi."

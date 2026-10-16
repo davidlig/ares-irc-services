@@ -121,8 +121,7 @@ final class SetNickSettingHandlerTest extends TestCase
         self::assertSame(SetNickSettingOutcome::MissingValue, $handler->handle($this->input(SetNickSettingOption::Email, '', true))->outcome);
         self::assertSame(SetNickSettingOutcome::InvalidEmail, $handler->handle($this->input(SetNickSettingOption::Email, 'bad', true))->outcome);
 
-        $other = $this->account('Other', 2);
-        $repository->method('findByEmail')->willReturn($other);
+        $repository->method('countByEmail')->willReturn(3);   // limit reached
         self::assertSame(SetNickSettingOutcome::EmailAlreadyUsed, $handler->handle(
             $this->input(SetNickSettingOption::Email, 'other@example.com', true),
         )->outcome);
@@ -136,7 +135,7 @@ final class SetNickSettingHandlerTest extends TestCase
     {
         $account = $this->account();
         $repository = $this->repositoryReturning($account);
-        $repository->method('findByEmail')->willReturn(null);
+        $repository->method('countByEmail')->willReturn(0);
         $result = $this->handler($repository)->handle($this->input(SetNickSettingOption::Email, 'new@example.com', true));
 
         self::assertSame(SetNickSettingOutcome::Changed, $result->outcome);
@@ -154,7 +153,7 @@ final class SetNickSettingHandlerTest extends TestCase
     {
         $account = $this->account();
         $repository = $this->repositoryReturning($account);
-        $repository->method('findByEmail')->willReturn(null);
+        $repository->method('countByEmail')->willReturn(0);
         $pending = $this->createMock(PendingEmailChangeStore::class);
         $pending->expects(self::once())->method('store')->with('TestNick', 'new@example.com', 'TOKEN', self::isInstanceOf(DateTimeImmutable::class));
         $tokens = $this->createStub(VerificationTokenGenerator::class);
@@ -182,7 +181,7 @@ final class SetNickSettingHandlerTest extends TestCase
     {
         $account = $this->account();
         $repository = $this->repositoryReturning($account);
-        $repository->method('findByEmail')->willReturn(null);
+        $repository->method('countByEmail')->willReturn(0);
         $tokens = $this->createStub(VerificationTokenGenerator::class);
         $tokens->method('generate')->willReturn('TOKEN');
         $mailer = $this->createStub(EmailChangeMailSender::class);
@@ -193,6 +192,38 @@ final class SetNickSettingHandlerTest extends TestCase
             tokens: $tokens,
             mailer: $mailer,
         )->handle($this->input(SetNickSettingOption::Email, 'new@example.com'))->outcome);
+    }
+
+    #[Test]
+    public function reSettingTheAccountsOwnAddressIsNeverTreatedAsTaken(): void
+    {
+        $account = $this->account();
+        $repository = $this->repositoryReturning($account);
+        // A limit reached would block any different address; the account's own
+        // address must short-circuit before the repository count is consulted.
+        $repository->method('countByEmail')->willReturn(3);
+        $handler = $this->handler($repository);
+
+        $result = $handler->handle($this->input(SetNickSettingOption::Email, 'testnick@example.com', true));
+
+        self::assertSame(SetNickSettingOutcome::Changed, $result->outcome);
+        self::assertSame('testnick@example.com', $account->getEmail());
+    }
+
+    #[Test]
+    public function aZeroPerEmailLimitDisablesTheCountCheckEntirely(): void
+    {
+        $account = $this->account();
+        $repository = $this->repositoryReturning($account);
+        // With the limit disabled (0), any count would still be >= 0, so the
+        // outcome only stays Changed if the count is never consulted.
+        $repository->method('countByEmail')->willReturn(1);
+        $handler = $this->handler($repository, maxEmails: 0);
+
+        $result = $handler->handle($this->input(SetNickSettingOption::Email, 'other@example.com', true));
+
+        self::assertSame(SetNickSettingOutcome::Changed, $result->outcome);
+        self::assertSame('other@example.com', $account->getEmail());
     }
 
     #[Test]
@@ -321,6 +352,7 @@ final class SetNickSettingHandlerTest extends TestCase
         ?ForcedVhostCheckerInterface $forced = null,
         ?ForbiddenVhostRepositoryInterface $forbidden = null,
         ?VhostDisplayResolver $display = null,
+        ?int $maxEmails = null,
     ): SetNickSettingHandler {
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-09 12:00:00 UTC'));
@@ -341,6 +373,7 @@ final class SetNickSettingHandlerTest extends TestCase
             $network ?? $this->createStub(NickNetworkActions::class),
             $forced ?? $this->createStub(ForcedVhostCheckerInterface::class),
             $forbidden ?? $this->createStub(ForbiddenVhostRepositoryInterface::class),
+            $maxEmails ?? 3,
         );
     }
 

@@ -98,6 +98,18 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return $result instanceof RegisteredNick ? $result : null;
     }
 
+    public function countByEmail(string $email): int
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('COUNT(n.id)')
+            ->from(RegisteredNick::class, 'n')
+            ->where('LOWER(n.email) = LOWER(:email)')
+            ->andWhere('n.email IS NOT NULL')
+            ->setParameter('email', $email);
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
     public function existsByNick(string $nickname): bool
     {
         return null !== $this->findByNick($nickname);

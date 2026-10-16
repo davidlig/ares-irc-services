@@ -26,12 +26,13 @@ register:
   short:            "Registrar el vostre sobrenom amb els serveis."
   help:             "Inicia el registre del vostre sobrenom actual. S'enviarà un token de\nverificació a l'adreça de correu proporcionada. Completeu el registre\nexecutant \x0303/msg %bot% VERIFY <token>\x03. El token expira en 1 hora.\nSi no arriba, comproveu la carpeta de correu brossa o utilitzeu \x0303RESEND\x03."
   pending:          "\x0307→\x03 S'ha enviat un token de verificació a \x02%email%\x02.\n  Executeu \x0303/msg %bot% VERIFY <token>\x03 per completar el registre.\n  No l'heu rebut? Comproveu el correu brossa o utilitzeu \x0303/msg %bot% RESEND\x03\n  El token expirarà en \x021 hora\x02."
+  registered:       "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat registrat."
   already_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està registrat."
   already_pending:  "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja té una verificació pendent.\n  Utilitzeu \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot registrar en aquesta xarxa."
   pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no pot ser registrat."
   invalid_email:    "\x0304✗\x03 L'adreça de correu proporcionada no és vàlida."
-  email_already_used: "\x0304✗\x03 El correu \x02%email%\x02 ja està en ús per un altre sobrenom. Utilitzeu una adreça diferent."
+  email_already_used: "\x0304✗\x03 El correu \x02%email%\x02 ja està en ús pel màxim de \x02%max%\x02 sobrenoms. Fes servir una altra adreça."
   throttled:          "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans d'intentar registrar-vos de nou."
   guest_prefix_forbidden: "\x0304✗\x03 No podeu registrar un sobrenom que comenci amb \x02%prefix%\x02."
 
@@ -680,3 +681,9 @@ debug:
   action_with_value: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%=%value%. %reason%"
   action_duration: "%operator% executa l'ordre %command% sobre %target%. Durada: %duration%. %reason%"
   prefix_reason: "Motiu: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <sobrenom> <contrasenya> <email>"
+  short:            "Registra un sobrenom en nom d un altre usuari."
+  help:             "Registra un sobrenom en nom d un altre usuari. El compte es crea ja actiu:\nes salten la verificació per correu i el límit de freqüència.\nL adreça continua validant-se i ha d estar lliure.\nAquesta ordre requereix permís d operador."
+  done:             "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat registrat."

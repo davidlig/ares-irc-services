@@ -26,12 +26,13 @@ register:
   short:            "Register your nickname with the services."
   help:             "Starts the registration of your current nickname. A verification token\nwill be sent to the provided email address. Complete the registration\nby running \x0303/msg %bot% VERIFY <token>\x03. The token expires in 1 hour.\nIf it does not arrive, check your spam folder or use \x0303RESEND\x03."
   pending:          "\x0307→\x03 A verification token has been sent to \x02%email%\x02.\n  Run \x0303/msg %bot% VERIFY <token>\x03 to complete registration.\n  Didn't receive it? Check spam or use \x0303/msg %bot% RESEND\x03\n  The token will expire in \x021 hour\x02."
+  registered:       "\x0303✔\x03 Nickname \x02%nickname%\x02 has been registered."
   already_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is already registered."
   already_pending:  "\x0304✗\x03 Nickname \x02%nickname%\x02 already has a pending verification.\n  Use \x0303/msg %bot% VERIFY <token>\x03 or \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be registered on this network."
   pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending deletion and cannot be registered."
   invalid_email:    "\x0304✗\x03 The email address provided is not valid."
-  email_already_used: "\x0304✗\x03 The email \x02%email%\x02 is already in use by another nickname. Use a different address."
+  email_already_used: "\x0304✗\x03 The email \x02%email%\x02 is already in use by the maximum of \x02%max%\x02 nicknames. Use a different address."
   throttled:          "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before trying to register again."
   guest_prefix_forbidden: "\x0304✗\x03 You cannot register a nick starting with \x02%prefix%\x02."
 
@@ -680,3 +681,9 @@ debug:
   action_with_value: "%operator% executes command %command% on %target%. Option: %option%=%value%. %reason%"
   action_duration: "%operator% executes command %command% on %target%. Duration: %duration%. %reason%"
   prefix_reason: "Reason: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <nickname> <password> <email>"
+  short:            "Register a nickname for another user."
+  help:             "Registers a nickname on behalf of another user. The account is created active:\ne-mail verification and the registration throttle are skipped.\nThe address is still validated and must be free.\nThis command requires an operator permission."
+  done:             "\x0303✔\x03 Nickname \x02%nickname%\x02 has been registered."

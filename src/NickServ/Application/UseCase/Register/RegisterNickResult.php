@@ -12,11 +12,17 @@ final readonly class RegisterNickResult
         public ?string $email = null,
         public ?string $guestPrefix = null,
         public int $retryAfterSeconds = 0,
+        public ?int $maxNicksPerEmail = null,
     ) {}
 
     public static function verificationRequired(string $email): self
     {
         return new self(RegisterNickOutcome::VerificationRequired, email: $email);
+    }
+
+    public static function registeredWithoutVerification(string $nickname): self
+    {
+        return new self(RegisterNickOutcome::RegisteredWithoutVerification, nickname: $nickname);
     }
 
     public static function throttled(int $retryAfterSeconds): self
@@ -34,9 +40,13 @@ final readonly class RegisterNickResult
         return new self(RegisterNickOutcome::InvalidEmail);
     }
 
-    public static function emailAlreadyUsed(string $email): self
+    public static function emailAlreadyUsed(string $email, int $maxNicksPerEmail): self
     {
-        return new self(RegisterNickOutcome::EmailAlreadyUsed, email: $email);
+        return new self(
+            RegisterNickOutcome::EmailAlreadyUsed,
+            email: $email,
+            maxNicksPerEmail: $maxNicksPerEmail,
+        );
     }
 
     public static function alreadyPending(string $nickname): self

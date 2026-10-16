@@ -304,3 +304,27 @@ motd:
     none:           "\x0303✓\x03 Nessuna voce MOTD scaduta da rimuovere."
   debug:
     finalized:      "Il messaggio MOTD #%id% è terminato: [%type%] %message% | %date% | %shown_count%"
+
+emailverify:
+  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
+  short:            "Attiva o disattiva la verifica e-mail alla registrazione."
+  help:             "Controlla se registrare un nickname richiede la conferma dell'indirizzo e-mail.\nON richiede la verifica: il nickname resta in attesa finché il token non è confermato.\nOFF registra il nickname subito; l'indirizzo viene comunque conservato per il recupero dell'account.\nSTATUS mostra la politica attuale.\nQuesto comando richiede accesso root."
+  on:
+    syntax:         "EMAILVERIFY ON"
+    short:          "Richiedere la verifica e-mail alla registrazione."
+    help:           "Richiede alle nuove registrazioni di confermare l'indirizzo e-mail prima che il nickname diventi attivo."
+  off:
+    syntax:         "EMAILVERIFY OFF"
+    short:          "Registrare i nickname senza verifica e-mail."
+    help:           "Registra i nuovi nickname immediatamente. L'indirizzo e-mail resta obbligatorio e viene conservato, perché è il canale di recupero dell'account."
+  status:
+    syntax:         "EMAILVERIFY STATUS"
+    short:          "Mostrare la politica di verifica attuale."
+    help:           "Mostra se attualmente è richiesta la verifica e-mail per la registrazione."
+  enabled:          "\x0303✓\x03 La verifica e-mail è ora \x02obbligatoria\x02 per la registrazione."
+  disabled:         "\x0303✓\x03 La verifica e-mail è ora \x02disattivata\x02; i nickname vengono registrati subito."
+  already_enabled:  "\x0304✗\x03 La verifica e-mail è già obbligatoria."
+  already_disabled: "\x0304✗\x03 La verifica e-mail è già disattivata."
+  status_on:        "La verifica e-mail è attualmente \x0303obbligatoria\x03 per la registrazione."
+  status_off:       "La verifica e-mail è attualmente \x0304disattivata\x03; i nickname vengono registrati subito."
+  unknown_sub:      "\x0304✗\x03 Sottocomando sconosciuto. Uso: \x02%syntax%\x02"

@@ -26,12 +26,13 @@ register:
   short:            "Registra tu apodo en los servicios."
   help:             "Inicia el registro de tu apodo actual. Se enviará un token de verificación\nal correo indicado. El registro se completará cuando ejecutes\n\x0303/msg %bot% VERIFY <token>\x03. El token expira en 1 hora.\nSi no te llega, revisa la carpeta de spam o usa \x0303RESEND\x03."
   pending:          "\x0307→\x03 Se ha enviado un token de verificación a \x02%email%\x02.\n  Ejecuta \x0303/msg %bot% VERIFY <token>\x03 para completar el registro.\n  ¿No te llega? Revisa spam o usa \x0303/msg %bot% RESEND\x03\n  El token expirará en \x021 hora\x02."
+  registered:       "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido registrado."
   already_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 ya está registrado."
   already_pending:  "\x0304✗\x03 El apodo \x02%nickname%\x02 ya tiene un registro pendiente de verificación.\n  Usa \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 El apodo \x02%nickname%\x02 no puede ser registrado en esta red."
   pending_deletion: "\x0304✗\x03 El apodo \x02%nickname%\x02 está pendiente de eliminación y no puede ser registrado."
   invalid_email:    "\x0304✗\x03 La dirección de correo electrónico no es válida."
-  email_already_used: "\x0304✗\x03 El correo \x02%email%\x02 ya está en uso por otro apodo. Usa otra dirección."
+  email_already_used: "\x0304✗\x03 El correo \x02%email%\x02 ya está en uso por el máximo de \x02%max%\x02 nicks. Usa otra dirección."
   throttled:          "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de intentar registrar de nuevo."
   guest_prefix_forbidden: "\x0304✗\x03 No puedes registrar un apodo que empiece por \x02%prefix%\x02."
 
@@ -680,3 +681,9 @@ debug:
   action_with_value: "%operator% ejecuta el comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
   action_duration: "%operator% ejecuta el comando %command% sobre %target%. Duración: %duration%. %reason%"
   prefix_reason: "Razón: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <apodo> <contraseña> <email>"
+  short:            "Registra un apodo en nombre de otro usuario."
+  help:             "Registra un apodo en nombre de otro usuario. La cuenta se crea ya activa:\nse saltan la verificación por correo y el límite de frecuencia.\nLa dirección sigue validándose y debe estar libre.\nEste comando requiere permiso de operador."
+  done:             "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido registrado."

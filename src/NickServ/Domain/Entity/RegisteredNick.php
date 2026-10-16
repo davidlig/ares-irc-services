@@ -138,6 +138,32 @@ class RegisteredNick
     }
 
     /**
+     * Registers an account immediately, with no verification window.
+     *
+     * Used when network policy does not require e-mail verification: the address is
+     * still validated and stored, but the account never enters the Pending state.
+     */
+    public static function createActive(
+        string $nickname,
+        string $passwordHash,
+        string $email,
+        string $language,
+        DateTimeImmutable $registeredAt,
+    ): self {
+        $nick = self::createPending(
+            nickname: $nickname,
+            passwordHash: $passwordHash,
+            email: $email,
+            language: $language,
+            expiresAt: $registeredAt,
+            registeredAt: $registeredAt,
+        );
+        $nick->activate();
+
+        return $nick;
+    }
+
+    /**
      * Transitions the account from PENDING to REGISTERED after email verification.
      */
     public function activate(): void

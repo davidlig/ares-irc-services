@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Application\UseCase\Register;
 
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\EmailVerificationSettingRepositoryInterface;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
@@ -43,7 +44,7 @@ final class RegisterNickHandlerTest extends TestCase
             ->with('ip:client', 300, $this->now)
             ->willReturn(61);
         $repository = $this->createMock(RegisterNickRepository::class);
-        $repository->expects(self::never())->method('findByEmail');
+        $repository->expects(self::never())->method('countByEmail');
 
         $result = $this->handler(repository: $repository, throttle: $throttle)->handle($this->input());
 
@@ -55,7 +56,7 @@ final class RegisterNickHandlerTest extends TestCase
     public function rejectsConfiguredGuestPrefixBeforeLookups(): void
     {
         $repository = $this->createMock(RegisterNickRepository::class);
-        $repository->expects(self::never())->method('findByEmail');
+        $repository->expects(self::never())->method('countByEmail');
 
         $result = $this->handler(repository: $repository, guestPrefix: 'Renamed-')->handle(
             $this->input(nickname: 'Renamed-ABC'),
@@ -69,7 +70,7 @@ final class RegisterNickHandlerTest extends TestCase
     public function rejectsInvalidEmailWithoutRepositoryLookup(): void
     {
         $repository = $this->createMock(RegisterNickRepository::class);
-        $repository->expects(self::never())->method('findByEmail');
+        $repository->expects(self::never())->method('countByEmail');
 
         $result = $this->handler(repository: $repository)->handle($this->input(email: 'invalid'));
 
@@ -80,9 +81,7 @@ final class RegisterNickHandlerTest extends TestCase
     public function checksEmailOwnershipBeforeNicknameOwnership(): void
     {
         $repository = $this->createMock(RegisterNickRepository::class);
-        $repository->expects(self::once())->method('findByEmail')->with('used@example.com')->willReturn(
-            $this->createStub(RegisteredNick::class),
-        );
+        $repository->expects(self::once())->method('countByEmail')->with('used@example.com')->willReturn(3);
         $repository->expects(self::never())->method('findByNick');
 
         $result = $this->handler(repository: $repository)->handle($this->input(email: 'used@example.com'));
@@ -106,7 +105,7 @@ final class RegisterNickHandlerTest extends TestCase
             $existing = $this->createStub(RegisteredNick::class);
             $existing->method('getStatus')->willReturn(NickStatus::from($statusValue));
             $repository = $this->createStub(RegisterNickRepository::class);
-            $repository->method('findByEmail')->willReturn(null);
+            $repository->method('countByEmail')->willReturn(0);
             $repository->method('findByNick')->willReturn($existing);
 
             $result = $this->handler(repository: $repository)->handle($this->input());
@@ -120,7 +119,7 @@ final class RegisterNickHandlerTest extends TestCase
     public function createsPendingRegistrationWithDeterministicExternalFacts(): void
     {
         $repository = $this->createMock(RegisterNickRepository::class);
-        $repository->expects(self::once())->method('findByEmail')->with('user@example.com')->willReturn(null);
+        $repository->expects(self::once())->method('countByEmail')->with('user@example.com')->willReturn(0);
         $repository->expects(self::once())->method('findByNick')->with('NewNick')->willReturn(null);
         $repository->expects(self::once())->method('save')->with(self::callback(fn (RegisteredNick $nick): bool => 'NewNick' === $nick->getNickname()
                 && 'hashed-password' === $nick->getPasswordHash()
@@ -168,7 +167,7 @@ final class RegisterNickHandlerTest extends TestCase
     public function mailFailureLeavesPendingStateAndDoesNotConsumeThrottle(): void
     {
         $repository = $this->createMock(RegisterNickRepository::class);
-        $repository->method('findByEmail')->willReturn(null);
+        $repository->method('countByEmail')->willReturn(0);
         $repository->method('findByNick')->willReturn(null);
         $repository->expects(self::once())->method('save');
         $verificationStore = $this->createMock(RegistrationVerificationStore::class);
@@ -198,6 +197,46 @@ final class RegisterNickHandlerTest extends TestCase
         return new RegisterNick($nickname, 'plain-password', $email, 'es', 'ip:client');
     }
 
+    #[Test]
+    public function registersImmediatelyWhenVerificationIsNotRequired(): void
+    {
+        $saved = null;
+
+        $repository = $this->createMock(RegisterNickRepository::class);
+        $repository->method('countByEmail')->willReturn(0);
+        $repository->method('findByNick')->willReturn(null);
+        $repository->expects(self::once())->method('save')->willReturnCallback(
+            static function (RegisteredNick $nick) use (&$saved): void {
+                $saved = $nick;
+            },
+        );
+
+        $mail = $this->createMock(RegistrationMailSender::class);
+        $mail->expects(self::never())->method('sendVerification');
+
+        $store = $this->createMock(RegistrationVerificationStore::class);
+        $store->expects(self::never())->method('store');
+
+        $throttle = $this->createMock(RegistrationThrottle::class);
+        $throttle->method('remainingCooldownSeconds')->willReturn(0);
+        $throttle->expects(self::once())->method('recordAttempt');
+
+        $result = $this->handler(
+            repository: $repository,
+            verificationStore: $store,
+            throttle: $throttle,
+            mail: $mail,
+            emailVerificationSettings: $this->emailVerificationSettings(false),
+        )->handle($this->input());
+
+        self::assertSame(RegisterNickOutcome::RegisteredWithoutVerification, $result->outcome);
+        self::assertSame('NewNick', $result->nickname);
+        self::assertInstanceOf(RegisteredNick::class, $saved);
+        self::assertSame(NickStatus::Registered, $saved->getStatus());
+        self::assertNull($saved->getExpiresAt());
+        self::assertSame('user@example.com', $saved->getEmail());
+    }
+
     private function handler(
         ?RegisterNickRepository $repository = null,
         ?PasswordHasher $passwordHasher = null,
@@ -207,10 +246,11 @@ final class RegisterNickHandlerTest extends TestCase
         ?RegistrationMailSender $mail = null,
         int $tokenTtl = 3600,
         string $guestPrefix = 'Guest-',
+        ?EmailVerificationSettingRepositoryInterface $emailVerificationSettings = null,
     ): RegisterNickHandler {
         if (null === $repository) {
             $repository = $this->createStub(RegisterNickRepository::class);
-            $repository->method('findByEmail')->willReturn(null);
+            $repository->method('countByEmail')->willReturn(0);
             $repository->method('findByNick')->willReturn(null);
         }
 
@@ -227,7 +267,9 @@ final class RegisterNickHandlerTest extends TestCase
             $verificationStore ?? $this->createStub(RegistrationVerificationStore::class),
             $throttle,
             $mail ?? $this->createStub(RegistrationMailSender::class),
+            $emailVerificationSettings ?? $this->emailVerificationSettings(),
             300,
+            3,
             $tokenTtl,
             $guestPrefix,
         );
@@ -239,6 +281,14 @@ final class RegisterNickHandlerTest extends TestCase
         $clock->method('now')->willReturn($this->now);
 
         return $clock;
+    }
+
+    private function emailVerificationSettings(bool $required = true): EmailVerificationSettingRepositoryInterface
+    {
+        $settings = $this->createStub(EmailVerificationSettingRepositoryInterface::class);
+        $settings->method('isVerificationRequired')->willReturn($required);
+
+        return $settings;
     }
 
     private function passwordHasher(): PasswordHasher

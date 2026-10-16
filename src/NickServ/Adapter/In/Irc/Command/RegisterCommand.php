@@ -98,6 +98,9 @@ final readonly class RegisterCommand implements NickServCommandInterface
             case RegisterNickOutcome::VerificationRequired:
                 $context->reply('register.pending', ['email' => $result->email]);
                 break;
+            case RegisterNickOutcome::RegisteredWithoutVerification:
+                $context->reply('register.registered', ['nickname' => $result->nickname]);
+                break;
             case RegisterNickOutcome::Throttled:
                 $context->reply('register.throttled', [
                     'minutes' => (string) (int) ceil($result->retryAfterSeconds / 60),
@@ -110,7 +113,10 @@ final readonly class RegisterCommand implements NickServCommandInterface
                 $context->reply('register.invalid_email');
                 break;
             case RegisterNickOutcome::EmailAlreadyUsed:
-                $context->reply('register.email_already_used', ['email' => $result->email]);
+                $context->reply('register.email_already_used', [
+                    'email' => $result->email,
+                    'max' => (string) ($result->maxNicksPerEmail ?? 0),
+                ]);
                 break;
             case RegisterNickOutcome::AlreadyPending:
                 $context->reply('register.already_pending', ['nickname' => $result->nickname]);

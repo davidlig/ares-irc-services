@@ -34,12 +34,13 @@ register:
   short:            "Rexistrar o seu alcume cos servizos."
   help:             "Inicia o rexistro do seu alcume actual. Enviaráselle un token de verificación\ná conta de correo electrónico proporcionada. Complete o rexistro\nexecutando \x0303/msg %bot% VERIFY <token>\x03. O token caduca en 1 hora.\nSe non chega, comprobe o seu cartafol de spam ou use \x0303RESEND\x03."
   pending:          "\x0307→\x03 Enviouse un token de verificación a \x02%email%\x02.\n  Execute \x0303/msg %bot% VERIFY <token>\x03 para completar o rexistro.\n  Non o recibiu? Comprobe spam ou use \x0303/msg %bot% RESEND\x03\n  O token caducará en \x021 hora\x02."
+  registered:       "\x0303✔\x03 O alcume \x02%nickname%\x02 foi rexistrado."
   already_registered: "\x0304✗\x03 O alcume \x02%nickname%\x02 xa está rexistrado."
   already_pending:  "\x0304✗\x03 O alcume \x02%nickname%\x02 xa ten unha verificación pendente.\n  Use \x0303/msg %bot% VERIFY <token>\x03 ou \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non se pode rexistrar nesta rede."
   pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 está pendente de eliminación e non se pode rexistrar."
   invalid_email:    "\x0304✗\x03 O enderezo de correo electrónico proporcionado non é válido."
-  email_already_used: "\x0304✗\x03 O correo electrónico \x02%email%\x02 xa está en uso por outro alcume. Use un enderezo diferente."
+  email_already_used: "\x0304✗\x03 O correo \x02%email%\x02 xa está en uso polo máximo de \x02%max%\x02 alcumes. Usa outro enderezo."
   throttled:          "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de tentar rexistrarse de novo."
   guest_prefix_forbidden: "\x0304✗\x03 Non pode rexistrar un alcume que comece con \x02%prefix%\x02."
 
@@ -690,3 +691,9 @@ debug:
   action_with_value: "%operator% executa o comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
   action_duration: "%operator% executa o comando %command% sobre %target%. Duración: %duration%. %reason%"
   prefix_reason: "Motivo: %reason%"
+
+saregister:
+  syntax:           "SAREGISTER <alcume> <contrasinal> <email>"
+  short:            "Rexistra un alcume no nome doutro usuario."
+  help:             "Rexistra un alcume no nome doutro usuario. A conta créase xa activa:\nsáltanse a verificación por correo e o límite de frecuencia.\nO enderezo séguise validando e debe estar libre.\nEsta orde require permiso de operador."
+  done:             "\x0303✔\x03 O alcume \x02%nickname%\x02 foi rexistrado."

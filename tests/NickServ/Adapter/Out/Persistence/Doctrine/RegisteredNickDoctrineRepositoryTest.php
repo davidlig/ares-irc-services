@@ -293,6 +293,19 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
     }
 
     #[Test]
+    public function countByEmailCountsCaseInsensitivelyAndIgnoresNullEmails(): void
+    {
+        $this->repository->save($this->createRegisteredNick('CountAlice', 'Alice@Example.com'));
+        $this->repository->save($this->createRegisteredNick('CountBob', 'alice@example.com'));
+        $this->repository->save(RegisteredNick::createForbidden('CountForbidden', 'reserved'));
+        $this->flushAndClear();
+
+        self::assertSame(2, $this->repository->countByEmail('ALICE@EXAMPLE.COM'));
+        self::assertSame(2, $this->repository->countByEmail('alice@example.com'));
+        self::assertSame(0, $this->repository->countByEmail('nobody@example.com'));
+    }
+
+    #[Test]
     public function findByVhostFindsByVhost(): void
     {
         $nick = $this->createRegisteredNick('TestUser', 'test@example.com');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Application\UseCase\Register;
 
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\EmailVerificationSettingRepositoryInterface;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
@@ -30,7 +31,9 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         private RegistrationVerificationStore $verificationStore,
         private RegistrationThrottle $throttle,
         private RegistrationMailSender $mailSender,
+        private EmailVerificationSettingRepositoryInterface $emailVerificationSettings,
         private int $minimumIntervalSeconds,
+        private int $maxNicksPerEmail,
         private int $verificationTokenTtlSeconds = 3600,
         private string $guestPrefix = 'Guest-',
     ) {}
@@ -56,8 +59,10 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
             return RegisterNickResult::invalidEmail();
         }
 
-        if (null !== $this->nickRepository->findByEmail($command->email)) {
-            return RegisterNickResult::emailAlreadyUsed($command->email);
+        if (0 < $this->maxNicksPerEmail
+            && $this->nickRepository->countByEmail($command->email) >= $this->maxNicksPerEmail
+        ) {
+            return RegisterNickResult::emailAlreadyUsed($command->email, $this->maxNicksPerEmail);
         }
 
         $existing = $this->nickRepository->findByNick($command->nickname);
@@ -71,6 +76,21 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         }
 
         $passwordHash = $this->passwordHasher->hash($command->password);
+
+        if (!$this->emailVerificationSettings->isVerificationRequired()) {
+            $active = RegisteredNick::createActive(
+                nickname: $command->nickname,
+                passwordHash: $passwordHash,
+                email: $command->email,
+                language: $command->language,
+                registeredAt: $now,
+            );
+            $this->nickRepository->save($active);
+            $this->throttle->recordAttempt($command->clientKey, $now);
+
+            return RegisterNickResult::registeredWithoutVerification($command->nickname);
+        }
+
         $token = $this->tokenGenerator->generate();
         $expiresAt = $now->modify(sprintf('+%d seconds', $this->verificationTokenTtlSeconds));
         $nick = RegisteredNick::createPending(

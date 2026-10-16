@@ -29,6 +29,9 @@ interface RegisteredNickRepositoryInterface
     /** Returns the account that has this email (case-insensitive). Null if not used or only FORBIDDEN. */
     public function findByEmail(string $email): ?RegisteredNick;
 
+    /** Number of accounts using this email (case-insensitive). Used to enforce the per-email limit. */
+    public function countByEmail(string $email): int;
+
     public function existsByNick(string $nickname): bool;
 
     /**

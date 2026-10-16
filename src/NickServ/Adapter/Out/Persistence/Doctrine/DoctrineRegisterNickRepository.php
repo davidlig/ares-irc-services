@@ -39,4 +39,16 @@ final readonly class DoctrineRegisterNickRepository implements RegisterNickRepos
         $this->entityManager->persist($nick);
         $this->entityManager->flush();
     }
+
+    public function countByEmail(string $email): int
+    {
+        return (int) $this->entityManager->createQueryBuilder()
+            ->select('COUNT(nick.id)')
+            ->from(RegisteredNick::class, 'nick')
+            ->where('LOWER(nick.email) = LOWER(:email)')
+            ->andWhere('nick.email IS NOT NULL')
+            ->setParameter('email', $email)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

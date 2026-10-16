@@ -568,3 +568,9 @@ list:
   status_suspended: "Suspès"
   status_pending_deletion: "Pendent d'eliminació"
   status_forbidden: "Prohibit"
+
+saregister:
+  syntax:           "SAREGISTER <#canal> [descripció]"
+  short:            "Registra un canal sense ser-hi dins."
+  help:             "Registra un canal a petició del staff. L operador no cal que sigui dins\ndel canal, i el canal no cal que existeixi encara a la xarxa.\nAquesta ordre requereix permís d operador."
+  done:             "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat."

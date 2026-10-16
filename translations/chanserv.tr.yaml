@@ -568,3 +568,9 @@ list:
   status_suspended: "Askıya alındı"
   status_pending_deletion: "Silinmeyi bekliyor"
   status_forbidden: "Yasaklandı"
+
+saregister:
+  syntax:           "SAREGISTER <#kanal> [açıklama]"
+  short:            "İçinde olmadan bir kanal kaydeder."
+  help:             "Staff isteğiyle bir kanal kaydeder. Operatörün kanalda olması gerekmez ve\nkanalın ağda henüz var olması gerekmez.\nBu komut operatör izni gerektirir."
+  done:             "\x0303✔\x03 \x02%channel%\x02 kanalı kaydedildi."

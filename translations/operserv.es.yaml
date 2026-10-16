@@ -304,3 +304,27 @@ motd:
     none:           "\x0303✓\x03 No hay entradas MOTD caducadas para eliminar."
   debug:
     finalized:      "El mensaje #%id% MOTD ha finalizado: [%type%] %message% | %date% | %shown_count%"
+
+emailverify:
+  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
+  short:            "Activa o desactiva la verificación de correo en el registro de apodos."
+  help:             "Controla si registrar un apodo exige confirmar la dirección de correo.\nON exige verificación: el apodo queda pendiente hasta confirmar el token.\nOFF registra el apodo de inmediato; la dirección se sigue guardando para recuperar la cuenta.\nSTATUS muestra la política actual.\nEste comando requiere acceso root."
+  on:
+    syntax:         "EMAILVERIFY ON"
+    short:          "Exigir verificación de correo al registrarse."
+    help:           "Exige que los registros nuevos confirmen la dirección de correo antes de que el apodo quede activo."
+  off:
+    syntax:         "EMAILVERIFY OFF"
+    short:          "Registrar apodos sin verificación de correo."
+    help:           "Registra los apodos nuevos de inmediato. La dirección de correo sigue siendo obligatoria y se guarda, porque es el canal de recuperación de la cuenta."
+  status:
+    syntax:         "EMAILVERIFY STATUS"
+    short:          "Mostrar la política de verificación actual."
+    help:           "Muestra si actualmente se exige verificación de correo para registrarse."
+  enabled:          "\x0303✓\x03 La verificación de correo ahora es \x02obligatoria\x02 para registrarse."
+  disabled:         "\x0303✓\x03 La verificación de correo está ahora \x02desactivada\x02; los apodos se registran de inmediato."
+  already_enabled:  "\x0304✗\x03 La verificación de correo ya es obligatoria."
+  already_disabled: "\x0304✗\x03 La verificación de correo ya está desactivada."
+  status_on:        "La verificación de correo está actualmente \x0303activada\x03 para registrarse."
+  status_off:       "La verificación de correo está actualmente \x0304desactivada\x03; los apodos se registran de inmediato."
+  unknown_sub:      "\x0304✗\x03 Subcomando desconocido. Uso: \x02%syntax%\x02"
