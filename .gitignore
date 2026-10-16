@@ -29,6 +29,7 @@
 .atl/
 /specs/
 /.codegraph/
+/.engram/
 
 # Docker local overrides
 docker-compose.override.yml
