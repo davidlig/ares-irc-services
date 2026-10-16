@@ -1,3 +1,6 @@
+# CReG translations — English
+# Domain: cregserv
+
 unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
 
 error:
@@ -5,3 +8,23 @@ error:
   oper_only: "\x0304✗\x03 This command is restricted to IRC Operators."
   not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg %nickserv% IDENTIFY\x03."
   permission_denied: "\x0304✗\x03 Permission denied. You do not have access to this command."
+
+registra:
+  syntax: "REGISTRA <#channel> <description>"
+  short: "Request the approval of a channel registration."
+  help: "Ask for a channel to be registered. A services operator evaluates the request and approves or denies it; the channel is only registered once approved. You must be identified with %nickserv%."
+  requested: "\x0303✔\x03 You have requested the registration of channel \x02%channel%\x02. A services operator will evaluate the request."
+  invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
+  already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
+  duplicate: "\x0304✗\x03 A registration request for \x02%channel%\x02 is already waiting for approval. Use \x0303/msg %bot% ESTADO %channel%\x03."
+  denied: "\x0304✗\x03 The registration of \x02%channel%\x02 was denied."
+  throttled: "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another channel."
+
+estado:
+  syntax: "ESTADO <#channel>"
+  short: "Show the registration state of a channel."
+  help: "Report where a channel stands in the registration workflow: registered, in process or denied."
+  registered: "\x0303✔\x03 Channel \x02%channel%\x02 is already registered."
+  pending: "\x0303◌\x03 Channel \x02%channel%\x02 is in process, waiting for a services operator to review it (requested %date%)."
+  denied: "\x0304✗\x03 Channel \x02%channel%\x02 was denied on %date%. Reason: %reason%"
+  no_request: "\x0304✗\x03 Channel \x02%channel%\x02 has no registration process."
