@@ -52,3 +52,27 @@ denegar:
   no_pending: "\x0304✗\x03 Channel \x02%channel%\x02 has no registration process."
   already_approved: "\x0304✗\x03 Already registered and approved channels cannot be denied."
   already_denied: "\x0304✗\x03 Channel \x02%channel%\x02 is already denied."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "List the channel registration requests waiting for review."
+  help: "Shows every request waiting for a services oper to evaluate it, with the channel, who asked for it, the date and the description. You need the \x02cregserv.pendientes\x02 permission."
+  empty: "There are no channels waiting for review."
+  line: "\x02Channel:\x02 %channel%, \x02Requested by:\x02 %requester%, \x02Date:\x02 %date%, \x02Description:\x02 %description%"
+  end: "End of the list."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "List the channel registration requests that were denied."
+  help: "Shows every denied request together with the reason it was denied with. You need the \x02cregserv.denegados\x02 permission."
+  empty: "There are no denied channels."
+  line: "\x02Channel:\x02 %channel%, \x02Reason:\x02 %reason%"
+  end: "End of the list."
+
+drop:
+  syntax: "DROP <#channel>"
+  short: "Remove the registration record \x02%bot%\x02 keeps for a channel."
+  help: "Removes the record \x02%bot%\x02 keeps for a channel, whatever state it is in. An approved channel stays registered with \x02ChanServ\x02: what this releases is the channel name, so a denied channel can be requested again. You need the \x02cregserv.drop\x02 permission."
+  dropped: "\x0303✔\x03 The registration record of channel \x02%channel%\x02 has been removed from \x02%bot%\x02."
+  invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
+  no_request: "\x0304✗\x03 The channel \x02%channel%\x02 is not recorded with \x02%bot%\x02."

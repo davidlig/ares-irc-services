@@ -128,6 +128,7 @@ final class EstadoCommandTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('outcomeReplyProvider')]
     public function repliesTheMatchingMessageForTheUseCaseOutcome(
         GetChannelRegistrationStatusResult $result,

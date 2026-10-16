@@ -52,3 +52,27 @@ denegar:
   no_pending: "\x0304✗\x03 El canal \x02%channel%\x02 no tiene ningún proceso de registro."
   already_approved: "\x0304✗\x03 No se pueden denegar canales ya registrados y aprobados."
   already_denied: "\x0304✗\x03 El canal \x02%channel%\x02 ya se encuentra denegado."
+
+pendientes:
+  syntax: "PENDIENTES"
+  short: "Lista las solicitudes de registro de canal pendientes de revisión."
+  help: "Muestra cada solicitud a la espera de que un operador de servicios la evalúe, con el canal, quién la pidió, la fecha y la descripción. Necesitas el permiso \x02cregserv.pendientes\x02."
+  empty: "No hay canales pendientes de revisión."
+  line: "\x02Canal:\x02 %channel%, \x02Solicitado por:\x02 %requester%, \x02Fecha:\x02 %date%, \x02Descripción:\x02 %description%"
+  end: "Fin de la lista."
+
+denegados:
+  syntax: "DENEGADOS"
+  short: "Lista las solicitudes de registro de canal que han sido denegadas."
+  help: "Muestra cada solicitud denegada junto con el motivo por el que se denegó. Necesitas el permiso \x02cregserv.denegados\x02."
+  empty: "No hay canales denegados."
+  line: "\x02Canal:\x02 %channel%, \x02Motivo:\x02 %reason%"
+  end: "Fin de la lista."
+
+drop:
+  syntax: "DROP <#canal>"
+  short: "Elimina el registro de canal que \x02%bot%\x02 guarda para un canal."
+  help: "Elimina el registro que \x02%bot%\x02 guarda para un canal, sea cual sea su estado. Un canal ya aprobado sigue registrado en \x02ChanServ\x02: lo que se libera aquí es el nombre, para que un canal denegado pueda volver a solicitarse. Necesitas el permiso \x02cregserv.drop\x02."
+  dropped: "\x0303✔\x03 El registro del canal \x02%channel%\x02 ha sido eliminado de \x02%bot%\x02."
+  invalid_channel: "\x0304✗\x03 El nombre del canal debe empezar por un \x02#\x02."
+  no_request: "\x0304✗\x03 El canal \x02%channel%\x02 no se encuentra registrado con \x02%bot%\x02."

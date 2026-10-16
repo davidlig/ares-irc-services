@@ -136,6 +136,7 @@ final class AprobarCommandTest extends TestCase
         ];
     }
 
+    #[Test]
     #[DataProvider('outcomeReplyProvider')]
     public function repliesTheMatchingMessageForTheUseCaseOutcome(
         ApproveChannelRegistrationResult $result,
