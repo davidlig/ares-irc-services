@@ -72,8 +72,9 @@ denegados:
 drop:
   syntax: "DROP <#kanaal>"
   short: "Verwijdert het registratierecord dat \x02%bot%\x02 voor een kanaal bewaart."
-  help: "Verwijdert het record dat \x02%bot%\x02 voor een kanaal bewaart, in welke staat het ook verkeert. Een al goedgekeurd kanaal blijft geregistreerd bij \x02ChanServ\x02: wat hier wordt vrijgegeven is de naam, zodat een afgewezen kanaal opnieuw kan worden aangevraagd. Je hebt de machtiging \x02cregserv.drop\x02 nodig."
+  help: "Verwijdert het record dat \x02%bot%\x02 voor een kanaal bewaart en, als het kanaal daar geregistreerd is, verwijdert het ook uit \x02ChanServ\x02. Je hebt de machtiging \x02cregserv.drop\x02 nodig."
   dropped: "\x0303✔\x03 Het registratierecord van kanaal \x02%channel%\x02 is verwijderd uit \x02%bot%\x02."
+  dropped_channel: "\x0303✔\x03 Kanaal \x02%channel%\x02 is verwijderd en het registratierecord ervan is weggehaald."
   invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
   no_request: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat niet geregistreerd bij \x02%bot%\x02."
 

@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace App\CRegServ\Application\UseCase\DropChannelRegistration;
 
+use App\CRegServ\Application\Port\Out\ChannelDropOutcome;
+use App\CRegServ\Application\Port\Out\ChannelDropPort;
 use App\CRegServ\Application\Port\Out\ChannelRegistrationRequestRepositoryInterface;
+use App\CRegServ\Application\Port\Out\RegisteredChannelLookupPort;
 
 use function str_starts_with;
 
 /**
- * Removes CReG's own record for a channel.
+ * Removes CReG's own record for a channel, and unregisters the channel from ChanServ when
+ * it is registered there.
  *
- * Mirrors pulsar's do_drop (modules/cregserv/main.c:682-699): the record goes away whatever
- * state it is in, and nothing outside CReG changes — an approved channel stays registered
- * with ChanServ, because the C block was written there and is not ours to remove.
+ * Mirrors pulsar's do_drop (modules/cregserv/main.c:682-699), where CReG owned the
+ * registration and del_creginfo() also unregistered the channel. In ares CReG delegates
+ * registration to ChanServ (which writes the UDB C block), so an approved channel must be
+ * dropped there too; a pending or denied request has no ChanServ registration to remove.
  *
  * Dropping is the only way out of a denial: the unique record is what blocks the channel
  * name, so without this the name could never be requested again.
@@ -22,6 +27,8 @@ final readonly class DropChannelRegistrationHandler implements DropChannelRegist
 {
     public function __construct(
         private ChannelRegistrationRequestRepositoryInterface $requestRepository,
+        private RegisteredChannelLookupPort $channelLookup,
+        private ChannelDropPort $channelDrop,
     ) {}
 
     public function handle(DropChannelRegistration $command): DropChannelRegistrationResult
@@ -35,8 +42,19 @@ final readonly class DropChannelRegistrationHandler implements DropChannelRegist
             return DropChannelRegistrationResult::noRequest($command->channelName);
         }
 
+        $unregistered = false;
+        if ($this->channelLookup->existsByChannelName($command->channelName)) {
+            $unregistered = ChannelDropOutcome::Dropped === $this->channelDrop->drop(
+                $command->channelName,
+                $command->actorNickname,
+                $command->occurredAt,
+            );
+        }
+
         $this->requestRepository->delete($request);
 
-        return DropChannelRegistrationResult::dropped($request->getChannel());
+        return $unregistered
+            ? DropChannelRegistrationResult::droppedAndUnregistered($command->channelName)
+            : DropChannelRegistrationResult::dropped($command->channelName);
     }
 }

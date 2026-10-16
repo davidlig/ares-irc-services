@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\Service;
 
+use App\ChanServ\Application\Port\In\ChannelDeregistrationOutcome;
 use App\ChanServ\Application\Port\In\ChannelRegistration;
 use App\ChanServ\Application\Port\In\ChannelRegistrationOutcome;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleAction;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleOutcome;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
+use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandlerInterface;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannel;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandlerInterface;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelOutcome;
@@ -27,6 +32,7 @@ final readonly class ApprovedChannelRegistrationService implements ChannelRegist
 {
     public function __construct(
         private RegisterChannelHandlerInterface $registerChannel,
+        private ManageChannelLifecycleHandlerInterface $manageChannelLifecycle,
     ) {}
 
     public function registerApproved(
@@ -57,6 +63,26 @@ final readonly class ApprovedChannelRegistrationService implements ChannelRegist
             RegisterChannelOutcome::Registered => ChannelRegistrationOutcome::Registered,
             RegisterChannelOutcome::PendingDeletion => ChannelRegistrationOutcome::PendingDeletion,
             default => ChannelRegistrationOutcome::Failed,
+        };
+    }
+
+    public function dropRegistered(
+        string $channelName,
+        string $actorNickname,
+        DateTimeImmutable $occurredAt,
+    ): ChannelDeregistrationOutcome {
+        $result = $this->manageChannelLifecycle->handle(new ManageChannelLifecycle(
+            channelName: $channelName,
+            action: ChannelLifecycleAction::Drop,
+            actorNickname: $actorNickname,
+            occurredAt: $occurredAt,
+        ));
+
+        return match ($result->outcome) {
+            ChannelLifecycleOutcome::Dropped,
+            ChannelLifecycleOutcome::ForceDropped => ChannelDeregistrationOutcome::Dropped,
+            ChannelLifecycleOutcome::NotRegistered => ChannelDeregistrationOutcome::NotRegistered,
+            default => ChannelDeregistrationOutcome::Failed,
         };
     }
 }

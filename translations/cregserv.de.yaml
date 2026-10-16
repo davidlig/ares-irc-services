@@ -72,8 +72,9 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "Entfernt den Registrierungseintrag, den \x02%bot%\x02 für einen Kanal speichert."
-  help: "Entfernt den Eintrag, den \x02%bot%\x02 für einen Kanal speichert, in welchem Zustand er auch ist. Ein bereits genehmigter Kanal bleibt bei \x02ChanServ\x02 registriert: freigegeben wird hier der Kanalname, damit ein abgelehnter Kanal erneut beantragt werden kann. Du brauchst die Berechtigung \x02cregserv.drop\x02."
+  help: "Entfernt den Eintrag, den \x02%bot%\x02 für einen Kanal speichert, und meldet ihn, wenn er dort registriert ist, auch bei \x02ChanServ\x02 ab. Du brauchst die Berechtigung \x02cregserv.drop\x02."
   dropped: "\x0303✔\x03 Der Registrierungseintrag des Kanals \x02%channel%\x02 wurde aus \x02%bot%\x02 entfernt."
+  dropped_channel: "\x0303✔\x03 Der Kanal \x02%channel%\x02 wurde gelöscht und sein Registrierungseintrag entfernt."
   invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
   no_request: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist nicht bei \x02%bot%\x02 erfasst."
 

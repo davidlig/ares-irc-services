@@ -16,6 +16,11 @@ final readonly class DropChannelRegistrationResult
         return new self(DropChannelRegistrationOutcome::Dropped, $channelName);
     }
 
+    public static function droppedAndUnregistered(string $channelName): self
+    {
+        return new self(DropChannelRegistrationOutcome::DroppedAndUnregistered, $channelName);
+    }
+
     public static function invalidChannel(string $channelName): self
     {
         return new self(DropChannelRegistrationOutcome::InvalidChannel, $channelName);

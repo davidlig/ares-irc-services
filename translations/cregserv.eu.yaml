@@ -72,8 +72,9 @@ denegados:
 drop:
   syntax: "DROP <#kanala>"
   short: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du."
-  help: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du, egoera edozein dela ere. Dagoeneko onartutako kanal batek \x02ChanServ\x02(e)n jarraitzen du erregistratuta: hemen askatzen dena izena da, ukatutako kanal bat berriro esketu ahal izan dadin. \x02cregserv.drop\x02 baimena behar duzu."
+  help: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du eta, kanala han erregistratuta badago, \x02ChanServ\x02(e)tik ere kentzen du. \x02cregserv.drop\x02 baimena behar duzu."
   dropped: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistroa kendu da \x02%bot%\x02(e)tik."
+  dropped_channel: "\x0303✔\x03 \x02%channel%\x02 kanala kendu da eta haren erregistroa ezabatu da."
   invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
   no_request: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago \x02%bot%\x02(e)n erregistratuta."
 

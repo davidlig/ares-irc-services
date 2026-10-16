@@ -11,6 +11,7 @@ use App\CRegServ\Application\UseCase\DropChannelRegistration\DropChannelRegistra
 use App\CRegServ\Application\UseCase\DropChannelRegistration\DropChannelRegistrationHandlerInterface;
 use App\CRegServ\Application\UseCase\DropChannelRegistration\DropChannelRegistrationOutcome;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
+use DateTimeImmutable;
 
 /**
  * DROP <#channel>.
@@ -19,9 +20,10 @@ use App\Irc\Application\Port\In\Command\CommandOutcome;
  * is_services_admin command and therefore an IRCop permission here, because ares has no
  * services-admin tier of its own.
  *
- * It removes CReG's record for a channel and nothing else: an already approved channel
- * stays registered with ChanServ. What it releases is the channel name, which is what makes
- * a denial reversible — without this the unique record would block the name forever.
+ * It removes CReG's record for a channel and, when the channel is already registered with
+ * ChanServ, unregisters it there too. A pending or denied request has no ChanServ
+ * registration, so only the record is removed — and the channel name is released, which is
+ * what makes a denial reversible.
  */
 final readonly class DropCommand implements CRegServCommandInterface
 {
@@ -81,10 +83,15 @@ final readonly class DropCommand implements CRegServCommandInterface
     {
         $channel = $context->args[0] ?? '';
 
-        $result = $this->handler->handle(new DropChannelRegistration(channelName: $channel));
+        $result = $this->handler->handle(new DropChannelRegistration(
+            channelName: $channel,
+            actorNickname: $context->getSenderNickname() ?? '',
+            occurredAt: new DateTimeImmutable(),
+        ));
 
         match ($result->outcome) {
             DropChannelRegistrationOutcome::Dropped => $context->reply('drop.dropped', ['channel' => $result->channelName]),
+            DropChannelRegistrationOutcome::DroppedAndUnregistered => $context->reply('drop.dropped_channel', ['channel' => $result->channelName]),
             DropChannelRegistrationOutcome::InvalidChannel => $context->reply('drop.invalid_channel'),
             DropChannelRegistrationOutcome::NoRequest => $context->reply('drop.no_request', ['channel' => $channel]),
         };

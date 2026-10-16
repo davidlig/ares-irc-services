@@ -28,4 +28,16 @@ interface ChannelRegistration
         string $approverNickname,
         DateTimeImmutable $occurredAt,
     ): ChannelRegistrationOutcome;
+
+    /**
+     * Deregisters a channel that was previously registered through this port.
+     *
+     * The drop is soft: the channel must already be registered here. A name ChanServ does
+     * not hold reports NotRegistered, and CReG's caller treats that as "record removed only".
+     */
+    public function dropRegistered(
+        string $channelName,
+        string $actorNickname,
+        DateTimeImmutable $occurredAt,
+    ): ChannelDeregistrationOutcome;
 }

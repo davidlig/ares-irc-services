@@ -72,8 +72,9 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "Remove the registration record \x02%bot%\x02 keeps for a channel."
-  help: "Removes the record \x02%bot%\x02 keeps for a channel, whatever state it is in. An approved channel stays registered with \x02ChanServ\x02: what this releases is the channel name, so a denied channel can be requested again. You need the \x02cregserv.drop\x02 permission."
+  help: "Removes the record \x02%bot%\x02 keeps for a channel and, when the channel is registered there, unregisters it from \x02ChanServ\x02 too. You need the \x02cregserv.drop\x02 permission."
   dropped: "\x0303✔\x03 The registration record of channel \x02%channel%\x02 has been removed from \x02%bot%\x02."
+  dropped_channel: "\x0303✔\x03 Channel \x02%channel%\x02 has been dropped and its registration record removed."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
   no_request: "\x0304✗\x03 The channel \x02%channel%\x02 is not recorded with \x02%bot%\x02."
 

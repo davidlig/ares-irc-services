@@ -1551,6 +1551,9 @@ services:
     App\CRegServ\Application\Port\Out\ChannelApprovalPort:
         alias: App\CRegServ\Adapter\Out\ChanServ\ChanServChannelApprovalAdapter
 
+    App\CRegServ\Application\Port\Out\ChannelDropPort:
+        alias: App\CRegServ\Adapter\Out\ChanServ\ChanServChannelDropAdapter
+
     App\CRegServ\Application\UseCase\ApproveChannelRegistration\ApproveChannelRegistrationHandlerInterface:
         alias: App\CRegServ\Application\UseCase\ApproveChannelRegistration\ApproveChannelRegistrationHandler
 

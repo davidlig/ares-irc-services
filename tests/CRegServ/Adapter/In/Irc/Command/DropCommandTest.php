@@ -126,6 +126,7 @@ final class DropCommandTest extends TestCase
     {
         return [
             'dropped' => [DropChannelRegistrationResult::dropped('#SitioChat'), 'drop.dropped'],
+            'dropped and unregistered' => [DropChannelRegistrationResult::droppedAndUnregistered('#SitioChat'), 'drop.dropped_channel'],
             'invalid channel' => [DropChannelRegistrationResult::invalidChannel('SitioChat'), 'drop.invalid_channel'],
             'nothing to drop' => [DropChannelRegistrationResult::noRequest('#SitioChat'), 'drop.no_request'],
         ];

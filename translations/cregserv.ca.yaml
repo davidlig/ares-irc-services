@@ -72,8 +72,9 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "Elimina el registre de canal que \x02%bot%\x02 guarda per a un canal."
-  help: "Elimina el registre que \x02%bot%\x02 guarda per a un canal, sigui quin sigui el seu estat. Un canal ja aprovat segueix registrat amb \x02ChanServ\x02: el que allibera aquí és el nom, perquè un canal denegat pugui tornar-se a sol·licitar. Necessites el permís \x02cregserv.drop\x02."
+  help: "Elimina el registre que \x02%bot%\x02 guarda per a un canal i, si el canal està registrat allà, el dona de baixa de \x02ChanServ\x02. Necessites el permís \x02cregserv.drop\x02."
   dropped: "\x0303✔\x03 El registre del canal \x02%channel%\x02 ha estat eliminat de \x02%bot%\x02."
+  dropped_channel: "\x0303✔\x03 El canal \x02%channel%\x02 s'ha eliminat i se n'ha suprimit el registre."
   invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
   no_request: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat amb \x02%bot%\x02."
 

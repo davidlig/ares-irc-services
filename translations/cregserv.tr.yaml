@@ -72,8 +72,9 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "\x02%bot%\x02'ün bir kanal için tuttuğu kayıt kaydını siler."
-  help: "\x02%bot%\x02'ün bir kanal için, hangi durumda olursa olsun tuttuğu kaydı siler. Zaten onaylanmış bir kanal \x02ChanServ\x02 üzerinde kayıtlı kalır: burada serbest bırakılan şey kanal adıdır; böylece reddedilmiş bir kanal yeniden talep edilebilir. \x02cregserv.drop\x02 iznine ihtiyacın var."
+  help: "\x02%bot%\x02'ün bir kanal için tuttuğu kaydı siler ve kanal orada kayıtlıysa \x02ChanServ\x02'den de çıkarır. \x02cregserv.drop\x02 iznine ihtiyacın var."
   dropped: "\x0303✔\x03 \x02%channel%\x02 kanalının kayıt kaydı \x02%bot%\x02 üzerinden silindi."
+  dropped_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı silindi ve kayıt kaydı kaldırıldı."
   invalid_channel: "\x0304✗\x03 Kanal adı bir \x02#\x02 ile başlamalıdır."
   no_request: "\x0304✗\x03 \x02%channel%\x02 kanalı \x02%bot%\x02 üzerinde kayıtlı değil."
 

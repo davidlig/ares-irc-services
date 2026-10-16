@@ -7,6 +7,7 @@ namespace App\CRegServ\Application\UseCase\DropChannelRegistration;
 enum DropChannelRegistrationOutcome
 {
     case Dropped;
+    case DroppedAndUnregistered;
     case InvalidChannel;
     case NoRequest;
 }
