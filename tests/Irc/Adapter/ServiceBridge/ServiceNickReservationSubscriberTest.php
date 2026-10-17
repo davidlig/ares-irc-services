@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\ServiceBridge;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Out\Persistence\Doctrine\EntityManagerRecovery;
 use App\Irc\Adapter\ServiceBridge\ServiceNickReservationInventory;
 use App\Irc\Adapter\ServiceBridge\ServiceNickReservationSubscriber;
 use App\Irc\Application\Port\In\ManagedServiceNickReservationLookup;
@@ -16,6 +17,8 @@ use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
 use App\Irc\Application\Port\In\ServiceNickReservationInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -75,6 +78,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener1, $listener2, $listener3],
             $this->createStub(ServiceNickReservationInventory::class),
+            $this->recoveryForAnOpenManager(),
             new NullLogger(),
         );
 
@@ -135,6 +139,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener],
             $this->createStub(ServiceNickReservationInventory::class),
+            $this->recoveryForAnOpenManager(),
             new NullLogger(),
         );
 
@@ -158,6 +163,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener],
             $this->createStub(ServiceNickReservationInventory::class),
+            $this->recoveryForAnOpenManager(),
             new NullLogger(),
         );
 
@@ -190,6 +196,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $userLookup,
             [$listener],
             $this->createStub(ServiceNickReservationInventory::class),
+            $this->recoveryForAnOpenManager(),
             new NullLogger(),
         );
 
@@ -549,6 +556,37 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         self::assertSame(2, $inventory->writes);
     }
 
+    #[Test]
+    public function onBurstCompleteRecoversAClosedEntityManagerBeforeTouchingTheInventory(): void
+    {
+        $manager = $this->createStub(EntityManagerInterface::class);
+        $manager->method('isOpen')->willReturn(false);
+
+        $registry = $this->createMock(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($manager);
+        $registry->expects(self::once())->method('resetManager');
+
+        $holder = new ActiveConnectionHolder();
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getProtocolName')->willReturn('inspircd');
+        $module->method('getNickReservation')->willReturn($this->createStub(ServiceNickReservationInterface::class));
+        $module->method('getServiceActions')->willReturn($this->createStub(ProtocolServiceActionsInterface::class));
+        new ReflectionClass($holder)->getProperty('protocolModule')->setValue($holder, $module);
+
+        $listener = $this->createStub(ServiceCommandListenerInterface::class);
+        $listener->method('getServiceName')->willReturn('NickServ');
+
+        $subscriber = new ServiceNickReservationSubscriber(
+            $holder,
+            $this->createStub(NetworkUserLookupPort::class),
+            [$listener],
+            $this->createStub(ServiceNickReservationInventory::class),
+            new EntityManagerRecovery($registry),
+        );
+
+        $subscriber->onBurstComplete($this->burstEvent());
+    }
+
     /** @param list<string> $names */
     private function subscriberFor(
         ServiceNickReservationInterface $reservation,
@@ -576,6 +614,7 @@ final class ServiceNickReservationSubscriberTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $listeners,
             $inventory,
+            $this->recoveryForAnOpenManager(),
             $logger,
         );
     }
@@ -583,5 +622,16 @@ final class ServiceNickReservationSubscriberTest extends TestCase
     private function burstEvent(): NetworkBurstCompleteEvent
     {
         return new NetworkBurstCompleteEvent($this->createStub(ConnectionInterface::class), '001');
+    }
+
+    private function recoveryForAnOpenManager(): EntityManagerRecovery
+    {
+        $manager = $this->createStub(EntityManagerInterface::class);
+        $manager->method('isOpen')->willReturn(true);
+
+        $registry = $this->createStub(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($manager);
+
+        return new EntityManagerRecovery($registry);
     }
 }

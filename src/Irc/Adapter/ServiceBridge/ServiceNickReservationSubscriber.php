@@ -6,6 +6,7 @@ namespace App\Irc\Adapter\ServiceBridge;
 
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Out\Persistence\Doctrine\EntityManagerRecovery;
 use App\Irc\Application\Port\In\ManagedServiceNickReservationLookup;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
@@ -44,6 +45,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         private NetworkUserLookupPort $userLookup,
         private iterable $serviceListeners,
         private ServiceNickReservationInventory $inventory,
+        private EntityManagerRecovery $entityManagerRecovery,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -80,6 +82,9 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         $hasLiveLookup = $reservation instanceof ManagedServiceNickReservationLookup;
         $previous = [];
         $canPersistInventory = true;
+
+        $this->entityManagerRecovery->recover();
+
         try {
             foreach ($this->inventory->namesForProtocol($protocol) as $nick) {
                 $previous[strtolower($nick)] = $nick;
