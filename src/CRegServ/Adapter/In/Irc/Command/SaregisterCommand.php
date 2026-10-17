@@ -82,6 +82,11 @@ final readonly class SaregisterCommand implements CRegServCommandInterface
         return CRegServPermission::SAREGISTER;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'saregister.example';
+    }
+
     public function execute(CRegServContext $context): ?CommandOutcome
     {
         $channelName = $context->args[0] ?? '';

@@ -49,7 +49,8 @@ cancel:
 aprobar:
   syntax: "APROBAR <#channel>"
   short: "Aprova una sol·licitud de registre de canal pendent."
-  help: "Registra un canal la sol·licitud del qual està a l'espera de revisió. El canal es registra a nom de qui la va sol·licitar; cap dels dos ha d'estar a dins. Necessites el permís \x02cregserv.aprobar\x02."
+  help: "Registra un canal la sol·licitud del qual està a l'espera de revisió. El canal es registra a nom de qui la va sol·licitar; cap dels dos ha d'estar a dins. Necessites el permís \x02cregserv.aprobar\x02.\n\n\x02#channel:\x02 El canal amb la sol·licitud pendent. Usa PENDIENTES per veure la cua.\n\nUn cop aprovat, el canal queda registrat a \x02ChanServ\x02 i la sol·licitud es tanca."
+  example: "/msg CReG APROBAR #channel"
   approved: "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat correctament per a \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
   no_pending: "\x0304✗\x03 El canal \x02%channel%\x02 no està en procés de registre."
@@ -61,7 +62,8 @@ aprobar:
 denegar:
   syntax: "DENEGAR <#channel> <reason>"
   short: "Denega una sol·licitud de registre de canal pendent."
-  help: "Rebutja una sol·licitud de registre deixant lliure el nom del canal. El motiu és obligatori i el mostra DENEGADOS. Necessites el permís \x02cregserv.denegar\x02."
+  help: "Denega una sol·licitud de registre deixant lliure el nom del canal. El motiu és obligatori i el mostra DENEGADOS. Necessites el permís \x02cregserv.denegar\x02.\n\n\x02#channel:\x02 El canal amb la sol·licitud pendent.\n\x02reason:\x02 Per què es denega la sol·licitud; es desa i el mostra qui consulta DENEGADOS.\n\nEl nom del canal queda lliure per tornar a sol·licitar-lo després de la denegació."
+  example: "/msg CReG DENEGAR #channel fora de tema"
   denied: "\x0303✔\x03 S'ha denegat el registre del canal \x02%channel%\x02."
   invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
   no_pending: "\x0304✗\x03 El canal \x02%channel%\x02 no té cap procés de registre."
@@ -71,7 +73,8 @@ denegar:
 pendientes:
   syntax: "PENDIENTES"
   short: "Llista les sol·licituds de registre de canal pendents de revisió."
-  help: "Mostra cada sol·licitud a l'espera que un operador de serveis l'avaluï, amb el canal, qui la va demanar, la data i la descripció. Necessites el permís \x02cregserv.pendientes\x02."
+  help: "Llista cada sol·licitud de registre a l'espera que un operador de serveis l'avaluï, mostrant el canal, qui la va demanar, la data i la descripció. Necessites el permís \x02cregserv.pendientes\x02.\n\nAquest comand no accepta paràmetres."
+  example: "/msg CReG PENDIENTES"
   empty: "No hi ha canals pendents de revisió."
   line: "\x02Canal:\x02 %channel%, \x02Sol·licitat per:\x02 %requester%, \x02Data:\x02 %date%, \x02Descripció:\x02 %description%"
   end: "Fi de la llista."
@@ -79,7 +82,8 @@ pendientes:
 denegados:
   syntax: "DENEGADOS"
   short: "Llista les sol·licituds de registre de canal que han estat denegades."
-  help: "Mostra cada sol·licitud denegada juntament amb el motiu pel qual es va denegar. Necessites el permís \x02cregserv.denegados\x02."
+  help: "Llista cada sol·licitud de registre denegada juntament amb el motiu pel qual es va denegar. Necessites el permís \x02cregserv.denegados\x02.\n\nAquest comand no accepta paràmetres."
+  example: "/msg CReG DENEGADOS"
   empty: "No hi ha canals denegats."
   line: "\x02Canal:\x02 %channel%, \x02Motiu:\x02 %reason%"
   end: "Fi de la llista."
@@ -87,7 +91,8 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "Elimina el registre de canal que \x02%bot%\x02 guarda per a un canal."
-  help: "Elimina el registre que \x02%bot%\x02 guarda per a un canal i, si el canal està registrat allà, el dona de baixa de \x02ChanServ\x02. Necessites el permís \x02cregserv.drop\x02."
+  help: "Elimina el registre que \x02%bot%\x02 guarda per a un canal i, si el canal està registrat allà, el dona de baixa de \x02ChanServ\x02. Necessites el permís \x02cregserv.drop\x02.\n\n\x02#channel:\x02 El canal que vols eliminar.\n\nLa baixa de \x02ChanServ\x02 és suau: el canal entra en un període de gràcia d'eliminació en lloc d'eliminar-se immediatament."
+  example: "/msg CReG DROP #channel"
   dropped: "\x0303✔\x03 El registre del canal \x02%channel%\x02 ha estat eliminat de \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 El canal \x02%channel%\x02 s'ha eliminat i ara entra en el període de gràcia d'eliminació."
   invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
@@ -96,7 +101,8 @@ drop:
 saregister:
   syntax: "SAREGISTER <#channel> [descripció]"
   short: "Registra un canal sense estar a dins."
-  help: "Registra un canal a petició del staff. L'operador no necessita estar al\ncanal, i el canal no necessita existir encara a la xarxa.\nAquest comand requereix permís d'operador."
+  help: "Registra un canal a petició del staff, sense passar per el flux de sol·licitud i aprovació. No cal que estiguis a dins del canal ni que aquest existeixi encara. Necessites el permís \x02cregserv.saregister\x02.\n\n\x02#channel:\x02 El canal que vols registrar.\n\x02descripció:\x02 Descripció opcional que es desa amb el registre."
+  example: "/msg CReG SAREGISTER #channel un canal de staff"
   done: "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat."
   invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
   pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 està pendent d'eliminació i no pot ser registrat."

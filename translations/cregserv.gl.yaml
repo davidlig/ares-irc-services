@@ -49,7 +49,8 @@ cancel:
 aprobar:
   syntax: "APROBAR <#canle>"
   short: "Aprueba unha solicitude de rexistro de canle pendente."
-  help: "Rexistra unha canle cuxa solicitude está á espera de revisión. A canle rexístrase a nome de quen a solicitou; ningún dos dous ten que estar dentro. Necesitas o permiso \x02cregserv.aprobar\x02."
+  help: "Rexistra unha canle cuxa solicitude está á espera de revisión. A canle rexístrase a nome de quen a solicitou; ningún dos dous ten que estar dentro. Necesitas o permiso \x02cregserv.aprobar\x02.\n\n\x02#canle:\x02 A canle coa solicitude pendente. Usa PENDIENTES para ver a cola.\n\nUnha vez aprobada, a canle queda rexistrada en \x02ChanServ\x02 e a solicitude péchase."
+  example: "/msg CReG APROBAR #canle"
   approved: "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada correctamente para \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
   no_pending: "\x0304✗\x03 A canle \x02%channel%\x02 non está en proceso de rexistro."
@@ -61,7 +62,8 @@ aprobar:
 denegar:
   syntax: "DENEGAR <#canle> <motivo>"
   short: "Denega unha solicitude de rexistro de canle pendente."
-  help: "Rexeita unha solicitude de rexistro deixando libre o nome da canle. O motivo é obrigatorio e móstrase en DENEGADOS. Necesitas o permiso \x02cregserv.denegar\x02."
+  help: "Denega unha solicitude de rexistro deixando libre o nome da canle. O motivo é obrigatorio e móstrase en DENEGADOS. Necesitas o permiso \x02cregserv.denegar\x02.\n\n\x02#canle:\x02 A canle coa solicitude pendente.\n\x02motivo:\x02 Por que se denega a solicitude; gárdase e móstralle a calquera que consulte DENEGADOS.\n\nO nome da canle queda libre para volve-la solicitar tras a denegación."
+  example: "/msg CReG DENEGAR #canle fora de tema"
   denied: "\x0303✔\x03 Denegouse o rexistro da canle \x02%channel%\x02."
   invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
   no_pending: "\x0304✗\x03 A canle \x02%channel%\x02 non ten ningún proceso de rexistro."
@@ -71,7 +73,8 @@ denegar:
 pendientes:
   syntax: "PENDIENTES"
   short: "Lista as solicitudes de rexistro de canle pendentes de revisión."
-  help: "Amosa cada solicitude á espera de que un operador de servizos a evalúe, coa canle, quen a pediu, a data e a descrición. Necesitas o permiso \x02cregserv.pendientes\x02."
+  help: "Lista cada solicitude de rexistro á espera de que un operador de servizos a evalúe, amosando a canle, quen a pediu, a data e a descrición. Necesitas o permiso \x02cregserv.pendientes\x02.\n\nEste comando non acepta parámetros."
+  example: "/msg CReG PENDIENTES"
   empty: "Non hai canles pendentes de revisión."
   line: "\x02Canle:\x02 %channel%, \x02Solicitada por:\x02 %requester%, \x02Data:\x02 %date%, \x02Descrición:\x02 %description%"
   end: "Fin da lista."
@@ -79,7 +82,8 @@ pendientes:
 denegados:
   syntax: "DENEGADOS"
   short: "Lista as solicitudes de rexistro de canle que foron denegadas."
-  help: "Amosa cada solicitude denegada xunto co motivo polo que se denegou. Necesitas o permiso \x02cregserv.denegados\x02."
+  help: "Lista cada solicitude de rexistro denegada xunto co motivo polo que se denegou. Necesitas o permiso \x02cregserv.denegados\x02.\n\nEste comando non acepta parámetros."
+  example: "/msg CReG DENEGADOS"
   empty: "Non hai canles denegadas."
   line: "\x02Canle:\x02 %channel%, \x02Motivo:\x02 %reason%"
   end: "Fin da lista."
@@ -87,7 +91,8 @@ denegados:
 drop:
   syntax: "DROP <#canle>"
   short: "Elimina o rexistro de canle que \x02%bot%\x02 garda para unha canle."
-  help: "Elimina o rexistro que \x02%bot%\x02 garda para unha canle e, se a canle está rexistrada alí, tamén a dá de baixa de \x02ChanServ\x02. Necesitas o permiso \x02cregserv.drop\x02."
+  help: "Elimina o rexistro que \x02%bot%\x02 garda para unha canle e, se a canle está rexistrada alí, tamén a dá de baixa de \x02ChanServ\x02. Necesitas o permiso \x02cregserv.drop\x02.\n\n\x02#canle:\x02 A canle que queres eliminar.\n\nA baixa de \x02ChanServ\x02 é branda: a canle entra nun período de graza de eliminación en lugar de borrarse de inmediato."
+  example: "/msg CReG DROP #canle"
   dropped: "\x0303✔\x03 O rexistro da canle \x02%channel%\x02 foi eliminado de \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 A canle \x02%channel%\x02 foi eliminada e agora entra no período de graza de eliminación."
   invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
@@ -96,7 +101,8 @@ drop:
 saregister:
   syntax: "SAREGISTER <#canle> [descrición]"
   short: "Rexistra unha canle sen estar dentro."
-  help: "Rexistra unha canle a petición do staff. O operador non necesita estar na\ncanle, e a canle non necesita existir aínda na rede.\nEste comando require permiso de operador."
+  help: "Rexistra unha canle a petición do staff, sen pasar polo fluxo de solicitude e aprobación. Non necesitas estar dentro da canle nin que esta exista aínda. Necesitas o permiso \x02cregserv.saregister\x02.\n\n\x02#canle:\x02 A canle que queres rexistrar.\n\x02descrición:\x02 Descrición opcional que se garda co rexistro."
+  example: "/msg CReG SAREGISTER #canle unha canle do staff"
   done: "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada."
   invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
   pending_deletion: "\x0304✗\x03 A canle \x02%channel%\x02 está pendente de eliminación e non pode ser rexistrada."

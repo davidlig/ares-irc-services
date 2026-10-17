@@ -79,6 +79,11 @@ final readonly class DropCommand implements CRegServCommandInterface
         return CRegServPermission::DROP;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'drop.example';
+    }
+
     public function execute(CRegServContext $context): ?CommandOutcome
     {
         $channel = $context->args[0] ?? '';

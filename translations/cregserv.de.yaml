@@ -49,7 +49,8 @@ cancel:
 aprobar:
   syntax: "APROBAR <#channel>"
   short: "Genehmigt eine ausstehende Kanalregistrierungsanfrage."
-  help: "Registriert einen Kanal, dessen Anfrage auf Prüfung wartet. Der Kanal wird auf den Benutzer registriert, der ihn beantragt hat; keiner von euch beiden muss sich darin befinden. Du brauchst die Berechtigung \x02cregserv.aprobar\x02."
+  help: "Registriert einen Kanal, dessen Anfrage auf Prüfung wartet. Der Kanal wird auf den Benutzer registriert, der ihn beantragt hat; keiner von euch beiden muss sich darin befinden. Du brauchst die Berechtigung \x02cregserv.aprobar\x02.\n\n\x02#channel:\x02 Der Kanal mit der ausstehenden Anfrage. Mit PENDIENTES siehst du die Warteschlange.\n\nNach der Genehmigung wird der Kanal bei \x02ChanServ\x02 registriert und die Anfrage geschlossen."
+  example: "/msg CReG APROBAR #channel"
   approved: "\x0303✔\x03 Der Kanal \x02%channel%\x02 wurde erfolgreich für \x02%founder%\x02 registriert."
   invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
   no_pending: "\x0304✗\x03 Der Kanal \x02%channel%\x02 befindet sich nicht in einem Registrierungsprozess."
@@ -61,7 +62,8 @@ aprobar:
 denegar:
   syntax: "DENEGAR <#channel> <Grund>"
   short: "Lehnt eine ausstehende Kanalregistrierungsanfrage ab."
-  help: "Weist eine Registrierungsanfrage zurück und lässt den Kanalnamen frei. Der Grund ist Pflicht und wird von DENEGADOS angezeigt. Du brauchst die Berechtigung \x02cregserv.denegar\x02."
+  help: "Weist eine Registrierungsanfrage zurück und lässt den Kanalnamen frei. Der Grund ist Pflicht und wird von DENEGADOS angezeigt. Du brauchst die Berechtigung \x02cregserv.denegar\x02.\n\n\x02#channel:\x02 Der Kanal mit der ausstehenden Anfrage.\n\x02Grund:\x02 Warum die Anfrage abgelehnt wird; er wird gespeichert und allen angezeigt, die DENEGADOS abfragen.\n\nDer Kanalname ist nach der Ablehnung wieder frei und kann neu beantragt werden."
+  example: "/msg CReG DENEGAR #channel Off-Topic"
   denied: "\x0303✔\x03 Die Registrierung des Kanals \x02%channel%\x02 wurde abgelehnt."
   invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
   no_pending: "\x0304✗\x03 Der Kanal \x02%channel%\x02 hat keinen Registrierungsprozess."
@@ -71,7 +73,8 @@ denegar:
 pendientes:
   syntax: "PENDIENTES"
   short: "Listet die auf Prüfung wartenden Kanalregistrierungsanfragen auf."
-  help: "Zeigt jede Anfrage, die auf die Prüfung durch einen Services-Operator wartet, mit Kanal, Antragsteller, Datum und Beschreibung. Du brauchst die Berechtigung \x02cregserv.pendientes\x02."
+  help: "Listet jede auf Prüfung wartende Kanalregistrierungsanfrage auf und zeigt Kanal, Antragsteller, Datum und Beschreibung. Du brauchst die Berechtigung \x02cregserv.pendientes\x02.\n\nDieser Befehl akzeptiert keine Parameter."
+  example: "/msg CReG PENDIENTES"
   empty: "Es warten keine Kanäle auf Prüfung."
   line: "\x02Kanal:\x02 %channel%, \x02Beantragt von:\x02 %requester%, \x02Datum:\x02 %date%, \x02Beschreibung:\x02 %description%"
   end: "Ende der Liste."
@@ -79,7 +82,8 @@ pendientes:
 denegados:
   syntax: "DENEGADOS"
   short: "Listet die abgelehnten Kanalregistrierungsanfragen auf."
-  help: "Zeigt jede abgelehnte Anfrage zusammen mit dem Grund der Ablehnung. Du brauchst die Berechtigung \x02cregserv.denegados\x02."
+  help: "Listet jede abgelehnte Kanalregistrierungsanfrage zusammen mit dem Grund der Ablehnung auf. Du brauchst die Berechtigung \x02cregserv.denegados\x02.\n\nDieser Befehl akzeptiert keine Parameter."
+  example: "/msg CReG DENEGADOS"
   empty: "Es gibt keine abgelehnten Kanäle."
   line: "\x02Kanal:\x02 %channel%, \x02Grund:\x02 %reason%"
   end: "Ende der Liste."
@@ -87,7 +91,8 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "Entfernt den Registrierungseintrag, den \x02%bot%\x02 für einen Kanal speichert."
-  help: "Entfernt den Eintrag, den \x02%bot%\x02 für einen Kanal speichert, und meldet ihn, wenn er dort registriert ist, auch bei \x02ChanServ\x02 ab. Du brauchst die Berechtigung \x02cregserv.drop\x02."
+  help: "Entfernt den Eintrag, den \x02%bot%\x02 für einen Kanal speichert, und meldet den Kanal, wenn er dort registriert ist, auch bei \x02ChanServ\x02 ab. Du brauchst die Berechtigung \x02cregserv.drop\x02.\n\n\x02#channel:\x02 Der Kanal, den du entfernen möchtest.\n\nDie Abmeldung bei \x02ChanServ\x02 ist weich: Der Kanal tritt statt sofortiger Löschung in eine Schonfrist für die Löschung ein."
+  example: "/msg CReG DROP #channel"
   dropped: "\x0303✔\x03 Der Registrierungseintrag des Kanals \x02%channel%\x02 wurde aus \x02%bot%\x02 entfernt."
   dropped_channel: "\x0303✔\x03 Der Kanal \x02%channel%\x02 wurde gelöscht und tritt nun in die Schonfrist für die Löschung ein."
   invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
@@ -96,7 +101,8 @@ drop:
 saregister:
   syntax: "SAREGISTER <#channel> [Beschreibung]"
   short: "Registriert einen Kanal, ohne sich darin zu befinden."
-  help: "Registriert einen Kanal auf Anforderung des Staffs. Der Operator muss sich nicht im\nKanal befinden, und der Kanal muss noch nicht im Netzwerk existieren.\nDieser Befehl erfordert eine Operatorberechtigung."
+  help: "Registriert einen Kanal auf Anforderung des Staffs, ohne den Anfrage- und Genehmigungsablauf zu durchlaufen. Du musst dich nicht im Kanal befinden, und der Kanal muss noch nicht existieren. Du brauchst die Berechtigung \x02cregserv.saregister\x02.\n\n\x02#channel:\x02 Der Kanal, den du registrieren möchtest.\n\x02Beschreibung:\x02 Optionale Beschreibung, die mit der Registrierung gespeichert wird."
+  example: "/msg CReG SAREGISTER #channel ein Staff-Kanal"
   done: "\x0303✔\x03 Der Kanal \x02%channel%\x02 wurde registriert."
   invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
   pending_deletion: "\x0304✗\x03 Der Kanal \x02%channel%\x02 steht auf der Löschliste und kann nicht registriert werden."

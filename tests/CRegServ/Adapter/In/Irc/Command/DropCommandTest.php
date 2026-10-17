@@ -119,6 +119,14 @@ final class DropCommandTest extends TestCase
         self::assertSame('drop.help', $command->getHelpKey());
     }
 
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = $this->createCommand(DropChannelRegistrationResult::noRequest('#SitioChat'));
+
+        self::assertSame('drop.example', $command->getExampleKey());
+    }
+
     /**
      * @return array<string, array{DropChannelRegistrationResult, string}>
      */

@@ -133,6 +133,14 @@ final class SaregisterCommandTest extends TestCase
         self::assertSame('saregister.help', $command->getHelpKey());
     }
 
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new SaregisterCommand($this->createStub(ChannelRegistration::class));
+
+        self::assertSame('saregister.example', $command->getExampleKey());
+    }
+
     /**
      * @return array<string, array{ChannelRegistrationOutcome, string}>
      */

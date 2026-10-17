@@ -74,6 +74,11 @@ final readonly class AprobarCommand implements CRegServCommandInterface
         return CRegServPermission::APROBAR;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'aprobar.example';
+    }
+
     public function execute(CRegServContext $context): ?CommandOutcome
     {
         $channel = $context->args[0] ?? '';

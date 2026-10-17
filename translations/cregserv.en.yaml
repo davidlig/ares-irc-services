@@ -49,7 +49,8 @@ cancel:
 aprobar:
   syntax: "APROBAR <#channel>"
   short: "Approve a pending channel registration request."
-  help: "Register a channel whose request is waiting for review. The channel is registered for the user who requested it; neither of you has to be in it. You need the \x02cregserv.aprobar\x02 permission."
+  help: "Registers a channel whose registration request is waiting for review. The channel is registered to the user who requested it; neither of you needs to be inside it. You need the \x02cregserv.aprobar\x02 permission.\n\n\x02#channel:\x02 The channel with the pending request. Use PENDIENTES to see the queue.\n\nOnce approved, the channel is registered with \x02ChanServ\x02 and the request is closed."
+  example: "/msg CReG APROBAR #mychannel"
   approved: "\x0303✔\x03 Channel \x02%channel%\x02 has been correctly registered for \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
   no_pending: "\x0304✗\x03 Channel \x02%channel%\x02 is not in a registration process."
@@ -61,7 +62,8 @@ aprobar:
 denegar:
   syntax: "DENEGAR <#channel> <reason>"
   short: "Deny a pending channel registration request."
-  help: "Refuse a registration request, keeping the channel name free. The reason is mandatory and is shown by DENEGADOS. You need the \x02cregserv.denegar\x02 permission."
+  help: "Denies a registration request, keeping the channel name free. The reason is mandatory and is shown by DENEGADOS. You need the \x02cregserv.denegar\x02 permission.\n\n\x02#channel:\x02 The channel with the pending request.\n\x02reason:\x02 Why the request is denied; it is stored and shown to anyone checking DENEGADOS.\n\nThe channel name becomes free to request again once denied."
+  example: "/msg CReG DENEGAR #mychannel off-topic"
   denied: "\x0303✔\x03 The registration of channel \x02%channel%\x02 has been denied."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
   no_pending: "\x0304✗\x03 Channel \x02%channel%\x02 has no registration process."
@@ -71,7 +73,8 @@ denegar:
 pendientes:
   syntax: "PENDIENTES"
   short: "List the channel registration requests waiting for review."
-  help: "Shows every request waiting for a services oper to evaluate it, with the channel, who asked for it, the date and the description. You need the \x02cregserv.pendientes\x02 permission."
+  help: "Lists every registration request waiting for a services oper to evaluate, showing the channel, who requested it, the date and the description. You need the \x02cregserv.pendientes\x02 permission.\n\nThis command takes no parameters."
+  example: "/msg CReG PENDIENTES"
   empty: "There are no channels waiting for review."
   line: "\x02Channel:\x02 %channel%, \x02Requested by:\x02 %requester%, \x02Date:\x02 %date%, \x02Description:\x02 %description%"
   end: "End of the list."
@@ -79,7 +82,8 @@ pendientes:
 denegados:
   syntax: "DENEGADOS"
   short: "List the channel registration requests that were denied."
-  help: "Shows every denied request together with the reason it was denied with. You need the \x02cregserv.denegados\x02 permission."
+  help: "Lists every denied registration request together with the reason it was denied. You need the \x02cregserv.denegados\x02 permission.\n\nThis command takes no parameters."
+  example: "/msg CReG DENEGADOS"
   empty: "There are no denied channels."
   line: "\x02Channel:\x02 %channel%, \x02Reason:\x02 %reason%"
   end: "End of the list."
@@ -87,7 +91,8 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "Remove the registration record \x02%bot%\x02 keeps for a channel."
-  help: "Removes the record \x02%bot%\x02 keeps for a channel and, when the channel is registered there, unregisters it from \x02ChanServ\x02 too. You need the \x02cregserv.drop\x02 permission."
+  help: "Removes the registration record \x02%bot%\x02 keeps for a channel and, if the channel is registered there, also drops it from \x02ChanServ\x02. You need the \x02cregserv.drop\x02 permission.\n\n\x02#channel:\x02 The channel to remove.\n\nThe \x02ChanServ\x02 drop is a soft drop: the channel enters a deletion grace period instead of being deleted immediately."
+  example: "/msg CReG DROP #mychannel"
   dropped: "\x0303✔\x03 The registration record of channel \x02%channel%\x02 has been removed from \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 Channel \x02%channel%\x02 has been dropped and now enters the deletion grace period."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
@@ -96,7 +101,8 @@ drop:
 saregister:
   syntax: "SAREGISTER <#channel> [description]"
   short: "Register a channel without being in it."
-  help: "Registers a channel at staff request. The operator does not need to be in\nthe channel, and the channel does not need to exist on the network yet.\nThis command requires an operator permission."
+  help: "Registers a channel at staff request, without going through the request-and-approval flow. You do not need to be inside the channel and it does not need to exist yet. You need the \x02cregserv.saregister\x02 permission.\n\n\x02#channel:\x02 The channel to register.\n\x02description:\x02 Optional description stored with the registration."
+  example: "/msg CReG SAREGISTER #mychannel a staff channel"
   done: "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
   pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."

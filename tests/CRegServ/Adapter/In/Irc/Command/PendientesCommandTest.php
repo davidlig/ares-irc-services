@@ -156,6 +156,14 @@ final class PendientesCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new PendientesCommand($this->createStub(ListChannelRegistrationsHandlerInterface::class));
+
+        self::assertSame('pendientes.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function asksForThePendingWorkQueue(): void
     {
         $messages = [];

@@ -73,6 +73,11 @@ final readonly class DenegadosCommand implements CRegServCommandInterface
         return CRegServPermission::DENEGADOS;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'denegados.example';
+    }
+
     public function execute(CRegServContext $context): ?CommandOutcome
     {
         $result = $this->handler->handle(new ListChannelRegistrations(ChannelRegistrationStatus::Denied));

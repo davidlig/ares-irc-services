@@ -49,7 +49,8 @@ cancel:
 aprobar:
   syntax: "APROBAR <#kanał>"
   short: "Zatwierdza oczekującą prośbę o rejestrację kanału."
-  help: "Rejestruje kanał, którego prośba czeka na sprawdzenie. Kanał jest rejestrowany na osobę, która ją złożyła; żadne z was nie musi być w środku. Potrzebujesz uprawnienia \x02cregserv.aprobar\x02."
+  help: "Rejestruje kanał, którego prośba czeka na sprawdzenie. Kanał jest rejestrowany na osobę, która ją złożyła; żadne z was nie musi być w środku. Potrzebujesz uprawnienia \x02cregserv.aprobar\x02.\n\n\x02#kanał:\x02 Kanał z oczekującą prośbą. Użyj PENDIENTES, aby zobaczyć kolejkę.\n\nPo zatwierdzeniu kanał zostaje zarejestrowany w \x02ChanServ\x02, a prośba zostaje zamknięta."
+  example: "/msg CReG APROBAR #kanał"
   approved: "\x0303✔\x03 Kanał \x02%channel%\x02 został poprawnie zarejestrowany dla \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
   no_pending: "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest w procesie rejestracji."
@@ -61,7 +62,8 @@ aprobar:
 denegar:
   syntax: "DENEGAR <#kanał> <powód>"
   short: "Odrzuca oczekującą prośbę o rejestrację kanału."
-  help: "Odrzuca prośbę o rejestrację, pozostawiając nazwę kanału wolną. Powód jest obowiązkowy i jest pokazywany przez DENEGADOS. Potrzebujesz uprawnienia \x02cregserv.denegar\x02."
+  help: "Odrzuca prośbę o rejestrację, pozostawiając nazwę kanału wolną. Powód jest obowiązkowy i jest pokazywany przez DENEGADOS. Potrzebujesz uprawnienia \x02cregserv.denegar\x02.\n\n\x02#kanał:\x02 Kanał z oczekującą prośbą.\n\x02powód:\x02 Dlaczego prośba zostaje odrzucona; jest zapisywany i pokazywany każdemu, kto sprawdza DENEGADOS.\n\nNazwa kanału jest wolna, więc po odrzuceniu można ją zgłosić ponownie."
+  example: "/msg CReG DENEGAR #kanał nie na temat"
   denied: "\x0303✔\x03 Rejestracja kanału \x02%channel%\x02 została odrzucona."
   invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
   no_pending: "\x0304✗\x03 Kanał \x02%channel%\x02 nie ma procesu rejestracji."
@@ -71,7 +73,8 @@ denegar:
 pendientes:
   syntax: "PENDIENTES"
   short: "Wyświetla prośby o rejestrację kanałów oczekujących na sprawdzenie."
-  help: "Wyświetla każdą prośbę oczekującą na ocenę przez operatora usług, wraz z kanałem, kto ją złożył, datą i opisem. Potrzebujesz uprawnienia \x02cregserv.pendientes\x02."
+  help: "Wyświetla każdą prośbę o rejestrację kanału oczekującą na ocenę przez operatora usług, pokazując kanał, kto ją złożył, datę i opis. Potrzebujesz uprawnienia \x02cregserv.pendientes\x02.\n\nTo polecenie nie przyjmuje parametrów."
+  example: "/msg CReG PENDIENTES"
   empty: "Brak kanałów oczekujących na sprawdzenie."
   line: "\x02Kanał:\x02 %channel%, \x02Zgłoszono przez:\x02 %requester%, \x02Data:\x02 %date%, \x02Opis:\x02 %description%"
   end: "Koniec listy."
@@ -79,7 +82,8 @@ pendientes:
 denegados:
   syntax: "DENEGADOS"
   short: "Wyświetla prośby o rejestrację kanałów, które zostały odrzucone."
-  help: "Wyświetla każdą odrzuconą prośbę wraz z powodem odrzucenia. Potrzebujesz uprawnienia \x02cregserv.denegados\x02."
+  help: "Wyświetla każdą odrzuconą prośbę o rejestrację kanału wraz z powodem odrzucenia. Potrzebujesz uprawnienia \x02cregserv.denegados\x02.\n\nTo polecenie nie przyjmuje parametrów."
+  example: "/msg CReG DENEGADOS"
   empty: "Brak odrzuconych kanałów."
   line: "\x02Kanał:\x02 %channel%, \x02Powód:\x02 %reason%"
   end: "Koniec listy."
@@ -87,7 +91,8 @@ denegados:
 drop:
   syntax: "DROP <#kanał>"
   short: "Usuwa wpis o rejestracji, który \x02%bot%\x02 przechowuje dla kanału."
-  help: "Usuwa wpis, który \x02%bot%\x02 przechowuje dla kanału, a jeśli kanał jest tam zarejestrowany, wyrejestrowuje go również z \x02ChanServ\x02. Potrzebujesz uprawnienia \x02cregserv.drop\x02."
+  help: "Usuwa wpis o rejestracji, który \x02%bot%\x02 przechowuje dla kanału, a jeśli kanał jest tam zarejestrowany, wyrejestrowuje go również z \x02ChanServ\x02. Potrzebujesz uprawnienia \x02cregserv.drop\x02.\n\n\x02#kanał:\x02 Kanał, który chcesz usunąć.\n\nWyrejestrowanie z \x02ChanServ\x02 jest miękkie: kanał wchodzi w okres karencji usuwania zamiast być usunięty od razu."
+  example: "/msg CReG DROP #kanał"
   dropped: "\x0303✔\x03 Wpis o rejestracji kanału \x02%channel%\x02 został usunięty z \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 Kanał \x02%channel%\x02 został usunięty i wchodzi teraz w okres karencji usuwania."
   invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
@@ -96,7 +101,8 @@ drop:
 saregister:
   syntax: "SAREGISTER <#kanał> [opis]"
   short: "Rejestruje kanał, nie będąc w środku."
-  help: "Rejestruje kanał na prośbę staffu. Operator nie musi znajdować się w kanale,\na kanał nie musi jeszcze istnieć w sieci.\nTo polecenie wymaga uprawnienia operatora."
+  help: "Rejestruje kanał na prośbę staffu, bez przechodzenia przez proces zgłoszenia i zatwierdzenia. Nie musisz znajdować się w kanale, a kanał nie musi jeszcze istnieć. Potrzebujesz uprawnienia \x02cregserv.saregister\x02.\n\n\x02#kanał:\x02 Kanał, który chcesz zarejestrować.\n\x02opis:\x02 Opcjonalny opis zapisywany razem z rejestracją."
+  example: "/msg CReG SAREGISTER #kanał kanał staffu"
   done: "\x0303✔\x03 Kanał \x02%channel%\x02 został zarejestrowany."
   invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
   pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 oczekuje na usunięcie i nie może być zarejestrowany."

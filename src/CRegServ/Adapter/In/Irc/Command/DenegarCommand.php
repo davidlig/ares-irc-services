@@ -76,6 +76,11 @@ final readonly class DenegarCommand implements CRegServCommandInterface
         return CRegServPermission::DENEGAR;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'denegar.example';
+    }
+
     public function execute(CRegServContext $context): ?CommandOutcome
     {
         $channel = $context->args[0] ?? '';

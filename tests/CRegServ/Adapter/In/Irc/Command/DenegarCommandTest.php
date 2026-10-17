@@ -119,6 +119,14 @@ final class DenegarCommandTest extends TestCase
         self::assertSame('denegar.help', $command->getHelpKey());
     }
 
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = $this->createCommand(DenyChannelRegistrationResult::invalidChannel('#SitioChat'));
+
+        self::assertSame('denegar.example', $command->getExampleKey());
+    }
+
     /**
      * @return array<string, array{DenyChannelRegistrationResult, string}>
      */

@@ -73,6 +73,11 @@ final readonly class PendientesCommand implements CRegServCommandInterface
         return CRegServPermission::PENDIENTES;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'pendientes.example';
+    }
+
     public function execute(CRegServContext $context): ?CommandOutcome
     {
         $result = $this->handler->handle(new ListChannelRegistrations(ChannelRegistrationStatus::Pending));

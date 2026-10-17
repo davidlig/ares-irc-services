@@ -155,6 +155,14 @@ final class DenegadosCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new DenegadosCommand($this->createStub(ListChannelRegistrationsHandlerInterface::class));
+
+        self::assertSame('denegados.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function asksForTheDeniedQueueAndNeverForThePendingOne(): void
     {
         $messages = [];

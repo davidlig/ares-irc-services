@@ -49,7 +49,8 @@ cancel:
 aprobar:
   syntax: "APROBAR <#kanala>"
   short: "Kanal-erregistro eskaera bat onartzen du."
-  help: "Azterketa zain dagoen eskaera duen kanal bat erregistratzen du. Kanala eskatu zuen erabiltzailearen izenean erregistratzen da; ez duzu kanalean egon behar. \x02cregserv.aprobar\x02 baimena behar duzu."
+  help: "Azterketa zain dagoen eskaera duen kanal bat erregistratzen du. Kanala eskatu zuen erabiltzailearen izenean erregistratzen da; ez duzu kanalean egon behar. \x02cregserv.aprobar\x02 baimena behar duzu.\n\n\x02#kanala:\x02 Eskaera zain dagoen kanala. Erabili PENDIENTES ilara ikusteko.\n\nOnartu ondoren, kanala \x02ChanServ\x02(e)n erregistratzen da eta eskaera itxi egiten da."
+  example: "/msg CReG APROBAR #kanala"
   approved: "\x0303✔\x03 \x02%channel%\x02 kanala ondo erregistratu da \x02%founder%\x02(r)entzat."
   invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
   no_pending: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistro-prozesuan."
@@ -61,7 +62,8 @@ aprobar:
 denegar:
   syntax: "DENEGAR <#kanala> <arrazoia>"
   short: "Kanal-erregistro eskaera bat ukatzen du."
-  help: "Erregistro eskaera bat errefusatzen du, kanalaren izena libre utziz. Arrazoia derrigorrezkoa da eta DENEGADOS-ek erakusten du. \x02cregserv.denegar\x02 baimena behar duzu."
+  help: "Erregistro eskaera bat errefusatzen du, kanalaren izena libre utziz. Arrazoia derrigorrezkoa da eta DENEGADOS-ek erakusten du. \x02cregserv.denegar\x02 baimena behar duzu.\n\n\x02#kanala:\x02 Eskaera zain dagoen kanala.\n\x02arrazoia:\x02 Eskaera zergatik ukatzen den; gordetzen da eta DENEGADOS kontsultatzen duenari erakusten zaio.\n\nKanalaren izena libre geratzen da berriro eskatzeko ukatu ondoren."
+  example: "/msg CReG DENEGAR #kanala gaiaz kanpo"
   denied: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistroa ukatu da."
   invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
   no_pending: "\x0304✗\x03 \x02%channel%\x02 kanalak ez du erregistro-prozesurik."
@@ -71,7 +73,8 @@ denegar:
 pendientes:
   syntax: "PENDIENTES"
   short: "Azterketa zain dauden kanal-erregistro eskaerak zerrendatzen ditu."
-  help: "Zerbitzuetako operadore batek ebaluatuko zain dagoen eskaera bakoitza erakusten du, kanalarekin, nork eskatu zuen, data eta deskribapenarekin. \x02cregserv.pendientes\x02 baimena behar duzu."
+  help: "Zerbitzuetako operadore batek ebaluatuko zain dagoen erregistro-eskaera bakoitza zerrendatzen du, kanala, nork eskatu zuen, data eta deskribapenarekin. \x02cregserv.pendientes\x02 baimena behar duzu.\n\nKomando honek ez du parametrorik onartzen."
+  example: "/msg CReG PENDIENTES"
   empty: "Ez dago azterketa zain dagoen kanalik."
   line: "\x02Kanala:\x02 %channel%, \x02Eskatuta:\x02 %requester%, \x02Data:\x02 %date%, \x02Deskribapena:\x02 %description%"
   end: "Zerrendaren amaiera."
@@ -79,7 +82,8 @@ pendientes:
 denegados:
   syntax: "DENEGADOS"
   short: "Ukatutako kanal-erregistro eskaerak zerrendatzen ditu."
-  help: "Ukatutako eskaera bakoitza erakusten du, ukatzeko arrazoiarekin batera. \x02cregserv.denegados\x02 baimena behar duzu."
+  help: "Ukatutako erregistro-eskaera bakoitza zerrendatzen du, ukatzeko arrazoiaz batera. \x02cregserv.denegados\x02 baimena behar duzu.\n\nKomando honek ez du parametrorik onartzen."
+  example: "/msg CReG DENEGADOS"
   empty: "Ez dago ukatutako kanalik."
   line: "\x02Kanala:\x02 %channel%, \x02Arrazoia:\x02 %reason%"
   end: "Zerrendaren amaiera."
@@ -87,7 +91,8 @@ denegados:
 drop:
   syntax: "DROP <#kanala>"
   short: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du."
-  help: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du eta, kanala han erregistratuta badago, \x02ChanServ\x02(e)tik ere kentzen du. \x02cregserv.drop\x02 baimena behar duzu."
+  help: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du eta, kanala han erregistratuta badago, \x02ChanServ\x02(e)tik ere kentzen du. \x02cregserv.drop\x02 baimena behar duzu.\n\n\x02#kanala:\x02 Kendu nahi duzun kanala.\n\n\x02ChanServ\x02(e)ko bajua biguna da: kanala ezabatzeko grazia-aldian sartzen da, berehala ezabatu beharrean."
+  example: "/msg CReG DROP #kanala"
   dropped: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistroa kendu da \x02%bot%\x02(e)tik."
   dropped_channel: "\x0303✔\x03 \x02%channel%\x02 kanala kendu da eta orain ezabaketa grazia-aldian sartzen da."
   invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
@@ -96,7 +101,8 @@ drop:
 saregister:
   syntax: "SAREGISTER <#kanala> [deskribapena]"
   short: "Kanala erregistratzen du barnean egon gabe."
-  help: "Staffaren eskaeraz kanal bat erregistratzen du. Eragileak ez du kanalean egon behar,\neta kanalak ez du oraindik sarean existitu behar.\nKomando honek eragile-baimena eskatzen du."
+  help: "Staffaren eskaeraz kanal bat erregistratzen du, eskaera eta onartzeko fluxurik gabe. Ez duzu kanalean egon beharrik eta kanalak ez du oraindik existitu behar. \x02cregserv.saregister\x02 baimena behar duzu.\n\n\x02#kanala:\x02 Erregistratu nahi duzun kanala.\n\x02deskribapena:\x02 Erregistroarekin gordetzen den deskribapen aukerakoa."
+  example: "/msg CReG SAREGISTER #kanala staff-kanal bat"
   done: "\x0303✔\x03 \x02%channel%\x02 kanala erregistratu da."
   invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ezabatzeko zain dago eta ezin da erregistratu."

@@ -49,7 +49,8 @@ cancel:
 aprobar:
   syntax: "APROBAR <#kanaal>"
   short: "Keurt een openstaand registratieverzoek voor een kanaal goed."
-  help: "Registreert een kanaal waarvan het verzoek op beoordeling wacht. Het kanaal wordt geregistreerd op naam van de gebruiker die het heeft aangevraagd; jullie hoeven er geen van beiden in te zijn. Je hebt de machtiging \x02cregserv.aprobar\x02 nodig."
+  help: "Registreert een kanaal waarvan het verzoek op beoordeling wacht. Het kanaal wordt geregistreerd op naam van de gebruiker die het heeft aangevraagd; jullie hoeven er geen van beiden in te zijn. Je hebt de machtiging \x02cregserv.aprobar\x02 nodig.\n\n\x02#kanaal:\x02 Het kanaal met het openstaande verzoek. Gebruik PENDIENTES om de wachtrij te zien.\n\nNa goedkeuring wordt het kanaal geregistreerd bij \x02ChanServ\x02 en wordt het verzoek gesloten."
+  example: "/msg CReG APROBAR #kanaal"
   approved: "\x0303✔\x03 Kanaal \x02%channel%\x02 is succesvol geregistreerd voor \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
   no_pending: "\x0304✗\x03 Kanaal \x02%channel%\x02 bevindt zich niet in een registratieproces."
@@ -61,7 +62,8 @@ aprobar:
 denegar:
   syntax: "DENEGAR <#kanaal> <reden>"
   short: "Wijst een openstaand registratieverzoek voor een kanaal af."
-  help: "Wijs een registratieverzoek af en laat de kanaalnaam vrij. De reden is verplicht en wordt getoond door DENEGADOS. Je hebt de machtiging \x02cregserv.denegar\x02 nodig."
+  help: "Wijst een registratieverzoek af en laat de kanaalnaam vrij. De reden is verplicht en wordt getoond door DENEGADOS. Je hebt de machtiging \x02cregserv.denegar\x02 nodig.\n\n\x02#kanaal:\x02 Het kanaal met het openstaande verzoek.\n\x02reden:\x02 Waarom het verzoek wordt afgewezen; wordt opgeslagen en getoond aan iedereen die DENEGADOS raadpleegt.\n\nDe kanaalnaam komt na de afwijzing weer vrij om opnieuw aan te vragen."
+  example: "/msg CReG DENEGAR #kanaal off-topic"
   denied: "\x0303✔\x03 De registratie van kanaal \x02%channel%\x02 is afgewezen."
   invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
   no_pending: "\x0304✗\x03 Kanaal \x02%channel%\x02 heeft geen registratieproces."
@@ -71,7 +73,8 @@ denegar:
 pendientes:
   syntax: "PENDIENTES"
   short: "Toont de registratieverzoeken voor kanalen die op beoordeling wachten."
-  help: "Toont elk verzoek dat wacht op beoordeling door een services-operator, met het kanaal, wie het heeft aangevraagd, de datum en de beschrijving. Je hebt de machtiging \x02cregserv.pendientes\x02 nodig."
+  help: "Toont elke registratieaanvraag die wacht op beoordeling door een services-operator, met het kanaal, wie het heeft aangevraagd, de datum en de beschrijving. Je hebt de machtiging \x02cregserv.pendientes\x02 nodig.\n\nDit commando accepteert geen parameters."
+  example: "/msg CReG PENDIENTES"
   empty: "Er wachten geen kanalen op beoordeling."
   line: "\x02Kanaal:\x02 %channel%, \x02Aangevraagd door:\x02 %requester%, \x02Datum:\x02 %date%, \x02Beschrijving:\x02 %description%"
   end: "Einde van de lijst."
@@ -79,7 +82,8 @@ pendientes:
 denegados:
   syntax: "DENEGADOS"
   short: "Toont de registratieverzoeken voor kanalen die zijn afgewezen."
-  help: "Toont elk afgewezen verzoek samen met de reden van de afwijzing. Je hebt de machtiging \x02cregserv.denegados\x02 nodig."
+  help: "Toont elke afgewezen registratieaanvraag samen met de reden van de afwijzing. Je hebt de machtiging \x02cregserv.denegados\x02 nodig.\n\nDit commando accepteert geen parameters."
+  example: "/msg CReG DENEGADOS"
   empty: "Er zijn geen afgewezen kanalen."
   line: "\x02Kanaal:\x02 %channel%, \x02Reden:\x02 %reason%"
   end: "Einde van de lijst."
@@ -87,7 +91,8 @@ denegados:
 drop:
   syntax: "DROP <#kanaal>"
   short: "Verwijdert het registratierecord dat \x02%bot%\x02 voor een kanaal bewaart."
-  help: "Verwijdert het record dat \x02%bot%\x02 voor een kanaal bewaart en, als het kanaal daar geregistreerd is, verwijdert het ook uit \x02ChanServ\x02. Je hebt de machtiging \x02cregserv.drop\x02 nodig."
+  help: "Verwijdert het registratierecord dat \x02%bot%\x02 voor een kanaal bewaart en, als het kanaal daar geregistreerd is, verwijdert het ook uit \x02ChanServ\x02. Je hebt de machtiging \x02cregserv.drop\x02 nodig.\n\n\x02#kanaal:\x02 Het kanaal dat je wilt verwijderen.\n\nDe verwijdering uit \x02ChanServ\x02 is zacht: het kanaal gaat in plaats van direct te worden verwijderd in een gratieperiode voor verwijdering."
+  example: "/msg CReG DROP #kanaal"
   dropped: "\x0303✔\x03 Het registratierecord van kanaal \x02%channel%\x02 is verwijderd uit \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 Kanaal \x02%channel%\x02 is verwijderd en gaat nu de gratieperiode voor verwijdering in."
   invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
@@ -96,7 +101,8 @@ drop:
 saregister:
   syntax: "SAREGISTER <#kanaal> [beschrijving]"
   short: "Registreert een kanaal zonder erin te zijn."
-  help: "Registreert een kanaal op verzoek van de staff. De operator hoeft niet in het\nkanaal aanwezig te zijn, en het kanaal hoeft nog niet op het netwerk te bestaan.\nDit commando vereist een operatormachtiging."
+  help: "Registreert een kanaal op verzoek van de staff, zonder door de aanvraag- en goedkeuringsstroom te gaan. Je hoeft niet in het kanaal aanwezig te zijn en het kanaal hoeft nog niet te bestaan. Je hebt de machtiging \x02cregserv.saregister\x02 nodig.\n\n\x02#kanaal:\x02 Het kanaal dat je wilt registreren.\n\x02beschrijving:\x02 Optionele beschrijving die met de registratie wordt opgeslagen."
+  example: "/msg CReG SAREGISTER #kanaal een staffkanaal"
   done: "\x0303✔\x03 Kanaal \x02%channel%\x02 is geregistreerd."
   invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
   pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat in de wachtrij voor verwijdering en kan niet worden geregistreerd."
