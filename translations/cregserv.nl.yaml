@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#kanaal>"
   short: "Toont de registratiestatus van een kanaal."
-  help: "Geeft aan waar een kanaal staat in het registratieproces.\n\nDe mogelijke statussen zijn:\n    \x02GEREGISTREERD\x02: het kanaal is al geregistreerd bij ChanServ.\n    \x02IN BEORDELING\x02: een registratieverzoek wacht op goedkeuring of afwijzing door een services-operator.\n    \x02AFGEWEZEN\x02: het registratieverzoek is afgewezen.\n    \x02WORDT VERWIJDERD\x02: het kanaal is uitgeschreven en bevindt zich in de uitstelperiode voor verwijdering; het kan pas opnieuw worden geregistreerd nadat de verwijdering is voltooid.\n    \x02GEEN PROCES\x02: het kanaal heeft geen registratieproces."
+  help: "Geeft aan waar een kanaal staat in het registratieproces.\n\nDe mogelijke statussen zijn:\n    \x02GEREGISTREERD\x02: het kanaal is al geregistreerd bij %chanserv%.\n    \x02IN BEORDELING\x02: een registratieverzoek wacht op goedkeuring of afwijzing door een services-operator.\n    \x02AFGEWEZEN\x02: het registratieverzoek is afgewezen.\n    \x02WORDT VERWIJDERD\x02: het kanaal is uitgeschreven en bevindt zich in de uitstelperiode voor verwijdering; het kan pas opnieuw worden geregistreerd nadat de verwijdering is voltooid.\n    \x02GEEN PROCES\x02: het kanaal heeft geen registratieproces."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
   pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 wordt momenteel verwijderd en kan pas worden geregistreerd nadat de verwijdering is voltooid."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#kanaal>"
   short: "Keurt een openstaand registratieverzoek voor een kanaal goed."
-  help: "Registreert een kanaal waarvan het verzoek op beoordeling wacht. Het kanaal wordt geregistreerd op naam van de gebruiker die het heeft aangevraagd; jullie hoeven er geen van beiden in te zijn. Je hebt de machtiging \x02cregserv.aprobar\x02 nodig.\n\n\x02#kanaal:\x02 Het kanaal met het openstaande verzoek. Gebruik PENDIENTES om de wachtrij te zien.\n\nNa goedkeuring wordt het kanaal geregistreerd bij \x02ChanServ\x02 en wordt het verzoek gesloten."
+  help: "Registreert een kanaal waarvan het verzoek op beoordeling wacht. Het kanaal wordt geregistreerd op naam van de gebruiker die het heeft aangevraagd; jullie hoeven er geen van beiden in te zijn. Je hebt de machtiging \x02cregserv.aprobar\x02 nodig.\n\n\x02#kanaal:\x02 Het kanaal met het openstaande verzoek. Gebruik PENDIENTES om de wachtrij te zien.\n\nNa goedkeuring wordt het kanaal geregistreerd bij \x02%chanserv%\x02 en wordt het verzoek gesloten."
   example: "/msg CReG APROBAR #kanaal"
   approved: "\x0303✔\x03 Kanaal \x02%channel%\x02 is succesvol geregistreerd voor \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 De kanaalnaam moet beginnen met een \x02#\x02."
   no_pending: "\x0304✗\x03 Kanaal \x02%channel%\x02 bevindt zich niet in een registratieproces."
-  already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd bij \x02ChanServ\x02."
+  already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd bij \x02%chanserv%\x02."
   already_approved: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
   already_denied: "\x0304✗\x03 Kanaal \x02%channel%\x02 kan niet worden geregistreerd omdat het gemarkeerd staat als \x0304GEWEIGERD\x03."
   failed: "\x0304✗\x03 De registratie van kanaal \x02%channel%\x02 kon niet worden voltooid."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#kanaal>"
   short: "Verwijdert het registratierecord dat \x02%bot%\x02 voor een kanaal bewaart."
-  help: "Verwijdert het registratierecord dat \x02%bot%\x02 voor een kanaal bewaart en, als het kanaal daar geregistreerd is, verwijdert het ook uit \x02ChanServ\x02. Je hebt de machtiging \x02cregserv.drop\x02 nodig.\n\n\x02#kanaal:\x02 Het kanaal dat je wilt verwijderen.\n\nDe verwijdering uit \x02ChanServ\x02 is zacht: het kanaal gaat in plaats van direct te worden verwijderd in een gratieperiode voor verwijdering."
+  help: "Verwijdert het registratierecord dat \x02%bot%\x02 voor een kanaal bewaart en, als het kanaal daar geregistreerd is, verwijdert het ook uit \x02%chanserv%\x02. Je hebt de machtiging \x02cregserv.drop\x02 nodig.\n\n\x02#kanaal:\x02 Het kanaal dat je wilt verwijderen.\n\nDe verwijdering uit \x02%chanserv%\x02 is zacht: het kanaal gaat in plaats van direct te worden verwijderd in een gratieperiode voor verwijdering."
   example: "/msg CReG DROP #kanaal"
   dropped: "\x0303✔\x03 Het registratierecord van kanaal \x02%channel%\x02 is verwijderd uit \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 Kanaal \x02%channel%\x02 is verwijderd en gaat nu de gratieperiode voor verwijdering in."

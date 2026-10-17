@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#channel>"
   short: "Show the registration state of a channel."
-  help: "Reports where a channel stands in the registration process.\n\nThe possible states are:\n    \x02REGISTERED\x02: the channel is already registered with ChanServ.\n    \x02IN REVIEW\x02: a registration request is waiting for a services oper to approve or deny it.\n    \x02DENIED\x02: the registration request was denied.\n    \x02BEING DELETED\x02: the channel was dropped and is in its deletion grace period; it cannot be registered again until deletion completes.\n    \x02NO PROCESS\x02: the channel has no registration process."
+  help: "Reports where a channel stands in the registration process.\n\nThe possible states are:\n    \x02REGISTERED\x02: the channel is already registered with %chanserv%.\n    \x02IN REVIEW\x02: a registration request is waiting for a services oper to approve or deny it.\n    \x02DENIED\x02: the registration request was denied.\n    \x02BEING DELETED\x02: the channel was dropped and is in its deletion grace period; it cannot be registered again until deletion completes.\n    \x02NO PROCESS\x02: the channel has no registration process."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Channel \x02%channel%\x02 is already registered."
   pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is being deleted and cannot be registered until the deletion completes."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#channel>"
   short: "Approve a pending channel registration request."
-  help: "Registers a channel whose registration request is waiting for review. The channel is registered to the user who requested it; neither of you needs to be inside it. You need the \x02cregserv.aprobar\x02 permission.\n\n\x02#channel:\x02 The channel with the pending request. Use PENDIENTES to see the queue.\n\nOnce approved, the channel is registered with \x02ChanServ\x02 and the request is closed."
+  help: "Registers a channel whose registration request is waiting for review. The channel is registered to the user who requested it; neither of you needs to be inside it. You need the \x02cregserv.aprobar\x02 permission.\n\n\x02#channel:\x02 The channel with the pending request. Use PENDIENTES to see the queue.\n\nOnce approved, the channel is registered with \x02%chanserv%\x02 and the request is closed."
   example: "/msg CReG APROBAR #mychannel"
   approved: "\x0303✔\x03 Channel \x02%channel%\x02 has been correctly registered for \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 The channel name must start with \x02#\x02."
   no_pending: "\x0304✗\x03 Channel \x02%channel%\x02 is not in a registration process."
-  already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered with \x02ChanServ\x02."
+  already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered with \x02%chanserv%\x02."
   already_approved: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
   already_denied: "\x0304✗\x03 Channel \x02%channel%\x02 cannot be registered because it is marked as \x0304DENIED\x03."
   failed: "\x0304✗\x03 The registration of channel \x02%channel%\x02 could not be completed."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "Remove the registration record \x02%bot%\x02 keeps for a channel."
-  help: "Removes the registration record \x02%bot%\x02 keeps for a channel and, if the channel is registered there, also drops it from \x02ChanServ\x02. You need the \x02cregserv.drop\x02 permission.\n\n\x02#channel:\x02 The channel to remove.\n\nThe \x02ChanServ\x02 drop is a soft drop: the channel enters a deletion grace period instead of being deleted immediately."
+  help: "Removes the registration record \x02%bot%\x02 keeps for a channel and, if the channel is registered there, also drops it from \x02%chanserv%\x02. You need the \x02cregserv.drop\x02 permission.\n\n\x02#channel:\x02 The channel to remove.\n\nThe \x02%chanserv%\x02 drop is a soft drop: the channel enters a deletion grace period instead of being deleted immediately."
   example: "/msg CReG DROP #mychannel"
   dropped: "\x0303✔\x03 The registration record of channel \x02%channel%\x02 has been removed from \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 Channel \x02%channel%\x02 has been dropped and now enters the deletion grace period."

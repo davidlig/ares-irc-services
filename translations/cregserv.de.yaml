@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#channel>"
   short: "Zeigt den Registrierungsstatus eines Kanals."
-  help: "Zeigt, an welcher Stelle ein Kanal im Registrierungsprozess steht.\n\nDie möglichen Zustände sind:\n    \x02REGISTRIERT\x02: Der Kanal ist bereits bei ChanServ registriert.\n    \x02IN PRÜFUNG\x02: Eine Registrierungsanfrage wartet darauf, dass ein Services-Operator sie genehmigt oder ablehnt.\n    \x02ABGELEHNT\x02: Die Registrierungsanfrage wurde abgelehnt.\n    \x02WIRD GELÖSCHT\x02: Der Kanal wurde abgemeldet und befindet sich in der Löschschonfrist; er kann erst registriert werden, wenn die Löschung abgeschlossen ist.\n    \x02KEIN PROZESS\x02: Für den Kanal gibt es keinen Registrierungsprozess."
+  help: "Zeigt, an welcher Stelle ein Kanal im Registrierungsprozess steht.\n\nDie möglichen Zustände sind:\n    \x02REGISTRIERT\x02: Der Kanal ist bereits bei %chanserv% registriert.\n    \x02IN PRÜFUNG\x02: Eine Registrierungsanfrage wartet darauf, dass ein Services-Operator sie genehmigt oder ablehnt.\n    \x02ABGELEHNT\x02: Die Registrierungsanfrage wurde abgelehnt.\n    \x02WIRD GELÖSCHT\x02: Der Kanal wurde abgemeldet und befindet sich in der Löschschonfrist; er kann erst registriert werden, wenn die Löschung abgeschlossen ist.\n    \x02KEIN PROZESS\x02: Für den Kanal gibt es keinen Registrierungsprozess."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Der Kanal \x02%channel%\x02 ist bereits registriert."
   pending_deletion: "\x0304✗\x03 Der Kanal \x02%channel%\x02 wird gerade gelöscht und kann erst nach Abschluss der Löschung registriert werden."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#channel>"
   short: "Genehmigt eine ausstehende Kanalregistrierungsanfrage."
-  help: "Registriert einen Kanal, dessen Anfrage auf Prüfung wartet. Der Kanal wird auf den Benutzer registriert, der ihn beantragt hat; keiner von euch beiden muss sich darin befinden. Du brauchst die Berechtigung \x02cregserv.aprobar\x02.\n\n\x02#channel:\x02 Der Kanal mit der ausstehenden Anfrage. Mit PENDIENTES siehst du die Warteschlange.\n\nNach der Genehmigung wird der Kanal bei \x02ChanServ\x02 registriert und die Anfrage geschlossen."
+  help: "Registriert einen Kanal, dessen Anfrage auf Prüfung wartet. Der Kanal wird auf den Benutzer registriert, der ihn beantragt hat; keiner von euch beiden muss sich darin befinden. Du brauchst die Berechtigung \x02cregserv.aprobar\x02.\n\n\x02#channel:\x02 Der Kanal mit der ausstehenden Anfrage. Mit PENDIENTES siehst du die Warteschlange.\n\nNach der Genehmigung wird der Kanal bei \x02%chanserv%\x02 registriert und die Anfrage geschlossen."
   example: "/msg CReG APROBAR #channel"
   approved: "\x0303✔\x03 Der Kanal \x02%channel%\x02 wurde erfolgreich für \x02%founder%\x02 registriert."
   invalid_channel: "\x0304✗\x03 Der Kanalname muss mit \x02#\x02 beginnen."
   no_pending: "\x0304✗\x03 Der Kanal \x02%channel%\x02 befindet sich nicht in einem Registrierungsprozess."
-  already_registered: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist bereits bei \x02ChanServ\x02 registriert."
+  already_registered: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist bereits bei \x02%chanserv%\x02 registriert."
   already_approved: "\x0304✗\x03 Der Kanal \x02%channel%\x02 ist bereits registriert."
   already_denied: "\x0304✗\x03 Der Kanal \x02%channel%\x02 kann nicht registriert werden, da er als \x0304ABGELEHNT\x03 markiert ist."
   failed: "\x0304✗\x03 Die Registrierung des Kanals \x02%channel%\x02 konnte nicht abgeschlossen werden."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "Entfernt den Registrierungseintrag, den \x02%bot%\x02 für einen Kanal speichert."
-  help: "Entfernt den Eintrag, den \x02%bot%\x02 für einen Kanal speichert, und meldet den Kanal, wenn er dort registriert ist, auch bei \x02ChanServ\x02 ab. Du brauchst die Berechtigung \x02cregserv.drop\x02.\n\n\x02#channel:\x02 Der Kanal, den du entfernen möchtest.\n\nDie Abmeldung bei \x02ChanServ\x02 ist weich: Der Kanal tritt statt sofortiger Löschung in eine Schonfrist für die Löschung ein."
+  help: "Entfernt den Eintrag, den \x02%bot%\x02 für einen Kanal speichert, und meldet den Kanal, wenn er dort registriert ist, auch bei \x02%chanserv%\x02 ab. Du brauchst die Berechtigung \x02cregserv.drop\x02.\n\n\x02#channel:\x02 Der Kanal, den du entfernen möchtest.\n\nDie Abmeldung bei \x02%chanserv%\x02 ist weich: Der Kanal tritt statt sofortiger Löschung in eine Schonfrist für die Löschung ein."
   example: "/msg CReG DROP #channel"
   dropped: "\x0303✔\x03 Der Registrierungseintrag des Kanals \x02%channel%\x02 wurde aus \x02%bot%\x02 entfernt."
   dropped_channel: "\x0303✔\x03 Der Kanal \x02%channel%\x02 wurde gelöscht und tritt nun in die Schonfrist für die Löschung ein."

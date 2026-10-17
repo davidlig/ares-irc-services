@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#channel>"
   short: "Bir kanalın kayıt durumunu gösterir."
-  help: "Bir kanalın kayıt sürecinin hangi aşamasında olduğunu bildirir.\n\nOlası durumlar şunlardır:\n    \x02KAYITLI\x02: kanal zaten ChanServ'e kayıtlı.\n    \x02İNCELEMEDE\x02: bir kayıt talebi bir hizmet operatörünün onaylamasını veya reddetmesini bekliyor.\n    \x02REDDEDİLDİ\x02: kayıt talebi reddedildi.\n    \x02SİLİNİYOR\x02: kanal düşürüldü ve silme bekleme döneminde; silme tamamlanana kadar yeniden kaydedilemez.\n    \x02SÜREÇ YOK\x02: kanalın kayıt süreci yok."
+  help: "Bir kanalın kayıt sürecinin hangi aşamasında olduğunu bildirir.\n\nOlası durumlar şunlardır:\n    \x02KAYITLI\x02: kanal zaten %chanserv%'e kayıtlı.\n    \x02İNCELEMEDE\x02: bir kayıt talebi bir hizmet operatörünün onaylamasını veya reddetmesini bekliyor.\n    \x02REDDEDİLDİ\x02: kayıt talebi reddedildi.\n    \x02SİLİNİYOR\x02: kanal düşürüldü ve silme bekleme döneminde; silme tamamlanana kadar yeniden kaydedilemez.\n    \x02SÜREÇ YOK\x02: kanalın kayıt süreci yok."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı siliniyor ve silme işlemi tamamlanana kadar kaydedilemez."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#channel>"
   short: "Bekleyen bir kanal kayıt talebini onaylar."
-  help: "Talebi inceleme bekleyen bir kanalı kaydeder. Kanal, talep eden kullanıcı adına kaydedilir; ikinizin de içeride olmasına gerek yok. \x02cregserv.aprobar\x02 iznine ihtiyacın var.\n\n\x02#channel:\x02 Bekleyen talebi olan kanal. Kuyruğu görmek için PENDIENTES kullan.\n\nOnaylandıktan sonra kanal \x02ChanServ\x02 üzerinde kaydedilir ve talep kapanır."
+  help: "Talebi inceleme bekleyen bir kanalı kaydeder. Kanal, talep eden kullanıcı adına kaydedilir; ikinizin de içeride olmasına gerek yok. \x02cregserv.aprobar\x02 iznine ihtiyacın var.\n\n\x02#channel:\x02 Bekleyen talebi olan kanal. Kuyruğu görmek için PENDIENTES kullan.\n\nOnaylandıktan sonra kanal \x02%chanserv%\x02 üzerinde kaydedilir ve talep kapanır."
   example: "/msg CReG APROBAR #channel"
   approved: "\x0303✔\x03 \x02%channel%\x02 kanalı \x02%founder%\x02 için başarıyla kaydedildi."
   invalid_channel: "\x0304✗\x03 Kanal adı bir \x02#\x02 ile başlamalıdır."
   no_pending: "\x0304✗\x03 \x02%channel%\x02 kanalı bir kayıt sürecinde değil."
-  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten \x02ChanServ\x02 üzerinde kayıtlı."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten \x02%chanserv%\x02 üzerinde kayıtlı."
   already_approved: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
   already_denied: "\x0304✗\x03 \x02%channel%\x02 kanalı \x0304REDDEDİLDİ\x03 olarak işaretlendiği için kaydedilemez."
   failed: "\x0304✗\x03 \x02%channel%\x02 kanalının kaydı tamamlanamadı."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "\x02%bot%\x02'ün bir kanal için tuttuğu kayıt kaydını siler."
-  help: "\x02%bot%\x02'ün bir kanal için tuttuğu kaydı siler ve kanal orada kayıtlıysa \x02ChanServ\x02'den de çıkarır. \x02cregserv.drop\x02 iznine ihtiyacın var.\n\n\x02#channel:\x02 Silmek istediğin kanal.\n\n\x02ChanServ\x02'den çıkarma yumuşaktır: kanal hemen silinmek yerine silme bekleme süresine girer."
+  help: "\x02%bot%\x02'ün bir kanal için tuttuğu kaydı siler ve kanal orada kayıtlıysa \x02%chanserv%\x02'den de çıkarır. \x02cregserv.drop\x02 iznine ihtiyacın var.\n\n\x02#channel:\x02 Silmek istediğin kanal.\n\n\x02%chanserv%\x02'den çıkarma yumuşaktır: kanal hemen silinmek yerine silme bekleme süresine girer."
   example: "/msg CReG DROP #channel"
   dropped: "\x0303✔\x03 \x02%channel%\x02 kanalının kayıt kaydı \x02%bot%\x02 üzerinden silindi."
   dropped_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı silindi ve artık silme bekleme süresine giriyor."

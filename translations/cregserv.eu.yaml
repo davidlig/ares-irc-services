@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#kanala>"
   short: "Kanal baten erregistro egoera erakusten du."
-  help: "Kanal bat erregistro-prozesuan non dagoen adierazten du.\n\nEgongo diren egoerak hauek dira:\n    \x02ERREGISTRATUTA\x02: kanala dagoeneko erregistratuta dago ChanServ-en.\n    \x02AZTERKETAN\x02: erregistro eskaera batek zerbitzuetako operadore baten zain dago onartu edo ukatu dezan.\n    \x02UKATUTA\x02: erregistro eskaera ukatua izan zen.\n    \x02EZABATZEN\x02: kanala baja emanda dago eta ezabaketaren epe-grazian; ezin da berriro erregistratu ezabaketa amaitu arte.\n    \x02PROZESURIK GABE\x02: kanalak ez du erregistro-prozesurik."
+  help: "Kanal bat erregistro-prozesuan non dagoen adierazten du.\n\nEgongo diren egoerak hauek dira:\n    \x02ERREGISTRATUTA\x02: kanala dagoeneko erregistratuta dago %chanserv%-en.\n    \x02AZTERKETAN\x02: erregistro eskaera batek zerbitzuetako operadore baten zain dago onartu edo ukatu dezan.\n    \x02UKATUTA\x02: erregistro eskaera ukatua izan zen.\n    \x02EZABATZEN\x02: kanala baja emanda dago eta ezabaketaren epe-grazian; ezin da berriro erregistratu ezabaketa amaitu arte.\n    \x02PROZESURIK GABE\x02: kanalak ez du erregistro-prozesurik."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 \x02%channel%\x02 kanala dagoeneko erregistratuta dago."
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ezabatzen ari da eta ezin da erregistratu ezabaketa amaitu arte."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#kanala>"
   short: "Kanal-erregistro eskaera bat onartzen du."
-  help: "Azterketa zain dagoen eskaera duen kanal bat erregistratzen du. Kanala eskatu zuen erabiltzailearen izenean erregistratzen da; ez duzu kanalean egon behar. \x02cregserv.aprobar\x02 baimena behar duzu.\n\n\x02#kanala:\x02 Eskaera zain dagoen kanala. Erabili PENDIENTES ilara ikusteko.\n\nOnartu ondoren, kanala \x02ChanServ\x02(e)n erregistratzen da eta eskaera itxi egiten da."
+  help: "Azterketa zain dagoen eskaera duen kanal bat erregistratzen du. Kanala eskatu zuen erabiltzailearen izenean erregistratzen da; ez duzu kanalean egon behar. \x02cregserv.aprobar\x02 baimena behar duzu.\n\n\x02#kanala:\x02 Eskaera zain dagoen kanala. Erabili PENDIENTES ilara ikusteko.\n\nOnartu ondoren, kanala \x02%chanserv%\x02(e)n erregistratzen da eta eskaera itxi egiten da."
   example: "/msg CReG APROBAR #kanala"
   approved: "\x0303✔\x03 \x02%channel%\x02 kanala ondo erregistratu da \x02%founder%\x02(r)entzat."
   invalid_channel: "\x0304✗\x03 Kanalaren izenak \x02#\x02 batekin hasi behar du."
   no_pending: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistro-prozesuan."
-  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko \x02ChanServ\x02(e)n erregistratuta dago."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko \x02%chanserv%\x02(e)n erregistratuta dago."
   already_approved: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko erregistratuta dago."
   already_denied: "\x0304✗\x03 \x02%channel%\x02 kanala ezin da erregistratu \x0304UKATUTA\x03 gisa markatuta baitago."
   failed: "\x0304✗\x03 \x02%channel%\x02 kanalaren erregistroa ezin da burutu."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#kanala>"
   short: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du."
-  help: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du eta, kanala han erregistratuta badago, \x02ChanServ\x02(e)tik ere kentzen du. \x02cregserv.drop\x02 baimena behar duzu.\n\n\x02#kanala:\x02 Kendu nahi duzun kanala.\n\n\x02ChanServ\x02(e)ko bajua biguna da: kanala ezabatzeko grazia-aldian sartzen da, berehala ezabatu beharrean."
+  help: "Kanal baten \x02%bot%\x02(e)an dagoen erregistroa kentzen du eta, kanala han erregistratuta badago, \x02%chanserv%\x02(e)tik ere kentzen du. \x02cregserv.drop\x02 baimena behar duzu.\n\n\x02#kanala:\x02 Kendu nahi duzun kanala.\n\n\x02%chanserv%\x02(e)ko bajua biguna da: kanala ezabatzeko grazia-aldian sartzen da, berehala ezabatu beharrean."
   example: "/msg CReG DROP #kanala"
   dropped: "\x0303✔\x03 \x02%channel%\x02 kanalaren erregistroa kendu da \x02%bot%\x02(e)tik."
   dropped_channel: "\x0303✔\x03 \x02%channel%\x02 kanala kendu da eta orain ezabaketa grazia-aldian sartzen da."

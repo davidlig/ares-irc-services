@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#kanał>"
   short: "Pokazuje stan rejestracji kanału."
-  help: "Wskazuje, na jakim etapie jest kanał w procesie rejestracji.\n\nMożliwe stany to:\n    \x02ZAREJESTROWANY\x02: kanał jest już zarejestrowany w ChanServ.\n    \x02W TRAKCIE SPRAWDZENIA\x02: prośba o rejestrację czeka na zatwierdzenie lub odrzucenie przez operatora usług.\n    \x02ODRZUCONY\x02: prośba o rejestrację została odrzucona.\n    \x02JEST USUWANY\x02: kanał został wyrejestrowany i znajduje się w okresie karencji usuwania; nie można go zarejestrować ponownie do czasu zakończenia usuwania.\n    \x02BRAK PROCESU\x02: kanał nie ma procesu rejestracji."
+  help: "Wskazuje, na jakim etapie jest kanał w procesie rejestracji.\n\nMożliwe stany to:\n    \x02ZAREJESTROWANY\x02: kanał jest już zarejestrowany w %chanserv%.\n    \x02W TRAKCIE SPRAWDZENIA\x02: prośba o rejestrację czeka na zatwierdzenie lub odrzucenie przez operatora usług.\n    \x02ODRZUCONY\x02: prośba o rejestrację została odrzucona.\n    \x02JEST USUWANY\x02: kanał został wyrejestrowany i znajduje się w okresie karencji usuwania; nie można go zarejestrować ponownie do czasu zakończenia usuwania.\n    \x02BRAK PROCESU\x02: kanał nie ma procesu rejestracji."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
   pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 jest właśnie usuwany i nie może być zarejestrowany do czasu zakończenia usuwania."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#kanał>"
   short: "Zatwierdza oczekującą prośbę o rejestrację kanału."
-  help: "Rejestruje kanał, którego prośba czeka na sprawdzenie. Kanał jest rejestrowany na osobę, która ją złożyła; żadne z was nie musi być w środku. Potrzebujesz uprawnienia \x02cregserv.aprobar\x02.\n\n\x02#kanał:\x02 Kanał z oczekującą prośbą. Użyj PENDIENTES, aby zobaczyć kolejkę.\n\nPo zatwierdzeniu kanał zostaje zarejestrowany w \x02ChanServ\x02, a prośba zostaje zamknięta."
+  help: "Rejestruje kanał, którego prośba czeka na sprawdzenie. Kanał jest rejestrowany na osobę, która ją złożyła; żadne z was nie musi być w środku. Potrzebujesz uprawnienia \x02cregserv.aprobar\x02.\n\n\x02#kanał:\x02 Kanał z oczekującą prośbą. Użyj PENDIENTES, aby zobaczyć kolejkę.\n\nPo zatwierdzeniu kanał zostaje zarejestrowany w \x02%chanserv%\x02, a prośba zostaje zamknięta."
   example: "/msg CReG APROBAR #kanał"
   approved: "\x0303✔\x03 Kanał \x02%channel%\x02 został poprawnie zarejestrowany dla \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 Nazwa kanału musi zaczynać się od \x02#\x02."
   no_pending: "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest w procesie rejestracji."
-  already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany w \x02ChanServ\x02."
+  already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany w \x02%chanserv%\x02."
   already_approved: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
   already_denied: "\x0304✗\x03 Kanału \x02%channel%\x02 nie można zarejestrować, ponieważ jest oznaczony jako \x0304ODRZUCONE\x03."
   failed: "\x0304✗\x03 Nie udało się zakończyć rejestracji kanału \x02%channel%\x02."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#kanał>"
   short: "Usuwa wpis o rejestracji, który \x02%bot%\x02 przechowuje dla kanału."
-  help: "Usuwa wpis o rejestracji, który \x02%bot%\x02 przechowuje dla kanału, a jeśli kanał jest tam zarejestrowany, wyrejestrowuje go również z \x02ChanServ\x02. Potrzebujesz uprawnienia \x02cregserv.drop\x02.\n\n\x02#kanał:\x02 Kanał, który chcesz usunąć.\n\nWyrejestrowanie z \x02ChanServ\x02 jest miękkie: kanał wchodzi w okres karencji usuwania zamiast być usunięty od razu."
+  help: "Usuwa wpis o rejestracji, który \x02%bot%\x02 przechowuje dla kanału, a jeśli kanał jest tam zarejestrowany, wyrejestrowuje go również z \x02%chanserv%\x02. Potrzebujesz uprawnienia \x02cregserv.drop\x02.\n\n\x02#kanał:\x02 Kanał, który chcesz usunąć.\n\nWyrejestrowanie z \x02%chanserv%\x02 jest miękkie: kanał wchodzi w okres karencji usuwania zamiast być usunięty od razu."
   example: "/msg CReG DROP #kanał"
   dropped: "\x0303✔\x03 Wpis o rejestracji kanału \x02%channel%\x02 został usunięty z \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 Kanał \x02%channel%\x02 został usunięty i wchodzi teraz w okres karencji usuwania."

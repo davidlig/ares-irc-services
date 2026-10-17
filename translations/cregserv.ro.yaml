@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#canal>"
   short: "Arată starea de înregistrare a unui canal."
-  help: "Indică în ce punct se află un canal în procesul de înregistrare.\n\nStările posibile sunt:\n    \x02ÎNREGISTRAT\x02: canalul este deja înregistrat la ChanServ.\n    \x02ÎN VERIFICARE\x02: o cerere de înregistrare așteaptă ca un operator de servicii să o aprobe sau să o respingă.\n    \x02RESPINS\x02: cererea de înregistrare a fost respinsă.\n    \x02ÎN CURS DE ȘTERGERE\x02: canalul a fost dezafiliat și se află în perioada de grație a ștergerii; nu poate fi înregistrat din nou până la finalizarea ștergerii.\n    \x02FĂRĂ PROCES\x02: canalul nu are niciun proces de înregistrare."
+  help: "Indică în ce punct se află un canal în procesul de înregistrare.\n\nStările posibile sunt:\n    \x02ÎNREGISTRAT\x02: canalul este deja înregistrat la %chanserv%.\n    \x02ÎN VERIFICARE\x02: o cerere de înregistrare așteaptă ca un operator de servicii să o aprobe sau să o respingă.\n    \x02RESPINS\x02: cererea de înregistrare a fost respinsă.\n    \x02ÎN CURS DE ȘTERGERE\x02: canalul a fost dezafiliat și se află în perioada de grație a ștergerii; nu poate fi înregistrat din nou până la finalizarea ștergerii.\n    \x02FĂRĂ PROCES\x02: canalul nu are niciun proces de înregistrare."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Canalul \x02%channel%\x02 este deja înregistrat."
   pending_deletion: "\x0304✗\x03 Canalul \x02%channel%\x02 este în curs de ștergere și nu poate fi înregistrat până la finalizarea ștergerii."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#canal>"
   short: "Aprobă o cerere de înregistrare a unui canal în așteptare."
-  help: "Înregistrează un canal a cărui cerere așteaptă verificarea. Canalul se înregistrează pe numele utilizatorului care l-a cerut; niciunul dintre voi nu trebuie să fie înăuntru. Ai nevoie de permisiunea \x02cregserv.aprobar\x02.\n\n\x02#canal:\x02 Canalul cu cererea în așteptare. Folosește PENDIENTES pentru a vedea coada.\n\nOdată aprobat, canalul este înregistrat la \x02ChanServ\x02, iar cererea este închisă."
+  help: "Înregistrează un canal a cărui cerere așteaptă verificarea. Canalul se înregistrează pe numele utilizatorului care l-a cerut; niciunul dintre voi nu trebuie să fie înăuntru. Ai nevoie de permisiunea \x02cregserv.aprobar\x02.\n\n\x02#canal:\x02 Canalul cu cererea în așteptare. Folosește PENDIENTES pentru a vedea coada.\n\nOdată aprobat, canalul este înregistrat la \x02%chanserv%\x02, iar cererea este închisă."
   example: "/msg CReG APROBAR #canal"
   approved: "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat cu succes pentru \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 Numele canalului trebuie să înceapă cu un \x02#\x02."
   no_pending: "\x0304✗\x03 Canalul \x02%channel%\x02 nu se află într-un proces de înregistrare."
-  already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat la \x02ChanServ\x02."
+  already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat la \x02%chanserv%\x02."
   already_approved: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
   already_denied: "\x0304✗\x03 Canalul \x02%channel%\x02 nu poate fi înregistrat deoarece este marcat ca \x0304RESPINS\x03."
   failed: "\x0304✗\x03 Înregistrarea canalului \x02%channel%\x02 nu a putut fi finalizată."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#canal>"
   short: "Elimină înregistrarea pe care \x02%bot%\x02 o păstrează pentru un canal."
-  help: "Elimină înregistrarea pe care \x02%bot%\x02 o păstrează pentru un canal și, dacă acesta este înregistrat acolo, îl scoate și din \x02ChanServ\x02. Ai nevoie de permisiunea \x02cregserv.drop\x02.\n\n\x02#canal:\x02 Canalul pe care vrei să-l elimini.\n\nScoaterea din \x02ChanServ\x02 este una blândă: canalul intră într-o perioadă de grație a ștergerii în loc să fie șters imediat."
+  help: "Elimină înregistrarea pe care \x02%bot%\x02 o păstrează pentru un canal și, dacă acesta este înregistrat acolo, îl scoate și din \x02%chanserv%\x02. Ai nevoie de permisiunea \x02cregserv.drop\x02.\n\n\x02#canal:\x02 Canalul pe care vrei să-l elimini.\n\nScoaterea din \x02%chanserv%\x02 este una blândă: canalul intră într-o perioadă de grație a ștergerii în loc să fie șters imediat."
   example: "/msg CReG DROP #canal"
   dropped: "\x0303✔\x03 Înregistrarea canalului \x02%channel%\x02 a fost eliminată din \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 Canalul \x02%channel%\x02 a fost eliminat și intră acum în perioada de grație a ștergerii."

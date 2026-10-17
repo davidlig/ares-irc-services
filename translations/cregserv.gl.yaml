@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#canle>"
   short: "Amosa o estado de rexistro dunha canle."
-  help: "Indica en que punto se atopa unha canle dentro do proceso de rexistro.\n\nOs estados posibles son:\n    \x02REXISTRADA\x02: a canle xa está rexistrada con ChanServ.\n    \x02EN REVISIÓN\x02: unha solicitude de rexistro espera a que un operador de servizos a aprove ou a denegue.\n    \x02DENEGADA\x02: a solicitude de rexistro foi denegada.\n    \x02EN ELIMINACIÓN\x02: a canle foi dada de baixa e está no seu período de graza de eliminación; non pode rexistrarse de novo até que remate a eliminación.\n    \x02SEN PROCESO\x02: a canle non ten ningún proceso de rexistro."
+  help: "Indica en que punto se atopa unha canle dentro do proceso de rexistro.\n\nOs estados posibles son:\n    \x02REXISTRADA\x02: a canle xa está rexistrada con %chanserv%.\n    \x02EN REVISIÓN\x02: unha solicitude de rexistro espera a que un operador de servizos a aprove ou a denegue.\n    \x02DENEGADA\x02: a solicitude de rexistro foi denegada.\n    \x02EN ELIMINACIÓN\x02: a canle foi dada de baixa e está no seu período de graza de eliminación; non pode rexistrarse de novo até que remate a eliminación.\n    \x02SEN PROCESO\x02: a canle non ten ningún proceso de rexistro."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 A canle \x02%channel%\x02 xa está rexistrada."
   pending_deletion: "\x0304✗\x03 A canle \x02%channel%\x02 estase eliminando e non pode ser rexistrada ata que se complete a eliminación."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#canle>"
   short: "Aprueba unha solicitude de rexistro de canle pendente."
-  help: "Rexistra unha canle cuxa solicitude está á espera de revisión. A canle rexístrase a nome de quen a solicitou; ningún dos dous ten que estar dentro. Necesitas o permiso \x02cregserv.aprobar\x02.\n\n\x02#canle:\x02 A canle coa solicitude pendente. Usa PENDIENTES para ver a cola.\n\nUnha vez aprobada, a canle queda rexistrada en \x02ChanServ\x02 e a solicitude péchase."
+  help: "Rexistra unha canle cuxa solicitude está á espera de revisión. A canle rexístrase a nome de quen a solicitou; ningún dos dous ten que estar dentro. Necesitas o permiso \x02cregserv.aprobar\x02.\n\n\x02#canle:\x02 A canle coa solicitude pendente. Usa PENDIENTES para ver a cola.\n\nUnha vez aprobada, a canle queda rexistrada en \x02%chanserv%\x02 e a solicitude péchase."
   example: "/msg CReG APROBAR #canle"
   approved: "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada correctamente para \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 O nome da canle debe empezar por un \x02#\x02."
   no_pending: "\x0304✗\x03 A canle \x02%channel%\x02 non está en proceso de rexistro."
-  already_registered: "\x0304✗\x03 A canle \x02%channel%\x02 xa está rexistrada con \x02ChanServ\x02."
+  already_registered: "\x0304✗\x03 A canle \x02%channel%\x02 xa está rexistrada con \x02%chanserv%\x02."
   already_approved: "\x0304✗\x03 A canle \x02%channel%\x02 xa está rexistrada."
   already_denied: "\x0304✗\x03 A canle \x02%channel%\x02 non pode ser rexistrada porque está marcada como \x0304DENEGADO\x03."
   failed: "\x0304✗\x03 Non se puido completar o rexistro da canle \x02%channel%\x02."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#canle>"
   short: "Elimina o rexistro de canle que \x02%bot%\x02 garda para unha canle."
-  help: "Elimina o rexistro que \x02%bot%\x02 garda para unha canle e, se a canle está rexistrada alí, tamén a dá de baixa de \x02ChanServ\x02. Necesitas o permiso \x02cregserv.drop\x02.\n\n\x02#canle:\x02 A canle que queres eliminar.\n\nA baixa de \x02ChanServ\x02 é branda: a canle entra nun período de graza de eliminación en lugar de borrarse de inmediato."
+  help: "Elimina o rexistro que \x02%bot%\x02 garda para unha canle e, se a canle está rexistrada alí, tamén a dá de baixa de \x02%chanserv%\x02. Necesitas o permiso \x02cregserv.drop\x02.\n\n\x02#canle:\x02 A canle que queres eliminar.\n\nA baixa de \x02%chanserv%\x02 é branda: a canle entra nun período de graza de eliminación en lugar de borrarse de inmediato."
   example: "/msg CReG DROP #canle"
   dropped: "\x0303✔\x03 O rexistro da canle \x02%channel%\x02 foi eliminado de \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 A canle \x02%channel%\x02 foi eliminada e agora entra no período de graza de eliminación."

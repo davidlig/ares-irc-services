@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#canal>"
   short: "Affiche l'état d'enregistrement d'un canal."
-  help: "Indique à quelle étape en est un canal dans le processus d'enregistrement.\n\nLes états possibles sont :\n    \x02ENREGISTRÉ\x02 : le canal est déjà enregistré avec ChanServ.\n    \x02EN EXAMEN\x02 : une demande d'enregistrement attend qu'un opérateur de services l'approuve ou la refuse.\n    \x02REFUSÉ\x02 : la demande d'enregistrement a été refusée.\n    \x02EN SUPPRESSION\x02 : le canal a été abandonné et se trouve dans sa période de grâce de suppression ; il ne peut pas être réenregistré tant que la suppression n'est pas terminée.\n    \x02AUCUN PROCESSUS\x02 : le canal n'a aucun processus d'enregistrement."
+  help: "Indique à quelle étape en est un canal dans le processus d'enregistrement.\n\nLes états possibles sont :\n    \x02ENREGISTRÉ\x02 : le canal est déjà enregistré avec %chanserv%.\n    \x02EN EXAMEN\x02 : une demande d'enregistrement attend qu'un opérateur de services l'approuve ou la refuse.\n    \x02REFUSÉ\x02 : la demande d'enregistrement a été refusée.\n    \x02EN SUPPRESSION\x02 : le canal a été abandonné et se trouve dans sa période de grâce de suppression ; il ne peut pas être réenregistré tant que la suppression n'est pas terminée.\n    \x02AUCUN PROCESSUS\x02 : le canal n'a aucun processus d'enregistrement."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 Le canal \x02%channel%\x02 est déjà enregistré."
   pending_deletion: "\x0304✗\x03 Le canal \x02%channel%\x02 est en cours de suppression et ne peut pas être enregistré tant que la suppression n'est pas terminée."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#canal>"
   short: "Approuve une demande d'enregistrement de canal en attente."
-  help: "Enregistre un canal dont la demande est en attente d'examen. Le canal est enregistré au nom de l'utilisateur qui l'a demandé ; aucun de vous deux n'a besoin d'y être. Vous avez besoin de la permission \x02cregserv.aprobar\x02.\n\n\x02#canal:\x02 Le canal dont la demande est en attente. Utilisez PENDIENTES pour voir la file d'attente.\n\nUne fois approuvé, le canal est enregistré auprès de \x02ChanServ\x02 et la demande est clôturée."
+  help: "Enregistre un canal dont la demande est en attente d'examen. Le canal est enregistré au nom de l'utilisateur qui l'a demandé ; aucun de vous deux n'a besoin d'y être. Vous avez besoin de la permission \x02cregserv.aprobar\x02.\n\n\x02#canal:\x02 Le canal dont la demande est en attente. Utilisez PENDIENTES pour voir la file d'attente.\n\nUne fois approuvé, le canal est enregistré auprès de \x02%chanserv%\x02 et la demande est clôturée."
   example: "/msg CReG APROBAR #canal"
   approved: "\x0303✔\x03 Le canal \x02%channel%\x02 a été enregistré avec succès pour \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 Le nom du canal doit commencer par un \x02#\x02."
   no_pending: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas en cours d'enregistrement."
-  already_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré auprès de \x02ChanServ\x02."
+  already_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré auprès de \x02%chanserv%\x02."
   already_approved: "\x0304✗\x03 Le canal \x02%channel%\x02 est déjà enregistré."
   already_denied: "\x0304✗\x03 Le canal \x02%channel%\x02 ne peut pas être enregistré car il est marqué \x0304REFUSÉ\x03."
   failed: "\x0304✗\x03 L'enregistrement du canal \x02%channel%\x02 n'a pas pu aboutir."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#canal>"
   short: "Supprime l'enregistrement que \x02%bot%\x02 conserve pour un canal."
-  help: "Supprime l'enregistrement que \x02%bot%\x02 conserve pour un canal et, si le canal y est enregistré, le retire aussi de \x02ChanServ\x02. Vous avez besoin de la permission \x02cregserv.drop\x02.\n\n\x02#canal:\x02 Le canal à supprimer.\n\nLe retrait de \x02ChanServ\x02 est un retrait doux : le canal entre dans une période de grâce de suppression au lieu d'être supprimé immédiatement."
+  help: "Supprime l'enregistrement que \x02%bot%\x02 conserve pour un canal et, si le canal y est enregistré, le retire aussi de \x02%chanserv%\x02. Vous avez besoin de la permission \x02cregserv.drop\x02.\n\n\x02#canal:\x02 Le canal à supprimer.\n\nLe retrait de \x02%chanserv%\x02 est un retrait doux : le canal entre dans une période de grâce de suppression au lieu d'être supprimé immédiatement."
   example: "/msg CReG DROP #canal"
   dropped: "\x0303✔\x03 L'enregistrement du canal \x02%channel%\x02 a été supprimé de \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 Le canal \x02%channel%\x02 a été supprimé et entre désormais dans la période de grâce de suppression."

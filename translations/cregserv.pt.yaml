@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#canal>"
   short: "Mostra o estado de registo de um canal."
-  help: "Indica em que ponto está um canal no processo de registo.\n\nOs estados possíveis são:\n    \x02REGISTADO\x02: o canal já está registado no ChanServ.\n    \x02EM ANÁLISE\x02: um pedido de registo espera que um operador de serviços o aprove ou o rejeite.\n    \x02NEGADO\x02: o pedido de registo foi negado.\n    \x02A SER REMOVIDO\x02: o canal foi dado de baixa e está no seu período de carência de remoção; não pode ser registado de novo até a remoção terminar.\n    \x02SEM PROCESSO\x02: o canal não tem processo de registo."
+  help: "Indica em que ponto está um canal no processo de registo.\n\nOs estados possíveis são:\n    \x02REGISTADO\x02: o canal já está registado no %chanserv%.\n    \x02EM ANÁLISE\x02: um pedido de registo espera que um operador de serviços o aprove ou o rejeite.\n    \x02NEGADO\x02: o pedido de registo foi negado.\n    \x02A SER REMOVIDO\x02: o canal foi dado de baixa e está no seu período de carência de remoção; não pode ser registado de novo até a remoção terminar.\n    \x02SEM PROCESSO\x02: o canal não tem processo de registo."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 O canal \x02%channel%\x02 já está registado."
   pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 está a ser removido e não pode ser registado até que a remoção termine."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#canal>"
   short: "Aprova um pedido de registo de canal pendente."
-  help: "Regista um canal cujo pedido está à espera de revisão. O canal é registado em nome de quem o pediu; nenhum de vocês tem de estar lá dentro. Precisas da permissão \x02cregserv.aprobar\x02.\n\n\x02#canal:\x02 O canal com o pedido pendente. Usa PENDIENTES para ver a fila.\n\nDepois de aprovado, o canal fica registado no \x02ChanServ\x02 e o pedido é encerrado."
+  help: "Regista um canal cujo pedido está à espera de revisão. O canal é registado em nome de quem o pediu; nenhum de vocês tem de estar lá dentro. Precisas da permissão \x02cregserv.aprobar\x02.\n\n\x02#canal:\x02 O canal com o pedido pendente. Usa PENDIENTES para ver a fila.\n\nDepois de aprovado, o canal fica registado no \x02%chanserv%\x02 e o pedido é encerrado."
   example: "/msg CReG APROBAR #canal"
   approved: "\x0303✔\x03 O canal \x02%channel%\x02 foi corretamente registado para \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 O nome do canal tem de começar por um \x02#\x02."
   no_pending: "\x0304✗\x03 O canal \x02%channel%\x02 não está em processo de registo."
-  already_registered: "\x0304✗\x03 O canal \x02%channel%\x02 já está registado no \x02ChanServ\x02."
+  already_registered: "\x0304✗\x03 O canal \x02%channel%\x02 já está registado no \x02%chanserv%\x02."
   already_approved: "\x0304✗\x03 O canal \x02%channel%\x02 já está registado."
   already_denied: "\x0304✗\x03 O canal \x02%channel%\x02 não pode ser registado porque está marcado como \x0304NEGADO\x03."
   failed: "\x0304✗\x03 Não foi possível concluir o registo do canal \x02%channel%\x02."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#canal>"
   short: "Remove o registo de canal que \x02%bot%\x02 guarda para um canal."
-  help: "Remove o registo que \x02%bot%\x02 guarda para um canal e, se o canal lá estiver registado, também o retira do \x02ChanServ\x02. Precisas da permissão \x02cregserv.drop\x02.\n\n\x02#canal:\x02 O canal que queres remover.\n\nA remoção do \x02ChanServ\x02 é suave: o canal entra num período de carência de remoção em vez de ser apagado de imediato."
+  help: "Remove o registo que \x02%bot%\x02 guarda para um canal e, se o canal lá estiver registado, também o retira do \x02%chanserv%\x02. Precisas da permissão \x02cregserv.drop\x02.\n\n\x02#canal:\x02 O canal que queres remover.\n\nA remoção do \x02%chanserv%\x02 é suave: o canal entra num período de carência de remoção em vez de ser apagado de imediato."
   example: "/msg CReG DROP #canal"
   dropped: "\x0303✔\x03 O registo do canal \x02%channel%\x02 foi removido do \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 O canal \x02%channel%\x02 foi removido e entra agora no período de carência de remoção."

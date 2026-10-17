@@ -27,7 +27,7 @@ registra:
 estado:
   syntax: "ESTADO <#channel>"
   short: "Mostra l'estat de registre d'un canal."
-  help: "Indica en quin punt es troba un canal dins del procés de registre.\n\nEls estats possibles són:\n    \x02REGISTRAT\x02: el canal ja està registrat amb ChanServ.\n    \x02EN REVISIÓ\x02: una sol·licitud de registre espera que un operador de serveis l'aprovi o la denegui.\n    \x02DENEGAT\x02: la sol·licitud de registre va ser denegada.\n    \x02EN ELIMINACIÓ\x02: el canal s'ha donat de baixa i és al període de gràcia d'eliminació; no pot tornar-se a registrar fins que s'acabi l'eliminació.\n    \x02SEN PROCÉS\x02: el canal no té cap procés de registre."
+  help: "Indica en quin punt es troba un canal dins del procés de registre.\n\nEls estats possibles són:\n    \x02REGISTRAT\x02: el canal ja està registrat amb %chanserv%.\n    \x02EN REVISIÓ\x02: una sol·licitud de registre espera que un operador de serveis l'aprovi o la denegui.\n    \x02DENEGAT\x02: la sol·licitud de registre va ser denegada.\n    \x02EN ELIMINACIÓ\x02: el canal s'ha donat de baixa i és al període de gràcia d'eliminació; no pot tornar-se a registrar fins que s'acabi l'eliminació.\n    \x02SEN PROCÉS\x02: el canal no té cap procés de registre."
   example: "/msg CReG ESTADO #mychannel"
   registered: "\x0303✔\x03 El canal \x02%channel%\x02 ja està registrat."
   pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 s'està eliminant i no pot ser registrat fins que es completi l'eliminació."
@@ -49,12 +49,12 @@ cancel:
 aprobar:
   syntax: "APROBAR <#channel>"
   short: "Aprova una sol·licitud de registre de canal pendent."
-  help: "Registra un canal la sol·licitud del qual està a l'espera de revisió. El canal es registra a nom de qui la va sol·licitar; cap dels dos ha d'estar a dins. Necessites el permís \x02cregserv.aprobar\x02.\n\n\x02#channel:\x02 El canal amb la sol·licitud pendent. Usa PENDIENTES per veure la cua.\n\nUn cop aprovat, el canal queda registrat a \x02ChanServ\x02 i la sol·licitud es tanca."
+  help: "Registra un canal la sol·licitud del qual està a l'espera de revisió. El canal es registra a nom de qui la va sol·licitar; cap dels dos ha d'estar a dins. Necessites el permís \x02cregserv.aprobar\x02.\n\n\x02#channel:\x02 El canal amb la sol·licitud pendent. Usa PENDIENTES per veure la cua.\n\nUn cop aprovat, el canal queda registrat a \x02%chanserv%\x02 i la sol·licitud es tanca."
   example: "/msg CReG APROBAR #channel"
   approved: "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat correctament per a \x02%founder%\x02."
   invalid_channel: "\x0304✗\x03 El nom del canal ha de començar per un \x02#\x02."
   no_pending: "\x0304✗\x03 El canal \x02%channel%\x02 no està en procés de registre."
-  already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat amb \x02ChanServ\x02."
+  already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat amb \x02%chanserv%\x02."
   already_approved: "\x0304✗\x03 El canal \x02%channel%\x02 ja està registrat."
   already_denied: "\x0304✗\x03 El canal \x02%channel%\x02 no pot ser registrat perquè està marcat com a \x0304DENEGAT\x03."
   failed: "\x0304✗\x03 No s'ha pogut completar el registre del canal \x02%channel%\x02."
@@ -91,7 +91,7 @@ denegados:
 drop:
   syntax: "DROP <#channel>"
   short: "Elimina el registre de canal que \x02%bot%\x02 guarda per a un canal."
-  help: "Elimina el registre que \x02%bot%\x02 guarda per a un canal i, si el canal està registrat allà, el dona de baixa de \x02ChanServ\x02. Necessites el permís \x02cregserv.drop\x02.\n\n\x02#channel:\x02 El canal que vols eliminar.\n\nLa baixa de \x02ChanServ\x02 és suau: el canal entra en un període de gràcia d'eliminació en lloc d'eliminar-se immediatament."
+  help: "Elimina el registre que \x02%bot%\x02 guarda per a un canal i, si el canal està registrat allà, el dona de baixa de \x02%chanserv%\x02. Necessites el permís \x02cregserv.drop\x02.\n\n\x02#channel:\x02 El canal que vols eliminar.\n\nLa baixa de \x02%chanserv%\x02 és suau: el canal entra en un període de gràcia d'eliminació en lloc d'eliminar-se immediatament."
   example: "/msg CReG DROP #channel"
   dropped: "\x0303✔\x03 El registre del canal \x02%channel%\x02 ha estat eliminat de \x02%bot%\x02."
   dropped_channel: "\x0303✔\x03 El canal \x02%channel%\x02 s'ha eliminat i ara entra en el període de gràcia d'eliminació."
