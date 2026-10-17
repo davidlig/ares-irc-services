@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Irc\Adapter\In\Maintenance;
 
 use App\Irc\Adapter\In\Maintenance\MaintenanceScheduler;
+use App\Irc\Adapter\Out\Persistence\Doctrine\EntityManagerRecovery;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -67,7 +70,7 @@ final class MaintenanceSchedulerTest extends TestCase
         };
 
         $logger = $this->createStub(LoggerInterface::class);
-        $scheduler = new MaintenanceScheduler([$taskA, $taskB], $logger);
+        $scheduler = new MaintenanceScheduler([$taskA, $taskB], $this->recovery(), $logger);
 
         $scheduler->tick();
 
@@ -150,7 +153,7 @@ final class MaintenanceSchedulerTest extends TestCase
         };
 
         $logger = $this->createStub(LoggerInterface::class);
-        $scheduler = new MaintenanceScheduler([$taskOk, $taskFails, $taskNever], $logger);
+        $scheduler = new MaintenanceScheduler([$taskOk, $taskFails, $taskNever], $this->recovery(), $logger);
 
         $scheduler->tick();
 
@@ -186,7 +189,7 @@ final class MaintenanceSchedulerTest extends TestCase
         };
 
         $logger = $this->createStub(LoggerInterface::class);
-        $scheduler = new MaintenanceScheduler([$task], $logger);
+        $scheduler = new MaintenanceScheduler([$task], $this->recovery(), $logger);
 
         $scheduler->tick();
         $scheduler->tick();
@@ -223,7 +226,7 @@ final class MaintenanceSchedulerTest extends TestCase
         };
 
         $logger = $this->createStub(LoggerInterface::class);
-        $scheduler = new MaintenanceScheduler([$task], $logger);
+        $scheduler = new MaintenanceScheduler([$task], $this->recovery(), $logger);
 
         $scheduler->tick();
         $scheduler->tick();
@@ -259,7 +262,7 @@ final class MaintenanceSchedulerTest extends TestCase
             $logMessages[] = $message;
         });
 
-        $scheduler = new MaintenanceScheduler([$task], $logger);
+        $scheduler = new MaintenanceScheduler([$task], $this->recovery(), $logger);
         $scheduler->tick();
 
         self::assertSame('Maintenance cycle started', $logMessages[0]);
@@ -299,10 +302,59 @@ final class MaintenanceSchedulerTest extends TestCase
             $logErrors[] = $message;
         });
 
-        $scheduler = new MaintenanceScheduler([$task], $logger);
+        $scheduler = new MaintenanceScheduler([$task], $this->recovery(), $logger);
         $scheduler->tick();
 
         self::assertSame('Maintenance cycle aborted', $logErrors[0]);
+    }
+
+    #[Test]
+    public function tickRecoversAClosedEntityManagerWhenATaskThrows(): void
+    {
+        $task = new class implements MaintenanceTaskInterface {
+            public function getName(): string
+            {
+                return 'task.throws';
+            }
+
+            public function getIntervalSeconds(): int
+            {
+                return 0;
+            }
+
+            public function getOrder(): int
+            {
+                return 100;
+            }
+
+            public function run(): void
+            {
+                throw new RuntimeException('Task error');
+            }
+        };
+
+        $closedManager = $this->createStub(EntityManagerInterface::class);
+        $closedManager->method('isOpen')->willReturn(false);
+
+        $registry = $this->createMock(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($closedManager);
+        $registry->expects(self::once())->method('resetManager');
+
+        $logger = $this->createStub(LoggerInterface::class);
+        $scheduler = new MaintenanceScheduler([$task], new EntityManagerRecovery($registry), $logger);
+
+        $scheduler->tick();
+    }
+
+    private function recovery(): EntityManagerRecovery
+    {
+        $manager = $this->createStub(EntityManagerInterface::class);
+        $manager->method('isOpen')->willReturn(true);
+
+        $registry = $this->createStub(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($manager);
+
+        return new EntityManagerRecovery($registry);
     }
 }
 

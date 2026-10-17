@@ -6,8 +6,11 @@ namespace App\Tests\Irc\Adapter\In\Maintenance;
 
 use App\Irc\Adapter\In\Maintenance\MaintenanceScheduler;
 use App\Irc\Adapter\In\Maintenance\RunMaintenanceCycleHandler;
+use App\Irc\Adapter\Out\Persistence\Doctrine\EntityManagerRecovery;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use App\Irc\Application\Port\In\Maintenance\RunMaintenanceCycle;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -46,7 +49,12 @@ final class RunMaintenanceCycleHandlerTest extends TestCase
             }
         };
 
-        $scheduler = new MaintenanceScheduler([$task], new NullLogger());
+        $manager = $this->createStub(EntityManagerInterface::class);
+        $manager->method('isOpen')->willReturn(true);
+        $registry = $this->createStub(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($manager);
+
+        $scheduler = new MaintenanceScheduler([$task], new EntityManagerRecovery($registry), new NullLogger());
         $handler = new RunMaintenanceCycleHandler($scheduler);
         $handler(new RunMaintenanceCycle());
 

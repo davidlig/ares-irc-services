@@ -7,6 +7,7 @@ namespace App\Tests\Irc\Adapter\In\Event;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\In\Event\AntifloodSubscriber;
 use App\Irc\Adapter\In\Event\ServiceCommandGateway;
+use App\Irc\Adapter\Out\Persistence\Doctrine\EntityManagerRecovery;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\MessageDirection;
 use App\Irc\Application\Antiflood\AntifloodRegistry;
@@ -22,6 +23,8 @@ use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -71,8 +74,20 @@ final class AntifloodSubscriberTest extends TestCase
 
         $this->gateway = new ServiceCommandGateway(
             listeners: [$this->nickservListener],
+            entityManagerRecovery: $this->recoveryForAnOpenManager(),
             logger: new NullLogger(),
         );
+    }
+
+    private function recoveryForAnOpenManager(): EntityManagerRecovery
+    {
+        $manager = $this->createStub(EntityManagerInterface::class);
+        $manager->method('isOpen')->willReturn(true);
+
+        $registry = $this->createStub(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($manager);
+
+        return new EntityManagerRecovery($registry);
     }
 
     private function createSubscriber(int $maxMessages = 5, int $windowSeconds = 10, int $cooldownSeconds = 60, ?string $debugChannel = null): AntifloodSubscriber

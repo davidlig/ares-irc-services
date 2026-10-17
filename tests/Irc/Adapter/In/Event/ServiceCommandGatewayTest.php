@@ -6,8 +6,11 @@ namespace App\Tests\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\In\Event\ServiceCommandGateway;
+use App\Irc\Adapter\Out\Persistence\Doctrine\EntityManagerRecovery;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -24,6 +27,8 @@ final class ServiceCommandGatewayTest extends TestCase
 
     private LoggerInterface&MockObject $logger;
 
+    private EntityManagerRecovery $entityManagerRecovery;
+
     private ServiceCommandGateway $gateway;
 
     protected function setUp(): void
@@ -37,11 +42,24 @@ final class ServiceCommandGatewayTest extends TestCase
         $this->chanservListener->method('getServiceUid')->willReturn('001CHAN');
 
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->entityManagerRecovery = $this->recoveryForAnOpenManager();
 
         $this->gateway = new ServiceCommandGateway(
             listeners: [$this->nickservListener, $this->chanservListener],
+            entityManagerRecovery: $this->entityManagerRecovery,
             logger: $this->logger,
         );
+    }
+
+    private function recoveryForAnOpenManager(): EntityManagerRecovery
+    {
+        $manager = $this->createStub(EntityManagerInterface::class);
+        $manager->method('isOpen')->willReturn(true);
+
+        $registry = $this->createStub(ManagerRegistry::class);
+        $registry->method('getManager')->willReturn($manager);
+
+        return new EntityManagerRecovery($registry);
     }
 
     #[Test]
@@ -262,6 +280,7 @@ final class ServiceCommandGatewayTest extends TestCase
     {
         $gateway = new ServiceCommandGateway(
             listeners: [$this->nickservListener, new stdClass(), $this->chanservListener],
+            entityManagerRecovery: $this->entityManagerRecovery,
             logger: $this->logger,
         );
         $message = new IRCMessage(
@@ -309,5 +328,74 @@ final class ServiceCommandGatewayTest extends TestCase
 
         $listener = $this->gateway->findListenerFor('UnknownBot');
         self::assertNull($listener);
+    }
+
+    #[Test]
+    public function recoversAClosedEntityManagerBeforeDispatchingTheCommand(): void
+    {
+        $order = [];
+
+        $closedManager = $this->createStub(EntityManagerInterface::class);
+        $closedManager->method('isOpen')->willReturn(false);
+
+        $registry = $this->createMock(ManagerRegistry::class);
+        $registry->method('getManager')->willReturnCallback(static function () use (&$order, $closedManager): EntityManagerInterface {
+            $order[] = 'recover';
+
+            return $closedManager;
+        });
+        $registry->expects(self::once())->method('resetManager');
+
+        $gateway = new ServiceCommandGateway(
+            listeners: [$this->nickservListener],
+            entityManagerRecovery: new EntityManagerRecovery($registry),
+            logger: $this->logger,
+        );
+
+        $this->logger->expects(self::atLeastOnce())->method('debug');
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->nickservListener
+            ->expects(self::once())
+            ->method('onCommand')
+            ->willReturnCallback(static function () use (&$order): void {
+                $order[] = 'dispatch';
+            });
+
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: '001ABCD',
+            params: ['NickServ'],
+            trailing: 'HELP',
+        );
+
+        $gateway->onMessage(new MessageReceivedEvent($message));
+
+        self::assertSame(['recover', 'dispatch'], $order);
+    }
+
+    #[Test]
+    public function doesNotTouchTheEntityManagerWhenNoListenerMatches(): void
+    {
+        $registry = $this->createMock(ManagerRegistry::class);
+        $registry->expects(self::never())->method('getManager');
+
+        $gateway = new ServiceCommandGateway(
+            listeners: [$this->nickservListener],
+            entityManagerRecovery: new EntityManagerRecovery($registry),
+            logger: $this->logger,
+        );
+
+        $this->logger->expects(self::never())->method('debug');
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->nickservListener->expects(self::never())->method('onCommand');
+
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: '001ABCD',
+            params: ['UnknownService'],
+            trailing: 'HELP',
+        );
+
+        $gateway->onMessage(new MessageReceivedEvent($message));
     }
 }

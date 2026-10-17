@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\In\Event;
 
 use App\Irc\Adapter\Event\MessageReceivedEvent;
+use App\Irc\Adapter\Out\Persistence\Doctrine\EntityManagerRecovery;
 use App\Irc\Application\Port\In\ServiceCommandListenerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -33,6 +34,7 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
      */
     public function __construct(
         iterable $listeners,
+        private EntityManagerRecovery $entityManagerRecovery,
         private LoggerInterface $logger = new NullLogger(),
     ) {
         $all = [];
@@ -92,6 +94,8 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
             'service' => $listener->getServiceName(),
             'sender' => $sourceId,
         ]);
+
+        $this->entityManagerRecovery->recover();
 
         $listener->onCommand($sourceId, $text);
     }

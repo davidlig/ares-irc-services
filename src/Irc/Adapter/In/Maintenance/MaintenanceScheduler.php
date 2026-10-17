@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\In\Maintenance;
 
+use App\Irc\Adapter\Out\Persistence\Doctrine\EntityManagerRecovery;
 use App\Irc\Application\Port\In\Maintenance\MaintenanceTaskInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -34,6 +35,7 @@ final class MaintenanceScheduler
      */
     public function __construct(
         iterable $tasks,
+        private readonly EntityManagerRecovery $entityManagerRecovery,
         private readonly LoggerInterface $logger,
     ) {
         $sorted = iterator_to_array($tasks, false);
@@ -74,6 +76,8 @@ final class MaintenanceScheduler
                     'tasks_completed' => $tasksRun,
                     'exception' => $e,
                 ]);
+
+                $this->entityManagerRecovery->recover();
 
                 return;
             }
