@@ -63,6 +63,11 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'dehalfop.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

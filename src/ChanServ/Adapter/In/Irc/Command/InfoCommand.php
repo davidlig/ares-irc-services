@@ -75,6 +75,11 @@ final readonly class InfoCommand implements ChanServCommandInterface
         return null;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'info.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return true;

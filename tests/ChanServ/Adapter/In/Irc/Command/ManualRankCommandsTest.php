@@ -83,6 +83,16 @@ final class ManualRankCommandsTest extends TestCase
         self::assertTrue($command->usesLevelFounder());
     }
 
+    /** @param class-string<ChanServCommandInterface> $class */
+    #[Test]
+    #[DataProvider('commandProvider')]
+    public function getExampleKeyReturnsCorrectKey(string $class, string $name, string $syntaxBase, string $helpBase, int $order): void
+    {
+        $command = new $class($this->createStub(ManageManualRankHandlerInterface::class));
+
+        self::assertSame($helpBase . '.example', $command->getExampleKey());
+    }
+
     #[Test]
     public function ignoresInputWithoutSender(): void
     {

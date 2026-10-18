@@ -89,6 +89,11 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'akick.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

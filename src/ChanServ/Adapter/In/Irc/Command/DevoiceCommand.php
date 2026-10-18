@@ -63,6 +63,11 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'devoice.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

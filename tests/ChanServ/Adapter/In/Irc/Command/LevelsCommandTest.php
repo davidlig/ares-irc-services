@@ -621,6 +621,17 @@ final class LevelsCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsLevelsExample(): void
+    {
+        $cmd = new LevelsCommand(new ManageChannelLevelsHandler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        ));
+
+        self::assertSame('levels.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function getSubCommandHelpReturnsArrayWithListSetReset(): void
     {
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler(

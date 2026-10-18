@@ -317,6 +317,18 @@ final class InviteCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsInviteExample(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $cmd = $this->createCommand($channelRepo, $accessHelper);
+        self::assertSame('invite.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function getSubCommandHelpReturnsEmptyArray(): void
     {
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);

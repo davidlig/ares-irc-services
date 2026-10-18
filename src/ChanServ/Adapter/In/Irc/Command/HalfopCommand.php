@@ -63,6 +63,11 @@ final readonly class HalfopCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'halfop.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

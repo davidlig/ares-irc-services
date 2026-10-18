@@ -118,6 +118,11 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'levels.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

@@ -63,6 +63,11 @@ final readonly class DeadminCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'deadmin.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

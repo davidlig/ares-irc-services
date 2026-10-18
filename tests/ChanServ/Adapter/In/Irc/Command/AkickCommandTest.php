@@ -913,6 +913,15 @@ final class AkickCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        [$channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+
+        self::assertSame('akick.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function addEmptyMaskRepliesSyntax(): void
     {
         $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');

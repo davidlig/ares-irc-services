@@ -269,6 +269,19 @@ final class SetCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsSetExample(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertSame('set.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function getOrderReturnsFour(): void
     {
         $cmd = $this->createSetCommand(

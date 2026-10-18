@@ -431,6 +431,15 @@ final class DelaccessCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsDelaccessExample(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
+        self::assertSame('delaccess.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function getSubCommandHelpReturnsEmptyArray(): void
     {
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);

@@ -66,6 +66,11 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return null;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'register.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

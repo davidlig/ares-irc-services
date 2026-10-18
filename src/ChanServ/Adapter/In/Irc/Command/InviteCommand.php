@@ -67,6 +67,11 @@ final readonly class InviteCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'invite.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

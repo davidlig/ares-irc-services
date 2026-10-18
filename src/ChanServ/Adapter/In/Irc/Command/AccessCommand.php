@@ -76,6 +76,11 @@ final readonly class AccessCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'access.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

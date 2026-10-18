@@ -63,6 +63,11 @@ final readonly class AdminCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'admin.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

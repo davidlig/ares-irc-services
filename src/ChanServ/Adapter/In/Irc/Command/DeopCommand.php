@@ -63,6 +63,11 @@ final readonly class DeopCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'deop.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

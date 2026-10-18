@@ -181,6 +181,12 @@ final class RegisterCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        self::assertSame('register.example', new RegisterCommand()->getExampleKey());
+    }
+
+    #[Test]
     public function isOperOnlyReturnsFalse(): void
     {
         self::assertFalse(new RegisterCommand()->isOperOnly());

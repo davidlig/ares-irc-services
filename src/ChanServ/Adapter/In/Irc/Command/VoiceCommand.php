@@ -65,6 +65,11 @@ final readonly class VoiceCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'voice.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

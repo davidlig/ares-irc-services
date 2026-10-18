@@ -65,6 +65,11 @@ final readonly class OpCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'op.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

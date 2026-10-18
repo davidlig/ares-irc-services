@@ -118,6 +118,11 @@ final readonly class SetCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'set.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

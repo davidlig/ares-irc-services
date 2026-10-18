@@ -910,6 +910,18 @@ final class AccessCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $this->createStub(ChannelLevelRepositoryInterface::class));
+        $cmd = $this->createCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
+
+        self::assertSame('access.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function allowsSuspendedChannelReturnsFalse(): void
     {
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);

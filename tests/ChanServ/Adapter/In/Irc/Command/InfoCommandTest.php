@@ -621,6 +621,16 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsInfoExample(): void
+    {
+        $cmd = $this->createCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChanUserAccountPort::class),
+        );
+        self::assertSame('info.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function getSubCommandHelpReturnsEmptyArray(): void
     {
         $cmd = $this->createCommand(

@@ -70,6 +70,11 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'delaccess.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;
