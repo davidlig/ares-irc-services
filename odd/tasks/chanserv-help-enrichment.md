@@ -62,17 +62,34 @@ OUT of scope:
       this session needs:
       `$env:PHP_INI_SCAN_DIR = "C:\Users\juanj\scoop\apps\php\current\cli;C:\Users\juanj\scoop\apps\php\current\cli\conf.d"`
       (new shells/opencode restart inherit it automatically).
-- [ ] T1 — Port example-render block into `src/ChanServ/Adapter/In/Irc/Help/UnifiedHelpFormatter.php`
-      (RED test first in `tests/ChanServ/Adapter/In/Irc/Help/UnifiedHelpFormatterTest.php`).
-      Route: inline (mechanical port, pattern known). Commit: `feat(chanserv): render help examples via getExampleKey`.
-- [ ] T2 — Add `getExampleKey()` to every user-visible command + `example:` keys and
-      `help.example_label` in `translations/chanserv.en.yaml` + per-command unit tests.
-      Route: delegated (1 writer, 15+ files). Commit: `feat(chanserv): enrich user command help with examples (en)`.
-- [ ] T3 — Propagate new keys to the 13 remaining locales (neutral register, no voseo).
-      Route: delegated (1 writer). Commit: `feat(chanserv): translate enriched help examples to 13 locales`.
-- [ ] T4 — HelpCommandTest integration assertion (example line present for a command,
-      absent for one without `getExampleKey`) + full gates + coverage 100.
-      Route: parent + focused writer if needed.
+- [x] T1 — DONE (commit 228f5290, feat/chanserv-help-enrichment): example block ported
+      from CRegServ copy; 2 tests added (with/without getExampleKey); spot-check re-run:
+      `phpunit tests/ChanServ/.../UnifiedHelpFormatterTest.php --no-coverage` → OK
+      (10 tests, 4732 assertions).
+- [x] T2 — DONE (commit 26dc026f): getExampleKey() on the 16 user-visible commands
+      (isOperOnly()===false, HelpCommand excluded; oper-only verified per class);
+      16 example keys + help.example_label in chanserv.en.yaml; 16 unit tests.
+      Deviation accepted: examples use %bot% placeholder (catalog guard forbids
+      literal service nicks; %bot% is injected by ChanServContext::wrapParams).
+      Spot-check re-run: `phpunit tests/ChanServ/Adapter/In/Irc/Command --no-coverage`
+      → OK (607 tests, 1428 assertions). Catalog test RED = known-pending until T3.
+- [x] T3 — DONE (commit 98d14e14): 221 keys (17×13 locales) propagated; catalog test
+      green. Spot-check re-run: `phpunit tests/Shared/Translations/TranslationCatalogTest.php
+      --no-coverage` → OK (11 tests, 34695 assertions). Locale judgment calls: localized
+      usage tokens per file (es #canal/apodo, pl #kanał, eu #kanala…), duration units
+      per file convention (fr 7j, tr 7g, resto 7d), register.example → literal CReG.
+- [x] T4 — DONE (2026-10-18, /opt/ares): HelpCommandTest integration assertions —
+      `oneArgShowsCommandHelpForKnownCommand` asserts the example line is PRESENT for a
+      handler with `getExampleKey()` (`help.example_label` + `register.example`), and
+      `oneArgOmitsExampleLineWhenHandlerLacksExampleKey` asserts it is ABSENT for a handler
+      without it. Also hardened T2: `ManualRankCommandsTest` fails if a manual-rank command
+      lacks `getExampleKey()`. Full gate chain green (2026-10-18):
+      `php -l` OK (2 files); `lint:container` OK; `lint:yaml` OK (139 files);
+      PHPStan max 0 errors; CS-Fixer fixed 1 file (added missing `use function sprintf`);
+      Deptrac 0 warnings / 0 errors;
+      `./scripts/check-coverage.sh 100 --issues` → Coverage 100.00% (22849/22849 lines),
+      full suite green (zero failures/warnings/notices/skips/incomplete/risky/deprecations).
+      Route: parent + focused writer (same session).
 
 ## Progress log
 

@@ -35,6 +35,8 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
+use function method_exists;
+use function sprintf;
 
 #[CoversClass(AdminCommand::class)]
 #[CoversClass(DeadminCommand::class)]
@@ -89,6 +91,10 @@ final class ManualRankCommandsTest extends TestCase
     public function getExampleKeyReturnsCorrectKey(string $class, string $name, string $syntaxBase, string $helpBase, int $order): void
     {
         $command = new $class($this->createStub(ManageManualRankHandlerInterface::class));
+
+        if (!method_exists($command, 'getExampleKey')) {
+            self::fail(sprintf('%s must expose getExampleKey().', $class));
+        }
 
         self::assertSame($helpBase . '.example', $command->getExampleKey());
     }

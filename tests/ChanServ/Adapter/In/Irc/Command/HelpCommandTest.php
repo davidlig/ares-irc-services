@@ -264,7 +264,7 @@ final class HelpCommandTest extends TestCase
             $messages = explode("\n", $m);
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
         $registerHandler = new class implements ChanServCommandInterface {
             public function getName(): string
@@ -290,6 +290,11 @@ final class HelpCommandTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'register.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'register.example';
             }
 
             public function getOrder(): int
@@ -339,8 +344,105 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['REGISTER'], $notifier, $translator, $registry));
 
-        self::assertContains('register.help', $messages);
-        self::assertContains('help.footer', $messages);
+        $all = implode(' ', $messages);
+        self::assertStringContainsString('register.help', $all);
+        self::assertStringContainsString('help.syntax_label', $all);
+        self::assertStringContainsString('register.syntax', $all);
+        self::assertStringContainsString('help.example_label', $all);
+        self::assertStringContainsString('register.example', $all);
+        self::assertStringContainsString('help.footer', $all);
+    }
+
+    #[Test]
+    public function oneArgOmitsExampleLineWhenHandlerLacksExampleKey(): void
+    {
+        $messages = [];
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $infoHandler = new class implements ChanServCommandInterface {
+            public function getName(): string
+            {
+                return 'INFO';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'info.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'info.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 1;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'info.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
+            public function execute(ChanServContext $c): void {}
+        };
+        $registry = new ChanServCommandRegistry([$infoHandler]);
+
+        $cmd = $this->createCommand();
+        $cmd->execute($this->createContext(['INFO'], $notifier, $translator, $registry));
+
+        $all = implode(' ', $messages);
+        self::assertStringContainsString('info.help', $all);
+        self::assertStringContainsString('help.syntax_label', $all);
+        self::assertStringContainsString('info.syntax', $all);
+        self::assertStringNotContainsString('help.example_label', $all);
+        self::assertStringContainsString('help.footer', $all);
     }
 
     #[Test]
