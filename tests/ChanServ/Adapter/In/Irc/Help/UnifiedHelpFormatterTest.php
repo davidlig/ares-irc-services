@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
+use function count;
 use function dirname;
 use function in_array;
 use function is_array;
@@ -216,6 +217,38 @@ final class UnifiedHelpFormatterTest extends TestCase
         self::assertSame([], $context->replies);
         self::assertSame([], $context->rawReplies);
         self::assertSame('HELP SET EMAIL', $context->translations[0]['params']['title']);
+    }
+
+    #[Test]
+    public function rendersTheExampleLineOnlyForCommandsExposingAnExampleKey(): void
+    {
+        $formatter = new UnifiedHelpFormatter();
+
+        $withExampleContext = new ChanServHelpFormatterContext();
+        $withExample = $formatter->renderCommandHelp($withExampleContext, new ChanServHelpableCommandWithExample('REGISTER', 2));
+
+        self::assertSame([
+            'translated:help.header',
+            'translated:register.help',
+            ' ',
+            'translated:help.syntax_label',
+            ' ',
+            'translated:help.example_label',
+            'translated:help.footer',
+        ], $withExample);
+
+        $exampleLabels = array_values(array_filter(
+            $withExampleContext->translations,
+            static fn (array $entry): bool => 'help.example_label' === $entry['key'],
+        ));
+        self::assertCount(1, $exampleLabels);
+        self::assertSame(['example' => 'translated:register.example'], $exampleLabels[0]['params']);
+
+        $withoutExampleContext = new ChanServHelpFormatterContext();
+        $withoutExample = $formatter->renderCommandHelp($withoutExampleContext, new ChanServHelpableCommand('JOIN', 1));
+
+        self::assertNotContains('translated:help.example_label', $withoutExample);
+        self::assertSame('translated:help.syntax_label', $withoutExample[count($withoutExample) - 2]);
     }
 
     #[Test]
@@ -580,5 +613,54 @@ final readonly class ChanServHelpableCommand implements HelpableCommandInterface
     public function getHelpParams(): array
     {
         return $this->helpParams;
+    }
+}
+
+/** A command that opts into the HELP example line, mirroring CRegServ's REGISTER/ESTADO/CANCEL pattern. */
+final readonly class ChanServHelpableCommandWithExample implements HelpableCommandInterface
+{
+    public function __construct(
+        private string $name,
+        private int $order,
+    ) {}
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getOrder(): int
+    {
+        return $this->order;
+    }
+
+    public function getShortDescKey(): string
+    {
+        return strtolower($this->name) . '.short';
+    }
+
+    public function getSyntaxKey(): string
+    {
+        return strtolower($this->name) . '.syntax';
+    }
+
+    public function getHelpKey(): string
+    {
+        return strtolower($this->name) . '.help';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
+    public function isOperOnly(): bool
+    {
+        return false;
+    }
+
+    public function getExampleKey(): string
+    {
+        return strtolower($this->name) . '.example';
     }
 }
