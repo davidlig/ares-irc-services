@@ -44,6 +44,7 @@ ircop:
   syntax:           "IRCOP {ADD|DEL|LIST} [nickname] [rol]"
   short:            "Ağ IRC operatörlerini yönetin."
   help:             "Ağ IRC operatörlerini yönetin. ADD, kayıtlı bir rumuzu\nbelirtilen rolle operatör olarak ekler.\nDEL bir operatörü kaldırır. LIST tüm operatörleri gösterir.\nMevcut rolleri görmek için ROLE LIST kullanın.\nBu komut yalnızca hizmetlerde yapılandırılmış Root kullanıcıları içindir."
+  example:          "/msg %bot% IRCOP ADD Alice helper"
 
   unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
   unknown_role:     "\x0304✗\x03 \x02%role%\x02 rolü mevcut değil. Kullanılabilir rolleri görmek için \x0303/msg %bot% ROLE LIST\x03 kullanın."
@@ -55,6 +56,7 @@ ircop:
     syntax:         "IRCOP ADD <nickname> <rol>"
     short:          "Bir ağ IRC operatörü ekleyin."
     help:           "Kayıtlı bir rumuzu ağ IRC operatörü olarak ekler.\nMevcut rolleri görmek için ROLE LIST kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
+    example:        "/msg %bot% IRCOP ADD Alice helper"
     done:           "\x0303✓\x03 \x02%nickname%\x02, \x02%role%\x02 olarak eklendi."
     nick_not_active: "\x0304✗\x03 \x02%nickname%\x02 rumuzu etkin bir kayıtlı rumuz değil."
 
@@ -62,12 +64,14 @@ ircop:
     syntax:         "IRCOP DEL <nickname>"
     short:          "Bir ağ IRC operatörünü kaldırın."
     help:            "Listeden bir ağ IRC operatörünü kaldırır.\nBu komut yalnızca Root kullanıcıları içindir."
+    example:         "/msg %bot% IRCOP DEL Alice"
     done:           "\x0303✓\x03 \x02%nickname%\x02 IRC operatörlerinden kaldırıldı."
 
   list:
     syntax:         "IRCOP LIST"
     short:          "Tüm ağ IRC operatörlerini listeleyin."
     help:            "Tüm ağ IRC operatörlerini rolleri ve kayıt tarihleriyle listeler.\nBu komut yalnızca Root kullanıcıları içindir."
+    example:         "/msg %bot% IRCOP LIST"
     header:         "\x0307---\x03 \x02Ağ IRC Operatörleri\x02 \x0307---\x03"
     empty:          "IRC operatörü bulunmamaktadır."
 
@@ -77,6 +81,7 @@ role:
     syntax: "ROLE OPERCLASS {LIST|<rol>} [{VIEW|SET}] [operclass]"
     short: "Rolun Unreal operclass degerini yonetir."
     help: "LIST agdaki kullanilabilir operclass'lari gosterir.\nVIEW rolun operclass'ini ve kullanilabilir olanlari gosterir.\nSET kimlik dogrulamada atar (OFF kaldirmak icin).\nYalnizca UnrealIRCd protokollerinde kullanilabilir."
+    example: "/msg %bot% ROLE OPERCLASS LIST"
     list:
       header: "\x0307---\x03 \x02Agdaki Kullanilabilir Operclass'lar\x02 \x0307---\x03"
       empty: "Agda kullanilabilir operclass yok."
@@ -92,6 +97,7 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <ad> ..."
   short:            "Operatör rollerini yönetin."
   help:             "Operatör rollerini yönetin. ADD yeni bir rol oluşturur, DEL siler,\nLIST tüm rolleri gösterir, PERMS bir rolün izinlerini yönetir, MODES IRCOP modlarını yönetir,\nVHOST bir rol için zorunlu vhost kalıbını yönetir.\nKorumalı roller (ADMIN, OPER, PREOPER) silinemez.\nBu komut yalnızca Root kullanıcıları içindir."
+  example:          "/msg %bot% ROLE ADD helper"
   syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <ad> ..."
   help_operclass:   "Operatör rollerini yönetin. ADD yeni bir rol oluşturur, DEL siler,\nLIST tüm rolleri gösterir, PERMS bir rolün izinlerini yönetir, MODES IRCOP modlarını yönetir,\nVHOST bir rol için zorunlu vhost kalıbını yönetir, OPERCLASS Unreal operclass değerini yönetir.\nKorumalı roller (ADMIN, OPER, PREOPER) silinemez.\nBu komut yalnızca Root kullanıcıları içindir."
 
@@ -105,18 +111,21 @@ role:
     syntax:         "ROLE ADD <ad> [açıklama]"
     short:          "Yeni bir rol oluşturun."
     help:            "Yeni bir özel rol oluşturur. Açıklama isteğe bağlıdır.\nBu komut yalnızca Root kullanıcıları içindir."
+    example:         "/msg %bot% ROLE ADD helper"
     done:           "\x0303✓\x03 \x02%role%\x02 rolü oluşturuldu."
 
   del:
     syntax:         "ROLE DEL <ad>"
     short:          "Bir rolü silin."
     help:            "Özel bir rolü siler. Korumalı roller (ADMIN, OPER, PREOPER)\nsilinemez. Rolde atanmış operatörler varsa,\nönce onları yeniden atamanız gerekir.\nBu komut yalnızca Root kullanıcıları içindir."
+    example:         "/msg %bot% ROLE DEL helper"
     done:           "\x0303✓\x03 \x02%role%\x02 rolü silindi."
 
   list:
     syntax:         "ROLE LIST"
     short:          "Tüm rolleri listeleyin."
     help:            "Tüm rolleri listeler. Korumalı roller [PROTECTED] ile işaretlenir.\nBu komut yalnızca Root kullanıcıları içindir."
+    example:         "/msg %bot% ROLE LIST"
     header:         "\x0307---\x03 \x02Operatör Rolleri\x02 \x0307---\x03"
     empty:          "Operatör rolü bulunmamaktadır."
 
@@ -124,6 +133,7 @@ role:
     syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [izin|ALL]"
     short:          "Rol izinlerini yönetin."
     help:            "Bir role atanmış izinleri yönetin.\nLIST, rolün tüm izinlerini gösterir.\nADD, role bir izin atar.\nDEL, rolden bir izni kaldırır (korumalı roller için geçerli değil).\nCLEAR, roldeki tüm izinleri kaldırır.\nMevcut tüm izinleri tek seferde eklemek için ALL kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
+    example:         "/msg %bot% ROLE PERMS helper ADD operserv.kill"
     not_found:       "\x0304✗\x03 \x02%perm%\x02 izni mevcut değil."
     already_has:     "\x0304✗\x03 \x02%role%\x02 rolü zaten \x02%perm%\x02 iznine sahip."
     does_not_have:   "\x0304✗\x03 \x02%role%\x02 rolü \x02%perm%\x02 iznine sahip değil."
@@ -146,6 +156,7 @@ role:
     syntax:         "ROLE MODES <rol> {VIEW|SET} [modlar]"
     short:          "Rol için IRCOP kullanıcı modlarını yönetin."
     help:            "Bir role atanmış IRCOP kullanıcı modlarını yönetin.\nVIEW, rolün mevcut modlarını gösterir.\nSET, IRCOP modlarını ayarlar (örn., oH için +oH).\nBu role sahip kullanıcılar kimlik doğrulamada bu modları alır.\nHer IRCD'ye göre kullanılabilir modlar: UnrealIRCd (H, q, s, W), InspIRCd (s).\nBu komut yalnızca Root kullanıcıları içindir."
+    example:         "/msg %bot% ROLE MODES helper SET oH"
 
     view:
       header:        "\x0307---\x03 \x02%role% için Modlar\x02 \x0307---\x03"
@@ -163,6 +174,7 @@ role:
     syntax:         "ROLE VHOST <rol> {VIEW|SET} [kalıp]"
     short:          "Bir rol için zorunlu vhost kalıbını yönetin."
     help:           "Bir role atanmış zorunlu vhost'u yönetin.\nVIEW, mevcut zorunlu vhost kalıbını gösterir.\nSET bir zorunlu vhost kalıbı atar (bu role sahip kullanıcılar\nkimlik doğrulamada bu vhost'u alır, kişisel vhost'u geçersiz kılar).\nKalıp temizlenmiş rumuzun sonuna eklenir, örn.:\n  Rumuz: _davidlig_ → Kalıp: admin.ares → VHost: davidlig.admin.ares\nGeçerli karakterler: a-z, A-Z, 0-9, tire (-) ve nokta (.).\nEn az bir nokta olmalı, - veya . ile başlayamaz/bitemez veya .. içeremez.\nZorunlu vhost kalıbını temizlemek için OFF kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
+    example:        "/msg %bot% ROLE VHOST helper SET staff.example.com"
 
     view:
       header:        "\x0307---\x03 \x02%role% için Zorunlu vhost\x02 \x0307---\x03"
@@ -191,6 +203,7 @@ gline:
   syntax:           "GLINE {ADD|DEL|LIST} [maske] [süre] [sebep]"
   short:            "Ağ genelindeki G-line'ları yönetin."
   help:             "Ağ genelindeki G-line'ları (genel yasaklamalar) yönetin.\nADD maske, süre ve sebep ile yeni bir G-line ekler.\nDEL bir G-line'ı maske veya giriş numarasıyla kaldırır.\nLIST maske filtresi ile isteğe bağlı olarak tüm G-line'ları gösterir.\n\nSüre formatı: 0=kalıcı, veya d, s, d son ekini kullanın (örn., 7g, 12s, 30d).\nRoot veya IRCop kullanıcılarıyla eşleşen GLINE'lar reddedilir.\nBu komut operserv.gline iznini gerektirir."
+  example:          "/msg %bot% GLINE ADD spammer@spam.example 7d Kitlesel reklam"
   unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
   invalid_mask:     "\x0304✗\x03 Geçersiz maske formatı. user@host formatında olmalıdır (örn., *@192.168.*)."
   global_mask:      "\x0304✗\x03 G-line maskesi \x02%mask%\x02 çok geniş. Genel maskeler kullanılamaz."
@@ -207,18 +220,21 @@ gline:
     syntax:         "GLINE ADD <maske> <süre> <sebep>"
     short:          "Ağ genelinde bir G-line ekleyin."
     help:           "Ağ genelinde bir G-line (genel yasaklama) ekler.\nMaske user@host formatında olmalıdır.\nSüre: 0=kalıcı, veya d, s, d son ekini kullanın (örn., 7g, 12s, 30d).\nRoot veya IRCop kullanıcılarıyla eşleşen GLINE'lar reddedilir.\nBu komut operserv.gline iznini gerektirir."
+    example:        "/msg %bot% GLINE ADD spammer@spam.example 7d Kitlesel reklam"
     done:           "\x0303✓\x03 G-line eklendi: \x02%mask%\x02 (%duration%) - %reason%"
 
   del:
     syntax:         "GLINE DEL <maske|numara>"
     short:          "Bir G-line'ı kaldırın."
     help:           "Listeden bir G-line'ı kaldırır.\nMaskeyi veya LIST'teki giriş numarasını belirtebilirsiniz.\nBu komut operserv.gline iznini gerektirir."
+    example:        "/msg %bot% GLINE DEL spammer@spam.example"
     done:           "\x0303✓\x03 G-line \x02%mask%\x02 kaldırıldı."
 
   list:
     syntax:         "GLINE LIST [maske]"
     short:          "Tüm G-line'ları listeleyin."
     help:           "Tüm G-line'ları listeler. İsteğe bağlı olarak maske kalıbı ile filtreleyin.\nBu komut operserv.gline iznini gerektirir."
+    example:        "/msg %bot% GLINE LIST"
     header:         "\x0307---\x03 \x02G-line'lar (%count%) \x0307---\x03"
     empty:          "G-line bulunmamaktadır."
     no_reason:      "Sebep yok"
@@ -231,6 +247,7 @@ global:
   syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <mesaj>"
   short:            "Tüm bağlı kullanıcılara genel bir mesaj gönderin."
   help:             "Tüm bağlı kullanıcılara bir mesaj gönderir.\n\nİlk argüman bir hizmet adıysa, mesaj mevcut hizmet kullanılarak gönderilir.\n\nHizmet değilse, belirtilen maskeyle geçici bir sözde istemci oluşturulur.\nMaske formatı: nick!ident@vhost\n- nick: IRC geçerli rumuz (harfler, []{}|\\`, rakamlar, harfle başlar)\n- ident: alfanümerik, . _ ~ - ile\n- vhost: geçerli host adı\n\nSözde istemciler için, rumuz bağlı veya kayıtlı olamaz.\nSözde istemci gönderme sırasında bağlı kalır ve otomatik olarak ayrılır\n(rumuz 24s boyunca SQLINE/QLINE ile engellenir).\n\nPRIVMSG özel mesaj olarak, NOTICE bildirim olarak gönderir.\nBu komut operserv.global iznini gerektirir."
+  example:          "/msg %bot% GLOBAL Network!staff@staff.example.com NOTICE 10 dakika içinde ağ bakımı"
   mask_invalid:    "\x0304✗\x03 Geçersiz maske formatı: %error%"
   nick_connected: "\x0304✗\x03 \x02%nickname%\x02 rumuzu şu anda bağlı."
   nick_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı."
@@ -242,6 +259,7 @@ raw:
   syntax:           "RAW <satır>"
   short:            "IRCd'ye ham bir protokol satırı gönderin."
   help:             "Verilen satırı doğrudan uplink IRCd soketine gönderir.\nSon derece dikkatli kullanın. Geçersiz protokol satırları ağı çökertebilir.\nBu komut operserv.raw iznini gerektirir."
+  example:          "/msg %bot% RAW WHOIS Alice"
   empty:            "\x0304✗\x03 Göndermek için boş olmayan bir satır belirtmelisiniz."
   too_long:         "\x0304✗\x03 Satır çok uzun. Maksimum 510 karakter."
   not_connected:    "\x0304✗\x03 IRCd'ye bağlı değil."
@@ -269,12 +287,14 @@ motd:
   short:            "Bağlantıda kullanıcılara gönderilen MOTD mesajlarını yönetin."
   syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [argümanlar]"
   help:             "Kullanıcılar ağa bağlandığında gönderilen Günün Mesajı girişlerini yönetin.\n\n"
+  example:          "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Ağa hoş geldiniz!"
   unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut. Kullanın: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
     syntax:         "MOTD ADD {service|nick!ident@vhost} {PRIVMSG|NOTICE} <süre> <mesaj>"
     syntax_hint:    "\x0304✗\x03 Kullanım: \x02%syntax%\x02"
     short:          "Bir MOTD girişi ekleyin."
     help:           "Her kullanıcı ağa bağlandığında gönderilecek yeni bir MOTD mesajı ekler.\n\n"
+    example:        "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Ağa hoş geldiniz!"
     done:           "\x0303✓\x03 MOTD girişi #%id% eklendi."
     invalid_type:   "\x0304✗\x03 Geçersiz mesaj türü. \x02PRIVMSG\x02 veya \x02NOTICE\x02 olmalıdır."
     invalid_expiry: "\x0304✗\x03 Geçersiz süre formatı. Kullanın: \x02<sayı><s|d|s|g>\x02 (örn., 30s, 5d, 24s, 7g)."
@@ -283,12 +303,14 @@ motd:
     syntax_hint:    "\x0304✗\x03 Kullanım: \x02%syntax%\x02"
     short:          "Bir MOTD girişini silin."
     help:           "Bir MOTD girişini ID'sine göre siler.\n\n"
+    example:        "/msg %bot% MOTD DEL 1"
     done:           "\x0303✓\x03 MOTD girişi #%id% silindi."
     not_found:      "\x0304✗\x03 MOTD girişi bulunamadı."
   list:
     syntax:         "MOTD LIST"
     short:          "Tüm MOTD girişlerini listeleyin."
     help:           "Tüm yapılandırılmış MOTD girişlerini listeler.\n\n"
+    example:        "/msg %bot% MOTD LIST"
     empty:          "Yapılandırılmış MOTD girişi yok."
     header:         "MOTD girişleri:"
     status_enabled: "\x0303etkin\x03"
@@ -301,6 +323,7 @@ motd:
     syntax:         "MOTD CLEAN"
     short:          "Süresi dolmuş tüm MOTD girişlerini kaldırın."
     help:           "Süresi geçmiş tüm MOTD girişlerini kaldırır.\n\n"
+    example:        "/msg %bot% MOTD CLEAN"
     done:           "\x0303✓\x03 %count% süresi dolmuş MOTD girişi kaldırıldı."
     none:           "\x0303✓\x03 Kaldırılacak süresi dolmuş MOTD girişi yok."
   debug:
@@ -310,18 +333,22 @@ emailverify:
   syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
   short:            "Kayıtta e-posta doğrulamasını aç veya kapat."
   help:             "Bir takma ad kaydetmenin e-posta adresini onaylamayı gerektirip gerektirmediğini denetler.\nON doğrulama ister: jeton onaylanana kadar takma ad beklemede kalır.\nOFF takma adı hemen kaydeder; adres hesap kurtarma için yine de saklanır.\nSTATUS geçerli politikayı gösterir.\nBu komut root erişimi gerektirir."
+  example:          "/msg %bot% EMAILVERIFY STATUS"
   on:
     syntax:         "EMAILVERIFY ON"
     short:          "Kayıtta e-posta doğrulaması iste."
     help:           "Yeni kayıtların, takma ad etkinleşmeden önce e-posta adresini onaylamasını ister."
+    example:        "/msg %bot% EMAILVERIFY ON"
   off:
     syntax:         "EMAILVERIFY OFF"
     short:          "Takma adları e-posta doğrulaması olmadan kaydet."
     help:           "Yeni takma adları hemen kaydeder. E-posta adresi yine zorunludur ve saklanır, çünkü hesap kurtarma yoludur."
+    example:        "/msg %bot% EMAILVERIFY OFF"
   status:
     syntax:         "EMAILVERIFY STATUS"
     short:          "Geçerli doğrulama politikasını göster."
     help:           "Kayıt için e-posta doğrulamasının şu anda gerekip gerekmediğini gösterir."
+    example:        "/msg %bot% EMAILVERIFY STATUS"
   enabled:          "\x0303✓\x03 E-posta doğrulaması artık kayıt için \x02zorunlu\x02."
   disabled:         "\x0303✓\x03 E-posta doğrulaması artık \x02kapalı\x02; takma adlar hemen kaydedilir."
   already_enabled:  "\x0304✗\x03 E-posta doğrulaması zaten zorunlu."

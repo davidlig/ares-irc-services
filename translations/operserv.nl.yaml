@@ -44,6 +44,7 @@ ircop:
   syntax:           "IRCOP {ADD|DEL|LIST} [bijnaam] [rol]"
   short:            "Beheer netwerk IRC-operators."
   help:             "Beheer netwerk IRC-operators. ADD voegt een geregistreerde bijnaam toe\nals operator met de opgegeven rol.\nDEL verwijdert een operator. LIST toont alle operators.\nGebruik ROLE LIST om beschikbare rollen te zien.\nDit commando is voorbehouden aan Root-gebruikers die in de services zijn geconfigureerd."
+  example:          "/msg %bot% IRCOP ADD Alice helper"
 
   unknown_sub:      "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
   unknown_role:     "\x0304✗\x03 Rol \x02%role%\x02 bestaat niet. Gebruik \x0303/msg %bot% ROLE LIST\x03 om beschikbare rollen te zien."
@@ -55,6 +56,7 @@ ircop:
     syntax:         "IRCOP ADD <bijnaam> <rol>"
     short:          "Voeg een netwerk IRC-operator toe."
     help:           "Voegt een geregistreerde bijnaam toe als netwerk IRC-operator.\nGebruik ROLE LIST om beschikbare rollen te zien.\nDit commando is voorbehouden aan Root-gebruikers."
+    example:        "/msg %bot% IRCOP ADD Alice helper"
     done:           "\x0303✓\x03 \x02%nickname%\x02 toegevoegd als \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geen actieve geregistreerde bijnaam."
 
@@ -62,12 +64,14 @@ ircop:
     syntax:         "IRCOP DEL <bijnaam>"
     short:          "Verwijder een netwerk IRC-operator."
     help:            "Verwijdert een netwerk IRC-operator uit de lijst.\nDit commando is voorbehouden aan Root-gebruikers."
+    example:         "/msg %bot% IRCOP DEL Alice"
     done:           "\x0303✓\x03 \x02%nickname%\x02 verwijderd uit IRC-operators."
 
   list:
     syntax:         "IRCOP LIST"
     short:          "Toon alle netwerk IRC-operators."
     help:            "Toont alle netwerk IRC-operators met hun rollen en registratiedatum.\nDit commando is voorbehouden aan Root-gebruikers."
+    example:         "/msg %bot% IRCOP LIST"
     header:         "\x0307---\x03 \x02Netwerk IRC Operators\x02 \x0307---\x03"
     empty:          "Er zijn geen IRC-operators."
 
@@ -77,6 +81,7 @@ role:
     syntax: "ROLE OPERCLASS {LIST|<rol>} [{VIEW|SET}] [operclass]"
     short: "Beheert de Unreal-operclass van een rol."
     help: "LIST toont de beschikbare operclasses in het netwerk.\nVIEW toont de operclass van de rol en beschikbare operclasses.\nSET wijst deze toe bij identificatie (OFF om te wissen).\nAlleen beschikbaar op UnrealIRCd-protocollen."
+    example: "/msg %bot% ROLE OPERCLASS LIST"
     list:
       header: "\x0307---\x03 \x02Beschikbare Operclasses in het Netwerk\x02 \x0307---\x03"
       empty: "Geen operclasses beschikbaar in het netwerk."
@@ -92,6 +97,7 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <naam> ..."
   short:            "Beheer operatorrollen."
   help:             "Beheer operatorrollen. ADD maakt een nieuwe rol aan, DEL verwijdert deze,\nLIST toont alle rollen, PERMS beheert permissies voor een rol, MODES beheert IRCOP-modi,\nVHOST beheert het geforceerde vhost-patroon voor een rol.\nBeschermde rollen (ADMIN, OPER, PREOPER) kunnen niet worden verwijderd.\nDit commando is voorbehouden aan Root-gebruikers."
+  example:          "/msg %bot% ROLE ADD helper"
   syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <naam> ..."
   help_operclass:   "Beheer operatorrollen. ADD maakt een nieuwe rol aan, DEL verwijdert deze,\nLIST toont alle rollen, PERMS beheert permissies voor een rol, MODES beheert IRCOP-modi,\nVHOST beheert het geforceerde vhost-patroon voor een rol, OPERCLASS beheert de Unreal-operclass.\nBeschermde rollen (ADMIN, OPER, PREOPER) kunnen niet worden verwijderd.\nDit commando is voorbehouden aan Root-gebruikers."
 
@@ -105,18 +111,21 @@ role:
     syntax:         "ROLE ADD <naam> [beschrijving]"
     short:          "Maak een nieuwe rol aan."
     help:            "Maakt een nieuwe aangepaste rol aan. Beschrijving is optioneel.\nDit commando is voorbehouden aan Root-gebruikers."
+    example:         "/msg %bot% ROLE ADD helper"
     done:           "\x0303✓\x03 Rol \x02%role%\x02 aangemaakt."
 
   del:
     syntax:         "ROLE DEL <naam>"
     short:          "Verwijder een rol."
     help:            "Verwijdert een aangepaste rol. Beschermde rollen (ADMIN, OPER, PREOPER)\nkunnen niet worden verwijderd. Als de rol operators toegewezen heeft,\nmoet u deze eerst opnieuw toewijzen.\nDit commando is voorbehouden aan Root-gebruikers."
+    example:         "/msg %bot% ROLE DEL helper"
     done:           "\x0303✓\x03 Rol \x02%role%\x02 verwijderd."
 
   list:
     syntax:         "ROLE LIST"
     short:          "Toon alle rollen."
     help:            "Toont alle rollen. Beschermde rollen zijn gemarkeerd met [PROTECTED].\nDit commando is voorbehouden aan Root-gebruikers."
+    example:         "/msg %bot% ROLE LIST"
     header:         "\x0307---\x03 \x02Operatorrollen\x02 \x0307---\x03"
     empty:          "Er zijn geen operatorrollen."
 
@@ -124,6 +133,7 @@ role:
     syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [permissie|ALL]"
     short:          "Beheer rolpermissies."
     help:            "Beheer permissies die aan een rol zijn toegewezen.\nLIST toont alle permissies voor de rol.\nADD wijst een permissie toe aan de rol.\nDEL verwijdert een permissie uit de rol (niet voor beschermde rollen).\nCLEAR verwijdert alle permissies uit de rol.\nGebruik ALL om alle beschikbare permissies in één keer toe te voegen.\nDit commando is voorbehouden aan Root-gebruikers."
+    example:         "/msg %bot% ROLE PERMS helper ADD operserv.kill"
     not_found:       "\x0304✗\x03 Permissie \x02%perm%\x02 bestaat niet."
     already_has:     "\x0304✗\x03 Rol \x02%role%\x02 heeft al permissie \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Rol \x02%role%\x02 heeft permissie \x02%perm%\x02 niet."
@@ -146,6 +156,7 @@ role:
     syntax:         "ROLE MODES <rol> {VIEW|SET} [modi]"
     short:          "Beheer IRCOP-gebruikersmodi voor de rol."
     help:            "Beheer IRCOP-gebruikersmodi die aan een rol zijn toegewezen.\nVIEW toont de huidige modi van de rol.\nSET stelt de IRCOP-modi in (bijv. oH voor +oH).\nGebruikers met deze rol ontvangen deze modi bij identificatie.\nBeschikbare modi per IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nDit commando is voorbehouden aan Root-gebruikers."
+    example:         "/msg %bot% ROLE MODES helper SET oH"
 
     view:
       header:        "\x0307---\x03 \x02Modi voor %role%\x02 \x0307---\x03"
@@ -163,6 +174,7 @@ role:
     syntax:         "ROLE VHOST <rol> {VIEW|SET} [patroon]"
     short:          "Beheer geforceerd vhost-patroon voor een rol."
     help:           "Beheer geforceerde vhost die aan een rol is toegewezen.\nVIEW toont het huidige geforceerde vhost-patroon.\nSET wijst een geforceerd vhost-patroon toe (gebruikers met deze rol zullen\ndeze vhost ontvangen bij identificatie, met voorrang op persoonlijke vhost).\nHet patroon wordt toegevoegd na de opgeschoonde bijnaam, bijv.:\n  Nick: _davidlig_ → Patroon: admin.ares → VHost: davidlig.admin.ares\nGeldige tekens: a-z, A-Z, 0-9, koppelteken (-) en punt (.).\nMoet ten minste één punt bevatten, mag niet beginnen/eindigen met - of . of .. hebben\nGebruik OFF om het geforceerde vhost-patroon te wissen.\nDit commando is voorbehouden aan Root-gebruikers."
+    example:        "/msg %bot% ROLE VHOST helper SET staff.example.com"
 
     view:
       header:        "\x0307---\x03 \x02Geforceerde vhost voor %role%\x02 \x0307---\x03"
@@ -191,6 +203,7 @@ gline:
   syntax:           "GLINE {ADD|DEL|LIST} [masker] [verloop] [reden]"
   short:            "Beheer netwerkbrede G-lines."
   help:             "Beheer netwerkbrede G-lines (globale bans).\nADD voegt een nieuwe G-line toe met masker, verloop en reden.\nDEL verwijdert een G-line op masker of vermeldingsnummer.\nLIST toont alle G-lines, optioneel gefilterd op masker.\n\nVerloopformaat: 0=permanent, of gebruik d, h, m suffix (bijv. 7d, 12h, 30m).\nGLINEs die overeenkomen met Root- of IRCop-gebruikers worden geweigerd.\nDit commando vereist de operserv.gline-permissie."
+  example:          "/msg %bot% GLINE ADD spammer@spam.example 7d Massale reclame"
   unknown_sub:      "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
   invalid_mask:     "\x0304✗\x03 Ongeldig maskerformaat. Moet in formaat gebruiker@host zijn (bijv. *@192.168.*)."
   global_mask:      "\x0304✗\x03 G-line masker \x02%mask%\x02 is te breed. Globale maskers zijn niet toegestaan."
@@ -207,18 +220,21 @@ gline:
     syntax:         "GLINE ADD <masker> <verloop> <reden>"
     short:          "Voeg een netwerkbrede G-line toe."
     help:           "Voegt een netwerkbrede G-line (globale ban) toe.\nHet masker moet in formaat gebruiker@host zijn.\nVerloop: 0=permanent, of gebruik d, h, m suffix (bijv. 7d, 12h, 30m).\nGLINE's die overeenkomen met Root- of IRCop-gebruikers worden geweigerd.\nDit commando vereist de operserv.gline-permissie."
+    example:        "/msg %bot% GLINE ADD spammer@spam.example 7d Massale reclame"
     done:           "\x0303✓\x03 G-line toegevoegd: \x02%mask%\x02 (%duration%) - %reason%"
 
   del:
     syntax:         "GLINE DEL <masker|nummer>"
     short:          "Verwijder een G-line."
     help:           "Verwijdert een G-line uit de lijst.\nU kunt het masker of het vermeldingsnummer van LIST opgeven.\nDit commando vereist de operserv.gline-permissie."
+    example:        "/msg %bot% GLINE DEL spammer@spam.example"
     done:           "\x0303✓\x03 G-line \x02%mask%\x02 verwijderd."
 
   list:
     syntax:         "GLINE LIST [masker]"
     short:          "Toon alle G-lines."
     help:           "Toont alle G-lines. Optioneel filteren op maskerpatroon.\nDit commando vereist de operserv.gline-permissie."
+    example:        "/msg %bot% GLINE LIST"
     header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
     empty:          "Er zijn geen G-lines."
     no_reason:      "Geen reden"
@@ -231,6 +247,7 @@ global:
   syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <bericht>"
   short:            "Stuur een globaal bericht naar alle verbonden gebruikers."
   help:             "Stuurt een bericht naar alle verbonden gebruikers.\n\nAls het eerste argument een servicenaam is, wordt het bericht verzonden via die bestaande service.\n\nAls het geen service is, wordt een tijdelijke pseudo-client aangemaakt met het\nopgegeven masker. Het masker moet in formaat zijn: nick!ident@vhost\n- nick: IRC-geldige bijnaam (letters, []{}|\\`, cijfers, begint met letter)\n- ident: alfanumeriek met . _ ~ -\n- vhost: geldige hostnaam\n\nVoor pseudo-clients mag de bijnaam niet verbonden of geregistreerd zijn.\nDe pseudo-client blijft verbonden tijdens het verzenden en verbreekt\nautomatisch (de nick wordt 24u geblokkeerd via SQLINE/QLINE).\n\nPRIVMSG verzendt als privébericht, NOTICE verzendt als notice.\nDit commando vereist de operserv.global-permissie."
+  example:          "/msg %bot% GLOBAL Network!staff@staff.example.com NOTICE Netwerkonderhoud over 10 minuten"
   mask_invalid:    "\x0304✗\x03 Ongeldig maskerformaat: %error%"
   nick_connected: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is momenteel verbonden."
   nick_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geregistreerd."
@@ -242,6 +259,7 @@ raw:
   syntax:           "RAW <regel>"
   short:            "Stuur een rauwe protocolregel naar de IRCd."
   help:             "Stuurt de opgegeven regel rechtstreeks naar de uplink IRCd-socket.\nGebruik met uiterste voorzichtigheid. Ongeldige protocolregels kunnen het netwerk laten crashen.\nDit commando vereist de operserv.raw-permissie."
+  example:          "/msg %bot% RAW WHOIS Alice"
   empty:            "\x0304✗\x03 U moet een niet-lege regel opgeven om te verzenden."
   too_long:         "\x0304✗\x03 Regel is te lang. Maximum 510 tekens."
   not_connected:    "\x0304✗\x03 Niet verbonden met IRCd."
@@ -269,12 +287,14 @@ motd:
   short:            "Beheer connect MOTD-berichten die naar gebruikers worden gestuurd bij verbinding."
   syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [args]"
   help:             "Beheer Message Of The Day-vermeldingen die naar gebruikers worden gestuurd wanneer ze verbinding maken met het netwerk.\n\n"
+  example:          "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Welkom op het netwerk!"
   unknown_sub:      "\x0304✗\x03 Onbekende subopdracht. Gebruik: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
     syntax:         "MOTD ADD {service|nick!ident@vhost} {PRIVMSG|NOTICE} <verloop> <bericht>"
     syntax_hint:    "\x0304✗\x03 Gebruik: \x02%syntax%\x02"
     short:          "Voeg een MOTD-vermelding toe."
     help:           "Voegt een nieuwe MOTD-vermelding toe die naar elke gebruiker wordt gestuurd wanneer deze verbinding maakt met het netwerk.\n\n"
+    example:        "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Welkom op het netwerk!"
     done:           "\x0303✓\x03 MOTD-vermelding #%id% toegevoegd."
     invalid_type:   "\x0304✗\x03 Ongeldig berichttype. Moet \x02PRIVMSG\x02 of \x02NOTICE\x02 zijn."
     invalid_expiry: "\x0304✗\x03 Ongeldig verloopformaat. Gebruik: \x02<getal><s|m|h|d>\x02 (bijv. 30s, 5m, 24h, 7d)."
@@ -283,12 +303,14 @@ motd:
     syntax_hint:    "\x0304✗\x03 Gebruik: \x02%syntax%\x02"
     short:          "Verwijder een MOTD-vermelding."
     help:           "Verwijdert een MOTD-vermelding op basis van zijn ID.\n\n"
+    example:        "/msg %bot% MOTD DEL 1"
     done:           "\x0303✓\x03 MOTD-vermelding #%id% verwijderd."
     not_found:      "\x0304✗\x03 MOTD-vermelding niet gevonden."
   list:
     syntax:         "MOTD LIST"
     short:          "Toon alle MOTD-vermeldingen."
     help:           "Toont alle geconfigureerde MOTD-vermeldingen.\n\n"
+    example:        "/msg %bot% MOTD LIST"
     empty:          "Geen MOTD-vermeldingen geconfigureerd."
     header:         "MOTD-vermeldingen:"
     status_enabled: "\x0303ingeschakeld\x03"
@@ -301,6 +323,7 @@ motd:
     syntax:         "MOTD CLEAN"
     short:          "Verwijder alle verlopen MOTD-vermeldingen."
     help:           "Verwijdert alle MOTD-vermeldingen waarvan de verlooptijd is verstreken.\n\n"
+    example:        "/msg %bot% MOTD CLEAN"
     done:           "\x0303✓\x03 %count% verlopen MOTD-vermeldingen verwijderd."
     none:           "\x0303✓\x03 Geen verlopen MOTD-vermeldingen om te verwijderen."
   debug:
@@ -310,18 +333,22 @@ emailverify:
   syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
   short:            "E-mailverificatie bij nicknaamregistratie in- of uitschakelen."
   help:             "Bepaalt of het registreren van een nicknaam bevestiging van het e-mailadres vereist.\nON vereist verificatie: de nicknaam blijft in behandeling tot het token is bevestigd.\nOFF registreert de nicknaam onmiddellijk; het adres wordt nog steeds bewaard voor accountherstel.\nSTATUS toont het huidige beleid.\nDit commando vereist root-toegang."
+  example:          "/msg %bot% EMAILVERIFY STATUS"
   on:
     syntax:         "EMAILVERIFY ON"
     short:          "E-mailverificatie bij registratie vereisen."
     help:           "Vereist dat nieuwe registraties het e-mailadres bevestigen voordat de nicknaam actief wordt."
+    example:        "/msg %bot% EMAILVERIFY ON"
   off:
     syntax:         "EMAILVERIFY OFF"
     short:          "Nicknamen registreren zonder e-mailverificatie."
     help:           "Registreert nieuwe nicknamen onmiddellijk. Het e-mailadres blijft verplicht en wordt bewaard, omdat het de weg voor accountherstel is."
+    example:        "/msg %bot% EMAILVERIFY OFF"
   status:
     syntax:         "EMAILVERIFY STATUS"
     short:          "Het huidige verificatiebeleid tonen."
     help:           "Toont of e-mailverificatie momenteel vereist is voor registratie."
+    example:        "/msg %bot% EMAILVERIFY STATUS"
   enabled:          "\x0303✓\x03 E-mailverificatie is nu \x02verplicht\x02 voor registratie."
   disabled:         "\x0303✓\x03 E-mailverificatie is nu \x02uitgeschakeld\x02; nicknamen worden onmiddellijk geregistreerd."
   already_enabled:  "\x0304✗\x03 E-mailverificatie is al verplicht."

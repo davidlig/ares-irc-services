@@ -44,6 +44,7 @@ ircop:
   syntax:           "IRCOP {ADD|DEL|LIST} [nickname] [role]"
   short:            "Manage network IRC operators."
   help:             "Manage network IRC operators. ADD adds a registered nickname\nas an operator with the specified role.\nDEL removes an operator. LIST shows all operators.\nUse ROLE LIST to see available roles.\nThis command is restricted to Root users configured in services."
+  example:          "/msg %bot% IRCOP ADD Alice helper"
 
   unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
   unknown_role:     "\x0304✗\x03 Role \x02%role%\x02 does not exist. Use \x0303/msg %bot% ROLE LIST\x03 to see available roles."
@@ -55,6 +56,7 @@ ircop:
     syntax:         "IRCOP ADD <nickname> <role>"
     short:          "Add a network IRC operator."
     help:           "Adds a registered nickname as a network IRC operator.\nUse ROLE LIST to see available roles.\nThis command is restricted to Root users."
+    example:        "/msg %bot% IRCOP ADD Alice helper"
     done:           "\x0303✓\x03 Added \x02%nickname%\x02 as \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not an active registered nickname."
 
@@ -62,12 +64,14 @@ ircop:
     syntax:         "IRCOP DEL <nickname>"
     short:          "Remove a network IRC operator."
     help:            "Removes a network IRC operator from the list.\nThis command is restricted to Root users."
+    example:         "/msg %bot% IRCOP DEL Alice"
     done:           "\x0303✓\x03 Removed \x02%nickname%\x02 from IRC operators."
 
   list:
     syntax:         "IRCOP LIST"
     short:          "List all network IRC operators."
     help:            "Lists all network IRC operators with their roles and registration date.\nThis command is restricted to Root users."
+    example:         "/msg %bot% IRCOP LIST"
     header:         "\x0307---\x03 \x02Network IRC Operators\x02 \x0307---\x03"
     empty:          "There are no IRC operators."
 
@@ -77,6 +81,7 @@ role:
     syntax:         "ROLE OPERCLASS {LIST|<role>} [{VIEW|SET}] [operclass]"
     short:          "Manage the Unreal operclass for a role."
     help:           "LIST shows available operclasses on the network.\nVIEW shows the operclass assigned to a role and available operclasses.\nSET assigns the operclass to IRCOPs on identify (OFF to clear).\nAvailable only on UnrealIRCd protocols."
+    example:        "/msg %bot% ROLE OPERCLASS LIST"
     list:
       header:       "\x0307---\x03 \x02Available Operclasses on the Network\x02 \x0307---\x03"
       empty:        "There are no operclasses available on the network."
@@ -92,6 +97,7 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
   short:            "Manage operator roles."
   help:             "Manage operator roles. ADD creates a new role, DEL removes it,\nLIST shows all roles, PERMS manages permissions for a role, MODES manages IRCOP modes,\nVHOST manages forced vhost pattern for a role.\nProtected roles (ADMIN, OPER, PREOPER) cannot be deleted.\nThis command is restricted to Root users."
+  example:          "/msg %bot% ROLE ADD helper"
   syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <name> ..."
   help_operclass:   "Manage operator roles. ADD creates a new role, DEL removes it,\nLIST shows all roles, PERMS manages permissions for a role, MODES manages IRCOP modes,\nVHOST manages forced vhost pattern for a role, OPERCLASS manages the Unreal operclass.\nProtected roles (ADMIN, OPER, PREOPER) cannot be deleted.\nThis command is restricted to Root users."
 
@@ -105,18 +111,21 @@ role:
     syntax:         "ROLE ADD <name> [description]"
     short:          "Create a new role."
     help:            "Creates a new custom role. Description is optional.\nThis command is restricted to Root users."
+    example:         "/msg %bot% ROLE ADD helper"
     done:           "\x0303✓\x03 Created role \x02%role%\x02."
 
   del:
     syntax:         "ROLE DEL <name>"
     short:          "Delete a role."
     help:            "Deletes a custom role. Protected roles (ADMIN, OPER, PREOPER)\ncannot be deleted. If the role has operators assigned,\nyou must reassign them first.\nThis command is restricted to Root users."
+    example:         "/msg %bot% ROLE DEL helper"
     done:           "\x0303✓\x03 Deleted role \x02%role%\x02."
 
   list:
     syntax:         "ROLE LIST"
     short:          "List all roles."
     help:            "Lists all roles. Protected roles are marked with [PROTECTED].\nThis command is restricted to Root users."
+    example:         "/msg %bot% ROLE LIST"
     header:         "\x0307---\x03 \x02Operator Roles\x02 \x0307---\x03"
     empty:          "There are no operator roles."
 
@@ -124,6 +133,7 @@ role:
     syntax:         "ROLE PERMS <role> {LIST|ADD|DEL|CLEAR} [permission|ALL]"
     short:          "Manage role permissions."
     help:            "Manage permissions assigned to a role.\nLIST shows all permissions for the role.\nADD assigns a permission to the role.\nDEL removes a permission from the role (not for protected roles).\nCLEAR removes all permissions from the role.\nUse ALL to add all available permissions at once.\nThis command is restricted to Root users."
+    example:         "/msg %bot% ROLE PERMS helper ADD operserv.kill"
     not_found:       "\x0304✗\x03 Permission \x02%perm%\x02 does not exist."
     already_has:     "\x0304✗\x03 Role \x02%role%\x02 already has permission \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Role \x02%role%\x02 does not have permission \x02%perm%\x02."
@@ -146,6 +156,7 @@ role:
     syntax:         "ROLE MODES <role> {VIEW|SET} [modes]"
     short:          "Manage IRCOP user modes for the role."
     help:            "Manage IRCOP user modes assigned to a role.\nVIEW shows the role's current modes.\nSET sets the IRCOP modes (e.g., oH for +oH).\nUsers with this role will receive these modes on identify.\nAvailable modes per IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nThis command is restricted to Root users."
+    example:         "/msg %bot% ROLE MODES helper SET oH"
 
     view:
       header:        "\x0307---\x03 \x02Modes for %role%\x02 \x0307---\x03"
@@ -163,6 +174,7 @@ role:
     syntax:         "ROLE VHOST <role> {VIEW|SET} [pattern]"
     short:          "Manage forced vhost pattern for a role."
     help:           "Manage forced vhost assigned to a role.\nVIEW shows the current forced vhost pattern.\nSET assigns a forced vhost pattern (users with this role will\nreceive this vhost on identify, overriding personal vhost).\nThe pattern is appended after the cleaned nickname, e.g.:\n  Nick: _davidlig_ → Pattern: admin.ares → VHost: davidlig.admin.ares\nValid characters: a-z, A-Z, 0-9, hyphen (-), and dot (.).\nMust have at least one dot, cannot start/end with - or . or have ..\nUse OFF to clear the forced vhost pattern.\nThis command is restricted to Root users."
+    example:        "/msg %bot% ROLE VHOST helper SET staff.example.com"
 
     view:
       header:        "\x0307---\x03 \x02Forced vhost for %role%\x02 \x0307---\x03"
@@ -191,6 +203,7 @@ gline:
   syntax:           "GLINE {ADD|DEL|LIST} [mask] [expiry] [reason]"
   short:            "Manage network-wide G-lines."
   help:             "Manage network-wide G-lines (global bans).\nADD adds a new G-line with mask, expiry and reason.\nDEL removes a G-line by mask or entry number.\nLIST shows all G-lines, optionally filtered by mask.\n\nExpiry format: 0=permanent, or use d, h, m suffix (e.g., 7d, 12h, 30m).\nGLINEs matching Root or IRCop users are rejected.\nThis command requires the operserv.gline permission."
+  example:          "/msg %bot% GLINE ADD spammer@spam.example 7d Mass advertising"
   unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
   invalid_mask:     "\x0304✗\x03 Invalid mask format. Must be in format user@host (e.g., *@192.168.*)."
   global_mask:      "\x0304✗\x03 G-line mask \x02%mask%\x02 is too broad. Global masks are not allowed."
@@ -207,18 +220,21 @@ gline:
     syntax:         "GLINE ADD <mask> <expiry> <reason>"
     short:          "Add a network-wide G-line."
     help:           "Adds a network-wide G-line (global ban).\nThe mask must be in format user@host.\nExpiry: 0=permanent, or use d, h, m suffix (e.g., 7d, 12h, 30m).\nGLINEs matching Root or IRCop users are rejected.\nThis command requires the operserv.gline permission."
+    example:        "/msg %bot% GLINE ADD spammer@spam.example 7d Mass advertising"
     done:           "\x0303✓\x03 G-line added: \x02%mask%\x02 (%duration%) - %reason%"
 
   del:
     syntax:         "GLINE DEL <mask|number>"
     short:          "Remove a G-line."
     help:           "Removes a G-line from the list.\nYou can specify the mask or the entry number from LIST.\nThis command requires the operserv.gline permission."
+    example:        "/msg %bot% GLINE DEL spammer@spam.example"
     done:           "\x0303✓\x03 G-line \x02%mask%\x02 removed."
 
   list:
     syntax:         "GLINE LIST [mask]"
     short:          "List all G-lines."
     help:           "Lists all G-lines. Optionally filter by mask pattern.\nThis command requires the operserv.gline permission."
+    example:        "/msg %bot% GLINE LIST"
     header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
     empty:          "There are no G-lines."
     no_reason:      "No reason"
@@ -231,6 +247,7 @@ global:
   syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <message>"
   short:            "Send a global message to all connected users."
   help:             "Sends a message to all connected users.\n\nIf the first argument is a service name, the message will be sent using that existing service.\n\nIf not a service, a temporary pseudo-client will be created with the\nspecified mask. The mask must be in format: nick!ident@vhost\n- nick: IRC valid nickname (letters, []{}|\\`, digits, starts with letter)\n- ident: alphanumeric with . _ ~ -\n- vhost: valid hostname\n\nFor pseudo-clients, the nickname cannot be connected or registered.\nThe pseudo-client will remain connected during the send and disconnect\nautomatically (the nick will be blocked for 24h via SQLINE/QLINE).\n\nPRIVMSG sends as private message, NOTICE sends as notice.\nThis command requires the operserv.global permission."
+  example:          "/msg %bot% GLOBAL Network!staff@staff.example.com NOTICE Network maintenance in 10 minutes"
   mask_invalid:    "\x0304✗\x03 Invalid mask format: %error%"
   nick_connected: "\x0304✗\x03 Nickname \x02%nickname%\x02 is currently connected."
   nick_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is registered."
@@ -242,6 +259,7 @@ raw:
   syntax:           "RAW <line>"
   short:            "Send a raw protocol line to the IRCd."
   help:             "Sends the given line directly to the uplink IRCd socket.\nUse with extreme caution. Invalid protocol lines may crash the network.\nThis command requires the operserv.raw permission."
+  example:          "/msg %bot% RAW WHOIS Alice"
   empty:            "\x0304✗\x03 You must specify a non-empty line to send."
   too_long:         "\x0304✗\x03 Line is too long. Maximum 510 characters."
   not_connected:    "\x0304✗\x03 Not connected to IRCd."
@@ -269,12 +287,14 @@ motd:
   short:            "Manage connect MOTD messages sent to users on connect."
   syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [args]"
   help:             "Manage Message Of The Day entries that are sent to users when they connect to the network.\n\n"
+  example:          "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Welcome to the network!"
   unknown_sub:      "\x0304✗\x03 Unknown subcommand. Use: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
     syntax:         "MOTD ADD {service|nick!ident@vhost} {PRIVMSG|NOTICE} <expiry> <message>"
     syntax_hint:    "\x0304✗\x03 Usage: \x02%syntax%\x02"
     short:          "Add a MOTD entry."
     help:           "Adds a new MOTD message that will be sent to each user when they connect to the network.\n\n"
+    example:        "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Welcome to the network!"
     done:           "\x0303✓\x03 MOTD entry #%id% added."
     invalid_type:   "\x0304✗\x03 Invalid message type. Must be \x02PRIVMSG\x02 or \x02NOTICE\x02."
     invalid_expiry: "\x0304✗\x03 Invalid expiry format. Use: \x02<number><s|m|h|d>\x02 (e.g., 30s, 5m, 24h, 7d)."
@@ -283,12 +303,14 @@ motd:
     syntax_hint:    "\x0304✗\x03 Usage: \x02%syntax%\x02"
     short:          "Delete a MOTD entry."
     help:           "Deletes a MOTD entry by its ID.\n\n"
+    example:        "/msg %bot% MOTD DEL 1"
     done:           "\x0303✓\x03 MOTD entry #%id% deleted."
     not_found:      "\x0304✗\x03 MOTD entry not found."
   list:
     syntax:         "MOTD LIST"
     short:          "List all MOTD entries."
     help:           "Lists all configured MOTD entries.\n\n"
+    example:        "/msg %bot% MOTD LIST"
     empty:          "No MOTD entries configured."
     header:         "MOTD entries:"
     status_enabled: "\x0303enabled\x03"
@@ -301,6 +323,7 @@ motd:
     syntax:         "MOTD CLEAN"
     short:          "Remove all expired MOTD entries."
     help:           "Removes all MOTD entries whose expiry time has passed.\n\n"
+    example:        "/msg %bot% MOTD CLEAN"
     done:           "\x0303✓\x03 Removed %count% expired MOTD entries."
     none:           "\x0303✓\x03 No expired MOTD entries to remove."
   debug:
@@ -310,18 +333,22 @@ emailverify:
   syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
   short:            "Enable or disable e-mail verification for nickname registration."
   help:             "Controls whether registering a nickname requires confirming the e-mail address.\nON requires verification: the nickname stays pending until the token is confirmed.\nOFF registers the nickname immediately; the address is still stored for account recovery.\nSTATUS shows the current policy.\nThis command requires root access."
+  example:          "/msg %bot% EMAILVERIFY STATUS"
   on:
     syntax:         "EMAILVERIFY ON"
     short:          "Require e-mail verification on registration."
     help:           "Requires new registrations to confirm the e-mail address before the nickname becomes active."
+    example:        "/msg %bot% EMAILVERIFY ON"
   off:
     syntax:         "EMAILVERIFY OFF"
     short:          "Register nicknames without e-mail verification."
     help:           "Registers new nicknames immediately. The e-mail address is still required and stored, because it is the account recovery channel."
+    example:        "/msg %bot% EMAILVERIFY OFF"
   status:
     syntax:         "EMAILVERIFY STATUS"
     short:          "Show the current verification policy."
     help:           "Shows whether e-mail verification is currently required for registration."
+    example:        "/msg %bot% EMAILVERIFY STATUS"
   enabled:          "\x0303✓\x03 E-mail verification is now \x02required\x02 for registration."
   disabled:         "\x0303✓\x03 E-mail verification is now \x02disabled\x02; nicknames register immediately."
   already_enabled:  "\x0304✗\x03 E-mail verification is already required."

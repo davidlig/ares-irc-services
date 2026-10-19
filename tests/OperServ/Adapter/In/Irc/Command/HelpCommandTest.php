@@ -7,6 +7,7 @@ namespace App\Tests\OperServ\Adapter\In\Irc\Command;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Application\Port\In\NickAccountData;
+use App\OperServ\Adapter\In\Irc\Command\GlineCommand;
 use App\OperServ\Adapter\In\Irc\Command\HelpCommand;
 use App\OperServ\Adapter\In\Irc\Command\KillCommand;
 use App\OperServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
@@ -24,6 +25,7 @@ use App\OperServ\Application\Port\Out\OperatorAccountLookup;
 use App\OperServ\Application\Port\Out\OperatorRoleAccess;
 use App\OperServ\Application\Port\Out\RootIdentityRegistry;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
+use App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -185,6 +187,33 @@ final class HelpCommandTest extends TestCase
         self::assertSame(1, substr_count($page, 'Syntax:'));
         self::assertSame(1, substr_count($page, 'Example:'));
         self::assertStringContainsString('/msg OperServ KILL BadUser Flooding channels', $page);
+    }
+
+    #[Test]
+    public function glineCommandAndSubcommandPagesRenderSyntaxAndExampleExactlyOnce(): void
+    {
+        $notifier = new HelpNotifier();
+        $gline = new GlineCommand($this->createStub(ManageGlineHandlerInterface::class));
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('ircOperator')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IrcOperatorStatus));
+        $authorization->method('permission')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RolePermission));
+        $translation = new HelpTranslation($this->englishTranslationEntries());
+        $command = new HelpCommand(new UnifiedHelpFormatter());
+
+        $command->execute($this->context(['GLINE'], [$gline], $notifier, $authorization, $translation));
+        self::assertCount(1, $notifier->messages);
+        $page = $notifier->messages[0];
+        self::assertSame(1, substr_count($page, 'Syntax:'));
+        self::assertSame(1, substr_count($page, 'Example:'));
+        self::assertStringContainsString('/msg OperServ GLINE ADD spammer@spam.example 7d Mass advertising', $page);
+
+        $notifier = new HelpNotifier();
+        $command->execute($this->context(['GLINE', 'ADD'], [$gline], $notifier, $authorization, $translation));
+        self::assertCount(1, $notifier->messages);
+        $page = $notifier->messages[0];
+        self::assertSame(1, substr_count($page, 'Syntax:'));
+        self::assertSame(1, substr_count($page, 'Example:'));
+        self::assertStringContainsString('/msg OperServ GLINE ADD spammer@spam.example 7d Mass advertising', $page);
     }
 
     /** @return iterable<string, array{list<string>}> */

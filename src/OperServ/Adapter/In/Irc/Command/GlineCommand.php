@@ -50,6 +50,11 @@ final readonly class GlineCommand implements OperServCommandInterface
         return 'gline.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'gline.example';
+    }
+
     public function getOrder(): int
     {
         return 20;
@@ -63,9 +68,9 @@ final readonly class GlineCommand implements OperServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'ADD', 'desc_key' => 'gline.add.short', 'help_key' => 'gline.add.help', 'syntax_key' => 'gline.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'gline.del.short', 'help_key' => 'gline.del.help', 'syntax_key' => 'gline.del.syntax'],
-            ['name' => 'LIST', 'desc_key' => 'gline.list.short', 'help_key' => 'gline.list.help', 'syntax_key' => 'gline.list.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'gline.add.short', 'help_key' => 'gline.add.help', 'syntax_key' => 'gline.add.syntax', 'example_key' => 'gline.add.example'],
+            ['name' => 'DEL', 'desc_key' => 'gline.del.short', 'help_key' => 'gline.del.help', 'syntax_key' => 'gline.del.syntax', 'example_key' => 'gline.del.example'],
+            ['name' => 'LIST', 'desc_key' => 'gline.list.short', 'help_key' => 'gline.list.help', 'syntax_key' => 'gline.list.syntax', 'example_key' => 'gline.list.example'],
         ];
     }
 

@@ -278,6 +278,46 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function rendersSubcommandExampleOnlyWhenEntryProvidesExampleKey(): void
+    {
+        $formatter = new UnifiedHelpFormatter();
+
+        $context = new OperServHelpFormatterContext();
+        self::assertSame([
+            'translated:help.header',
+            'translated:set.email.help',
+            ' ',
+            'translated:help.syntax_label',
+            ' ',
+            'translated:help.example_label',
+            'translated:help.footer',
+        ], $formatter->renderSubCommandHelp($context, 'SET', [
+            'name' => 'EMAIL',
+            'help_key' => 'set.email.help',
+            'syntax_key' => 'set.email.syntax',
+            'example_key' => 'set.email.example',
+        ]));
+        self::assertContains([
+            'key' => 'help.example_label',
+            'params' => ['example' => 'translated:set.email.example'],
+        ], $context->translationRequests);
+
+        $context = new OperServHelpFormatterContext();
+        self::assertSame([
+            'translated:help.header',
+            'translated:set.email.help',
+            ' ',
+            'translated:help.syntax_label',
+            'translated:help.footer',
+        ], $formatter->renderSubCommandHelp($context, 'SET', [
+            'name' => 'EMAIL',
+            'help_key' => 'set.email.help',
+            'syntax_key' => 'set.email.syntax',
+        ]));
+        self::assertNotContains('help.example_label', array_column($context->translationRequests, 'key'));
+    }
+
+    #[Test]
     public function preservesMultibyteHeaderWidthAndDoesNotPadOverlongTitles(): void
     {
         $context = new OperServHelpFormatterContext();
@@ -478,8 +518,8 @@ final class OperServHelpFormatterContext implements HelpFormatterContextInterfac
 final readonly class OperServHelpableCommand implements HelpableCommandInterface
 {
     /**
-     * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> $subcommands
-     * @param array<string, mixed>                                                                                    $helpParams
+     * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string, example_key?: string}> $subcommands
+     * @param array<string, mixed>                                                                                                          $helpParams
      */
     public function __construct(
         private string $name,

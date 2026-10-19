@@ -44,6 +44,7 @@ ircop:
   syntax:           "IRCOP {ADD|DEL|LIST} [ezizena] [rola]"
   short:            "Kudeatu sareko IRC operadoreak."
   help:             "Sareko IRC operadoreak kudeatzen ditu. ADDk ezizen erregistratu bat gehitzen du\nzehaztutako rolarekin operadore gisa.\nDELek operadore bat kentzen du. LISTek operadore guztiak erakusten ditu.\nErabili ROLE LIST rolak ikusteko.\nKomando hau zerbitzuetan konfiguratutako Root erabiltzaileentzat mugatuta dago."
+  example:          "/msg %bot% IRCOP ADD Alice helper"
 
   unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
   unknown_role:     "\x0304✗\x03 \x02%role%\x02 rola ez da existitzen. Erabili \x0303/msg %bot% ROLE LIST\x03 rolak ikusteko."
@@ -55,6 +56,7 @@ ircop:
     syntax:         "IRCOP ADD <ezizena> <rola>"
     short:          "Gehitu sareko IRC operadore bat."
     help:           "Ezizen erregistratu bat sareko IRC operadore gisa gehitzen du.\nErabili ROLE LIST rolak ikusteko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    example:        "/msg %bot% IRCOP ADD Alice helper"
     done:           "\x0303✓\x03 \x02%nickname%\x02 \x02%role%\x02 gisa gehitu da."
     nick_not_active: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez da ezizen erregistratu aktibo bat."
 
@@ -62,12 +64,14 @@ ircop:
     syntax:         "IRCOP DEL <ezizena>"
     short:          "Kendu sareko IRC operadore bat."
     help:            "Sareko IRC operadore bat zerrendatik kentzen du.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    example:         "/msg %bot% IRCOP DEL Alice"
     done:           "\x0303✓\x03 \x02%nickname%\x02 IRC operadoreetatik kendu da."
 
   list:
     syntax:         "IRCOP LIST"
     short:          "Zerrendatu sareko IRC operadore guztiak."
     help:            "Sareko IRC operadore guztiak bere rolekin eta erregistro datarekin zerrendatzen ditu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    example:         "/msg %bot% IRCOP LIST"
     header:         "\x0307---\x03 \x02Sareko IRC Operadoreak\x02 \x0307---\x03"
     empty:          "Ez dago IRC operadorerik."
 
@@ -77,6 +81,7 @@ role:
     syntax: "ROLE OPERCLASS {LIST|<rola>} [{VIEW|SET}] [operclass]"
     short: "Unreal operclass kudeatzen du."
     help: "LISTek sarean erabilgarri dauden operclass-ak erakusten ditu.\nVIEW-k rolaren operclass-a eta erabilgarri daudenak erakusten ditu.\nSET-ek identifikatzean ezartzen du (OFF kentzeko).\nUnrealIRCd protokoloetan bakarrik erabilgarri."
+    example: "/msg %bot% ROLE OPERCLASS LIST"
     list:
       header: "\x0307---\x03 \x02Sarean Erabilgarri Dauden Operclass-ak\x02 \x0307---\x03"
       empty: "Ez dago operclass-ik erabilgarri sarean."
@@ -92,6 +97,7 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <izena> ..."
   short:            "Kudeatu operadore rolak."
   help:             "Operadore rolak kudeatzen ditu. ADDek rol berri bat sortzen du, DELek kentzen du,\nLISTek rol guztiak erakusten ditu, PERMSek rol baten baimenak kudeatzen ditu, MODESek IRCOP moduak kudeatzen ditu,\nVHOSTek rol baten behartutako vhost eredua kudeatzen du.\nBabestutako rolak (ADMIN, OPER, PREOPER) ezin dira ezabatu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+  example:          "/msg %bot% ROLE ADD helper"
   syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <izena> ..."
   help_operclass:   "Operadore rolak kudeatzen ditu. ADDek rol berri bat sortzen du, DELek kentzen du,\nLISTek rol guztiak erakusten ditu, PERMSek rol baten baimenak kudeatzen ditu, MODESek IRCOP moduak kudeatzen ditu,\nVHOSTek rol baten behartutako vhost eredua kudeatzen du, OPERCLASSek Unreal operclass kudeatzen du.\nBabestutako rolak (ADMIN, OPER, PREOPER) ezin dira ezabatu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
 
@@ -105,18 +111,21 @@ role:
     syntax:         "ROLE ADD <izena> [deskribapena]"
     short:          "Sortu rol berri bat."
     help:            "Rol pertsonalizatu berri bat sortzen du. Deskribapena aukerakoa da.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    example:         "/msg %bot% ROLE ADD helper"
     done:           "\x0303✓\x03 \x02%role%\x02 rola sortu da."
 
   del:
     syntax:         "ROLE DEL <izena>"
     short:          "Ezabatu rol bat."
     help:            "Rol pertsonalizatu bat ezabatzen du. Babestutako rolak (ADMIN, OPER, PREOPER)\nezin dira ezabatu. Rolak operadoreak esleituta baditu,\nlehenik berresleitu behar dituzu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    example:         "/msg %bot% ROLE DEL helper"
     done:           "\x0303✓\x03 \x02%role%\x02 rola ezabatu da."
 
   list:
     syntax:         "ROLE LIST"
     short:          "Zerrendatu rol guztiak."
     help:            "Rol guztiak zerrendatzen ditu. Babestutako rolak [PROTECTED] markarekin daude.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    example:         "/msg %bot% ROLE LIST"
     header:         "\x0307---\x03 \x02Operadore Rolak\x02 \x0307---\x03"
     empty:          "Ez dago operadore rolik."
 
@@ -124,6 +133,7 @@ role:
     syntax:         "ROLE PERMS <rola> {LIST|ADD|DEL|CLEAR} [baimena|ALL]"
     short:          "Kudeatu rol baten baimenak."
     help:            "Rol bati esleitutako baimenak kudeatzen ditu.\nLISTek rolaren baimen guztiak erakusten ditu.\nADDek baimen bat esleitzen dio rolari.\nDELek baimen bat kentzen dio rolari (ez babestutako roletarako).\nCLEARek rolaren baimen guztiak kentzen ditu.\nErabili ALL eskuragarri dauden baimen guztiak batera gehitzeko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    example:         "/msg %bot% ROLE PERMS helper ADD operserv.kill"
     not_found:       "\x0304✗\x03 \x02%perm%\x02 baimena ez da existitzen."
     already_has:     "\x0304✗\x03 \x02%role%\x02 rolak jada \x02%perm%\x02 baimena du."
     does_not_have:   "\x0304✗\x03 \x02%role%\x02 rolak ez du \x02%perm%\x02 baimenik."
@@ -146,6 +156,7 @@ role:
     syntax:         "ROLE MODES <rola> {VIEW|SET} [moduak]"
     short:          "Kudeatu rolerako IRCOP erabiltzaile moduak."
     help:            "Rol bati esleitutako IRCOP erabiltzaile moduak kudeatzen ditu.\nVIEWek rolaren uneko moduak erakusten ditu.\nSETek IRCOP moduak ezartzen ditu (adib., oH +oHrako).\nRol hau duten erabiltzaileek modu hauek jasoko dituzte identifikatzean.\nIRCd bakoitzeko modu erabilgarriak: UnrealIRCd (H, q, s, W), InspIRCd (s).\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    example:         "/msg %bot% ROLE MODES helper SET oH"
 
     view:
       header:        "\x0307---\x03 \x02%role% rolaren moduak\x02 \x0307---\x03"
@@ -163,6 +174,7 @@ role:
     syntax:         "ROLE VHOST <rola> {VIEW|SET} [eredua]"
     short:          "Kudeatu rol baten behartutako vhost eredua."
     help:           "Rol bati esleitutako behartutako vhost-a kudeatzen du.\nVIEWek uneko behartutako vhost eredua erakusten du.\nSETek behartutako vhost eredu bat esleitzen du (rol hau duten\nerabiltzaileek vhost hau jasoko dute identifikatzean, vhost pertsonala gainidatziz).\nEredua ezizen garbituaren ondoren eransten da, adib.:\n  Ezizena: _davidlig_ → Eredua: admin.ares → VHost: davidlig.admin.ares\nKaraktere baliozkoak: a-z, A-Z, 0-9, marra (-) eta puntua (.).\nGutxienez puntu bat eduki behar du, ezin da - edo .-z hasi/amaitu ezta .. eduki ere.\nErabili OFF behartutako vhost eredua garbitzeko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    example:        "/msg %bot% ROLE VHOST helper SET staff.example.com"
 
     view:
       header:        "\x0307---\x03 \x02%role% rolaren behartutako vhost-a\x02 \x0307---\x03"
@@ -191,6 +203,7 @@ gline:
   syntax:           "GLINE {ADD|DEL|LIST} [maskara] [iraungitzea] [arrazoia]"
   short:            "Kudeatu sare osoko G-lineak."
   help:             "Sare osoko G-lineak (debeku globalak) kudeatzen ditu.\nADDek G-line berri bat gehitzen du maskara, iraungitze eta arrazoiarekin.\nDELek G-line bat kentzen du maskara edo sarrera zenbakiaren arabera.\nLISTek G-line guztiak erakusten ditu, aukeran maskararekin iragazita.\n\nIraungitze formatua: 0=iraunkorra, edo erabili d, o, m atzizkia (adib., 7d, 12o, 30m).\nRoot edo IRCop erabiltzaileekin bat datozen GLINEak baztertzen dira.\nKomando honek operserv.gline baimena behar du."
+  example:          "/msg %bot% GLINE ADD spammer@spam.example 7d Publizitate masiboa"
   unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
   invalid_mask:     "\x0304✗\x03 Maskara formatu baliogabea. Formatua user@host izan behar du (adib., *@192.168.*)."
   global_mask:      "\x0304✗\x03 \x02%mask%\x02 G-line maskara zabalegia da. Maskara globalak ez dira onartzen."
@@ -207,18 +220,21 @@ gline:
     syntax:         "GLINE ADD <maskara> <iraungitzea> <arrazoia>"
     short:          "Gehitu sare osoko G-line bat."
     help:           "Sare osoko G-line bat (debeku globala) gehitzen du.\nMaskarak user@host formatuan egon behar du.\nIraungitzea: 0=iraunkorra, edo erabili d, o, m atzizkia (adib., 7d, 12o, 30m).\nRoot edo IRCop erabiltzaileekin bat datozen GLINEak baztertzen dira.\nKomando honek operserv.gline baimena behar du."
+    example:        "/msg %bot% GLINE ADD spammer@spam.example 7d Publizitate masiboa"
     done:           "\x0303✓\x03 G-linea gehitu da: \x02%mask%\x02 (%duration%) - %reason%"
 
   del:
     syntax:         "GLINE DEL <maskara|zenbakia>"
     short:          "Kendu G-line bat."
     help:           "G-line bat zerrendatik kentzen du.\nMaskara edo LISTeko sarrera zenbakia zehaztu dezakezu.\nKomando honek operserv.gline baimena behar du."
+    example:        "/msg %bot% GLINE DEL spammer@spam.example"
     done:           "\x0303✓\x03 \x02%mask%\x02 G-linea kendu da."
 
   list:
     syntax:         "GLINE LIST [maskara]"
     short:          "Zerrendatu G-line guztiak."
     help:           "G-line guztiak zerrendatzen ditu. Aukeran maskara ereduarekin iragazi.\nKomando honek operserv.gline baimena behar du."
+    example:        "/msg %bot% GLINE LIST"
     header:         "\x0307---\x03 \x02G-lineak (%count%) \x0307---\x03"
     empty:          "Ez dago G-linearik."
     no_reason:      "Arrazoirik ez"
@@ -231,6 +247,7 @@ global:
   syntax:           "GLOBAL {zerbitzua|nick!ident@vhost} {PRIVMSG|NOTICE} <mezua>"
   short:            "Bidali mezu global bat konektatutako erabiltzaile guztiei."
   help:             "Konektatutako erabiltzaile guztiei mezu bat bidaltzen die.\n\nLehen argumentua zerbitzu izen bat bada, mezua existitzen den zerbitzu hori\nerabiliz bidaliko da.\n\nZerbitzu bat ez bada, aldi baterako pseudo-bezero bat sortuko da\nzehaztutako maskararekin. Maskarak formatu honetan egon behar du: nick!ident@vhost\n- ezizena: IRC ezizen baliozkoa (letrak, []{}|\\`, digituak, letraz hasten da)\n- ident: alfanumerikoa . _ ~ - karaktereekin\n- vhost: ostalari izen baliozkoa\n\nPseudo-bezeroentzat, ezizena ezin da konektatuta edo erregistratuta egon.\nPseudo-bezeroa konektatuta egongo da bidalketan zehar eta automatikoki\ndeskonektatuko da (ezizena 24 orduz blokeatuko da SQLINE/QLINE bidez).\n\nPRIVMSGek mezu pribatu gisa bidaltzen du, NOTICEk ohar gisa.\nKomando honek operserv.global baimena behar du."
+  example:          "/msg %bot% GLOBAL Network!staff@staff.example.com NOTICE Sarearen mantentze-lanak 10 minutu barru"
   mask_invalid:    "\x0304✗\x03 Maskara formatu baliogabea: %error%"
   nick_connected: "\x0304✗\x03 \x02%nickname%\x02 ezizena unean konektatuta dago."
   nick_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena erregistratuta dago."
@@ -242,6 +259,7 @@ raw:
   syntax:           "RAW <lerroa>"
   short:            "Bidali protokolo lerro gordin bat IRCd-ra."
   help:             "Emandako lerroa zuzenean goiko IRCd socket-era bidaltzen du.\nMuturreko kontuz erabili. Protokolo lerro baliogabeek sarea kraskatu dezakete.\nKomando honek operserv.raw baimena behar du."
+  example:          "/msg %bot% RAW WHOIS Alice"
   empty:            "\x0304✗\x03 Hutsik ez dagoen lerro bat zehaztu behar duzu bidaltzeko."
   too_long:         "\x0304✗\x03 Lerroa luzeegia da. Gehienez 510 karaktere."
   not_connected:    "\x0304✗\x03 Ez dago IRCd-ra konektatuta."
@@ -269,12 +287,14 @@ motd:
   short:            "Kudeatu konexio MOTD mezuak, erabiltzaileei konektatzean bidaliak."
   syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [arg]"
   help:             "Kudeatu Eguneko Mezua sarrerak, erabiltzaileei sarera konektatzean bidaltzen zaizkienak.\n\n"
+  example:          "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Ongi etorri sarera!"
   unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna. Erabili: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
     syntax:         "MOTD ADD {zerbitzua|nick!ident@vhost} {PRIVMSG|NOTICE} <iraungitzea> <mezua>"
     syntax_hint:    "\x0304✗\x03 Erabilera: \x02%syntax%\x02"
     short:          "Gehitu MOTD sarrera bat."
     help:           "MOTD mezu berri bat gehitzen du, erabiltzaile bakoitzari sarera konektatzean bidaliko zaiona.\n\n"
+    example:        "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Ongi etorri sarera!"
     done:           "\x0303✓\x03 #%id% MOTD sarrera gehitu da."
     invalid_type:   "\x0304✗\x03 Mezu mota baliogabea. \x02PRIVMSG\x02 edo \x02NOTICE\x02 izan behar du."
     invalid_expiry: "\x0304✗\x03 Iraungitze formatu baliogabea. Erabili: \x02<zenbakia><s|m|o|e>\x02 (adib., 30s, 5m, 24o, 7e)."
@@ -283,12 +303,14 @@ motd:
     syntax_hint:    "\x0304✗\x03 Erabilera: \x02%syntax%\x02"
     short:          "Ezabatu MOTD sarrera bat."
     help:           "MOTD sarrera bat ezabatzen du bere IDaren arabera.\n\n"
+    example:        "/msg %bot% MOTD DEL 1"
     done:           "\x0303✓\x03 #%id% MOTD sarrera ezabatu da."
     not_found:      "\x0304✗\x03 MOTD sarrera ez da aurkitu."
   list:
     syntax:         "MOTD LIST"
     short:          "Zerrendatu MOTD sarrera guztiak."
     help:           "Konfiguratutako MOTD sarrera guztiak zerrendatzen ditu.\n\n"
+    example:        "/msg %bot% MOTD LIST"
     empty:          "Ez dago MOTD sarrerarik konfiguratuta."
     header:         "MOTD sarrerak:"
     status_enabled: "\x0303gaituta\x03"
@@ -301,6 +323,7 @@ motd:
     syntax:         "MOTD CLEAN"
     short:          "Kendu iraungitako MOTD sarrera guztiak."
     help:           "Bere iraungitze denbora igaro den MOTD sarrera guztiak kentzen ditu.\n\n"
+    example:        "/msg %bot% MOTD CLEAN"
     done:           "\x0303✓\x03 %count% iraungitako MOTD sarrera kendu dira."
     none:           "\x0303✓\x03 Ez dago kentzeko iraungitako MOTD sarrerarik."
   debug:
@@ -310,18 +333,22 @@ emailverify:
   syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
   short:            "Ezizenen erregistroan posta elektronikoaren egiaztapena gaitu edo desgaitu."
   help:             "Ezizen bat erregistratzeko posta helbidea berretsi behar den kontrolatzen du.\nON aukerak egiaztapena eskatzen du: ezizena zain geratzen da tokena berretsi arte.\nOFF aukerak ezizena berehala erregistratzen du; helbidea kontua berreskuratzeko gordetzen da oraindik.\nSTATUS aukerak uneko politika erakusten du.\nKomando honek root sarbidea behar du."
+  example:          "/msg %bot% EMAILVERIFY STATUS"
   on:
     syntax:         "EMAILVERIFY ON"
     short:          "Erregistratzean posta egiaztapena eskatu."
     help:           "Erregistro berriek posta helbidea berretsi behar dute ezizena aktibo izan aurretik."
+    example:        "/msg %bot% EMAILVERIFY ON"
   off:
     syntax:         "EMAILVERIFY OFF"
     short:          "Ezizenak posta egiaztapenik gabe erregistratu."
     help:           "Ezizen berriak berehala erregistratzen ditu. Posta helbidea derrigorrezkoa eta gordea izaten jarraitzen du, kontua berreskuratzeko bidea baita."
+    example:        "/msg %bot% EMAILVERIFY OFF"
   status:
     syntax:         "EMAILVERIFY STATUS"
     short:          "Uneko egiaztapen-politika erakutsi."
     help:           "Erregistratzeko posta egiaztapena une honetan beharrezkoa den erakusten du."
+    example:        "/msg %bot% EMAILVERIFY STATUS"
   enabled:          "\x0303✓\x03 Posta egiaztapena orain \x02derrigorrezkoa\x02 da erregistratzeko."
   disabled:         "\x0303✓\x03 Posta egiaztapena orain \x02desgaituta\x02 dago; ezizenak berehala erregistratzen dira."
   already_enabled:  "\x0304✗\x03 Posta egiaztapena jada derrigorrezkoa da."

@@ -49,6 +49,14 @@ final class GlineCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new GlineCommand(new RecordingGlineCommandHandler());
+
+        self::assertSame('gline.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsAddDeleteListAndUnknownArguments(): void
     {
         $handler = new RecordingGlineCommandHandler();

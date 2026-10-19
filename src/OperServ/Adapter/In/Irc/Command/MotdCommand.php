@@ -53,6 +53,11 @@ final readonly class MotdCommand implements OperServCommandInterface
         return 'motd.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'motd.example';
+    }
+
     public function getOrder(): int
     {
         return 39;
@@ -66,10 +71,10 @@ final readonly class MotdCommand implements OperServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'ADD', 'desc_key' => 'motd.add.short', 'help_key' => 'motd.add.help', 'syntax_key' => 'motd.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'motd.del.short', 'help_key' => 'motd.del.help', 'syntax_key' => 'motd.del.syntax'],
-            ['name' => 'LIST', 'desc_key' => 'motd.list.short', 'help_key' => 'motd.list.help', 'syntax_key' => 'motd.list.syntax'],
-            ['name' => 'CLEAN', 'desc_key' => 'motd.clean.short', 'help_key' => 'motd.clean.help', 'syntax_key' => 'motd.clean.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'motd.add.short', 'help_key' => 'motd.add.help', 'syntax_key' => 'motd.add.syntax', 'example_key' => 'motd.add.example'],
+            ['name' => 'DEL', 'desc_key' => 'motd.del.short', 'help_key' => 'motd.del.help', 'syntax_key' => 'motd.del.syntax', 'example_key' => 'motd.del.example'],
+            ['name' => 'LIST', 'desc_key' => 'motd.list.short', 'help_key' => 'motd.list.help', 'syntax_key' => 'motd.list.syntax', 'example_key' => 'motd.list.example'],
+            ['name' => 'CLEAN', 'desc_key' => 'motd.clean.short', 'help_key' => 'motd.clean.help', 'syntax_key' => 'motd.clean.syntax', 'example_key' => 'motd.clean.example'],
         ];
     }
 

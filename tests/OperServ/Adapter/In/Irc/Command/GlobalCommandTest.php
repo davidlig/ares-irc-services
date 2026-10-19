@@ -56,6 +56,14 @@ final class GlobalCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new GlobalCommand($this->handler(new GlobalCommandNetwork(new GlobalCommandTrace())));
+
+        self::assertSame('global.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsActorMessageAndTimestampThenPresentsSafeSuccess(): void
     {
         $trace = new GlobalCommandTrace();

@@ -48,6 +48,14 @@ final class EmailVerifyCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new EmailVerifyCommand(new RecordingEmailVerifyCommandHandler());
+
+        self::assertSame('emailverify.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsSubcommandsToActions(): void
     {
         $handler = new RecordingEmailVerifyCommandHandler();

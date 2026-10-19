@@ -49,6 +49,11 @@ final readonly class RoleCommand implements OperServCommandInterface
         return $this->handler->supportsOperclass() ? 'role.help_operclass' : 'role.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'role.example';
+    }
+
     public function getOrder(): int
     {
         return 2;
@@ -61,9 +66,9 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     public function getSubCommandHelp(): array
     {
-        $commands = [['name' => 'LIST', 'desc_key' => 'role.list.short', 'help_key' => 'role.list.help', 'syntax_key' => 'role.list.syntax'], ['name' => 'ADD', 'desc_key' => 'role.add.short', 'help_key' => 'role.add.help', 'syntax_key' => 'role.add.syntax'], ['name' => 'DEL', 'desc_key' => 'role.del.short', 'help_key' => 'role.del.help', 'syntax_key' => 'role.del.syntax'], ['name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help', 'syntax_key' => 'role.perms.syntax'], ['name' => 'MODES', 'desc_key' => 'role.modes.short', 'help_key' => 'role.modes.help', 'syntax_key' => 'role.modes.syntax'], ['name' => 'VHOST', 'desc_key' => 'role.vhost.short', 'help_key' => 'role.vhost.help', 'syntax_key' => 'role.vhost.syntax']];
+        $commands = [['name' => 'LIST', 'desc_key' => 'role.list.short', 'help_key' => 'role.list.help', 'syntax_key' => 'role.list.syntax', 'example_key' => 'role.list.example'], ['name' => 'ADD', 'desc_key' => 'role.add.short', 'help_key' => 'role.add.help', 'syntax_key' => 'role.add.syntax', 'example_key' => 'role.add.example'], ['name' => 'DEL', 'desc_key' => 'role.del.short', 'help_key' => 'role.del.help', 'syntax_key' => 'role.del.syntax', 'example_key' => 'role.del.example'], ['name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help', 'syntax_key' => 'role.perms.syntax', 'example_key' => 'role.perms.example'], ['name' => 'MODES', 'desc_key' => 'role.modes.short', 'help_key' => 'role.modes.help', 'syntax_key' => 'role.modes.syntax', 'example_key' => 'role.modes.example'], ['name' => 'VHOST', 'desc_key' => 'role.vhost.short', 'help_key' => 'role.vhost.help', 'syntax_key' => 'role.vhost.syntax', 'example_key' => 'role.vhost.example']];
         if ($this->handler->supportsOperclass()) {
-            $commands[] = ['name' => 'OPERCLASS', 'desc_key' => 'role.operclass.short', 'help_key' => 'role.operclass.help', 'syntax_key' => 'role.operclass.syntax'];
+            $commands[] = ['name' => 'OPERCLASS', 'desc_key' => 'role.operclass.short', 'help_key' => 'role.operclass.help', 'syntax_key' => 'role.operclass.syntax', 'example_key' => 'role.operclass.example'];
         }
 
         return $commands;

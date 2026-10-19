@@ -52,6 +52,14 @@ final class MotdCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new MotdCommand(new RecordingMotdCommandHandler());
+
+        self::assertSame('motd.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsAllSubcommandsAndArguments(): void
     {
         $handler = new RecordingMotdCommandHandler();

@@ -54,6 +54,14 @@ final class RoleCommandTest extends TestCase
         self::assertSame($expectedSubcommands, array_column($command->getSubCommandHelp(), 'name'));
     }
 
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new RoleCommand(new RecordingManageRoleHandler(false));
+
+        self::assertSame('role.example', $command->getExampleKey());
+    }
+
     /** @return iterable<string, array{bool, string, string, list<string>}> */
     public static function operclassCapabilities(): iterable
     {

@@ -56,6 +56,11 @@ final readonly class EmailVerifyCommand implements OperServCommandInterface
         return 'emailverify.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'emailverify.example';
+    }
+
     public function getOrder(): int
     {
         return 45;
@@ -74,18 +79,21 @@ final readonly class EmailVerifyCommand implements OperServCommandInterface
                 'desc_key' => 'emailverify.on.short',
                 'help_key' => 'emailverify.on.help',
                 'syntax_key' => 'emailverify.on.syntax',
+                'example_key' => 'emailverify.on.example',
             ],
             [
                 'name' => self::ACTION_OFF,
                 'desc_key' => 'emailverify.off.short',
                 'help_key' => 'emailverify.off.help',
                 'syntax_key' => 'emailverify.off.syntax',
+                'example_key' => 'emailverify.off.example',
             ],
             [
                 'name' => self::ACTION_STATUS,
                 'desc_key' => 'emailverify.status.short',
                 'help_key' => 'emailverify.status.help',
                 'syntax_key' => 'emailverify.status.syntax',
+                'example_key' => 'emailverify.status.example',
             ],
         ];
     }

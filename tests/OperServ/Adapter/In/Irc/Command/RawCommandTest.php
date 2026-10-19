@@ -45,6 +45,14 @@ final class RawCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = $this->command(null);
+
+        self::assertSame('raw.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function recordsSafeAuditAfterEffectAndBeforeReply(): void
     {
         $trace = new RawCommandTrace();

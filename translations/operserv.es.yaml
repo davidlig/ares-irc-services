@@ -44,6 +44,7 @@ ircop:
   syntax:           "IRCOP {ADD|DEL|LIST} [apodo] [rol]"
   short:            "Gestiona operadores de red."
   help:             "Gestiona operadores de red. ADD añade un apodo registrado\ncomo operador con el rol especificado.\nDEL elimina un operador. LIST muestra todos los operadores.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root configurados en los servicios."
+  example:          "/msg %bot% IRCOP ADD Alice helper"
 
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
   unknown_role:     "\x0304✗\x03 El rol \x02%role%\x02 no existe. Usa \x0303/msg %bot% ROLE LIST\x03 para ver los roles disponibles."
@@ -55,6 +56,7 @@ ircop:
     syntax:         "IRCOP ADD <apodo> <rol>"
     short:          "Añade un operador de red."
     help:            "Añade un apodo registrado como operador de red.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root."
+    example:         "/msg %bot% IRCOP ADD Alice helper"
     done:           "\x0303✓\x03 Añadido \x02%nickname%\x02 como \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 El apodo \x02%nickname%\x02 no es un apodo registrado activo."
 
@@ -62,12 +64,14 @@ ircop:
     syntax:         "IRCOP DEL <apodo>"
     short:          "Elimina un operador de red."
     help:            "Elimina un operador de red de la lista.\nEste comando está restringido a usuarios Root."
+    example:         "/msg %bot% IRCOP DEL Alice"
     done:           "\x0303✓\x03 Eliminado \x02%nickname%\x02 de operadores."
 
   list:
     syntax:         "IRCOP LIST"
     short:          "Lista todos los operadores de red."
     help:            "Lista todos los operadores de red con sus roles y fecha de registro.\nEste comando está restringido a usuarios Root."
+    example:         "/msg %bot% IRCOP LIST"
     header:         "\x0307---\x03 \x02Operadores de Red\x02 \x0307---\x03"
     empty:          "No hay operadores de red."
 
@@ -77,6 +81,7 @@ role:
     syntax: "ROLE OPERCLASS {LIST|<rol>} [{VIEW|SET}] [operclass]"
     short: "Gestiona la operclass Unreal de un rol."
     help: "LIST muestra las operclasses disponibles en la red.\nVIEW muestra la operclass del rol y las disponibles.\nSET asigna la operclass a los IRCOP al identificarse (OFF para eliminar).\nDisponible solo en protocolos UnrealIRCd."
+    example: "/msg %bot% ROLE OPERCLASS LIST"
     list:
       header: "\x0307---\x03 \x02Operclasses Disponibles en la Red\x02 \x0307---\x03"
       empty: "No hay operclasses disponibles en la red."
@@ -92,6 +97,7 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nombre> ..."
   short:            "Gestiona roles de operadores."
   help:             "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol, MODES gestiona modos IRCOP,\nVHOST gestiona el patrón de vhost forzado de un rol.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
+  example:          "/msg %bot% ROLE ADD helper"
   syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <nombre> ..."
   help_operclass:   "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol, MODES gestiona modos IRCOP,\nVHOST gestiona el patrón de vhost forzado de un rol, OPERCLASS gestiona la operclass Unreal.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
 
@@ -105,18 +111,21 @@ role:
     syntax:         "ROLE ADD <nombre> [descripción]"
     short:          "Crea un nuevo rol."
     help:            "Crea un nuevo rol personalizado. La descripción es opcional.\nEste comando está restringido a usuarios Root."
+    example:         "/msg %bot% ROLE ADD helper"
     done:           "\x0303✓\x03 Creado el rol \x02%role%\x02."
 
   del:
     syntax:         "ROLE DEL <nombre>"
     short:          "Elimina un rol."
     help:            "Elimina un rol personalizado. Los roles protegidos (ADMIN, OPER, PREOPER)\nno pueden eliminarse. Si el rol tiene operadores asignados,\ndebes reasignarlos primero.\nEste comando está restringido a usuarios Root."
+    example:         "/msg %bot% ROLE DEL helper"
     done:           "\x0303✓\x03 Eliminado el rol \x02%role%\x02."
 
   list:
     syntax:         "ROLE LIST"
     short:          "Lista todos los roles."
     help:            "Lista todos los roles. Los roles protegidos se marcan con [PROTEGIDO].\nEste comando está restringido a usuarios Root."
+    example:         "/msg %bot% ROLE LIST"
     header:         "\x0307---\x03 \x02Roles de Operadores\x02 \x0307---\x03"
     empty:          "No hay roles de operadores."
 
@@ -124,6 +133,7 @@ role:
     syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [permiso|ALL]"
     short:          "Gestiona permisos de un rol."
     help:            "Gestiona permisos asignados a un rol.\nLIST muestra todos los permisos del rol.\nADD asigna un permiso al rol.\nDEL quita un permiso del rol (no para roles protegidos).\nCLEAR quita todos los permisos del rol.\nUsa ALL para añadir todos los permisos disponibles a la vez.\nEste comando está restringido a usuarios Root."
+    example:         "/msg %bot% ROLE PERMS helper ADD operserv.kill"
     not_found:       "\x0304✗\x03 El permiso \x02%perm%\x02 no existe."
     already_has:     "\x0304✗\x03 El rol \x02%role%\x02 ya tiene el permiso \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 El rol \x02%role%\x02 no tiene el permiso \x02%perm%\x02."
@@ -146,6 +156,7 @@ role:
     syntax:         "ROLE MODES <rol> {VIEW|SET} [modos]"
     short:          "Gestiona modos de usuario IRCOP del rol."
     help:            "Gestiona los modos de usuario IRCOP asignados a un rol.\nVIEW muestra los modos actuales del rol.\nSET establece los modos IRCOP (ej: oH para +oH).\nLos usuarios con este rol recibirán estos modos al identificarse.\nModos disponibles según IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nEste comando está restringido a usuarios Root."
+    example:         "/msg %bot% ROLE MODES helper SET oH"
 
     view:
       header:        "\x0307---\x03 \x02Modos de %role%\x02 \x0307---\x03"
@@ -163,6 +174,7 @@ role:
     syntax:         "ROLE VHOST <rol> {VIEW|SET} [patrón]"
     short:          "Gestiona el patrón de vhost forzado del rol."
     help:           "Gestiona el vhost forzado asignado a un rol.\nVIEW muestra el patrón de vhost forzado actual.\nSET asigna un patrón de vhost forzado (los usuarios con este rol\nrecibirán este vhost al identificarse, sobrescribiendo el vhost personal).\nEl patrón se añade después del apodo limpio, ej:\n  Nick: _davidlig_ → Patrón: admin.ares → VHost: davidlig.admin.ares\nCaracteres válidos: a-z, A-Z, 0-9, guion (-) y punto (.).\nDebe tener al menos un punto, no puede empezar/terminar con - o . o tener ..\nUsa OFF para eliminar el patrón de vhost forzado.\nEste comando está restringido a usuarios Root."
+    example:        "/msg %bot% ROLE VHOST helper SET staff.example.com"
 
     view:
       header:        "\x0307---\x03 \x02VHost forzado de %role%\x02 \x0307---\x03"
@@ -191,6 +203,7 @@ gline:
   syntax:           "GLINE {ADD|DEL|LIST} [máscara] [expiración] [razón]"
   short:            "Gestiona G-lines de red."
   help:             "Gestiona G-lines (bans globales) de red.\nADD añade un nuevo G-line con máscara, expiración y razón.\nDEL elimina un G-line por máscara o número de entrada.\nLIST muestra todos los G-lines, filtrable por máscara.\n\nFormato de expiración: 0=permanente, o usa sufijo d, h, m (ej: 7d, 12h, 30m).\nLos GLINEs que coincidan con usuarios Root o IRCop son rechazados.\nEste comando requiere el permiso operserv.gline."
+  example:          "/msg %bot% GLINE ADD spammer@spam.example 7d Publicidad masiva"
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
   invalid_mask:     "\x0304✗\x03 Formato de máscara inválido. Debe ser usuario@host (ej: *@192.168.*)."
   global_mask:      "\x0304✗\x03 La máscara G-line \x02%mask%\x02 es demasiado amplia. No se permiten máscaras globales."
@@ -207,18 +220,21 @@ gline:
     syntax:         "GLINE ADD <máscara> <expiración> <razón>"
     short:          "Añade un G-line de red."
     help:           "Añade un G-line (ban global) de red.\nLa máscara debe tener formato usuario@host.\nExpiración: 0=permanente, o usa sufijo d, h, m (ej: 7d, 12h, 30m).\nLos GLINEs que coincidan con usuarios Root o IRCop son rechazados.\nEste comando requiere el permiso operserv.gline."
+    example:        "/msg %bot% GLINE ADD spammer@spam.example 7d Publicidad masiva"
     done:           "\x0303✓\x03 G-line añadido: \x02%mask%\x02 (%duration%) - %reason%"
 
   del:
     syntax:         "GLINE DEL <máscara|número>"
     short:          "Elimina un G-line."
     help:           "Elimina un G-line de la lista.\nPuedes especificar la máscara o el número de entrada de LIST.\nEste comando requiere el permiso operserv.gline."
+    example:        "/msg %bot% GLINE DEL spammer@spam.example"
     done:           "\x0303✓\x03 G-line \x02%mask%\x02 eliminado."
 
   list:
     syntax:         "GLINE LIST [máscara]"
     short:          "Lista todos los G-lines."
     help:           "Lista todos los G-lines. Opcionalmente filtra por patrón de máscara.\nEste comando requiere el permiso operserv.gline."
+    example:        "/msg %bot% GLINE LIST"
     header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
     empty:          "No hay G-lines."
     no_reason:      "Sin razón"
@@ -231,6 +247,7 @@ global:
   syntax:           "GLOBAL {servicio|apodo!ident@vhost} {PRIVMSG|NOTICE} <mensaje>"
   short:            "Envía un mensaje global a todos los usuarios conectados."
   help:             "Envía un mensaje a todos los usuarios conectados.\n\nSi el primer argumento es un nombre de servicio, el mensaje se enviará usando ese servicio existente.\n\nSi no es un servicio, se creará un pseudo-cliente temporal con la máscara\nespecificada. La máscara debe tener el formato: apodo!ident@vhost\n- apodo: apodo IRC válido (letras, []{}|\\`, dígitos, empieza por letra)\n- ident: alfanumérico con . _ ~ -\n- vhost: hostname válido\n\nPara pseudo-clientes, el apodo no puede estar conectado ni registrado.\nEl pseudo-cliente permanecerá conectado durante el envío y se desconectará\nautomáticamente (el apodo será bloqueado 24h mediante SQLINE/QLINE).\n\nPRIVMSG envía como mensaje privado, NOTICE envía como aviso.\nEste comando requiere el permiso operserv.global."
+  example:          "/msg %bot% GLOBAL Network!staff@staff.example.com NOTICE Mantenimiento de la red en 10 minutos"
   mask_invalid:    "\x0304✗\x03 Formato de máscara inválido: %error%"
   nick_connected: "\x0304✗\x03 El apodo \x02%nickname%\x02 está conectado actualmente."
   nick_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 está registrado."
@@ -242,6 +259,7 @@ raw:
   syntax:           "RAW <línea>"
   short:            "Envía una línea de protocolo cruda al IRCd."
   help:             "Envía la línea indicada directamente al socket del IRCd de enlace.\nÚsalo con extrema precaución. Líneas de protocolo inválidas pueden bloquear la red.\nEste comando requiere el permiso operserv.raw."
+  example:          "/msg %bot% RAW WHOIS Alice"
   empty:            "\x0304✗\x03 Debes especificar una línea no vacía para enviar."
   too_long:         "\x0304✗\x03 La línea es demasiado larga. Máximo 510 caracteres."
   not_connected:    "\x0304✗\x03 No conectado al IRCd."
@@ -270,12 +288,14 @@ motd:
   short:            "Gestiona mensajes MOTD que se envían a usuarios al conectar."
   syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [parámetros]"
   help:             "Gestiona entradas de mensaje del día (MOTD) que se envían cuando un usuario se conecta a la red.\n\n"
+  example:          "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d ¡Bienvenido a la red!"
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido. Usa: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
     syntax:         "MOTD ADD {servicio|apodo!ident@vhost} {PRIVMSG|NOTICE} <expiración> <mensaje>"
     syntax_hint:    "\x0304✗\x03 Uso: \x02%syntax%\x02"
     short:          "Añade una entrada MOTD."
     help:           "Añade un nuevo mensaje MOTD que se enviará a cada usuario cuando se conecte a la red.\n\n"
+    example:        "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d ¡Bienvenido a la red!"
     done:           "\x0303✓\x03 Entrada MOTD #%id% añadida."
     invalid_type:   "\x0304✗\x03 Tipo de mensaje inválido. Debe ser \x02PRIVMSG\x02 o \x02NOTICE\x02."
     invalid_expiry: "\x0304✗\x03 Formato de expiración inválido. Usa: \x02<número><s|m|h|d>\x02 o \x020\x02 para indefinido (ej: 30s, 5m, 24h, 7d)."
@@ -284,12 +304,14 @@ motd:
     syntax_hint:    "\x0304✗\x03 Uso: \x02%syntax%\x02"
     short:          "Elimina una entrada MOTD."
     help:           "Elimina una entrada MOTD por su ID.\n\n"
+    example:        "/msg %bot% MOTD DEL 1"
     done:           "\x0303✓\x03 Entrada MOTD #%id% eliminada."
     not_found:      "\x0304✗\x03 Entrada MOTD no encontrada."
   list:
     syntax:         "MOTD LIST"
     short:          "Lista todas las entradas MOTD."
     help:           "Lista todas las entradas MOTD configuradas.\n\n"
+    example:        "/msg %bot% MOTD LIST"
     empty:          "No hay entradas MOTD configuradas."
     header:         "Entradas MOTD:"
     status_enabled: "\x0303activada\x03"
@@ -302,6 +324,7 @@ motd:
     syntax:         "MOTD CLEAN"
     short:          "Elimina todas las entradas MOTD caducadas."
     help:           "Elimina todas las entradas MOTD cuyo tiempo de expiración haya pasado.\n\n"
+    example:        "/msg %bot% MOTD CLEAN"
     done:           "\x0303✓\x03 Eliminadas %count% entradas MOTD caducadas."
     none:           "\x0303✓\x03 No hay entradas MOTD caducadas para eliminar."
   debug:
@@ -311,18 +334,22 @@ emailverify:
   syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
   short:            "Activa o desactiva la verificación de correo en el registro de apodos."
   help:             "Controla si registrar un apodo exige confirmar la dirección de correo.\nON exige verificación: el apodo queda pendiente hasta confirmar el token.\nOFF registra el apodo de inmediato; la dirección se sigue guardando para recuperar la cuenta.\nSTATUS muestra la política actual.\nEste comando requiere acceso root."
+  example:          "/msg %bot% EMAILVERIFY STATUS"
   on:
     syntax:         "EMAILVERIFY ON"
     short:          "Exigir verificación de correo al registrarse."
     help:           "Exige que los registros nuevos confirmen la dirección de correo antes de que el apodo quede activo."
+    example:        "/msg %bot% EMAILVERIFY ON"
   off:
     syntax:         "EMAILVERIFY OFF"
     short:          "Registrar apodos sin verificación de correo."
     help:           "Registra los apodos nuevos de inmediato. La dirección de correo sigue siendo obligatoria y se guarda, porque es el canal de recuperación de la cuenta."
+    example:        "/msg %bot% EMAILVERIFY OFF"
   status:
     syntax:         "EMAILVERIFY STATUS"
     short:          "Mostrar la política de verificación actual."
     help:           "Muestra si actualmente se exige verificación de correo para registrarse."
+    example:        "/msg %bot% EMAILVERIFY STATUS"
   enabled:          "\x0303✓\x03 La verificación de correo ahora es \x02obligatoria\x02 para registrarse."
   disabled:         "\x0303✓\x03 La verificación de correo está ahora \x02desactivada\x02; los apodos se registran de inmediato."
   already_enabled:  "\x0304✗\x03 La verificación de correo ya es obligatoria."

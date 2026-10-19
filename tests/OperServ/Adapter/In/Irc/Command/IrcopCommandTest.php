@@ -50,6 +50,14 @@ final class IrcopCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new IrcopCommand($this->createStub(ManageIrcopHandlerInterface::class));
+
+        self::assertSame('ircop.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsActorAccountAndTimestampAndPresentsRoleChange(): void
     {
         $received = null;

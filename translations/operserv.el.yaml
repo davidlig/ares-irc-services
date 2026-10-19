@@ -44,6 +44,7 @@ ircop:
   syntax:           "IRCOP {ADD|DEL|LIST} [nickname] [role]"
   short:            "Διαχείριση IRC operators του δικτύου."
   help:             "Διαχείριση IRC operators του δικτύου. ADD προσθέτει ένα καταχωρημένο\nψευδώνυμο ως operator με τον καθορισμένο ρόλο.\nDEL αφαιρεί έναν operator. LIST εμφανίζει όλους τους operators.\nΧρησιμοποιήστε ROLE LIST για να δείτε τους διαθέσιμους ρόλους.\nΑυτή η εντολή περιορίζεται σε Root χρήστες που έχουν διαμορφωθεί στις υπηρεσίες."
+  example:          "/msg %bot% IRCOP ADD Alice helper"
 
   unknown_sub:      "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL, ή LIST."
   unknown_role:     "\x0304✗\x03 Ο ρόλος \x02%role%\x02 δεν υπάρχει. Χρησιμοποιήστε \x0303/msg %bot% ROLE LIST\x03 για να δείτε τους διαθέσιμους ρόλους."
@@ -55,6 +56,7 @@ ircop:
     syntax:         "IRCOP ADD <nickname> <role>"
     short:          "Προσθήκη IRC operator δικτύου."
     help:           "Προσθέτει ένα καταχωρημένο ψευδώνυμο ως IRC operator δικτύου.\nΧρησιμοποιήστε ROLE LIST για να δείτε τους διαθέσιμους ρόλους.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+    example:        "/msg %bot% IRCOP ADD Alice helper"
     done:           "\x0303✓\x03 Προστέθηκε ο/η \x02%nickname%\x02 ως \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι ενεργό καταχωρημένο ψευδώνυμο."
 
@@ -62,12 +64,14 @@ ircop:
     syntax:         "IRCOP DEL <nickname>"
     short:          "Αφαίρεση IRC operator δικτύου."
     help:            "Αφαιρεί έναν IRC operator δικτύου από τη λίστα.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+    example:         "/msg %bot% IRCOP DEL Alice"
     done:           "\x0303✓\x03 Αφαιρέθηκε ο/η \x02%nickname%\x02 από τους IRC operators."
 
   list:
     syntax:         "IRCOP LIST"
     short:          "Λίστα όλων των IRC operators δικτύου."
     help:            "Εμφανίζει όλους τους IRC operators δικτύου με τους ρόλους και την ημερομηνία καταχώρησης.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+    example:         "/msg %bot% IRCOP LIST"
     header:         "\x0307---\x03 \x02IRC Operators Δικτύου\x02 \x0307---\x03"
     empty:          "Δεν υπάρχουν IRC operators."
 
@@ -77,6 +81,7 @@ role:
     syntax: "ROLE OPERCLASS {LIST|<role>} [{VIEW|SET}] [operclass]"
     short: "Manage Unreal operclass."
     help: "LIST εμφανίζει τις διαθέσιμες operclasses στο δίκτυο.\nVIEW εμφανίζει την operclass του ρόλου και τις διαθέσιμες.\nSET την αναθέτει κατά την ταυτοποίηση (OFF για αφαίρεση).\nΔιαθέσιμο μόνο σε πρωτόκολλα UnrealIRCd."
+    example: "/msg %bot% ROLE OPERCLASS LIST"
     list:
       header: "\x0307---\x03 \x02Διαθέσιμες Operclasses στο Δίκτυο\x02 \x0307---\x03"
       empty: "Δεν υπάρχουν διαθέσιμες operclasses στο δίκτυο."
@@ -92,6 +97,7 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
   short:            "Διαχείριση ρόλων operator."
   help:             "Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,\nLIST εμφανίζει όλους τους ρόλους, PERMS διαχειρίζεται άδειες για έναν ρόλο,\nMODES διαχειρίζεται λειτουργίες IRCOP, VHOST διαχειρίζεται μοτίβο\nαναγκαστικού vhost για έναν ρόλο.\nΟι προστατευμένοι ρόλοι (ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+  example:          "/msg %bot% ROLE ADD helper"
   syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <name> ..."
   help_operclass:   "Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,\nLIST εμφανίζει όλους τους ρόλους, PERMS διαχειρίζεται άδειες για έναν ρόλο,\nMODES διαχειρίζεται λειτουργίες IRCOP, VHOST διαχειρίζεται μοτίβο αναγκαστικού vhost,\nOPERCLASS διαχειρίζεται την Unreal operclass ενός ρόλου.\nΟι προστατευμένοι ρόλοι (ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
 
@@ -105,18 +111,21 @@ role:
     syntax:         "ROLE ADD <name> [description]"
     short:          "Δημιουργία νέου ρόλου."
     help:            "Δημιουργεί έναν νέο προσαρμοσμένο ρόλο. Η περιγραφή είναι προαιρετική.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+    example:         "/msg %bot% ROLE ADD helper"
     done:           "\x0303✓\x03 Δημιουργήθηκε ο ρόλος \x02%role%\x02."
 
   del:
     syntax:         "ROLE DEL <name>"
     short:          "Διαγραφή ρόλου."
     help:            "Διαγράφει έναν προσαρμοσμένο ρόλο. Οι προστατευμένοι ρόλοι\n(ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.\nΑν ο ρόλος έχει ανατεθειμένους operators,\nπρέπει να τους επανατοποθετήσετε πρώτα.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+    example:         "/msg %bot% ROLE DEL helper"
     done:           "\x0303✓\x03 Διαγράφηκε ο ρόλος \x02%role%\x02."
 
   list:
     syntax:         "ROLE LIST"
     short:          "Λίστα όλων των ρόλων."
     help:            "Εμφανίζει όλους τους ρόλους. Οι προστατευμένοι ρόλοι\nσημειώνονται με [ΠΡΟΣΤΑΤΕΥΜΕΝΟΣ].\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+    example:         "/msg %bot% ROLE LIST"
     header:         "\x0307---\x03 \x02Ρόλοι Operator\x02 \x0307---\x03"
     empty:          "Δεν υπάρχουν ρόλοι operator."
 
@@ -124,6 +133,7 @@ role:
     syntax:         "ROLE PERMS <role> {LIST|ADD|DEL|CLEAR} [permission|ALL]"
     short:          "Διαχείριση αδειών ρόλου."
     help:            "Διαχείριση αδειών που ανατίθενται σε έναν ρόλο.\nLIST εμφανίζει όλες τις άδειες για τον ρόλο.\nADD αναθέτει μια άδεια στον ρόλο.\nDEL αφαιρεί μια άδεια από τον ρόλο (όχι για προστατευμένους ρόλους).\nCLEAR αφαιρεί όλες τις άδειες από τον ρόλο.\nΧρησιμοποιήστε ALL για να προσθέσετε όλες τις διαθέσιμες άδειες ταυτόχρονα.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+    example:         "/msg %bot% ROLE PERMS helper ADD operserv.kill"
     not_found:       "\x0304✗\x03 Η άδεια \x02%perm%\x02 δεν υπάρχει."
     already_has:     "\x0304✗\x03 Ο ρόλος \x02%role%\x02 έχει ήδη την άδεια \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Ο ρόλος \x02%role%\x02 δεν έχει την άδεια \x02%perm%\x02."
@@ -146,6 +156,7 @@ role:
     syntax:         "ROLE MODES <role> {VIEW|SET} [modes]"
     short:          "Διαχείριση λειτουργιών χρήστη IRCOP για τον ρόλο."
     help:            "Διαχείριση λειτουργιών χρήστη IRCOP που ανατίθενται σε έναν ρόλο.\nVIEW εμφανίζει τις τρέχουσες λειτουργίες του ρόλου.\nSET ορίζει τις λειτουργίες IRCOP (π.χ., oH για +oH).\nΟι χρήστες με αυτόν τον ρόλο θα λαμβάνουν αυτές τις λειτουργίες κατά την ταυτοποίηση.\nΔιαθέσιμες λειτουργίες ανά IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+    example:         "/msg %bot% ROLE MODES helper SET oH"
 
     view:
       header:        "\x0307---\x03 \x02Λειτουργίες για %role%\x02 \x0307---\x03"
@@ -163,6 +174,7 @@ role:
     syntax:         "ROLE VHOST <role> {VIEW|SET} [pattern]"
     short:          "Διαχείριση μοτίβου αναγκαστικού vhost για έναν ρόλο."
     help:           "Διαχείριση αναγκαστικού vhost που ανατίθεται σε έναν ρόλο.\nVIEW εμφανίζει το τρέχον μοτίβο αναγκαστικού vhost.\nSET αναθέτει ένα μοτίβο αναγκαστικού vhost (οι χρήστες με αυτόν τον ρόλο\nθα λαμβάνουν αυτό το vhost κατά την ταυτοποίηση,\nπαρακάμπτοντας το προσωπικό vhost).\nΤο μοτίβο προσαρτάται μετά το καθαρισμένο ψευδώνυμο, π.χ.:\n  Nick: _davidlig_ → Μοτίβο: admin.ares → VHost: davidlig.admin.ares\nΈγκυροι χαρακτήρες: a-z, A-Z, 0-9, παύλα (-) και τελεία (.).\nΠρέπει να έχει τουλάχιστον μία τελεία, δεν μπορεί να ξεκινά/τελειώνει\nμε - ή . ή να έχει ..\nΧρησιμοποιήστε OFF για εκκαθάριση του μοτίβου αναγκαστικού vhost.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+    example:        "/msg %bot% ROLE VHOST helper SET staff.example.com"
 
     view:
       header:        "\x0307---\x03 \x02Αναγκαστικό vhost για %role%\x02 \x0307---\x03"
@@ -191,6 +203,7 @@ gline:
   syntax:           "GLINE {ADD|DEL|LIST} [mask] [expiry] [reason]"
   short:            "Διαχείριση G-lines σε όλο το δίκτυο."
   help:             "Διαχείριση G-lines σε όλο το δίκτυο (καθολικοί αποκλεισμοί).\nADD προσθέτει νέο G-line με μάσκα, λήξη και αιτία.\nDEL αφαιρεί ένα G-line με μάσκα ή αριθμό καταχώρησης.\nLIST εμφανίζει όλα τα G-lines, προαιρετικά φιλτραρισμένα κατά μάσκα.\n\nΜορφή λήξης: 0=μόνιμο, ή χρήση κατάληξης d, h, m (π.χ., 7d, 12h, 30m).\nΤα GLINE που ταιριάζουν με Root ή IRCop χρήστες απορρίπτονται.\nΑυτή η εντολή απαιτεί την άδεια operserv.gline."
+  example:          "/msg %bot% GLINE ADD spammer@spam.example 7d Μαζική διαφήμιση"
   unknown_sub:      "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL, ή LIST."
   invalid_mask:     "\x0304✗\x03 Μη έγκυρη μορφή μάσκας. Πρέπει να είναι στη μορφή user@host (π.χ., *@192.168.*)."
   global_mask:      "\x0304✗\x03 Η μάσκα G-line \x02%mask%\x02 είναι πολύ ευρεία. Οι καθολικές μάσκες δεν επιτρέπονται."
@@ -207,18 +220,21 @@ gline:
     syntax:         "GLINE ADD <mask> <expiry> <reason>"
     short:          "Προσθήκη G-line σε όλο το δίκτυο."
     help:           "Προσθέτει ένα G-line σε όλο το δίκτυο (καθολικός αποκλεισμός).\nΗ μάσκα πρέπει να είναι στη μορφή user@host.\nΛήξη: 0=μόνιμο, ή χρήση κατάληξης d, h, m (π.χ., 7d, 12h, 30m).\nΤα GLINE που ταιριάζουν με Root ή IRCop χρήστες απορρίπτονται.\nΑυτή η εντολή απαιτεί την άδεια operserv.gline."
+    example:        "/msg %bot% GLINE ADD spammer@spam.example 7d Μαζική διαφήμιση"
     done:           "\x0303✓\x03 Προστέθηκε G-line: \x02%mask%\x02 (%duration%) - %reason%"
 
   del:
     syntax:         "GLINE DEL <mask|number>"
     short:          "Αφαίρεση G-line."
     help:           "Αφαιρεί ένα G-line από τη λίστα.\nΜπορείτε να καθορίσετε τη μάσκα ή τον αριθμό καταχώρησης από το LIST.\nΑυτή η εντολή απαιτεί την άδεια operserv.gline."
+    example:        "/msg %bot% GLINE DEL spammer@spam.example"
     done:           "\x0303✓\x03 Το G-line \x02%mask%\x02 αφαιρέθηκε."
 
   list:
     syntax:         "GLINE LIST [mask]"
     short:          "Λίστα όλων των G-lines."
     help:           "Εμφανίζει όλα τα G-lines. Προαιρετικά φιλτράρισμα κατά μοτίβο μάσκας.\nΑυτή η εντολή απαιτεί την άδεια operserv.gline."
+    example:        "/msg %bot% GLINE LIST"
     header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
     empty:          "Δεν υπάρχουν G-lines."
     no_reason:      "Χωρίς αιτία"
@@ -231,6 +247,7 @@ global:
   syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <message>"
   short:            "Αποστολή καθολικού μηνύματος σε όλους τους συνδεδεμένους χρήστες."
   help:             "Στέλνει ένα μήνυμα σε όλους τους συνδεδεμένους χρήστες.\n\nΑν το πρώτο όρισμα είναι όνομα υπηρεσίας, το μήνυμα θα σταλεί\nχρησιμοποιώντας αυτήν την υπάρχουσα υπηρεσία.\n\nΑν δεν είναι υπηρεσία, θα δημιουργηθεί ένας προσωρινός ψευδο-πελάτης\nμε την καθορισμένη μάσκα. Η μάσκα πρέπει να είναι στη μορφή: nick!ident@vhost\n- nick: έγκυρο ψευδώνυμο IRC (γράμματα, []{}|\\`, ψηφία, ξεκινά με γράμμα)\n- ident: αλφαριθμητικό με . _ ~ -\n- vhost: έγκυρο hostname\n\nΓια ψευδο-πελάτες, το ψευδώνυμο δεν μπορεί να είναι συνδεδεμένο ή καταχωρημένο.\nΟ ψευδο-πελάτης θα παραμείνει συνδεδεμένος κατά την αποστολή και θα\nαποσυνδεθεί αυτόματα (το nick θα μπλοκαριστεί για 24 ώρες μέσω SQLINE/QLINE).\n\nPRIVMSG στέλνει ως ιδιωτικό μήνυμα, NOTICE στέλνει ως notice.\nΑυτή η εντολή απαιτεί την άδεια operserv.global."
+  example:          "/msg %bot% GLOBAL Network!staff@staff.example.com NOTICE Συντήρηση δικτύου σε 10 λεπτά"
   mask_invalid:    "\x0304✗\x03 Μη έγκυρη μορφή μάσκας: %error%"
   nick_connected: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι τρέχοντα συνδεδεμένο."
   nick_registered: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι καταχωρημένο."
@@ -242,6 +259,7 @@ raw:
   syntax:           "RAW <line>"
   short:            "Αποστολή ακατέργαστης γραμμής πρωτοκόλλου στο IRCd."
   help:             "Στέλνει τη δοσμένη γραμμή απευθείας στο socket του uplink IRCd.\nΧρησιμοποιήστε με εξαιρετική προσοχή. Μη έγκυρες γραμμές πρωτοκόλλου\nμπορεί να καταρρεύσουν το δίκτυο.\nΑυτή η εντολή απαιτεί την άδεια operserv.raw."
+  example:          "/msg %bot% RAW WHOIS Alice"
   empty:            "\x0304✗\x03 Πρέπει να καθορίσετε μια μη κενή γραμμή για αποστολή."
   too_long:         "\x0304✗\x03 Η γραμμή είναι πολύ μεγάλη. Μέγιστο 510 χαρακτήρες."
   not_connected:    "\x0304✗\x03 Δεν υπάρχει σύνδεση με το IRCd."
@@ -269,12 +287,14 @@ motd:
   short:            "Διαχείριση μηνυμάτων MOTD που στέλνονται στους χρήστες κατά τη σύνδεση."
   syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [args]"
   help:             "Διαχείριση καταχωρήσεων Message Of The Day που στέλνονται στους χρήστες όταν συνδέονται στο δίκτυο.\n\n"
+  example:          "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Καλώς ήρθες στο δίκτυο!"
   unknown_sub:      "\x0304✗\x03 Άγνωστη υπο-εντολή. Χρησιμοποιήστε: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
     syntax:         "MOTD ADD {service|nick!ident@vhost} {PRIVMSG|NOTICE} <expiry> <message>"
     syntax_hint:    "\x0304✗\x03 Χρήση: \x02%syntax%\x02"
     short:          "Προσθήκη καταχώρησης MOTD."
     help:           "Προσθέτει ένα νέο μήνυμα MOTD που θα στέλνεται σε κάθε χρήστη όταν συνδέεται στο δίκτυο.\n\n"
+    example:        "/msg %bot% MOTD ADD Network!staff@staff.example.com NOTICE 7d Καλώς ήρθες στο δίκτυο!"
     done:           "\x0303✓\x03 Προστέθηκε καταχώρηση MOTD #%id%."
     invalid_type:   "\x0304✗\x03 Μη έγκυρος τύπος μηνύματος. Πρέπει να είναι \x02PRIVMSG\x02 ή \x02NOTICE\x02."
     invalid_expiry: "\x0304✗\x03 Μη έγκυρη μορφή λήξης. Χρησιμοποιήστε: \x02<number><s|m|h|d>\x02 (π.χ., 30s, 5m, 24h, 7d)."
@@ -283,12 +303,14 @@ motd:
     syntax_hint:    "\x0304✗\x03 Χρήση: \x02%syntax%\x02"
     short:          "Διαγραφή καταχώρησης MOTD."
     help:           "Διαγράφει μια καταχώρηση MOTD με το ID της.\n\n"
+    example:        "/msg %bot% MOTD DEL 1"
     done:           "\x0303✓\x03 Διαγράφηκε η καταχώρηση MOTD #%id%."
     not_found:      "\x0304✗\x03 Η καταχώρηση MOTD δεν βρέθηκε."
   list:
     syntax:         "MOTD LIST"
     short:          "Λίστα όλων των καταχωρήσεων MOTD."
     help:           "Εμφανίζει όλες τις διαμορφωμένες καταχωρήσεις MOTD.\n\n"
+    example:        "/msg %bot% MOTD LIST"
     empty:          "Δεν υπάρχουν διαμορφωμένες καταχωρήσεις MOTD."
     header:         "Καταχωρήσεις MOTD:"
     status_enabled: "\x0303ενεργή\x03"
@@ -301,6 +323,7 @@ motd:
     syntax:         "MOTD CLEAN"
     short:          "Αφαίρεση όλων των ληγμένων καταχωρήσεων MOTD."
     help:           "Αφαιρεί όλες τις καταχωρήσεις MOTD των οποίων ο χρόνος λήξης έχει παρέλθει.\n\n"
+    example:        "/msg %bot% MOTD CLEAN"
     done:           "\x0303✓\x03 Αφαιρέθηκαν %count% ληγμένες καταχωρήσεις MOTD."
     none:           "\x0303✓\x03 Δεν υπάρχουν ληγμένες καταχωρήσεις MOTD προς αφαίρεση."
   debug:
@@ -310,18 +333,22 @@ emailverify:
   syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
   short:            "Ενεργοποίηση ή απενεργοποίηση της επαλήθευσης email κατά την καταχώρηση ψευδωνύμου."
   help:             "Ελέγχει αν η καταχώρηση ψευδωνύμου απαιτεί επιβεβαίωση της διεύθυνσης email.\nΤο ON απαιτεί επαλήθευση: το ψευδώνυμο μένει σε εκκρεμότητα μέχρι να επιβεβαιωθεί το token.\nΤο OFF καταχωρεί το ψευδώνυμο αμέσως· η διεύθυνση εξακολουθεί να αποθηκεύεται για ανάκτηση λογαριασμού.\nΤο STATUS δείχνει την τρέχουσα πολιτική.\nΑυτή η εντολή απαιτεί πρόσβαση root."
+  example:          "/msg %bot% EMAILVERIFY STATUS"
   on:
     syntax:         "EMAILVERIFY ON"
     short:          "Απαίτηση επαλήθευσης email κατά την καταχώρηση."
     help:           "Απαιτεί από τις νέες καταχωρήσεις να επιβεβαιώσουν τη διεύθυνση email πριν ενεργοποιηθεί το ψευδώνυμο."
+    example:        "/msg %bot% EMAILVERIFY ON"
   off:
     syntax:         "EMAILVERIFY OFF"
     short:          "Καταχώρηση ψευδωνύμων χωρίς επαλήθευση email."
     help:           "Καταχωρεί τα νέα ψευδώνυμα αμέσως. Η διεύθυνση email εξακολουθεί να απαιτείται και να αποθηκεύεται, καθώς είναι το μέσο ανάκτησης του λογαριασμού."
+    example:        "/msg %bot% EMAILVERIFY OFF"
   status:
     syntax:         "EMAILVERIFY STATUS"
     short:          "Εμφάνιση της τρέχουσας πολιτικής επαλήθευσης."
     help:           "Δείχνει αν απαιτείται αυτή τη στιγμή επαλήθευση email για την καταχώρηση."
+    example:        "/msg %bot% EMAILVERIFY STATUS"
   enabled:          "\x0303✓\x03 Η επαλήθευση email είναι πλέον \x02υποχρεωτική\x02 για την καταχώρηση."
   disabled:         "\x0303✓\x03 Η επαλήθευση email είναι πλέον \x02ανενεργή\x02· τα ψευδώνυμα καταχωρούνται αμέσως."
   already_enabled:  "\x0304✗\x03 Η επαλήθευση email είναι ήδη υποχρεωτική."
