@@ -329,30 +329,3 @@ motd:
   debug:
     finalized:      "Le message MOTD #%id% est terminé : [%type%] %message% | %date% | %shown_count%"
 
-emailverify:
-  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
-  short:            "Activer ou désactiver la vérification e-mail lors de l'enregistrement."
-  help:             "Contrôle si l'enregistrement d'un pseudonyme exige la confirmation de l'adresse e-mail.\nON exige une vérification : le pseudonyme reste en attente jusqu'à confirmation du jeton.\nOFF enregistre le pseudonyme immédiatement ; l'adresse reste conservée pour la récupération du compte.\nSTATUS affiche la politique actuelle.\nCette commande nécessite un accès root."
-  example:          "/msg %bot% EMAILVERIFY STATUS"
-  on:
-    syntax:         "EMAILVERIFY ON"
-    short:          "Exiger la vérification e-mail à l'enregistrement."
-    help:           "Exige que les nouveaux enregistrements confirment l'adresse e-mail avant que le pseudonyme devienne actif."
-    example:        "/msg %bot% EMAILVERIFY ON"
-  off:
-    syntax:         "EMAILVERIFY OFF"
-    short:          "Enregistrer les pseudonymes sans vérification e-mail."
-    help:           "Enregistre les nouveaux pseudonymes immédiatement. L'adresse e-mail reste obligatoire et conservée, car c'est le moyen de récupération du compte."
-    example:        "/msg %bot% EMAILVERIFY OFF"
-  status:
-    syntax:         "EMAILVERIFY STATUS"
-    short:          "Afficher la politique de vérification actuelle."
-    help:           "Indique si la vérification e-mail est actuellement exigée pour l'enregistrement."
-    example:        "/msg %bot% EMAILVERIFY STATUS"
-  enabled:          "\x0303✓\x03 La vérification e-mail est désormais \x02obligatoire\x02 à l'enregistrement."
-  disabled:         "\x0303✓\x03 La vérification e-mail est désormais \x02désactivée\x02 ; les pseudonymes sont enregistrés immédiatement."
-  already_enabled:  "\x0304✗\x03 La vérification e-mail est déjà obligatoire."
-  already_disabled: "\x0304✗\x03 La vérification e-mail est déjà désactivée."
-  status_on:        "La vérification e-mail est actuellement \x0303obligatoire\x03 à l'enregistrement."
-  status_off:       "La vérification e-mail est actuellement \x0304désactivée\x03 ; les pseudonymes sont enregistrés immédiatement."
-  unknown_sub:      "\x0304✗\x03 Sous-commande inconnue. Utilisation : \x02%syntax%\x02"

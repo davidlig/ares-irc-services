@@ -687,3 +687,14 @@ saregister:
   short:            "Registra un sobrenom en nom d un altre usuari."
   help:             "Registra un sobrenom en nom d un altre usuari. El compte es crea ja actiu:\nes salten la verificació per correu i el límit de freqüència.\nL adreça continua validant-se i ha d estar lliure.\nAquesta ordre requereix permís d operador."
   done:             "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat registrat."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Defineix la política de verificació de correu per al registre de sobrenoms a tota la xarxa."
+  help:             "Defineix la política de tota la xarxa per al registre de sobrenoms.\nON deixa cada sobrenom nou pendent fins que es confirma el seu testimoni de correu.\nOFF registra els sobrenoms nous immediatament; l'adreça es continua guardant per recuperar el compte.\nSTATUS mostra la política actual.\nAquesta ordre requereix el permís d'IRCop nickserv.vreg."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 La verificació de correu ara és \x02obligatòria\x02 per registrar-se."
+  off:              "\x0303✔\x03 La verificació de correu està ara \x02desactivada\x02; els sobrenoms es registren immediatament."
+  status_on:        "La verificació de correu està actualment \x0303activada\x03 per registrar-se."
+  status_off:       "La verificació de correu està actualment \x0304desactivada\x03; els sobrenoms es registren immediatament."
+  usage:            "\x0304✗\x03 Acció desconeguda. Ús: \x02%syntax%\x02"

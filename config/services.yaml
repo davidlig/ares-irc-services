@@ -2155,6 +2155,9 @@ services:
     App\NickServ\Adapter\In\Irc\Command\SaregisterCommand:
         tags: ['nickserv.command']
 
+    App\NickServ\Adapter\In\Irc\Command\VregCommand:
+        tags: ['nickserv.command']
+
     # --- UserMessageTypeResolver — NOTICE vs PRIVMSG preference -----------------
 
     App\NickServ\Application\Port\In\UserMessagePreferenceQuery:
@@ -2275,15 +2278,6 @@ services:
         alias: App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineMotdRepository
 
     App\OperServ\Adapter\In\Irc\Command\MotdCommand:
-        tags: ['operserv.command.new']
-
-    App\OperServ\Application\UseCase\ManageEmailVerification\ManageEmailVerificationHandlerInterface:
-        alias: App\OperServ\Application\UseCase\ManageEmailVerification\ManageEmailVerificationHandler
-
-    App\OperServ\Application\Port\Out\EmailVerificationPolicyPortInterface:
-        alias: App\OperServ\Adapter\Out\Policy\EmailVerificationPolicyAdapter
-
-    App\OperServ\Adapter\In\Irc\Command\EmailVerifyCommand:
         tags: ['operserv.command.new']
 
     App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopHandlerInterface:

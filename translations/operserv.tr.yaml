@@ -329,30 +329,3 @@ motd:
   debug:
     finalized:      "MOTD mesajı #%id% sona erdi: [%type%] %message% | %date% | %shown_count%"
 
-emailverify:
-  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
-  short:            "Kayıtta e-posta doğrulamasını aç veya kapat."
-  help:             "Bir takma ad kaydetmenin e-posta adresini onaylamayı gerektirip gerektirmediğini denetler.\nON doğrulama ister: jeton onaylanana kadar takma ad beklemede kalır.\nOFF takma adı hemen kaydeder; adres hesap kurtarma için yine de saklanır.\nSTATUS geçerli politikayı gösterir.\nBu komut root erişimi gerektirir."
-  example:          "/msg %bot% EMAILVERIFY STATUS"
-  on:
-    syntax:         "EMAILVERIFY ON"
-    short:          "Kayıtta e-posta doğrulaması iste."
-    help:           "Yeni kayıtların, takma ad etkinleşmeden önce e-posta adresini onaylamasını ister."
-    example:        "/msg %bot% EMAILVERIFY ON"
-  off:
-    syntax:         "EMAILVERIFY OFF"
-    short:          "Takma adları e-posta doğrulaması olmadan kaydet."
-    help:           "Yeni takma adları hemen kaydeder. E-posta adresi yine zorunludur ve saklanır, çünkü hesap kurtarma yoludur."
-    example:        "/msg %bot% EMAILVERIFY OFF"
-  status:
-    syntax:         "EMAILVERIFY STATUS"
-    short:          "Geçerli doğrulama politikasını göster."
-    help:           "Kayıt için e-posta doğrulamasının şu anda gerekip gerekmediğini gösterir."
-    example:        "/msg %bot% EMAILVERIFY STATUS"
-  enabled:          "\x0303✓\x03 E-posta doğrulaması artık kayıt için \x02zorunlu\x02."
-  disabled:         "\x0303✓\x03 E-posta doğrulaması artık \x02kapalı\x02; takma adlar hemen kaydedilir."
-  already_enabled:  "\x0304✗\x03 E-posta doğrulaması zaten zorunlu."
-  already_disabled: "\x0304✗\x03 E-posta doğrulaması zaten kapalı."
-  status_on:        "E-posta doğrulaması şu anda kayıt için \x0303zorunlu\x03."
-  status_off:       "E-posta doğrulaması şu anda \x0304kapalı\x03; takma adlar hemen kaydedilir."
-  unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut. Kullanım: \x02%syntax%\x02"

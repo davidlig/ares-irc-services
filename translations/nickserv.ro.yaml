@@ -687,3 +687,14 @@ saregister:
   short:            "Înregistrează un pseudonim pentru alt utilizator."
   help:             "Înregistrează un pseudonim în numele altui utilizator. Contul este creat\nactiv: verificarea e-mail și limita de frecvență sunt sărite.\nAdresa este totuși validată și trebuie să fie liberă.\nAceastă comandă necesită permisiune de operator."
   done:             "\x0303✔\x03 Pseudonimul \x02%nickname%\x02 a fost înregistrat."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Stabilește politica de verificare e-mail pentru înregistrarea pseudonimelor la nivel de rețea."
+  help:             "Stabilește politica la nivel de rețea pentru înregistrarea pseudonimelor.\nON lasă fiecare pseudonim nou în așteptare până la confirmarea tokenului de e-mail.\nOFF înregistrează pseudonimele noi imediat; adresa este totuși păstrată pentru recuperarea contului.\nSTATUS afișează politica actuală.\nAceastă comandă necesită permisiunea IRCop nickserv.vreg."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 Verificarea e-mail este acum \x02obligatorie\x02 la înregistrare."
+  off:              "\x0303✔\x03 Verificarea e-mail este acum \x02dezactivată\x02; pseudonimele se înregistrează imediat."
+  status_on:        "Verificarea e-mail este în prezent \x0303obligatorie\x03 la înregistrare."
+  status_off:       "Verificarea e-mail este în prezent \x0304dezactivată\x03; pseudonimele se înregistrează imediat."
+  usage:            "\x0304✗\x03 Acțiune necunoscută. Utilizare: \x02%syntax%\x02"

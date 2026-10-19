@@ -687,3 +687,14 @@ saregister:
   short:            "Başka bir kullanıcı için takma ad kaydeder."
   help:             "Başka bir kullanıcı adına takma ad kaydeder. Hesap doğrudan etkin oluşturulur:\ne-posta doğrulaması ve kayıt hız sınırı atlanır.\nAdres yine doğrulanır ve boş olmalıdır.\nBu komut operatör izni gerektirir."
   done:             "\x0303✔\x03 \x02%nickname%\x02 takma adı kaydedildi."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Ağ genelinde takma ad kaydı için e-posta doğrulama politikasını belirler."
+  help:             "Ağ genelinde takma ad kaydı politikasını belirler.\nON, her yeni takma adı e-posta jetonu onaylanana kadar beklemede bırakır.\nOFF yeni takma adları hemen kaydeder; adres hesap kurtarma için yine de saklanır.\nSTATUS geçerli politikayı gösterir.\nBu komut nickserv.vreg IRCop iznini gerektirir."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 E-posta doğrulaması artık kayıt için \x02zorunlu\x02."
+  off:              "\x0303✔\x03 E-posta doğrulaması artık \x02kapalı\x02; takma adlar hemen kaydedilir."
+  status_on:        "E-posta doğrulaması şu anda kayıt için \x0303zorunlu\x03."
+  status_off:       "E-posta doğrulaması şu anda \x0304kapalı\x03; takma adlar hemen kaydedilir."
+  usage:            "\x0304✗\x03 Bilinmeyen eylem. Kullanım: \x02%syntax%\x02"

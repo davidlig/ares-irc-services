@@ -329,30 +329,3 @@ motd:
   debug:
     finalized:      "Mesajul MOTD #%id% s-a încheiat: [%type%] %message% | %date% | %shown_count%"
 
-emailverify:
-  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
-  short:            "Activează sau dezactivează verificarea e-mail la înregistrare."
-  help:             "Controlează dacă înregistrarea unui pseudonim necesită confirmarea adresei de e-mail.\nON cere verificare: pseudonimul rămâne în așteptare până la confirmarea tokenului.\nOFF înregistrează pseudonimul imediat; adresa este totuși păstrată pentru recuperarea contului.\nSTATUS afișează politica actuală.\nAceastă comandă necesită acces root."
-  example:          "/msg %bot% EMAILVERIFY STATUS"
-  on:
-    syntax:         "EMAILVERIFY ON"
-    short:          "Cere verificarea e-mail la înregistrare."
-    help:           "Cere ca înregistrările noi să confirme adresa de e-mail înainte ca pseudonimul să devină activ."
-    example:        "/msg %bot% EMAILVERIFY ON"
-  off:
-    syntax:         "EMAILVERIFY OFF"
-    short:          "Înregistrează pseudonime fără verificare e-mail."
-    help:           "Înregistrează pseudonimele noi imediat. Adresa de e-mail rămâne obligatorie și este păstrată, deoarece este canalul de recuperare a contului."
-    example:        "/msg %bot% EMAILVERIFY OFF"
-  status:
-    syntax:         "EMAILVERIFY STATUS"
-    short:          "Afișează politica actuală de verificare."
-    help:           "Arată dacă verificarea e-mail este în prezent cerută la înregistrare."
-    example:        "/msg %bot% EMAILVERIFY STATUS"
-  enabled:          "\x0303✓\x03 Verificarea e-mail este acum \x02obligatorie\x02 la înregistrare."
-  disabled:         "\x0303✓\x03 Verificarea e-mail este acum \x02dezactivată\x02; pseudonimele se înregistrează imediat."
-  already_enabled:  "\x0304✗\x03 Verificarea e-mail este deja obligatorie."
-  already_disabled: "\x0304✗\x03 Verificarea e-mail este deja dezactivată."
-  status_on:        "Verificarea e-mail este în prezent \x0303obligatorie\x03 la înregistrare."
-  status_off:       "Verificarea e-mail este în prezent \x0304dezactivată\x03; pseudonimele se înregistrează imediat."
-  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută. Utilizare: \x02%syntax%\x02"

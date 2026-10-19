@@ -329,30 +329,3 @@ motd:
   debug:
     finalized:      "A mensaxe MOTD #%id% finalizou: [%type%] %message% | %date% | %shown_count%"
 
-emailverify:
-  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
-  short:            "Activa ou desactiva a verificación de correo no rexistro de alcumes."
-  help:             "Controla se rexistrar un alcume esixe confirmar o enderezo de correo.\nON esixe verificación: o alcume queda pendente ata confirmar o token.\nOFF rexistra o alcume de inmediato; o enderezo séguise gardando para recuperar a conta.\nSTATUS mostra a política actual.\nEsta orde require acceso root."
-  example:          "/msg %bot% EMAILVERIFY STATUS"
-  on:
-    syntax:         "EMAILVERIFY ON"
-    short:          "Esixir verificación de correo ao rexistrarse."
-    help:           "Esixe que os rexistros novos confirmen o enderezo de correo antes de que o alcume quede activo."
-    example:        "/msg %bot% EMAILVERIFY ON"
-  off:
-    syntax:         "EMAILVERIFY OFF"
-    short:          "Rexistrar alcumes sen verificación de correo."
-    help:           "Rexistra os alcumes novos de inmediato. O enderezo de correo segue sendo obrigatorio e gárdase, porque é a vía de recuperación da conta."
-    example:        "/msg %bot% EMAILVERIFY OFF"
-  status:
-    syntax:         "EMAILVERIFY STATUS"
-    short:          "Mostrar a política de verificación actual."
-    help:           "Mostra se actualmente se esixe verificación de correo para rexistrarse."
-    example:        "/msg %bot% EMAILVERIFY STATUS"
-  enabled:          "\x0303✓\x03 A verificación de correo agora é \x02obrigatoria\x02 para rexistrarse."
-  disabled:         "\x0303✓\x03 A verificación de correo está agora \x02desactivada\x02; os alcumes rexístranse de inmediato."
-  already_enabled:  "\x0304✗\x03 A verificación de correo xa é obrigatoria."
-  already_disabled: "\x0304✗\x03 A verificación de correo xa está desactivada."
-  status_on:        "A verificación de correo está actualmente \x0303activada\x03 para rexistrarse."
-  status_off:       "A verificación de correo está actualmente \x0304desactivada\x03; os alcumes rexístranse de inmediato."
-  unknown_sub:      "\x0304✗\x03 Suborde descoñecida. Uso: \x02%syntax%\x02"

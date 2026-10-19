@@ -687,3 +687,14 @@ saregister:
   short:            "Beste erabiltzaile baten izenean ezizen bat erregistratzen du."
   help:             "Beste erabiltzaile baten izenean ezizen bat erregistratzen du. Kontua aktibo\nsortzen da: posta-egiaztapena eta maiztasun-muga saltatzen dira.\nHelbidea oraindik balioztatzen da eta libre egon behar du.\nKomando honek operadore-baimena behar du."
   done:             "\x0303✔\x03 \x02%nickname%\x02 ezizena erregistratu da."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Sare osoan ezizenak erregistratzeko posta egiaztapenaren politika ezartzen du."
+  help:             "Sare osoan ezizenak erregistratzeko politika ezartzen du.\nON aukerak ezizen berri bakoitza zain uzten du bere posta tokena berretsi arte.\nOFF aukerak ezizen berriak berehala erregistratzen ditu; helbidea kontua berreskuratzeko gordetzen da oraindik.\nSTATUS aukerak uneko politika erakusten du.\nKomando honek nickserv.vreg IRCop baimena behar du."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 Posta egiaztapena orain \x02derrigorrezkoa\x02 da erregistratzeko."
+  off:              "\x0303✔\x03 Posta egiaztapena orain \x02desgaituta\x02 dago; ezizenak berehala erregistratzen dira."
+  status_on:        "Posta egiaztapena une honetan \x0303derrigorrezkoa\x03 da erregistratzeko."
+  status_off:       "Posta egiaztapena une honetan \x0304desgaituta\x03 dago; ezizenak berehala erregistratzen dira."
+  usage:            "\x0304✗\x03 Ekintza ezezaguna. Erabilera: \x02%syntax%\x02"

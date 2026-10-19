@@ -687,3 +687,14 @@ saregister:
   short:            "Registreert een nicknaam voor een andere gebruiker."
   help:             "Registreert een nicknaam namens een andere gebruiker. Het account wordt direct\nactief: e-mailverificatie en de registratielimiet worden overgeslagen.\nHet adres wordt nog steeds gevalideerd en moet vrij zijn.\nDit commando vereist een operator-recht."
   done:             "\x0303✔\x03 De nicknaam \x02%nickname%\x02 is geregistreerd."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Stelt het netwerkbrede e-mailverificatiebeleid voor nicknaamregistratie in."
+  help:             "Stelt het netwerkbrede beleid voor nicknaamregistratie in.\nON laat elke nieuwe nicknaam in behandeling tot het bijbehorende e-mailtoken is bevestigd.\nOFF registreert nieuwe nicknamen onmiddellijk; het adres wordt nog steeds bewaard voor accountherstel.\nSTATUS toont het huidige beleid.\nDit commando vereist de IRCop-toestemming nickserv.vreg."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 E-mailverificatie is nu \x02verplicht\x02 voor registratie."
+  off:              "\x0303✔\x03 E-mailverificatie is nu \x02uitgeschakeld\x02; nicknamen worden onmiddellijk geregistreerd."
+  status_on:        "E-mailverificatie is momenteel \x0303verplicht\x03 voor registratie."
+  status_off:       "E-mailverificatie is momenteel \x0304uitgeschakeld\x03; nicknamen worden onmiddellijk geregistreerd."
+  usage:            "\x0304✗\x03 Onbekende actie. Gebruik: \x02%syntax%\x02"

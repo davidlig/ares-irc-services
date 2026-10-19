@@ -687,3 +687,14 @@ saregister:
   short:            "Registra uma alcunha em nome de outro utilizador."
   help:             "Registra uma alcunha em nome de outro utilizador. A conta é criada já ativa:\na verificação por e-mail e o limite de frequência são ignorados.\nO endereço continua a ser validado e tem de estar livre.\nEste comando requer permissão de operador."
   done:             "\x0303✔\x03 A alcunha \x02%nickname%\x02 foi registada."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Define a política de verificação de e-mail para o registo de alcunhas em toda a rede."
+  help:             "Define a política de toda a rede para o registo de alcunhas.\nON deixa cada alcunha nova pendente até o respetivo token de e-mail ser confirmado.\nOFF registra as alcunhas novas de imediato; o endereço continua a ser guardado para recuperar a conta.\nSTATUS mostra a política atual.\nEste comando requer a permissão de IRCop nickserv.vreg."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 A verificação de e-mail é agora \x02obrigatória\x02 no registo."
+  off:              "\x0303✔\x03 A verificação de e-mail está agora \x02desativada\x02; as alcunhas registam-se de imediato."
+  status_on:        "A verificação de e-mail está atualmente \x0303ativada\x03 no registo."
+  status_off:       "A verificação de e-mail está atualmente \x0304desativada\x03; as alcunhas registam-se de imediato."
+  usage:            "\x0304✗\x03 Ação desconhecida. Uso: \x02%syntax%\x02"

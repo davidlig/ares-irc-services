@@ -329,30 +329,3 @@ motd:
   debug:
     finalized:      "MOTD-Nachricht #%id% wurde beendet: [%type%] %message% | %date% | %shown_count%"
 
-emailverify:
-  syntax:           "EMAILVERIFY {ON|OFF|STATUS}"
-  short:            "E-Mail-Verifizierung bei der Nickname-Registrierung ein- oder ausschalten."
-  help:             "Steuert, ob die Registrierung eines Nicknames die Bestätigung der E-Mail-Adresse verlangt.\nON verlangt eine Verifizierung: der Nickname bleibt ausstehend, bis das Token bestätigt ist.\nOFF registriert den Nickname sofort; die Adresse wird weiterhin für die Kontowiederherstellung gespeichert.\nSTATUS zeigt die aktuelle Richtlinie.\nDieser Befehl erfordert Root-Zugriff."
-  example:          "/msg %bot% EMAILVERIFY STATUS"
-  on:
-    syntax:         "EMAILVERIFY ON"
-    short:          "E-Mail-Verifizierung bei der Registrierung verlangen."
-    help:           "Verlangt, dass neue Registrierungen die E-Mail-Adresse bestätigen, bevor der Nickname aktiv wird."
-    example:        "/msg %bot% EMAILVERIFY ON"
-  off:
-    syntax:         "EMAILVERIFY OFF"
-    short:          "Nicknames ohne E-Mail-Verifizierung registrieren."
-    help:           "Registriert neue Nicknames sofort. Die E-Mail-Adresse bleibt erforderlich und wird gespeichert, da sie der Weg zur Kontowiederherstellung ist."
-    example:        "/msg %bot% EMAILVERIFY OFF"
-  status:
-    syntax:         "EMAILVERIFY STATUS"
-    short:          "Die aktuelle Verifizierungsrichtlinie anzeigen."
-    help:           "Zeigt an, ob derzeit eine E-Mail-Verifizierung für die Registrierung erforderlich ist."
-    example:        "/msg %bot% EMAILVERIFY STATUS"
-  enabled:          "\x0303✓\x03 Die E-Mail-Verifizierung ist jetzt für die Registrierung \x02erforderlich\x02."
-  disabled:         "\x0303✓\x03 Die E-Mail-Verifizierung ist jetzt \x02deaktiviert\x02; Nicknames werden sofort registriert."
-  already_enabled:  "\x0304✗\x03 Die E-Mail-Verifizierung ist bereits erforderlich."
-  already_disabled: "\x0304✗\x03 Die E-Mail-Verifizierung ist bereits deaktiviert."
-  status_on:        "Die E-Mail-Verifizierung ist derzeit für die Registrierung \x0303erforderlich\x03."
-  status_off:       "Die E-Mail-Verifizierung ist derzeit \x0304deaktiviert\x03; Nicknames werden sofort registriert."
-  unknown_sub:      "\x0304✗\x03 Unbekannter Unterbefehl. Verwendung: \x02%syntax%\x02"

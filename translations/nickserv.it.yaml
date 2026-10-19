@@ -687,3 +687,14 @@ saregister:
   short:            "Registra un nickname per un altro utente."
   help:             "Registra un nickname per conto di un altro utente. L account viene creato\nattivo: la verifica e-mail e il limite di frequenza vengono saltati.\nL indirizzo viene comunque validato e deve essere libero.\nQuesto comando richiede un permesso operatore."
   done:             "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato registrato."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Imposta la politica di verifica e-mail per la registrazione dei nickname sull'intera rete."
+  help:             "Imposta la politica dell'intera rete per la registrazione dei nickname.\nON lascia ogni nuovo nickname in attesa finché il suo token e-mail non è confermato.\nOFF registra i nuovi nickname subito; l'indirizzo viene comunque conservato per il recupero dell'account.\nSTATUS mostra la politica attuale.\nQuesto comando richiede il permesso IRCop nickserv.vreg."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 La verifica e-mail è ora \x02obbligatoria\x02 per la registrazione."
+  off:              "\x0303✔\x03 La verifica e-mail è ora \x02disattivata\x02; i nickname vengono registrati subito."
+  status_on:        "La verifica e-mail è attualmente \x0303obbligatoria\x03 per la registrazione."
+  status_off:       "La verifica e-mail è attualmente \x0304disattivata\x03; i nickname vengono registrati subito."
+  usage:            "\x0304✗\x03 Azione sconosciuta. Uso: \x02%syntax%\x02"

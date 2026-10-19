@@ -697,3 +697,14 @@ saregister:
   short:            "Rexistra un alcume no nome doutro usuario."
   help:             "Rexistra un alcume no nome doutro usuario. A conta créase xa activa:\nsáltanse a verificación por correo e o límite de frecuencia.\nO enderezo séguise validando e debe estar libre.\nEsta orde require permiso de operador."
   done:             "\x0303✔\x03 O alcume \x02%nickname%\x02 foi rexistrado."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Define a política de verificación de correo para o rexistro de alcumes en toda a rede."
+  help:             "Define a política de toda a rede para o rexistro de alcumes.\nON deixa cada alcume novo pendente ata que se confirme o seu token de correo.\nOFF rexistra os alcumes novos de inmediato; o enderezo séguise gardando para recuperar a conta.\nSTATUS mostra a política actual.\nEsta orde require o permiso de IRCop nickserv.vreg."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 A verificación de correo agora é \x02obrigatoria\x02 para rexistrarse."
+  off:              "\x0303✔\x03 A verificación de correo está agora \x02desactivada\x02; os alcumes rexístranse de inmediato."
+  status_on:        "A verificación de correo está actualmente \x0303activada\x03 para rexistrarse."
+  status_off:       "A verificación de correo está actualmente \x0304desactivada\x03; os alcumes rexístranse de inmediato."
+  usage:            "\x0304✗\x03 Acción descoñecida. Uso: \x02%syntax%\x02"

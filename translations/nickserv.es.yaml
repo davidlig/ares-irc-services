@@ -687,3 +687,14 @@ saregister:
   short:            "Registra un apodo en nombre de otro usuario."
   help:             "Registra un apodo en nombre de otro usuario. La cuenta se crea ya activa:\nse saltan la verificación por correo y el límite de frecuencia.\nLa dirección sigue validándose y debe estar libre.\nEste comando requiere permiso de operador."
   done:             "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido registrado."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Define la política de verificación de correo para el registro de apodos en toda la red."
+  help:             "Define la política de toda la red para el registro de apodos.\nON deja cada apodo nuevo pendiente hasta que se confirma su token de correo.\nOFF registra los apodos nuevos de inmediato; la dirección se sigue guardando para recuperar la cuenta.\nSTATUS muestra la política actual.\nEste comando requiere el permiso de IRCop nickserv.vreg."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 La verificación de correo ahora es \x02obligatoria\x02 para registrarse."
+  off:              "\x0303✔\x03 La verificación de correo está ahora \x02desactivada\x02; los apodos se registran de inmediato."
+  status_on:        "La verificación de correo está actualmente \x0303activada\x03 para registrarse."
+  status_off:       "La verificación de correo está actualmente \x0304desactivada\x03; los apodos se registran de inmediato."
+  usage:            "\x0304✗\x03 Acción desconocida. Uso: \x02%syntax%\x02"

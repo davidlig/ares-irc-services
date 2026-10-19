@@ -687,3 +687,14 @@ saregister:
   short:            "Rejestruje pseudonim w imieniu innego użytkownika."
   help:             "Rejestruje pseudonim w imieniu innego użytkownika. Konto powstaje od razu\naktywne: weryfikacja e-mail i limit częstotliwości są pomijane.\nAdres jest nadal sprawdzany i musi być wolny.\nTo polecenie wymaga uprawnienia operatora."
   done:             "\x0303✔\x03 Pseudonim \x02%nickname%\x02 został zarejestrowany."
+
+vreg:
+  syntax:           "VREG {ON|OFF|STATUS}"
+  short:            "Ustawia ogólnosieciową politykę weryfikacji e-mail przy rejestracji pseudonimów."
+  help:             "Ustawia ogólnosieciową politykę rejestracji pseudonimów.\nON pozostawia każdy nowy pseudonim oczekujący do potwierdzenia tokenu e-mail.\nOFF rejestruje nowe pseudonimy natychmiast; adres nadal jest zapisywany na potrzeby odzyskiwania konta.\nSTATUS pokazuje bieżącą politykę.\nTo polecenie wymaga uprawnienia IRCop nickserv.vreg."
+  example:          "/msg %bot% VREG STATUS"
+  on:               "\x0303✔\x03 Weryfikacja e-mail jest teraz \x02wymagana\x02 przy rejestracji."
+  off:              "\x0303✔\x03 Weryfikacja e-mail jest teraz \x02wyłączona\x02; pseudonimy rejestrują się natychmiast."
+  status_on:        "Weryfikacja e-mail jest obecnie \x0303wymagana\x03 przy rejestracji."
+  status_off:       "Weryfikacja e-mail jest obecnie \x0304wyłączona\x03; pseudonimy rejestrują się natychmiast."
+  usage:            "\x0304✗\x03 Nieznana akcja. Użycie: \x02%syntax%\x02"
