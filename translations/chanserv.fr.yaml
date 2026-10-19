@@ -270,6 +270,14 @@ invite:
   done:             "\x0303✔\x03 Vous avez été invité sur \x02%channel%\x02."
   notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 s'invite sur le canal."
 
+unban:
+  syntax:           "UNBAN <#canal> [masque|surnom]"
+  short:            "Retirer un bannissement du canal."
+  help:             "Retire un bannissement du canal. Vous pouvez indiquer un masque littéral (par exemple *!*@bad.host), le surnom d'un utilisateur connecté pour utiliser son masque actuel, ou omettre l'argument pour retirer votre propre masque. Vous avez besoin du niveau UNBAN du canal."
+  example:          "/msg %bot% UNBAN #canal *!*@bad.host"
+  done:             "\x0303✔\x03 Le bannissement \x02%mask%\x02 a été retiré."
+  user_not_found:   "\x0304✗\x03 Le surnom \x02%nick%\x02 n'est pas connecté au réseau."
+
 admin:
   syntax:           "ADMIN <#canal> <surnom>"
   short:            "Donner le mode admin de canal."

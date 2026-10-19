@@ -270,6 +270,14 @@ invite:
   done:             "\x0303✔\x03 Heu estat convidat a \x02%channel%\x02."
   notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 es convida al canal."
 
+unban:
+  syntax:           "UNBAN <#channel> [màscara|sobrenom]"
+  short:            "Retirar un bloqueig del canal."
+  help:             "Retira un bloqueig del canal. Podeu indicar una màscara literal (per exemple *!*@bad.host), el sobrenom d'un usuari connectat per fer servir la seva màscara actual, o ometre l'argument per retirar la vostra pròpia màscara. Cal el nivell UNBAN del canal."
+  example:          "/msg %bot% UNBAN #channel *!*@bad.host"
+  done:             "\x0303✔\x03 S'ha retirat el bloqueig \x02%mask%\x02."
+  user_not_found:   "\x0304✗\x03 El sobrenom \x02%nick%\x02 no està connectat a la xarxa."
+
 admin:
   syntax:           "ADMIN <#channel> <nickname>"
   short:            "Donar el mode d'administrador de canal."

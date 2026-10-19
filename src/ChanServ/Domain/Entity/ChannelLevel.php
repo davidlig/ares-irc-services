@@ -42,6 +42,9 @@ class ChannelLevel
 
     public const string KEY_INVITE = 'INVITE';
 
+    /** ChanServ: remove a ban from the channel (default 100). */
+    public const string KEY_UNBAN = 'UNBAN';
+
     public const string KEY_ACCESSLIST = 'ACCESSLIST';
 
     public const string KEY_ACCESSCHANGE = 'ACCESSCHANGE';
@@ -70,6 +73,7 @@ class ChannelLevel
         self::KEY_HALFOPDEHALFOP => 200,
         self::KEY_VOICEDEVOICE => 100,
         self::KEY_INVITE => 200,
+        self::KEY_UNBAN => 100,
         self::KEY_ACCESSLIST => 400,
         self::KEY_ACCESSCHANGE => 499,
         self::KEY_MEMOREAD => 200,

@@ -16,6 +16,7 @@ enum ChannelLevel: string
     case HalfopDehalfop = 'HALFOPDEHALFOP';
     case VoiceDevoice = 'VOICEDEVOICE';
     case Invite = 'INVITE';
+    case Unban = 'UNBAN';
     case AccessList = 'ACCESSLIST';
     case AccessChange = 'ACCESSCHANGE';
     case MemoRead = 'MEMOREAD';
@@ -29,7 +30,7 @@ enum ChannelLevel: string
             self::AutoAdmin, self::AdminDeadmin, self::AccessList => 400,
             self::AutoOperator, self::OpDeop, self::MemoChange => 300,
             self::AutoHalfOperator, self::HalfopDehalfop, self::Invite, self::MemoRead => 200,
-            self::AutoVoice, self::VoiceDevoice => 100,
+            self::AutoVoice, self::VoiceDevoice, self::Unban => 100,
             self::Set, self::AccessChange => 499,
             self::Akick => 450,
             self::NoJoin => -1,

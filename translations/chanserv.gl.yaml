@@ -270,6 +270,14 @@ invite:
   done:             "\x0303✔\x03 Foi convidado a \x02%channel%\x02."
   notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 convídase a si mesmo á canle."
 
+unban:
+  syntax:           "UNBAN <#canle> [máscara|alcume]"
+  short:            "Retirar un bloqueo da canle."
+  help:             "Retira un bloqueo da canle. Podes indicar unha máscara literal (por exemplo *!*@bad.host), o alcume dun usuario conectado para usar a súa máscara actual, ou omitir o argumento para retirar a túa propia máscara. Necesitas o nivel UNBAN da canle."
+  example:          "/msg %bot% UNBAN #canle *!*@bad.host"
+  done:             "\x0303✔\x03 Retirouse o bloqueo \x02%mask%\x02."
+  user_not_found:   "\x0304✗\x03 O alcume \x02%nick%\x02 non está conectado á rede."
+
 admin:
   syntax:           "ADMIN <#canle> <alcume>"
   short:            "Conceder o modo de administrador de canle."

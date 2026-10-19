@@ -366,6 +366,9 @@ services:
     App\ChanServ\Application\UseCase\DeliverEntryMessage\DeliverChannelEntryMessageHandlerInterface:
         alias: App\ChanServ\Application\UseCase\DeliverEntryMessage\DeliverChannelEntryMessageHandler
 
+    App\ChanServ\Application\UseCase\UnbanUser\UnbanUserHandlerInterface:
+        alias: App\ChanServ\Application\UseCase\UnbanUser\UnbanUserHandler
+
     App\ChanServ\Adapter\Out\Network\IrcChannelRankNetworkQuery:
         arguments:
             $chanservNick: '%chanserv.nick%'
@@ -1379,6 +1382,9 @@ services:
         tags: ['chanserv.command']
 
     App\ChanServ\Adapter\In\Irc\Command\InviteCommand:
+        tags: ['chanserv.command']
+
+    App\ChanServ\Adapter\In\Irc\Command\UnbanCommand:
         tags: ['chanserv.command']
 
     App\ChanServ\Adapter\In\Irc\Command\AkickCommand:

@@ -270,6 +270,14 @@ invite:
   done:             "\x0303✔\x03 \x02%channel%\x02 kanalına davet edildiniz."
   notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 kendini kanala davet ediyor."
 
+unban:
+  syntax:           "UNBAN <#channel> [maske|rumuz]"
+  short:            "Kanaldan bir yasağı kaldır."
+  help:             "Kanaldan bir yasağı kaldırır. Gerçek bir maske (örneğin *!*@bad.host), bağlı bir kullanıcının güncel maskesini kullanmak için rumuzunu verebilir veya argümanı atlayarak kendi maskenizi kaldırabilirsiniz. Kanalın UNBAN seviyesine ihtiyacınız var."
+  example:          "/msg %bot% UNBAN #channel *!*@bad.host"
+  done:             "\x0303✔\x03 \x02%mask%\x02 yasağı kaldırıldı."
+  user_not_found:   "\x0304✗\x03 \x02%nick%\x02 rumuzu ağa bağlı değil."
+
 admin:
   syntax:           "ADMIN <#channel> <nickname>"
   short:            "Kanal admin modu verin."

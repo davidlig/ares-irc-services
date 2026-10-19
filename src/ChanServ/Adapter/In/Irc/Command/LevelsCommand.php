@@ -52,6 +52,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         ChannelLevel::KEY_HALFOPDEHALFOP,
         ChannelLevel::KEY_VOICEDEVOICE,
         ChannelLevel::KEY_INVITE,
+        ChannelLevel::KEY_UNBAN,
         ChannelLevel::KEY_ACCESSLIST,
         ChannelLevel::KEY_ACCESSCHANGE,
         ChannelLevel::KEY_MEMOREAD,
