@@ -330,4 +330,16 @@ final class SendCommandTest extends TestCase
             self::assertSame([$expectedReply], $replies);
         }
     }
+
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new SendCommand(
+            $this->createStub(SendMemoHandlerInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+        );
+
+        self::assertSame('send.example', $command->getExampleKey());
+    }
 }

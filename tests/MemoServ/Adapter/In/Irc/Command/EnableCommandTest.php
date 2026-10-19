@@ -182,4 +182,12 @@ final class EnableCommandTest extends TestCase
             self::assertSame([$expectedReply], $replies);
         }
     }
+
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new EnableCommand($this->createStub(EnableMemosHandlerInterface::class));
+
+        self::assertSame('enable.example', $command->getExampleKey());
+    }
 }

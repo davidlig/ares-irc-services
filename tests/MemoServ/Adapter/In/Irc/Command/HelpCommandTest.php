@@ -103,9 +103,9 @@ final class HelpCommandTest extends TestCase
     /**
      * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string}> $subcommands
      */
-    private function createDummyCommand(string $name, int $order = 1, array $subcommands = [], bool $operOnly = false): MemoServCommandInterface
+    private function createDummyCommand(string $name, int $order = 1, array $subcommands = [], bool $operOnly = false, ?string $exampleKey = null): MemoServCommandInterface
     {
-        return new class($name, $order, $subcommands, $operOnly) implements MemoServCommandInterface {
+        return new class($name, $order, $subcommands, $operOnly, $exampleKey) implements MemoServCommandInterface {
             /**
              * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string}> $subcommands
              */
@@ -114,6 +114,7 @@ final class HelpCommandTest extends TestCase
                 private int $order,
                 private array $subcommands,
                 private bool $operOnly,
+                private ?string $exampleKey,
             ) {}
 
             public function getName(): string
@@ -167,6 +168,11 @@ final class HelpCommandTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function getExampleKey(): ?string
+            {
+                return $this->exampleKey;
             }
 
             public function execute(MemoServContext $context): null
@@ -257,6 +263,38 @@ final class HelpCommandTest extends TestCase
 
         self::assertCount(1, $replies);
         self::assertStringContainsString('SEND', $replies[0]);
+    }
+
+    #[Test]
+    public function showsExampleLineInCommandHelpWhenCommandDeclaresExampleKey(): void
+    {
+        $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
+        $command = new HelpCommand(new UnifiedHelpFormatter());
+
+        $targetCmd = $this->createDummyCommand('SEND', 1, [], false, 'send.example');
+
+        $replies = [];
+        $context = $this->createContext($sender, null, ['SEND'], $replies, [$targetCmd, $command]);
+        $command->execute($context);
+
+        self::assertCount(1, $replies);
+        self::assertStringContainsString('help.example_label [%example%: send.example]', $replies[0]);
+    }
+
+    #[Test]
+    public function omitsExampleLineInCommandHelpWhenCommandDeclaresNoExampleKey(): void
+    {
+        $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
+        $command = new HelpCommand(new UnifiedHelpFormatter());
+
+        $targetCmd = $this->createDummyCommand('SEND', 1);
+
+        $replies = [];
+        $context = $this->createContext($sender, null, ['SEND'], $replies, [$targetCmd, $command]);
+        $command->execute($context);
+
+        self::assertCount(1, $replies);
+        self::assertStringNotContainsString('help.example_label', $replies[0]);
     }
 
     #[Test]

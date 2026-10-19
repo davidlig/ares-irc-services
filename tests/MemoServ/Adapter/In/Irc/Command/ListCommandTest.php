@@ -212,4 +212,12 @@ final class ListCommandTest extends TestCase
 
         self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: LIST]'], $replies);
     }
+
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new ListCommand($this->createStub(ListMemosHandlerInterface::class));
+
+        self::assertSame('list.example', $command->getExampleKey());
+    }
 }

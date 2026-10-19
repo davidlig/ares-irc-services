@@ -83,8 +83,14 @@ line coverage (equality of covered/total statements, not a rounded display).
   language alongside the message text (`apodo`/`rumuz`/…). Evidence: `TranslationCatalogTest`
   OK (11 tests / 34443 assertions); `TranslationCatalogTest` + `tests/MemoServ` OK (298 tests /
   36487 assertions); parent spot checks on es/tr. Route: delegated (context reason).
-- **T4** (S7, S8) — Tests (formatter + HelpCommand integration) + full gate chain + coverage
-  100 exactly once. Route: inline + gate. Status: pending.
+- **T4** (S7, S8) — DONE — Integration tests in `HelpCommandTest`
+  (`showsExampleLineInCommandHelpWhenCommandDeclaresExampleKey` +
+  `omitsExampleLineInCommandHelpWhenCommandDeclaresNoExampleKey`, driven by a new
+  `?string $exampleKey` parameter on `createDummyCommand`) and `getExampleKeyReturnsCorrectKey()`
+  in each of the 7 command test files. Full gate chain green: `php -l`, `lint:container`,
+  `lint:yaml` (139 files), PHPStan max (0 errors), CS-Fixer (0 files), Deptrac (0 uncovered /
+  0 warnings / 0 errors), `check-coverage.sh 100 --issues` → **100.00% (22840/22840 lines)**.
+  Route: inline + gates. Status: done.
 
 ## Log
 
@@ -101,3 +107,13 @@ line coverage (equality of covered/total statements, not a rounded display).
   `example:` keys and zero `example_label` across all 14 `translations/memoserv.*.yaml`;
   `MemoServContext.php:128` injects `%bot%` placeholders via `getAllPlaceholders()`; IGNORE
   exposes 3 sub-options (ADD/DEL/LIST) through `getSubCommandHelp()`.
+- **L5 (2026-10-19)** — The coverage gate caught a real gap that focused runs had hidden: T1–T3
+  added `getExampleKey()` to the 7 real commands, but every HELP test uses command doubles, so
+  those 7 methods were never executed → `Coverage 99.97% is below minimum 100%
+  (lines: 22833/22840)`. The clover report confirmed the uncovered lines were exactly the 7
+  `return '<cmd>.example';` statements. Fixed by mirroring the pattern this repo already uses
+  (`getExampleKeyReturnsCorrectKey()` in each command's own test file), not by weakening the gate.
+  Re-run: 100.00% (22840/22840).
+- **L6 (2026-10-19)** — User delivery instruction, verbatim: "Cuando acabes, sube tambien a mi
+  repo aparte de hacer issue o pr a David". Delivery: push `feat/memoserv-help-enrichment` to the
+  `juanjiyo` fork, then open the upstream issue and PR against `davidlig/ares-irc-services`.

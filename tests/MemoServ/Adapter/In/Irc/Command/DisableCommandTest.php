@@ -182,4 +182,12 @@ final class DisableCommandTest extends TestCase
             self::assertSame([$expectedReply], $replies);
         }
     }
+
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new DisableCommand($this->createStub(DisableMemosHandlerInterface::class));
+
+        self::assertSame('disable.example', $command->getExampleKey());
+    }
 }

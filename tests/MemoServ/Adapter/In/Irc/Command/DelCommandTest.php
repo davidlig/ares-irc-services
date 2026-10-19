@@ -235,4 +235,12 @@ final class DelCommandTest extends TestCase
 
         self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: DEL]'], $replies);
     }
+
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new DelCommand($this->createStub(DelMemoHandlerInterface::class));
+
+        self::assertSame('del.example', $command->getExampleKey());
+    }
 }

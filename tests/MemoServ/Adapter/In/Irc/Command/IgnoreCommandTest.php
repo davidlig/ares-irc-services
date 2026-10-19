@@ -306,4 +306,12 @@ final class IgnoreCommandTest extends TestCase
 
         self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: IGNORE]'], $replies);
     }
+
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new IgnoreCommand($this->createStub(IgnoreMemoHandlerInterface::class), 10, 20);
+
+        self::assertSame('ignore.example', $command->getExampleKey());
+    }
 }

@@ -254,4 +254,12 @@ final class ReadCommandTest extends TestCase
 
         self::assertSame(['error.insufficient_access [%channel%: #Ares, %operation%: READ]'], $replies);
     }
+
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new ReadCommand($this->createStub(ReadMemoHandlerInterface::class));
+
+        self::assertSame('read.example', $command->getExampleKey());
+    }
 }
