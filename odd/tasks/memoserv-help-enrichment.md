@@ -65,8 +65,13 @@ line coverage (equality of covered/total statements, not a rounded display).
 
 ## Tasks
 
-- **T1** (S2, S8) — Formatter: add the example block to MemoServ's `renderCommandHelp`; add
-  `help.example_label` to `translations/memoserv.en.yaml`. Route: inline. Status: pending.
+- **T1** (S2, S8) — DONE — Formatter: example block in `renderCommandHelp` (`method_exists`
+  → `is_string` → `help.example_label` with `%example%`, between the syntax line and the
+  footer); `help.example_label` added to `translations/memoserv.en.yaml`. Tests:
+  `rendersExampleLineWhenHandlerDeclaresExampleKey` (RED observed first) and
+  `omitsExampleLineWhenHandlerLacksExampleKey`. Evidence: `UnifiedHelpFormatterTest` 8/8
+  green; full `tests/MemoServ` 287 tests / 2031 assertions green. Route: inline (parent).
+  Status: done.
 - **T2** (S3, S5) — 7 commands declare `getExampleKey()` (+ `getHelpParams()` where needed);
   English example strings with `%bot%`. Route: inline. Status: pending.
 - **T3** (S4, S5) — Translate `help.example_label` + the 7 `example` keys across the 13

@@ -172,6 +172,46 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function rendersExampleLineWhenHandlerDeclaresExampleKey(): void
+    {
+        $context = new MemoServHelpFormatterContext();
+        $command = new MemoServExampleHelpableCommand('SEND', 1, 'send.example');
+
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp($context, $command);
+
+        self::assertSame([
+            'translated:help.header',
+            'translated:send.help',
+            ' ',
+            'translated:help.syntax_label',
+            ' ',
+            'translated:help.example_label',
+            'translated:help.footer',
+        ], $lines);
+        self::assertContains([
+            'key' => 'help.example_label',
+            'params' => ['example' => 'translated:send.example'],
+        ], $context->translationRequests);
+    }
+
+    #[Test]
+    public function omitsExampleLineWhenHandlerLacksExampleKey(): void
+    {
+        $context = new MemoServHelpFormatterContext();
+        $command = new MemoServHelpableCommand('SEND', 1);
+
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp($context, $command);
+
+        self::assertSame([
+            'translated:help.header',
+            'translated:send.help',
+            ' ',
+            'translated:help.syntax_label',
+            'translated:help.footer',
+        ], $lines);
+    }
+
+    #[Test]
     public function rendersSubcommandHelpWithOptionalDetails(): void
     {
         $context = new MemoServHelpFormatterContext();
@@ -486,5 +526,54 @@ final readonly class MemoServHelpableCommand implements HelpableCommandInterface
     public function getHelpParams(): array
     {
         return $this->helpParams;
+    }
+}
+
+final readonly class MemoServExampleHelpableCommand implements HelpableCommandInterface
+{
+    public function __construct(
+        private string $name,
+        private int $order,
+        private string $exampleKey,
+    ) {}
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getOrder(): int
+    {
+        return $this->order;
+    }
+
+    public function getShortDescKey(): string
+    {
+        return strtolower($this->name) . '.short';
+    }
+
+    public function getSyntaxKey(): string
+    {
+        return strtolower($this->name) . '.syntax';
+    }
+
+    public function getHelpKey(): string
+    {
+        return strtolower($this->name) . '.help';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
+    public function isOperOnly(): bool
+    {
+        return false;
+    }
+
+    public function getExampleKey(): string
+    {
+        return $this->exampleKey;
     }
 }
