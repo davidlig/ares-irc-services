@@ -418,11 +418,7 @@ noexpire:
     Bei OFF gelten die normalen Ablaufregeln.
 
     Nur IRCops mit der Berechtigung 'chanserv.noexpire' können diesen Befehl verwenden.
-
-    Syntax: NOEXPIRE <#channel> {ON|OFF}
-    Beispiele:
-      NOEXPIRE #Wichtig ON
-      NOEXPIRE #Wichtig OFF
+  example:          "/msg %bot% NOEXPIRE #channel ON"
   success_on:       "\x0303✔\x03 Channel \x02%channel%\x02 ist jetzt vor Ablauf geschützt."
   success_off:      "\x0303✔\x03 Channel \x02%channel%\x02 läuft jetzt normal ab."
   not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
@@ -465,15 +461,7 @@ history:
       DEL   — Einen bestimmten Eintrag anhand der ID löschen.
       VIEW  — Verlaufseinträge anzeigen (seitenweise, 3 pro Seite).
       CLEAR — Alle Verlaufseinträge für den Channel löschen.
-
-    Syntax: HISTORY <#channel> {ADD|DEL|VIEW|CLEAR} [Argumente]
-    Beispiele:
-      HISTORY #channel VIEW
-      HISTORY #channel VIEW 2
-      HISTORY #channel VIEW ALL
-      HISTORY #channel ADD Verdacht auf Übernahmeversuch
-      HISTORY #channel DEL 42
-      HISTORY #channel CLEAR
+  example:          "/msg %bot% HISTORY #channel VIEW"
   not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
   unknown_operator: "(unbekannt)"
 
@@ -541,10 +529,7 @@ clearaccess:
     Entfernt alle Zugriffseinträge aus der Zugriffsliste eines Channels.
     Diese Aktion ist unwiderruflich und kann nicht rückgängig gemacht werden.
     Nur IRCops mit der Berechtigung 'chanserv.clearaccess' können diesen Befehl verwenden.
-
-    Syntax: CLEARACCESS <#channel>
-    Beispiele:
-      CLEARACCESS #channel
+  example:          "/msg %bot% CLEARACCESS #channel"
   success:          "\x0303✔\x03 \x02%count%\x02 Zugriffseinträge aus \x02%channel%\x02 gelöscht."
   empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 hat keine Zugriffseinträge."
 
@@ -557,11 +542,7 @@ clearusers:
     Ein optionaler Grund kann angegeben werden; wenn nicht, wird ein Standardgrund verwendet.
 
     Nur IRCops mit der Berechtigung 'chanserv.clearusers' können diesen Befehl verwenden.
-
-    Syntax: CLEARUSERS <#channel> [Grund]
-    Beispiele:
-      CLEARUSERS #channel
-      CLEARUSERS #channel flooding
+  example:          "/msg %bot% CLEARUSERS #channel flooding"
   not_on_network:   "\x0304✗\x03 Channel \x02%channel%\x02 ist derzeit nicht im Netzwerk."
   empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 hat keine Benutzer zum Kicken."
   success:          "\x0303✔\x03 \x02%count%\x02 Benutzer aus \x02%channel%\x02 gekickt."

@@ -418,11 +418,7 @@ noexpire:
     Όταν είναι OFF, ισχύουν οι κανονικοί κανόνες λήξης.
 
     Μόνο IRCops με άδεια 'chanserv.noexpire' μπορούν να χρησιμοποιήσουν αυτήν την εντολή.
-
-    Σύνταξη: NOEXPIRE <#channel> {ON|OFF}
-    Παραδείγματα:
-      NOEXPIRE #Important ON
-      NOEXPIRE #Important OFF
+  example:          "/msg %bot% NOEXPIRE #channel ON"
   success_on:       "\x0303✔\x03 Το κανάλι \x02%channel%\x02 είναι τώρα προστατευμένο από λήξη."
   success_off:      "\x0303✔\x03 Το κανάλι \x02%channel%\x02 θα λήγει τώρα κανονικά."
   not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
@@ -465,15 +461,7 @@ history:
       DEL   — Διαγραφή συγκεκριμένης καταχώρησης μέσω ID.
       VIEW  — Προβολή καταχωρήσεων ιστορικού (σελιδοποιημένη, 3 ανά σελίδα).
       CLEAR — Διαγραφή όλων των καταχωρήσεων ιστορικού για το κανάλι.
-
-    Σύνταξη: HISTORY <#channel> {ADD|DEL|VIEW|CLEAR} [arguments]
-    Παραδείγματα:
-      HISTORY #channel VIEW
-      HISTORY #channel VIEW 2
-      HISTORY #channel VIEW ALL
-      HISTORY #channel ADD Ύποπτη απόπειρα takeover
-      HISTORY #channel DEL 42
-      HISTORY #channel CLEAR
+  example:          "/msg %bot% HISTORY #channel VIEW"
   not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
   unknown_operator: "(άγνωστος)"
 
@@ -541,10 +529,7 @@ clearaccess:
     Αφαιρεί όλες τις καταχωρήσεις πρόσβασης από τη λίστα πρόσβασης ενός καναλιού.
     Αυτή η ενέργεια είναι μη αναστρέψιμη και δεν μπορεί να αναιρεθεί.
     Μόνο IRCops με άδεια 'chanserv.clearaccess' μπορούν να χρησιμοποιήσουν αυτήν την εντολή.
-
-    Σύνταξη: CLEARACCESS <#channel>
-    Παραδείγματα:
-      CLEARACCESS #channel
+  example:          "/msg %bot% CLEARACCESS #channel"
   success:          "\x0303✔\x03 Εκκαθαρίστηκαν \x02%count%\x02 καταχωρήσεις πρόσβασης από \x02%channel%\x02."
   empty:            "\x0307ℹ\x03 Το κανάλι \x02%channel%\x02 δεν έχει καταχωρήσεις πρόσβασης."
 
@@ -557,11 +542,7 @@ clearusers:
     Μπορεί να δοθεί προαιρετική αιτία· αν παραλειφθεί, χρησιμοποιείται μια προεπιλεγμένη αιτία.
 
     Μόνο IRCops με άδεια 'chanserv.clearusers' μπορούν να χρησιμοποιήσουν αυτήν την εντολή.
-
-    Σύνταξη: CLEARUSERS <#channel> [reason]
-    Παραδείγματα:
-      CLEARUSERS #channel
-      CLEARUSERS #channel flooding
+  example:          "/msg %bot% CLEARUSERS #channel flooding"
   not_on_network:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι τρέχοντα στο δίκτυο."
   empty:            "\x0307ℹ\x03 Το κανάλι \x02%channel%\x02 δεν έχει χρήστες για kick."
   success:          "\x0303✔\x03 Έγιναν kick \x02%count%\x02 χρήστης(ες) από \x02%channel%\x02."

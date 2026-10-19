@@ -73,6 +73,11 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
         return ChanServPermission::CLEARUSERS;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'clearusers.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return true;

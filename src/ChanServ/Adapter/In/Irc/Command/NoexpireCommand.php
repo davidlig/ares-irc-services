@@ -75,6 +75,11 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         return ChanServPermission::NOEXPIRE;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'noexpire.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return false;

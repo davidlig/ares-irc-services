@@ -418,11 +418,7 @@ noexpire:
     Wanneer OFF, zijn de normale verloopregels van toepassing.
 
     Alleen IRCops met 'chanserv.noexpire'-toestemming kunnen dit commando gebruiken.
-
-    Syntax: NOEXPIRE <#kanaal> {ON|OFF}
-    Voorbeelden:
-      NOEXPIRE #Belangrijk ON
-      NOEXPIRE #Belangrijk OFF
+  example:          "/msg %bot% NOEXPIRE #kanaal ON"
   success_on:       "\x0303✔\x03 Kanaal \x02%channel%\x02 is nu beschermd tegen verloop."
   success_off:      "\x0303✔\x03 Kanaal \x02%channel%\x02 verloopt nu normaal."
   not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
@@ -465,15 +461,7 @@ history:
       DEL   — Verwijder een specifieke vermelding op ID.
       VIEW  — Bekijk geschiedenisvermeldingen (gepagineerd, 3 per pagina).
       CLEAR — Verwijder alle geschiedenisvermeldingen voor het kanaal.
-
-    Syntax: HISTORY <#kanaal> {ADD|DEL|VIEW|CLEAR} [argumenten]
-    Voorbeelden:
-      HISTORY #kanaal VIEW
-      HISTORY #kanaal VIEW 2
-      HISTORY #kanaal VIEW ALL
-      HISTORY #kanaal ADD Vermoedelijke overnamepoging
-      HISTORY #kanaal DEL 42
-      HISTORY #kanaal CLEAR
+  example:          "/msg %bot% HISTORY #kanaal VIEW"
   not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   unknown_operator: "(onbekend)"
 
@@ -541,10 +529,7 @@ clearaccess:
     Verwijdert alle toegangsvermeldingen uit de toegangslijst van een kanaal.
     Deze actie is onomkeerbaar en kan niet ongedaan worden gemaakt.
     Alleen IRCops met 'chanserv.clearaccess'-toestemming kunnen dit commando gebruiken.
-
-    Syntax: CLEARACCESS <#kanaal>
-    Voorbeelden:
-      CLEARACCESS #kanaal
+  example:          "/msg %bot% CLEARACCESS #kanaal"
   success:          "\x0303✔\x03 \x02%count%\x02 toegangsvermeldingen gewist uit \x02%channel%\x02."
   empty:            "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen toegangsvermeldingen."
 
@@ -557,11 +542,7 @@ clearusers:
     Een optionele reden kan worden opgegeven; indien weggelaten wordt een standaardreden gebruikt.
 
     Alleen IRCops met 'chanserv.clearusers'-toestemming kunnen dit commando gebruiken.
-
-    Syntax: CLEARUSERS <#kanaal> [reden]
-    Voorbeelden:
-      CLEARUSERS #kanaal
-      CLEARUSERS #kanaal flooding
+  example:          "/msg %bot% CLEARUSERS #kanaal flooding"
   not_on_network:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is momenteel niet op het netwerk."
   empty:            "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen gebruikers om te kicken."
   success:          "\x0303✔\x03 \x02%count%\x02 gebruiker(s) gekickt uit \x02%channel%\x02."

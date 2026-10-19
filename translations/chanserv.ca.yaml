@@ -418,11 +418,7 @@ noexpire:
     Quan està OFF, s'apliquen les regles normals d'expiració.
 
     Només els IRCops amb el permís 'chanserv.noexpire' poden utilitzar aquesta ordre.
-
-    Sintaxi: NOEXPIRE <#channel> {ON|OFF}
-    Exemples:
-      NOEXPIRE #Important ON
-      NOEXPIRE #Important OFF
+  example:          "/msg %bot% NOEXPIRE #channel ON"
   success_on:       "\x0303✔\x03 El canal \x02%channel%\x02 ara està protegit contra l'expiració."
   success_off:      "\x0303✔\x03 El canal \x02%channel%\x02 ara expirarà normalment."
   not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
@@ -465,15 +461,7 @@ history:
       DEL   — Esborrar una entrada específica per ID.
       VIEW  — Veure les entrades de l'historial (paginat, 3 per pàgina).
       CLEAR — Esborrar totes les entrades de l'historial del canal.
-
-    Sintaxi: HISTORY <#channel> {ADD|DEL|VIEW|CLEAR} [arguments]
-    Exemples:
-      HISTORY #channel VIEW
-      HISTORY #channel VIEW 2
-      HISTORY #channel VIEW ALL
-      HISTORY #channel ADD Sospita d'intent de takeover
-      HISTORY #channel DEL 42
-      HISTORY #channel CLEAR
+  example:          "/msg %bot% HISTORY #channel VIEW"
   not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
   unknown_operator: "(desconegut)"
 
@@ -541,10 +529,7 @@ clearaccess:
     Treu totes les entrades d'accés de la llista d'accés d'un canal.
     Aquesta acció és irreversible i no es pot desfer.
     Només els IRCops amb el permís 'chanserv.clearaccess' poden utilitzar aquesta ordre.
-
-    Sintaxi: CLEARACCESS <#channel>
-    Exemples:
-      CLEARACCESS #channel
+  example:          "/msg %bot% CLEARACCESS #channel"
   success:          "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'accés de \x02%channel%\x02."
   empty:            "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap entrada d'accés."
 
@@ -557,11 +542,7 @@ clearusers:
     Es pot proporcionar un motiu opcional; si s'omet, s'utilitza un motiu predeterminat.
 
     Només els IRCops amb el permís 'chanserv.clearusers' poden utilitzar aquesta ordre.
-
-    Sintaxi: CLEARUSERS <#channel> [reason]
-    Exemples:
-      CLEARUSERS #channel
-      CLEARUSERS #channel flooding
+  example:          "/msg %bot% CLEARUSERS #channel flooding"
   not_on_network:   "\x0304✗\x03 El canal \x02%channel%\x02 no és actualment a la xarxa."
   empty:            "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap usuari per fer kick."
   success:          "\x0303✔\x03 S'ha fet kick a \x02%count%\x02 usuari(s) de \x02%channel%\x02."

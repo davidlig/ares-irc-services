@@ -418,11 +418,7 @@ noexpire:
     Gdy OFF, obowiązują normalne zasady wygaśnięcia.
 
     Tylko IRCops z uprawnieniem 'chanserv.noexpire' mogą użyć tej komendy.
-
-    Składnia: NOEXPIRE <#kanał> {ON|OFF}
-    Przykłady:
-      NOEXPIRE #Ważny ON
-      NOEXPIRE #Ważny OFF
+  example:          "/msg %bot% NOEXPIRE #kanał ON"
   success_on:       "\x0303✔\x03 Kanał \x02%channel%\x02 jest teraz chroniony przed wygaśnięciem."
   success_off:      "\x0303✔\x03 Kanał \x02%channel%\x02 będzie teraz wygasał normalnie."
   not_registered:   "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest zarejestrowany."
@@ -465,15 +461,7 @@ history:
       DEL   — Usuń konkretny wpis według ID.
       VIEW  — Przeglądaj wpisy historii (stronicowane, 3 na stronę).
       CLEAR — Usuń wszystkie wpisy historii kanału.
-
-    Składnia: HISTORY <#kanał> {ADD|DEL|VIEW|CLEAR} [argumenty]
-    Przykłady:
-      HISTORY #kanał VIEW
-      HISTORY #kanał VIEW 2
-      HISTORY #kanał VIEW ALL
-      HISTORY #kanał ADD Podejrzana próba przejęcia
-      HISTORY #kanał DEL 42
-      HISTORY #kanał CLEAR
+  example:          "/msg %bot% HISTORY #kanał VIEW"
   not_registered:   "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest zarejestrowany."
   unknown_operator: "(nieznany)"
 
@@ -541,10 +529,7 @@ clearaccess:
     Usuwa wszystkie wpisy dostępu z listy dostępu kanału.
     Ta akcja jest nieodwracalna i nie można jej cofnąć.
     Tylko IRCops z uprawnieniem 'chanserv.clearaccess' mogą użyć tej komendy.
-
-    Składnia: CLEARACCESS <#kanał>
-    Przykłady:
-      CLEARACCESS #kanał
+  example:          "/msg %bot% CLEARACCESS #kanał"
   success:          "\x0303✔\x03 Wyczyszczono \x02%count%\x02 wpisów dostępu z \x02%channel%\x02."
   empty:            "\x0307ℹ\x03 Kanał \x02%channel%\x02 nie ma wpisów dostępu."
 
@@ -557,11 +542,7 @@ clearusers:
     Opcjonalny powód może być podany; jeśli pominięty, używany jest domyślny powód.
 
     Tylko IRCops z uprawnieniem 'chanserv.clearusers' mogą użyć tej komendy.
-
-    Składnia: CLEARUSERS <#kanał> [powód]
-    Przykłady:
-      CLEARUSERS #kanał
-      CLEARUSERS #kanał zalewanie
+  example:          "/msg %bot% CLEARUSERS #kanał zalewanie"
   not_on_network:   "\x0304✗\x03 Kanał \x02%channel%\x02 obecnie nie jest w sieci."
   empty:            "\x0307ℹ\x03 Kanał \x02%channel%\x02 nie ma użytkowników do wyrzucenia."
   success:          "\x0303✔\x03 Wyrzucono \x02%count%\x02 użytkownika(ów) z \x02%channel%\x02."

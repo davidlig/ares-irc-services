@@ -418,11 +418,7 @@ noexpire:
     OFF dagoenean, iraungitze arau normalak aplikatzen dira.
 
     'chanserv.noexpire' baimena duten IRCopek soilik erabil dezakete komando hau.
-
-    Sintaxia: NOEXPIRE <#kanala> {ON|OFF}
-    Adibideak:
-      NOEXPIRE #Garrantzitsua ON
-      NOEXPIRE #Garrantzitsua OFF
+  example:          "/msg %bot% NOEXPIRE #kanala ON"
   success_on:       "\x0303✔\x03 \x02%channel%\x02 kanala iraungitzetik babestuta dago orain."
   success_off:      "\x0303✔\x03 \x02%channel%\x02 kanala normal iraungiko da orain."
   not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
@@ -465,15 +461,7 @@ history:
       DEL   — Ezabatu sarrera zehatz bat IDaren arabera.
       VIEW  — Ikusi historia sarrerak (orrikatua, 3 orrialdeko).
       CLEAR — Ezabatu historiako sarrera guztiak kanalarentzat.
-
-    Sintaxia: HISTORY <#kanala> {ADD|DEL|VIEW|CLEAR} [argumentuak]
-    Adibideak:
-      HISTORY #kanala VIEW
-      HISTORY #kanala VIEW 2
-      HISTORY #kanala VIEW ALL
-      HISTORY #kanala ADD Suspected takeover attempt
-      HISTORY #kanala DEL 42
-      HISTORY #kanala CLEAR
+  example:          "/msg %bot% HISTORY #kanala VIEW"
   not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
   unknown_operator: "(ezezaguna)"
 
@@ -541,10 +529,7 @@ clearaccess:
     Kanal baten sarbide zerrendako sarrera guztiak kentzen ditu.
     Ekintza hau atzeraezina da eta ezin da desegin.
     'chanserv.clearaccess' baimena duten IRCopek soilik erabil dezakete komando hau.
-
-    Sintaxia: CLEARACCESS <#kanala>
-    Adibideak:
-      CLEARACCESS #kanala
+  example:          "/msg %bot% CLEARACCESS #kanala"
   success:          "\x0303✔\x03 \x02%count%\x02 sarbide sarrera garbitu dira \x02%channel%\x02 kanaletik."
   empty:            "\x0307ℹ\x03 \x02%channel%\x02 kanalak ez du sarbide sarrerarik."
 
@@ -557,11 +542,7 @@ clearusers:
     Arrazoi bat aukeran eman daiteke; saltatzen bada, arrazoi lehenetsi bat erabiltzen da.
 
     'chanserv.clearusers' baimena duten IRCopek soilik erabil dezakete komando hau.
-
-    Sintaxia: CLEARUSERS <#kanala> [arrazoia]
-    Adibideak:
-      CLEARUSERS #kanala
-      CLEARUSERS #kanala flooding
+  example:          "/msg %bot% CLEARUSERS #kanala flooding"
   not_on_network:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago unean sarean."
   empty:            "\x0307ℹ\x03 \x02%channel%\x02 kanalak ez du kanporatzeko erabiltzailerik."
   success:          "\x0303✔\x03 \x02%count%\x02 erabiltzaile kanporatu dira \x02%channel%\x02 kanaletik."

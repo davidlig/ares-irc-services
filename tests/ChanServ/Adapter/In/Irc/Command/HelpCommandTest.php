@@ -8,9 +8,12 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Adapter\In\Irc\Command\ClearaccessCommand;
 use App\ChanServ\Adapter\In\Irc\Command\HelpCommand;
 use App\ChanServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
+use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
+use App\ChanServ\Application\UseCase\ClearAccess\ClearChannelAccessHandlerInterface;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
@@ -35,10 +38,12 @@ final class HelpCommandTest extends TestCase
         ChanServNotifierInterface $notifier,
         TranslatorInterface $translator,
         ChanServCommandRegistry $registry,
+        ?ChanAccountView $senderAccount = null,
+        ?SenderView $sender = null,
     ): ChanServContext {
         return new ChanServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            null,
+            $sender ?? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $senderAccount,
             'HELP',
             $args,
             $notifier,
@@ -443,6 +448,41 @@ final class HelpCommandTest extends TestCase
         self::assertStringContainsString('info.syntax', $all);
         self::assertStringNotContainsString('help.example_label', $all);
         self::assertStringContainsString('help.footer', $all);
+    }
+
+    #[Test]
+    public function oneArgRendersExampleLineForMigratedIrcopCommand(): void
+    {
+        $messages = [];
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $operatorAccess = $this->createStub(ChanServOperatorAccess::class);
+        $operatorAccess->method('hasPermission')->willReturn(true);
+
+        $registry = new ChanServCommandRegistry([
+            new ClearaccessCommand($this->createStub(ClearChannelAccessHandlerInterface::class)),
+        ]);
+
+        $this->createCommand(operatorAccess: $operatorAccess)->execute($this->createContext(
+            ['CLEARACCESS'],
+            $notifier,
+            $translator,
+            $registry,
+            new ChanAccountView(1, 'Oper', 'en'),
+            new SenderView('UID1', 'Oper', 'i', 'h', 'c', 'ip', true, true),
+        ));
+
+        $all = implode(' ', $messages);
+        self::assertStringContainsString('clearaccess.help', $all);
+        self::assertStringContainsString('help.syntax_label', $all);
+        self::assertStringContainsString('clearaccess.syntax', $all);
+        self::assertStringContainsString('help.example_label', $all);
+        self::assertStringContainsString('clearaccess.example', $all);
     }
 
     #[Test]

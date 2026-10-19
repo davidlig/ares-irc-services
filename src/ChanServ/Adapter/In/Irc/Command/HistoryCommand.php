@@ -88,6 +88,11 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
         return ChanServPermission::HISTORY;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'history.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return true;

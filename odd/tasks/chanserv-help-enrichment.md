@@ -52,6 +52,9 @@ OUT of scope:
 - Formatter unit test asserts the example block renders (and stays absent when the
   handler lacks `getExampleKey()`).
 - All quality gates run green (evidence recorded per task).
+- No ChanServ command re-states its syntax or carries an ad-hoc `Examples:` list inside the
+  localized `help` prose: the syntax comes from the `help.syntax_label` block and the example
+  from the command's declared `example` key (single source per fact). Added by T5.
 
 ## Tasks
 
@@ -90,10 +93,44 @@ OUT of scope:
       `./scripts/check-coverage.sh 100 --issues` → Coverage 100.00% (22849/22849 lines),
       full suite green (zero failures/warnings/notices/skips/incomplete/risky/deprecations).
       Route: parent + focused writer (same session).
+- [x] T5 — DONE (2026-10-19, /opt/ares): legacy-prose defect found during the NickServ
+      pre-audit and corrected here. The 4 IRCop/staff commands left out of T2 scope
+      (NOEXPIRE, HISTORY, CLEARACCESS, CLEARUSERS — all permission-gated, hence excluded by
+      `isOperOnly() === false`) carried `Syntax:`/`Examples:` inside their localized `help`
+      block in all 14 locales; because the formatter already renders `help.syntax_label`,
+      users read the syntax TWICE, and those four diverged in style from the other sixteen.
+      Fix: the trailing legacy block (blank line + syntax line + examples list) is deleted
+      from the 4 `help` block scalars in all 14 locales; each command declares
+      `getExampleKey()` (`noexpire.example`, `history.example`, `clearaccess.example`,
+      `clearusers.example`) and an `example` key in the 14 locales using the house style
+      `/msg %bot% …` with the locale's own channel placeholder (es #canal, eu #kanala,
+      gl #canle, it #canale, nl #kanaal, pl #kanał, resto #channel) and the legacy reason
+      word for CLEARUSERS (pl `zalewanie`, resto `flooding`). The `history` `Subcommands:`
+      prose list is deliberately KEPT (documented redundancy with the rendered options
+      block; separate decision, not part of this defect). Deleted prose is replaced
+      one-for-one by the structured example, so no user-visible content is lost
+      (multi-example lists collapse into the single canonical example line, as in T2).
+      Evidence: 322 deletions / 56 insertions in `translations/chanserv.*.yaml`, 4 command
+      classes, 4 test files; gates green (2026-10-19, /opt/ares): `php -l` × 4 OK;
+      `phpunit tests/ChanServ` OK (1502 tests, 10135 assertions — re-run by the parent as
+      spot check); catalog test OK (11 tests, 34807 assertions); `phpunit tests/Shared` OK
+      (49 tests, 36060 assertions); `lint:yaml` OK (98 files); PHPStan max 0 errors;
+      CS-Fixer 0 files; `./scripts/check-coverage.sh 100 --issues` → 100.00%
+      (22853/22853 lines). Route: parent + one focused writer (allowed edit surfaces
+      declared). Branch `feat/chanserv-help-enrichment` → updates open PR #34; issue #33
+      body corrected (its claim that ChanServ help had "no examples" was inaccurate).
 
 ## Progress log
 
 - 2026-10-18: plan created; exploration done (map in session); environment check: PHP missing on Windows.
+- 2026-10-19: T5 scope extension. Reason: the user asked to verify NickServ's enrichment
+  before starting it; that audit exposed a legacy pattern (`Syntax:`/`Examples:` embedded in
+  localized help prose) present in NickServ (21 lines), ChanServ (8 lines = the 4 commands
+  above) and nowhere else — MemoServ, CRegServ and OperServ are clean (verified count 0). The
+  pattern predates this branch (it is present in `main`), but PR #34 left these four behind.
+  Decision:
+  correct ChanServ here, keep the delivered PR self-consistent; NickServ becomes its own
+  correction + enrichment unit.
 
 ## Delivery strategy
 

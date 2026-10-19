@@ -418,11 +418,7 @@ noexpire:
     When OFF, normal expiration rules apply.
 
     Only IRCops with 'chanserv.noexpire' permission can use this command.
-
-    Syntax: NOEXPIRE <#channel> {ON|OFF}
-    Examples:
-      NOEXPIRE #Important ON
-      NOEXPIRE #Important OFF
+  example:          "/msg %bot% NOEXPIRE #channel ON"
   success_on:       "\x0303✔\x03 Channel \x02%channel%\x02 is now protected from expiration."
   success_off:      "\x0303✔\x03 Channel \x02%channel%\x02 will now expire normally."
   not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
@@ -465,15 +461,7 @@ history:
       DEL   — Delete a specific entry by ID.
       VIEW  — View history entries (paginated, 3 per page).
       CLEAR — Delete all history entries for the channel.
-
-    Syntax: HISTORY <#channel> {ADD|DEL|VIEW|CLEAR} [arguments]
-    Examples:
-      HISTORY #channel VIEW
-      HISTORY #channel VIEW 2
-      HISTORY #channel VIEW ALL
-      HISTORY #channel ADD Suspected takeover attempt
-      HISTORY #channel DEL 42
-      HISTORY #channel CLEAR
+  example:          "/msg %bot% HISTORY #channel VIEW"
   not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
   unknown_operator: "(unknown)"
 
@@ -541,10 +529,7 @@ clearaccess:
     Removes all access entries from a channel's access list.
     This action is irreversible and cannot be undone.
     Only IRCops with 'chanserv.clearaccess' permission can use this command.
-
-    Syntax: CLEARACCESS <#channel>
-    Examples:
-      CLEARACCESS #channel
+  example:          "/msg %bot% CLEARACCESS #channel"
   success:          "\x0303✔\x03 Cleared \x02%count%\x02 access entries from \x02%channel%\x02."
   empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 has no access entries."
 
@@ -557,11 +542,7 @@ clearusers:
     An optional reason can be provided; if omitted, a default reason is used.
 
     Only IRCops with 'chanserv.clearusers' permission can use this command.
-
-    Syntax: CLEARUSERS <#channel> [reason]
-    Examples:
-      CLEARUSERS #channel
-      CLEARUSERS #channel flooding
+  example:          "/msg %bot% CLEARUSERS #channel flooding"
   not_on_network:   "\x0304✗\x03 Channel \x02%channel%\x02 is not currently on the network."
   empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 has no users to kick."
   success:          "\x0303✔\x03 Kicked \x02%count%\x02 user(s) from \x02%channel%\x02."

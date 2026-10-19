@@ -418,11 +418,7 @@ noexpire:
     Când este OFF, se aplică regulile normale de expirare.
 
     Doar IRCopii cu permisiunea 'chanserv.noexpire' pot folosi această comandă.
-
-    Sintaxă: NOEXPIRE <#canal> {ON|OFF}
-    Exemple:
-      NOEXPIRE #Important ON
-      NOEXPIRE #Important OFF
+  example:          "/msg %bot% NOEXPIRE #canal ON"
   success_on:       "\x0303✔\x03 Canalul \x02%channel%\x02 este acum protejat împotriva expirării."
   success_off:      "\x0303✔\x03 Canalul \x02%channel%\x02 va expira acum normal."
   not_registered:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
@@ -465,15 +461,7 @@ history:
       DEL   — Șterge o intrare specifică după ID.
       VIEW  — Vizualizează intrările din istoric (paginat, 3 pe pagină).
       CLEAR — Șterge toate intrările din istoricul canalului.
-
-    Sintaxă: HISTORY <#canal> {ADD|DEL|VIEW|CLEAR} [argumente]
-    Exemple:
-      HISTORY #canal VIEW
-      HISTORY #canal VIEW 2
-      HISTORY #canal VIEW ALL
-      HISTORY #canal ADD Tentativă suspectă de preluare
-      HISTORY #canal DEL 42
-      HISTORY #canal CLEAR
+  example:          "/msg %bot% HISTORY #canal VIEW"
   not_registered:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
   unknown_operator: "(necunoscut)"
 
@@ -541,10 +529,7 @@ clearaccess:
     Elimină toate intrările de acces din lista de acces a unui canal.
     Această acțiune este ireversibilă și nu poate fi anulată.
     Doar IRCopii cu permisiunea 'chanserv.clearaccess' pot folosi această comandă.
-
-    Sintaxă: CLEARACCESS <#canal>
-    Exemple:
-      CLEARACCESS #canal
+  example:          "/msg %bot% CLEARACCESS #canal"
   success:          "\x0303✔\x03 S-au șters \x02%count%\x02 intrări de acces din \x02%channel%\x02."
   empty:            "\x0307ℹ\x03 Canalul \x02%channel%\x02 nu are intrări de acces."
 
@@ -557,11 +542,7 @@ clearusers:
     Se poate furniza un motiv opțional; dacă este omis, se folosește un motiv implicit.
 
     Doar IRCopii cu permisiunea 'chanserv.clearusers' pot folosi această comandă.
-
-    Sintaxă: CLEARUSERS <#canal> [motiv]
-    Exemple:
-      CLEARUSERS #canal
-      CLEARUSERS #canal flooding
+  example:          "/msg %bot% CLEARUSERS #canal flooding"
   not_on_network:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu se află în prezent în rețea."
   empty:            "\x0307ℹ\x03 Canalul \x02%channel%\x02 nu are utilizatori cărora să li se dea kick."
   success:          "\x0303✔\x03 S-a dat kick la \x02%count%\x02 utilizator(i) din \x02%channel%\x02."

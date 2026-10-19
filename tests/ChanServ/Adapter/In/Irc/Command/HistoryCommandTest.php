@@ -114,6 +114,14 @@ final class HistoryCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('history.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function allowsSuspendedChannelReturnsTrue(): void
     {
         $cmd = $this->createCommand();

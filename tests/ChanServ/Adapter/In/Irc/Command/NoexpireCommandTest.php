@@ -113,6 +113,14 @@ final class NoexpireCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('noexpire.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function getSubCommandHelpReturnsEmptyArray(): void
     {
         $cmd = $this->createCommand();

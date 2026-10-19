@@ -418,11 +418,7 @@ noexpire:
     KAPALI olduğunda, normal süre sonu kuralları uygulanır.
 
     Bu komutu yalnızca 'chanserv.noexpire' iznine sahip IRCop'ler kullanabilir.
-
-    Sözdizimi: NOEXPIRE <#channel> {ON|OFF}
-    Örnekler:
-      NOEXPIRE #Onemli ON
-      NOEXPIRE #Onemli OFF
+  example:          "/msg %bot% NOEXPIRE #channel ON"
   success_on:       "\x0303✔\x03 \x02%channel%\x02 kanalı artık süre sonuna karşı korunuyor."
   success_off:      "\x0303✔\x03 \x02%channel%\x02 kanalı artık normal şekilde sona erecek."
   not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
@@ -465,15 +461,7 @@ history:
       DEL   — Belirli bir girişi ID ile silin.
       VIEW  — Geçmiş girişlerini görüntüleyin (sayfalı, sayfa başına 3).
       CLEAR — Kanal için tüm geçmiş girişlerini silin.
-
-    Sözdizimi: HISTORY <#channel> {ADD|DEL|VIEW|CLEAR} [argümanlar]
-    Örnekler:
-      HISTORY #channel VIEW
-      HISTORY #channel VIEW 2
-      HISTORY #channel VIEW ALL
-      HISTORY #channel ADD Şüpheli devralma girişimi
-      HISTORY #channel DEL 42
-      HISTORY #channel CLEAR
+  example:          "/msg %bot% HISTORY #channel VIEW"
   not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   unknown_operator: "(bilinmiyor)"
 
@@ -541,10 +529,7 @@ clearaccess:
     Bir kanalın erişim listesindeki tüm erişim girişlerini kaldırır.
     Bu eylem geri alınamaz.
     Bu komutu yalnızca 'chanserv.clearaccess' iznine sahip IRCop'ler kullanabilir.
-
-    Sözdizimi: CLEARACCESS <#channel>
-    Örnekler:
-      CLEARACCESS #channel
+  example:          "/msg %bot% CLEARACCESS #channel"
   success:          "\x0303✔\x03 \x02%channel%\x02 kanalından \x02%count%\x02 erişim girişi temizlendi."
   empty:            "\x0307ℹ\x03 \x02%channel%\x02 kanalının erişim girişi yok."
 
@@ -557,11 +542,7 @@ clearusers:
     İsteğe bağlı bir sebep belirtilebilir; belirtilmezse varsayılan sebep kullanılır.
 
     Bu komutu yalnızca 'chanserv.clearusers' iznine sahip IRCop'ler kullanabilir.
-
-    Sözdizimi: CLEARUSERS <#channel> [sebep]
-    Örnekler:
-      CLEARUSERS #channel
-      CLEARUSERS #channel flooding
+  example:          "/msg %bot% CLEARUSERS #channel flooding"
   not_on_network:   "\x0304✗\x03 \x02%channel%\x02 kanalı şu anda ağda değil."
   empty:            "\x0307ℹ\x03 \x02%channel%\x02 kanalında atılacak kullanıcı yok."
   success:          "\x0303✔\x03 \x02%channel%\x02 kanalından \x02%count%\x02 kullanıcı atıldı."

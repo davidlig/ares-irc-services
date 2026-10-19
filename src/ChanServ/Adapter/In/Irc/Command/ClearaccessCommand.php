@@ -70,6 +70,11 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
         return ChanServPermission::CLEARACCESS;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'clearaccess.example';
+    }
+
     public function allowsSuspendedChannel(): bool
     {
         return true;

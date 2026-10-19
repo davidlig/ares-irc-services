@@ -420,11 +420,7 @@ noexpire:
     Cando está OFF, aplícanse as regras normais de caducidade.
 
     Só os IRCops co permiso 'chanserv.noexpire' poden usar este comando.
-
-    Sintaxe: NOEXPIRE <#canle> {ON|OFF}
-    Exemplos:
-      NOEXPIRE #Importante ON
-      NOEXPIRE #Importante OFF
+  example:          "/msg %bot% NOEXPIRE #canle ON"
   success_on:       "\x0303✔\x03 A canle \x02%channel%\x02 está agora protexida contra a caducidade."
   success_off:      "\x0303✔\x03 A canle \x02%channel%\x02 caducará normalmente agora."
   not_registered:   "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
@@ -467,15 +463,7 @@ history:
       DEL   — Eliminar unha entrada específica polo ID.
       VIEW  — Ver entradas do historial (paxinado, 3 por páxina).
       CLEAR — Eliminar todas as entradas do historial da canle.
-
-    Sintaxe: HISTORY <#canle> {ADD|DEL|VIEW|CLEAR} [argumentos]
-    Exemplos:
-      HISTORY #canle VIEW
-      HISTORY #canle VIEW 2
-      HISTORY #canle VIEW ALL
-      HISTORY #canle ADD Sospeita de intento de apropiación
-      HISTORY #canle DEL 42
-      HISTORY #canle CLEAR
+  example:          "/msg %bot% HISTORY #canle VIEW"
   not_registered:   "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
   unknown_operator: "(descoñecido)"
 
@@ -543,10 +531,7 @@ clearaccess:
     Elimina todas as entradas de acceso da lista de acceso dunha canle.
     Esta acción é irreversible e non se pode desfacer.
     Só os IRCops co permiso 'chanserv.clearaccess' poden usar este comando.
-
-    Sintaxe: CLEARACCESS <#canle>
-    Exemplos:
-      CLEARACCESS #canle
+  example:          "/msg %bot% CLEARACCESS #canle"
   success:          "\x0303✔\x03 Limpadas \x02%count%\x02 entradas de acceso de \x02%channel%\x02."
   empty:            "\x0307ℹ\x03 A canle \x02%channel%\x02 non ten entradas de acceso."
 
@@ -559,11 +544,7 @@ clearusers:
     Pode proporcionarse un motivo opcional; se se omite, úsase un motivo predeterminado.
 
     Só os IRCops co permiso 'chanserv.clearusers' poden usar este comando.
-
-    Sintaxe: CLEARUSERS <#canle> [motivo]
-    Exemplos:
-      CLEARUSERS #canle
-      CLEARUSERS #canle flooding
+  example:          "/msg %bot% CLEARUSERS #canle flooding"
   not_on_network:   "\x0304✗\x03 A canle \x02%channel%\x02 non está actualmente na rede."
   empty:            "\x0307ℹ\x03 A canle \x02%channel%\x02 non ten usuarios que expulsar."
   success:          "\x0303✔\x03 Expulsado(s) \x02%count%\x02 usuario(s) de \x02%channel%\x02."

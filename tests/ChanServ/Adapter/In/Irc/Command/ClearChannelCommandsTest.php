@@ -52,6 +52,14 @@ final class ClearChannelCommandsTest extends TestCase
     }
 
     #[Test]
+    public function clearAccessGetExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new ClearaccessCommand($this->createStub(ClearChannelAccessHandlerInterface::class));
+
+        self::assertSame('clearaccess.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function clearUsersExposesMetadata(): void
     {
         $command = new ClearusersCommand($this->createStub(ClearChannelUsersHandlerInterface::class));
@@ -69,6 +77,14 @@ final class ClearChannelCommandsTest extends TestCase
         self::assertTrue($command->allowsSuspendedChannel());
         self::assertFalse($command->allowsForbiddenChannel());
         self::assertFalse($command->usesLevelFounder());
+    }
+
+    #[Test]
+    public function clearUsersGetExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new ClearusersCommand($this->createStub(ClearChannelUsersHandlerInterface::class));
+
+        self::assertSame('clearusers.example', $command->getExampleKey());
     }
 
     #[Test]
