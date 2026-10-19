@@ -233,9 +233,7 @@ saset:
     SASET EMAIL : Change l'e-mail directement (sans validation de jeton).
 
     Cette commande nécessite la permission IRCop : nickserv.saset
-
-    Syntaxe : SASET <surnom> <option> <valeur>
-    Exemple : SASET Utilisateur PASSWORD nouveau_mdp
+  example:          "/msg %bot% SASET Utilisateur PASSWORD nouveau_mdp"
   unknown_option:   "\x0304✗\x03 Option inconnue \x02%option%\x02. Options disponibles : %options%."
   cannot_modify_oper: "\x0304✗\x03 Impossible de modifier le surnom d'un opérateur IRC."
 
@@ -335,9 +333,7 @@ userip:
 
     Cette commande affiche des informations sensibles sur le surnom.
     À utiliser de manière responsable.
-
-    Syntaxe : USERIP <surnom>
-    Exemple : USERIP Utilisateur123
+  example:          "/msg %bot% USERIP Utilisateur123"
   not_online:       "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas connecté."
   result:           "\x0307ℹ\x03 Surnom : \x02%nickname%\x02 | IP : \x0307%ip%\x03 | Hôte : \x0307%host%\x03"
 
@@ -363,12 +359,7 @@ suspend:
 
     Les utilisateurs suspendus ne peuvent pas s'identifier à leur surnom.
     Les opérateurs IRC et les utilisateurs root ne peuvent pas être suspendus.
-
-    Syntaxe : SUSPEND <surnom> <durée> <raison>
-    Exemples :
-      SUSPEND MauvaisUtil 7j Spam dans #aide
-      SUSPEND Abuseur 30j Flood répété
-      SUSPEND ProblèmeUtil 0 Contournement de bannissement permanent
+  example:          "/msg %bot% SUSPEND MauvaisUtil 7j Spam dans #aide"
   success:            "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été suspendu jusqu'à \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Le surnom \x02%nickname%\x02 est déjà suspendu."
   not_registered:     "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
@@ -385,9 +376,7 @@ unsuspend:
   short:            "Lever la suspension d'un surnom."
   help:             |
     Lève une suspension active d'un surnom, permettant au propriétaire de s'identifier à nouveau.
-
-    Syntaxe : UNSUSPEND <surnom>
-    Exemple : UNSUSPEND UnUtilisateur
+  example:          "/msg %bot% UNSUSPEND UnUtilisateur"
   success:          "\x0303✔\x03 La suspension a été levée pour \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
   not_suspended:    "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas suspendu."
@@ -403,9 +392,7 @@ rename:
     Le nouveau format de surnom utilise le préfixe invité configuré (%prefix%).
 
     Cette commande nécessite la permission IRCop : nickserv.rename
-
-    Syntaxe : RENAME <surnom>
-    Exemple : RENAME FauteurDeTrouble
+  example:          "/msg %bot% RENAME Invité-4F21AB"
   not_online:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas connecté."
   cannot_rename_root: "\x0304✗\x03 Impossible de renommer l'utilisateur root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Impossible de renommer l'opérateur IRC \x02%nickname%\x02."
@@ -425,9 +412,7 @@ drop:
     Vous ne pouvez pas abandonner votre propre surnom.
 
     Cette commande nécessite la permission IRCop : nickserv.drop
-
-    Syntaxe : DROP <surnom>
-    Exemple : DROP AncienCompte
+  example:          "/msg %bot% DROP AncienCompte"
   not_registered:     "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
   suspended:         "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu. Levez d'abord la suspension."
   forbidden:         "\x0304✗\x03 Le surnom \x02%nickname%\x02 est interdit."
@@ -463,9 +448,7 @@ forbid:
     Les utilisateurs root, les opérateurs IRC et les surnoms de service ne peuvent pas être interdits.
 
     Cette commande nécessite la permission IRCop : nickserv.forbid
-
-    Syntaxe : FORBID <surnom> <raison>
-    Exemple : FORBID MauvaisSurnom Violations répétées des règles
+  example:          "/msg %bot% FORBID MauvaisSurnom Violations répétées des règles"
   success:            "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été interdit."
   updated:            "\x0303✔\x03 La raison d'interdiction pour \x02%nickname%\x02 a été mise à jour."
   reason_required:    "\x0304✗\x03 Vous devez fournir une raison pour l'interdiction."
@@ -481,9 +464,7 @@ unforbid:
     Lève l'interdiction d'un surnom, permettant de le réutiliser.
 
     Cette commande nécessite la permission IRCop : nickserv.forbid
-
-    Syntaxe : UNFORBID <surnom>
-    Exemple : UNFORBID UnSurnom
+  example:          "/msg %bot% UNFORBID UnSurnom"
   success:          "\x0303✔\x03 Le surnom \x02%nickname%\x02 n'est plus interdit."
   not_forbidden:    "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas interdit."
 
@@ -496,7 +477,7 @@ forbidvhost:
     correspondants via %bot% SET VHOST.
 
     Jokers : * correspond à toute séquence, ? correspond à un seul caractère.
-    Exemple : *.pirate.com bloque tout vhost se terminant par .pirate.com
+    Un motif tel que *.pirate.com bloque tout vhost se terminant par .pirate.com
 
     Cette commande nécessite la permission IRCop : nickserv.forbidvhost
 
@@ -504,6 +485,7 @@ forbidvhost:
       ADD <motif>    Ajouter un motif interdit
       DEL <motif>    Supprimer un motif interdit
       LIST           Afficher tous les motifs interdits
+  example:          "/msg %bot% FORBIDVHOST ADD *.pirate.com"
 
   unknown_sub: "\x0304✗\x03 Sous-commande inconnue \x02%sub%\x02. Utilisez ADD, DEL ou LIST."
 
@@ -557,25 +539,13 @@ history:
       SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
       SASET EMAIL, RECOVER
 
-    Syntaxe : HISTORY <surnom> ADD <message>
-              HISTORY <surnom> DEL <id>
-              HISTORY <surnom> VIEW [PAGE|ALL]
-              HISTORY <surnom> CLEAR
-
-    Exemples :
-      HISTORY UnSurnom VIEW
-      HISTORY UnSurnom ADD Note manuelle sur cet utilisateur
-      HISTORY UnSurnom VIEW 2
-      HISTORY UnSurnom VIEW ALL
-      HISTORY UnSurnom DEL 123
-      HISTORY UnSurnom CLEAR
-
     Utilisez VIEW pour voir l'historique (affiche 3 entrées par défaut).
     Utilisez VIEW PAGE 2 pour voir la page suivante.
     Utilisez VIEW ALL pour voir l'historique complet.
     Utilisez ADD pour ajouter une entrée manuelle.
     Utilisez DEL pour supprimer une entrée spécifique par ID.
     Utilisez CLEAR pour supprimer toutes les entrées d'historique.
+  example:          "/msg %bot% HISTORY UnSurnom VIEW"
   not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
   unknown_operator: "(inconnu)"
 
@@ -660,11 +630,7 @@ noexpire:
     Lorsque OFF, les règles normales d'expiration s'appliquent.
 
     Seuls les IRCops avec la permission 'nickserv.noexpire' peuvent utiliser cette commande.
-
-    Syntaxe : NOEXPIRE <surnom> {ON|OFF}
-    Exemples :
-      NOEXPIRE UtilisateurImportant ON
-      NOEXPIRE UtilisateurImportant OFF
+  example:          "/msg %bot% NOEXPIRE UtilisateurImportant ON"
   success_on:       "\x0303✔\x03 Le surnom \x02%nickname%\x02 est maintenant protégé contre l'expiration."
   success_off:      "\x0303✔\x03 Le surnom \x02%nickname%\x02 expirera maintenant normalement."
   not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."

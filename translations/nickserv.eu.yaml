@@ -233,9 +233,7 @@ saset:
     SASET EMAIL: Posta elektronikoa zuzenean aldatzen du (token balidaziorik gabe).
 
     Komando honek IRCop baimena behar du: nickserv.saset
-
-    Sintaxia: SASET <ezizen> <aukera> <balio>
-    Adibidea: SASET Erabiltzaile PASSWORD pasahitzberria
+  example:          "/msg %bot% SASET Erabiltzaile PASSWORD pasahitzberria"
   unknown_option:   "\x0304✗\x03 Aukera ezezaguna \x02%option%\x02. Aukera erabilgarriak: %options%."
   cannot_modify_oper: "\x0304✗\x03 Ezin da IRC Operadore baten ezizena aldatu."
 
@@ -335,9 +333,7 @@ userip:
 
     Komando honek ezizen informazio sentikorra erakusten du.
     Erabili arduraz.
-
-    Sintaxia: USERIP <ezizena>
-    Adibidea: USERIP ErabiltzaileBat
+  example:          "/msg %bot% USERIP ErabiltzaileBat"
   not_online:       "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
   result:           "\x0307ℹ\x03 Ezizena: \x02%nickname%\x02 | IPa: \x0307%ip%\x03 | Ostalaria: \x0307%host%\x03"
 
@@ -363,12 +359,7 @@ suspend:
 
     Etenda dauden erabiltzaileak ezin dira bere ezizenean identifikatu.
     IRC operadoreak eta root erabiltzaileak ezin dira eten.
-
-    Sintaxia: SUSPEND <ezizena> <iraupena> <arrazoia>
-    Adibideak:
-      SUSPEND ErabiltzaileGaiztoa 7d Spam egiten #laguntza kanalean
-      SUSPEND TratuTxarrekoa 30d Behin eta berrizko jarioa
-      SUSPEND Arazoa 0 Betiko debeku saihesketa
+  example:          "/msg %bot% SUSPEND ErabiltzaileGaiztoa 7d Spam egiten #laguntza kanalean"
   success:            "\x0303✔\x03 \x02%nickname%\x02 ezizena \x02%duration%\x02 arte eten da."
   already_suspended:  "\x0304✗\x03 \x02%nickname%\x02 ezizena jada etenda dago."
   not_registered:     "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
@@ -385,9 +376,7 @@ unsuspend:
   short:            "Kendu ezizen baten etenaldia."
   help:             |
     Ezizen baten etenaldi aktiboa kentzen du, jabea berriro identifikatzea ahalbidetuz.
-
-    Sintaxia: UNSUSPEND <ezizena>
-    Adibidea: UNSUSPEND ErabiltzaileBat
+  example:          "/msg %bot% UNSUSPEND ErabiltzaileBat"
   success:          "\x0303✔\x03 \x02%nickname%\x02 ezizenaren etenaldia kendu da."
   not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   not_suspended:    "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago etenda."
@@ -403,9 +392,7 @@ rename:
     Ezizen berriaren formatuak konfiguratutako gonbidatu aurrizkia (%prefix%) erabiltzen du.
 
     Komando honek IRCop baimena behar du: nickserv.rename
-
-    Sintaxia: RENAME <ezizena>
-    Adibidea: RENAME ArazoSortzailea
+  example:          "/msg %bot% RENAME Guest-4F21AB"
   not_online:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
   cannot_rename_root: "\x0304✗\x03 Ezin da root erabiltzaile \x02%nickname%\x02 izenaz aldatu."
   cannot_rename_oper: "\x0304✗\x03 Ezin da IRC operadore \x02%nickname%\x02 izenaz aldatu."
@@ -425,9 +412,7 @@ drop:
     Ezin duzu zure ezizena ezabatu.
 
     Komando honek IRCop baimena behar du: nickserv.drop
-
-    Sintaxia: DROP <ezizena>
-    Adibidea: DROP KontuZaharra
+  example:          "/msg %bot% DROP KontuZaharra"
   not_registered:     "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   suspended:         "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago. Kendu etenaldia lehenik."
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 ezizena debekatua dago."
@@ -463,9 +448,7 @@ forbid:
     Root erabiltzaileak, IRC operadoreak eta zerbitzu ezizenak ezin dira debekatu.
 
     Komando honek IRCop baimena behar du: nickserv.forbid
-
-    Sintaxia: FORBID <ezizena> <arrazoia>
-    Adibidea: FORBID EzizenGaiztoa Behin eta berrizko politika urraketak
+  example:          "/msg %bot% FORBID EzizenGaiztoa Behin eta berrizko politika urraketak"
   success:            "\x0303✔\x03 \x02%nickname%\x02 ezizena debekatu da."
   updated:            "\x0303✔\x03 \x02%nickname%\x02 ezizenaren debeku arrazoia eguneratu da."
   reason_required:    "\x0304✗\x03 Debekurako arrazoi bat eman behar duzu."
@@ -481,9 +464,7 @@ unforbid:
     Ezizen debekua kentzen du, ezizena berriro erabilia izatea ahalbidetuz.
 
     Komando honek IRCop baimena behar du: nickserv.forbid
-
-    Sintaxia: UNFORBID <ezizena>
-    Adibidea: UNFORBID EzizenBat
+  example:          "/msg %bot% UNFORBID EzizenBat"
   success:          "\x0303✔\x03 \x02%nickname%\x02 ezizena jada ez dago debekatuta."
   not_forbidden:    "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago debekatuta."
 
@@ -496,7 +477,7 @@ forbidvhost:
     eragozten duten ereduak kudeatzen ditu.
 
     Komodinek: * edozein segida bat dator, ? karaktere bakarra bat dator.
-    Adibidea: *.pirated.com .pirated.com-ez amaitzen den edozein vhost blokeatzen du
+    *.pirated.com bezalako eredu batek .pirated.com-ez amaitzen den edozein vhost blokeatzen du
 
     Komando honek IRCop baimena behar du: nickserv.forbidvhost
 
@@ -504,6 +485,7 @@ forbidvhost:
       ADD <eredua>    Gehitu debekatutako eredu bat
       DEL <eredua>    Kendu debekatutako eredu bat
       LIST            Erakutsi debekatutako eredu guztiak
+  example:          "/msg %bot% FORBIDVHOST ADD *.pirated.com"
 
   unknown_sub: "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
 
@@ -557,25 +539,13 @@ history:
       SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
       SASET EMAIL, RECOVER
 
-    Sintaxia: HISTORY <ezizena> ADD <mezua>
-            HISTORY <ezizena> DEL <ida>
-            HISTORY <ezizena> VIEW [ORRIA|ALL]
-            HISTORY <ezizena> CLEAR
-
-    Adibideak:
-      HISTORY EzizenBat VIEW
-      HISTORY EzizenBat ADD Erabiltzaile honi buruzko oharra
-      HISTORY EzizenBat VIEW 2
-      HISTORY EzizenBat VIEW ALL
-      HISTORY EzizenBat DEL 123
-      HISTORY EzizenBat CLEAR
-
     Erabili VIEW historia ikusteko (3 sarrera erakusten ditu lehenetsiz).
     Erabili VIEW PAGE 2 hurrengo orria ikusteko.
     Erabili VIEW ALL historia osoa ikusteko.
     Erabili ADD eskuzko sarrera bat gehitzeko.
     Erabili DEL ID zehatz baten sarrera ezabatzeko.
     Erabili CLEAR historia sarrera guztiak ezabatzeko.
+  example:          "/msg %bot% HISTORY EzizenBat VIEW"
   not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   unknown_operator: "(ezezaguna)"
 
@@ -660,11 +630,7 @@ noexpire:
     OFF dagoenean, iraungitze arau normalak aplikatzen dira.
 
     'nickserv.noexpire' baimena duten IRCopek soilik erabil dezakete komando hau.
-
-    Sintaxia: NOEXPIRE <ezizena> {ON|OFF}
-    Adibideak:
-      NOEXPIRE ErabiltzaileGarrantzitsua ON
-      NOEXPIRE ErabiltzaileGarrantzitsua OFF
+  example:          "/msg %bot% NOEXPIRE ErabiltzaileGarrantzitsua ON"
   success_on:       "\x0303✔\x03 \x02%nickname%\x02 ezizena iraungitzetik babestuta dago orain."
   success_off:      "\x0303✔\x03 \x02%nickname%\x02 ezizena normal iraungiko da orain."
   not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."

@@ -78,6 +78,11 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
         return NickServPermission::USERIP;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'userip.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

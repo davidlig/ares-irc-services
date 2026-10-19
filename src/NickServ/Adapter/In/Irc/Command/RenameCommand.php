@@ -76,6 +76,11 @@ final readonly class RenameCommand implements NickServCommandInterface, IrcopAud
         return NickServPermission::RENAME;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'rename.example';
+    }
+
     public function getHelpParams(): array
     {
         return ['%prefix%' => $this->guestPrefix];

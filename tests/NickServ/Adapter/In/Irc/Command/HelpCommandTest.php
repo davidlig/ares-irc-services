@@ -8,6 +8,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\HelpCommand;
+use App\NickServ\Adapter\In\Irc\Command\NoexpireCommand;
 use App\NickServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -17,6 +18,8 @@ use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
+use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandlerInterface;
+use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,12 +41,14 @@ final class HelpCommandTest extends TestCase
         '%operserv%' => 'OperServ',
     ];
 
-    private function createHelpCommand(int $inactivityExpiryDays = 0): HelpCommand
-    {
+    private function createHelpCommand(
+        int $inactivityExpiryDays = 0,
+        ?NickServOperatorAccess $operatorAccess = null,
+    ): HelpCommand {
         return new HelpCommand(
             new UnifiedHelpFormatter(),
             new TimezoneHelpProvider(),
-            $this->createStub(NickServOperatorAccess::class),
+            $operatorAccess ?? $this->createStub(NickServOperatorAccess::class),
             $inactivityExpiryDays,
         );
     }
@@ -57,10 +62,11 @@ final class HelpCommandTest extends TestCase
         NickServNotifierInterface $notifier,
         TranslatorInterface $translator,
         NickServCommandRegistry $registry,
+        ?RegisteredNick $senderAccount = null,
     ): NickServContext {
         return new NickServContext(
             $sender,
-            null,
+            $senderAccount,
             'HELP',
             $args,
             $notifier,
@@ -1114,6 +1120,225 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(0);
 
         self::assertSame([], $cmd->getHelpParams());
+    }
+
+    #[Test]
+    public function commandThatDeclaresExampleKeyShowsExampleLine(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
+        });
+        $translations = [];
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []) use (&$translations): string {
+                $translations[] = ['id' => $id, 'parameters' => $parameters];
+
+                $translation = 'help.example_label' === $id ? 'Example: %example%' : $id;
+
+                return self::replaceTranslationParameters($translation, self::requireStringKeyedParameters($parameters));
+            },
+        );
+
+        $handler = new class implements NickServCommandInterface {
+            public function getName(): string
+            {
+                return 'REGISTER';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 2;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'register.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'register.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 1;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'register.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'register.example';
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
+        };
+        $registry = new NickServCommandRegistry([$handler]);
+
+        $cmd = $this->createHelpCommand(0);
+        $cmd->execute($this->createContext($sender, ['REGISTER'], $notifier, $translator, $registry));
+
+        self::assertContains('Example: register.example', $messages);
+        self::assertContains([
+            'id' => 'help.example_label',
+            'parameters' => [
+                ...self::SERVICE_NICKNAME_PLACEHOLDERS,
+                '%example%' => 'register.example',
+            ],
+        ], $translations);
+    }
+
+    #[Test]
+    public function commandWithoutExampleKeyOmitsExampleLine(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new class implements NickServCommandInterface {
+            public function getName(): string
+            {
+                return 'REGISTER';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 2;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'register.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'register.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 1;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'register.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
+            public function execute(NickServContext $c): null
+            {
+                return null;
+            }
+        };
+        $registry = new NickServCommandRegistry([$handler]);
+
+        $cmd = $this->createHelpCommand(0);
+        $cmd->execute($this->createContext($sender, ['REGISTER'], $notifier, $translator, $registry));
+
+        $output = implode("\n", $messages);
+        self::assertStringNotContainsString('help.example_label', $output);
+        self::assertStringNotContainsString('Example:', $output);
+    }
+
+    #[Test]
+    public function authorizedOperSeesExampleLineForPermissionGatedCommand(): void
+    {
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []): string {
+                $translation = 'help.example_label' === $id ? 'Example: %example%' : $id;
+
+                return self::replaceTranslationParameters($translation, self::requireStringKeyedParameters($parameters));
+            },
+        );
+
+        $operatorAccess = $this->createStub(NickServOperatorAccess::class);
+        $operatorAccess->method('hasPermission')->willReturn(true);
+
+        $registry = new NickServCommandRegistry([
+            new NoexpireCommand($this->createStub(SetNoexpireNickHandlerInterface::class)),
+        ]);
+
+        $cmd = $this->createHelpCommand(0, $operatorAccess);
+        $cmd->execute($this->createContext($sender, ['NOEXPIRE'], $notifier, $translator, $registry, $account));
+
+        self::assertContains('Example: noexpire.example', $messages);
     }
 
     /** @param list<string> $args */

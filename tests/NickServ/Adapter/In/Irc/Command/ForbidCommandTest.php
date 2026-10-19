@@ -113,6 +113,14 @@ final class ForbidCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('forbid.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function getSubCommandHelpReturnsEmptyArray(): void
     {
         $cmd = $this->createCommand();

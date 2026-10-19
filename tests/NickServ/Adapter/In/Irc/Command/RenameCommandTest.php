@@ -52,6 +52,19 @@ final class RenameCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new RenameCommand(
+            $this->createStub(RenameNickHandlerInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(LoggerInterface::class),
+            guestPrefix: 'Guest-',
+        );
+
+        self::assertSame('rename.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function returnsRejectedWhenSenderIsNull(): void
     {
         $handler = $this->createMock(RenameNickHandlerInterface::class);

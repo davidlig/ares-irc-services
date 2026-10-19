@@ -80,6 +80,11 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
         return NickServPermission::SASET;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'saset.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

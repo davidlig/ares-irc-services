@@ -74,6 +74,11 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
         return NickServPermission::SUSPEND;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'suspend.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

@@ -233,9 +233,7 @@ saset:
     SASET EMAIL: Canvia el correu electrònic directament (sense validació de token).
 
     Aquesta ordre requereix permís IRCop: nickserv.saset
-
-    Sintaxi: SASET <sobrenom> <opció> <valor>
-    Exemple: SASET Usuari PASSWORD contrasenyanova
+  example:          "/msg %bot% SASET Usuari PASSWORD contrasenyanova"
   unknown_option:   "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Opcions disponibles: %options%."
   cannot_modify_oper: "\x0304✗\x03 No es pot modificar un sobrenom d'Operador d'IRC."
 
@@ -335,9 +333,7 @@ userip:
 
     Aquesta ordre mostra informació sensible del sobrenom.
     Utilitzeu-la amb responsabilitat.
-
-    Sintaxi: USERIP <nickname>
-    Exemple: USERIP SomeUser
+  example:          "/msg %bot% USERIP SomeUser"
   not_online:       "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
   result:           "\x0307ℹ\x03 Sobrenom: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Amfitrió: \x0307%host%\x03"
 
@@ -363,12 +359,7 @@ suspend:
 
     Els usuaris suspesos no poden identificar-se amb el seu sobrenom.
     Els operadors d'IRC i els usuaris root no es poden suspendre.
-
-    Sintaxi: SUSPEND <nickname> <duration> <reason>
-    Exemples:
-      SUSPEND BadUser 7d Spam a #help
-      SUSPEND Abuser 30d Flood repetit
-      SUSPEND ProblemUser 0 Evasió de permaban
+  example:          "/msg %bot% SUSPEND BadUser 7d Spam a #help"
   success:            "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat suspès fins a \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està suspès."
   not_registered:     "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
@@ -385,9 +376,7 @@ unsuspend:
   short:            "Treure la suspensió d'un sobrenom."
   help:             |
     Treu una suspensió activa d'un sobrenom, permetent que el propietari s'identifiqui de nou.
-
-    Sintaxi: UNSUSPEND <nickname>
-    Exemple: UNSUSPEND SomeUser
+  example:          "/msg %bot% UNSUSPEND SomeUser"
   success:          "\x0303✔\x03 S'ha aixecat la suspensió de \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
   not_suspended:    "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està suspès."
@@ -403,9 +392,7 @@ rename:
     El format del nou sobrenom utilitza el prefix de convidat configurat (%prefix%).
 
     Aquesta ordre requereix el permís d'IRCop: nickserv.rename
-
-    Sintaxi: RENAME <nickname>
-    Exemple: RENAME Troublemaker
+  example:          "/msg %bot% RENAME Convidat-4F21AB"
   not_online:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
   cannot_rename_root: "\x0304✗\x03 No es pot reanomenar l'usuari root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 No es pot reanomenar l'operador d'IRC \x02%nickname%\x02."
@@ -425,9 +412,7 @@ drop:
     No podeu eliminar el vostre propi sobrenom.
 
     Aquesta ordre requereix el permís d'IRCop: nickserv.drop
-
-    Sintaxi: DROP <nickname>
-    Exemple: DROP OldAccount
+  example:          "/msg %bot% DROP OldAccount"
   not_registered:     "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
   suspended:         "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Traieu la suspensió primer."
   forbidden:         "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit."
@@ -463,9 +448,7 @@ forbid:
     Els usuaris root, operadors d'IRC i sobrenoms de servei no es poden prohibir.
 
     Aquesta ordre requereix el permís d'IRCop: nickserv.forbid
-
-    Sintaxi: FORBID <nickname> <reason>
-    Exemple: FORBID BadNick Violacions repetides de les normes
+  example:          "/msg %bot% FORBID BadNick Violacions repetides de les normes"
   success:            "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat prohibit."
   updated:            "\x0303✔\x03 El motiu de prohibició de \x02%nickname%\x02 ha estat actualitzat."
   reason_required:    "\x0304✗\x03 Heu de proporcionar un motiu per a la prohibició."
@@ -481,9 +464,7 @@ unforbid:
     Treu una prohibició de sobrenom, permetent que el sobrenom es pugui utilitzar de nou.
 
     Aquesta ordre requereix el permís d'IRCop: nickserv.forbid
-
-    Sintaxi: UNFORBID <nickname>
-    Exemple: UNFORBID SomeNick
+  example:          "/msg %bot% UNFORBID SomeNick"
   success:          "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ja no està prohibit."
   not_forbidden:    "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està prohibit."
 
@@ -496,7 +477,7 @@ forbidvhost:
     mitjançant %bot% SET VHOST.
 
     Comodins: * coincideix amb qualsevol seqüència, ? coincideix amb un sol caràcter.
-    Exemple: *.pirated.com bloqueja qualsevol vhost que acabi amb .pirated.com
+    Un patró com *.pirated.com bloqueja qualsevol vhost que acabi amb .pirated.com
 
     Aquesta ordre requereix el permís d'IRCop: nickserv.forbidvhost
 
@@ -504,6 +485,7 @@ forbidvhost:
       ADD <pattern>    Afegir un patró prohibit
       DEL <pattern>    Treure un patró prohibit
       LIST             Mostrar tots els patrons prohibits
+  example:          "/msg %bot% FORBIDVHOST ADD *.pirated.com"
 
   unknown_sub: "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, o LIST."
 
@@ -557,25 +539,13 @@ history:
       SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
       SASET EMAIL, RECOVER
 
-    Sintaxi: HISTORY <nickname> ADD <message>
-            HISTORY <nickname> DEL <id>
-            HISTORY <nickname> VIEW [PAGE|ALL]
-            HISTORY <nickname> CLEAR
-
-    Exemples:
-      HISTORY SomeNick VIEW
-      HISTORY SomeNick ADD Nota manual sobre aquest usuari
-      HISTORY SomeNick VIEW 2
-      HISTORY SomeNick VIEW ALL
-      HISTORY SomeNick DEL 123
-      HISTORY SomeNick CLEAR
-
     Utilitzeu VIEW per veure l'historial (mostra 3 entrades per defecte).
     Utilitzeu VIEW PAGE 2 per veure la pàgina següent.
     Utilitzeu VIEW ALL per veure l'historial complet.
     Utilitzeu ADD per afegir una entrada manual.
     Utilitzeu DEL per esborrar una entrada específica per ID.
     Utilitzeu CLEAR per esborrar totes les entrades de l'historial.
+  example:          "/msg %bot% HISTORY SomeNick VIEW"
   not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
   unknown_operator: "(desconegut)"
 
@@ -660,11 +630,7 @@ noexpire:
     Quan està OFF, s'apliquen les regles normals d'expiració.
 
     Només els IRCops amb el permís 'nickserv.noexpire' poden utilitzar aquesta ordre.
-
-    Sintaxi: NOEXPIRE <nickname> {ON|OFF}
-    Exemples:
-      NOEXPIRE ImportantUser ON
-      NOEXPIRE ImportantUser OFF
+  example:          "/msg %bot% NOEXPIRE ImportantUser ON"
   success_on:       "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ara està protegit contra l'expiració."
   success_off:      "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ara expirarà normalment."
   not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."

@@ -233,9 +233,7 @@ saset:
     SASET EMAIL: Αλλάζει το email άμεσα (χωρίς επικύρωση token).
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.saset
-
-    Σύνταξη: SASET <ψευδώνυμο> <επιλογή> <τιμή>
-    Παράδειγμα: SASET Χρήστης PASSWORD νέοςκωδικός
+  example:          "/msg %bot% SASET Χρήστης PASSWORD νέοςκωδικός"
   unknown_option:   "\x0304✗\x03 Άγνωστη επιλογή \x02%option%\x02. Διαθέσιμες επιλογές: %options%."
   cannot_modify_oper: "\x0304✗\x03 Δεν μπορεί να τροποποιηθεί ψευδώνυμο IRC Operator."
 
@@ -335,9 +333,7 @@ userip:
 
     Αυτή η εντολή εμφανίζει ευαίσθητες πληροφορίες ψευδωνύμου.
     Χρησιμοποιήστε υπεύθυνα.
-
-    Σύνταξη: USERIP <nickname>
-    Παράδειγμα: USERIP SomeUser
+  example:          "/msg %bot% USERIP SomeUser"
   not_online:       "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
   result:           "\x0307ℹ\x03 Ψευδώνυμο: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
@@ -363,12 +359,7 @@ suspend:
 
     Οι χρήστες σε αναστολή δεν μπορούν να ταυτοποιηθούν στο ψευδώνυμό τους.
     Οι IRC operators και οι root χρήστες δεν μπορούν να τεθούν σε αναστολή.
-
-    Σύνταξη: SUSPEND <nickname> <duration> <reason>
-    Παραδείγματα:
-      SUSPEND BadUser 7d Spamming στο #help
-      SUSPEND Abuser 30d Επαναλαμβανόμενο flood
-      SUSPEND ProblemUser 0 Αποφυγή permaban
+  example:          "/msg %bot% SUSPEND BadUser 7d Spamming στο #help"
   success:            "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει τεθεί σε αναστολή μέχρι \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι ήδη σε αναστολή."
   not_registered:     "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
@@ -385,9 +376,7 @@ unsuspend:
   short:            "Αφαίρεση αναστολής από ψευδώνυμο."
   help:             |
     Αφαιρεί μια ενεργή αναστολή από ένα ψευδώνυμο, επιτρέποντας στον κάτοχο να ταυτοποιηθεί ξανά.
-
-    Σύνταξη: UNSUSPEND <nickname>
-    Παράδειγμα: UNSUSPEND SomeUser
+  example:          "/msg %bot% UNSUSPEND SomeUser"
   success:          "\x0303✔\x03 Η αναστολή έχει αρθεί από \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   not_suspended:    "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι σε αναστολή."
@@ -403,9 +392,7 @@ rename:
     Η μορφή του νέου ψευδωνύμου χρησιμοποιεί το διαμορφωμένο πρόθεμα επισκέπτη (%prefix%).
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.rename
-
-    Σύνταξη: RENAME <nickname>
-    Παράδειγμα: RENAME Troublemaker
+  example:          "/msg %bot% RENAME Guest-4F21AB"
   not_online:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
   cannot_rename_root: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί ο root χρήστης \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί ο IRC operator \x02%nickname%\x02."
@@ -425,9 +412,7 @@ drop:
     Δεν μπορείτε να διαγράψετε το δικό σας ψευδώνυμο.
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.drop
-
-    Σύνταξη: DROP <nickname>
-    Παράδειγμα: DROP OldAccount
+  example:          "/msg %bot% DROP OldAccount"
   not_registered:     "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   suspended:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Άρετε πρώτα την αναστολή."
   forbidden:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο."
@@ -463,9 +448,7 @@ forbid:
     Οι root χρήστες, οι IRC operators και τα ψευδώνυμα υπηρεσιών δεν μπορούν να απαγορευτούν.
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbid
-
-    Σύνταξη: FORBID <nickname> <reason>
-    Παράδειγμα: FORBID BadNick Επαναλαμβανόμενες παραβιάσεις πολιτικής
+  example:          "/msg %bot% FORBID BadNick Επαναλαμβανόμενες παραβιάσεις πολιτικής"
   success:            "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει απαγορευτεί."
   updated:            "\x0303✔\x03 Η αιτία απαγόρευσης για το \x02%nickname%\x02 έχει ενημερωθεί."
   reason_required:    "\x0304✗\x03 Πρέπει να δώσετε αιτία για την απαγόρευση."
@@ -481,9 +464,7 @@ unforbid:
     Αφαιρεί την απαγόρευση ενός ψευδωνύμου, επιτρέποντας τη χρήση του ξανά.
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbid
-
-    Σύνταξη: UNFORBID <nickname>
-    Παράδειγμα: UNFORBID SomeNick
+  example:          "/msg %bot% UNFORBID SomeNick"
   success:          "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι πλέον απαγορευμένο."
   not_forbidden:    "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι απαγορευμένο."
 
@@ -496,7 +477,7 @@ forbidvhost:
     μέσω του %bot% SET VHOST.
 
     Wildcards: * ταιριάζει με οποιαδήποτε ακολουθία, ? ταιριάζει με έναν χαρακτήρα.
-    Παράδειγμα: *.pirated.com μπλοκάρει οποιοδήποτε vhost τελειώνει σε .pirated.com
+    Ένα μοτίβο όπως *.pirated.com μπλοκάρει οποιοδήποτε vhost τελειώνει σε .pirated.com
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbidvhost
 
@@ -504,6 +485,7 @@ forbidvhost:
       ADD <pattern>    Προσθήκη απαγορευμένου μοτίβου
       DEL <pattern>    Αφαίρεση απαγορευμένου μοτίβου
       LIST             Εμφάνιση όλων των απαγορευμένων μοτίβων
+  example:          "/msg %bot% FORBIDVHOST ADD *.pirated.com"
 
   unknown_sub: "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL, ή LIST."
 
@@ -557,25 +539,13 @@ history:
       SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
       SASET EMAIL, RECOVER
 
-    Σύνταξη: HISTORY <nickname> ADD <message>
-            HISTORY <nickname> DEL <id>
-            HISTORY <nickname> VIEW [PAGE|ALL]
-            HISTORY <nickname> CLEAR
-
-    Παραδείγματα:
-      HISTORY SomeNick VIEW
-      HISTORY SomeNick ADD Χειροκίνητη σημείωση για αυτόν τον χρήστη
-      HISTORY SomeNick VIEW 2
-      HISTORY SomeNick VIEW ALL
-      HISTORY SomeNick DEL 123
-      HISTORY SomeNick CLEAR
-
     Χρησιμοποιήστε VIEW για να δείτε το ιστορικό (εμφανίζει 3 καταχωρήσεις προεπιλεγμένα).
     Χρησιμοποιήστε VIEW PAGE 2 για την επόμενη σελίδα.
     Χρησιμοποιήστε VIEW ALL για πλήρες ιστορικό.
     Χρησιμοποιήστε ADD για χειροκίνητη καταχώρηση.
     Χρησιμοποιήστε DEL για διαγραφή συγκεκριμένης καταχώρησης μέσω ID.
     Χρησιμοποιήστε CLEAR για διαγραφή όλων των καταχωρήσεων ιστορικού.
+  example:          "/msg %bot% HISTORY SomeNick VIEW"
   not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   unknown_operator: "(άγνωστος)"
 
@@ -660,11 +630,7 @@ noexpire:
     Όταν είναι OFF, ισχύουν οι κανονικοί κανόνες λήξης.
 
     Μόνο IRCops με άδεια 'nickserv.noexpire' μπορούν να χρησιμοποιήσουν αυτήν την εντολή.
-
-    Σύνταξη: NOEXPIRE <nickname> {ON|OFF}
-    Παραδείγματα:
-      NOEXPIRE ImportantUser ON
-      NOEXPIRE ImportantUser OFF
+  example:          "/msg %bot% NOEXPIRE ImportantUser ON"
   success_on:       "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι τώρα προστατευμένο από λήξη."
   success_off:      "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 θα λήγει τώρα κανονικά."
   not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."

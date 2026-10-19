@@ -47,6 +47,14 @@ final class SasetCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new SasetCommand($this->createStub(SetNickSettingHandlerInterface::class));
+
+        self::assertSame('saset.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function rejectsMissingSenderSyntaxAndUnknownOptionWithoutCallingUseCase(): void
     {
         $handler = $this->createMock(SetNickSettingHandlerInterface::class);

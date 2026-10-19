@@ -58,6 +58,18 @@ final class DropCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new DropCommand(
+            $this->createStub(DropNickHandlerInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->clock(),
+        );
+
+        self::assertSame('drop.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function returnsRejectedWhenSenderIsNull(): void
     {
         $handler = $this->createMock(DropNickHandlerInterface::class);

@@ -80,6 +80,11 @@ final readonly class DropCommand implements NickServCommandInterface, IrcopAudit
         return NickServPermission::DROP;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'drop.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

@@ -47,6 +47,14 @@ final class NoexpireCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new NoexpireCommand($this->createStub(SetNoexpireNickHandlerInterface::class));
+
+        self::assertSame('noexpire.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function returnsRejectedWhenSenderIsNull(): void
     {
         $handler = $this->createMock(SetNoexpireNickHandlerInterface::class);

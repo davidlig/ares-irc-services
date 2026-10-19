@@ -53,6 +53,17 @@ final class UseripCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new UseripCommand(
+            $this->createStub(GetUseripHandlerInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame('userip.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function returnsRejectedWhenSenderIsNull(): void
     {
         $handler = $this->createMock(GetUseripHandlerInterface::class);

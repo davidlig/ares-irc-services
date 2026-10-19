@@ -233,9 +233,7 @@ saset:
     SASET EMAIL: Zmienia e-mail bezpośrednio (bez walidacji tokenem).
 
     Ta komenda wymaga uprawnienia IRCop: nickserv.saset
-
-    Składnia: SASET <nick> <opcja> <wartość>
-    Przykład: SASET Użytkownik PASSWORD nowehasło
+  example:          "/msg %bot% SASET Użytkownik PASSWORD nowehasło"
   unknown_option:   "\x0304✗\x03 Nieznana opcja \x02%option%\x02. Dostępne opcje: %options%."
   cannot_modify_oper: "\x0304✗\x03 Nie można modyfikować nicka Operatora IRC."
 
@@ -335,9 +333,7 @@ userip:
 
     Ta komenda wyświetla wrażliwe informacje o nicku.
     Używaj odpowiedzialnie.
-
-    Składnia: USERIP <nick>
-    Przykład: USERIP JakisUzytkownik
+  example:          "/msg %bot% USERIP JakisUzytkownik"
   not_online:       "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest połączony."
   result:           "\x0307ℹ\x03 Nick: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
@@ -363,12 +359,7 @@ suspend:
 
     Zawieszeni użytkownicy nie mogą zidentyfikować się do swojego nicka.
     Operatorzy IRC i użytkownicy root nie mogą być zawieszeni.
-
-    Składnia: SUSPEND <nick> <czas_trwania> <powód>
-    Przykłady:
-      SUSPEND ZlyUzytkownik 7d Spamowanie na #help
-      SUSPEND Naduzywca 30d Powtarzające się zalewanie
-      SUSPEND Problematyczny 0 Obchodzenie permabana
+  example:          "/msg %bot% SUSPEND ZlyUzytkownik 7d Spamowanie na #help"
   success:            "\x0303✔\x03 Nick \x02%nickname%\x02 został zawieszony do \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Nick \x02%nickname%\x02 jest już zawieszony."
   not_registered:     "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
@@ -385,9 +376,7 @@ unsuspend:
   short:            "Usuń zawieszenie z nicka."
   help:             |
     Usuwa aktywne zawieszenie z nicka, pozwalając właścicielowi na ponowną identyfikację.
-
-    Składnia: UNSUSPEND <nick>
-    Przykład: UNSUSPEND JakisUzytkownik
+  example:          "/msg %bot% UNSUSPEND JakisUzytkownik"
   success:          "\x0303✔\x03 Zawieszenie zostało zniesione z \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
   not_suspended:    "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zawieszony."
@@ -403,9 +392,7 @@ rename:
     Nowy format nicka używa skonfigurowanego prefiksu gościa (%prefix%).
 
     Ta komenda wymaga uprawnienia IRCop: nickserv.rename
-
-    Składnia: RENAME <nick>
-    Przykład: RENAME Klopotliwy
+  example:          "/msg %bot% RENAME Gosc-4F21AB"
   not_online:        "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest połączony."
   cannot_rename_root: "\x0304✗\x03 Nie można przemianować użytkownika root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Nie można przemianować operatora IRC \x02%nickname%\x02."
@@ -425,9 +412,7 @@ drop:
     Nie możesz usunąć własnego nicka.
 
     Ta komenda wymaga uprawnienia IRCop: nickserv.drop
-
-    Składnia: DROP <nick>
-    Przykład: DROP StareKonto
+  example:          "/msg %bot% DROP StareKonto"
   not_registered:     "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
   suspended:         "\x0304✗\x03 Nick \x02%nickname%\x02 jest zawieszony. Najpierw zdejmij zawieszenie."
   forbidden:         "\x0304✗\x03 Nick \x02%nickname%\x02 jest zabroniony."
@@ -463,9 +448,7 @@ forbid:
     Użytkownicy root, Operatorzy IRC i nicki serwisowe nie mogą być zabronione.
 
     Ta komenda wymaga uprawnienia IRCop: nickserv.forbid
-
-    Składnia: FORBID <nick> <powód>
-    Przykład: FORBID ZlyNick Powtarzające się naruszenia regulaminu
+  example:          "/msg %bot% FORBID ZlyNick Powtarzające się naruszenia regulaminu"
   success:            "\x0303✔\x03 Nick \x02%nickname%\x02 został zabroniony."
   updated:            "\x0303✔\x03 Powód zabronienia dla \x02%nickname%\x02 został zaktualizowany."
   reason_required:    "\x0304✗\x03 Musisz podać powód zabronienia."
@@ -481,9 +464,7 @@ unforbid:
     Usuwa zabronienie nicka, pozwalając na ponowne używanie.
 
     Ta komenda wymaga uprawnienia IRCop: nickserv.forbid
-
-    Składnia: UNFORBID <nick>
-    Przykład: UNFORBID JakisNick
+  example:          "/msg %bot% UNFORBID JakisNick"
   success:          "\x0303✔\x03 Nick \x02%nickname%\x02 nie jest już zabroniony."
   not_forbidden:    "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zabroniony."
 
@@ -496,7 +477,7 @@ forbidvhost:
     vhostów przez %bot% SET VHOST.
 
     Symbole wieloznaczne: * pasuje do dowolnego ciągu, ? pasuje do pojedynczego znaku.
-    Przykład: *.piracka.strona blokuje każdy vhost kończący się na .piracka.strona
+    Wzorzec taki jak *.piracka.strona blokuje każdy vhost kończący się na .piracka.strona
 
     Ta komenda wymaga uprawnienia IRCop: nickserv.forbidvhost
 
@@ -504,6 +485,7 @@ forbidvhost:
       ADD <wzorzec>      Dodaj zabroniony wzorzec
       DEL <wzorzec>      Usuń zabroniony wzorzec
       LIST               Pokaż wszystkie zabronione wzorce
+  example:          "/msg %bot% FORBIDVHOST ADD *.piracka.strona"
 
   unknown_sub: "\x0304✗\x03 Nieznana podkomenda \x02%sub%\x02. Użyj ADD, DEL lub LIST."
 
@@ -557,25 +539,13 @@ history:
       SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
       SASET EMAIL, RECOVER
 
-    Składnia: HISTORY <nick> ADD <wiadomość>
-            HISTORY <nick> DEL <id>
-            HISTORY <nick> VIEW [PAGE|ALL]
-            HISTORY <nick> CLEAR
-
-    Przykłady:
-      HISTORY JakisNick VIEW
-      HISTORY JakisNick ADD Ręczna notatka o tym użytkowniku
-      HISTORY JakisNick VIEW 2
-      HISTORY JakisNick VIEW ALL
-      HISTORY JakisNick DEL 123
-      HISTORY JakisNick CLEAR
-
     Użyj VIEW aby zobaczyć historię (domyślnie pokazuje 3 wpisy).
     Użyj VIEW PAGE 2 aby zobaczyć następną stronę.
     Użyj VIEW ALL aby zobaczyć pełną historię.
     Użyj ADD aby dodać ręczny wpis.
     Użyj DEL aby usunąć konkretny wpis według ID.
     Użyj CLEAR aby usunąć wszystkie wpisy historii.
+  example:          "/msg %bot% HISTORY JakisNick VIEW"
   not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
   unknown_operator: "(nieznany)"
 
@@ -660,11 +630,7 @@ noexpire:
     Gdy OFF, obowiązują normalne zasady wygaśnięcia.
 
     Tylko IRCops z uprawnieniem 'nickserv.noexpire' mogą użyć tej komendy.
-
-    Składnia: NOEXPIRE <nick> {ON|OFF}
-    Przykłady:
-      NOEXPIRE WaznyUzytkownik ON
-      NOEXPIRE WaznyUzytkownik OFF
+  example:          "/msg %bot% NOEXPIRE WaznyUzytkownik ON"
   success_on:       "\x0303✔\x03 Nick \x02%nickname%\x02 jest teraz chroniony przed wygaśnięciem."
   success_off:      "\x0303✔\x03 Nick \x02%nickname%\x02 będzie teraz wygasał normalnie."
   not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."

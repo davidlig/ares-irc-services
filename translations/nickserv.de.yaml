@@ -233,9 +233,7 @@ saset:
     SASET EMAIL: Ändert die E-Mail direkt (ohne Token-Validierung).
 
     Dieser Befehl erfordert IRCop-Berechtigung: nickserv.saset
-
-    Syntax: SASET <Nickname> <Option> <Wert>
-    Beispiel: SASET Benutzer PASSWORD neuespass
+  example:          "/msg %bot% SASET Benutzer PASSWORD neuespass"
   unknown_option:   "\x0304✗\x03 Unbekannte Option \x02%option%\x02. Verfügbare Optionen: %options%."
   cannot_modify_oper: "\x0304✗\x03 Kann Nickname eines IRC-Operators nicht ändern."
 
@@ -335,9 +333,7 @@ userip:
 
     Dieser Befehl zeigt sensible Nickname-Informationen an.
     Verwenden Sie ihn verantwortungsvoll.
-
-    Syntax: USERIP <nickname>
-    Beispiel: USERIP EinBenutzer
+  example:          "/msg %bot% USERIP EinBenutzer"
   not_online:       "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht verbunden."
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
@@ -363,12 +359,7 @@ suspend:
 
     Suspendierte Benutzer können sich nicht mit ihrem Nickname identifizieren.
     IRC-Operatoren und Root-Benutzer können nicht suspendiert werden.
-
-    Syntax: SUSPEND <nickname> <Dauer> <Grund>
-    Beispiele:
-      SUSPEND SchlechterBenutzer 7d Spamming in #hilfe
-      SUSPEND Missbraucher 30d Wiederholter Flood
-      SUSPEND ProblemBenutzer 0 Sperrumgehung
+  example:          "/msg %bot% SUSPEND SchlechterBenutzer 7d Spamming in #hilfe"
   success:            "\x0303✔\x03 Nickname \x02%nickname%\x02 wurde suspendiert bis \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Nickname \x02%nickname%\x02 ist bereits suspendiert."
   not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
@@ -385,9 +376,7 @@ unsuspend:
   short:            "Suspendierung eines Nicknames aufheben."
   help:             |
     Hebt eine aktive Suspendierung eines Nicknames auf, sodass der Besitzer sich wieder identifizieren kann.
-
-    Syntax: UNSUSPEND <nickname>
-    Beispiel: UNSUSPEND EinBenutzer
+  example:          "/msg %bot% UNSUSPEND EinBenutzer"
   success:          "\x0303✔\x03 Suspendierung wurde von \x02%nickname%\x02 aufgehoben."
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   not_suspended:    "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht suspendiert."
@@ -403,9 +392,7 @@ rename:
     Das neue Nickname-Format verwendet das konfigurierte Gast-Präfix (%prefix%).
 
     Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.rename
-
-    Syntax: RENAME <nickname>
-    Beispiel: RENAME Störenfried
+  example:          "/msg %bot% RENAME Gast-4F21AB"
   not_online:        "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht verbunden."
   cannot_rename_root: "\x0304✗\x03 Root-Benutzer \x02%nickname%\x02 kann nicht umbenannt werden."
   cannot_rename_oper: "\x0304✗\x03 IRC-Operator \x02%nickname%\x02 kann nicht umbenannt werden."
@@ -425,9 +412,7 @@ drop:
     Sie können Ihren eigenen Nickname nicht löschen.
 
     Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.drop
-
-    Syntax: DROP <nickname>
-    Beispiel: DROP AlterAccount
+  example:          "/msg %bot% DROP AlterAccount"
   not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert. Zuerst entsuspendieren."
   forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist gesperrt."
@@ -463,9 +448,7 @@ forbid:
     Root-Benutzer, IRC-Operatoren und Service-Nicknames können nicht gesperrt werden.
 
     Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.forbid
-
-    Syntax: FORBID <nickname> <Grund>
-    Beispiel: FORBID SchlechterNick Wiederholte Richtlinienverstöße
+  example:          "/msg %bot% FORBID SchlechterNick Wiederholte Richtlinienverstöße"
   success:            "\x0303✔\x03 Nickname \x02%nickname%\x02 wurde gesperrt."
   updated:            "\x0303✔\x03 Sperrgrund für \x02%nickname%\x02 wurde aktualisiert."
   reason_required:    "\x0304✗\x03 Sie müssen einen Grund für die Sperrung angeben."
@@ -481,9 +464,7 @@ unforbid:
     Hebt eine Nickname-Sperrung auf, sodass der Nickname wieder verwendet werden kann.
 
     Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.forbid
-
-    Syntax: UNFORBID <nickname>
-    Beispiel: UNFORBID EinNick
+  example:          "/msg %bot% UNFORBID EinNick"
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 ist nicht mehr gesperrt."
   not_forbidden:    "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht gesperrt."
 
@@ -496,7 +477,7 @@ forbidvhost:
     via %bot% SET VHOST festzulegen.
 
     Platzhalter: * entspricht einer beliebigen Sequenz, ? einem einzelnen Zeichen.
-    Beispiel: *.raubkopien.de sperrt jeden VHost, der auf .raubkopien.de endet.
+    Ein Muster wie *.raubkopien.de sperrt jeden VHost, der auf .raubkopien.de endet.
 
     Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.forbidvhost
 
@@ -504,6 +485,7 @@ forbidvhost:
       ADD <Muster>    Ein gesperrtes Muster hinzufügen
       DEL <Muster>    Ein gesperrtes Muster entfernen
       LIST            Alle gesperrten Muster anzeigen
+  example:          "/msg %bot% FORBIDVHOST ADD *.raubkopien.de"
 
   unknown_sub: "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL oder LIST."
 
@@ -557,25 +539,13 @@ history:
       SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
       SASET EMAIL, RECOVER
 
-    Syntax: HISTORY <nickname> ADD <Nachricht>
-            HISTORY <nickname> DEL <id>
-            HISTORY <nickname> VIEW [PAGE|ALL]
-            HISTORY <nickname> CLEAR
-
-    Beispiele:
-      HISTORY EinNick VIEW
-      HISTORY EinNick ADD Manuelle Notiz über diesen Benutzer
-      HISTORY EinNick VIEW 2
-      HISTORY EinNick VIEW ALL
-      HISTORY EinNick DEL 123
-      HISTORY EinNick CLEAR
-
     Verwenden Sie VIEW, um den Verlauf zu sehen (zeigt standardmäßig 3 Einträge).
     Verwenden Sie VIEW PAGE 2, um die nächste Seite zu sehen.
     Verwenden Sie VIEW ALL, um den vollständigen Verlauf zu sehen.
     Verwenden Sie ADD, um einen manuellen Eintrag hinzuzufügen.
     Verwenden Sie DEL, um einen bestimmten Eintrag anhand der ID zu löschen.
     Verwenden Sie CLEAR, um alle Verlaufseinträge zu löschen.
+  example:          "/msg %bot% HISTORY EinNick VIEW"
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   unknown_operator: "(unbekannt)"
 
@@ -660,11 +630,7 @@ noexpire:
     Bei OFF gelten die normalen Ablaufregeln.
 
     Nur IRCops mit der Berechtigung 'nickserv.noexpire' können diesen Befehl verwenden.
-
-    Syntax: NOEXPIRE <nickname> {ON|OFF}
-    Beispiele:
-      NOEXPIRE WichtigerBenutzer ON
-      NOEXPIRE WichtigerBenutzer OFF
+  example:          "/msg %bot% NOEXPIRE WichtigerBenutzer ON"
   success_on:       "\x0303✔\x03 Nickname \x02%nickname%\x02 ist jetzt vor Ablauf geschützt."
   success_off:      "\x0303✔\x03 Nickname \x02%nickname%\x02 läuft jetzt normal ab."
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."

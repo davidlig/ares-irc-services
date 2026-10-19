@@ -55,6 +55,14 @@ final class HistoryCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new HistoryCommand($this->createStub(HistoryNickHandlerInterface::class), $this->clock());
+
+        self::assertSame('history.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function returnsRejectedWhenSenderIsNull(): void
     {
         $handler = $this->createMock(HistoryNickHandlerInterface::class);

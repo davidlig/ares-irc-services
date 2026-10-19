@@ -241,9 +241,7 @@ saset:
     SASET EMAIL: Cambia o correo electrónico directamente (sen validación de token).
 
     Este comando require permiso IRCop: nickserv.saset
-
-    Sintaxe: SASET <alcume> <opción> <valor>
-    Exemplo: SASET Usuario PASSWORD novo_contrasinal
+  example:          "/msg %bot% SASET Usuario PASSWORD novo_contrasinal"
   unknown_option:   "\x0304✗\x03 Opción descoñecida \x02%option%\x02. Opcións dispoñibles: %options%."
   cannot_modify_oper: "\x0304✗\x03 Non se pode modificar un alcume de Operador de IRC."
 
@@ -343,9 +341,7 @@ userip:
 
     Este comando mostra información sensible do alcume.
     Úseo con responsabilidade.
-
-    Sintaxe: USERIP <alcume>
-    Exemplo: USERIP AlgúnUsuario
+  example:          "/msg %bot% USERIP AlgúnUsuario"
   not_online:       "\x0304✗\x03 O alcume \x02%nickname%\x02 non está conectado."
   result:           "\x0307ℹ\x03 Alcume: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
@@ -371,12 +367,7 @@ suspend:
 
     Os usuarios suspendidos non poden identificarse co seu alcume.
     Os operadores de IRC e os usuarios root non poden ser suspendidos.
-
-    Sintaxe: SUSPEND <alcume> <duración> <motivo>
-    Exemplos:
-      SUSPEND MalUsuario 7d Spam en #axuda
-      SUSPEND Abusador 30d Flood reiterado
-      SUSPEND UsuarioProblemático 0 Permaban por evasión
+  example:          "/msg %bot% SUSPEND MalUsuario 7d Spam en #axuda"
   success:            "\x0303✔\x03 O alcume \x02%nickname%\x02 foi suspendido ata \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 O alcume \x02%nickname%\x02 xa está suspendido."
   not_registered:     "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
@@ -393,9 +384,7 @@ unsuspend:
   short:            "Eliminar a suspensión dun alcume."
   help:             |
     Elimina unha suspensión activa dun alcume, permitindo que o propietario se identifique de novo.
-
-    Sintaxe: UNSUSPEND <alcume>
-    Exemplo: UNSUSPEND AlgúnUsuario
+  example:          "/msg %bot% UNSUSPEND AlgúnUsuario"
   success:          "\x0303✔\x03 A suspensión foi levantada de \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   not_suspended:    "\x0304✗\x03 O alcume \x02%nickname%\x02 non está suspendido."
@@ -411,9 +400,7 @@ rename:
     O formato do novo alcume usa o prefixo de convidado configurado (%prefix%).
 
     Este comando require o permiso IRCop: nickserv.rename
-
-    Sintaxe: RENAME <alcume>
-    Exemplo: RENAME Problemático
+  example:          "/msg %bot% RENAME Guest-4F21AB"
   not_online:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non está conectado."
   cannot_rename_root: "\x0304✗\x03 Non se pode renomear o usuario root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Non se pode renomear o operador de IRC \x02%nickname%\x02."
@@ -433,9 +420,7 @@ drop:
     Non pode eliminar o seu propio alcume.
 
     Este comando require o permiso IRCop: nickserv.drop
-
-    Sintaxe: DROP <alcume>
-    Exemplo: DROP ContaAntiga
+  example:          "/msg %bot% DROP ContaAntiga"
   not_registered:     "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   suspended:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido. Reactíveo primeiro."
   forbidden:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está prohibido."
@@ -471,9 +456,7 @@ forbid:
     Os usuarios root, operadores de IRC e alcumes de servizo non poden ser prohibidos.
 
     Este comando require o permiso IRCop: nickserv.forbid
-
-    Sintaxe: FORBID <alcume> <motivo>
-    Exemplo: FORBID MalAlcume Violacións reiteradas das políticas
+  example:          "/msg %bot% FORBID MalAlcume Violacións reiteradas das políticas"
   success:            "\x0303✔\x03 O alcume \x02%nickname%\x02 foi prohibido."
   updated:            "\x0303✔\x03 O motivo de prohibición de \x02%nickname%\x02 foi actualizado."
   reason_required:    "\x0304✗\x03 Debe proporcionar un motivo para a prohibición."
@@ -489,9 +472,7 @@ unforbid:
     Elimina unha prohibición de alcume, permitindo que o alcume poida ser usado de novo.
 
     Este comando require o permiso IRCop: nickserv.forbid
-
-    Sintaxe: UNFORBID <alcume>
-    Exemplo: UNFORBID AlgúnAlcume
+  example:          "/msg %bot% UNFORBID AlgúnAlcume"
   success:          "\x0303✔\x03 O alcume \x02%nickname%\x02 xa non está prohibido."
   not_forbidden:    "\x0304✗\x03 O alcume \x02%nickname%\x02 non está prohibido."
 
@@ -504,7 +485,7 @@ forbidvhost:
     coincidentes mediante %bot% SET VHOST.
 
     Comodíns: * coincide con calquera secuencia, ? coincide cun só carácter.
-    Exemplo: *.pirateado.com bloquea calquera vhost que remate en .pirateado.com
+    Un patrón como *.pirateado.com bloquea calquera vhost que remate en .pirateado.com
 
     Este comando require o permiso IRCop: nickserv.forbidvhost
 
@@ -512,6 +493,7 @@ forbidvhost:
       ADD <patrón>    Engadir un patrón prohibido
       DEL <patrón>    Eliminar un patrón prohibido
       LIST            Mostrar todos os patróns prohibidos
+  example:          "/msg %bot% FORBIDVHOST ADD *.pirateado.com"
 
   unknown_sub: "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use ADD, DEL ou LIST."
 
@@ -565,25 +547,13 @@ history:
       SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
       SASET EMAIL, RECOVER
 
-    Sintaxe: HISTORY <alcume> ADD <mensaxe>
-             HISTORY <alcume> DEL <id>
-             HISTORY <alcume> VIEW [PÁXINA|ALL]
-             HISTORY <alcume> CLEAR
-
-    Exemplos:
-      HISTORY AlgúnAlcume VIEW
-      HISTORY AlgúnAlcume ADD Nota manual sobre este usuario
-      HISTORY AlgúnAlcume VIEW 2
-      HISTORY AlgúnAlcume VIEW ALL
-      HISTORY AlgúnAlcume DEL 123
-      HISTORY AlgúnAlcume CLEAR
-
     Use VIEW para ver o historial (mostra 3 entradas por defecto).
     Use VIEW PÁXINA 2 para ver a seguinte páxina.
     Use VIEW ALL para ver o historial completo.
     Use ADD para engadir unha entrada manual.
     Use DEL para eliminar unha entrada específica polo ID.
     Use CLEAR para eliminar todas as entradas do historial.
+  example:          "/msg %bot% HISTORY AlgúnAlcume VIEW"
   not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   unknown_operator: "(descoñecido)"
 
@@ -670,11 +640,7 @@ noexpire:
     Cando está OFF, aplícanse as regras normais de caducidade.
 
     Só os IRCops co permiso 'nickserv.noexpire' poden usar este comando.
-
-    Sintaxe: NOEXPIRE <alcume> {ON|OFF}
-    Exemplos:
-      NOEXPIRE UsuarioImportante ON
-      NOEXPIRE UsuarioImportante OFF
+  example:          "/msg %bot% NOEXPIRE UsuarioImportante ON"
   success_on:       "\x0303✔\x03 O alcume \x02%nickname%\x02 está agora protexido contra a caducidade."
   success_off:      "\x0303✔\x03 O alcume \x02%nickname%\x02 caducará normalmente agora."
   not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."

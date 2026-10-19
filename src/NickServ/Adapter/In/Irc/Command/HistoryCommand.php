@@ -91,6 +91,11 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
         return NickServPermission::HISTORY;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'history.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

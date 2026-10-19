@@ -130,6 +130,14 @@ final class ForbidVhostCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame('forbidvhost.example', $cmd->getExampleKey());
+    }
+
+    #[Test]
     public function getOrderReturnsSeventyFive(): void
     {
         $cmd = $this->createCommand();

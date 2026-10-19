@@ -72,6 +72,11 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
         return NickServPermission::NOEXPIRE;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'noexpire.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];
