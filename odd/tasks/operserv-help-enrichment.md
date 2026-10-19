@@ -30,14 +30,19 @@ the end via `./scripts/check-coverage.sh 100 --issues`).
 
 ## Tasks
 
-- [ ] T1 — Formatter: `renderSubCommandHelp()` example block for OperServ.
-- [ ] T2 — The 7 top-level commands without an example: `EMAILVERIFY`, `GLINE`, `GLOBAL`, `IRCOP`,
+- [x] T1 — Formatter: `renderSubCommandHelp()` example block for OperServ. DONE in `1fe72519`.
+- [x] T2 — The 7 top-level commands without an example: `EMAILVERIFY`, `GLINE`, `GLOBAL`, `IRCOP`,
       `MOTD`, `RAW`, `ROLE` — `getExampleKey()` + `example` × 14 locales + per-command regression.
-- [ ] T3 — The 20 sub-pages: `EMAILVERIFY` (on/off/status), `GLINE` (add/del/list), `IRCOP`
+      DONE in `1fe72519`.
+- [x] T3 — The 20 sub-pages: `EMAILVERIFY` (on/off/status), `GLINE` (add/del/list), `IRCOP`
       (add/del/list), `MOTD` (add/del/list/clean), `ROLE` (add/del/list/perms/modes/vhost/operclass)
       — `example_key` in the arrays + `example` × 14 locales + formatter and end-to-end assertions.
-- [ ] T4 — Delivery: one commit on the branch, push, and update issue `#39` / PR `#40` so their title
-      and body describe the full OperServ unit instead of only the KILL fix.
+      DONE in `1fe72519`: 378 values over 14 locales, all with the house prefix and `%bot%` as their
+      only placeholder; no `help` prose changed and the two pre-existing `example` strings
+      (`role.vhost.view`, `gline.search.options`) are untouched.
+- [x] T4 — Delivery: one commit on the branch, push, and update issue `#39` / PR `#40` so their title
+      and body describe the full OperServ unit instead of only the KILL fix. DONE: both now read
+      `feat(operserv): enrich per-command HELP with examples and drop the duplicated KILL prose`.
 
 ## Log
 
@@ -52,3 +57,22 @@ the end via `./scripts/check-coverage.sh 100 --issues`).
   reference contributes style, not content, and nothing is copied.
 - L3 — 2026-10-19: scope fixed by inspection: 7 top-level commands have no example, and 20 sub-pages
   exist across EMAILVERIFY, GLINE, IRCOP, MOTD and ROLE. `KILL` is already done in `64c68c30`.
+- L4 — 2026-10-19: delivered as `1fe72519` (32 files, +614/−13) on top of `64c68c30`, pushed to the
+  fork; issue `#39` and PR `#40` retitled and rewritten to describe the whole OperServ unit. Parent
+  verification: 378 example values over the 14 locales (27 keys each), every one with the house
+  prefix and `%bot%` as its only placeholder; `HELP` has none; no `help` prose changed against
+  `64c68c30`; the two pre-existing `example` strings stay byte-identical. Gates: `tests/OperServ`
+  834/4624, `tests/Shared` 49/36284, `lint:container` and `lint:yaml` OK, PHPStan max 0, Deptrac
+  0/0/0, CS-Fixer 0/2136, coverage 100.00% (22847/22847). Two false alarms from the parent's own
+  detectors are worth remembering: counting every key named `example` picks up pre-existing
+  non-command strings, and comparing a localized value against its English text looks like a change.
+- L5 — 2026-10-19: dbots (`/home/juanjo/irc/sitiochat/dbots`, the ChatHispano mIRC bot system) was
+  reviewed as a text reference. Its 11 `helps/*.help` files are terse: `Sintaxis:` plus one line of
+  description, with 6 "ejemplo" mentions in the whole set, so they add nothing to the wording and
+  nothing was taken from them. Two observations worth keeping: dbots groups its OperServ index by
+  privilege tier (Pre-Operadores / Operadores / Administradores / ROOT), which Ares does not need
+  because its index is already filtered by permission, so a non-Root oper only sees what they can
+  run; and its command inventory is the one ChatHispano users have today, with several commands that
+  have no Ares counterpart (REGISTRA, ESTADO, SENDPASS, SENDNEWPASS, blackmail, validar,
+  vreg, MIGRAR, APODERA, killclones, listclones, spam, dropnbd, the CeNTeR/NO/PreOpServ/GlobalServ
+  modules). That gap is a migration-coverage question for the maintainer, not a help-text task.
