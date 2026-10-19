@@ -31,13 +31,18 @@ the end via `./scripts/check-coverage.sh 100 --issues`).
 
 ## Tasks
 
-- [ ] T1 — Level key: `UNBAN` in `ChannelLevel` (entity constant + `DEFAULTS`) and the enum case with
-      its default, plus the LEVELS listing.
-- [ ] T2 — The vertical slice: `UnbanUser` use case + handler + result, the command, the notifier call,
+- [x] T1 — Level key: `UNBAN` in `ChannelLevel` (entity constant + `DEFAULTS`) and the enum case with
+      its default, plus the LEVELS listing. DONE: default 100, listed between `INVITE` and
+      `ACCESSLIST`.
+- [x] T2 — The vertical slice: `UnbanUser` use case + handler + result, the command, the notifier call,
       wiring, and the 14-locale string set with the house `/msg %bot% UNBAN #channel mask` example.
-- [ ] T3 — Tests: use case (literal mask, nickname, own mask, not found, insufficient level), command
-      routing and presentation, LEVELS listing, alignment count 72.
-- [ ] T4 — Delivery: commit, push, issue + PR.
+      DONE in `b477b652`.
+- [x] T3 — Tests: use case (literal mask, nickname, own mask, not found, insufficient level), command
+      routing and presentation, LEVELS listing, alignment count 72. DONE, with the count at **71**:
+      this branch is based on `main`, whose baseline is 70, so the brief's 71 → 72 was stale and the
+      correct expectation is 70 → 71.
+- [x] T4 — Delivery: commit, push, issue + PR. DONE: issue `#43` and PR `#44`, carrying one commit
+      with 29 files (+974 / −3).
 
 ## Log
 
@@ -51,3 +56,14 @@ the end via `./scripts/check-coverage.sh 100 --issues`).
   vertical slice to copy is `InviteCommand` plus its `PrepareInvite` use case, including the
   timestamp plumbing. `LEVELS LIST` renders the raw keys, so the new level needs no per-key
   translations.
+- L4 — 2026-10-19: delivered as `b477b652` (29 files, +974/−3), issue `#43` and PR `#44`. Parent
+  verification: the six `unban` keys exist in the 14 locales, no `help` value restates the syntax,
+  and every example is a `/msg %bot% ` line with `%bot%` as its only placeholder. Gates: ChanServ
+  1508/10127, Shared 35644 with 71 commands, Bootstrap 78/1127, `lint:container` and `lint:yaml` OK,
+  PHPStan max 0, Deptrac 0/0/0, CS-Fixer 0/2143, coverage 100.00% (22886/22886).
+- L5 — 2026-10-19: two decisions worth remembering. Nickname resolution lives in `UnbanCommand`
+  (Adapter/In) rather than the use case, because Deptrac forbids `ChanServ\Application` from
+  depending on `Irc\Application\Port\In`; the use case keeps channel resolution, authorization and
+  the timestamp. And this branch is based on `main`, where ChanServ's formatter does not render
+  example blocks yet, so `unban.example` is stored and catalog-enforced but becomes visible only once
+  the ChanServ help unit (#34) lands — the PR says so explicitly.
