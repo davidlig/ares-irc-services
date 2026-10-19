@@ -72,11 +72,17 @@ line coverage (equality of covered/total statements, not a rounded display).
   `omitsExampleLineWhenHandlerLacksExampleKey`. Evidence: `UnifiedHelpFormatterTest` 8/8
   green; full `tests/MemoServ` 287 tests / 2031 assertions green. Route: inline (parent).
   Status: done.
-- **T2** (S3, S5) — 7 commands declare `getExampleKey()` (+ `getHelpParams()` where needed);
-  English example strings with `%bot%`. Route: inline. Status: pending.
-- **T3** (S4, S5) — Translate `help.example_label` + the 7 `example` keys across the 13
-  remaining locales. Route: delegated (context reason — ~112 mechanical strings across 13
-  files). Status: pending.
+- **T2** (S3, S5) — DONE — 7 commands declare `getExampleKey()` (`send/read/list/del/ignore/
+  enable/disable.example`); English example strings with `%bot%` in
+  `translations/memoserv.en.yaml`. Route: inline (parent).
+- **T3** (S4, S5) — DONE (landed together with T2 in one commit — the parity tests forbid
+  en-only keys). `help.example_label` + the 7 `example` keys added to the 13 remaining locales
+  (104 strings) by a delegated writer. Labels: ca `Exemple`, de `Beispiel`, el `Παράδειγμα`,
+  es `Ejemplo`, eu `Adibidea`, fr `Exemple :`, gl `Exemplo`, it `Esempio`, nl `Voorbeeld`,
+  pl `Przykład`, pt `Exemplo`, ro `Exemplu`, tr `Örnek`. Illustrative words localized per
+  language alongside the message text (`apodo`/`rumuz`/…). Evidence: `TranslationCatalogTest`
+  OK (11 tests / 34443 assertions); `TranslationCatalogTest` + `tests/MemoServ` OK (298 tests /
+  36487 assertions); parent spot checks on es/tr. Route: delegated (context reason).
 - **T4** (S7, S8) — Tests (formatter + HelpCommand integration) + full gate chain + coverage
   100 exactly once. Route: inline + gate. Status: pending.
 

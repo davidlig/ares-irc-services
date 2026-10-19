@@ -73,6 +73,11 @@ final readonly class DelCommand implements MemoServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'del.example';
+    }
+
     public function execute(MemoServContext $context): null
     {
         $senderAccount = $context->senderAccount;

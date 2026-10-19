@@ -72,6 +72,11 @@ final readonly class EnableCommand implements MemoServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'enable.example';
+    }
+
     public function execute(MemoServContext $context): null
     {
         $senderAccount = $context->senderAccount;

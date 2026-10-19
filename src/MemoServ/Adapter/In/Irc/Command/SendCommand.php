@@ -79,6 +79,11 @@ final readonly class SendCommand implements MemoServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'send.example';
+    }
+
     public function execute(MemoServContext $context): null
     {
         $senderAccount = $context->senderAccount;

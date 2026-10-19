@@ -72,6 +72,11 @@ final readonly class DisableCommand implements MemoServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'disable.example';
+    }
+
     public function execute(MemoServContext $context): null
     {
         $senderAccount = $context->senderAccount;

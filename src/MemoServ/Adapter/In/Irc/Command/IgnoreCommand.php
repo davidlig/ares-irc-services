@@ -85,6 +85,11 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'ignore.example';
+    }
+
     public function execute(MemoServContext $context): null
     {
         $senderAccount = $context->senderAccount;
