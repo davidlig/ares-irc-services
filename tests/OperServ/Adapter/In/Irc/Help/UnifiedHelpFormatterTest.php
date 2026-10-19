@@ -184,6 +184,75 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function rendersExampleLineOnlyWhenHandlerProvidesExampleKey(): void
+    {
+        $formatter = new UnifiedHelpFormatter();
+
+        $context = new OperServHelpFormatterContext();
+        $withExample = new OperServHelpableCommand('KILL', 1, [], [], 'kill.example');
+        self::assertSame([
+            'translated:help.header',
+            'translated:kill.help',
+            ' ',
+            'translated:help.syntax_label',
+            ' ',
+            'translated:help.example_label',
+            'translated:help.footer',
+        ], $formatter->renderCommandHelp($context, $withExample));
+        self::assertContains([
+            'key' => 'help.example_label',
+            'params' => ['example' => 'translated:kill.example'],
+        ], $context->translationRequests);
+
+        $withoutExample = new class implements HelpableCommandInterface {
+            public function getName(): string
+            {
+                return 'GLINE';
+            }
+
+            public function getOrder(): int
+            {
+                return 2;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'gline.short';
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'gline.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'gline.help';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+        };
+
+        $context = new OperServHelpFormatterContext();
+        self::assertSame([
+            'translated:help.header',
+            'translated:gline.help',
+            ' ',
+            'translated:help.syntax_label',
+            'translated:help.footer',
+        ], $formatter->renderCommandHelp($context, $withoutExample));
+        self::assertNotContains('help.example_label', array_column($context->translationRequests, 'key'));
+    }
+
+    #[Test]
     public function rendersSubcommandHelpWithOptionalDetails(): void
     {
         $context = new OperServHelpFormatterContext();
@@ -235,6 +304,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'help.general_footer' => ['10', '03'],
             'help.set_sub_footer' => ['10', '03'],
             'help.syntax_label' => ['03'],
+            'help.example_label' => ['03'],
             'help.group_header' => ['10'],
             'help.subgroup_header' => ['10'],
             'help.unknown_command' => ['07', '03'],
@@ -249,6 +319,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'help.general_footer' => ['%bot%'],
             'help.set_sub_footer' => ['%bot%', '%command%'],
             'help.syntax_label' => ['%syntax%'],
+            'help.example_label' => ['%example%'],
             'help.group_header' => ['%group%'],
             'help.subgroup_header' => ['%group%'],
             'help.unknown_command' => ['%command%', '%bot%'],
@@ -415,6 +486,7 @@ final readonly class OperServHelpableCommand implements HelpableCommandInterface
         private int $order,
         private array $subcommands = [],
         private array $helpParams = [],
+        private ?string $exampleKey = null,
     ) {}
 
     public function getName(): string
@@ -445,6 +517,11 @@ final readonly class OperServHelpableCommand implements HelpableCommandInterface
     public function getSubCommandHelp(): array
     {
         return $this->subcommands;
+    }
+
+    public function getExampleKey(): ?string
+    {
+        return $this->exampleKey;
     }
 
     public function isOperOnly(): bool

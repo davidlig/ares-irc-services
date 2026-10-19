@@ -57,6 +57,14 @@ final class KillCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new KillCommand($this->handler(new KillCommandUsers(), new KillCommandRoots(), new KillCommandNetwork(new KillCommandTrace())));
+
+        self::assertSame('kill.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsActorServiceReasonAndTimestampThenPresentsSuccess(): void
     {
         $trace = new KillCommandTrace();

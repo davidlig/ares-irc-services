@@ -26,6 +26,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP <opdracht>\x03\x0F voor meer informatie."
   set_sub_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP %command% <optie>\x03\x0F voor meer informatie."
   syntax_label: "Syntaxis: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Voorbeeld: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0307⚠\x03\x0F OPMERKING: Nicknamen die langer dan %days% dagen niet zijn gebruikt, worden automatisch verwijderd."
   group_header: "\x0310  ◆ %group%\x03\x0F"
@@ -178,7 +179,8 @@ role:
 kill:
   syntax:           "KILL <bijnaam> <reden>"
   short:            "Verbreek geforceerd de verbinding van een gebruiker met het netwerk."
-  help:             "Verbreekt de verbinding van een gebruiker met het IRC-netwerk.\nIRCops en Root-gebruikers kunnen niet worden gekilld.\nDit commando vereist de operserv.kill-permissie.\n\nSyntax: KILL <bijnaam> <reden>\nVoorbeeld: KILL SlechteGebr Kanalen flooden"
+  help:             "Verbreekt de verbinding van een gebruiker met het IRC-netwerk.\nIRCops en Root-gebruikers kunnen niet worden gekilld.\nDit commando vereist de operserv.kill-permissie."
+  example:          "/msg %bot% KILL SlechteGebr Kanalen flooden"
   user_not_online:  "\x0304✗\x03 Nick \x02%nickname%\x02 is niet verbonden."
   protected_root:   "\x0304✗\x03 Kan Root-gebruiker \x02%nickname%\x02 niet killen."
   protected_ircop:  "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet killen."

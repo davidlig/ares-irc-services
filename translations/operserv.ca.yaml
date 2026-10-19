@@ -26,6 +26,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Fes servir /msg %bot% \x02\x0303HELP <comanda>\x03\x0F per obtenir més informació."
   set_sub_footer: "\x0310ℹ\x03\x0F Fes servir /msg %bot% \x02\x0303HELP %command% <opció>\x03\x0F per obtenir més informació."
   syntax_label: "Sintaxi: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Exemple: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0307⚠\x03\x0F NOTA: Els nicks no utilitzats durant més de %days% dies s’eliminen automàticament."
   group_header: "\x0310  ◆ %group%\x03\x0F"
@@ -178,7 +179,8 @@ role:
 kill:
   syntax:           "KILL <nickname> <reason>"
   short:            "Desconnectar forçosament un usuari de la xarxa."
-  help:             "Desconnecta un usuari de la xarxa IRC.\nEls IRCops i usuaris Root no es poden matar.\nAquesta ordre requereix el permís operserv.kill.\n\nSintaxi: KILL <nickname> <reason>\nExemple: KILL BadUser Flooding channels"
+  help:             "Desconnecta un usuari de la xarxa IRC.\nEls IRCops i usuaris Root no es poden matar.\nAquesta ordre requereix el permís operserv.kill."
+  example:          "/msg %bot% KILL BadUser Flooding channels"
   user_not_online:  "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
   protected_root:   "\x0304✗\x03 No es pot matar l'usuari Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 No es pot matar l'operador d'IRC \x02%nickname%\x02."

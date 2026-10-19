@@ -26,6 +26,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Użyj /msg %bot% \x02\x0303HELP <komenda>\x03\x0F, aby uzyskać więcej informacji."
   set_sub_footer: "\x0310ℹ\x03\x0F Użyj /msg %bot% \x02\x0303HELP %command% <opcja>\x03\x0F, aby uzyskać więcej informacji."
   syntax_label: "Składnia: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Przykład: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0307⚠\x03\x0F UWAGA: Nieużywane przez ponad %days% dni pseudonimy są automatycznie usuwane."
   group_header: "\x0310  ◆ %group%\x03\x0F"
@@ -178,7 +179,8 @@ role:
 kill:
   syntax:           "KILL <nick> <powód>"
   short:            "Wymuś rozłączenie użytkownika z sieci."
-  help:             "Rozłącza użytkownika z sieci IRC.\nIRCops i użytkownicy Root nie mogą być zabici.\nTa komenda wymaga uprawnienia operserv.kill.\n\nSkładnia: KILL <nick> <powód>\nPrzykład: KILL ZlyUzytkownik Zalewanie kanałów"
+  help:             "Rozłącza użytkownika z sieci IRC.\nIRCops i użytkownicy Root nie mogą być zabici.\nTa komenda wymaga uprawnienia operserv.kill."
+  example:          "/msg %bot% KILL ZlyUzytkownik Zalewanie kanałów"
   user_not_online:  "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest połączony."
   protected_root:   "\x0304✗\x03 Nie można zabić użytkownika Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Nie można zabić operatora IRC \x02%nickname%\x02."

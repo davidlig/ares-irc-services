@@ -26,6 +26,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Χρησιμοποιήστε /msg %bot% \x02\x0303HELP <εντολή>\x03\x0F για περισσότερες πληροφορίες."
   set_sub_footer: "\x0310ℹ\x03\x0F Χρησιμοποιήστε /msg %bot% \x02\x0303HELP %command% <επιλογή>\x03\x0F για περισσότερες πληροφορίες."
   syntax_label: "Σύνταξη: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Παράδειγμα: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0307⚠\x03\x0F ΣΗΜΕΙΩΣΗ: Τα ψευδώνυμα που δεν χρησιμοποιούνται για περισσότερες από %days% ημέρες διαγράφονται αυτόματα."
   group_header: "\x0310  ◆ %group%\x03\x0F"
@@ -178,7 +179,8 @@ role:
 kill:
   syntax:           "KILL <nickname> <reason>"
   short:            "Αναγκαστική αποσύνδεση χρήστη από το δίκτυο."
-  help:             "Αποσυνδέει έναν χρήστη από το δίκτυο IRC.\nΟι IRCops και οι Root χρήστες δεν μπορούν να γίνουν kill.\nΑυτή η εντολή απαιτεί την άδεια operserv.kill.\n\nΣύνταξη: KILL <nickname> <reason>\nΠαράδειγμα: KILL BadUser Flooding σε κανάλια"
+  help:             "Αποσυνδέει έναν χρήστη από το δίκτυο IRC.\nΟι IRCops και οι Root χρήστες δεν μπορούν να γίνουν kill.\nΑυτή η εντολή απαιτεί την άδεια operserv.kill."
+  example:          "/msg %bot% KILL BadUser Flooding σε κανάλια"
   user_not_online:  "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
   protected_root:   "\x0304✗\x03 Δεν μπορεί να γίνει kill ο Root χρήστης \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Δεν μπορεί να γίνει kill ο IRC operator \x02%nickname%\x02."

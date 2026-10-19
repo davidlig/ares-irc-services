@@ -26,6 +26,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Erabili /msg %bot% \x02\x0303HELP <komandoa>\x03\x0F informazio gehiago lortzeko."
   set_sub_footer: "\x0310ℹ\x03\x0F Erabili /msg %bot% \x02\x0303HELP %command% <aukera>\x03\x0F informazio gehiago lortzeko."
   syntax_label: "Sintaxia: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Adibidea: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0307⚠\x03\x0F OHARRA: %days% egun baino gehiagoz erabiltzen ez diren ezizenak automatikoki ezabatuko dira."
   group_header: "\x0310  ◆ %group%\x03\x0F"
@@ -178,7 +179,8 @@ role:
 kill:
   syntax:           "KILL <ezizena> <arrazoia>"
   short:            "Behartu erabiltzaile bat saretik deskonektatzera."
-  help:             "Erabiltzaile bat IRC saretik deskonektatzen du.\nIRCop-ak eta Root erabiltzaileak ezin dira kill bidez deskonektatu.\nKomando honek operserv.kill baimena behar du.\n\nSintaxia: KILL <ezizena> <arrazoia>\nAdibidea: KILL ErabiltzaileGaiztoa Flood egiten kanaletan"
+  help:             "Erabiltzaile bat IRC saretik deskonektatzen du.\nIRCop-ak eta Root erabiltzaileak ezin dira kill bidez deskonektatu.\nKomando honek operserv.kill baimena behar du."
+  example:          "/msg %bot% KILL ErabiltzaileGaiztoa Flood egiten kanaletan"
   user_not_online:  "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
   protected_root:   "\x0304✗\x03 Ezin da Root erabiltzaile \x02%nickname%\x02 kill bidez deskonektatu."
   protected_ircop:  "\x0304✗\x03 Ezin da IRC operadore \x02%nickname%\x02 kill bidez deskonektatu."

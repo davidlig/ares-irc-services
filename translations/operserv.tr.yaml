@@ -26,6 +26,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP <komut>\x03\x0F kullanın."
   set_sub_footer: "\x0310ℹ\x03\x0F Daha fazla bilgi için /msg %bot% \x02\x0303HELP %command% <seçenek>\x03\x0F kullanın."
   syntax_label: "Sözdizimi: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Örnek: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0307⚠\x03\x0F NOT: %days% günden uzun süre kullanılmayan takma adlar otomatik olarak silinir."
   group_header: "\x0310  ◆ %group%\x03\x0F"
@@ -178,7 +179,8 @@ role:
 kill:
   syntax:           "KILL <nickname> <sebep>"
   short:            "Bir kullanıcıyı ağdan zorla ayırın."
-  help:             "Bir kullanıcıyı IRC ağından ayırır.\nIRCop'ler ve Root kullanıcıları kill'lenemez.\nBu komut operserv.kill iznini gerektirir.\n\nSözdizimi: KILL <nickname> <sebep>\nÖrnek: KILL KtUye Kanalları floodlama"
+  help:             "Bir kullanıcıyı IRC ağından ayırır.\nIRCop'ler ve Root kullanıcıları kill'lenemez.\nBu komut operserv.kill iznini gerektirir."
+  example:          "/msg %bot% KILL KtUye Kanalları floodlama"
   user_not_online:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu bağlı değil."
   protected_root:   "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 kill'lenemez."
   protected_ircop:  "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 kill'lenemez."

@@ -8,6 +8,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Application\Port\In\NickAccountData;
 use App\OperServ\Adapter\In\Irc\Command\HelpCommand;
+use App\OperServ\Adapter\In\Irc\Command\KillCommand;
 use App\OperServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
@@ -15,7 +16,14 @@ use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
+use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\OperServ\Application\Port\Out\KillNetworkUser as KillNetworkUserPort;
+use App\OperServ\Application\Port\Out\NetworkUserLookup;
+use App\OperServ\Application\Port\Out\OperatorAccountLookup;
+use App\OperServ\Application\Port\Out\OperatorRoleAccess;
+use App\OperServ\Application\Port\Out\RootIdentityRegistry;
+use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +36,7 @@ use function dirname;
 use function is_array;
 use function is_scalar;
 use function is_string;
+use function substr_count;
 
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
@@ -145,6 +154,37 @@ final class HelpCommandTest extends TestCase
         ));
 
         self::assertSame(['help.unknown_command'], $notifier->messages);
+    }
+
+    #[Test]
+    public function killCommandPageRendersSyntaxAndExampleExactlyOnce(): void
+    {
+        $notifier = new HelpNotifier();
+        $kill = new KillCommand(new KillNetworkUserHandler(
+            $this->createStub(NetworkUserLookup::class),
+            $this->createStub(RootIdentityRegistry::class),
+            $this->createStub(OperatorAccountLookup::class),
+            $this->createStub(OperatorRoleAccess::class),
+            $this->createStub(KillNetworkUserPort::class),
+            $this->createStub(CommandAuditRecorder::class),
+        ));
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('ircOperator')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::IrcOperatorStatus));
+        $authorization->method('permission')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RolePermission));
+
+        new HelpCommand(new UnifiedHelpFormatter())->execute($this->context(
+            ['KILL'],
+            [$kill],
+            $notifier,
+            $authorization,
+            new HelpTranslation($this->englishTranslationEntries()),
+        ));
+
+        self::assertCount(1, $notifier->messages);
+        $page = $notifier->messages[0];
+        self::assertSame(1, substr_count($page, 'Syntax:'));
+        self::assertSame(1, substr_count($page, 'Example:'));
+        self::assertStringContainsString('/msg OperServ KILL BadUser Flooding channels', $page);
     }
 
     /** @return iterable<string, array{list<string>}> */

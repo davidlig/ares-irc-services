@@ -26,6 +26,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Folosește /msg %bot% \x02\x0303HELP <comandă>\x03\x0F pentru mai multe informații."
   set_sub_footer: "\x0310ℹ\x03\x0F Folosește /msg %bot% \x02\x0303HELP %command% <opțiune>\x03\x0F pentru mai multe informații."
   syntax_label: "Sintaxă: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Exemplu: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0307⚠\x03\x0F NOTĂ: Poreclele nefolosite mai mult de %days% zile sunt eliminate automat."
   group_header: "\x0310  ◆ %group%\x03\x0F"
@@ -178,7 +179,8 @@ role:
 kill:
   syntax:           "KILL <poreclă> <motiv>"
   short:            "Deconectați forțat un utilizator din rețea."
-  help:             "Deconectează un utilizator din rețeaua IRC.\nIRCopii și utilizatorii Root nu pot primi kill.\nAceastă comandă necesită permisiunea operserv.kill.\n\nSintaxă: KILL <poreclă> <motiv>\nExemplu: KILL UtilizatorRău Flood pe canale"
+  help:             "Deconectează un utilizator din rețeaua IRC.\nIRCopii și utilizatorii Root nu pot primi kill.\nAceastă comandă necesită permisiunea operserv.kill."
+  example:          "/msg %bot% KILL UtilizatorRău Flood pe canale"
   user_not_online:  "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este conectată."
   protected_root:   "\x0304✗\x03 Nu se poate da kill utilizatorului Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Nu se poate da kill operatorului IRC \x02%nickname%\x02."

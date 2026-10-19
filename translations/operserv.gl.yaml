@@ -26,6 +26,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Usa /msg %bot% \x02\x0303HELP <comando>\x03\x0F para obter máis información."
   set_sub_footer: "\x0310ℹ\x03\x0F Usa /msg %bot% \x02\x0303HELP %command% <opción>\x03\x0F para obter máis información."
   syntax_label: "Sintaxe: \x02\x0303%syntax%\x03\x0F"
+  example_label: "Exemplo: \x02\x0303%example%\x03\x0F"
   footer:           "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0307⚠\x03\x0F NOTA: Os alcumes que non se utilicen durante máis de %days% días eliminaranse automaticamente."
   group_header: "\x0310  ◆ %group%\x03\x0F"
@@ -178,7 +179,8 @@ role:
 kill:
   syntax:           "KILL <alcume> <motivo>"
   short:            "Desconectar forzosamente un usuario da rede."
-  help:             "Desconecta un usuario da rede de IRC.\nOs IRCops e usuarios Root non poden ser matados.\nEste comando require o permiso operserv.kill.\n\nSintaxe: KILL <alcume> <motivo>\nExemplo: KILL MalUsuario Inundando canles"
+  help:             "Desconecta un usuario da rede de IRC.\nOs IRCops e usuarios Root non poden ser matados.\nEste comando require o permiso operserv.kill."
+  example:          "/msg %bot% KILL MalUsuario Inundando canles"
   user_not_online:  "\x0304✗\x03 O alcume \x02%nickname%\x02 non está conectado."
   protected_root:   "\x0304✗\x03 Non se pode matar o usuario Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Non se pode matar o operador de IRC \x02%nickname%\x02."

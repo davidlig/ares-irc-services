@@ -46,6 +46,11 @@ final readonly class KillCommand implements OperServCommandInterface
         return 'kill.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'kill.example';
+    }
+
     public function getOrder(): int
     {
         return 10;
