@@ -8,17 +8,25 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\UseCase\UnbanUser\UnbanUser;
 use App\ChanServ\Application\UseCase\UnbanUser\UnbanUserHandlerInterface;
+use App\ChanServ\Domain\Policy\BanMaskMatcher;
+use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Irc\Application\Port\In\SenderView;
 
+use function count;
 use function str_contains;
 
 /**
- * UNBAN <#channel> [mask|nickname]. Removes one ban from the channel.
- * Requires UNBAN level. A nickname resolves to the connected user's current mask.
+ * UNBAN <#channel> [mask|nickname]. Removes every ban in the channel that affects the target.
+ * Requires UNBAN level. A literal mask removes exactly that entry.
  */
 final readonly class UnbanCommand implements ChanServCommandInterface
 {
-    public function __construct(private UnbanUserHandlerInterface $handler) {}
+    public function __construct(
+        private UnbanUserHandlerInterface $handler,
+        private ChannelLookupPort $channelLookup,
+        private BanMaskMatcher $banMaskMatcher,
+    ) {}
 
     public function getName(): string
     {
@@ -118,25 +126,41 @@ final readonly class UnbanCommand implements ChanServCommandInterface
             founderEquivalent: $context->isLevelFounder,
         ));
 
-        $mask = $this->resolveMask($context, $sender->toUserMask());
-        if (null === $mask) {
+        $argument = $context->args[1] ?? '';
+        if (str_contains($argument, '!') || str_contains($argument, '@')) {
+            return $this->applyUnban($context, $channelName, [$argument], $argument, $result->channelCreationTimestamp);
+        }
+
+        $target = $this->resolveTarget($context, $argument, $sender);
+        if (null === $target) {
             return CommandOutcome::rejected();
         }
 
-        $context->getNotifier()->setChannelModes($channelName, '-b', [$mask], $result->channelCreationTimestamp);
-        $context->reply('unban.done', ['%mask%' => $mask]);
+        $view = $this->channelLookup->findByChannelName($channelName);
+        if (null === $view) {
+            return $this->applyUnban($context, $channelName, [$target->toUserMask()], $target->nick, $result->channelCreationTimestamp);
+        }
 
-        return CommandOutcome::success();
+        $masks = [];
+        foreach ($view->bans as $mask) {
+            if ($this->banMaskMatcher->matches($mask, $target->nick, $target->ident, $target->hostname)) {
+                $masks[] = $mask;
+            }
+        }
+
+        if ([] === $masks) {
+            $context->reply('unban.no_bans', ['%target%' => $target->nick]);
+
+            return CommandOutcome::rejected();
+        }
+
+        return $this->applyUnban($context, $channelName, $masks, $target->nick, $result->channelCreationTimestamp);
     }
 
-    private function resolveMask(ChanServContext $context, string $senderMask): ?string
+    private function resolveTarget(ChanServContext $context, string $argument, SenderView $sender): ?SenderView
     {
-        $argument = $context->args[1] ?? '';
         if ('' === $argument) {
-            return $senderMask;
-        }
-        if (str_contains($argument, '!') || str_contains($argument, '@')) {
-            return $argument;
+            return $sender;
         }
 
         $target = $context->getUserLookup()->findByNick($argument);
@@ -146,6 +170,17 @@ final readonly class UnbanCommand implements ChanServCommandInterface
             return null;
         }
 
-        return $target->toUserMask();
+        return $target;
+    }
+
+    /** @param list<string> $masks */
+    private function applyUnban(ChanServContext $context, string $channelName, array $masks, string $target, int $timestamp): CommandOutcome
+    {
+        foreach ($masks as $mask) {
+            $context->getNotifier()->setChannelModes($channelName, '-b', [$mask], $timestamp);
+        }
+        $context->reply('unban.done', ['%count%' => (string) count($masks), '%target%' => $target]);
+
+        return CommandOutcome::success();
     }
 }

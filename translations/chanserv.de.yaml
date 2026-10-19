@@ -272,10 +272,11 @@ invite:
 
 unban:
   syntax:           "UNBAN <#channel> [Maske|Nickname]"
-  short:            "Einen Bann vom Channel entfernen."
-  help:             "Entfernt einen Bann vom Channel. Sie können eine wörtliche Maske (zum Beispiel *!*@bad.host), den Nicknamen eines verbundenen Benutzers für dessen aktuelle Maske oder ohne Argument Ihre eigene Maske angeben. Sie benötigen die Channel-Stufe UNBAN."
+  short:            "Entfernt alle Bans, die einen Benutzer betreffen."
+  help:             "Entfernt alle Bans des Channels, die den angegebenen Benutzer betreffen, wobei Nickname, Ident und Host verglichen werden. Ohne Argument werden die Bans entfernt, die Sie betreffen, und eine wörtliche Maske entfernt genau diesen Eintrag. Sie benötigen die Channel-Stufe UNBAN."
   example:          "/msg %bot% UNBAN #channel *!*@bad.host"
-  done:             "\x0303✔\x03 Der Bann \x02%mask%\x02 wurde entfernt."
+  done:             "\x0303✔\x03 %count% Ban(s) für \x02%target%\x02 wurden entfernt."
+  no_bans:          "\x0307ℹ\x03 Kein Ban betrifft \x02%target%\x02."
   user_not_found:   "\x0304✗\x03 Nickname \x02%nick%\x02 ist nicht mit dem Netzwerk verbunden."
 
 admin:

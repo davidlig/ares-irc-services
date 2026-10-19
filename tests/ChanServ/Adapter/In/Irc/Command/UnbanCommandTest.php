@@ -20,8 +20,10 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
+use App\ChanServ\Domain\Policy\BanMaskMatcher;
 use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
@@ -36,14 +38,16 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(UnbanUser::class)]
 #[CoversClass(UnbanUserHandler::class)]
 #[CoversClass(UnbanUserResult::class)]
+#[CoversClass(BanMaskMatcher::class)]
 final class UnbanCommandTest extends TestCase
 {
     #[Test]
-    public function literalMaskIsAppliedAndSuccessIsReported(): void
+    public function literalMaskRemovesExactlyThatEntry(): void
     {
         $messages = [];
         $modes = [];
-        $cmd = $this->createCommand($this->createChannelRepository());
+        $view = new ChannelView('#test', '+nt', null, 1, [], 0, [], ['*!*@bad.host', 'User!ident@*']);
+        $cmd = $this->createCommand($this->createChannelRepository(), $this->createChannelLookup($view));
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'ident', 'host', 'cloaked', 'ip'),
             new ChanAccountView(2, 'User', 'en'),
@@ -60,7 +64,111 @@ final class UnbanCommandTest extends TestCase
     }
 
     #[Test]
-    public function nicknameArgumentIsResolvedToTheConnectedUsersMask(): void
+    public function nicknameArgumentRemovesEveryMatchingBan(): void
+    {
+        $messages = [];
+        $modes = [];
+        $lookup = $this->createStub(NetworkUserLookupPort::class);
+        $lookup->method('findByNick')->willReturn(new SenderView('UID2', 'Target', 'tident', 'thost', 'tcloaked', 'ip'));
+        $view = new ChannelView('#test', '+nt', null, 1, [], 0, [], ['*!tident@*', '*!*@thost', '*!*@elsewhere']);
+        $cmd = $this->createCommand($this->createChannelRepository(), $this->createChannelLookup($view));
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'ident', 'host', 'cloaked', 'ip'),
+            new ChanAccountView(2, 'User', 'en'),
+            ['#test', 'Target'],
+            $this->createNotifier($messages, $modes),
+            $this->createTranslator(),
+            $lookup,
+        );
+
+        $outcome = $cmd->execute($context);
+
+        self::assertTrue($outcome->success);
+        self::assertSame(['unban.done'], $messages);
+        self::assertSame([
+            ['#test', '-b', ['*!tident@*'], 1700000000],
+            ['#test', '-b', ['*!*@thost'], 1700000000],
+        ], $modes);
+    }
+
+    #[Test]
+    public function omittedArgumentRemovesEveryBanMatchingTheSender(): void
+    {
+        $messages = [];
+        $modes = [];
+        $view = new ChannelView('#test', '+nt', null, 1, [], 0, [], ['*!ident@*', 'User!*@*', '*!*@other.host', '*!*@host']);
+        $cmd = $this->createCommand($this->createChannelRepository(), $this->createChannelLookup($view));
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'ident', 'host', 'cloaked', 'ip'),
+            new ChanAccountView(2, 'User', 'en'),
+            ['#test'],
+            $this->createNotifier($messages, $modes),
+            $this->createTranslator(),
+        );
+
+        $outcome = $cmd->execute($context);
+
+        self::assertTrue($outcome->success);
+        self::assertSame([
+            ['#test', '-b', ['*!ident@*'], 1700000000],
+            ['#test', '-b', ['User!*@*'], 1700000000],
+            ['#test', '-b', ['*!*@host'], 1700000000],
+        ], $modes);
+    }
+
+    #[Test]
+    public function doneReplyCarriesTheRemovedCountAndTarget(): void
+    {
+        $messages = [];
+        $modes = [];
+        $params = [];
+        $view = new ChannelView('#test', '+nt', null, 1, [], 0, [], ['*!ident@*', 'User!*@*']);
+        $cmd = $this->createCommand($this->createChannelRepository(), $this->createChannelLookup($view));
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$messages, &$params): string {
+            $messages[] = $id;
+            $params[$id] = $parameters;
+
+            return $id;
+        });
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'ident', 'host', 'cloaked', 'ip'),
+            new ChanAccountView(2, 'User', 'en'),
+            ['#test'],
+            $this->createNotifier($messages, $modes),
+            $translator,
+        );
+
+        $cmd->execute($context);
+
+        self::assertSame('2', $params['unban.done']['%count%']);
+        self::assertSame('User', $params['unban.done']['%target%']);
+    }
+
+    #[Test]
+    public function noMatchingBansRepliesNoBansAndAppliesNoMode(): void
+    {
+        $messages = [];
+        $modes = [];
+        $view = new ChannelView('#test', '+nt', null, 1, [], 0, [], ['*!*@other.host']);
+        $cmd = $this->createCommand($this->createChannelRepository(), $this->createChannelLookup($view));
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'ident', 'host', 'cloaked', 'ip'),
+            new ChanAccountView(2, 'User', 'en'),
+            ['#test'],
+            $this->createNotifier($messages, $modes),
+            $this->createTranslator(),
+        );
+
+        $outcome = $cmd->execute($context);
+
+        self::assertFalse($outcome->success);
+        self::assertSame(['unban.no_bans'], $messages);
+        self::assertSame([], $modes);
+    }
+
+    #[Test]
+    public function missingChannelViewFallsBackToTheExactTargetMask(): void
     {
         $messages = [];
         $modes = [];
@@ -79,11 +187,12 @@ final class UnbanCommandTest extends TestCase
         $outcome = $cmd->execute($context);
 
         self::assertTrue($outcome->success);
+        self::assertSame(['unban.done'], $messages);
         self::assertSame([['#test', '-b', ['Target!tident@thost'], 1700000000]], $modes);
     }
 
     #[Test]
-    public function omittedArgumentUsesTheSendersOwnMask(): void
+    public function missingChannelViewFallsBackToTheSendersMask(): void
     {
         $messages = [];
         $modes = [];
@@ -240,10 +349,14 @@ final class UnbanCommandTest extends TestCase
         $channel->method('isFounder')->willReturn(false);
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
-        $cmd = new UnbanCommand(new UnbanUserHandler(
-            $channels,
-            new ChanServAccessHelper($accessRepository, $levelRepository),
-        ));
+        $cmd = new UnbanCommand(
+            new UnbanUserHandler(
+                $channels,
+                new ChanServAccessHelper($accessRepository, $levelRepository),
+            ),
+            $this->createStub(ChannelLookupPort::class),
+            new BanMaskMatcher(),
+        );
 
         $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(
@@ -339,8 +452,10 @@ final class UnbanCommandTest extends TestCase
         self::assertTrue($this->createCommand($this->createStub(RegisteredChannelRepositoryInterface::class))->usesLevelFounder());
     }
 
-    private function createCommand(RegisteredChannelRepositoryInterface $channels): UnbanCommand
-    {
+    private function createCommand(
+        RegisteredChannelRepositoryInterface $channels,
+        ?ChannelLookupPort $channelLookup = null,
+    ): UnbanCommand {
         $levelRepository = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepository->method('findByChannelAndKey')->willReturn(null);
         $access = $this->createStub(ChannelAccess::class);
@@ -348,10 +463,14 @@ final class UnbanCommandTest extends TestCase
         $accessRepository = $this->createStub(ChannelAccessRepositoryInterface::class);
         $accessRepository->method('findByChannelAndNick')->willReturn($access);
 
-        return new UnbanCommand(new UnbanUserHandler(
-            $channels,
-            new ChanServAccessHelper($accessRepository, $levelRepository),
-        ));
+        return new UnbanCommand(
+            new UnbanUserHandler(
+                $channels,
+                new ChanServAccessHelper($accessRepository, $levelRepository),
+            ),
+            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
+            new BanMaskMatcher(),
+        );
     }
 
     private function createChannelRepository(): RegisteredChannelRepositoryInterface
@@ -364,6 +483,14 @@ final class UnbanCommandTest extends TestCase
         $channels->method('findByChannelName')->willReturn($channel);
 
         return $channels;
+    }
+
+    private function createChannelLookup(ChannelView $view): ChannelLookupPort
+    {
+        $lookup = $this->createStub(ChannelLookupPort::class);
+        $lookup->method('findByChannelName')->willReturn($view);
+
+        return $lookup;
     }
 
     /**

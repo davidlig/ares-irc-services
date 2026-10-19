@@ -50,6 +50,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
         $channel = new Channel($name, '+nt', $createdAt);
         $channel->syncMember(new Uid('001ABC'), ChannelMemberRole::Op);
         $channel->updateTopic('Hello world');
+        $channel->addBan('*!*@bad.host');
         $repo = $this->createMock(ChannelRepositoryInterface::class);
         $repo->expects(self::atLeastOnce())->method('findByName')->with(self::callback(static fn (ChannelName $n) => '#test' === $n->value))->willReturn($channel);
         $adapter = new CoreChannelLookupAdapter($repo);
@@ -62,6 +63,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
         self::assertSame('Hello world', $view->topic);
         self::assertSame(1, $view->memberCount);
         self::assertSame($createdAt->getTimestamp(), $view->timestamp);
+        self::assertSame(['*!*@bad.host'], $view->bans);
         self::assertCount(1, $view->members);
         self::assertSame('001ABC', $view->members[0]['uid']);
         self::assertSame('o', $view->members[0]['roleLetter']);
@@ -113,6 +115,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
         $createdAt2 = new DateTimeImmutable('2020-01-02 12:00:00');
         $channel1 = new Channel(new ChannelName('#test'), '+nt', $createdAt1);
         $channel1->syncMember(new Uid('001ABC'), ChannelMemberRole::Op);
+        $channel1->addBan('*!*@bad.host');
         $channel2 = new Channel(new ChannelName('#other'), '+n', $createdAt2);
 
         $repo = $this->createMock(ChannelRepositoryInterface::class);
@@ -125,9 +128,11 @@ final class CoreChannelLookupAdapterTest extends TestCase
         self::assertSame('#test', $views[0]->name);
         self::assertSame('+nt', $views[0]->modes);
         self::assertSame(1, $views[0]->memberCount);
+        self::assertSame(['*!*@bad.host'], $views[0]->bans);
         self::assertSame('#other', $views[1]->name);
         self::assertSame('+n', $views[1]->modes);
         self::assertSame(0, $views[1]->memberCount);
+        self::assertSame([], $views[1]->bans);
     }
 
     #[Test]

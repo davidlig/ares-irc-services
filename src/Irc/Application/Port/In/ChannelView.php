@@ -18,6 +18,7 @@ final readonly class ChannelView
      * @param MemberEntry[]        $members    uid, roleLetter (highest), and optional prefixLetters (actual set from SJOIN)
      * @param int                  $timestamp  Unix timestamp of channel creation (for SJOIN when adding service to existing channel)
      * @param array<string,string> $modeParams Mode letter => param value (e.g. k => password, L => #channel) for MLOCK -k/-L
+     * @param list<string>         $bans       Ban masks (+b) currently set on the channel
      */
     public function __construct(
         public string $name,
@@ -27,6 +28,8 @@ final readonly class ChannelView
         public array $members = [],
         public int $timestamp = 0,
         public array $modeParams = [],
+        /** @var list<string> */
+        public array $bans = [],
     ) {}
 
     public function getModeParam(string $letter): ?string

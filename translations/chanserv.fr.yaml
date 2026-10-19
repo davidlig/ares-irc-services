@@ -272,10 +272,11 @@ invite:
 
 unban:
   syntax:           "UNBAN <#canal> [masque|surnom]"
-  short:            "Retirer un bannissement du canal."
-  help:             "Retire un bannissement du canal. Vous pouvez indiquer un masque littéral (par exemple *!*@bad.host), le surnom d'un utilisateur connecté pour utiliser son masque actuel, ou omettre l'argument pour retirer votre propre masque. Vous avez besoin du niveau UNBAN du canal."
+  short:            "Retire les bannissements qui touchent un utilisateur."
+  help:             "Retire tous les bannissements du canal qui touchent l'utilisateur indiqué, en comparant le surnom, l'ident et l'hôte. Sans argument, retire les bannissements qui vous touchent, et un masque littéral retire exactement cette entrée. Vous avez besoin du niveau UNBAN du canal."
   example:          "/msg %bot% UNBAN #canal *!*@bad.host"
-  done:             "\x0303✔\x03 Le bannissement \x02%mask%\x02 a été retiré."
+  done:             "\x0303✔\x03 %count% bannissement(s) touchant \x02%target%\x02 ont été retirés."
+  no_bans:          "\x0307ℹ\x03 Aucun bannissement ne touche \x02%target%\x02."
   user_not_found:   "\x0304✗\x03 Le surnom \x02%nick%\x02 n'est pas connecté au réseau."
 
 admin:

@@ -272,10 +272,11 @@ invite:
 
 unban:
   syntax:           "UNBAN <#canal> [mască|poreclă]"
-  short:            "Elimină un ban de pe canal."
-  help:             "Elimină un ban de pe canal. Poți indica o mască literală (de exemplu *!*@bad.host), porecla unui utilizator conectat pentru a folosi masca sa actuală, sau omite argumentul pentru a elimina propria mască. Ai nevoie de nivelul UNBAN al canalului."
+  short:            "Elimină banurile care afectează un utilizator."
+  help:             "Elimină toate banurile canalului care afectează utilizatorul indicat, comparând porecla, ident și host. Fără argument elimină banurile care te afectează, iar o mască literală elimină exact acea intrare. Ai nevoie de nivelul UNBAN al canalului."
   example:          "/msg %bot% UNBAN #canal *!*@bad.host"
-  done:             "\x0303✔\x03 Banul \x02%mask%\x02 a fost eliminat."
+  done:             "\x0303✔\x03 Au fost eliminate %count% ban(uri) care afectau \x02%target%\x02."
+  no_bans:          "\x0307ℹ\x03 Niciun ban nu afectează \x02%target%\x02."
   user_not_found:   "\x0304✗\x03 Porecla \x02%nick%\x02 nu este conectată la rețea."
 
 admin:

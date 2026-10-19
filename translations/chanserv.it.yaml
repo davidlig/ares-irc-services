@@ -272,10 +272,11 @@ invite:
 
 unban:
   syntax:           "UNBAN <#canale> [maschera|nickname]"
-  short:            "Rimuove un ban dal canale."
-  help:             "Rimuove un ban dal canale. Puoi indicare una maschera letterale (ad esempio *!*@bad.host), il nickname di un utente connesso per usare la sua maschera attuale, oppure omettere l'argomento per rimuovere la tua maschera. Serve il livello UNBAN del canale."
+  short:            "Rimuove i ban che colpiscono un utente."
+  help:             "Rimuove tutti i ban del canale che colpiscono l'utente indicato, confrontando nickname, ident e host. Senza argomento rimuove i ban che ti colpiscono, e una maschera letterale rimuove esattamente quella voce. Serve il livello UNBAN del canale."
   example:          "/msg %bot% UNBAN #canale *!*@bad.host"
-  done:             "\x0303✔\x03 Il ban \x02%mask%\x02 è stato rimosso."
+  done:             "\x0303✔\x03 Rimossi %count% ban che colpivano \x02%target%\x02."
+  no_bans:          "\x0307ℹ\x03 Nessun ban colpisce \x02%target%\x02."
   user_not_found:   "\x0304✗\x03 Il nickname \x02%nick%\x02 non è connesso alla rete."
 
 admin:

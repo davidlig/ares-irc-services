@@ -272,10 +272,11 @@ invite:
 
 unban:
   syntax:           "UNBAN <#canle> [máscara|alcume]"
-  short:            "Retirar un bloqueo da canle."
-  help:             "Retira un bloqueo da canle. Podes indicar unha máscara literal (por exemplo *!*@bad.host), o alcume dun usuario conectado para usar a súa máscara actual, ou omitir o argumento para retirar a túa propia máscara. Necesitas o nivel UNBAN da canle."
+  short:            "Retira os bloqueos que afectan a un usuario."
+  help:             "Retira todos os bloqueos da canle que afectan o usuario indicado, comparando alcume, ident e host. Sen argumento retira os bloqueos que te afectan, e unha máscara literal retira exactamente esa entrada. Necesitas o nivel UNBAN da canle."
   example:          "/msg %bot% UNBAN #canle *!*@bad.host"
-  done:             "\x0303✔\x03 Retirouse o bloqueo \x02%mask%\x02."
+  done:             "\x0303✔\x03 Retiráronse %count% bloqueo(s) que afectaban a \x02%target%\x02."
+  no_bans:          "\x0307ℹ\x03 Ningún bloqueo afecta a \x02%target%\x02."
   user_not_found:   "\x0304✗\x03 O alcume \x02%nick%\x02 non está conectado á rede."
 
 admin:

@@ -11,6 +11,8 @@ use App\Irc\Domain\Repository\ChannelRepositoryInterface;
 use App\Irc\Domain\ValueObject\ChannelName;
 use InvalidArgumentException;
 
+use function array_values;
+
 /**
  * Core implements ChannelLookupPort: resolves a channel by name and returns
  * a ChannelView DTO for Services. No Domain\IRC entities leak to Services.
@@ -52,6 +54,7 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
             members: $members,
             timestamp: $channel->getCreatedAt()->getTimestamp(),
             modeParams: $channel->getModeParams(),
+            bans: array_values($channel->getBans()),
         );
     }
 
@@ -80,6 +83,7 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
                 members: $members,
                 timestamp: $channel->getCreatedAt()->getTimestamp(),
                 modeParams: $channel->getModeParams(),
+                bans: array_values($channel->getBans()),
             );
         }
 

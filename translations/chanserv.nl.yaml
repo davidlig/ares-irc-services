@@ -272,10 +272,11 @@ invite:
 
 unban:
   syntax:           "UNBAN <#kanaal> [masker|bijnaam]"
-  short:            "Een ban van het kanaal verwijderen."
-  help:             "Verwijdert een ban van het kanaal. Je kunt een letterlijk masker opgeven (bijvoorbeeld *!*@bad.host), de bijnaam van een verbonden gebruiker om diens huidige masker te gebruiken, of het argument weglaten om je eigen masker te verwijderen. Je hebt het UNBAN-kanaalniveau nodig."
+  short:            "Verwijdert de bans die een gebruiker treffen."
+  help:             "Verwijdert alle bans van het kanaal die de opgegeven gebruiker treffen, waarbij bijnaam, ident en host worden vergeleken. Zonder argument worden de bans verwijderd die jou treffen, en een letterlijk masker verwijdert precies die vermelding. Je hebt het UNBAN-kanaalniveau nodig."
   example:          "/msg %bot% UNBAN #kanaal *!*@bad.host"
-  done:             "\x0303✔\x03 De ban \x02%mask%\x02 is verwijderd."
+  done:             "\x0303✔\x03 %count% ban(s) die \x02%target%\x02 troffen, zijn verwijderd."
+  no_bans:          "\x0307ℹ\x03 Geen enkele ban treft \x02%target%\x02."
   user_not_found:   "\x0304✗\x03 Bijnaam \x02%nick%\x02 is niet met het netwerk verbonden."
 
 admin:

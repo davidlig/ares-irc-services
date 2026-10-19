@@ -272,10 +272,11 @@ invite:
 
 unban:
   syntax:           "UNBAN <#kanala> [maskara|ezizena]"
-  short:            "Kanalaren blokeo bat kendu."
-  help:             "Kanalean blokeo bat kentzen du. Maskara literala (adibidez *!*@bad.host), konektatutako erabiltzaile baten ezizena haren uneko maskara erabiltzeko, edo argumentua ez ematea zeure maskara kentzeko. Kanaleko UNBAN maila behar duzu."
+  short:            "Erabiltzaile bat ukitzen duten blokeoak kentzen ditu."
+  help:             "Kanaleko emandako erabiltzaileari eragiten dioten blokeo guztiak kentzen ditu, ezizena, ident-a eta host-a alderatuz. Argumenturik gabe zuri eragiten dizkizuten blokeoak kentzen ditu, eta maskara literal batek sarrera hori bakarrik kentzen du. Kanaleko UNBAN maila behar duzu."
   example:          "/msg %bot% UNBAN #kanala *!*@bad.host"
-  done:             "\x0303✔\x03 \x02%mask%\x02 blokeoa kendu da."
+  done:             "\x0303✔\x03 \x02%target%\x02 erabiltzaileari eragiten zioten %count% blokeo kendu dira."
+  no_bans:          "\x0307ℹ\x03 Blokeoek ez diote \x02%target%\x02 erabiltzaileari eragiten."
   user_not_found:   "\x0304✗\x03 \x02%nick%\x02 ezizena ez dago sarearekin konektatuta."
 
 admin:
