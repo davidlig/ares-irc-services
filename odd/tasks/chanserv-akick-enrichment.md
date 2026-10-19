@@ -38,10 +38,16 @@ the end via `./scripts/check-coverage.sh 100 --issues`).
 
 ## Tasks
 
-- [ ] T1 — Phase 1, no schema change: `SET`, `CLEAR` with the new `AKICKCHANGE` level, `COUNT`,
-      `CHECK` and `ENFORCE`, with their strings in the 14 locales and their tests.
-- [ ] T2 — Phase 2, with migration: `uses` and `last_used_at`, the increment on enforcement, `VIEW`
-      and `LASTUSE`, with their strings in the 14 locales and their tests.
+- [x] T1 — Phase 1, no schema change: `SET`, `CLEAR` with the new `AKICKCHANGE` level, `COUNT`,
+      `CHECK` and `ENFORCE`, with their strings in the 14 locales and their tests. DONE in
+      `43318381` (29 files, +1828/−53). `CLEAR` requires `AKICK` **and** `AKICKCHANGE` (499), so the
+      plain `AKICK` level can never reach it; `ENFORCE` reuses the existing enforcement use case
+      against the channel's live members.
+- [x] T2 — Phase 2, with migration: `uses` and `last_used_at`, the increment on enforcement, `VIEW`
+      and `LASTUSE`, with their strings in the 14 locales and their tests. DONE: migration
+      `Version20261020000001` adds the two columns reversibly; the enforcement stamps the entry that
+      caught a member through a small `AkickUseRecorder`; `VIEW` shows mask, reason, author, creation,
+      expiry, uses and last use, and `LASTUSE` orders by last use with the never-used entries last.
 - [ ] T3 — Delivery: commits, push, issue + PR.
 
 ## Log

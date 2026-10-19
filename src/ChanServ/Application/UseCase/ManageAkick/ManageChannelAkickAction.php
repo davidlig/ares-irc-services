@@ -14,5 +14,7 @@ enum ManageChannelAkickAction
     case Count;
     case Check;
     case Enforce;
+    case View;
+    case LastUse;
     case Unknown;
 }

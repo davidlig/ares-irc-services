@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 a été déhalfopé."
 
 akick:
-  syntax:           "AKICK <#canal> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [masque] [expiration] [raison]"
+  syntax:           "AKICK <#canal> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [masque] [expiration] [raison]"
   short:            "Gérer la liste d'auto-kick."
-  help:             "Gère la liste d'auto-kick d'un canal : les entrées qui bannissent et expulsent l'utilisateur correspondant à la connexion, la raison qui les explique, le surnom qui les a ajoutées et le moment où elles expirent. Elle permet aussi de changer la raison d'une entrée sans perdre son auteur, de vider toute la liste, de compter les entrées, de dire quelles entrées attraperaient un utilisateur connecté et d'appliquer la liste aux membres connectés à l'instant présent. Vider la liste est l'opération destructive et demande le niveau de canal AKICKCHANGE en plus du niveau AKICK."
-  unknown_sub:      "\x0304✗\x03 Sous-commande inconnue \x02%sub%\x02. Utilisez ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK ou ENFORCE."
+  help:             "Gère la liste d'auto-kick d'un canal : les entrées qui bannissent et expulsent l'utilisateur correspondant à la connexion, la raison qui les explique, le surnom qui les a ajoutées et le moment où elles expirent. Elle permet aussi de changer la raison d'une entrée sans perdre son auteur, de vider toute la liste, de compter les entrées, de dire quelles entrées attraperaient un utilisateur connecté et d'appliquer la liste aux membres connectés à l'instant présent. Vider la liste est l'opération destructive et demande le niveau de canal AKICKCHANGE en plus du niveau AKICK. Les entrées peuvent aussi être inspectées une par une, avec leur moment de création, le nombre de membres qu'elles ont attrapés et la dernière fois qu'elles ont été appliquées."
+  unknown_sub:      "\x0304✗\x03 Sous-commande inconnue \x02%sub%\x02. Utilisez ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW ou LASTUSE."
   invalid_mask:     "\x0304✗\x03 Format de masque invalide. Utilisez \x02surnom!ident@hôte\x02 avec des jokers (*)."
   dangerous_mask:   "\x0304✗\x03 Le masque \x02%mask%\x02 est trop large. Il doit contenir au moins 4 caractères alphanumériques."
   protected_user:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 a un accès dans ce canal."
@@ -378,6 +378,24 @@ akick:
     help:           "Applique la liste aux membres connectés au canal à l'instant présent : chaque membre attrapé par une entrée est banni et expulsé. Elle indique combien de membres ont été expulsés."
     example:        "/msg %bot% AKICK #canal ENFORCE"
     done:           "\x0303✔\x03 Membres expulsés de \x02%channel%\x02 par la liste AKICK : %count%."
+  view:
+    syntax:         "AKICK <#canal> VIEW"
+    short:          "Afficher le détail de chaque entrée AKICK."
+    help:           "Affiche le détail de chaque entrée de la liste : le masque, la raison, le surnom qui l'a ajoutée, le moment de sa création, son expiration, le nombre de membres qu'elle a attrapés et la dernière fois qu'elle a été appliquée."
+    example:        "/msg %bot% AKICK #canal VIEW"
+    header:         "\x0303Entrées AKICK de \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (par %nickname%, créée : %created%, expire : %expiration%, utilisations : %uses%, dernière utilisation : %lastuse%)"
+    empty:          "\x0307ℹ\x03 Le canal \x02%channel%\x02 n'a aucune entrée AKICK."
+    never_used:     "jamais"
+  lastuse:
+    syntax:         "AKICK <#canal> LASTUSE"
+    short:          "Afficher les entrées AKICK triées par dernière utilisation."
+    help:           "Affiche les entrées de la liste triées par leur dernière utilisation, la plus récente en premier. Les entrées qui n'ont jamais attrapé de membre viennent en dernier."
+    example:        "/msg %bot% AKICK #canal LASTUSE"
+    header:         "\x0303Entrées AKICK de \x02%channel%\x02 par dernière utilisation\x03"
+    entry:          "  #%index% %mask% %reason% (par %nickname%, créée : %created%, expire : %expiration%, utilisations : %uses%, dernière utilisation : %lastuse%)"
+    empty:          "\x0307ℹ\x03 Le canal \x02%channel%\x02 n'a aucune entrée AKICK."
+    never_used:     "jamais"
 
 restore:
   syntax:           "RESTORE <#canal>"

@@ -27,4 +27,8 @@ enum ManageChannelAkickOutcome
     case Checked;
     case NicknameNotConnected;
     case Enforced;
+    case ViewEmpty;
+    case Viewed;
+    case LastUseEmpty;
+    case LastUsed;
 }

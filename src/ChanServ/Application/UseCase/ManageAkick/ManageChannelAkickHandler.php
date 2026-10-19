@@ -13,6 +13,7 @@ use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelAkickChangedEvent;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
+use App\ChanServ\Application\UseCase\EnforceAkick\AkickUseRecorder;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandlerInterface;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\ChannelLevel;
@@ -27,10 +28,16 @@ use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
+use function array_values;
 use function strlen;
+
+use const PHP_INT_MIN;
 
 final readonly class ManageChannelAkickHandler implements ManageChannelAkickHandlerInterface
 {
+    /** Sort key of an entry that was never applied: it always comes last. */
+    private const int NEVER_USED = PHP_INT_MIN;
+
     public function __construct(
         private RegisteredChannelRepositoryInterface $channels,
         private ChannelAkickRepositoryInterface $akicks,
@@ -44,6 +51,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         private AkickActions $actions,
         private ChanServEventPublisher $events,
         private EnforceChannelAkickHandlerInterface $enforcer,
+        private AkickUseRecorder $uses,
     ) {}
 
     public function handle(ManageChannelAkick $command): ManageChannelAkickResult
@@ -70,6 +78,8 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             ManageChannelAkickAction::Count => $this->count($channel, $command, $command->actorNickId),
             ManageChannelAkickAction::Check => $this->check($channel, $command, $command->actorNickId),
             ManageChannelAkickAction::Enforce => $this->enforce($channel, $command, $command->actorNickId),
+            ManageChannelAkickAction::View => $this->view($channel, $command, $command->actorNickId),
+            ManageChannelAkickAction::LastUse => $this->lastUse($channel, $command, $command->actorNickId),
             ManageChannelAkickAction::Unknown => new ManageChannelAkickResult(ManageChannelAkickOutcome::UnknownAction),
         };
     }
@@ -78,27 +88,44 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
     {
         $this->authorize($channel, $command, $actorNickId, 'AKICK LIST', ChannelLevel::KEY_AKICK);
 
-        $stored = $this->akicks->listByChannel($channel->getId());
+        $stored = array_values($this->akicks->listByChannel($channel->getId()));
         if ([] === $stored) {
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::ListEmpty);
         }
 
-        $entries = [];
-        foreach ($stored as $akick) {
-            $creatorId = $akick->getCreatorNickId();
-            $entries[] = new ChannelAkickEntryView(
-                $akick->getMask(),
-                $akick->getReason(),
-                null === $creatorId ? null : $this->accounts->findNicknameById($creatorId),
-                $akick->getExpiresAt(),
-            );
-        }
+        $entries = $this->entriesOf($stored);
 
         if ($this->network->synchronizationComplete()) {
             $this->enforceRules($channel->getName(), array_values($this->akicks->listByChannel($channel->getId())), $command->now);
         }
 
         return new ManageChannelAkickResult(ManageChannelAkickOutcome::Listed, $entries);
+    }
+
+    private function view(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId): ManageChannelAkickResult
+    {
+        $this->authorize($channel, $command, $actorNickId, 'AKICK VIEW', ChannelLevel::KEY_AKICK);
+
+        $entries = $this->entriesOf(array_values($this->akicks->listByChannel($channel->getId())));
+        if ([] === $entries) {
+            return new ManageChannelAkickResult(ManageChannelAkickOutcome::ViewEmpty);
+        }
+
+        return new ManageChannelAkickResult(ManageChannelAkickOutcome::Viewed, $entries);
+    }
+
+    private function lastUse(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId): ManageChannelAkickResult
+    {
+        $this->authorize($channel, $command, $actorNickId, 'AKICK LASTUSE', ChannelLevel::KEY_AKICK);
+
+        $entries = $this->entriesOf(array_values($this->akicks->listByChannel($channel->getId())));
+        if ([] === $entries) {
+            return new ManageChannelAkickResult(ManageChannelAkickOutcome::LastUseEmpty);
+        }
+
+        usort($entries, self::compareByLastUse(...));
+
+        return new ManageChannelAkickResult(ManageChannelAkickOutcome::LastUsed, $entries);
     }
 
     private function add(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId, string $performedBy): ManageChannelAkickResult
@@ -279,6 +306,9 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
                 $akick->getReason(),
                 null === $creatorId ? null : $this->accounts->findNicknameById($creatorId),
                 $akick->getExpiresAt(),
+                $akick->getCreatedAt(),
+                $akick->getUses(),
+                $akick->getLastUsedAt(),
             );
         }
 
@@ -351,6 +381,41 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         return $this->akicks->listByChannel($channelId)[$number - 1] ?? null;
     }
 
+    /**
+     * Builds the presentation view of the given entries.
+     *
+     * @param list<ChannelAkick> $akicks
+     *
+     * @return list<ChannelAkickEntryView>
+     */
+    private function entriesOf(array $akicks): array
+    {
+        $entries = [];
+        foreach ($akicks as $akick) {
+            $creatorId = $akick->getCreatorNickId();
+            $entries[] = new ChannelAkickEntryView(
+                $akick->getMask(),
+                $akick->getReason(),
+                null === $creatorId ? null : $this->accounts->findNicknameById($creatorId),
+                $akick->getExpiresAt(),
+                $akick->getCreatedAt(),
+                $akick->getUses(),
+                $akick->getLastUsedAt(),
+            );
+        }
+
+        return $entries;
+    }
+
+    /** Most recent use first; the entries that were never used come last. */
+    private static function compareByLastUse(ChannelAkickEntryView $left, ChannelAkickEntryView $right): int
+    {
+        $leftUse = $left->lastUsedAt?->getTimestamp() ?? self::NEVER_USED;
+        $rightUse = $right->lastUsedAt?->getTimestamp() ?? self::NEVER_USED;
+
+        return $rightUse <=> $leftUse;
+    }
+
     /** @param list<ChannelAkick> $akicks */
     private function enforceRules(string $channelName, array $akicks, DateTimeImmutable $now): void
     {
@@ -380,6 +445,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
                 $matching->mask->value,
                 $matching->enforcementReason(),
             );
+            $this->uses->record($akicks, $rules, $matching, $now);
         }
     }
 }

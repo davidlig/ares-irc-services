@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 stracił halfop."
 
 akick:
-  syntax:           "AKICK <#kanał> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [maska] [wygaśnięcie] [powód]"
+  syntax:           "AKICK <#kanał> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [maska] [wygaśnięcie] [powód]"
   short:            "Zarządzaj listą auto-kick."
-  help:             "Zarządza listą auto-kick kanału: wpisami, które banują i wyrzucają pasującego użytkownika przy połączeniu, powodem, który je wyjaśnia, nickiem, który je dodał, i momentem ich wygaśnięcia. Może też zmienić powód istniejącego wpisu bez utraty jego autora, wyczyścić całą listę, policzyć wpisy, pokazać, które wpisy złapałyby podłączonego użytkownika, i zastosować listę do członków podłączonych w tej chwili. Wyczyszczenie listy to operacja niszcząca i wymaga poziomu kanału AKICKCHANGE oprócz poziomu AKICK."
-  unknown_sub:      "\x0304✗\x03 Nieznana podkomenda \x02%sub%\x02. Użyj ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK lub ENFORCE."
+  help:             "Zarządza listą auto-kick kanału: wpisami, które banują i wyrzucają pasującego użytkownika przy połączeniu, powodem, który je wyjaśnia, nickiem, który je dodał, i momentem ich wygaśnięcia. Może też zmienić powód istniejącego wpisu bez utraty jego autora, wyczyścić całą listę, policzyć wpisy, pokazać, które wpisy złapałyby podłączonego użytkownika, i zastosować listę do członków podłączonych w tej chwili. Wyczyszczenie listy to operacja niszcząca i wymaga poziomu kanału AKICKCHANGE oprócz poziomu AKICK. Wpisy można też oglądać pojedynczo, wraz z momentem ich utworzenia, liczbą złapanych członków i tym, kiedy ostatnio zostały zastosowane."
+  unknown_sub:      "\x0304✗\x03 Nieznana podkomenda \x02%sub%\x02. Użyj ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW lub LASTUSE."
   invalid_mask:     "\x0304✗\x03 Nieprawidłowy format maski. Użyj \x02nick!ident@host\x02 z symbolami wieloznacznymi (*)."
   dangerous_mask:   "\x0304✗\x03 Maska \x02%mask%\x02 jest zbyt szeroka. Musi zawierać co najmniej 4 znaki alfanumeryczne."
   protected_user:   "\x0304✗\x03 Nick \x02%nickname%\x02 ma dostęp na tym kanale."
@@ -378,6 +378,24 @@ akick:
     help:           "Stosuje listę na członków podłączonych do kanału w tej chwili: każdy członek złapany przez wpis otrzymuje bana i wyrzucenie. Podaje, ilu członków zostało wyrzuconych."
     example:        "/msg %bot% AKICK #kanał ENFORCE"
     done:           "\x0303✔\x03 Członkowie wyrzuceni z \x02%channel%\x02 przez listę AKICK: %count%."
+  view:
+    syntax:         "AKICK <#kanał> VIEW"
+    short:          "Pokaż szczegóły każdego wpisu AKICK."
+    help:           "Pokazuje szczegóły każdego wpisu na liście: maskę, powód, nick, który go dodał, moment utworzenia, termin wygaśnięcia, liczbę złapanych członków i to, kiedy ostatnio został zastosowany."
+    example:        "/msg %bot% AKICK #kanał VIEW"
+    header:         "\x0303Wpisy AKICK kanału \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (od %nickname%, utworzony: %created%, wygasa: %expiration%, użycia: %uses%, ostatnie użycie: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Kanał \x02%channel%\x02 nie ma wpisów AKICK."
+    never_used:     "nigdy"
+  lastuse:
+    syntax:         "AKICK <#kanał> LASTUSE"
+    short:          "Pokaż wpisy AKICK uporządkowane według ostatniego użycia."
+    help:           "Pokazuje wpisy listy uporządkowane według ostatniego użycia, najpierw najnowszy. Wpisy, które nigdy nie złapały członka, są na końcu."
+    example:        "/msg %bot% AKICK #kanał LASTUSE"
+    header:         "\x0303Wpisy AKICK kanału \x02%channel%\x02 według ostatniego użycia\x03"
+    entry:          "  #%index% %mask% %reason% (od %nickname%, utworzony: %created%, wygasa: %expiration%, użycia: %uses%, ostatnie użycie: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Kanał \x02%channel%\x02 nie ma wpisów AKICK."
+    never_used:     "nigdy"
 
 restore:
   syntax:           "RESTORE <#kana>"

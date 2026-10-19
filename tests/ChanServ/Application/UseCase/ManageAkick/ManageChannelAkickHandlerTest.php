@@ -15,8 +15,10 @@ use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
+use App\ChanServ\Application\UseCase\EnforceAkick\AkickUseRecorder;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandler;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandlerInterface;
+use App\ChanServ\Application\UseCase\ManageAkick\ChannelAkickEntryView;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkick;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickAction;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickHandler;
@@ -343,6 +345,129 @@ final class ManageChannelAkickHandlerTest extends TestCase
     }
 
     #[Test]
+    public function viewReturnsTheEntriesWithTheirDetails(): void
+    {
+        $akick = ChannelAkick::create($this->now, 1, 7, '*!*@bad.host', 'Spammer');
+        $akick->recordUse($this->now);
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$akick]);
+
+        $accounts = $this->createStub(ChanUserAccountPort::class);
+        $accounts->method('findNicknameById')->willReturnMap([[7, 'Author']]);
+
+        $result = $this->handler($akicks, accounts: $accounts)->handle($this->command(ManageChannelAkickAction::View));
+
+        self::assertSame(ManageChannelAkickOutcome::Viewed, $result->outcome);
+        self::assertCount(1, $result->entries);
+        self::assertSame('*!*@bad.host', $result->entries[0]->mask);
+        self::assertSame('Spammer', $result->entries[0]->reason);
+        self::assertSame('Author', $result->entries[0]->creatorNickname);
+        self::assertSame($this->now, $result->entries[0]->createdAt);
+        self::assertSame(1, $result->entries[0]->uses);
+        self::assertSame($this->now, $result->entries[0]->lastUsedAt);
+    }
+
+    #[Test]
+    public function viewOnAnEmptyChannelReportsThatThereAreNoEntries(): void
+    {
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([]);
+
+        $result = $this->handler($akicks)->handle($this->command(ManageChannelAkickAction::View));
+
+        self::assertSame(ManageChannelAkickOutcome::ViewEmpty, $result->outcome);
+    }
+
+    #[Test]
+    public function viewKeepsTheEntryWhoseAuthorIsGoneWithoutANickname(): void
+    {
+        $akick = ChannelAkick::create($this->now, 1, 7, '*!*@bad.host', 'Spammer');
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$akick]);
+
+        $accounts = $this->createStub(ChanUserAccountPort::class);
+        $accounts->method('findNicknameById')->willReturn(null);
+
+        $result = $this->handler($akicks, accounts: $accounts)->handle($this->command(ManageChannelAkickAction::View));
+
+        self::assertSame(ManageChannelAkickOutcome::Viewed, $result->outcome);
+        self::assertNull($result->entries[0]->creatorNickname);
+    }
+
+    #[Test]
+    public function lastUseOrdersTheEntriesByTheirLastUseWithTheNeverUsedOnesLast(): void
+    {
+        $never = ChannelAkick::create($this->now, 1, 7, '*!*@never.host', 'Never');
+        $older = ChannelAkick::create($this->now, 1, 7, '*!*@older.host', 'Older');
+        $older->recordUse(new DateTimeImmutable('2026-10-20 09:00:00 UTC'));
+        $newer = ChannelAkick::create($this->now, 1, 7, '*!*@newer.host', 'Newer');
+        $newer->recordUse(new DateTimeImmutable('2026-10-20 11:00:00 UTC'));
+
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$never, $older, $newer]);
+
+        $result = $this->handler($akicks)->handle($this->command(ManageChannelAkickAction::LastUse));
+
+        self::assertSame(ManageChannelAkickOutcome::LastUsed, $result->outcome);
+        self::assertSame(
+            ['*!*@newer.host', '*!*@older.host', '*!*@never.host'],
+            array_map(static fn (ChannelAkickEntryView $entry): string => $entry->mask, $result->entries),
+        );
+        self::assertSame(0, $result->entries[2]->uses);
+        self::assertNull($result->entries[2]->lastUsedAt);
+    }
+
+    #[Test]
+    public function lastUseKeepsTheRelativeOrderOfTheEntriesThatWereNeverUsed(): void
+    {
+        $neverOne = ChannelAkick::create($this->now, 1, 7, '*!*@never-one.host');
+        $neverTwo = ChannelAkick::create($this->now, 1, 7, '*!*@never-two.host');
+        $used = ChannelAkick::create($this->now, 1, 7, '*!*@used.host');
+        $used->recordUse($this->now);
+
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$neverOne, $neverTwo, $used]);
+
+        $result = $this->handler($akicks)->handle($this->command(ManageChannelAkickAction::LastUse));
+
+        self::assertSame(ManageChannelAkickOutcome::LastUsed, $result->outcome);
+        self::assertSame(
+            ['*!*@used.host', '*!*@never-one.host', '*!*@never-two.host'],
+            array_map(static fn (ChannelAkickEntryView $entry): string => $entry->mask, $result->entries),
+        );
+    }
+
+    #[Test]
+    public function lastUseOnAnEmptyChannelReportsThatThereAreNoEntries(): void
+    {
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([]);
+
+        $result = $this->handler($akicks)->handle($this->command(ManageChannelAkickAction::LastUse));
+
+        self::assertSame(ManageChannelAkickOutcome::LastUseEmpty, $result->outcome);
+    }
+
+    #[Test]
+    public function theEnforcementOfTheListRecordsTheUseOfTheEntryThatCaughtAMember(): void
+    {
+        $akick = ChannelAkick::create($this->now, 1, 7, '*!*@bad.host', 'Spammer');
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$akick]);
+
+        $members = [new ChannelEntryMember('UID2', 'BadUser', 'BadUser!ident@bad.host', true, false, false)];
+        $network = $this->createStub(ChannelEntryNetworkQuery::class);
+        $network->method('synchronizationComplete')->willReturn(true);
+        $network->method('findChannel')->willReturn(new ChannelEntryNetworkState('#Test', $members));
+
+        $result = $this->handler($akicks, network: $network)->handle($this->command(ManageChannelAkickAction::List));
+
+        self::assertSame(ManageChannelAkickOutcome::Listed, $result->outcome);
+        self::assertSame(1, $akick->getUses());
+        self::assertSame($this->now, $akick->getLastUsedAt());
+    }
+
+    #[Test]
     public function anUnknownActionIsReported(): void
     {
         $result = $this->handler($this->createStub(ChannelAkickRepositoryInterface::class))->handle(
@@ -424,7 +549,9 @@ final class ManageChannelAkickHandlerTest extends TestCase
                 $network,
                 $actions,
                 new AkickMatchPolicy(),
+                new AkickUseRecorder($akicks),
             ),
+            new AkickUseRecorder($akicks),
         );
     }
 

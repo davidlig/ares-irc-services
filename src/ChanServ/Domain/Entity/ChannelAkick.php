@@ -48,6 +48,10 @@ class ChannelAkick
 
     private ?DateTimeImmutable $expiresAt = null;
 
+    private int $uses = 0;
+
+    private ?DateTimeImmutable $lastUsedAt = null;
+
     private function __construct(
         DateTimeImmutable $createdAt,
         int $channelId,
@@ -108,6 +112,25 @@ class ChannelAkick
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    /** How many times this entry caught a member. */
+    public function getUses(): int
+    {
+        return $this->uses;
+    }
+
+    /** When this entry caught a member for the last time, null when it was never applied. */
+    public function getLastUsedAt(): ?DateTimeImmutable
+    {
+        return $this->lastUsedAt;
+    }
+
+    /** Records that this entry caught a member at the given moment. */
+    public function recordUse(DateTimeImmutable $usedAt): void
+    {
+        ++$this->uses;
+        $this->lastUsedAt = $usedAt;
     }
 
     public function isExpired(DateTimeImmutable $now): bool

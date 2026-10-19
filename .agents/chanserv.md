@@ -26,8 +26,8 @@ change is deliberately specified and tested.
   default; it does not materialize defaults in persistence.
 - Defaults are: `AUTOADMIN=400`, `AUTOOP=300`, `AUTOHALFOP=200`, `AUTOVOICE=100`, `SET=499`,
   `ADMINDEADMIN=400`, `OPDEOP=300`, `HALFOPDEHALFOP=200`, `VOICEDEVOICE=100`, `INVITE=200`,
-  `ACCESSLIST=400`, `ACCESSCHANGE=499`, `MEMOREAD=200`, `MEMOCHANGE=300`, `AKICK=450`, and
-  `NOJOIN=-1`.
+  `ACCESSLIST=400`, `ACCESSCHANGE=499`, `MEMOREAD=200`, `MEMOCHANGE=300`, `AKICK=450`,
+  `AKICKCHANGE=499`, and `NOJOIN=-1`.
 - Desired automatic rank is the highest supported rank whose threshold is met, in this order:
   administrator, operator, half-operator, voice. An identified founder receives the highest rank
   supported by the active protocol, including owner when available.
@@ -70,6 +70,9 @@ change is deliberately specified and tested.
 - When network synchronization is complete, AKICK ADD immediately applies the matching ban/kick to
   current members. The LIST path also reapplies all current AKICK bans and kicks; this unusual
   event-driven side effect is intentional and must be preserved.
+- Every enforcement that catches a member with an entry records that use on the entry: the use
+  counter grows and the last-use date is stamped with the moment of the enforcement. An entry that
+  never caught a member keeps a zero counter and no last-use date.
 - `NOJOIN=-1` disables enforcement. Otherwise users whose effective access is below NOJOIN are
   kicked. Unidentified users have level `-1`; IRC operators and ChanServ itself are exempt.
 - Join-time NOJOIN runs before rank enforcement. AKICK and NOJOIN also run after network

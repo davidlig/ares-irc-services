@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret el halfop."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [màscara] [caducitat] [motiu]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [màscara] [caducitat] [motiu]"
   short:            "Gestionar la llista d'auto-kick."
-  help:             "Gestiona la llista d'auto-kick d'un canal: les entrades que baneixen i expulsen un usuari coincident en connectar-se, el motiu que les explica, el sobrenom que les ha afegit i el moment en què caduquen. També pot canviar el motiu d'una entrada sense perdre-ne l'autor, buidar tota la llista, comptar les entrades, indicar quines entrades agafarien un usuari connectat i aplicar la llista als membres connectats ara mateix. Buidar la llista és l'operació destructiva i requereix el nivell de canal AKICKCHANGE a més del AKICK."
-  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK o ENFORCE."
+  help:             "Gestiona la llista d'auto-kick d'un canal: les entrades que baneixen i expulsen un usuari coincident en connectar-se, el motiu que les explica, el sobrenom que les ha afegit i el moment en què caduquen. També pot canviar el motiu d'una entrada sense perdre-ne l'autor, buidar tota la llista, comptar les entrades, indicar quines entrades agafarien un usuari connectat i aplicar la llista als membres connectats ara mateix. Buidar la llista és l'operació destructiva i requereix el nivell de canal AKICKCHANGE a més del AKICK. També es poden inspeccionar una per una, amb el moment en què es van crear, quantes vegades han agafat un membre i quan s'han aplicat per darrer cop."
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW o LASTUSE."
   invalid_mask:     "\x0304✗\x03 Format de màscara no vàlid. Utilitzeu \x02nick!ident@host\x02 amb comodins (*)."
   dangerous_mask:   "\x0304✗\x03 La màscara \x02%mask%\x02 és massa àmplia. Ha de contenir almenys 4 caràcters alfanumèrics."
   protected_user:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 té accés en aquest canal."
@@ -378,6 +378,24 @@ akick:
     help:           "Aplica la llista als membres connectats al canal ara mateix: cada membre capturat per una entrada és banejat i expulsat. Indica quants membres han estat expulsats."
     example:        "/msg %bot% AKICK #channel ENFORCE"
     done:           "\x0303✔\x03 Membres expulsats de \x02%channel%\x02 per la llista AKICK: %count%."
+  view:
+    syntax:         "AKICK <#channel> VIEW"
+    short:          "Mostrar els detalls de cada entrada AKICK."
+    help:           "Mostra els detalls de cada entrada de la llista: la màscara, el motiu, el sobrenom que l'ha afegit, el moment en què es va crear, quan caduca, quantes vegades ha agafat un membre i quan s'ha aplicat per darrer cop."
+    example:        "/msg %bot% AKICK #channel VIEW"
+    header:         "\x0303Entrades AKICK de \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (per %nickname%, creada: %created%, expira: %expiration%, usos: %uses%, darrer ús: %lastuse%)"
+    empty:          "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap entrada AKICK."
+    never_used:     "mai"
+  lastuse:
+    syntax:         "AKICK <#channel> LASTUSE"
+    short:          "Mostrar les entrades AKICK ordenades pel seu darrer ús."
+    help:           "Mostra les entrades de la llista ordenades pel seu darrer ús, primer la més recent. Les entrades que mai han agafat un membre van al final."
+    example:        "/msg %bot% AKICK #channel LASTUSE"
+    header:         "\x0303Entrades AKICK de \x02%channel%\x02 pel darrer ús\x03"
+    entry:          "  #%index% %mask% %reason% (per %nickname%, creada: %created%, expira: %expiration%, usos: %uses%, darrer ús: %lastuse%)"
+    empty:          "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap entrada AKICK."
+    never_used:     "mai"
 
 restore:
   syntax:           "RESTORE <#channel>"

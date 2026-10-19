@@ -82,6 +82,8 @@ final readonly class AkickCommand implements ChanServCommandInterface
             ['name' => 'COUNT', 'desc_key' => 'akick.count.short', 'help_key' => 'akick.count.help', 'syntax_key' => 'akick.count.syntax', 'example_key' => 'akick.count.example'],
             ['name' => 'CHECK', 'desc_key' => 'akick.check.short', 'help_key' => 'akick.check.help', 'syntax_key' => 'akick.check.syntax', 'example_key' => 'akick.check.example'],
             ['name' => 'ENFORCE', 'desc_key' => 'akick.enforce.short', 'help_key' => 'akick.enforce.help', 'syntax_key' => 'akick.enforce.syntax', 'example_key' => 'akick.enforce.example'],
+            ['name' => 'VIEW', 'desc_key' => 'akick.view.short', 'help_key' => 'akick.view.help', 'syntax_key' => 'akick.view.syntax', 'example_key' => 'akick.view.example'],
+            ['name' => 'LASTUSE', 'desc_key' => 'akick.lastuse.short', 'help_key' => 'akick.lastuse.help', 'syntax_key' => 'akick.lastuse.syntax', 'example_key' => 'akick.lastuse.example'],
         ];
     }
 
@@ -135,6 +137,8 @@ final readonly class AkickCommand implements ChanServCommandInterface
             'COUNT' => ManageChannelAkickAction::Count,
             'CHECK' => ManageChannelAkickAction::Check,
             'ENFORCE' => ManageChannelAkickAction::Enforce,
+            'VIEW' => ManageChannelAkickAction::View,
+            'LASTUSE' => ManageChannelAkickAction::LastUse,
             default => ManageChannelAkickAction::Unknown,
         };
         $item = null;
@@ -280,6 +284,10 @@ final readonly class AkickCommand implements ChanServCommandInterface
                 '%channel%' => $channelName,
                 '%count%' => (string) $result->count,
             ]),
+            ManageChannelAkickOutcome::ViewEmpty => $context->reply('akick.view.empty', ['%channel%' => $channelName]),
+            ManageChannelAkickOutcome::Viewed => $this->presentView($context, $channelName, $result->entries),
+            ManageChannelAkickOutcome::LastUseEmpty => $context->reply('akick.lastuse.empty', ['%channel%' => $channelName]),
+            ManageChannelAkickOutcome::LastUsed => $this->presentLastUse($context, $channelName, $result->entries),
         };
     }
 
@@ -367,6 +375,48 @@ final readonly class AkickCommand implements ChanServCommandInterface
                     : $context->formatDate($entry->expiresAt),
             ]);
         }
+    }
+
+    /** @param list<ChannelAkickEntryView> $entries */
+    private function presentView(ChanServContext $context, string $channelName, array $entries): void
+    {
+        $context->reply('akick.view.header', ['%channel%' => $channelName]);
+        foreach ($entries as $index => $entry) {
+            $context->reply('akick.view.entry', $this->detailParams($context, $entry, $index, 'akick.view.never_used'));
+        }
+    }
+
+    /** @param list<ChannelAkickEntryView> $entries */
+    private function presentLastUse(ChanServContext $context, string $channelName, array $entries): void
+    {
+        $context->reply('akick.lastuse.header', ['%channel%' => $channelName]);
+        foreach ($entries as $index => $entry) {
+            $context->reply('akick.lastuse.entry', $this->detailParams($context, $entry, $index, 'akick.lastuse.never_used'));
+        }
+    }
+
+    /**
+     * Placeholders of an inspected entry: the mask, the reason, the author, the creation
+     * date, the expiry, the use counter and the last time the entry was applied.
+     *
+     * @return array<string, string>
+     */
+    private function detailParams(ChanServContext $context, ChannelAkickEntryView $entry, int $index, string $neverUsedKey): array
+    {
+        return [
+            '%index%' => (string) ($index + 1),
+            '%mask%' => sprintf("\x0304%s\x03", $entry->mask),
+            '%reason%' => $entry->reason ?? $context->trans('akick.list.no_reason'),
+            '%nickname%' => $entry->creatorNickname ?? $context->trans('akick.list.unknown_creator'),
+            '%created%' => null === $entry->createdAt ? '' : $context->formatDate($entry->createdAt),
+            '%expiration%' => null === $entry->expiresAt
+                ? $context->trans('akick.list.never_expires')
+                : $context->formatDate($entry->expiresAt),
+            '%uses%' => (string) $entry->uses,
+            '%lastuse%' => null === $entry->lastUsedAt
+                ? $context->trans($neverUsedKey)
+                : $context->formatDate($entry->lastUsedAt),
+        ];
     }
 
     private function decodeIp(string $ipBase64): string

@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a retras halfopul."
 
 akick:
-  syntax:           "AKICK <#canal> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [mască] [expirare] [motiv]"
+  syntax:           "AKICK <#canal> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [mască] [expirare] [motiv]"
   short:            "Gestionați lista de auto-kick."
-  help:             "Gestionați lista de auto-kick a unui canal: intrările care banează și îl alungă pe utilizatorul care se potrivește la conectare, motivul care le explică, porecla care le-a adăugat și momentul expirării lor. Poate schimba și motivul unei intrări existente fără să îi piardă autorul, poate goli întreaga listă, poate număra intrările, poate spune care intrări ar prinde un utilizator conectat și poate aplica lista membrilor conectați în acest moment. Golirea listei este operațiunea distructivă și are nevoie de nivelul de canal AKICKCHANGE pe lângă nivelul AKICK."
-  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK sau ENFORCE."
+  help:             "Gestionați lista de auto-kick a unui canal: intrările care banează și îl alungă pe utilizatorul care se potrivește la conectare, motivul care le explică, porecla care le-a adăugat și momentul expirării lor. Poate schimba și motivul unei intrări existente fără să îi piardă autorul, poate goli întreaga listă, poate număra intrările, poate spune care intrări ar prinde un utilizator conectat și poate aplica lista membrilor conectați în acest moment. Golirea listei este operațiunea distructivă și are nevoie de nivelul de canal AKICKCHANGE pe lângă nivelul AKICK. Intrările pot fi inspectate și una câte una, cu momentul creării, de câte ori au prins un membru și când au fost aplicate ultima dată."
+  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW sau LASTUSE."
   invalid_mask:     "\x0304✗\x03 Format de mască invalid. Folosiți \x02poreclă!ident@host\x02 cu metacaractere (*)."
   dangerous_mask:   "\x0304✗\x03 Masca \x02%mask%\x02 este prea largă. Trebuie să conțină cel puțin 4 caractere alfanumerice."
   protected_user:   "\x0304✗\x03 Porecla \x02%nickname%\x02 are acces pe acest canal."
@@ -378,6 +378,24 @@ akick:
     help:           "Aplică lista membrilor conectați la canal în acest moment: fiecare membru prins de o intrare este bănat și dat afară. Raportează câți membri au fost dați afară."
     example:        "/msg %bot% AKICK #canal ENFORCE"
     done:           "\x0303✔\x03 Membri dați afară din \x02%channel%\x02 de lista AKICK: %count%."
+  view:
+    syntax:         "AKICK <#canal> VIEW"
+    short:          "Afișează detaliile fiecărei intrări AKICK."
+    help:           "Afișează detaliile fiecărei intrări din listă: masca, motivul, porecla care a adăugat-o, momentul creării, când expiră, de câte ori a prins un membru și când a fost aplicată ultima dată."
+    example:        "/msg %bot% AKICK #canal VIEW"
+    header:         "\x0303Intrări AKICK pentru \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (de la %nickname%, creată: %created%, expiră: %expiration%, utilizări: %uses%, ultima utilizare: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Canalul \x02%channel%\x02 nu are intrări AKICK."
+    never_used:     "niciodată"
+  lastuse:
+    syntax:         "AKICK <#canal> LASTUSE"
+    short:          "Afișează intrările AKICK ordonate după ultima utilizare."
+    help:           "Afișează intrările listei ordonate după ultima utilizare, cea mai recentă prima. Intrările care nu au prins niciodată un membru sunt la final."
+    example:        "/msg %bot% AKICK #canal LASTUSE"
+    header:         "\x0303Intrări AKICK pentru \x02%channel%\x02 după ultima utilizare\x03"
+    entry:          "  #%index% %mask% %reason% (de la %nickname%, creată: %created%, expiră: %expiration%, utilizări: %uses%, ultima utilizare: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Canalul \x02%channel%\x02 nu are intrări AKICK."
+    never_used:     "niciodată"
 
 restore:
   syntax:           "RESTORE <#canal>"

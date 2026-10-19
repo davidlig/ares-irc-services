@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 è stato dehalfoppato."
 
 akick:
-  syntax:           "AKICK <#canale> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [maschera] [scadenza] [motivo]"
+  syntax:           "AKICK <#canale> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [maschera] [scadenza] [motivo]"
   short:            "Gestisce la lista di auto-kick."
-  help:             "Gestisce la lista di auto-kick di un canale: le voci che banno ed espellono l'utente corrispondente al collegamento, il motivo che le spiega, il nickname che le ha aggiunte e il momento in cui scadono. Può anche cambiare il motivo di una voce senza perderne l'autore, svuotare l'intera lista, contare le voci, dire quali voci catturerebbero un utente collegato e applicare la lista ai membri collegati in questo momento. Svuotare la lista è l'operazione distruttiva e richiede il livello di canale AKICKCHANGE oltre al livello AKICK."
-  unknown_sub:      "\x0304✗\x03 Sotto-comando sconosciuto \x02%sub%\x02. Usi ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK o ENFORCE."
+  help:             "Gestisce la lista di auto-kick di un canale: le voci che banno ed espellono l'utente corrispondente al collegamento, il motivo che le spiega, il nickname che le ha aggiunte e il momento in cui scadono. Può anche cambiare il motivo di una voce senza perderne l'autore, svuotare l'intera lista, contare le voci, dire quali voci catturerebbero un utente collegato e applicare la lista ai membri collegati in questo momento. Svuotare la lista è l'operazione distruttiva e richiede il livello di canale AKICKCHANGE oltre al livello AKICK. Le voci si possono anche ispezionare una per una, con il momento in cui sono state create, quante volte hanno catturato un membro e quando sono state applicate l'ultima volta."
+  unknown_sub:      "\x0304✗\x03 Sotto-comando sconosciuto \x02%sub%\x02. Usi ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW o LASTUSE."
   invalid_mask:     "\x0304✗\x03 Formato maschera non valido. Usi \x02nick!ident@host\x02 con caratteri jolly (*)."
   dangerous_mask:   "\x0304✗\x03 La maschera \x02%mask%\x02 è troppo ampia. Deve contenere almeno 4 caratteri alfanumerici."
   protected_user:   "\x0304✗\x03 Il nickname \x02%nickname%\x02 ha accesso in questo canale."
@@ -378,6 +378,24 @@ akick:
     help:           "Applica la lista ai membri collegati al canale in questo momento: ogni membro catturato da una voce viene bannato e espulso. Riporta quanti membri sono stati espulsi."
     example:        "/msg %bot% AKICK #canale ENFORCE"
     done:           "\x0303✔\x03 Membri espulsi da \x02%channel%\x02 dalla lista AKICK: %count%."
+  view:
+    syntax:         "AKICK <#canale> VIEW"
+    short:          "Mostrare i dettagli di ogni voce AKICK."
+    help:           "Mostra i dettagli di ogni voce dell'elenco: la maschera, il motivo, il nickname che l'ha aggiunta, il momento in cui è stata creata, quando scade, quante volte ha catturato un membro e quando è stata applicata l'ultima volta."
+    example:        "/msg %bot% AKICK #canale VIEW"
+    header:         "\x0303Voci AKICK di \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (da %nickname%, creata: %created%, scade: %expiration%, usi: %uses%, ultimo uso: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Il canale \x02%channel%\x02 non ha voci AKICK."
+    never_used:     "mai"
+  lastuse:
+    syntax:         "AKICK <#canale> LASTUSE"
+    short:          "Mostrare le voci AKICK ordinate per ultimo uso."
+    help:           "Mostra le voci dell'elenco ordinate per il loro ultimo uso, prima la più recente. Le voci che non hanno mai catturato un membro vengono per ultime."
+    example:        "/msg %bot% AKICK #canale LASTUSE"
+    header:         "\x0303Voci AKICK di \x02%channel%\x02 per ultimo uso\x03"
+    entry:          "  #%index% %mask% %reason% (da %nickname%, creata: %created%, scade: %expiration%, usi: %uses%, ultimo uso: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Il canale \x02%channel%\x02 non ha voci AKICK."
+    never_used:     "mai"
 
 restore:
   syntax:           "RESTORE <#canale>"

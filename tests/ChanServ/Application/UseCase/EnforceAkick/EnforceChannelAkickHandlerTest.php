@@ -10,6 +10,7 @@ use App\ChanServ\Application\Port\Out\AkickActions;
 use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelEntryNetworkQuery;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\UseCase\EnforceAkick\AkickUseRecorder;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkick;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandler;
 use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandlerInterface;
@@ -102,6 +103,82 @@ final class EnforceChannelAkickHandlerTest extends TestCase
     }
 
     #[Test]
+    public function applyingAnEntryRecordsItsUseWithTheMomentOfTheEnforcement(): void
+    {
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test');
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$akick]);
+
+        $saved = [];
+        $akicks->method('save')->willReturnCallback(static function (ChannelAkick $entity) use (&$saved): void {
+            $saved[] = $entity;
+        });
+
+        $handler = $this->handler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $akicks,
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $this->createStub(AkickActions::class),
+        );
+
+        self::assertSame(1, $handler->handleKnownChannel($this->channel(), [
+            $this->member('001A', 'nick!ident@example.test'),
+        ], $this->now));
+
+        self::assertSame(1, $akick->getUses());
+        self::assertSame($this->now, $akick->getLastUsedAt());
+        self::assertSame([$akick], $saved);
+    }
+
+    #[Test]
+    public function aSecondApplicationIncrementsTheCounterAgain(): void
+    {
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test');
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$akick]);
+
+        $handler = $this->handler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $akicks,
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $this->createStub(AkickActions::class),
+        );
+
+        $members = [$this->member('001A', 'nick!ident@example.test')];
+
+        self::assertSame(1, $handler->handleKnownChannel($this->channel(), $members, $this->now));
+        self::assertSame(1, $akick->getUses());
+
+        $later = new DateTimeImmutable('2026-09-07 12:05:00 UTC');
+        self::assertSame(1, $handler->handleKnownChannel($this->channel(), $members, $later));
+
+        self::assertSame(2, $akick->getUses());
+        self::assertSame($later, $akick->getLastUsedAt());
+    }
+
+    #[Test]
+    public function anEntryThatCaughtNobodyKeepsAZeroCounterAndNoDate(): void
+    {
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@example.test');
+        $akicks = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akicks->method('listByChannel')->willReturn([$akick]);
+
+        $handler = $this->handler(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $akicks,
+            $this->createStub(ChannelEntryNetworkQuery::class),
+            $this->createStub(AkickActions::class),
+        );
+
+        self::assertSame(0, $handler->handleKnownChannel($this->channel(), [
+            $this->member('001C', 'safe!ident@safe.test'),
+        ], $this->now));
+
+        self::assertSame(0, $akick->getUses());
+        self::assertNull($akick->getLastUsedAt());
+    }
+
+    #[Test]
     public function joinLoadsMemberAndUsesCanonicalRegisteredChannelName(): void
     {
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -160,7 +237,7 @@ final class EnforceChannelAkickHandlerTest extends TestCase
         ChannelEntryNetworkQuery $network,
         AkickActions $actions,
     ): EnforceChannelAkickHandler {
-        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, new AkickMatchPolicy());
+        return new EnforceChannelAkickHandler($channels, $akicks, $network, $actions, new AkickMatchPolicy(), new AkickUseRecorder($akicks));
     }
 
     private function channel(string $name = '#Test', bool $blocked = false): RegisteredChannel

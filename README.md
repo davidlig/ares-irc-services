@@ -433,7 +433,7 @@ Channel settings use `SET <#channel> <option> [value]` (channel before option).
 | `DEADMIN` | `<#channel> <nick>` | Remove +a in a channel |
 | `HALFOP` | `<#channel> <nick>` | Give +h in a channel |
 | `DEHALFOP` | `<#channel> <nick>` | Remove +h in a channel |
-| `AKICK` | `<#channel> {ADD\|DEL\|LIST} [mask] [expiry] [reason]` | Manage auto-kick list |
+| `AKICK` | `<#channel> {ADD\|DEL\|LIST\|SET\|CLEAR\|COUNT\|CHECK\|ENFORCE\|VIEW\|LASTUSE} [mask] [expiry] [reason]` | Manage auto-kick list |
 | `DROP` | `<#channel> [FORCE]` | Mark a channel for deletion; FORCE permanently deletes a pending deletion (IRCops) |
 | `RESTORE` | `<#channel>` | Restore a channel during its deletion grace period (IRCops) |
 | `SUSPEND` | `<#channel> <duration> <reason>` | Suspend a channel |

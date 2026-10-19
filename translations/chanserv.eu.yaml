@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02(r)i halfop modua kendu zaio."
 
 akick:
-  syntax:           "AKICK <#kanala> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [maskara] [iraungitzea] [arrazoia]"
+  syntax:           "AKICK <#kanala> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [maskara] [iraungitzea] [arrazoia]"
   short:            "Kudeatu auto-kick zerrenda."
-  help:             "Kudeatu kanal baten auto-kick zerrenda: sarrerak erabiltzaile bat baneatu eta kanpoatzen dituzte connectatzean, arrazoia zein den, gehitu zuen ezizena eta noiz amaitzen den. Eraikuntza baten arrazoia egileari galdu gabe aldatzeko, zerrenda osoa husteko, sarrerak zenbatzeko, zein sarrerak harratuko litzukeen erabiltzaile konektatu bat jakiteko eta zerrenda oraintze konektatutako kideei aplikatzeko auera ematen du. Zerrenda hutsatzea suntsagarri den erakundea da, beraz AKICK kanal mailaz gainera AKICKCHANGE maila behar du."
-  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK edo ENFORCE."
+  help:             "Kudeatu kanal baten auto-kick zerrenda: sarrerak erabiltzaile bat baneatu eta kanpoatzen dituzte connectatzean, arrazoia zein den, gehitu zuen ezizena eta noiz amaitzen den. Eraikuntza baten arrazoia egileari galdu gabe aldatzeko, zerrenda osoa husteko, sarrerak zenbatzeko, zein sarrerak harratuko litzukeen erabiltzaile konektatu bat jakiteko eta zerrenda oraintze konektatutako kideei aplikatzeko auera ematen du. Zerrenda hutsatzea suntsagarri den erakundea da, beraz AKICK kanal mailaz gainera AKICKCHANGE maila behar du. Sarrerak banaka-banaka aztertu daitezke, sortze ziren unearekin, zenbat kide harratu dituzten eta azkenaiz noiz aplikatu ziren adierazita."
+  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW edo LASTUSE."
   invalid_mask:     "\x0304✗\x03 Maskara formatu baliogabea. Erabili \x02nick!ident@host\x02 komodinak erabiliz (*)."
   dangerous_mask:   "\x0304✗\x03 \x02%mask%\x02 maskara zabalegia da. Gutxienez 4 karaktere alfanumeriko eduki behar ditu."
   protected_user:   "\x0304✗\x03 \x02%nickname%\x02 ezizenak sarbidea du kanal honetan."
@@ -378,6 +378,24 @@ akick:
     help:           "Zerrenda oraintze kanalean konektatutako kideei aplikatzen die: sarrera batek harratzen duen kide bakoitza baneatu eta kanpoatzen da. Zenbat kide kanporatu ziren esaten du."
     example:        "/msg %bot% AKICK #kanala ENFORCE"
     done:           "\x0303✔\x03 AKICK zerrendak \x02%channel%\x02 kanaletik kanporatutako kideak: %count%."
+  view:
+    syntax:         "AKICK <#kanala> VIEW"
+    short:          "Erakutsi AKICK sarrera bakoitzaren xehetasunak."
+    help:           "Erakusten du zerrendako sarrera bakoitzaren xehetasunak: maskara, arrazoia, sarrera gehitu zuen ezizena, noiz sortu zen, noiz amaitzen den, zenbat kide harratu dituen eta noiz aplikatu zen azkenaiz."
+    example:        "/msg %bot% AKICK #kanala VIEW"
+    header:         "\x0303\x02%channel%\x02 kanalaren AKICK sarrerak\x03"
+    entry:          "  #%index% %mask% %reason% (%nickname%-(e)k gehituta, sortua: %created%, iraungitzea: %expiration%, erabilerak: %uses%, azken erabilera: %lastuse%)"
+    empty:          "\x0307ℹ\x03 \x02%channel%\x02 kanalak ez du AKICK sarrerarik."
+    never_used:     "inoiz ez"
+  lastuse:
+    syntax:         "AKICK <#kanala> LASTUSE"
+    short:          "Erakutsi AKICK sarrerak azken erabileraren arabera ordenatuta."
+    help:           "Erakusten du zerrendako sarrerak azken erabileraren arabera ordenatuta, berrien lehenik. Kide bat inoiz ez harratu duten sarrerak azkenean daude."
+    example:        "/msg %bot% AKICK #kanala LASTUSE"
+    header:         "\x0303\x02%channel%\x02 kanalaren AKICK sarrerak azken erabileraren arabera\x03"
+    entry:          "  #%index% %mask% %reason% (%nickname%-(e)k gehituta, sortua: %created%, iraungitzea: %expiration%, erabilerak: %uses%, azken erabilera: %lastuse%)"
+    empty:          "\x0307ℹ\x03 \x02%channel%\x02 kanalak ez du AKICK sarrerarik."
+    never_used:     "inoiz ez"
 
 restore:
   syntax:           "RESTORE <#kanala>"

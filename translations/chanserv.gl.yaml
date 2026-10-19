@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 A \x02%nickname%\x02 foille retirado halfop."
 
 akick:
-  syntax:           "AKICK <#canle> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [máscara] [caducidade] [motivo]"
+  syntax:           "AKICK <#canle> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [máscara] [caducidade] [motivo]"
   short:            "Xestionar a lista de expulsión automática."
-  help:             "Xestiona a lista de expulsión automática dunha canle: as entradas que banean e expulsan ao usuario que coincide ao conectarse, o motivo que as explica, o alcume que as engadiu e o momento en que caducan. Tamén pode cambiar o motivo dunha entrada sen perder o seu autor, baleirar a lista enteira, contar as entradas, dicir que entradas atraparían a un usuario conectado e aplicar a lista aos membros conectados neste momento. Baleirar a lista é a operación destrutiva e necesita o nivel de canle AKICKCHANGE ademais do AKICK."
-  unknown_sub:      "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK ou ENFORCE."
+  help:             "Xestiona a lista de expulsión automática dunha canle: as entradas que banean e expulsan ao usuario que coincide ao conectarse, o motivo que as explica, o alcume que as engadiu e o momento en que caducan. Tamén pode cambiar o motivo dunha entrada sen perder o seu autor, baleirar a lista enteira, contar as entradas, dicir que entradas atraparían a un usuario conectado e aplicar a lista aos membros conectados neste momento. Baleirar a lista é a operación destrutiva e necesita o nivel de canle AKICKCHANGE ademais do AKICK. As entradas tamén se poden inspeccionar unha a unha, co momento en que se crearon, cantas veces atrBou a un membro e cando se aplicaron por última vez."
+  unknown_sub:      "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW ou LASTUSE."
   invalid_mask:     "\x0304✗\x03 Formato de máscara non válido. Use \x02alcume!ident@host\x02 con comodíns (*)."
   dangerous_mask:   "\x0304✗\x03 A máscara \x02%mask%\x02 é demasiado ampla. Debe conter polo menos 4 caracteres alfanuméricos."
   protected_user:   "\x0304✗\x03 O alcume \x02%nickname%\x02 ten acceso nesta canle."
@@ -378,6 +378,24 @@ akick:
     help:           "Aplica a lista aos membros conectados á canle neste momento: cada membro atrapado por unha entrada é baneado e expulsado. Informa de cantos membros foron expulsados."
     example:        "/msg %bot% AKICK #canle ENFORCE"
     done:           "\x0303✔\x03 Membros expulsados de \x02%channel%\x02 pola lista AKICK: %count%."
+  view:
+    syntax:         "AKICK <#canle> VIEW"
+    short:          "Mostrar os detalles de cada entrada AKICK."
+    help:           "Muestra os detalles de cada entrada da lista: a máscara, a razón, o alcume que a engadiu, o momento en que se creou, cando caduca, cantas veces atrBou a un membro e cando se aplicou por última vez."
+    example:        "/msg %bot% AKICK #canle VIEW"
+    header:         "\x0303Entradas AKICK de \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (por %nickname%, creada: %created%, caduca: %expiration%, usos: %uses%, último uso: %lastuse%)"
+    empty:          "\x0307ℹ\x03 O canal \x02%channel%\x02 non ten AKICKs."
+    never_used:     "nunca"
+  lastuse:
+    syntax:         "AKICK <#canle> LASTUSE"
+    short:          "Mostrar as entradas AKICK ordenadas polo seu último uso."
+    help:           "Muestra as entradas da lista ordenadas polo seu último uso, primeiro a máis recente. As entradas que nunca atrBou a un membro van ao final."
+    example:        "/msg %bot% AKICK #canle LASTUSE"
+    header:         "\x0303Entradas AKICK de \x02%channel%\x02 por último uso\x03"
+    entry:          "  #%index% %mask% %reason% (por %nickname%, creada: %created%, caduca: %expiration%, usos: %uses%, último uso: %lastuse%)"
+    empty:          "\x0307ℹ\x03 O canal \x02%channel%\x02 non ten AKICKs."
+    never_used:     "nunca"
 
 restore:
   syntax:           "RESTORE <#canle>"

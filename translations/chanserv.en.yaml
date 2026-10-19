@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 has been dehalfopped."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [mask] [expiry] [reason]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [mask] [expiry] [reason]"
   short:            "Manage auto-kick list."
-  help:             "Manages the auto-kick list of a channel: the entries that ban and kick a matching user on join, the reason that explains them, the nickname that added them and the moment they expire. It can also change the reason of an existing entry without losing its author, empty the whole list, count the entries, tell which entries would catch a connected user and apply the list to the members connected right now. Emptying the list is the destructive operation and needs the AKICKCHANGE channel level on top of the AKICK one."
-  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK or ENFORCE."
+  help:             "Manages the auto-kick list of a channel: the entries that ban and kick a matching user on join, the reason that explains them, the nickname that added them and the moment they expire. It can also change the reason of an existing entry without losing its author, empty the whole list, count the entries, tell which entries would catch a connected user and apply the list to the members connected right now. Emptying the list is the destructive operation and needs the AKICKCHANGE channel level on top of the AKICK one. The entries can also be inspected one by one, with the moment they were created, how many times they caught a member and when they were applied for the last time."
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW or LASTUSE."
   invalid_mask:     "\x0304✗\x03 Invalid mask format. Use \x02nick!ident@host\x02 with wildcards (*)."
   dangerous_mask:   "\x0304✗\x03 The mask \x02%mask%\x02 is too broad. It must contain at least 4 alphanumeric characters."
   protected_user:   "\x0304✗\x03 Nickname \x02%nickname%\x02 has access in this channel."
@@ -378,6 +378,24 @@ akick:
     help:           "Applies the list to the members connected to the channel right now: every member caught by an entry is banned and kicked. It reports how many members were expelled."
     example:        "/msg %bot% AKICK #channel ENFORCE"
     done:           "\x0303✔\x03 Members expelled from \x02%channel%\x02 by the AKICK list: %count%."
+  view:
+    syntax:         "AKICK <#channel> VIEW"
+    short:          "Show the details of every AKICK entry."
+    help:           "Shows the details of every entry of the list: the mask, the reason, the nickname that added it, the moment it was created, when it expires, how many times it caught a member and when it was applied for the last time."
+    example:        "/msg %bot% AKICK #channel VIEW"
+    header:         "\x0303AKICK entries of \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (by %nickname%, created: %created%, expires: %expiration%, uses: %uses%, last use: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Channel \x02%channel%\x02 has no AKICK entries."
+    never_used:     "never"
+  lastuse:
+    syntax:         "AKICK <#channel> LASTUSE"
+    short:          "Show the AKICK entries ordered by their last use."
+    help:           "Shows the entries of the list ordered by their last use, the most recent one first. The entries that never caught a member come last."
+    example:        "/msg %bot% AKICK #channel LASTUSE"
+    header:         "\x0303AKICK entries of \x02%channel%\x02 by last use\x03"
+    entry:          "  #%index% %mask% %reason% (by %nickname%, created: %created%, expires: %expiration%, uses: %uses%, last use: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Channel \x02%channel%\x02 has no AKICK entries."
+    never_used:     "never"
 
 restore:
   syntax:           "RESTORE <#channel>"

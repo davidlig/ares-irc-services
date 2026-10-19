@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 wurde Halfop entzogen."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [Maske] [Ablauf] [Grund]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [Maske] [Ablauf] [Grund]"
   short:            "Auto-Kick-Liste verwalten."
-  help:             "Verwaltet die Auto-Kick-Liste eines Channels: die Einträge, die beim Verbinden einen passenden Nutzer  bannen und kicken, den Grund, der sie erklärt, den Nickname, der sie hinzugefügt hat, und den Zeitpunkt, an dem sie ablaufen. Der Grund eines bestehenden Eintrags kann geändert werden, ohne seinen Autor zu verlieren; außerdem lässt sich die ganze Liste leeren, die Anzahl der Einträge zählen, anzeigen, welche Einträge einen verbundenen Nutzer treffen würden, und die Liste auf die gerade verbundenen Mitglieder anwenden. Das Leeren der Liste ist der destruktive Vorgang und benötigt neben AKICK den Channel-Level AKICKCHANGE."
-  unknown_sub:      "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK oder ENFORCE."
+  help:             "Verwaltet die Auto-Kick-Liste eines Channels: die Einträge, die beim Verbinden einen passenden Nutzer  bannen und kicken, den Grund, der sie erklärt, den Nickname, der sie hinzugefügt hat, und den Zeitpunkt, an dem sie ablaufen. Der Grund eines bestehenden Eintrags kann geändert werden, ohne seinen Autor zu verlieren; außerdem lässt sich die ganze Liste leeren, die Anzahl der Einträge zählen, anzeigen, welche Einträge einen verbundenen Nutzer treffen würden, und die Liste auf die gerade verbundenen Mitglieder anwenden. Das Leeren der Liste ist der destruktive Vorgang und benötigt neben AKICK den Channel-Level AKICKCHANGE. Die Einträge können auch einzeln inspiziert werden, mit dem Zeitpunkt ihrer Erstellung, der Anzahl der erfassten Mitglieder und dem Zeitpunkt ihrer letzten Anwendung."
+  unknown_sub:      "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW oder LASTUSE."
   invalid_mask:     "\x0304✗\x03 Ungültiges Maskenformat. Verwenden Sie \x02nick!ident@host\x02 mit Platzhaltern (*)."
   dangerous_mask:   "\x0304✗\x03 Die Maske \x02%mask%\x02 ist zu allgemein. Sie muss mindestens 4 alphanumerische Zeichen enthalten."
   protected_user:   "\x0304✗\x03 Nickname \x02%nickname%\x02 hat Zugriff in diesem Channel."
@@ -378,6 +378,24 @@ akick:
     help:           "Wendet die Liste auf die gerade mit dem Channel verbundenen Mitglieder an: jedes von einem Eintrag erfasste Mitglied wird gebannt und gekickt. Es meldet, wie viele Mitglieder hinausgeworfen wurden."
     example:        "/msg %bot% AKICK #channel ENFORCE"
     done:           "\x0303✔\x03 Durch die AKICK-Liste aus \x02%channel%\x02 hinausgeworfene Mitglieder: %count%."
+  view:
+    syntax:         "AKICK <#channel> VIEW"
+    short:          "Details jedes AKICK-Eintrags anzeigen."
+    help:           "Zeigt die Details jedes Eintrags der Liste: die Maske, den Grund, den Nickname, der ihn hinzugefügt hat, den Zeitpunkt der Erstellung, den Ablauf, wie oft er ein Mitglied erfasst hat und wann er zuletzt angewendet wurde."
+    example:        "/msg %bot% AKICK #channel VIEW"
+    header:         "\x0303AKICK-Einträge von \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (von %nickname%, erstellt: %created%, läuft ab: %expiration%, Anwendungen: %uses%, letzte Anwendung: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Channel \x02%channel%\x02 hat keine AKICK-Einträge."
+    never_used:     "nie"
+  lastuse:
+    syntax:         "AKICK <#channel> LASTUSE"
+    short:          "AKICK-Einträge nach ihrer letzten Anwendung anzeigen."
+    help:           "Zeigt die Einträge der Liste nach ihrer letzten Anwendung, den jüngsten zuerst. Einträge, die nie ein Mitglied erfasst haben, stehen am Ende."
+    example:        "/msg %bot% AKICK #channel LASTUSE"
+    header:         "\x0303AKICK-Einträge von \x02%channel%\x02 nach letzter Anwendung\x03"
+    entry:          "  #%index% %mask% %reason% (von %nickname%, erstellt: %created%, läuft ab: %expiration%, Anwendungen: %uses%, letzte Anwendung: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Channel \x02%channel%\x02 hat keine AKICK-Einträge."
+    never_used:     "nie"
 
 restore:
   syntax:           "RESTORE <#channel>"

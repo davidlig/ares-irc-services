@@ -14,6 +14,8 @@ use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
 
+use function array_values;
+
 final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHandlerInterface
 {
     public function __construct(
@@ -22,6 +24,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
         private ChannelEntryNetworkQuery $network,
         private AkickActions $actions,
         private AkickMatchPolicy $matchPolicy,
+        private AkickUseRecorder $uses,
     ) {}
 
     public function handle(EnforceChannelAkick $command): int
@@ -45,8 +48,9 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
             return 0;
         }
 
+        $entries = array_values($this->akicks->listByChannel($channel->getId()));
         $rules = [];
-        foreach ($this->akicks->listByChannel($channel->getId()) as $akick) {
+        foreach ($entries as $akick) {
             $rules[] = new AkickRule(
                 new AkickMask($akick->getMask()),
                 $akick->getReason(),
@@ -67,6 +71,7 @@ final readonly class EnforceChannelAkickHandler implements EnforceChannelAkickHa
                 $matching->mask->value,
                 $matching->enforcementReason(),
             );
+            $this->uses->record($entries, $rules, $matching, $now);
             ++$enforced;
         }
 

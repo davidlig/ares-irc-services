@@ -108,6 +108,33 @@ final class ChannelAkickTest extends TestCase
     }
 
     #[Test]
+    public function aFreshEntryHasNoUsesAndNoLastUseDate(): void
+    {
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com');
+
+        self::assertSame(0, $akick->getUses());
+        self::assertNull($akick->getLastUsedAt());
+    }
+
+    #[Test]
+    public function recordUseIncrementsTheCounterAndStampsTheMoment(): void
+    {
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 2, '*!*@host.com');
+        $firstUse = new DateTimeImmutable('2026-10-20 10:00:00 UTC');
+        $secondUse = new DateTimeImmutable('2026-10-20 11:30:00 UTC');
+
+        $akick->recordUse($firstUse);
+
+        self::assertSame(1, $akick->getUses());
+        self::assertSame($firstUse, $akick->getLastUsedAt());
+
+        $akick->recordUse($secondUse);
+
+        self::assertSame(2, $akick->getUses());
+        self::assertSame($secondUse, $akick->getLastUsedAt());
+    }
+
+    #[Test]
     public function isValidMaskRejectsInvalidFormats(): void
     {
         self::assertTrue(ChannelAkick::isValidMask('*!*@host.com'));

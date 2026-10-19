@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 perdeu o halfop."
 
 akick:
-  syntax:           "AKICK <#canal> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [máscara] [expiração] [motivo]"
+  syntax:           "AKICK <#canal> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [máscara] [expiração] [motivo]"
   short:            "Gerir lista de auto-kick."
-  help:             "Gere a lista de auto-kick de um canal: as entradas que baneiam e expulsam o utilizador que corresponde ao ligar, o motivo que as explica, o nickname que as adicionou e o momento em que expiram. Também pode alterar o motivo de uma entrada sem perder o seu autor, esvaziar a lista toda, contar as entradas, dizer que entradas apanhariam um utilizador ligado e aplicar a lista aos membros ligados neste momento. Esvaziar a lista é a operação destrutiva e precisa do nível de canal AKICKCHANGE para além do nível AKICK."
-  unknown_sub:      "\x0304✗\x03 Subcomando desconhecido \x02%sub%\x02. Use ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK ou ENFORCE."
+  help:             "Gere a lista de auto-kick de um canal: as entradas que baneiam e expulsam o utilizador que corresponde ao ligar, o motivo que as explica, o nickname que as adicionou e o momento em que expiram. Também pode alterar o motivo de uma entrada sem perder o seu autor, esvaziar a lista toda, contar as entradas, dizer que entradas apanhariam um utilizador ligado e aplicar a lista aos membros ligados neste momento. Esvaziar a lista é a operação destrutiva e precisa do nível de canal AKICKCHANGE para além do nível AKICK. As entradas também podem ser inspecionadas uma a uma, com o momento em que foram criadas, quantas vezes apanharam um membro e quando foram aplicadas pela última vez."
+  unknown_sub:      "\x0304✗\x03 Subcomando desconhecido \x02%sub%\x02. Use ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW ou LASTUSE."
   invalid_mask:     "\x0304✗\x03 Formato de máscara inválido. Use \x02nick!ident@host\x02 com caracteres universais (*)."
   dangerous_mask:   "\x0304✗\x03 A máscara \x02%mask%\x02 é demasiado ampla. Deve conter pelo menos 4 caracteres alfanuméricos."
   protected_user:   "\x0304✗\x03 O nickname \x02%nickname%\x02 tem acesso neste canal."
@@ -378,6 +378,24 @@ akick:
     help:           "Aplica a lista aos membros ligados ao canal neste momento: cada membro apanhado por uma entrada é banido e expulso. Informa de quantos membros foram expulsos."
     example:        "/msg %bot% AKICK #canal ENFORCE"
     done:           "\x0303✔\x03 Membros expulsos de \x02%channel%\x02 pela lista AKICK: %count%."
+  view:
+    syntax:         "AKICK <#canal> VIEW"
+    short:          "Mostrar os detalhes de cada entrada AKICK."
+    help:           "Mostra os detalhes de cada entrada da lista: a máscara, o motivo, o nickname que a adicionou, o momento em que foi criada, quando expira, quantas vezes apanhou um membro e quando foi aplicada pela última vez."
+    example:        "/msg %bot% AKICK #canal VIEW"
+    header:         "\x0303Entradas AKICK de \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (por %nickname%, criada: %created%, expira: %expiration%, usos: %uses%, último uso: %lastuse%)"
+    empty:          "\x0307ℹ\x03 O canal \x02%channel%\x02 não tem entradas AKICK."
+    never_used:     "nunca"
+  lastuse:
+    syntax:         "AKICK <#canal> LASTUSE"
+    short:          "Mostrar as entradas AKICK ordenadas pela última utilização."
+    help:           "Mostra as entradas da lista ordenadas pela última utilização, primeiro a mais recente. As entradas que nunca apanharam um membro ficam no fim."
+    example:        "/msg %bot% AKICK #canal LASTUSE"
+    header:         "\x0303Entradas AKICK de \x02%channel%\x02 por última utilização\x03"
+    entry:          "  #%index% %mask% %reason% (por %nickname%, criada: %created%, expira: %expiration%, usos: %uses%, último uso: %lastuse%)"
+    empty:          "\x0307ℹ\x03 O canal \x02%channel%\x02 não tem entradas AKICK."
+    never_used:     "nunca"
 
 restore:
   syntax:           "RESTORE <#canal>"

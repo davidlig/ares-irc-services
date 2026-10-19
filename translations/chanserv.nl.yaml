@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 is gedehalfopt."
 
 akick:
-  syntax:           "AKICK <#kanaal> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [masker] [verloop] [reden]"
+  syntax:           "AKICK <#kanaal> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE|VIEW|LASTUSE} [masker] [verloop] [reden]"
   short:            "Beheer auto-kick-lijst."
-  help:             "Beheert de auto-kicklijst van een kanaal: de vermeldingen die een overeenkomende gebruiker bij het verbinden bannen en wegtrappen, de reden die ze verklaart, de bijnaam die ze heeft toegevoegd en het moment waarop ze verlopen. Het kan ook de reden van een bestaande vermelding wijzigen zonder de auteur te verliezen, de hele lijst legen, de vermeldingen tellen, vertellen welke vermeldingen een verbonden gebruiker zouden pakken en de lijst toepassen op de leden die nu verbonden zijn. De lijst legen is de vernietigende handeling en vraagt naast het AKICK-niveau ook het kanaalniveau AKICKCHANGE."
-  unknown_sub:      "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK of ENFORCE."
+  help:             "Beheert de auto-kicklijst van een kanaal: de vermeldingen die een overeenkomende gebruiker bij het verbinden bannen en wegtrappen, de reden die ze verklaart, de bijnaam die ze heeft toegevoegd en het moment waarop ze verlopen. Het kan ook de reden van een bestaande vermelding wijzigen zonder de auteur te verliezen, de hele lijst legen, de vermeldingen tellen, vertellen welke vermeldingen een verbonden gebruiker zouden pakken en de lijst toepassen op de leden die nu verbonden zijn. De lijst legen is de vernietigende handeling en vraagt naast het AKICK-niveau ook het kanaalniveau AKICKCHANGE. De items kunnen ook één voor één worden bekeken, met het moment waarop ze zijn aangemaakt, hoe vaak ze een lid hebben gevangen en wanneer ze voor het laatst zijn toegepast."
+  unknown_sub:      "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK, ENFORCE, VIEW of LASTUSE."
   invalid_mask:     "\x0304✗\x03 Ongeldig maskerformaat. Gebruik \x02nick!ident@host\x02 met wildcards (*)."
   dangerous_mask:   "\x0304✗\x03 Het masker \x02%mask%\x02 is te breed. Het moet ten minste 4 alfanumerieke tekens bevatten."
   protected_user:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 heeft toegang in dit kanaal."
@@ -378,6 +378,24 @@ akick:
     help:           "Past de lijst toe op de leden die nu met het kanaal verbonden zijn: elk lid dat door een vermelding wordt gepakt, wordt gebannen en weggetrapt. Het meldt hoeveel leden zijn weggegooid."
     example:        "/msg %bot% AKICK #kanaal ENFORCE"
     done:           "\x0303✔\x03 Leden weggegooid uit \x02%channel%\x02 door de AKICK-lijst: %count%."
+  view:
+    syntax:         "AKICK <#kanaal> VIEW"
+    short:          "Toon de details van elk AKICK-item."
+    help:           "Toont de details van elk item in de lijst: het masker, de reden, de bijnaam die het heeft toegevoegd, het moment waarop het is aangemaakt, wanneer het verloopt, hoe vaak het een lid heeft gevangen en wanneer het voor het laatst is toegepast."
+    example:        "/msg %bot% AKICK #kanaal VIEW"
+    header:         "\x0303AKICK-items van \x02%channel%\x02\x03"
+    entry:          "  #%index% %mask% %reason% (van %nickname%, aangemaakt: %created%, verloopt: %expiration%, toepassingen: %uses%, laatste toepassing: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Channel \x02%channel%\x02 heeft geen AKICK-items."
+    never_used:     "nooit"
+  lastuse:
+    syntax:         "AKICK <#kanaal> LASTUSE"
+    short:          "Toon de AKICK-items gesorteerd op hun laatste toepassing."
+    help:           "Toont de items van de lijst gesorteerd op hun laatste toepassing, de meest recente eerst. De items die nooit een lid hebben gevangen staan achteraan."
+    example:        "/msg %bot% AKICK #kanaal LASTUSE"
+    header:         "\x0303AKICK-items van \x02%channel%\x02 op laatste toepassing\x03"
+    entry:          "  #%index% %mask% %reason% (van %nickname%, aangemaakt: %created%, verloopt: %expiration%, toepassingen: %uses%, laatste toepassing: %lastuse%)"
+    empty:          "\x0307ℹ\x03 Channel \x02%channel%\x02 heeft geen AKICK-items."
+    never_used:     "nooit"
 
 restore:
   syntax:           "RESTORE <#kanaal>"

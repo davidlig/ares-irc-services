@@ -101,6 +101,51 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     }
 
     #[Test]
+    public function savePersistsTheUseCounterAndTheLastUseDate(): void
+    {
+        $akick = ChannelAkick::create(
+            new DateTimeImmutable(),
+            channelId: 1,
+            creatorNickId: 100,
+            mask: '*!*@used.com',
+            reason: 'Caught twice'
+        );
+        $usedAt = new DateTimeImmutable('2026-10-20 10:00:00 UTC');
+        $akick->recordUse($usedAt);
+        $akick->recordUse($usedAt);
+
+        $this->repository->save($akick);
+        $this->flushAndClear();
+
+        $found = $this->repository->findById($akick->getId());
+
+        self::assertNotNull($found);
+        self::assertSame(2, $found->getUses());
+        self::assertNotNull($found->getLastUsedAt());
+        self::assertSame($usedAt->format('Y-m-d H:i:s'), $found->getLastUsedAt()->format('Y-m-d H:i:s'));
+    }
+
+    #[Test]
+    public function anEntryThatWasNeverUsedKeepsAZeroCounterAndNoDate(): void
+    {
+        $akick = ChannelAkick::create(
+            new DateTimeImmutable(),
+            channelId: 1,
+            creatorNickId: 100,
+            mask: '*!*@unused.com'
+        );
+
+        $this->repository->save($akick);
+        $this->flushAndClear();
+
+        $found = $this->repository->findById($akick->getId());
+
+        self::assertNotNull($found);
+        self::assertSame(0, $found->getUses());
+        self::assertNull($found->getLastUsedAt());
+    }
+
+    #[Test]
     public function removeDeletesAkick(): void
     {
         $akick = ChannelAkick::create(
