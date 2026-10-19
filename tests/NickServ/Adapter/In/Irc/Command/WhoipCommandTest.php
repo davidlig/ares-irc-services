@@ -54,6 +54,14 @@ final class WhoipCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new WhoipCommand($this->createStub(FindNicknamesByLastConnectIpHandlerInterface::class));
+
+        self::assertSame('whoip.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function returnsRejectedWhenSenderIsNull(): void
     {
         $handler = $this->createMock(FindNicknamesByLastConnectIpHandlerInterface::class);

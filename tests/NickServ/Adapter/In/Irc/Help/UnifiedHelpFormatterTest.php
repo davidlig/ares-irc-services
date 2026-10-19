@@ -40,6 +40,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'general_footer' => ['03'],
             'set_sub_footer' => ['03'],
             'syntax_label' => ['03'],
+            'example_label' => ['03'],
             'footer' => ['14'],
             'group_header' => ['10'],
             'subgroup_header' => ['10'],
@@ -332,6 +333,40 @@ final class UnifiedHelpFormatterTest extends TestCase
         $rawReplies = $lines;
         self::assertSame('translated:help.footer', end($rawReplies));
     }
+
+    #[Test]
+    public function rendersTheExampleLineOnlyForCommandsExposingAnExampleKey(): void
+    {
+        $formatter = new UnifiedHelpFormatter();
+
+        $withExampleContext = new NickServHelpFormatterContext();
+        $withExample = $formatter->renderCommandHelp($withExampleContext, new NickServHelpableCommandWithExample('IDENTIFY', 2));
+
+        self::assertSame([
+            'translated:help.header',
+            'translated:identify.help',
+            ' ',
+            'translated:help.syntax_label',
+            ' ',
+            'translated:help.example_label',
+            'translated:help.footer',
+        ], $withExample);
+        self::assertSame([], $withExampleContext->replies);
+        self::assertSame([], $withExampleContext->rawReplies);
+
+        $exampleLabels = array_values(array_filter(
+            $withExampleContext->translations,
+            static fn (array $entry): bool => 'help.example_label' === $entry['key'],
+        ));
+        self::assertCount(1, $exampleLabels);
+        self::assertSame(['example' => 'translated:identify.example'], $exampleLabels[0]['params']);
+
+        $withoutExampleContext = new NickServHelpFormatterContext();
+        $withoutExample = $formatter->renderCommandHelp($withoutExampleContext, new NickServHelpableCommand('HELP', 0));
+
+        self::assertNotContains('translated:help.example_label', $withoutExample);
+        self::assertSame('translated:help.syntax_label', $withoutExample[count($withoutExample) - 2]);
+    }
 }
 
 final class NickServHelpFormatterContext implements HelpFormatterContextInterface
@@ -460,5 +495,54 @@ final readonly class NickServHelpableCommand implements HelpableCommandInterface
     public function getHelpParams(): array
     {
         return $this->helpParams;
+    }
+}
+
+/** A command that opts into the HELP example line, mirroring the twelve NickServ command adapters. */
+final readonly class NickServHelpableCommandWithExample implements HelpableCommandInterface
+{
+    public function __construct(
+        private string $name,
+        private int $order,
+    ) {}
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getOrder(): int
+    {
+        return $this->order;
+    }
+
+    public function getShortDescKey(): string
+    {
+        return strtolower($this->name) . '.short';
+    }
+
+    public function getSyntaxKey(): string
+    {
+        return strtolower($this->name) . '.syntax';
+    }
+
+    public function getHelpKey(): string
+    {
+        return strtolower($this->name) . '.help';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
+    public function isOperOnly(): bool
+    {
+        return false;
+    }
+
+    public function getExampleKey(): string
+    {
+        return strtolower($this->name) . '.example';
     }
 }

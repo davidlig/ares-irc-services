@@ -81,6 +81,11 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         return null;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'identify.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

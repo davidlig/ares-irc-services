@@ -70,6 +70,11 @@ final readonly class InfoCommand implements NickServCommandInterface
         return null;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'info.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

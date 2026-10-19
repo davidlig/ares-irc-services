@@ -76,6 +76,11 @@ final readonly class ListCommand implements NickServCommandInterface, IrcopAudit
         return NickServPermission::LIST;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'list.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

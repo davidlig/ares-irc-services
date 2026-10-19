@@ -48,6 +48,14 @@ final class SaregisterCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new SaregisterCommand(new RecordingSaregisterHandler());
+
+        self::assertSame('saregister.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsIrcInputToTheUseCase(): void
     {
         $handler = new RecordingSaregisterHandler();

@@ -50,6 +50,14 @@ final class ListCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new ListCommand($this->createStub(ListNickAccountsHandlerInterface::class));
+
+        self::assertSame('list.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsPatternAndPageThenPresentsRowsAndSafeAuditData(): void
     {
         $registeredAt = new DateTimeImmutable('2026-01-01 12:00:00 UTC');

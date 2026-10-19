@@ -50,6 +50,14 @@ final class SetCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new SetCommand($this->createStub(SetNickSettingHandlerInterface::class));
+
+        self::assertSame('set.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function rejectsMissingSenderSyntaxAndUnknownOptionWithoutCallingUseCase(): void
     {
         $handler = $this->createMock(SetNickSettingHandlerInterface::class);

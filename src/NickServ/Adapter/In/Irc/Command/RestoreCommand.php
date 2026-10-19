@@ -69,6 +69,11 @@ final readonly class RestoreCommand implements NickServCommandInterface, IrcopAu
         return NickServPermission::RESTORE;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'restore.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

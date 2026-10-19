@@ -74,6 +74,11 @@ final readonly class SaregisterCommand implements NickServCommandInterface
         return NickServPermission::SAREGISTER;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'saregister.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

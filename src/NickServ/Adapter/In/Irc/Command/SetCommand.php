@@ -78,6 +78,11 @@ final readonly class SetCommand implements NickServCommandInterface
         return NickServPermission::IDENTIFIED_OWNER;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'set.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

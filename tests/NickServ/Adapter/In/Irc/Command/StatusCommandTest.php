@@ -55,6 +55,17 @@ final class StatusCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new StatusCommand(
+            $this->createStub(StatusNickHandlerInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame('status.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsTargetNickAndOnlinePresence(): void
     {
         $onlineUser = new SenderView('UID1', 'target', 'ident', 'host', 'cloak', 'ip', isIdentified: true);

@@ -69,6 +69,11 @@ final readonly class StatusCommand implements NickServCommandInterface
         return null;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'status.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

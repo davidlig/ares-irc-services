@@ -57,6 +57,17 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new InfoCommand(
+            $this->createStub(InfoNickHandlerInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame('info.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function mapsArgumentsAndContextProperly(): void
     {
         $sender = new SenderView('UID1', 'Sender', 'ident', 'host', 'cloak', 'ip', isIdentified: true, isOper: true);

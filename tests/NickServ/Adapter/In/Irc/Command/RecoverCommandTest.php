@@ -54,6 +54,17 @@ final class RecoverCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new RecoverCommand(
+            $this->createStub(RecoverNickHandlerInterface::class),
+            $this->authenticationMode(),
+        );
+
+        self::assertSame('recover.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function doesNothingWhenSenderIsNull(): void
     {
         $handler = $this->createMock(RecoverNickHandlerInterface::class);

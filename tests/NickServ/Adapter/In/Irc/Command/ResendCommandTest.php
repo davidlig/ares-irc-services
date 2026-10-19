@@ -44,6 +44,14 @@ final class ResendCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new ResendCommand($this->createStub(ResendVerificationHandlerInterface::class));
+
+        self::assertSame('resend.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function ignoresMissingSender(): void
     {
         $handler = $this->createMock(ResendVerificationHandlerInterface::class);

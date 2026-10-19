@@ -43,6 +43,14 @@ final class RegisterCommandTest extends TestCase
         self::assertSame([], $command->getHelpParams());
     }
 
+    #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new RegisterCommand($this->createStub(RegisterNickHandlerInterface::class));
+
+        self::assertSame('register.example', $command->getExampleKey());
+    }
+
     /** @param array{uid: string, nick: string, ident: string, hostname: string, cloakedHost: string, ipBase64: string} $senderData */
     #[Test]
     #[DataProvider('clientKeys')]

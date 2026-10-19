@@ -71,6 +71,11 @@ final readonly class WhoipCommand implements NickServCommandInterface, IrcopAudi
         return NickServPermission::WHOIP;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'whoip.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

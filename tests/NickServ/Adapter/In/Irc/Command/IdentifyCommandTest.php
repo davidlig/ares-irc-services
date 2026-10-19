@@ -55,6 +55,20 @@ final class IdentifyCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new IdentifyCommand(
+            $this->createStub(IdentifyNickHandlerInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            new NickServClientKeyResolver(),
+            $this->authenticationMode(),
+        );
+
+        self::assertSame('identify.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function exposesNativeAuthenticationMetadata(): void
     {
         $command = new IdentifyCommand(

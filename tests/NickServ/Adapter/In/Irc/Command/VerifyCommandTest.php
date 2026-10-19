@@ -44,6 +44,14 @@ final class VerifyCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new VerifyCommand($this->createStub(VerifyNickHandlerInterface::class));
+
+        self::assertSame('verify.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function ignoresMissingSender(): void
     {
         $handler = $this->createMock(VerifyNickHandlerInterface::class);

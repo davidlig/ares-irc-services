@@ -69,6 +69,11 @@ final readonly class RegisterCommand implements NickServCommandInterface
         return null;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'register.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];

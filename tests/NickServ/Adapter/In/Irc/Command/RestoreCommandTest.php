@@ -47,6 +47,14 @@ final class RestoreCommandTest extends TestCase
     }
 
     #[Test]
+    public function getExampleKeyReturnsCorrectKey(): void
+    {
+        $command = new RestoreCommand($this->createStub(RestoreNickHandlerInterface::class));
+
+        self::assertSame('restore.example', $command->getExampleKey());
+    }
+
+    #[Test]
     public function returnsRejectedWhenSenderIsNull(): void
     {
         $handler = $this->createMock(RestoreNickHandlerInterface::class);

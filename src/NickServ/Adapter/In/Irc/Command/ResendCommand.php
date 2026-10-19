@@ -67,6 +67,11 @@ final readonly class ResendCommand implements NickServCommandInterface
         return null;
     }
 
+    public function getExampleKey(): string
+    {
+        return 'resend.example';
+    }
+
     public function getHelpParams(): array
     {
         return [];
