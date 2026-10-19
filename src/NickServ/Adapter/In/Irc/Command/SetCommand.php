@@ -65,6 +65,7 @@ final readonly class SetCommand implements NickServCommandInterface
             'desc_key' => 'set.' . strtolower($option) . '.short',
             'help_key' => 'set.' . strtolower($option) . '.help',
             'syntax_key' => 'set.' . strtolower($option) . '.syntax',
+            'example_key' => 'set.' . strtolower($option) . '.example',
         ], self::SUPPORTED_OPTIONS);
     }
 

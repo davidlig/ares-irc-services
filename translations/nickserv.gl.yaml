@@ -178,12 +178,14 @@ set:
     syntax:         "SET PASSWORD <novo_contrasinal>"
     short:          "Cambiar o contrasinal do seu alcume."
     help:           "Cambia o contrasinal do seu alcume. O novo contrasinal ten\nefecto inmediato. Escolla un contrasinal seguro de polo menos 6 caracteres\nque non use noutros servizos."
+    example:        "/msg %bot% SET PASSWORD novo_contrasinal123"
     success:        "\x0303✔\x03 O seu contrasinal foi actualizado con éxito."
 
   email:
     syntax:         "SET EMAIL <novo_correo-e> [token]"
     short:          "Cambiar o enderezo de correo electrónico ligado ao seu alcume (confirmación en dous pasos)."
     help:           "Cambio de correo electrónico en dous pasos por seguridade.\n1) \x0303SET EMAIL <novo_correo-e>\x03 — envíase un token ao seu correo actual.\n2) \x0303SET EMAIL <novo_correo-e> <token>\x03 — confirme co token recibido.\nO token caduca en 1 hora."
+    example:        "/msg %bot% SET EMAIL usuario@exemplo.com"
     success:        "\x0303✔\x03 O seu correo electrónico foi actualizado a \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Enviouse un token de confirmación a \x02%current_email%\x02.\n  Para confirmar o cambio a \x02%new_email%\x02 execute:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  O token caduca en 1 hora."
     invalid_token:  "\x0304✗\x03 O token non é válido ou caducou. Solicite un novo con \x0303SET EMAIL <novo_correo-e>\x03."
@@ -192,6 +194,7 @@ set:
     syntax:         "SET LANGUAGE <código>"
     short:          "Cambiar o idioma que os servizos usan para comunicarse con vostede."
     help:           "Cambia o idioma que %nickserv% e outros servizos usan ao falar con vostede.\nIdiomas dispoñibles:\n  \x02ca\x02 (catalán)\n  \x02de\x02 (alemán)\n  \x02el\x02 (grego)\n  \x02en\x02 (inglés)\n  \x02es\x02 (español)\n  \x02eu\x02 (éuscaro)\n  \x02fr\x02 (francés)\n  \x02gl\x02 (galego)\n  \x02it\x02 (italiano)\n  \x02nl\x02 (neerlandés)\n  \x02pl\x02 (polaco)\n  \x02pt\x02 (portugués)\n  \x02ro\x02 (romanés)\n  \x02tr\x02 (turco)"
+    example:        "/msg %bot% SET LANGUAGE gl"
     success:        "\x0303✔\x03 Idioma cambiado a \x02%language%\x02."
     invalid:        "\x0304✗\x03 Idioma non soportado. Idiomas dispoñibles: %languages%."
 
@@ -199,6 +202,7 @@ set:
     syntax:         "SET TIMEZONE <fuso_horario>"
     short:          "Establecer o fuso horario usado cando se mostran datas."
     help:           "Establece o fuso horario que usa %nickserv% cando mostra datas.\nUse \x02HELP SET TIMEZONE\x02 para o índice de rexións; \x02HELP SET TIMEZONE <rexión>\x02 (p.ex. Europe) para os fusos horarios desa rexión. Use \x02OFF\x02 para limpar."
+    example:        "/msg %bot% SET TIMEZONE Europe/Madrid"
     success:        "\x0303✔\x03 Fuso horario establecido en \x02%timezone%\x02. As datas mostraranse neste fuso."
     cleared:        "\x0303✔\x03 Fuso horario limpado. As datas usarán o valor predeterminado da rede."
     invalid:        "\x0304✗\x03 Fuso horario non válido \x02%timezone%\x02. Use un identificador válido (p.ex. UTC, Europe/Madrid)."
@@ -207,6 +211,7 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Activar ou desactivar a privacidade da información do seu alcume."
     help:           "Controla a visibilidade da información do seu alcume no comando INFO.\nCon \x02PRIVATE ON\x02 só vostede e os operadores de IRC poden ver os seus detalles.\nCon \x02PRIVATE OFF\x02 a súa información é pública para todos."
+    example:        "/msg %bot% SET PRIVATE ON"
     on:             "\x0303✔\x03 A información do seu alcume é agora \x02privada\x02."
     off:            "\x0303✔\x03 A información do seu alcume é agora \x02pública\x02."
 
@@ -214,6 +219,7 @@ set:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Usar PRIVMSG (ON) ou NOTICE (OFF) para as respostas do servizo."
     help:           "Controla como %nickserv% e outros servizos envían mensaxes a vostede.\nCon \x02MSG ON\x02 as respostas envíanse como \x02PRIVMSG\x02 (algúns clientes poden provocar respostas ou notificacións).\nCon \x02MSG OFF\x02 as respostas envíanse como \x02NOTICE\x02 (predeterminado; normalmente sen resposta automática)."
+    example:        "/msg %bot% SET MSG ON"
     on:             "\x0303✔\x03 As mensaxes do servizo enviaranse agora como \x02PRIVMSG\x02."
     off:            "\x0303✔\x03 As mensaxes do servizo enviaranse agora como \x02NOTICE\x02."
 
@@ -221,6 +227,7 @@ set:
     syntax:         "SET VHOST [vhost]"
     short:          "Establecer ou limpar o seu nome de servidor virtual (hostname mostrado)."
     help:           "Establece un nome de servidor personalizado que outros ven cando está identificado.\nUse \x02SET VHOST\x02 sen valor para limpalo. Só letras (a-z, A-Z), díxitos, guión e punto;\nsen guión nin punto ao inicio/final de cada bloque; máx. 48 caracteres. Único por alcume."
+    example:        "/msg %bot% SET VHOST usuarios.exemplo.com"
     success:        "\x0303✔\x03 O seu host virtual foi establecido como \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 O seu host virtual foi limpado."
     invalid:        "\x0304✗\x03 Vhost non válido. Só letras, díxitos, guión e punto (non ao inicio/final de bloque); máx. 48 caracteres."
@@ -248,37 +255,44 @@ saset:
   password:
     syntax:         "SASET <alcume> PASSWORD <novo_contrasinal>"
     short:          "Cambiar o contrasinal dun alcume."
-    help:           "Cambia o contrasinal doutro alcume.\nO cambio é inmediato.\n\nSintaxe: SASET <alcume> PASSWORD <novo_contrasinal>\nExemplo: SASET Usuario PASSWORD novo_contrasinal123"
+    help:           "Cambia o contrasinal doutro alcume.\nO cambio é inmediato."
+    example:        "/msg %bot% SASET Usuario PASSWORD novo_contrasinal123"
 
   email:
     syntax:         "SASET <alcume> EMAIL <novo_correo>"
     short:          "Cambiar o correo electrónico dun alcume."
-    help:           "Cambia o correo electrónico doutro alcume.\nNon se envía confirmación—o cambio é inmediato.\n\nSintaxe: SASET <alcume> EMAIL <novo_correo>\nExemplo: SASET Usuario EMAIL usuario@exemplo.com"
+    help:           "Cambia o correo electrónico doutro alcume.\nNon se envía confirmación—o cambio é inmediato."
+    example:        "/msg %bot% SASET Usuario EMAIL usuario@exemplo.com"
 
   language:
     syntax:         "SASET <alcume> LANGUAGE <código>"
     short:          "Cambiar o idioma dun alcume."
-    help:           "Cambia o idioma doutro alcume.\nIdiomas dispoñibles: en (inglés), es (español).\n\nSintaxe: SASET <alcume> LANGUAGE <código>\nExemplo: SASET Usuario LANGUAGE gl"
+    help:           "Cambia o idioma doutro alcume.\nIdiomas dispoñibles: en (inglés), es (español)."
+    example:        "/msg %bot% SASET Usuario LANGUAGE gl"
 
   timezone:
     syntax:         "SASET <alcume> TIMEZONE <fuso_horario|OFF>"
     short:          "Cambiar o fuso horario dun alcume."
-    help:           "Establece ou limpa o fuso horario doutro alcume.\nUse OFF para limpalo.\n\nSintaxe: SASET <alcume> TIMEZONE <fuso_horario>\nExemplo: SASET Usuario TIMEZONE Europe/Madrid"
+    help:           "Establece ou limpa o fuso horario doutro alcume.\nUse OFF para limpalo."
+    example:        "/msg %bot% SASET Usuario TIMEZONE Europe/Madrid"
 
   private:
     syntax:         "SASET <alcume> PRIVATE {ON|OFF}"
     short:          "Cambiar a privacidade dun alcume."
-    help:           "Activa ou desactiva a privacidade da información doutro alcume.\n\nSintaxe: SASET <alcume> PRIVATE {ON|OFF}\nExemplo: SASET Usuario PRIVATE ON"
+    help:           "Activa ou desactiva a privacidade da información doutro alcume."
+    example:        "/msg %bot% SASET Usuario PRIVATE ON"
 
   msg:
     syntax:         "SASET <alcume> MSG {ON|OFF}"
     short:          "Cambiar a preferencia de mensaxes dun alcume."
-    help:           "Establece se outro alcume recibe as respostas como PRIVMSG (ON) ou NOTICE (OFF).\n\nSintaxe: SASET <alcume> MSG {ON|OFF}\nExemplo: SASET Usuario MSG ON"
+    help:           "Establece se outro alcume recibe as respostas como PRIVMSG (ON) ou NOTICE (OFF)."
+    example:        "/msg %bot% SASET Usuario MSG ON"
 
   vhost:
     syntax:         "SASET <alcume> VHOST [vhost]"
     short:          "Cambiar o host virtual dun alcume."
-    help:           "Establece ou limpa o host virtual doutro alcume.\nUse \x02SASET <alcume> VHOST\x02 sen valor para limpalo.\n\nSintaxe: SASET <alcume> VHOST [vhost]\nExemplo: SASET Usuario VHOST usuarios.exemplo.com"
+    help:           "Establece ou limpa o host virtual doutro alcume.\nUse \x02SASET <alcume> VHOST\x02 sen valor para limpalo."
+    example:        "/msg %bot% SASET Usuario VHOST usuarios.exemplo.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -505,9 +519,7 @@ forbidvhost:
       poderán establecer vhosts que coincidan con este patrón mediante SET VHOST.
 
       Comodíns: * coincide con calquera secuencia, ? coincide cun só carácter.
-
-      Sintaxe: FORBIDVHOST ADD <patrón>
-      Exemplo: FORBIDVHOST ADD *.pirateado.com
+    example:     "/msg %bot% FORBIDVHOST ADD *.pirateado.com"
     done:            "\x0303✓\x03 Patrón de vhost prohibido engadido: \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 O patrón \x02%pattern%\x02 xa existe."
     invalid:          "\x0304✗\x03 Formato de patrón de vhost non válido."
@@ -517,9 +529,7 @@ forbidvhost:
     short:       "Eliminar un patrón de vhost prohibido."
     help:        |
       Elimina un patrón da lista de vhosts prohibidos.
-
-      Sintaxe: FORBIDVHOST DEL <patrón>
-      Exemplo: FORBIDVHOST DEL *.pirateado.com
+    example:     "/msg %bot% FORBIDVHOST DEL *.pirateado.com"
     done:        "\x0303✓\x03 Patrón de vhost prohibido eliminado: \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 Patrón \x02%pattern%\x02 non atopado."
 
@@ -528,8 +538,7 @@ forbidvhost:
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Mostra todos os patróns de vhost prohibidos.
-
-      Sintaxe: FORBIDVHOST LIST
+    example:     "/msg %bot% FORBIDVHOST LIST"
     header:      "\x0307ℹ\x03 Patróns de vhost prohibidos (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — por %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Non hai patróns de vhost prohibidos."
@@ -562,9 +571,7 @@ history:
     short:      "Engadir unha entrada manual ao historial."
     help:        |
       Engade unha entrada manual ao historial do alcume.
-
-      Sintaxe: HISTORY <alcume> ADD <mensaxe>
-      Exemplo: HISTORY AlgúnAlcume ADD Usuario denunciado por spam
+    example:     "/msg %bot% HISTORY AlgúnAlcume ADD Usuario denunciado por spam"
     success:    "\x0303✔\x03 Entrada do historial engadida para \x02%nickname%\x02."
 
   del:
@@ -572,9 +579,7 @@ history:
     short:      "Eliminar unha entrada do historial polo ID."
     help:        |
       Elimina unha entrada específica do historial polo seu ID.
-
-      Sintaxe: HISTORY <alcume> DEL <id>
-      Exemplo: HISTORY AlgúnAlcume DEL 42
+    example:     "/msg %bot% HISTORY AlgúnAlcume DEL 42"
     success:    "\x0303✔\x03 Entrada do historial \x02%id%\x02 eliminada."
     not_found:  "\x0304✗\x03 Entrada do historial \x02%id%\x02 non atopada."
     invalid_id: "\x0304✗\x03 ID de entrada non válido: \x02%id%\x02."
@@ -585,13 +590,10 @@ history:
     help:        |
       Mostra o historial de accións do alcume.
 
-      Sintaxe: HISTORY <alcume> VIEW
-               HISTORY <alcume> VIEW PÁXINA
-               HISTORY <alcume> VIEW ALL
-
       Por defecto mostra 3 entradas cada vez.
       Use VIEW 2 para ver a segunda páxina.
       Use VIEW ALL para ver o historial completo.
+    example:     "/msg %bot% HISTORY AlgúnAlcume VIEW"
     header:     "\x02Historial de \x0307%nickname%\x03\x02 (mostrando %start%-%end% de %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 por %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -604,9 +606,7 @@ history:
     help:        |
       Elimina todas as entradas do historial do alcume especificado.
       Esta acción non se pode desfacer.
-
-      Sintaxe: HISTORY <alcume> CLEAR
-      Exemplo: HISTORY AlgúnAlcume CLEAR
+    example:     "/msg %bot% HISTORY AlgúnAlcume CLEAR"
     success:    "\x0303✔\x03 Limpadas \x02%count%\x02 entradas do historial de \x02%nickname%\x02."
 
 # --- History message translations (used when viewing history) ---

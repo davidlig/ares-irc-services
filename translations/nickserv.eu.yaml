@@ -170,12 +170,14 @@ set:
     syntax:         "SET PASSWORD <pasahitz_berria>"
     short:          "Aldatu zure ezizenaren pasahitza."
     help:           "Zure ezizenaren pasahitza aldatzen du. Pasahitz berriak\nberehala eragiten du. Aukeratu gutxienez 6 karaktereko pasahitz sendo bat\nbeste zerbitzuetan erabiltzen ez duzuna."
+    example:        "/msg %bot% SET PASSWORD pasahitzberria123"
     success:        "\x0303✔\x03 Zure pasahitza arrakastaz eguneratu da."
 
   email:
     syntax:         "SET EMAIL <posta_berria> [tokena]"
     short:          "Aldatu zure ezizenari lotutako posta elektroniko helbidea (bi urratseko berrespena)."
     help:           "Posta elektroniko aldaketa bi urratsetan segurtasunerako.\n1) \x0303SET EMAIL <posta_berria>\x03 — token bat zure uneko posta elektronikora bidaltzen da.\n2) \x0303SET EMAIL <posta_berria> <token>\x03 — berretsi jasotako tokenarekin.\nTokena ordubetean iraungitzen da."
+    example:        "/msg %bot% SET EMAIL erabiltzaile@adibidea.com"
     success:        "\x0303✔\x03 Zure posta elektronikoa \x02%email%\x02 helbidera eguneratu da."
     pending_sent:   "\x0307→\x03 Berrespen token bat bidali da \x02%current_email%\x02 helbidera.\n  \x02%new_email%\x02 helbiderako aldaketa baieztatzeko exekutatu:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Tokena ordubetean iraungitzen da."
     invalid_token:  "\x0304✗\x03 Tokena baliogabea da edo iraungi da. Eskatu berri bat honekin \x0303SET EMAIL <posta_berria>\x03."
@@ -184,6 +186,7 @@ set:
     syntax:         "SET LANGUAGE <kodea>"
     short:          "Aldatu zerbitzuek zurekin komunikatzeko erabiltzen duten hizkuntza."
     help:           "%nickserv% eta beste zerbitzuek zurekin hitz egitean erabiltzen duten hizkuntza\naldatzen du. Hizkuntza erabilgarriak:\n  \x02ca\x02 (Katalana)\n  \x02de\x02 (Alemana)\n  \x02el\x02 (Greziera)\n  \x02en\x02 (Ingelesa)\n  \x02es\x02 (Gaztelania)\n  \x02eu\x02 (Euskara)\n  \x02fr\x02 (Frantsesa)\n  \x02gl\x02 (Galiziera)\n  \x02it\x02 (Italiera)\n  \x02nl\x02 (Nederlandera)\n  \x02pl\x02 (Poloniera)\n  \x02pt\x02 (Portugesa)\n  \x02ro\x02 (Errumaniera)\n  \x02tr\x02 (Turkiera)"
+    example:        "/msg %bot% SET LANGUAGE eu"
     success:        "\x0303✔\x03 Hizkuntza \x02%language%\x02(e)ra aldatu da."
     invalid:        "\x0304✗\x03 Onartu gabeko hizkuntza. Hizkuntza erabilgarriak: %languages%."
 
@@ -191,6 +194,7 @@ set:
     syntax:         "SET TIMEZONE <ordu-zona>"
     short:          "Ezarri datak erakustean erabiltzen den ordu-zona."
     help:           "%nickserv% zerbitzuak datak erakustean erabiltzen duen ordu-zona ezartzen du.\nErabili \x02HELP SET TIMEZONE\x02 eskualdeen indizerako;\n\x02HELP SET TIMEZONE <eskualdea>\x02 (adib. Europe) eskualde horretako ordu-zonentzako.\nErabili \x02OFF\x02 garbitzeko."
+    example:        "/msg %bot% SET TIMEZONE Europe/Madrid"
     success:        "\x0303✔\x03 Ordu-zona \x02%timezone%\x02 gisa ezarri da. Datak ordu-zona honetan erakutsiko dira."
     cleared:        "\x0303✔\x03 Ordu-zona garbitu da. Datek sarearen lehenetsia erabiliko dute."
     invalid:        "\x0304✗\x03 Ordu-zona baliogabea \x02%timezone%\x02. Erabili identifikatzaile baliozko bat (adib. UTC, Europe/Madrid)."
@@ -199,6 +203,7 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Gaitu edo desgaitu pribatutasuna zure ezizenaren informaziorako."
     help:           "Zure ezizenaren informazioaren ikusgarritasuna kontrolatzen du INFO komandoan.\n\x02PRIVATE ON\x02 dagoenean zuk eta IRC Operadoreek soilik ikus ditzakezue zure xehetasunak.\n\x02PRIVATE OFF\x02 dagoenean zure informazioa guztiontzat publikoa da."
+    example:        "/msg %bot% SET PRIVATE ON"
     on:             "\x0303✔\x03 Zure ezizenaren informazioa orain \x02pribatua\x02 da."
     off:            "\x0303✔\x03 Zure ezizenaren informazioa orain \x02publikoa\x02 da."
 
@@ -206,6 +211,7 @@ set:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Erabili PRIVMSG (ON) edo NOTICE (OFF) zerbitzuen erantzunetarako."
     help:           "%nickserv% eta beste zerbitzuek zuri mezuak nola bidaltzen dizkizuten kontrolatzen du.\n\x02MSG ON\x02 dagoenean erantzunak \x02PRIVMSG\x02 gisa bidaltzen dira (bezero batzuek erantzunak edo jakinarazpenak aktiba ditzakete).\n\x02MSG OFF\x02 dagoenean erantzunak \x02NOTICE\x02 gisa bidaltzen dira (lehenetsia; normalean ez du erantzun automatikorik)."
+    example:        "/msg %bot% SET MSG ON"
     on:             "\x0303✔\x03 Zerbitzuen mezuak orain \x02PRIVMSG\x02 gisa bidaliko dira."
     off:            "\x0303✔\x03 Zerbitzuen mezuak orain \x02NOTICE\x02 gisa bidaliko dira."
 
@@ -213,6 +219,7 @@ set:
     syntax:         "SET VHOST [vhost-a]"
     short:          "Ezarri edo garbitu zure ostalari birtual pertsonalizatua (erakutsitako ostalari izena)."
     help:           "Identifikatuta zaudenean besteek ikusten duten ostalari izen pertsonalizatu bat ezartzen du.\nErabili \x02SET VHOST\x02 baliorik gabe garbitzeko. Letrak (a-z, A-Z), digituak, marra eta puntua soilik;\nbloke baten hasieran/amaieran marra edo punturik ez; gehienez 48 karaktere. Ezizen bakoitzeko bakarra."
+    example:        "/msg %bot% SET VHOST erabiltzaileak.adibidea.com"
     success:        "\x0303✔\x03 Zure ostalari birtuala \x02%vhost%\x02 gisa ezarri da."
     cleared:        "\x0303✔\x03 Zure ostalari birtuala garbitu da."
     invalid:        "\x0304✗\x03 Vhost baliogabea. Letrak, digituak, marra eta puntua soilik (ez blokearen hasieran/amaieran); gehienez 48 karaktere."
@@ -240,37 +247,44 @@ saset:
   password:
     syntax:         "SASET <ezizen> PASSWORD <pasahitz_berria>"
     short:          "Ezizen baten pasahitza aldatu."
-    help:           "Beste ezizen baten pasahitza aldatzen du.\nAldaketa berehalakoa da.\n\nSintaxia: SASET <ezizen> PASSWORD <pasahitz_berria>\nAdibidea: SASET Erabiltzaile PASSWORD pasahitzberria123"
+    help:           "Beste ezizen baten pasahitza aldatzen du.\nAldaketa berehalakoa da."
+    example:        "/msg %bot% SASET Erabiltzaile PASSWORD pasahitzberria123"
 
   email:
     syntax:         "SASET <ezizen> EMAIL <posta_berria>"
     short:          "Ezizen baten posta elektronikoa aldatu."
-    help:           "Beste ezizen baten posta elektronikoa aldatzen du.\nEz da berrespenik bidaltzen—aldaketa berehalakoa da.\n\nSintaxia: SASET <ezizen> EMAIL <posta_berria>\nAdibidea: SASET Erabiltzaile EMAIL erabiltzaile@adibidea.com"
+    help:           "Beste ezizen baten posta elektronikoa aldatzen du.\nEz da berrespenik bidaltzen—aldaketa berehalakoa da."
+    example:        "/msg %bot% SASET Erabiltzaile EMAIL erabiltzaile@adibidea.com"
 
   language:
     syntax:         "SASET <ezizen> LANGUAGE <kodea>"
     short:          "Ezizen baten hizkuntza aldatu."
-    help:           "Beste ezizen baten hizkuntza aldatzen du.\nHizkuntza erabilgarriak: en (ingelesa), es (espainiera).\n\nSintaxia: SASET <ezizen> LANGUAGE <kodea>\nAdibidea: SASET Erabiltzaile LANGUAGE eu"
+    help:           "Beste ezizen baten hizkuntza aldatzen du.\nHizkuntza erabilgarriak: en (ingelesa), es (espainiera)."
+    example:        "/msg %bot% SASET Erabiltzaile LANGUAGE eu"
 
   timezone:
     syntax:         "SASET <ezizen> TIMEZONE <ordu_zona|OFF>"
     short:          "Ezizen baten ordu-zona aldatu."
-    help:           "Beste ezizen baten ordu-zona ezartzen edo garbitzen du.\nErabili OFF garbitzeko.\n\nSintaxia: SASET <ezizen> TIMEZONE <ordu_zona>\nAdibidea: SASET Erabiltzaile TIMEZONE Europe/Madrid"
+    help:           "Beste ezizen baten ordu-zona ezartzen edo garbitzen du.\nErabili OFF garbitzeko."
+    example:        "/msg %bot% SASET Erabiltzaile TIMEZONE Europe/Madrid"
 
   private:
     syntax:         "SASET <ezizen> PRIVATE {ON|OFF}"
     short:          "Ezizen baten pribatutasuna aldatu."
-    help:           "Beste ezizen baten informazioaren pribatutasuna gaitu edo desgaitu.\n\nSintaxia: SASET <ezizen> PRIVATE {ON|OFF}\nAdibidea: SASET Erabiltzaile PRIVATE ON"
+    help:           "Beste ezizen baten informazioaren pribatutasuna gaitu edo desgaitu."
+    example:        "/msg %bot% SASET Erabiltzaile PRIVATE ON"
 
   msg:
     syntax:         "SASET <ezizen> MSG {ON|OFF}"
     short:          "Ezizen baten mezuen hobespena aldatu."
-    help:           "Beste ezizen batek erantzunak PRIVMSG (ON) edo NOTICE (OFF) gisa jasoko dituen ezartzen du.\n\nSintaxia: SASET <ezizen> MSG {ON|OFF}\nAdibidea: SASET Erabiltzaile MSG ON"
+    help:           "Beste ezizen batek erantzunak PRIVMSG (ON) edo NOTICE (OFF) gisa jasoko dituen ezartzen du."
+    example:        "/msg %bot% SASET Erabiltzaile MSG ON"
 
   vhost:
     syntax:         "SASET <ezizen> VHOST [vhost]"
     short:          "Ezizen baten ostalari birtuala aldatu."
-    help:           "Beste ezizen baten ostalari birtuala ezartzen edo garbitzen du.\nErabili \x02SASET <ezizen> VHOST\x02 baliorik gabe garbitzeko.\n\nSintaxia: SASET <ezizen> VHOST [vhost]\nAdibidea: SASET Erabiltzaile VHOST erabiltzaileak.adibidea.com"
+    help:           "Beste ezizen baten ostalari birtuala ezartzen edo garbitzen du.\nErabili \x02SASET <ezizen> VHOST\x02 baliorik gabe garbitzeko."
+    example:        "/msg %bot% SASET Erabiltzaile VHOST erabiltzaileak.adibidea.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -497,9 +511,7 @@ forbidvhost:
       izango dute eredu honekin bat datorren vhostik ezarri SET VHOST bidez.
 
       Komodinek: * edozein segida bat dator, ? karaktere bakarra bat dator.
-
-      Sintaxia: FORBIDVHOST ADD <eredua>
-      Adibidea: FORBIDVHOST ADD *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST ADD *.pirated.com"
     done:            "\x0303✓\x03 Debekatutako vhost eredua gehitu da: \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 \x02%pattern%\x02 eredua jada existitzen da."
     invalid:          "\x0304✗\x03 Debekatutako vhost eredu formatu baliogabea."
@@ -509,9 +521,7 @@ forbidvhost:
     short:       "Kendu debekatutako vhost eredu bat."
     help:        |
       Eredu bat debekatutako vhost zerrendatik kentzen du.
-
-      Sintaxia: FORBIDVHOST DEL <eredua>
-      Adibidea: FORBIDVHOST DEL *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST DEL *.pirated.com"
     done:        "\x0303✓\x03 Debekatutako vhost eredua kendu da: \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 \x02%pattern%\x02 eredua ez da aurkitu."
 
@@ -520,8 +530,7 @@ forbidvhost:
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Debekatutako vhost eredu guztiak erakusten ditu.
-
-      Sintaxia: FORBIDVHOST LIST
+    example:     "/msg %bot% FORBIDVHOST LIST"
     header:      "\x0307ℹ\x03 Debekatutako vhost ereduak (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — %nickname%-(e)k (%date%)"
     empty:       "\x0307ℹ\x03 Ez dago debekatutako vhost eredurik."
@@ -554,9 +563,7 @@ history:
     short:      "Gehitu eskuzko historia sarrera bat."
     help:        |
       Ezizenaren historiara eskuzko sarrera bat gehitzen du.
-
-      Sintaxia: HISTORY <ezizena> ADD <mezua>
-      Adibidea: HISTORY EzizenBat ADD Erabiltzailea spam egiteagatik salatua
+    example:     "/msg %bot% HISTORY EzizenBat ADD Erabiltzailea spam egiteagatik salatua"
     success:    "\x0303✔\x03 Historia sarrera gehitu da \x02%nickname%\x02 ezizenarentzat."
 
   del:
@@ -564,9 +571,7 @@ history:
     short:      "Ezabatu historia sarrera bat IDaren arabera."
     help:        |
       Historia sarrera zehatz bat ezabatzen du bere IDaren arabera.
-
-      Sintaxia: HISTORY <ezizena> DEL <ida>
-      Adibidea: HISTORY EzizenBat DEL 42
+    example:     "/msg %bot% HISTORY EzizenBat DEL 42"
     success:    "\x0303✔\x03 \x02%id%\x02 historia sarrera ezabatu da."
     not_found:  "\x0304✗\x03 \x02%id%\x02 historia sarrera ez da aurkitu."
     invalid_id: "\x0304✗\x03 Sarrera ID baliogabea: \x02%id%\x02."
@@ -577,13 +582,10 @@ history:
     help:        |
       Ezizenaren ekintza historia erakusten du.
 
-      Sintaxia: HISTORY <ezizena> VIEW
-              HISTORY <ezizena> VIEW ORRIA
-              HISTORY <ezizena> VIEW ALL
-
       Lehenetsiz 3 sarrera erakusten ditu aldiko.
       Erabili VIEW 2 bigarren orria ikusteko.
       Erabili VIEW ALL historia osoa ikusteko.
+    example:     "/msg %bot% HISTORY EzizenBat VIEW"
     header:     "\x02\x0307%nickname%\x03 ezizenaren historia\x02 (%total%etik %start%-%end% erakusten):"
     entry:       "#%id% [%date%] \x0303%action%\x03 - \x02%operator%\x02 — %message%"
     extra:       "  Gehigarria \x0307→\x03 %extra%"
@@ -596,9 +598,7 @@ history:
     help:        |
       Zehaztutako ezizenaren historia sarrera guztiak kentzen ditu.
       Ekintza hau ezin da desegin.
-
-      Sintaxia: HISTORY <ezizena> CLEAR
-      Adibidea: HISTORY EzizenBat CLEAR
+    example:     "/msg %bot% HISTORY EzizenBat CLEAR"
     success:    "\x0303✔\x03 \x02%count%\x02 historia sarrera garbitu dira \x02%nickname%\x02 ezizenarentzat."
 
 # --- Historia mezuen itzulpenak (historia ikustean erabiliak) ---

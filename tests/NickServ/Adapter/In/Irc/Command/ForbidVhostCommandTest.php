@@ -34,6 +34,7 @@ use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const DATE_ATOM;
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(ForbidVhostCommand::class)]
 #[CoversClass(ManageForbiddenVhostHandler::class)]
@@ -103,6 +104,12 @@ final class ForbidVhostCommandTest extends TestCase
         self::assertSame('ADD', $help[0]['name']);
         self::assertSame('DEL', $help[1]['name']);
         self::assertSame('LIST', $help[2]['name']);
+        $decoded = json_decode(json_encode($help, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame(
+            ['forbidvhost.add.example', 'forbidvhost.del.example', 'forbidvhost.list.example'],
+            array_column($decoded, 'example_key'),
+        );
     }
 
     #[Test]

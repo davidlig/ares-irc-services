@@ -64,9 +64,9 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'ADD', 'desc_key' => 'forbidvhost.add.short', 'help_key' => 'forbidvhost.add.help', 'syntax_key' => 'forbidvhost.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'forbidvhost.del.short', 'help_key' => 'forbidvhost.del.help', 'syntax_key' => 'forbidvhost.del.syntax'],
-            ['name' => 'LIST', 'desc_key' => 'forbidvhost.list.short', 'help_key' => 'forbidvhost.list.help', 'syntax_key' => 'forbidvhost.list.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'forbidvhost.add.short', 'help_key' => 'forbidvhost.add.help', 'syntax_key' => 'forbidvhost.add.syntax', 'example_key' => 'forbidvhost.add.example'],
+            ['name' => 'DEL', 'desc_key' => 'forbidvhost.del.short', 'help_key' => 'forbidvhost.del.help', 'syntax_key' => 'forbidvhost.del.syntax', 'example_key' => 'forbidvhost.del.example'],
+            ['name' => 'LIST', 'desc_key' => 'forbidvhost.list.short', 'help_key' => 'forbidvhost.list.help', 'syntax_key' => 'forbidvhost.list.syntax', 'example_key' => 'forbidvhost.list.example'],
         ];
     }
 

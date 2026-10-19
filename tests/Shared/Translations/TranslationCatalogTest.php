@@ -151,8 +151,8 @@ final class TranslationCatalogTest extends TestCase
 
     /** @var list<string> */
     private const array DYNAMIC_KEY_PATTERNS = [
-        '/^set\\.(password|email|language|timezone|private|msg|vhost)\\.(short|help|syntax)$/',
-        '/^saset\\.(password|email|language|timezone|private|msg|vhost)\\.(short|help|syntax)$/',
+        '/^set\\.(password|email|language|timezone|private|msg|vhost)\\.(short|help|syntax|example)$/',
+        '/^saset\\.(password|email|language|timezone|private|msg|vhost)\\.(short|help|syntax|example)$/',
         '/^history\\.extra\\.[a-z_]+$/',
         '/^(op|deop|voice|devoice|halfop|dehalfop|admin|deadmin)\\.(done|notice_grant)$/',
         '/^(admin|halfop|op|voice)\\.(not_supported|user_not_on_channel)$/',

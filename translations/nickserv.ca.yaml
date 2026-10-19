@@ -170,12 +170,14 @@ set:
     syntax:         "SET PASSWORD <new_password>"
     short:          "Canviar la contrasenya del vostre sobrenom."
     help:           "Canvia la contrasenya del vostre sobrenom. La nova contrasenya\nté efecte immediatament. Trieu una contrasenya forta d'almenys 6 caràcters\nque no utilitzeu en altres serveis."
+    example:        "/msg %bot% SET PASSWORD contrasenyanova123"
     success:        "\x0303✔\x03 La vostra contrasenya s'ha actualitzat correctament."
 
   email:
     syntax:         "SET EMAIL <new_email> [token]"
     short:          "Canviar l'adreça de correu vinculada al vostre sobrenom (confirmació en dos passos)."
     help:           "Canvi de correu en dos passos per seguretat.\n1) \x0303SET EMAIL <new_email>\x03 — s'envia un token al vostre correu actual.\n2) \x0303SET EMAIL <new_email> <token>\x03 — confirmeu amb el token rebut.\nEl token expira en 1 hora."
+    example:        "/msg %bot% SET EMAIL usuari@exemple.com"
     success:        "\x0303✔\x03 El vostre correu s'ha actualitzat a \x02%email%\x02."
     pending_sent:   "\x0307→\x03 S'ha enviat un token de confirmació a \x02%current_email%\x02.\n  Per confirmar el canvi a \x02%new_email%\x02 executeu:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  El token expira en 1 hora."
     invalid_token:  "\x0304✗\x03 El token no és vàlid o ha expirat. Sol·liciteu-ne un de nou amb \x0303SET EMAIL <new_email>\x03."
@@ -184,6 +186,7 @@ set:
     syntax:         "SET LANGUAGE <code>"
     short:          "Canviar l'idioma que els serveis utilitzen per comunicar-se amb vós."
     help:           "Canvia l'idioma que %nickserv% i altres serveis utilitzen quan us parlen.\nIdiomes disponibles:\n  \x02ca\x02 (Català)\n  \x02de\x02 (Alemany)\n  \x02el\x02 (Grec)\n  \x02en\x02 (Anglès)\n  \x02es\x02 (Espanyol)\n  \x02eu\x02 (Basc)\n  \x02fr\x02 (Francès)\n  \x02gl\x02 (Gallec)\n  \x02it\x02 (Italià)\n  \x02nl\x02 (Neerlandès)\n  \x02pl\x02 (Polonès)\n  \x02pt\x02 (Portuguès)\n  \x02ro\x02 (Romanès)\n  \x02tr\x02 (Turc)"
+    example:        "/msg %bot% SET LANGUAGE ca"
     success:        "\x0303✔\x03 Idioma canviat a \x02%language%\x02."
     invalid:        "\x0304✗\x03 Idioma no admès. Idiomes disponibles: %languages%."
 
@@ -191,6 +194,7 @@ set:
     syntax:         "SET TIMEZONE <timezone>"
     short:          "Establir la zona horària utilitzada en mostrar dates."
     help:           "Estableix la zona horària que %nickserv% utilitza en mostrar dates.\nUtilitzeu \x02HELP SET TIMEZONE\x02 per a l'índex de regions; \x02HELP SET TIMEZONE <region>\x02 (p. ex. Europe) per a les zones horàries d'aquesta regió. Utilitzeu \x02OFF\x02 per esborrar."
+    example:        "/msg %bot% SET TIMEZONE Europe/Madrid"
     success:        "\x0303✔\x03 Zona horària establerta a \x02%timezone%\x02. Les dates es mostraran en aquesta zona horària."
     cleared:        "\x0303✔\x03 Zona horària esborrada. Les dates utilitzaran el valor predeterminat de la xarxa."
     invalid:        "\x0304✗\x03 Zona horària no vàlida \x02%timezone%\x02. Utilitzeu un identificador vàlid (p. ex. UTC, Europe/Madrid)."
@@ -199,6 +203,7 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Activar o desactivar la privadesa de la informació del vostre sobrenom."
     help:           "Controla la visibilitat de la informació del vostre sobrenom a l'ordre INFO.\nAmb \x02PRIVATE ON\x02 només vós i els operadors d'IRC podeu veure els vostres detalls.\nAmb \x02PRIVATE OFF\x02 la vostra informació és pública per a tothom."
+    example:        "/msg %bot% SET PRIVATE ON"
     on:             "\x0303✔\x03 La informació del vostre sobrenom ara és \x02privada\x02."
     off:            "\x0303✔\x03 La informació del vostre sobrenom ara és \x02pública\x02."
 
@@ -206,6 +211,7 @@ set:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Utilitzar PRIVMSG (ON) o NOTICE (OFF) per a les respostes dels serveis."
     help:           "Controla com %nickserv% i altres serveis us envien missatges.\nAmb \x02MSG ON\x02 les respostes s'envien com a \x02PRIVMSG\x02 (alguns clients poden activar respostes o notificacions).\nAmb \x02MSG OFF\x02 les respostes s'envien com a \x02NOTICE\x02 (predeterminat; normalment sense resposta automàtica)."
+    example:        "/msg %bot% SET MSG ON"
     on:             "\x0303✔\x03 Els missatges del servei s'enviaran ara com a \x02PRIVMSG\x02."
     off:            "\x0303✔\x03 Els missatges del servei s'enviaran ara com a \x02NOTICE\x02."
 
@@ -213,6 +219,7 @@ set:
     syntax:         "SET VHOST [vhost]"
     short:          "Establir o esborrar el vostre amfitrió virtual personalitzat (nom d'amfitrió mostrat)."
     help:           "Estableix un nom d'amfitrió personalitzat que els altres veuen quan esteu identificat.\nExecuteu \x02SET VHOST\x02 sense cap valor per esborrar-lo. Només lletres (a-z, A-Z), dígits, guionet i punt;\nsense guionet ni punt al principi/final de cap bloc; màx. 48 caràcters. Únic per sobrenom."
+    example:        "/msg %bot% SET VHOST usuaris.exemple.com"
     success:        "\x0303✔\x03 El vostre amfitrió virtual s'ha establert a \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 El vostre amfitrió virtual s'ha esborrat."
     invalid:        "\x0304✗\x03 Vhost no vàlid. Només lletres, dígits, guionet i punt (no al principi/final de bloc); màx. 48 caràcters."
@@ -240,37 +247,44 @@ saset:
   password:
     syntax:         "SASET <sobrenom> PASSWORD <nova_contrasenya>"
     short:          "Canviar la contrasenya d'un sobrenom."
-    help:           "Canvia la contrasenya d'un altre sobrenom.\nEl canvi és immediat.\n\nSintaxi: SASET <sobrenom> PASSWORD <nova_contrasenya>\nExemple: SASET Usuari PASSWORD contrasenyanova123"
+    help:           "Canvia la contrasenya d'un altre sobrenom.\nEl canvi és immediat."
+    example:        "/msg %bot% SASET Usuari PASSWORD contrasenyanova123"
 
   email:
     syntax:         "SASET <sobrenom> EMAIL <nou_correu>"
     short:          "Canviar el correu electrònic d'un sobrenom."
-    help:           "Canvia el correu electrònic d'un altre sobrenom.\nNo s'envia cap confirmació—el canvi és immediat.\n\nSintaxi: SASET <sobrenom> EMAIL <nou_correu>\nExemple: SASET Usuari EMAIL usuari@exemple.com"
+    help:           "Canvia el correu electrònic d'un altre sobrenom.\nNo s'envia cap confirmació—el canvi és immediat."
+    example:        "/msg %bot% SASET Usuari EMAIL usuari@exemple.com"
 
   language:
     syntax:         "SASET <sobrenom> LANGUAGE <codi>"
     short:          "Canviar l'idioma d'un sobrenom."
-    help:           "Canvia l'idioma d'un altre sobrenom.\nIdiomes disponibles: en (anglès), es (espanyol).\n\nSintaxi: SASET <sobrenom> LANGUAGE <codi>\nExemple: SASET Usuari LANGUAGE ca"
+    help:           "Canvia l'idioma d'un altre sobrenom.\nIdiomes disponibles: en (anglès), es (espanyol)."
+    example:        "/msg %bot% SASET Usuari LANGUAGE ca"
 
   timezone:
     syntax:         "SASET <sobrenom> TIMEZONE <zona_horària|OFF>"
     short:          "Canviar la zona horària d'un sobrenom."
-    help:           "Estableix o esborra la zona horària d'un altre sobrenom.\nUtilitzeu OFF per esborrar-la.\n\nSintaxi: SASET <sobrenom> TIMEZONE <zona_horària>\nExemple: SASET Usuari TIMEZONE Europe/Madrid"
+    help:           "Estableix o esborra la zona horària d'un altre sobrenom.\nUtilitzeu OFF per esborrar-la."
+    example:        "/msg %bot% SASET Usuari TIMEZONE Europe/Madrid"
 
   private:
     syntax:         "SASET <sobrenom> PRIVATE {ON|OFF}"
     short:          "Canviar la privadesa d'un sobrenom."
-    help:           "Activa o desactiva la privadesa de la informació d'un altre sobrenom.\n\nSintaxi: SASET <sobrenom> PRIVATE {ON|OFF}\nExemple: SASET Usuari PRIVATE ON"
+    help:           "Activa o desactiva la privadesa de la informació d'un altre sobrenom."
+    example:        "/msg %bot% SASET Usuari PRIVATE ON"
 
   msg:
     syntax:         "SASET <sobrenom> MSG {ON|OFF}"
     short:          "Canviar la preferència de missatges d'un sobrenom."
-    help:           "Estableix si un altre sobrenom rep respostes com a PRIVMSG (ON) o NOTICE (OFF).\n\nSintaxi: SASET <sobrenom> MSG {ON|OFF}\nExemple: SASET Usuari MSG ON"
+    help:           "Estableix si un altre sobrenom rep respostes com a PRIVMSG (ON) o NOTICE (OFF)."
+    example:        "/msg %bot% SASET Usuari MSG ON"
 
   vhost:
     syntax:         "SASET <sobrenom> VHOST [vhost]"
     short:          "Canviar l'amfitrió virtual d'un sobrenom."
-    help:           "Estableix o esborra l'amfitrió virtual d'un altre sobrenom.\nExecuteu \x02SASET <sobrenom> VHOST\x02 sense cap valor per esborrar-lo.\n\nSintaxi: SASET <sobrenom> VHOST [vhost]\nExemple: SASET Usuari VHOST usuaris.exemple.com"
+    help:           "Estableix o esborra l'amfitrió virtual d'un altre sobrenom.\nExecuteu \x02SASET <sobrenom> VHOST\x02 sense cap valor per esborrar-lo."
+    example:        "/msg %bot% SASET Usuari VHOST usuaris.exemple.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -497,9 +511,7 @@ forbidvhost:
       establir vhosts que coincideixin amb aquest patró mitjançant SET VHOST.
 
       Comodins: * coincideix amb qualsevol seqüència, ? coincideix amb un sol caràcter.
-
-      Sintaxi: FORBIDVHOST ADD <pattern>
-      Exemple: FORBIDVHOST ADD *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST ADD *.pirated.com"
     done:            "\x0303✓\x03 Patró de vhost prohibit afegit: \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 El patró \x02%pattern%\x02 ja existeix."
     invalid:          "\x0304✗\x03 Format de patró de vhost no vàlid."
@@ -509,9 +521,7 @@ forbidvhost:
     short:       "Treure un patró de vhost prohibit."
     help:        |
       Treu un patró de la llista de vhost prohibits.
-
-      Sintaxi: FORBIDVHOST DEL <pattern>
-      Exemple: FORBIDVHOST DEL *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST DEL *.pirated.com"
     done:        "\x0303✓\x03 Patró de vhost prohibit tret: \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 Patró \x02%pattern%\x02 no trobat."
 
@@ -520,8 +530,7 @@ forbidvhost:
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Mostra tots els patrons de vhost prohibits.
-
-      Sintaxi: FORBIDVHOST LIST
+    example:     "/msg %bot% FORBIDVHOST LIST"
     header:      "\x0307ℹ\x03 Patrons de vhost prohibits (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — per %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 No hi ha patrons de vhost prohibits."
@@ -554,9 +563,7 @@ history:
     short:      "Afegir una entrada manual a l'historial."
     help:        |
       Afegeix una entrada manual a l'historial del sobrenom.
-
-      Sintaxi: HISTORY <nickname> ADD <message>
-      Exemple: HISTORY SomeNick ADD Usuari denunciat per spam
+    example:     "/msg %bot% HISTORY SomeNick ADD Usuari denunciat per spam"
     success:    "\x0303✔\x03 Entrada d'historial afegida per a \x02%nickname%\x02."
 
   del:
@@ -564,9 +571,7 @@ history:
     short:      "Esborrar una entrada de l'historial per ID."
     help:        |
       Esborra una entrada específica de l'historial pel seu ID.
-
-      Sintaxi: HISTORY <nickname> DEL <id>
-      Exemple: HISTORY SomeNick DEL 42
+    example:     "/msg %bot% HISTORY SomeNick DEL 42"
     success:    "\x0303✔\x03 Entrada d'historial \x02%id%\x02 esborrada."
     not_found:  "\x0304✗\x03 Entrada d'historial \x02%id%\x02 no trobada."
     invalid_id: "\x0304✗\x03 ID d'entrada no vàlid: \x02%id%\x02."
@@ -577,13 +582,10 @@ history:
     help:        |
       Mostra l'historial d'accions del sobrenom.
 
-      Sintaxi: HISTORY <nickname> VIEW
-              HISTORY <nickname> VIEW PAGE
-              HISTORY <nickname> VIEW ALL
-
       Per defecte mostra 3 entrades a la vegada.
       Utilitzeu VIEW 2 per veure la segona pàgina.
       Utilitzeu VIEW ALL per veure l'historial complet.
+    example:     "/msg %bot% HISTORY SomeNick VIEW"
     header:     "\x02Historial de \x0307%nickname%\x03\x02 (mostrant %start%-%end% de %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 per %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -596,9 +598,7 @@ history:
     help:        |
       Treu totes les entrades d'historial del sobrenom especificat.
       Aquesta acció no es pot desfer.
-
-      Sintaxi: HISTORY <nickname> CLEAR
-      Exemple: HISTORY SomeNick CLEAR
+    example:     "/msg %bot% HISTORY SomeNick CLEAR"
     success:    "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'historial de \x02%nickname%\x02."
 
 # --- History message translations (used when viewing history) ---

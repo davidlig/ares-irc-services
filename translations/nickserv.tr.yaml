@@ -170,12 +170,14 @@ set:
     syntax:         "SET PASSWORD <yeni_şifre>"
     short:          "Rumuz şifrenizi değiştirin."
     help:           "Rumuzunuzun şifresini değiştirir. Yeni şifre hemen geçerli olur.\nEn az 6 karakterden oluşan, başka hizmetlerde kullanmadığınız\ngüçlü bir şifre seçin."
+    example:        "/msg %bot% SET PASSWORD yenişifre123"
     success:        "\x0303✔\x03 Şifreniz başarıyla güncellendi."
 
   email:
     syntax:         "SET EMAIL <yeni_e-posta> [token]"
     short:          "Rumuzunuza bağlı e-posta adresini değiştirin (iki aşamalı onay)."
     help:           "Güvenlik için iki aşamada e-posta değişikliği.\n1) \x0303SET EMAIL <yeni_e-posta>\x03 — mevcut e-postanıza bir token gönderilir.\n2) \x0303SET EMAIL <yeni_e-posta> <token>\x03 — alınan token ile onaylayın.\nToken 1 saat içinde sona erer."
+    example:        "/msg %bot% SET EMAIL kullanıcı@örnek.com"
     success:        "\x0303✔\x03 E-postanız \x02%email%\x02 olarak güncellendi."
     pending_sent:   "\x0307→\x03 \x02%current_email%\x02 adresine bir onay tokenı gönderildi.\n  \x02%new_email%\x02 adresine değişikliği onaylamak için çalıştırın:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Token 1 saat içinde sona erer."
     invalid_token:  "\x0304✗\x03 Token geçersiz veya süresi dolmuş. \x0303SET EMAIL <yeni_e-posta>\x03 ile yeni bir tane isteyin."
@@ -184,6 +186,7 @@ set:
     syntax:         "SET LANGUAGE <kod>"
     short:          "Hizmetlerin sizinle iletişim kurarken kullandığı dili değiştirin."
     help:           "%nickserv% ve diğer hizmetlerin sizinle konuşurken kullandığı dili değiştirir.\nKullanılabilir diller:\n  \x02ca\x02 (Katalanca)\n  \x02de\x02 (Almanca)\n  \x02el\x02 (Yunanca)\n  \x02en\x02 (İngilizce)\n  \x02es\x02 (İspanyolca)\n  \x02eu\x02 (Baskça)\n  \x02fr\x02 (Fransızca)\n  \x02gl\x02 (Galiçyaca)\n  \x02it\x02 (İtalyanca)\n  \x02nl\x02 (Felemenkçe)\n  \x02pl\x02 (Lehçe)\n  \x02pt\x02 (Portekizce)\n  \x02ro\x02 (Rumence)\n  \x02tr\x02 (Türkçe)"
+    example:        "/msg %bot% SET LANGUAGE tr"
     success:        "\x0303✔\x03 Dil \x02%language%\x02 olarak değiştirildi."
     invalid:        "\x0304✗\x03 Desteklenmeyen dil. Kullanılabilir diller: %languages%."
 
@@ -191,6 +194,7 @@ set:
     syntax:         "SET TIMEZONE <zaman_dilimi>"
     short:          "Tarihleri görüntülerken kullanılacak zaman dilimini ayarlayın."
     help:           "%nickserv% tarihleri gösterirken kullanılacak zaman dilimini ayarlar.\nBölge dizini için \x02HELP SET TIMEZONE\x02; bölgenin zaman dilimleri için \x02HELP SET TIMEZONE <bölge>\x02 (örn. Europe) kullanın. Temizlemek için \x02OFF\x02 kullanın."
+    example:        "/msg %bot% SET TIMEZONE Europe/Istanbul"
     success:        "\x0303✔\x03 Zaman dilimi \x02%timezone%\x02 olarak ayarlandı. Tarihler bu zaman diliminde gösterilecek."
     cleared:        "\x0303✔\x03 Zaman dilimi temizlendi. Tarihler ağ varsayılanını kullanacak."
     invalid:        "\x0304✗\x03 Geçersiz zaman dilimi \x02%timezone%\x02. Geçerli bir tanımlayıcı kullanın (örn. UTC, Europe/Istanbul)."
@@ -199,6 +203,7 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Rumuz bilgilerinizin gizliliğini etkinleştirin veya devre dışı bırakın."
     help:           "INFO komutunda rumuz bilgilerinizin görünürlüğünü kontrol eder.\n\x02PRIVATE AÇIK\x02 ile bilgilerinizi yalnızca siz ve IRC Operatörleri görebilir.\n\x02PRIVATE KAPALI\x02 ile bilgileriniz herkese açıktır."
+    example:        "/msg %bot% SET PRIVATE ON"
     on:             "\x0303✔\x03 Rumuz bilgileriniz artık \x02gizlidir\x02."
     off:            "\x0303✔\x03 Rumuz bilgileriniz artık \x02herkese açıktır\x02."
 
@@ -206,6 +211,7 @@ set:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Hizmet yanıtları için PRIVMSG (AÇIK) veya NOTICE (KAPALI) kullanın."
     help:           "%nickserv% ve diğer hizmetlerin size nasıl mesaj göndereceğini kontrol eder.\n\x02MSG AÇIK\x02 ile yanıtlar \x02PRIVMSG\x02 olarak gönderilir (bazı istemciler otomatik yanıt/uyarı tetikleyebilir).\n\x02MSG KAPALI\x02 ile yanıtlar \x02NOTICE\x02 olarak gönderilir (varsayılan; genellikle otomatik yanıt olmaz)."
+    example:        "/msg %bot% SET MSG ON"
     on:             "\x0303✔\x03 Hizmet mesajları artık \x02PRIVMSG\x02 olarak gönderilecek."
     off:            "\x0303✔\x03 Hizmet mesajları artık \x02NOTICE\x02 olarak gönderilecek."
 
@@ -213,6 +219,7 @@ set:
     syntax:         "SET VHOST [vhost]"
     short:          "Özel sanal ana makinenizi (görüntülenen host adı) ayarlayın veya temizleyin."
     help:           "Kimlik doğrulandığınızda başkalarının gördüğü özel bir host adı ayarlar.\nTemizlemek için \x02SET VHOST\x02 komutunu değer olmadan kullanın. Yalnızca harfler (a-z, A-Z), rakamlar, tire ve nokta;\nher bloğun başında/sonunda tire veya nokta olmaz; maks 48 karakter. Her rumuz için benzersiz."
+    example:        "/msg %bot% SET VHOST kullanıcılar.örnek.com"
     success:        "\x0303✔\x03 Sanal host'unuz \x02%vhost%\x02 olarak ayarlandı."
     cleared:        "\x0303✔\x03 Sanal host'unuz temizlendi."
     invalid:        "\x0304✗\x03 Geçersiz vhost. Yalnızca harfler, rakamlar, tire ve nokta (blok başında/sonunda olamaz); maks 48 karakter."
@@ -240,37 +247,44 @@ saset:
   password:
     syntax:         "SASET <rumuz> PASSWORD <yeni_şifre>"
     short:          "Bir rumuzun şifresini değiştir."
-    help:           "Başka bir rumuzun şifresini değiştirir.\nDeğişiklik hemen geçerlidir.\n\nSözdizimi: SASET <rumuz> PASSWORD <yeni_şifre>\nÖrnek: SASET Kullanıcı PASSWORD yenişifre123"
+    help:           "Başka bir rumuzun şifresini değiştirir.\nDeğişiklik hemen geçerlidir."
+    example:        "/msg %bot% SASET Kullanıcı PASSWORD yenişifre123"
 
   email:
     syntax:         "SASET <rumuz> EMAIL <yeni_e-posta>"
     short:          "Bir rumuzun e-postasını değiştir."
-    help:           "Başka bir rumuzun e-postasını değiştirir.\nOnay gönderilmez—değişiklik hemen geçerlidir.\n\nSözdizimi: SASET <rumuz> EMAIL <yeni_e-posta>\nÖrnek: SASET Kullanıcı EMAIL kullanıcı@örnek.com"
+    help:           "Başka bir rumuzun e-postasını değiştirir.\nOnay gönderilmez—değişiklik hemen geçerlidir."
+    example:        "/msg %bot% SASET Kullanıcı EMAIL kullanıcı@örnek.com"
 
   language:
     syntax:         "SASET <rumuz> LANGUAGE <kod>"
     short:          "Bir rumuzun dilini değiştir."
-    help:           "Başka bir rumuzun dilini değiştirir.\nKullanılabilir diller: en (İngilizce), es (İspanyolca).\n\nSözdizimi: SASET <rumuz> LANGUAGE <kod>\nÖrnek: SASET Kullanıcı LANGUAGE tr"
+    help:           "Başka bir rumuzun dilini değiştirir.\nKullanılabilir diller: en (İngilizce), es (İspanyolca)."
+    example:        "/msg %bot% SASET Kullanıcı LANGUAGE tr"
 
   timezone:
     syntax:         "SASET <rumuz> TIMEZONE <zaman_dilimi|OFF>"
     short:          "Bir rumuzun zaman dilimini değiştir."
-    help:           "Başka bir rumuzun zaman dilimini ayarlar veya temizler.\nTemizlemek için OFF kullanın.\n\nSözdizimi: SASET <rumuz> TIMEZONE <zaman_dilimi>\nÖrnek: SASET Kullanıcı TIMEZONE Europe/Istanbul"
+    help:           "Başka bir rumuzun zaman dilimini ayarlar veya temizler.\nTemizlemek için OFF kullanın."
+    example:        "/msg %bot% SASET Kullanıcı TIMEZONE Europe/Istanbul"
 
   private:
     syntax:         "SASET <rumuz> PRIVATE {ON|OFF}"
     short:          "Bir rumuzun gizliliğini değiştir."
-    help:           "Başka bir rumuzun bilgilerinin gizliliğini etkinleştirir veya devre dışı bırakır.\n\nSözdizimi: SASET <rumuz> PRIVATE {ON|OFF}\nÖrnek: SASET Kullanıcı PRIVATE ON"
+    help:           "Başka bir rumuzun bilgilerinin gizliliğini etkinleştirir veya devre dışı bırakır."
+    example:        "/msg %bot% SASET Kullanıcı PRIVATE ON"
 
   msg:
     syntax:         "SASET <rumuz> MSG {ON|OFF}"
     short:          "Bir rumuzun mesaj tercihini değiştir."
-    help:           "Başka bir rumuzun yanıtları PRIVMSG (ON) veya NOTICE (OFF) olarak alıp almayacağını ayarlar.\n\nSözdizimi: SASET <rumuz> MSG {ON|OFF}\nÖrnek: SASET Kullanıcı MSG ON"
+    help:           "Başka bir rumuzun yanıtları PRIVMSG (ON) veya NOTICE (OFF) olarak alıp almayacağını ayarlar."
+    example:        "/msg %bot% SASET Kullanıcı MSG ON"
 
   vhost:
     syntax:         "SASET <rumuz> VHOST [vhost]"
     short:          "Bir rumuzun sanal host'unu değiştir."
-    help:           "Başka bir rumuzun sanal host'unu ayarlar veya temizler.\nTemizlemek için \x02SASET <rumuz> VHOST\x02 komutunu değer olmadan kullanın.\n\nSözdizimi: SASET <rumuz> VHOST [vhost]\nÖrnek: SASET Kullanıcı VHOST kullanıcılar.örnek.com"
+    help:           "Başka bir rumuzun sanal host'unu ayarlar veya temizler.\nTemizlemek için \x02SASET <rumuz> VHOST\x02 komutunu değer olmadan kullanın."
+    example:        "/msg %bot% SASET Kullanıcı VHOST kullanıcılar.örnek.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -497,9 +511,7 @@ forbidvhost:
       SET VHOST ile bu kalıpla eşleşen vhost'ları ayarlayamaz.
 
       Jokerler: * herhangi bir diziyi eşler, ? tek karakteri eşler.
-
-      Sözdizimi: FORBIDVHOST ADD <kalıp>
-      Örnek: FORBIDVHOST ADD *.korsan.com
+    example:     "/msg %bot% FORBIDVHOST ADD *.korsan.com"
     done:            "\x0303✓\x03 Yasaklı vhost kalıbı eklendi: \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 \x02%pattern%\x02 kalıbı zaten mevcut."
     invalid:          "\x0304✗\x03 Geçersiz vhost kalıbı formatı."
@@ -509,9 +521,7 @@ forbidvhost:
     short:       "Yasaklı bir vhost kalıbını kaldırın."
     help:        |
       Yasaklı vhost listesinden bir kalıbı kaldırır.
-
-      Sözdizimi: FORBIDVHOST DEL <kalıp>
-      Örnek: FORBIDVHOST DEL *.korsan.com
+    example:     "/msg %bot% FORBIDVHOST DEL *.korsan.com"
     done:        "\x0303✓\x03 Yasaklı vhost kalıbı kaldırıldı: \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 \x02%pattern%\x02 kalıbı bulunamadı."
 
@@ -520,8 +530,7 @@ forbidvhost:
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Tüm yasaklı vhost kalıplarını gösterir.
-
-      Sözdizimi: FORBIDVHOST LIST
+    example:     "/msg %bot% FORBIDVHOST LIST"
     header:      "\x0307ℹ\x03 Yasaklı vhost kalıpları (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — ekleyen: %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Yasaklı vhost kalıbı yok."
@@ -554,9 +563,7 @@ history:
     short:      "Manuel bir geçmiş girişi ekleyin."
     help:        |
       Rumuzun geçmişine manuel bir giriş ekler.
-
-      Sözdizimi: HISTORY <nickname> ADD <mesaj>
-      Örnek: HISTORY BaziRumuz ADD Kullanıcı spam için raporlandı
+    example:     "/msg %bot% HISTORY BaziRumuz ADD Kullanıcı spam için raporlandı"
     success:    "\x0303✔\x03 \x02%nickname%\x02 için geçmiş girişi eklendi."
 
   del:
@@ -564,9 +571,7 @@ history:
     short:      "ID ile bir geçmiş girişini silin."
     help:        |
       Belirli bir geçmiş girişini ID'sine göre siler.
-
-      Sözdizimi: HISTORY <nickname> DEL <id>
-      Örnek: HISTORY BaziRumuz DEL 42
+    example:     "/msg %bot% HISTORY BaziRumuz DEL 42"
     success:    "\x0303✔\x03 Geçmiş girişi \x02%id%\x02 silindi."
     not_found:  "\x0304✗\x03 Geçmiş girişi \x02%id%\x02 bulunamadı."
     invalid_id: "\x0304✗\x03 Geçersiz giriş ID'si: \x02%id%\x02."
@@ -577,13 +582,10 @@ history:
     help:        |
       Rumuzun eylem geçmişini gösterir.
 
-      Sözdizimi: HISTORY <nickname> VIEW
-              HISTORY <nickname> VIEW SAYFA
-              HISTORY <nickname> VIEW ALL
-
       Varsayılan olarak her defasında 3 giriş gösterir.
       İkinci sayfayı görmek için VIEW 2 kullanın.
       Tam geçmişi görmek için VIEW ALL kullanın.
+    example:     "/msg %bot% HISTORY BaziRumuz VIEW"
     header:     "\x02\x0307%nickname%\x03\x02 için geçmiş (%start%-%end% / %total% gösteriliyor):"
     entry:       "#%id% [%date%] \x0303%action%\x03 - %operator% tarafından — %message%"
     extra:       "  Ekstra \x0307→\x03 %extra%"
@@ -596,9 +598,7 @@ history:
     help:        |
       Belirtilen rumuz için tüm geçmiş girişlerini kaldırır.
       Bu eylem geri alınamaz.
-
-      Sözdizimi: HISTORY <nickname> CLEAR
-      Örnek: HISTORY BaziRumuz CLEAR
+    example:     "/msg %bot% HISTORY BaziRumuz CLEAR"
     success:    "\x0303✔\x03 \x02%nickname%\x02 için \x02%count%\x02 geçmiş girişi temizlendi."
 
 # --- Geçmiş mesaj çevirileri (geçmiş görüntülenirken kullanılır) ---

@@ -335,6 +335,47 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function rendersTheExampleLineOnlyForSubcommandsExposingAnExampleKey(): void
+    {
+        $formatter = new UnifiedHelpFormatter();
+
+        $withExampleContext = new NickServHelpFormatterContext();
+        $withExample = $formatter->renderSubCommandHelp($withExampleContext, 'HISTORY', [
+            'name' => 'VIEW',
+            'help_key' => 'history.view.help',
+            'syntax_key' => 'history.view.syntax',
+            'example_key' => 'history.view.example',
+        ]);
+
+        self::assertSame([
+            'translated:help.header',
+            'translated:history.view.help',
+            ' ',
+            'translated:help.syntax_label',
+            ' ',
+            'translated:help.example_label',
+            'translated:help.footer',
+        ], $withExample);
+
+        $exampleLabels = array_values(array_filter(
+            $withExampleContext->translations,
+            static fn (array $entry): bool => 'help.example_label' === $entry['key'],
+        ));
+        self::assertCount(1, $exampleLabels);
+        self::assertSame(['example' => 'translated:history.view.example'], $exampleLabels[0]['params']);
+
+        $withoutExampleContext = new NickServHelpFormatterContext();
+        $withoutExample = $formatter->renderSubCommandHelp($withoutExampleContext, 'SET', [
+            'name' => 'EMAIL',
+            'help_key' => 'set.email.help',
+            'syntax_key' => 'set.email.syntax',
+        ]);
+
+        self::assertNotContains('translated:help.example_label', $withoutExample);
+        self::assertSame('translated:help.syntax_label', $withoutExample[count($withoutExample) - 2]);
+    }
+
+    #[Test]
     public function rendersTheExampleLineOnlyForCommandsExposingAnExampleKey(): void
     {
         $formatter = new UnifiedHelpFormatter();

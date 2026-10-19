@@ -170,12 +170,14 @@ set:
     syntax:         "SET PASSWORD <parolă_nouă>"
     short:          "Schimbați parola poreclei dumneavoastră."
     help:           "Schimbă parola pentru porecla dumneavoastră. Noua parolă intră în\nvigoare imediat. Alegeți o parolă puternică de cel puțin 6 caractere\npe care să nu o folosiți la alte servicii."
+    example:        "/msg %bot% SET PASSWORD parolanouă123"
     success:        "\x0303✔\x03 Parola dumneavoastră a fost actualizată cu succes."
 
   email:
     syntax:         "SET EMAIL <e-mail_nou> [token]"
     short:          "Schimbați adresa de e-mail asociată poreclei dumneavoastră (confirmare în doi pași)."
     help:           "Schimbarea e-mailului în doi pași pentru securitate.\n1) \x0303SET EMAIL <e-mail_nou>\x03 — se trimite un token la e-mailul dumneavoastră actual.\n2) \x0303SET EMAIL <e-mail_nou> <token>\x03 — confirmați cu tokenul primit.\nTokenul expiră într-o oră."
+    example:        "/msg %bot% SET EMAIL utilizator@exemplu.com"
     success:        "\x0303✔\x03 E-mailul dumneavoastră a fost actualizat la \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Un token de confirmare a fost trimis la \x02%current_email%\x02.\n  Pentru a confirma schimbarea la \x02%new_email%\x02 executați:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Tokenul expiră într-o oră."
     invalid_token:  "\x0304✗\x03 Tokenul este invalid sau a expirat. Solicitați unul nou cu \x0303SET EMAIL <e-mail_nou>\x03."
@@ -184,6 +186,7 @@ set:
     syntax:         "SET LANGUAGE <cod>"
     short:          "Schimbați limba pe care serviciile o folosesc pentru a comunica cu dumneavoastră."
     help:           "Schimbă limba pe care %nickserv% și celelalte servicii o folosesc când vă vorbesc.\nLimbi disponibile:\n  \x02ca\x02 (catalană)\n  \x02de\x02 (germană)\n  \x02el\x02 (greacă)\n  \x02en\x02 (engleză)\n  \x02es\x02 (spaniolă)\n  \x02eu\x02 (bască)\n  \x02fr\x02 (franceză)\n  \x02gl\x02 (galiciană)\n  \x02it\x02 (italiană)\n  \x02nl\x02 (olandeză)\n  \x02pl\x02 (poloneză)\n  \x02pt\x02 (portugheză)\n  \x02ro\x02 (română)\n  \x02tr\x02 (turcă)"
+    example:        "/msg %bot% SET LANGUAGE ro"
     success:        "\x0303✔\x03 Limba a fost schimbată în \x02%language%\x02."
     invalid:        "\x0304✗\x03 Limbă nesuportată. Limbi disponibile: %languages%."
 
@@ -191,6 +194,7 @@ set:
     syntax:         "SET TIMEZONE <fus_orar>"
     short:          "Setați fusul orar folosit la afișarea datelor."
     help:           "Setează fusul orar folosit atunci când %nickserv% afișează datele.\nFolosiți \x02HELP SET TIMEZONE\x02 pentru indexul regiunilor; \x02HELP SET TIMEZONE <regiune>\x02 (de ex. Europe) pentru fusurile orare ale acelei regiuni. Folosiți \x02OFF\x02 pentru a șterge."
+    example:        "/msg %bot% SET TIMEZONE Europe/București"
     success:        "\x0303✔\x03 Fusul orar a fost setat la \x02%timezone%\x02. Datele vor fi afișate în acest fus orar."
     cleared:        "\x0303✔\x03 Fusul orar a fost șters. Datele vor folosi valoarea implicită a rețelei."
     invalid:        "\x0304✗\x03 Fus orar invalid \x02%timezone%\x02. Folosiți un identificator valid (de ex. UTC, Europe/București)."
@@ -199,6 +203,7 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Activați sau dezactivați confidențialitatea informațiilor poreclei dumneavoastră."
     help:           "Controlează vizibilitatea informațiilor poreclei dumneavoastră în comanda INFO.\nCu \x02PRIVATE ON\x02 doar dumneavoastră și operatorii IRC puteți vizualiza detaliile.\nCu \x02PRIVATE OFF\x02 informațiile dumneavoastră sunt publice pentru toată lumea."
+    example:        "/msg %bot% SET PRIVATE ON"
     on:             "\x0303✔\x03 Informațiile poreclei dumneavoastră sunt acum \x02private\x02."
     off:            "\x0303✔\x03 Informațiile poreclei dumneavoastră sunt acum \x02publice\x02."
 
@@ -206,6 +211,7 @@ set:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Folosiți PRIVMSG (ON) sau NOTICE (OFF) pentru răspunsurile serviciilor."
     help:           "Controlează modul în care %nickserv% și celelalte servicii vă trimit mesaje.\nCu \x02MSG ON\x02 răspunsurile sunt trimise ca \x02PRIVMSG\x02 (unii clienți pot declanșa răspunsuri automate sau notificări).\nCu \x02MSG OFF\x02 răspunsurile sunt trimise ca \x02NOTICE\x02 (implicit; de obicei fără răspuns automat)."
+    example:        "/msg %bot% SET MSG ON"
     on:             "\x0303✔\x03 Mesajele serviciilor vor fi trimise acum ca \x02PRIVMSG\x02."
     off:            "\x0303✔\x03 Mesajele serviciilor vor fi trimise acum ca \x02NOTICE\x02."
 
@@ -213,6 +219,7 @@ set:
     syntax:         "SET VHOST [vhost]"
     short:          "Setați sau ștergeți gazda virtuală personalizată (hostname afișat)."
     help:           "Setează un hostname personalizat pe care ceilalți îl văd când sunteți identificat.\nFolosiți \x02SET VHOST\x02 fără valoare pentru a șterge. Doar litere (a-z, A-Z), cifre, cratimă și punct;\nfără cratimă sau punct la începutul/sfârșitul niciunui bloc; max 48 de caractere. Unic per poreclă."
+    example:        "/msg %bot% SET VHOST utilizatori.exemplu.com"
     success:        "\x0303✔\x03 Gazda dumneavoastră virtuală a fost setată la \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Gazda dumneavoastră virtuală a fost ștearsă."
     invalid:        "\x0304✗\x03 Vhost invalid. Doar litere, cifre, cratimă și punct (nu la începutul/sfârșitul blocului); max 48 de caractere."
@@ -240,37 +247,44 @@ saset:
   password:
     syntax:         "SASET <poreclă> PASSWORD <parolă_nouă>"
     short:          "Schimbă parola unei porecle."
-    help:           "Schimbă parola altei porecle.\nSchimbarea este imediată.\n\nSintaxă: SASET <poreclă> PASSWORD <parolă_nouă>\nExemplu: SASET Utilizator PASSWORD parolanouă123"
+    help:           "Schimbă parola altei porecle.\nSchimbarea este imediată."
+    example:        "/msg %bot% SASET Utilizator PASSWORD parolanouă123"
 
   email:
     syntax:         "SASET <poreclă> EMAIL <e-mail_nou>"
     short:          "Schimbă e-mailul unei porecle."
-    help:           "Schimbă e-mailul altei porecle.\nNu se trimite nicio confirmare—schimbarea este imediată.\n\nSintaxă: SASET <poreclă> EMAIL <e-mail_nou>\nExemplu: SASET Utilizator EMAIL utilizator@exemplu.com"
+    help:           "Schimbă e-mailul altei porecle.\nNu se trimite nicio confirmare—schimbarea este imediată."
+    example:        "/msg %bot% SASET Utilizator EMAIL utilizator@exemplu.com"
 
   language:
     syntax:         "SASET <poreclă> LANGUAGE <cod>"
     short:          "Schimbă limba unei porecle."
-    help:           "Schimbă limba altei porecle.\nLimbi disponibile: en (engleză), es (spaniolă).\n\nSintaxă: SASET <poreclă> LANGUAGE <cod>\nExemplu: SASET Utilizator LANGUAGE ro"
+    help:           "Schimbă limba altei porecle.\nLimbi disponibile: en (engleză), es (spaniolă)."
+    example:        "/msg %bot% SASET Utilizator LANGUAGE ro"
 
   timezone:
     syntax:         "SASET <poreclă> TIMEZONE <fus_orar|OFF>"
     short:          "Schimbă fusul orar al unei porecle."
-    help:           "Setează sau șterge fusul orar al altei porecle.\nFolosiți OFF pentru a-l șterge.\n\nSintaxă: SASET <poreclă> TIMEZONE <fus_orar>\nExemplu: SASET Utilizator TIMEZONE Europe/București"
+    help:           "Setează sau șterge fusul orar al altei porecle.\nFolosiți OFF pentru a-l șterge."
+    example:        "/msg %bot% SASET Utilizator TIMEZONE Europe/București"
 
   private:
     syntax:         "SASET <poreclă> PRIVATE {ON|OFF}"
     short:          "Schimbă confidențialitatea unei porecle."
-    help:           "Activează sau dezactivează confidențialitatea informațiilor altei porecle.\n\nSintaxă: SASET <poreclă> PRIVATE {ON|OFF}\nExemplu: SASET Utilizator PRIVATE ON"
+    help:           "Activează sau dezactivează confidențialitatea informațiilor altei porecle."
+    example:        "/msg %bot% SASET Utilizator PRIVATE ON"
 
   msg:
     syntax:         "SASET <poreclă> MSG {ON|OFF}"
     short:          "Schimbă preferința de mesaje a unei porecle."
-    help:           "Setează dacă altă poreclă primește răspunsurile ca PRIVMSG (ON) sau NOTICE (OFF).\n\nSintaxă: SASET <poreclă> MSG {ON|OFF}\nExemplu: SASET Utilizator MSG ON"
+    help:           "Setează dacă altă poreclă primește răspunsurile ca PRIVMSG (ON) sau NOTICE (OFF)."
+    example:        "/msg %bot% SASET Utilizator MSG ON"
 
   vhost:
     syntax:         "SASET <poreclă> VHOST [vhost]"
     short:          "Schimbă gazda virtuală a unei porecle."
-    help:           "Setează sau șterge gazda virtuală a altei porecle.\nFolosiți \x02SASET <poreclă> VHOST\x02 fără valoare pentru a o șterge.\n\nSintaxă: SASET <poreclă> VHOST [vhost]\nExemplu: SASET Utilizator VHOST utilizatori.exemplu.com"
+    help:           "Setează sau șterge gazda virtuală a altei porecle.\nFolosiți \x02SASET <poreclă> VHOST\x02 fără valoare pentru a o șterge."
+    example:        "/msg %bot% SASET Utilizator VHOST utilizatori.exemplu.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -497,9 +511,7 @@ forbidvhost:
       seta vhosturi care corespund acestui model prin SET VHOST.
 
       Metacaractere: * potrivește orice secvență, ? potrivește un singur caracter.
-
-      Sintaxă: FORBIDVHOST ADD <model>
-      Exemplu: FORBIDVHOST ADD *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST ADD *.pirated.com"
     done:            "\x0303✓\x03 Model de vhost interzis adăugat: \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 Modelul \x02%pattern%\x02 există deja."
     invalid:          "\x0304✗\x03 Format de model vhost invalid."
@@ -509,9 +521,7 @@ forbidvhost:
     short:       "Eliminați un model de vhost interzis."
     help:        |
       Elimină un model din lista de vhosturi interzise.
-
-      Sintaxă: FORBIDVHOST DEL <model>
-      Exemplu: FORBIDVHOST DEL *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST DEL *.pirated.com"
     done:        "\x0303✓\x03 Model de vhost interzis eliminat: \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 Modelul \x02%pattern%\x02 nu a fost găsit."
 
@@ -520,8 +530,7 @@ forbidvhost:
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Afișează toate modelele de vhost interzise.
-
-      Sintaxă: FORBIDVHOST LIST
+    example:     "/msg %bot% FORBIDVHOST LIST"
     header:      "\x0307ℹ\x03 Modele de vhost interzise (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — de %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Nu există modele de vhost interzise."
@@ -554,9 +563,7 @@ history:
     short:      "Adăugați o intrare manuală în istoric."
     help:        |
       Adaugă o intrare manuală în istoricul poreclei.
-
-      Sintaxă: HISTORY <poreclă> ADD <mesaj>
-      Exemplu: HISTORY OPoreclă ADD Utilizator raportat pentru spam
+    example:     "/msg %bot% HISTORY OPoreclă ADD Utilizator raportat pentru spam"
     success:    "\x0303✔\x03 Intrare în istoric adăugată pentru \x02%nickname%\x02."
 
   del:
@@ -564,9 +571,7 @@ history:
     short:      "Ștergeți o intrare din istoric după ID."
     help:        |
       Șterge o intrare specifică din istoric după ID-ul său.
-
-      Sintaxă: HISTORY <poreclă> DEL <id>
-      Exemplu: HISTORY OPoreclă DEL 42
+    example:     "/msg %bot% HISTORY OPoreclă DEL 42"
     success:    "\x0303✔\x03 Intrarea din istoric \x02%id%\x02 a fost ștearsă."
     not_found:  "\x0304✗\x03 Intrarea din istoric \x02%id%\x02 nu a fost găsită."
     invalid_id: "\x0304✗\x03 ID de intrare invalid: \x02%id%\x02."
@@ -577,13 +582,10 @@ history:
     help:        |
       Afișează istoricul de acțiuni al poreclei.
 
-      Sintaxă: HISTORY <poreclă> VIEW
-               HISTORY <poreclă> VIEW PAGE
-               HISTORY <poreclă> VIEW ALL
-
       În mod implicit afișează 3 intrări pe rând.
       Folosiți VIEW 2 pentru a vedea a doua pagină.
       Folosiți VIEW ALL pentru a vedea istoricul complet.
+    example:     "/msg %bot% HISTORY OPoreclă VIEW"
     header:     "\x02Istoric pentru \x0307%nickname%\x03\x02 (se afișează %start%-%end% din %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 de %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -596,9 +598,7 @@ history:
     help:        |
       Elimină toate intrările din istoric pentru porecla specificată.
       Această acțiune nu poate fi anulată.
-
-      Sintaxă: HISTORY <poreclă> CLEAR
-      Exemplu: HISTORY OPoreclă CLEAR
+    example:     "/msg %bot% HISTORY OPoreclă CLEAR"
     success:    "\x0303✔\x03 S-au șters \x02%count%\x02 intrări din istoricul poreclei \x02%nickname%\x02."
 
 # --- History message translations (used when viewing history) ---

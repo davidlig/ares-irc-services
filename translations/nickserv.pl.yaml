@@ -170,12 +170,14 @@ set:
     syntax:         "SET PASSWORD <nowe_hasło>"
     short:          "Zmień hasło swojego nicka."
     help:           "Zmienia hasło dla Twojego nicka. Nowe hasło obowiązuje\nnatychmiast. Wybierz silne hasło o długości co najmniej 6 znaków,\nktórego nie używasz w innych serwisach."
+    example:        "/msg %bot% SET PASSWORD nowehasło123"
     success:        "\x0303✔\x03 Twoje hasło zostało pomyślnie zaktualizowane."
 
   email:
     syntax:         "SET EMAIL <nowy_e-mail> [token]"
     short:          "Zmień adres e-mail powiązany z Twoim nickiem (dwuetapowe potwierdzenie)."
     help:           "Zmiana e-maila w dwóch krokach dla bezpieczeństwa.\n1) \x0303SET EMAIL <nowy_e-mail>\x03 — token jest wysyłany na Twój obecny e-mail.\n2) \x0303SET EMAIL <nowy_e-mail> <token>\x03 — potwierdź otrzymanym tokenem.\nToken wygasa za 1 godzinę."
+    example:        "/msg %bot% SET EMAIL użytkownik@przykład.com"
     success:        "\x0303✔\x03 Twój e-mail został zaktualizowany na \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Token potwierdzający został wysłany na \x02%current_email%\x02.\n  Aby potwierdzić zmianę na \x02%new_email%\x02 uruchom:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Token wygasa za 1 godzinę."
     invalid_token:  "\x0304✗\x03 Token jest nieprawidłowy lub wygasł. Poproś o nowy używając \x0303SET EMAIL <nowy_e-mail>\x03."
@@ -184,6 +186,7 @@ set:
     syntax:         "SET LANGUAGE <kod>"
     short:          "Zmień język używany przez serwisy do komunikacji z Tobą."
     help:           "Zmienia język, w jakim %nickserv% i inne serwisy mówią do Ciebie.\nDostępne języki:\n  \x02ca\x02 (kataloński)\n  \x02de\x02 (niemiecki)\n  \x02el\x02 (grecki)\n  \x02en\x02 (angielski)\n  \x02es\x02 (hiszpański)\n  \x02eu\x02 (baskijski)\n  \x02fr\x02 (francuski)\n  \x02gl\x02 (galicyjski)\n  \x02it\x02 (włoski)\n  \x02nl\x02 (niderlandzki)\n  \x02pl\x02 (polski)\n  \x02pt\x02 (portugalski)\n  \x02ro\x02 (rumuński)\n  \x02tr\x02 (turecki)"
+    example:        "/msg %bot% SET LANGUAGE pl"
     success:        "\x0303✔\x03 Język zmieniony na \x02%language%\x02."
     invalid:        "\x0304✗\x03 Nieobsługiwany język. Dostępne języki: %languages%."
 
@@ -191,6 +194,7 @@ set:
     syntax:         "SET TIMEZONE <strefa_czasowa>"
     short:          "Ustaw strefę czasową używaną przy wyświetlaniu dat."
     help:           "Ustawia strefę czasową używaną gdy %nickserv% pokazuje daty.\nUżyj \x02HELP SET TIMEZONE\x02 aby zobaczyć indeks regionów; \x02HELP SET TIMEZONE <region>\x02 (np. Europe) aby zobaczyć strefy danego regionu. Użyj \x02OFF\x02 aby wyczyścić."
+    example:        "/msg %bot% SET TIMEZONE Europe/Warsaw"
     success:        "\x0303✔\x03 Strefa czasowa ustawiona na \x02%timezone%\x02. Daty będą wyświetlane w tej strefie."
     cleared:        "\x0303✔\x03 Strefa czasowa wyczyszczona. Daty będą używać domyślnej sieciowej."
     invalid:        "\x0304✗\x03 Nieprawidłowa strefa czasowa \x02%timezone%\x02. Użyj prawidłowego identyfikatora (np. UTC, Europe/Warsaw)."
@@ -199,6 +203,7 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Włącz lub wyłącz prywatność informacji o Twoim nicku."
     help:           "Kontroluje widoczność informacji o Twoim nicku w komendzie INFO.\nPrzy \x02PRIVATE ON\x02 tylko Ty i Operatorzy IRC mogą zobaczyć Twoje dane.\nPrzy \x02PRIVATE OFF\x02 Twoje informacje są publiczne dla wszystkich."
+    example:        "/msg %bot% SET PRIVATE ON"
     on:             "\x0303✔\x03 Informacje o Twoim nicku są teraz \x02prywatne\x02."
     off:            "\x0303✔\x03 Informacje o Twoim nicku są teraz \x02publiczne\x02."
 
@@ -206,6 +211,7 @@ set:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Użyj PRIVMSG (ON) lub NOTICE (OFF) dla odpowiedzi serwisów."
     help:           "Kontroluje jak %nickserv% i inne serwisy wysyłają do Ciebie wiadomości.\nPrzy \x02MSG ON\x02 odpowiedzi są wysyłane jako \x02PRIVMSG\x02 (niektóre klienty mogą wywołać automatyczne odpowiedzi lub powiadomienia).\nPrzy \x02MSG OFF\x02 odpowiedzi są wysyłane jako \x02NOTICE\x02 (domyślnie; zazwyczaj bez automatycznej odpowiedzi)."
+    example:        "/msg %bot% SET MSG ON"
     on:             "\x0303✔\x03 Wiadomości serwisów będą teraz wysyłane jako \x02PRIVMSG\x02."
     off:            "\x0303✔\x03 Wiadomości serwisów będą teraz wysyłane jako \x02NOTICE\x02."
 
@@ -213,6 +219,7 @@ set:
     syntax:         "SET VHOST [vhost]"
     short:          "Ustaw lub wyczyść swój niestandardowy host wirtualny (wyświetlany hostname)."
     help:           "Ustawia niestandardową nazwę hosta, którą inni widzą gdy jesteś zidentyfikowany.\nUżyj \x02SET VHOST\x02 bez wartości aby wyczyścić. Tylko litery (a-z, A-Z), cyfry, myślnik i kropka;\nbez myślnika lub kropki na początku/końcu bloku; maks. 48 znaków. Unikalny na nick."
+    example:        "/msg %bot% SET VHOST użytkownicy.przykład.com"
     success:        "\x0303✔\x03 Twój host wirtualny został ustawiony na \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Twój host wirtualny został wyczyszczony."
     invalid:        "\x0304✗\x03 Nieprawidłowy vhost. Tylko litery, cyfry, myślnik i kropka (nie na początku/końcu bloku); maks. 48 znaków."
@@ -240,37 +247,44 @@ saset:
   password:
     syntax:         "SASET <nick> PASSWORD <nowe_hasło>"
     short:          "Zmień hasło nicka."
-    help:           "Zmienia hasło innego nicka.\nZmiana jest natychmiastowa.\n\nSkładnia: SASET <nick> PASSWORD <nowe_hasło>\nPrzykład: SASET Użytkownik PASSWORD nowehasło123"
+    help:           "Zmienia hasło innego nicka.\nZmiana jest natychmiastowa."
+    example:        "/msg %bot% SASET Użytkownik PASSWORD nowehasło123"
 
   email:
     syntax:         "SASET <nick> EMAIL <nowy_e-mail>"
     short:          "Zmień e-mail nicka."
-    help:           "Zmienia e-mail innego nicka.\nŻadne potwierdzenie nie jest wysyłane—zmiana jest natychmiastowa.\n\nSkładnia: SASET <nick> EMAIL <nowy_e-mail>\nPrzykład: SASET Użytkownik EMAIL użytkownik@przykład.com"
+    help:           "Zmienia e-mail innego nicka.\nŻadne potwierdzenie nie jest wysyłane—zmiana jest natychmiastowa."
+    example:        "/msg %bot% SASET Użytkownik EMAIL użytkownik@przykład.com"
 
   language:
     syntax:         "SASET <nick> LANGUAGE <kod>"
     short:          "Zmień język nicka."
-    help:           "Zmienia język innego nicka.\nDostępne języki: en (angielski), es (hiszpański).\n\nSkładnia: SASET <nick> LANGUAGE <kod>\nPrzykład: SASET Użytkownik LANGUAGE pl"
+    help:           "Zmienia język innego nicka.\nDostępne języki: en (angielski), es (hiszpański)."
+    example:        "/msg %bot% SASET Użytkownik LANGUAGE pl"
 
   timezone:
     syntax:         "SASET <nick> TIMEZONE <strefa_czasowa|OFF>"
     short:          "Zmień strefę czasową nicka."
-    help:           "Ustawia lub czyści strefę czasową innego nicka.\nUżyj OFF, aby wyczyścić.\n\nSkładnia: SASET <nick> TIMEZONE <strefa_czasowa>\nPrzykład: SASET Użytkownik TIMEZONE Europe/Warsaw"
+    help:           "Ustawia lub czyści strefę czasową innego nicka.\nUżyj OFF, aby wyczyścić."
+    example:        "/msg %bot% SASET Użytkownik TIMEZONE Europe/Warsaw"
 
   private:
     syntax:         "SASET <nick> PRIVATE {ON|OFF}"
     short:          "Zmień prywatność nicka."
-    help:           "Włącza lub wyłącza prywatność informacji innego nicka.\n\nSkładnia: SASET <nick> PRIVATE {ON|OFF}\nPrzykład: SASET Użytkownik PRIVATE ON"
+    help:           "Włącza lub wyłącza prywatność informacji innego nicka."
+    example:        "/msg %bot% SASET Użytkownik PRIVATE ON"
 
   msg:
     syntax:         "SASET <nick> MSG {ON|OFF}"
     short:          "Zmień preferencję wiadomości nicka."
-    help:           "Ustawia, czy inny nick otrzymuje odpowiedzi jako PRIVMSG (ON) lub NOTICE (OFF).\n\nSkładnia: SASET <nick> MSG {ON|OFF}\nPrzykład: SASET Użytkownik MSG ON"
+    help:           "Ustawia, czy inny nick otrzymuje odpowiedzi jako PRIVMSG (ON) lub NOTICE (OFF)."
+    example:        "/msg %bot% SASET Użytkownik MSG ON"
 
   vhost:
     syntax:         "SASET <nick> VHOST [vhost]"
     short:          "Zmień host wirtualny nicka."
-    help:           "Ustawia lub czyści host wirtualny innego nicka.\nUżyj \x02SASET <nick> VHOST\x02 bez wartości, aby wyczyścić.\n\nSkładnia: SASET <nick> VHOST [vhost]\nPrzykład: SASET Użytkownik VHOST użytkownicy.przykład.com"
+    help:           "Ustawia lub czyści host wirtualny innego nicka.\nUżyj \x02SASET <nick> VHOST\x02 bez wartości, aby wyczyścić."
+    example:        "/msg %bot% SASET Użytkownik VHOST użytkownicy.przykład.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -497,9 +511,7 @@ forbidvhost:
       mogli ustawiać vhostów pasujących do tego wzorca przez SET VHOST.
 
       Symbole wieloznaczne: * pasuje do dowolnego ciągu, ? pasuje do pojedynczego znaku.
-
-      Składnia: FORBIDVHOST ADD <wzorzec>
-      Przykład: FORBIDVHOST ADD *.piracka.strona
+    example:     "/msg %bot% FORBIDVHOST ADD *.piracka.strona"
     done:            "\x0303✓\x03 Zabroniony wzorzec vhost dodany: \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 Wzorzec \x02%pattern%\x02 już istnieje."
     invalid:          "\x0304✗\x03 Nieprawidłowy format wzorca vhost."
@@ -509,9 +521,7 @@ forbidvhost:
     short:       "Usuń zabroniony wzorzec vhost."
     help:        |
       Usuwa wzorzec z listy zabronionych vhostów.
-
-      Składnia: FORBIDVHOST DEL <wzorzec>
-      Przykład: FORBIDVHOST DEL *.piracka.strona
+    example:     "/msg %bot% FORBIDVHOST DEL *.piracka.strona"
     done:        "\x0303✓\x03 Zabroniony wzorzec vhost usunięty: \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 Wzorzec \x02%pattern%\x02 nie znaleziony."
 
@@ -520,8 +530,7 @@ forbidvhost:
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Pokazuje wszystkie zabronione wzorce vhost.
-
-      Składnia: FORBIDVHOST LIST
+    example:     "/msg %bot% FORBIDVHOST LIST"
     header:      "\x0307ℹ\x03 Zabronione wzorce vhost (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — przez %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Brak zabronionych wzorców vhost."
@@ -554,9 +563,7 @@ history:
     short:      "Dodaj ręczny wpis historii."
     help:        |
       Dodaje ręczny wpis do historii nicka.
-
-      Składnia: HISTORY <nick> ADD <wiadomość>
-      Przykład: HISTORY JakisNick ADD Użytkownik zgłoszony za spam
+    example:     "/msg %bot% HISTORY JakisNick ADD Użytkownik zgłoszony za spam"
     success:    "\x0303✔\x03 Wpis historii dodany dla \x02%nickname%\x02."
 
   del:
@@ -564,9 +571,7 @@ history:
     short:      "Usuń wpis historii według ID."
     help:        |
       Usuwa konkretny wpis historii według jego ID.
-
-      Składnia: HISTORY <nick> DEL <id>
-      Przykład: HISTORY JakisNick DEL 42
+    example:     "/msg %bot% HISTORY JakisNick DEL 42"
     success:    "\x0303✔\x03 Wpis historii \x02%id%\x02 usunięty."
     not_found:  "\x0304✗\x03 Wpis historii \x02%id%\x02 nie znaleziony."
     invalid_id: "\x0304✗\x03 Nieprawidłowe ID wpisu: \x02%id%\x02."
@@ -577,13 +582,10 @@ history:
     help:        |
       Wyświetla historię działań nicka.
 
-      Składnia: HISTORY <nick> VIEW
-              HISTORY <nick> VIEW PAGE
-              HISTORY <nick> VIEW ALL
-
       Domyślnie pokazuje 3 wpisy na raz.
       Użyj VIEW 2 aby zobaczyć drugą stronę.
       Użyj VIEW ALL aby zobaczyć pełną historię.
+    example:     "/msg %bot% HISTORY JakisNick VIEW"
     header:     "\x02Historia dla \x0307%nickname%\x03\x02 (pokazuje %start%-%end% z %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 przez %operator% — %message%"
     extra:       "  Dodatkowo \x0307→\x03 %extra%"
@@ -596,9 +598,7 @@ history:
     help:        |
       Usuwa wszystkie wpisy historii dla podanego nicka.
       Ta akcja jest nieodwracalna.
-
-      Składnia: HISTORY <nick> CLEAR
-      Przykład: HISTORY JakisNick CLEAR
+    example:     "/msg %bot% HISTORY JakisNick CLEAR"
     success:    "\x0303✔\x03 Wyczyszczono \x02%count%\x02 wpisów historii dla \x02%nickname%\x02."
 
 # --- History message translations (used when viewing history) ---

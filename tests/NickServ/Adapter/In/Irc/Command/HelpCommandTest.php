@@ -9,6 +9,7 @@ use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\HelpCommand;
 use App\NickServ\Adapter\In\Irc\Command\NoexpireCommand;
+use App\NickServ\Adapter\In\Irc\Command\SasetCommand;
 use App\NickServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
@@ -19,6 +20,7 @@ use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandlerInterface;
+use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,6 +31,7 @@ use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_scalar;
+use function substr_count;
 
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
@@ -1339,6 +1342,46 @@ final class HelpCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, ['NOEXPIRE'], $notifier, $translator, $registry, $account));
 
         self::assertContains('Example: noexpire.example', $messages);
+    }
+
+    #[Test]
+    public function subcommandHelpRendersSyntaxAndExampleExactlyOnce(): void
+    {
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages = explode("\n", $m);
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []): string {
+                $translation = match ($id) {
+                    'help.syntax_label' => 'Syntax: %syntax%',
+                    'help.example_label' => 'Example: %example%',
+                    default => $id,
+                };
+
+                return self::replaceTranslationParameters($translation, self::requireStringKeyedParameters($parameters));
+            },
+        );
+
+        $operatorAccess = $this->createStub(NickServOperatorAccess::class);
+        $operatorAccess->method('hasPermission')->willReturn(true);
+
+        $registry = new NickServCommandRegistry([
+            new SasetCommand($this->createStub(SetNickSettingHandlerInterface::class)),
+        ]);
+
+        $cmd = $this->createHelpCommand(0, $operatorAccess);
+        $cmd->execute($this->createContext($sender, ['SASET', 'PASSWORD'], $notifier, $translator, $registry, $account));
+
+        $output = implode("\n", $messages);
+        self::assertSame(1, substr_count($output, 'Syntax:'));
+        self::assertSame(1, substr_count($output, 'Example:'));
     }
 
     /** @param list<string> $args */

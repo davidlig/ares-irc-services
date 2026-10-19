@@ -170,12 +170,14 @@ set:
     syntax:         "SET PASSWORD <new_password>"
     short:          "Αλλάξτε τον κωδικό του ψευδωνύμου σας."
     help:           "Αλλάζει τον κωδικό για το ψευδώνυμό σας. Ο νέος κωδικός\nισχύει άμεσα. Επιλέξτε έναν ισχυρό κωδικό τουλάχιστον 6 χαρακτήρων\nπου δεν χρησιμοποιείτε σε άλλες υπηρεσίες."
+    example:        "/msg %bot% SET PASSWORD νέοςκωδικός123"
     success:        "\x0303✔\x03 Ο κωδικός σας έχει ενημερωθεί επιτυχώς."
 
   email:
     syntax:         "SET EMAIL <new_email> [token]"
     short:          "Αλλάξτε τη διεύθυνση email που συνδέεται με το ψευδώνυμό σας (επιβεβαίωση δύο βημάτων)."
     help:           "Αλλαγή email σε δύο βήματα για ασφάλεια.\n1) \x0303SET EMAIL <new_email>\x03 — αποστέλλεται token στο τρέχον email σας.\n2) \x0303SET EMAIL <new_email> <token>\x03 — επιβεβαίωση με το token που λάβατε.\nΤο token λήγει σε 1 ώρα."
+    example:        "/msg %bot% SET EMAIL χρήστης@παράδειγμα.com"
     success:        "\x0303✔\x03 Το email σας έχει ενημερωθεί σε \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Ένα token επιβεβαίωσης έχει σταλεί στο \x02%current_email%\x02.\n  Για να επιβεβαιώσετε την αλλαγή σε \x02%new_email%\x02 εκτελέστε:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Το token λήγει σε 1 ώρα."
     invalid_token:  "\x0304✗\x03 Το token είναι άκυρο ή έχει λήξει. Ζητήστε νέο με \x0303SET EMAIL <new_email>\x03."
@@ -184,6 +186,7 @@ set:
     syntax:         "SET LANGUAGE <code>"
     short:          "Αλλάξτε τη γλώσσα που χρησιμοποιούν οι υπηρεσίες για να επικοινωνούν μαζί σας."
     help:           "Αλλάζει τη γλώσσα που το %nickserv% και άλλες υπηρεσίες χρησιμοποιούν όταν σας μιλούν.\nΔιαθέσιμες γλώσσες:\n  \x02ca\x02 (Καταλανικά)\n  \x02de\x02 (Γερμανικά)\n  \x02el\x02 (Ελληνικά)\n  \x02en\x02 (Αγγλικά)\n  \x02es\x02 (Ισπανικά)\n  \x02eu\x02 (Βασκικά)\n  \x02fr\x02 (Γαλλικά)\n  \x02gl\x02 (Γαλικιακά)\n  \x02it\x02 (Ιταλικά)\n  \x02nl\x02 (Ολλανδικά)\n  \x02pl\x02 (Πολωνικά)\n  \x02pt\x02 (Πορτογαλικά)\n  \x02ro\x02 (Ρουμανικά)\n  \x02tr\x02 (Τουρκικά)"
+    example:        "/msg %bot% SET LANGUAGE el"
     success:        "\x0303✔\x03 Η γλώσσα άλλαξε σε \x02%language%\x02."
     invalid:        "\x0304✗\x03 Μη υποστηριζόμενη γλώσσα. Διαθέσιμες γλώσσες: %languages%."
 
@@ -191,6 +194,7 @@ set:
     syntax:         "SET TIMEZONE <timezone>"
     short:          "Ορίστε τη ζώνη ώρας που χρησιμοποιείται κατά την εμφάνιση ημερομηνιών."
     help:           "Ορίζει τη ζώνη ώρας που χρησιμοποιεί το %nickserv% όταν εμφανίζει ημερομηνίες.\nΧρησιμοποιήστε \x02HELP SET TIMEZONE\x02 για το ευρετήριο περιοχών· \x02HELP SET TIMEZONE <region>\x02 (π.χ. Europe) για τις ζώνες ώρας αυτής της περιοχής. Χρησιμοποιήστε \x02OFF\x02 για εκκαθάριση."
+    example:        "/msg %bot% SET TIMEZONE Europe/Athens"
     success:        "\x0303✔\x03 Ζώνη ώρας ορίστηκε σε \x02%timezone%\x02. Οι ημερομηνίες θα εμφανίζονται σε αυτήν τη ζώνη ώρας."
     cleared:        "\x0303✔\x03 Η ζώνη ώρας εκκαθαρίστηκε. Οι ημερομηνίες θα χρησιμοποιούν την προεπιλογή του δικτύου."
     invalid:        "\x0304✗\x03 Μη έγκυρη ζώνη ώρας \x02%timezone%\x02. Χρησιμοποιήστε έγκυρο αναγνωριστικό (π.χ. UTC, Europe/Athens)."
@@ -199,6 +203,7 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Ενεργοποίηση ή απενεργοποίηση ιδιωτικότητας για τις πληροφορίες του ψευδωνύμου σας."
     help:           "Ελέγχει την ορατότητα των πληροφοριών του ψευδωνύμου σας στην εντολή INFO.\nΜε \x02PRIVATE ON\x02 μόνο εσείς και οι IRC Operators μπορούν να δουν τις λεπτομέρειές σας.\nΜε \x02PRIVATE OFF\x02 οι πληροφορίες σας είναι δημόσιες για όλους."
+    example:        "/msg %bot% SET PRIVATE ON"
     on:             "\x0303✔\x03 Οι πληροφορίες του ψευδωνύμου σας είναι τώρα \x02ιδιωτικές\x02."
     off:            "\x0303✔\x03 Οι πληροφορίες του ψευδωνύμου σας είναι τώρα \x02δημόσιες\x02."
 
@@ -206,6 +211,7 @@ set:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Χρήση PRIVMSG (ON) ή NOTICE (OFF) για απαντήσεις υπηρεσιών."
     help:           "Ελέγχει πώς το %nickserv% και άλλες υπηρεσίες στέλνουν μηνύματα σε εσάς.\nΜε \x02MSG ON\x02 οι απαντήσεις στέλνονται ως \x02PRIVMSG\x02 (ορισμένοι clients μπορεί να ενεργοποιούν απαντήσεις ή ειδοποιήσεις).\nΜε \x02MSG OFF\x02 οι απαντήσεις στέλνονται ως \x02NOTICE\x02 (προεπιλογή· συνήθως χωρίς αυτόματη απάντηση)."
+    example:        "/msg %bot% SET MSG ON"
     on:             "\x0303✔\x03 Τα μηνύματα υπηρεσιών θα στέλνονται τώρα ως \x02PRIVMSG\x02."
     off:            "\x0303✔\x03 Τα μηνύματα υπηρεσιών θα στέλνονται τώρα ως \x02NOTICE\x02."
 
@@ -213,6 +219,7 @@ set:
     syntax:         "SET VHOST [vhost]"
     short:          "Ορίστε ή εκκαθαρίστε το προσαρμοσμένο εικονικό host σας (εμφανιζόμενο hostname)."
     help:           "Ορίζει ένα προσαρμοσμένο hostname που βλέπουν οι άλλοι όταν είστε ταυτοποιημένοι.\nΧρησιμοποιήστε \x02SET VHOST\x02 χωρίς τιμή για εκκαθάριση. Μόνο γράμματα (a-z, A-Z), ψηφία,\nπαύλα και τελεία· όχι παύλα ή τελεία στην αρχή/τέλος κάθε μπλοκ· μέγιστο 48 χαρακτήρες.\nΜοναδικό ανά ψευδώνυμο."
+    example:        "/msg %bot% SET VHOST χρήστες.παράδειγμα.com"
     success:        "\x0303✔\x03 Το εικονικό host σας έχει οριστεί σε \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Το εικονικό host σας έχει εκκαθαριστεί."
     invalid:        "\x0304✗\x03 Μη έγκυρο vhost. Μόνο γράμματα, ψηφία, παύλα και τελεία (όχι στην αρχή/τέλος μπλοκ)· μέγιστο 48 χαρακτήρες."
@@ -240,37 +247,44 @@ saset:
   password:
     syntax:         "SASET <ψευδώνυμο> PASSWORD <νέος_κωδικός>"
     short:          "Αλλαγή κωδικού ψευδωνύμου."
-    help:           "Αλλάζει τον κωδικό πρόσβασης άλλου ψευδωνύμου.\nΗ αλλαγή είναι άμεση.\n\nΣύνταξη: SASET <ψευδώνυμο> PASSWORD <νέος_κωδικός>\nΠαράδειγμα: SASET Χρήστης PASSWORD νέοςκωδικός123"
+    help:           "Αλλάζει τον κωδικό πρόσβασης άλλου ψευδωνύμου.\nΗ αλλαγή είναι άμεση."
+    example:        "/msg %bot% SASET Χρήστης PASSWORD νέοςκωδικός123"
 
   email:
     syntax:         "SASET <ψευδώνυμο> EMAIL <νέο_email>"
     short:          "Αλλαγή email ψευδωνύμου."
-    help:           "Αλλάζει το email άλλου ψευδωνύμου.\nΔεν αποστέλλεται επιβεβαίωση—η αλλαγή είναι άμεση.\n\nΣύνταξη: SASET <ψευδώνυμο> EMAIL <νέο_email>\nΠαράδειγμα: SASET Χρήστης EMAIL χρήστης@παράδειγμα.com"
+    help:           "Αλλάζει το email άλλου ψευδωνύμου.\nΔεν αποστέλλεται επιβεβαίωση—η αλλαγή είναι άμεση."
+    example:        "/msg %bot% SASET Χρήστης EMAIL χρήστης@παράδειγμα.com"
 
   language:
     syntax:         "SASET <ψευδώνυμο> LANGUAGE <κωδικός>"
     short:          "Αλλαγή γλώσσας ψευδωνύμου."
-    help:           "Αλλάζει τη γλώσσα άλλου ψευδωνύμου.\nΔιαθέσιμες γλώσσες: en (Αγγλικά), es (Ισπανικά).\n\nΣύνταξη: SASET <ψευδώνυμο> LANGUAGE <κωδικός>\nΠαράδειγμα: SASET Χρήστης LANGUAGE el"
+    help:           "Αλλάζει τη γλώσσα άλλου ψευδωνύμου.\nΔιαθέσιμες γλώσσες: en (Αγγλικά), es (Ισπανικά)."
+    example:        "/msg %bot% SASET Χρήστης LANGUAGE el"
 
   timezone:
     syntax:         "SASET <ψευδώνυμο> TIMEZONE <ζώνη_ώρας|OFF>"
     short:          "Αλλαγή ζώνης ώρας ψευδωνύμου."
-    help:           "Ορίζει ή εκκαθαρίζει τη ζώνη ώρας άλλου ψευδωνύμου.\nΧρησιμοποιήστε OFF για εκκαθάριση.\n\nΣύνταξη: SASET <ψευδώνυμο> TIMEZONE <ζώνη_ώρας>\nΠαράδειγμα: SASET Χρήστης TIMEZONE Europe/Athens"
+    help:           "Ορίζει ή εκκαθαρίζει τη ζώνη ώρας άλλου ψευδωνύμου.\nΧρησιμοποιήστε OFF για εκκαθάριση."
+    example:        "/msg %bot% SASET Χρήστης TIMEZONE Europe/Athens"
 
   private:
     syntax:         "SASET <ψευδώνυμο> PRIVATE {ON|OFF}"
     short:          "Αλλαγή ιδιωτικότητας ψευδωνύμου."
-    help:           "Ενεργοποιεί ή απενεργοποιεί την ιδιωτικότητα των πληροφοριών άλλου ψευδωνύμου.\n\nΣύνταξη: SASET <ψευδώνυμο> PRIVATE {ON|OFF}\nΠαράδειγμα: SASET Χρήστης PRIVATE ON"
+    help:           "Ενεργοποιεί ή απενεργοποιεί την ιδιωτικότητα των πληροφοριών άλλου ψευδωνύμου."
+    example:        "/msg %bot% SASET Χρήστης PRIVATE ON"
 
   msg:
     syntax:         "SASET <ψευδώνυμο> MSG {ON|OFF}"
     short:          "Αλλαγή προτίμησης μηνυμάτων ψευδωνύμου."
-    help:           "Ορίζει αν άλλο ψευδώνυμο λαμβάνει απαντήσεις ως PRIVMSG (ON) ή NOTICE (OFF).\n\nΣύνταξη: SASET <ψευδώνυμο> MSG {ON|OFF}\nΠαράδειγμα: SASET Χρήστης MSG ON"
+    help:           "Ορίζει αν άλλο ψευδώνυμο λαμβάνει απαντήσεις ως PRIVMSG (ON) ή NOTICE (OFF)."
+    example:        "/msg %bot% SASET Χρήστης MSG ON"
 
   vhost:
     syntax:         "SASET <ψευδώνυμο> VHOST [vhost]"
     short:          "Αλλαγή εικονικού host ψευδωνύμου."
-    help:           "Ορίζει ή εκκαθαρίζει το εικονικό host άλλου ψευδωνύμου.\nΧρησιμοποιήστε \x02SASET <ψευδώνυμο> VHOST\x02 χωρίς τιμή για εκκαθάριση.\n\nΣύνταξη: SASET <ψευδώνυμο> VHOST [vhost]\nΠαράδειγμα: SASET Χρήστης VHOST χρήστες.παράδειγμα.com"
+    help:           "Ορίζει ή εκκαθαρίζει το εικονικό host άλλου ψευδωνύμου.\nΧρησιμοποιήστε \x02SASET <ψευδώνυμο> VHOST\x02 χωρίς τιμή για εκκαθάριση."
+    example:        "/msg %bot% SASET Χρήστης VHOST χρήστες.παράδειγμα.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -497,9 +511,7 @@ forbidvhost:
       μπορούν να ορίσουν vhosts που ταιριάζουν με αυτό το μοτίβο μέσω SET VHOST.
 
       Wildcards: * ταιριάζει με οποιαδήποτε ακολουθία, ? ταιριάζει με έναν χαρακτήρα.
-
-      Σύνταξη: FORBIDVHOST ADD <pattern>
-      Παράδειγμα: FORBIDVHOST ADD *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST ADD *.pirated.com"
     done:            "\x0303✓\x03 Προστέθηκε απαγορευμένο μοτίβο vhost: \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 Το μοτίβο \x02%pattern%\x02 υπάρχει ήδη."
     invalid:          "\x0304✗\x03 Μη έγκυρη μορφή μοτίβου vhost."
@@ -509,9 +521,7 @@ forbidvhost:
     short:       "Αφαίρεση απαγορευμένου μοτίβου vhost."
     help:        |
       Αφαιρεί ένα μοτίβο από τη λίστα απαγορευμένων vhost.
-
-      Σύνταξη: FORBIDVHOST DEL <pattern>
-      Παράδειγμα: FORBIDVHOST DEL *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST DEL *.pirated.com"
     done:        "\x0303✓\x03 Αφαιρέθηκε απαγορευμένο μοτίβο vhost: \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 Το μοτίβο \x02%pattern%\x02 δεν βρέθηκε."
 
@@ -520,8 +530,7 @@ forbidvhost:
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Εμφανίζει όλα τα απαγορευμένα μοτίβα vhost.
-
-      Σύνταξη: FORBIDVHOST LIST
+    example:     "/msg %bot% FORBIDVHOST LIST"
     header:      "\x0307ℹ\x03 Απαγορευμένα μοτίβα vhost (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — από %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Δεν υπάρχουν απαγορευμένα μοτίβα vhost."
@@ -554,9 +563,7 @@ history:
     short:      "Προσθήκη χειροκίνητης καταχώρησης ιστορικού."
     help:        |
       Προσθέτει μια χειροκίνητη καταχώρηση στο ιστορικό του ψευδωνύμου.
-
-      Σύνταξη: HISTORY <nickname> ADD <message>
-      Παράδειγμα: HISTORY SomeNick ADD Ο χρήστης αναφέρθηκε για spam
+    example:     "/msg %bot% HISTORY SomeNick ADD Ο χρήστης αναφέρθηκε για spam"
     success:    "\x0303✔\x03 Η καταχώρηση ιστορικού προστέθηκε για \x02%nickname%\x02."
 
   del:
@@ -564,9 +571,7 @@ history:
     short:      "Διαγραφή καταχώρησης ιστορικού μέσω ID."
     help:        |
       Διαγράφει μια συγκεκριμένη καταχώρηση ιστορικού με το ID της.
-
-      Σύνταξη: HISTORY <nickname> DEL <id>
-      Παράδειγμα: HISTORY SomeNick DEL 42
+    example:     "/msg %bot% HISTORY SomeNick DEL 42"
     success:    "\x0303✔\x03 Η καταχώρηση ιστορικού \x02%id%\x02 διαγράφηκε."
     not_found:  "\x0304✗\x03 Η καταχώρηση ιστορικού \x02%id%\x02 δεν βρέθηκε."
     invalid_id: "\x0304✗\x03 Μη έγκυρο ID καταχώρησης: \x02%id%\x02."
@@ -577,13 +582,10 @@ history:
     help:        |
       Εμφανίζει το ιστορικό ενεργειών του ψευδωνύμου.
 
-      Σύνταξη: HISTORY <nickname> VIEW
-              HISTORY <nickname> VIEW PAGE
-              HISTORY <nickname> VIEW ALL
-
       Προεπιλεγμένα εμφανίζει 3 καταχωρήσεις κάθε φορά.
       Χρησιμοποιήστε VIEW 2 για τη δεύτερη σελίδα.
       Χρησιμοποιήστε VIEW ALL για πλήρες ιστορικό.
+    example:     "/msg %bot% HISTORY SomeNick VIEW"
     header:     "\x02Ιστορικό για \x0307%nickname%\x03\x02 (εμφάνιση %start%-%end% από %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 από %operator% — %message%"
     extra:       "  Επιπλέον \x0307→\x03 %extra%"
@@ -596,9 +598,7 @@ history:
     help:        |
       Αφαιρεί όλες τις καταχωρήσεις ιστορικού για το καθορισμένο ψευδώνυμο.
       Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.
-
-      Σύνταξη: HISTORY <nickname> CLEAR
-      Παράδειγμα: HISTORY SomeNick CLEAR
+    example:     "/msg %bot% HISTORY SomeNick CLEAR"
     success:    "\x0303✔\x03 Εκκαθαρίστηκαν \x02%count%\x02 καταχωρήσεις ιστορικού για \x02%nickname%\x02."
 
 # --- History message translations (used when viewing history) ---

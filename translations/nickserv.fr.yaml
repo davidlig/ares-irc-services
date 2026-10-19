@@ -170,12 +170,14 @@ set:
     syntax:         "SET PASSWORD <nouveau_motdepasse>"
     short:          "Changer le mot de passe de votre surnom."
     help:           "Change le mot de passe de votre surnom. Le nouveau mot de passe\nprend effet immédiatement. Choisissez un mot de passe robuste d'au moins\n6 caractères que vous n'utilisez pas sur d'autres services."
+    example:        "/msg %bot% SET PASSWORD nouveau_mdp123"
     success:        "\x0303✔\x03 Votre mot de passe a été mis à jour avec succès."
 
   email:
     syntax:         "SET EMAIL <nouvel_e-mail> [jeton]"
     short:          "Changer l'adresse e-mail liée à votre surnom (confirmation en deux étapes)."
     help:           "Changement d'e-mail en deux étapes pour la sécurité.\n1) \x0303SET EMAIL <nouvel_e-mail>\x03 — un jeton est envoyé à votre e-mail actuel.\n2) \x0303SET EMAIL <nouvel_e-mail> <jeton>\x03 — confirmez avec le jeton reçu.\nLe jeton expire dans 1 heure."
+    example:        "/msg %bot% SET EMAIL utilisateur@exemple.com"
     success:        "\x0303✔\x03 Votre e-mail a été mis à jour en \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Un jeton de confirmation a été envoyé à \x02%current_email%\x02.\n  Pour confirmer le changement vers \x02%new_email%\x02, exécutez :\n  \x0303/msg %bot% SET EMAIL %new_email% <jeton>\x03\n  Le jeton expire dans 1 heure."
     invalid_token:  "\x0304✗\x03 Le jeton est invalide ou a expiré. Demandez-en un nouveau avec \x0303SET EMAIL <nouvel_e-mail>\x03."
@@ -184,6 +186,7 @@ set:
     syntax:         "SET LANGUAGE <code>"
     short:          "Changer la langue que les services utilisent pour communiquer avec vous."
     help:           "Change la langue que %nickserv% et les autres services utilisent pour vous parler.\nLangues disponibles :\n  \x02ca\x02 (catalan)\n  \x02de\x02 (allemand)\n  \x02el\x02 (grec)\n  \x02en\x02 (anglais)\n  \x02es\x02 (espagnol)\n  \x02eu\x02 (basque)\n  \x02fr\x02 (français)\n  \x02gl\x02 (galicien)\n  \x02it\x02 (italien)\n  \x02nl\x02 (néerlandais)\n  \x02pl\x02 (polonais)\n  \x02pt\x02 (portugais)\n  \x02ro\x02 (roumain)\n  \x02tr\x02 (turc)"
+    example:        "/msg %bot% SET LANGUAGE fr"
     success:        "\x0303✔\x03 Langue changée en \x02%language%\x02."
     invalid:        "\x0304✗\x03 Langue non prise en charge. Langues disponibles : %languages%."
 
@@ -191,6 +194,7 @@ set:
     syntax:         "SET TIMEZONE <fuseau_horaire>"
     short:          "Définir le fuseau horaire utilisé pour l'affichage des dates."
     help:           "Définit le fuseau horaire utilisé lorsque %nickserv% affiche des dates.\nUtilisez \x02HELP SET TIMEZONE\x02 pour l'index des régions ; \x02HELP SET TIMEZONE <région>\x02 (ex. Europe) pour les fuseaux de cette région. Utilisez \x02OFF\x02 pour effacer."
+    example:        "/msg %bot% SET TIMEZONE Europe/Paris"
     success:        "\x0303✔\x03 Fuseau horaire défini sur \x02%timezone%\x02. Les dates seront affichées dans ce fuseau."
     cleared:        "\x0303✔\x03 Fuseau horaire effacé. Les dates utiliseront le fuseau par défaut du réseau."
     invalid:        "\x0304✗\x03 Fuseau horaire invalide \x02%timezone%\x02. Utilisez un identifiant valide (ex. UTC, Europe/Paris)."
@@ -199,6 +203,7 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Activer ou désactiver la confidentialité des informations de votre surnom."
     help:           "Contrôle la visibilité des informations de votre surnom dans la commande INFO.\nAvec \x02PRIVATE ON\x02, seuls vous et les opérateurs IRC peuvent voir vos détails.\nAvec \x02PRIVATE OFF\x02, vos informations sont publiques pour tous."
+    example:        "/msg %bot% SET PRIVATE ON"
     on:             "\x0303✔\x03 Les informations de votre surnom sont maintenant \x02privées\x02."
     off:            "\x0303✔\x03 Les informations de votre surnom sont maintenant \x02publiques\x02."
 
@@ -206,6 +211,7 @@ set:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Utiliser PRIVMSG (ON) ou NOTICE (OFF) pour les réponses des services."
     help:           "Contrôle comment %nickserv% et les autres services vous envoient les messages.\nAvec \x02MSG ON\x02, les réponses sont envoyées en \x02PRIVMSG\x02 (certains clients peuvent déclencher des réponses ou notifications).\nAvec \x02MSG OFF\x02, les réponses sont envoyées en \x02NOTICE\x02 (par défaut ; généralement sans réponse automatique)."
+    example:        "/msg %bot% SET MSG ON"
     on:             "\x0303✔\x03 Les messages des services seront maintenant envoyés en \x02PRIVMSG\x02."
     off:            "\x0303✔\x03 Les messages des services seront maintenant envoyés en \x02NOTICE\x02."
 
@@ -213,6 +219,7 @@ set:
     syntax:         "SET VHOST [vhost]"
     short:          "Définir ou effacer votre hôte virtuel personnalisé (hostname affiché)."
     help:           "Définit un nom d'hôte personnalisé que les autres voient lorsque vous êtes identifié.\nUtilisez \x02SET VHOST\x02 sans valeur pour l'effacer. Uniquement lettres (a-z, A-Z), chiffres,\ntrait d'union et point ; pas de tiret/point au début/fin d'un bloc ; max 48 caractères. Unique par surnom."
+    example:        "/msg %bot% SET VHOST utilisateurs.exemple.com"
     success:        "\x0303✔\x03 Votre hôte virtuel a été défini sur \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Votre hôte virtuel a été effacé."
     invalid:        "\x0304✗\x03 Vhost invalide. Uniquement lettres, chiffres, trait d'union et point (pas au début/fin de bloc) ; max 48 caractères."
@@ -240,37 +247,44 @@ saset:
   password:
     syntax:         "SASET <surnom> PASSWORD <nouveau_mdp>"
     short:          "Changer le mot de passe d'un surnom."
-    help:           "Change le mot de passe d'un autre surnom.\nLe changement est immédiat.\n\nSyntaxe : SASET <surnom> PASSWORD <nouveau_mdp>\nExemple : SASET Utilisateur PASSWORD nouveau_mdp123"
+    help:           "Change le mot de passe d'un autre surnom.\nLe changement est immédiat."
+    example:        "/msg %bot% SASET Utilisateur PASSWORD nouveau_mdp123"
 
   email:
     syntax:         "SASET <surnom> EMAIL <nouvel_e-mail>"
     short:          "Changer l'e-mail d'un surnom."
-    help:           "Change l'e-mail d'un autre surnom.\nAucune confirmation n'est envoyée—le changement est immédiat.\n\nSyntaxe : SASET <surnom> EMAIL <nouvel_e-mail>\nExemple : SASET Utilisateur EMAIL utilisateur@exemple.com"
+    help:           "Change l'e-mail d'un autre surnom.\nAucune confirmation n'est envoyée—le changement est immédiat."
+    example:        "/msg %bot% SASET Utilisateur EMAIL utilisateur@exemple.com"
 
   language:
     syntax:         "SASET <surnom> LANGUAGE <code>"
     short:          "Changer la langue d'un surnom."
-    help:           "Change la langue d'un autre surnom.\nLangues disponibles : en (anglais), es (espagnol).\n\nSyntaxe : SASET <surnom> LANGUAGE <code>\nExemple : SASET Utilisateur LANGUAGE fr"
+    help:           "Change la langue d'un autre surnom.\nLangues disponibles : en (anglais), es (espagnol)."
+    example:        "/msg %bot% SASET Utilisateur LANGUAGE fr"
 
   timezone:
     syntax:         "SASET <surnom> TIMEZONE <fuseau_horaire|OFF>"
     short:          "Changer le fuseau horaire d'un surnom."
-    help:           "Définit ou efface le fuseau horaire d'un autre surnom.\nUtilisez OFF pour l'effacer.\n\nSyntaxe : SASET <surnom> TIMEZONE <fuseau_horaire>\nExemple : SASET Utilisateur TIMEZONE Europe/Paris"
+    help:           "Définit ou efface le fuseau horaire d'un autre surnom.\nUtilisez OFF pour l'effacer."
+    example:        "/msg %bot% SASET Utilisateur TIMEZONE Europe/Paris"
 
   private:
     syntax:         "SASET <surnom> PRIVATE {ON|OFF}"
     short:          "Changer la confidentialité d'un surnom."
-    help:           "Active ou désactive la confidentialité des informations d'un autre surnom.\n\nSyntaxe : SASET <surnom> PRIVATE {ON|OFF}\nExemple : SASET Utilisateur PRIVATE ON"
+    help:           "Active ou désactive la confidentialité des informations d'un autre surnom."
+    example:        "/msg %bot% SASET Utilisateur PRIVATE ON"
 
   msg:
     syntax:         "SASET <surnom> MSG {ON|OFF}"
     short:          "Changer la préférence de messages d'un surnom."
-    help:           "Définit si un autre surnom reçoit les réponses en PRIVMSG (ON) ou NOTICE (OFF).\n\nSyntaxe : SASET <surnom> MSG {ON|OFF}\nExemple : SASET Utilisateur MSG ON"
+    help:           "Définit si un autre surnom reçoit les réponses en PRIVMSG (ON) ou NOTICE (OFF)."
+    example:        "/msg %bot% SASET Utilisateur MSG ON"
 
   vhost:
     syntax:         "SASET <surnom> VHOST [vhost]"
     short:          "Changer l'hôte virtuel d'un surnom."
-    help:           "Définit ou efface l'hôte virtuel d'un autre surnom.\nUtilisez \x02SASET <surnom> VHOST\x02 sans valeur pour l'effacer.\n\nSyntaxe : SASET <surnom> VHOST [vhost]\nExemple : SASET Utilisateur VHOST utilisateurs.exemple.com"
+    help:           "Définit ou efface l'hôte virtuel d'un autre surnom.\nUtilisez \x02SASET <surnom> VHOST\x02 sans valeur pour l'effacer."
+    example:        "/msg %bot% SASET Utilisateur VHOST utilisateurs.exemple.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -497,9 +511,7 @@ forbidvhost:
       ne pourront pas définir de vhosts correspondant à ce motif via SET VHOST.
 
       Jokers : * correspond à toute séquence, ? correspond à un seul caractère.
-
-      Syntaxe : FORBIDVHOST ADD <motif>
-      Exemple : FORBIDVHOST ADD *.pirate.com
+    example:     "/msg %bot% FORBIDVHOST ADD *.pirate.com"
     done:            "\x0303✓\x03 Motif de vhost interdit ajouté : \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 Le motif \x02%pattern%\x02 existe déjà."
     invalid:          "\x0304✗\x03 Format de motif vhost invalide."
@@ -509,9 +521,7 @@ forbidvhost:
     short:       "Supprimer un motif de vhost interdit."
     help:        |
       Supprime un motif de la liste des vhosts interdits.
-
-      Syntaxe : FORBIDVHOST DEL <motif>
-      Exemple : FORBIDVHOST DEL *.pirate.com
+    example:     "/msg %bot% FORBIDVHOST DEL *.pirate.com"
     done:        "\x0303✓\x03 Motif de vhost interdit supprimé : \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 Motif \x02%pattern%\x02 introuvable."
 
@@ -520,8 +530,7 @@ forbidvhost:
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Affiche tous les motifs de vhost interdits.
-
-      Syntaxe : FORBIDVHOST LIST
+    example:     "/msg %bot% FORBIDVHOST LIST"
     header:      "\x0307ℹ\x03 Motifs de vhost interdits (\x02%count%\x02) :"
     entry:       "  %index%. \x0304%pattern%\x03 — par %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Aucun motif de vhost interdit."
@@ -554,9 +563,7 @@ history:
     short:      "Ajouter une entrée manuelle à l'historique."
     help:        |
       Ajoute une entrée manuelle à l'historique du surnom.
-
-      Syntaxe : HISTORY <surnom> ADD <message>
-      Exemple : HISTORY UnSurnom ADD Utilisateur signalé pour spam
+    example:     "/msg %bot% HISTORY UnSurnom ADD Utilisateur signalé pour spam"
     success:    "\x0303✔\x03 Entrée d'historique ajoutée pour \x02%nickname%\x02."
 
   del:
@@ -564,9 +571,7 @@ history:
     short:      "Supprimer une entrée d'historique par ID."
     help:        |
       Supprime une entrée d'historique spécifique par son ID.
-
-      Syntaxe : HISTORY <surnom> DEL <id>
-      Exemple : HISTORY UnSurnom DEL 42
+    example:     "/msg %bot% HISTORY UnSurnom DEL 42"
     success:    "\x0303✔\x03 Entrée d'historique \x02%id%\x02 supprimée."
     not_found:  "\x0304✗\x03 Entrée d'historique \x02%id%\x02 introuvable."
     invalid_id: "\x0304✗\x03 ID d'entrée invalide : \x02%id%\x02."
@@ -577,13 +582,10 @@ history:
     help:        |
       Affiche l'historique des actions du surnom.
 
-      Syntaxe : HISTORY <surnom> VIEW
-                HISTORY <surnom> VIEW PAGE
-                HISTORY <surnom> VIEW ALL
-
       Par défaut, affiche 3 entrées à la fois.
       Utilisez VIEW 2 pour voir la deuxième page.
       Utilisez VIEW ALL pour voir l'historique complet.
+    example:     "/msg %bot% HISTORY UnSurnom VIEW"
     header:     "\x02Historique pour \x0307%nickname%\x03\x02 (affichage %start%-%end% sur %total%) :"
     entry:       "#%id% [%date%] \x0303%action%\x03 par %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -596,9 +598,7 @@ history:
     help:        |
       Supprime toutes les entrées d'historique du surnom spécifié.
       Cette action est irréversible.
-
-      Syntaxe : HISTORY <surnom> CLEAR
-      Exemple : HISTORY UnSurnom CLEAR
+    example:     "/msg %bot% HISTORY UnSurnom CLEAR"
     success:    "\x0303✔\x03 \x02%count%\x02 entrées d'historique effacées pour \x02%nickname%\x02."
 
 # --- Traductions des messages d'historique (utilisées lors de l'affichage) ---

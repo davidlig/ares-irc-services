@@ -170,12 +170,14 @@ set:
     syntax:         "SET PASSWORD <nieuw_wachtwoord>"
     short:          "Wijzig uw bijnaamwachtwoord."
     help:           "Wijzigt het wachtwoord voor uw bijnaam. Het nieuwe wachtwoord wordt\ndirect van kracht. Kies een sterk wachtwoord van minimaal 6 tekens\ndat u niet op andere services gebruikt."
+    example:        "/msg %bot% SET PASSWORD nieuwwachtwoord123"
     success:        "\x0303✔\x03 Uw wachtwoord is succesvol bijgewerkt."
 
   email:
     syntax:         "SET EMAIL <nieuwe_e-mail> [token]"
     short:          "Wijzig het e-mailadres dat aan uw bijnaam is gekoppeld (tweestapsbevestiging)."
     help:           "E-mailwijziging in twee stappen voor veiligheid.\n1) \x0303SET EMAIL <nieuwe_e-mail>\x03 — er wordt een token naar uw huidige e-mail gestuurd.\n2) \x0303SET EMAIL <nieuwe_e-mail> <token>\x03 — bevestig met de ontvangen token.\nDe token verloopt binnen 1 uur."
+    example:        "/msg %bot% SET EMAIL gebruiker@voorbeeld.com"
     success:        "\x0303✔\x03 Uw e-mail is bijgewerkt naar \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Er is een bevestigingstoken verzonden naar \x02%current_email%\x02.\n  Om de wijziging naar \x02%new_email%\x02 te bevestigen, voer uit:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  De token verloopt binnen 1 uur."
     invalid_token:  "\x0304✗\x03 De token is ongeldig of verlopen. Vraag een nieuwe aan met \x0303SET EMAIL <nieuwe_e-mail>\x03."
@@ -184,6 +186,7 @@ set:
     syntax:         "SET LANGUAGE <code>"
     short:          "Wijzig de taal die de services gebruiken om met u te communiceren."
     help:           "Wijzigt de taal die %nickserv% en andere services gebruiken wanneer ze met u praten.\nBeschikbare talen:\n  \x02ca\x02 (Catalaans)\n  \x02de\x02 (Duits)\n  \x02el\x02 (Grieks)\n  \x02en\x02 (Engels)\n  \x02es\x02 (Spaans)\n  \x02eu\x02 (Baskisch)\n  \x02fr\x02 (Frans)\n  \x02gl\x02 (Galicisch)\n  \x02it\x02 (Italiaans)\n  \x02nl\x02 (Nederlands)\n  \x02pl\x02 (Pools)\n  \x02pt\x02 (Portugees)\n  \x02ro\x02 (Roemeens)\n  \x02tr\x02 (Turks)"
+    example:        "/msg %bot% SET LANGUAGE nl"
     success:        "\x0303✔\x03 Taal gewijzigd naar \x02%language%\x02."
     invalid:        "\x0304✗\x03 Niet-ondersteunde taal. Beschikbare talen: %languages%."
 
@@ -191,6 +194,7 @@ set:
     syntax:         "SET TIMEZONE <tijdzone>"
     short:          "Stel de tijdzone in die wordt gebruikt bij het weergeven van datums."
     help:           "Stelt de tijdzone in die %nickserv% gebruikt bij het tonen van datums.\nGebruik \x02HELP SET TIMEZONE\x02 voor de regio-index; \x02HELP SET TIMEZONE <regio>\x02 (bijv. Europe) voor de tijdzones van die regio. Gebruik \x02OFF\x02 om te wissen."
+    example:        "/msg %bot% SET TIMEZONE Europe/Amsterdam"
     success:        "\x0303✔\x03 Tijdzone ingesteld op \x02%timezone%\x02. Datums worden in deze tijdzone weergegeven."
     cleared:        "\x0303✔\x03 Tijdzone gewist. Datums gebruiken de netwerkstandaard."
     invalid:        "\x0304✗\x03 Ongeldige tijdzone \x02%timezone%\x02. Gebruik een geldige identificatie (bijv. UTC, Europe/Amsterdam)."
@@ -199,6 +203,7 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Schakel privacy in of uit voor uw bijnaaminformatie."
     help:           "Bepaalt de zichtbaarheid van uw bijnaaminformatie in het INFO-commando.\nMet \x02PRIVATE ON\x02 kunnen alleen u en IRC Operators uw gegevens bekijken.\nMet \x02PRIVATE OFF\x02 is uw informatie openbaar voor iedereen."
+    example:        "/msg %bot% SET PRIVATE ON"
     on:             "\x0303✔\x03 Uw bijnaaminformatie is nu \x02privé\x02."
     off:            "\x0303✔\x03 Uw bijnaaminformatie is nu \x02openbaar\x02."
 
@@ -206,6 +211,7 @@ set:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Gebruik PRIVMSG (ON) of NOTICE (OFF) voor service-antwoorden."
     help:           "Bepaalt hoe %nickserv% en andere services berichten naar u sturen.\nMet \x02MSG ON\x02 worden antwoorden verzonden als \x02PRIVMSG\x02 (sommige clients kunnen antwoorden of meldingen activeren).\nMet \x02MSG OFF\x02 worden antwoorden verzonden als \x02NOTICE\x02 (standaard; meestal geen automatisch antwoord)."
+    example:        "/msg %bot% SET MSG ON"
     on:             "\x0303✔\x03 Serviceberichten worden nu verzonden als \x02PRIVMSG\x02."
     off:            "\x0303✔\x03 Serviceberichten worden nu verzonden als \x02NOTICE\x02."
 
@@ -213,6 +219,7 @@ set:
     syntax:         "SET VHOST [vhost]"
     short:          "Stel uw aangepaste virtuele host in of wis deze (weergegeven hostnaam)."
     help:           "Stelt een aangepaste hostnaam in die anderen zien wanneer u geïdentificeerd bent.\nGebruik \x02SET VHOST\x02 zonder waarde om te wissen. Alleen letters (a-z, A-Z), cijfers, koppelteken en punt;\ngeen koppelteken of punt aan begin/einde van een blok; max 48 tekens. Uniek per bijnaam."
+    example:        "/msg %bot% SET VHOST gebruikers.voorbeeld.com"
     success:        "\x0303✔\x03 Uw virtuele host is ingesteld op \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Uw virtuele host is gewist."
     invalid:        "\x0304✗\x03 Ongeldige vhost. Alleen letters, cijfers, koppelteken en punt (niet aan begin/einde van blok); max 48 tekens."
@@ -240,37 +247,44 @@ saset:
   password:
     syntax:         "SASET <bijnaam> PASSWORD <nieuw_wachtwoord>"
     short:          "Wachtwoord van een bijnaam wijzigen."
-    help:           "Wijzigt het wachtwoord van een andere bijnaam.\nDe wijziging is direct.\n\nSyntax: SASET <bijnaam> PASSWORD <nieuw_wachtwoord>\nVoorbeeld: SASET Gebruiker PASSWORD nieuwwachtwoord123"
+    help:           "Wijzigt het wachtwoord van een andere bijnaam.\nDe wijziging is direct."
+    example:        "/msg %bot% SASET Gebruiker PASSWORD nieuwwachtwoord123"
 
   email:
     syntax:         "SASET <bijnaam> EMAIL <nieuwe_e-mail>"
     short:          "E-mail van een bijnaam wijzigen."
-    help:           "Wijzigt de e-mail van een andere bijnaam.\nEr wordt geen bevestiging verzonden—de wijziging is direct.\n\nSyntax: SASET <bijnaam> EMAIL <nieuwe_e-mail>\nVoorbeeld: SASET Gebruiker EMAIL gebruiker@voorbeeld.com"
+    help:           "Wijzigt de e-mail van een andere bijnaam.\nEr wordt geen bevestiging verzonden—de wijziging is direct."
+    example:        "/msg %bot% SASET Gebruiker EMAIL gebruiker@voorbeeld.com"
 
   language:
     syntax:         "SASET <bijnaam> LANGUAGE <code>"
     short:          "Taal van een bijnaam wijzigen."
-    help:           "Wijzigt de taal van een andere bijnaam.\nBeschikbare talen: en (Engels), es (Spaans).\n\nSyntax: SASET <bijnaam> LANGUAGE <code>\nVoorbeeld: SASET Gebruiker LANGUAGE nl"
+    help:           "Wijzigt de taal van een andere bijnaam.\nBeschikbare talen: en (Engels), es (Spaans)."
+    example:        "/msg %bot% SASET Gebruiker LANGUAGE nl"
 
   timezone:
     syntax:         "SASET <bijnaam> TIMEZONE <tijdzone|OFF>"
     short:          "Tijdzone van een bijnaam wijzigen."
-    help:           "Stelt de tijdzone van een andere bijnaam in of wist deze.\nGebruik OFF om te wissen.\n\nSyntax: SASET <bijnaam> TIMEZONE <tijdzone>\nVoorbeeld: SASET Gebruiker TIMEZONE Europe/Amsterdam"
+    help:           "Stelt de tijdzone van een andere bijnaam in of wist deze.\nGebruik OFF om te wissen."
+    example:        "/msg %bot% SASET Gebruiker TIMEZONE Europe/Amsterdam"
 
   private:
     syntax:         "SASET <bijnaam> PRIVATE {ON|OFF}"
     short:          "Privacy van een bijnaam wijzigen."
-    help:           "Schakelt de privacy van de informatie van een andere bijnaam in of uit.\n\nSyntax: SASET <bijnaam> PRIVATE {ON|OFF}\nVoorbeeld: SASET Gebruiker PRIVATE ON"
+    help:           "Schakelt de privacy van de informatie van een andere bijnaam in of uit."
+    example:        "/msg %bot% SASET Gebruiker PRIVATE ON"
 
   msg:
     syntax:         "SASET <bijnaam> MSG {ON|OFF}"
     short:          "Berichtvoorkeur van een bijnaam wijzigen."
-    help:           "Stelt in of een andere bijnaam antwoorden ontvangt als PRIVMSG (ON) of NOTICE (OFF).\n\nSyntax: SASET <bijnaam> MSG {ON|OFF}\nVoorbeeld: SASET Gebruiker MSG ON"
+    help:           "Stelt in of een andere bijnaam antwoorden ontvangt als PRIVMSG (ON) of NOTICE (OFF)."
+    example:        "/msg %bot% SASET Gebruiker MSG ON"
 
   vhost:
     syntax:         "SASET <bijnaam> VHOST [vhost]"
     short:          "Virtuele host van een bijnaam wijzigen."
-    help:           "Stelt de virtuele host van een andere bijnaam in of wist deze.\nGebruik \x02SASET <bijnaam> VHOST\x02 zonder waarde om te wissen.\n\nSyntax: SASET <bijnaam> VHOST [vhost]\nVoorbeeld: SASET Gebruiker VHOST gebruikers.voorbeeld.com"
+    help:           "Stelt de virtuele host van een andere bijnaam in of wist deze.\nGebruik \x02SASET <bijnaam> VHOST\x02 zonder waarde om te wissen."
+    example:        "/msg %bot% SASET Gebruiker VHOST gebruikers.voorbeeld.com"
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -497,9 +511,7 @@ forbidvhost:
       geen vhosts instellen die overeenkomen met dit patroon via SET VHOST.
 
       Wildcards: * komt overeen met elke reeks, ? komt overeen met één teken.
-
-      Syntax: FORBIDVHOST ADD <patroon>
-      Voorbeeld: FORBIDVHOST ADD *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST ADD *.pirated.com"
     done:            "\x0303✓\x03 Verboden vhost-patroon toegevoegd: \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 Patroon \x02%pattern%\x02 bestaat al."
     invalid:          "\x0304✗\x03 Ongeldig vhost-patroonformaat."
@@ -509,9 +521,7 @@ forbidvhost:
     short:       "Verwijder een verboden vhost-patroon."
     help:        |
       Verwijdert een patroon uit de lijst met verboden vhosts.
-
-      Syntax: FORBIDVHOST DEL <patroon>
-      Voorbeeld: FORBIDVHOST DEL *.pirated.com
+    example:     "/msg %bot% FORBIDVHOST DEL *.pirated.com"
     done:        "\x0303✓\x03 Verboden vhost-patroon verwijderd: \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 Patroon \x02%pattern%\x02 niet gevonden."
 
@@ -520,8 +530,7 @@ forbidvhost:
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Toont alle verboden vhost-patronen.
-
-      Syntax: FORBIDVHOST LIST
+    example:     "/msg %bot% FORBIDVHOST LIST"
     header:      "\x0307ℹ\x03 Verboden vhost-patronen (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — door %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Geen verboden vhost-patronen."
@@ -554,9 +563,7 @@ history:
     short:      "Voeg een handmatige geschiedenisvermelding toe."
     help:        |
       Voegt een handmatige vermelding toe aan de geschiedenis van de bijnaam.
-
-      Syntax: HISTORY <bijnaam> ADD <bericht>
-      Voorbeeld: HISTORY EenNick ADD Gebruiker gerapporteerd voor spam
+    example:     "/msg %bot% HISTORY EenNick ADD Gebruiker gerapporteerd voor spam"
     success:    "\x0303✔\x03 Geschiedenisvermelding toegevoegd voor \x02%nickname%\x02."
 
   del:
@@ -564,9 +571,7 @@ history:
     short:      "Verwijder een geschiedenisvermelding op ID."
     help:        |
       Verwijdert een specifieke geschiedenisvermelding op zijn ID.
-
-      Syntax: HISTORY <bijnaam> DEL <id>
-      Voorbeeld: HISTORY EenNick DEL 42
+    example:     "/msg %bot% HISTORY EenNick DEL 42"
     success:    "\x0303✔\x03 Geschiedenisvermelding \x02%id%\x02 verwijderd."
     not_found:  "\x0304✗\x03 Geschiedenisvermelding \x02%id%\x02 niet gevonden."
     invalid_id: "\x0304✗\x03 Ongeldige vermeldings-ID: \x02%id%\x02."
@@ -577,13 +582,10 @@ history:
     help:        |
       Toont de actiegeschiedenis van de bijnaam.
 
-      Syntax: HISTORY <bijnaam> VIEW
-              HISTORY <bijnaam> VIEW PAGINA
-              HISTORY <bijnaam> VIEW ALL
-
       Standaard worden er 3 vermeldingen tegelijk getoond.
       Gebruik VIEW 2 om de tweede pagina te zien.
       Gebruik VIEW ALL om de volledige geschiedenis te zien.
+    example:     "/msg %bot% HISTORY EenNick VIEW"
     header:     "\x02Geschiedenis voor \x0307%nickname%\x03\x02 (toont %start%-%end% van %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 door %operator% — %message%"
     extra:       "  Extra \x0307→\x03 %extra%"
@@ -596,9 +598,7 @@ history:
     help:        |
       Verwijdert alle geschiedenisvermeldingen voor de opgegeven bijnaam.
       Deze actie kan niet ongedaan worden gemaakt.
-
-      Syntax: HISTORY <bijnaam> CLEAR
-      Voorbeeld: HISTORY EenNick CLEAR
+    example:     "/msg %bot% HISTORY EenNick CLEAR"
     success:    "\x0303✔\x03 \x02%count%\x02 geschiedenisvermeldingen gewist voor \x02%nickname%\x02."
 
 # --- History message translations (used when viewing history) ---

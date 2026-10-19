@@ -29,10 +29,15 @@ at the end via `./scripts/check-coverage.sh 100 --issues`).
   are rejected by the catalog guard, which scans `NickServ`.
 - S5 — `help.example_label` exists in all 14 `translations/nickserv.*.yaml`, in the approved palette
   (`\x0303` label color with reset), matching the CRegServ value.
-- S6 — Sub-command pages are OUT of this unit: `renderSubCommandHelp()` renders no example block in
-  any of the four services, so the `SET`/`SASET` option pages and the `FORBIDVHOST`/`HISTORY`
-  sub-command pages keep their current inline text. Documented deviation; reported as a follow-up
-  candidate, never silently shipped as "done".
+- S6 — Superseded on 2026-10-19 (user decision): the option pages of `SET` and `SASET` (7 each) and
+  the sub-command pages of `FORBIDVHOST` (3) and `HISTORY` (4) are fixed in this feature after all.
+  `renderSubCommandHelp()` gains the same example block (NickServ's copy only: the other services
+  need no change because their sub-page prose never restated the syntax), the inline `Syntax:` and
+  example lines leave the prose, and all 21 sub-pages declare their `example_key`. The example
+  arguments are the ones already written in each locale, promoted into the house `/msg %bot% ` form;
+  only `forbidvhost.list`, `history.view` and the seven `SET` options had no example, and they take
+  the canonical invocation of their own `syntax` value. No wording is copied from another services
+  implementation: Ares keeps its own text and only changes where the reader sees it.
 - S7 — The `Subcommands:` prose list inside `forbidvhost.help` is kept, mirroring the ChanServ
   `history` decision (it restates the rendered options block; a separate verbosity choice).
 - S8 — Gates: `TranslationCatalogTest` green (key parity, placeholder parity, no dead keys),
@@ -74,6 +79,14 @@ at the end via `./scripts/check-coverage.sh 100 --issues`).
       that names the option and sub-command pages as a follow-up decision rather than as done. The
       labels (`type:feature`, `status:approved`, `size:exception`) cannot be applied by this account:
       it has no triage permission on the upstream repository, so a maintainer must set them.
+- [x] T6 — The 21 sub-command pages: the formatter's `renderSubCommandHelp()` gains the example
+      block, the four `getSubCommandHelp()` arrays declare `example_key` (SASET maps its seven
+      options), 21 `example` keys × 14 locales, the inline `Syntax:`/`Examples:` lines leave the
+      prose, plus formatter and end-to-end assertions. Route: one writer. DONE: 294/294 sub-level
+      keys, zero label lines left in the sub-page prose, every value in the house `/msg %bot% ` form,
+      and the 322 top-level keys untouched. `TranslationCatalogTest::DYNAMIC_KEY_PATTERNS` had to
+      accept `example` for the dynamically composed `set.*`/`saset.*` keys, which is the guard
+      working as designed, not a weakened test.
 
 ## Log
 
@@ -119,3 +132,12 @@ at the end via `./scripts/check-coverage.sh 100 --issues`).
   sub-command pages of FORBIDVHOST and HISTORY still restate their syntax above the formatter's
   `Syntax:` line, and giving them a structured example would require extending `renderSubCommandHelp`
   in all four service copies — out of this unit by design, never silently declared done.
+- L10 — 2026-10-19: the user closed that follow-up by decision, and S6 was superseded. T6 delivered:
+  `renderSubCommandHelp()` now renders the example block, the 21 sub-pages declare `example_key`,
+  and their prose lost the duplicated `Syntax:`/`Examples:` lines. Parent verification: 294/294
+  sub-level keys, zero label lines across the 14 locales, zero values missing the `/msg %bot% `
+  prefix, and the 322 top-level keys unchanged. The only file outside the planned surfaces was
+  `TranslationCatalogTest::DYNAMIC_KEY_PATTERNS`, extended to accept `example` where the key is
+  composed at runtime — the dead-key guard doing its job. The user also clarified the reference
+  chain: ChatHispano's bots are a faithful replica of Andrew Church's Pulsar, so the wording
+  reference remains Pulsar, read for richness only; no text is copied into Ares.
