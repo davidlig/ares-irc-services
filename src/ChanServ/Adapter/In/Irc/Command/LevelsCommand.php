@@ -58,6 +58,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         ChannelLevel::KEY_MEMOREAD,
         ChannelLevel::KEY_MEMOCHANGE,
         ChannelLevel::KEY_AKICK,
+        ChannelLevel::KEY_AKICKCHANGE,
         ChannelLevel::KEY_NOJOIN,
     ];
 

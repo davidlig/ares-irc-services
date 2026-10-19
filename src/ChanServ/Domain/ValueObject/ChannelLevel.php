@@ -22,6 +22,7 @@ enum ChannelLevel: string
     case MemoRead = 'MEMOREAD';
     case MemoChange = 'MEMOCHANGE';
     case Akick = 'AKICK';
+    case AkickChange = 'AKICKCHANGE';
     case NoJoin = 'NOJOIN';
 
     public function defaultValue(): int
@@ -31,7 +32,7 @@ enum ChannelLevel: string
             self::AutoOperator, self::OpDeop, self::MemoChange => 300,
             self::AutoHalfOperator, self::HalfopDehalfop, self::Invite, self::MemoRead => 200,
             self::AutoVoice, self::VoiceDevoice, self::Unban => 100,
-            self::Set, self::AccessChange => 499,
+            self::Set, self::AccessChange, self::AkickChange => 499,
             self::Akick => 450,
             self::NoJoin => -1,
         };

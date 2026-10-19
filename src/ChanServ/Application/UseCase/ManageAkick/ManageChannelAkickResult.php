@@ -13,5 +13,7 @@ final readonly class ManageChannelAkickResult
         public ?string $mask = null,
         public ?string $reason = null,
         public ?string $protectedNickname = null,
+        public ?string $nickname = null,
+        public int $count = 0,
     ) {}
 }

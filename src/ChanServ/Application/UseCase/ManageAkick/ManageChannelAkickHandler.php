@@ -13,6 +13,7 @@ use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelAkickChangedEvent;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
+use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandlerInterface;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
@@ -25,6 +26,8 @@ use App\ChanServ\Domain\ValueObject\AkickMask;
 use App\ChanServ\Domain\ValueObject\AkickRule;
 use DateTimeImmutable;
 use InvalidArgumentException;
+
+use function strlen;
 
 final readonly class ManageChannelAkickHandler implements ManageChannelAkickHandlerInterface
 {
@@ -40,6 +43,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         private ChannelEntryNetworkQuery $network,
         private AkickActions $actions,
         private ChanServEventPublisher $events,
+        private EnforceChannelAkickHandlerInterface $enforcer,
     ) {}
 
     public function handle(ManageChannelAkick $command): ManageChannelAkickResult
@@ -61,13 +65,18 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
             ManageChannelAkickAction::List => $this->list($channel, $command, $command->actorNickId),
             ManageChannelAkickAction::Add => $this->add($channel, $command, $command->actorNickId, $performedBy),
             ManageChannelAkickAction::Delete => $this->delete($channel, $command, $command->actorNickId, $performedBy),
+            ManageChannelAkickAction::Set => $this->set($channel, $command, $command->actorNickId),
+            ManageChannelAkickAction::Clear => $this->clear($channel, $command, $command->actorNickId),
+            ManageChannelAkickAction::Count => $this->count($channel, $command, $command->actorNickId),
+            ManageChannelAkickAction::Check => $this->check($channel, $command, $command->actorNickId),
+            ManageChannelAkickAction::Enforce => $this->enforce($channel, $command, $command->actorNickId),
             ManageChannelAkickAction::Unknown => new ManageChannelAkickResult(ManageChannelAkickOutcome::UnknownAction),
         };
     }
 
     private function list(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId): ManageChannelAkickResult
     {
-        $this->authorize($channel, $command, $actorNickId, 'AKICK LIST');
+        $this->authorize($channel, $command, $actorNickId, 'AKICK LIST', ChannelLevel::KEY_AKICK);
 
         $stored = $this->akicks->listByChannel($channel->getId());
         if ([] === $stored) {
@@ -94,7 +103,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
 
     private function add(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId, string $performedBy): ManageChannelAkickResult
     {
-        $this->authorize($channel, $command, $actorNickId, 'AKICK ADD');
+        $this->authorize($channel, $command, $actorNickId, 'AKICK ADD', ChannelLevel::KEY_AKICK);
 
         if (!$command->validRequest || null === $command->item || '' === $command->item) {
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::InvalidRequest);
@@ -156,7 +165,7 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
 
     private function delete(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId, string $performedBy): ManageChannelAkickResult
     {
-        $this->authorize($channel, $command, $actorNickId, 'AKICK DEL');
+        $this->authorize($channel, $command, $actorNickId, 'AKICK DEL', ChannelLevel::KEY_AKICK);
 
         if (!$command->validRequest || null === $command->item || '' === $command->item) {
             return new ManageChannelAkickResult(ManageChannelAkickOutcome::InvalidRequest);
@@ -185,10 +194,122 @@ final readonly class ManageChannelAkickHandler implements ManageChannelAkickHand
         return new ManageChannelAkickResult(ManageChannelAkickOutcome::Deleted, mask: $mask);
     }
 
-    private function authorize(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId, string $operation): void
+    private function set(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId): ManageChannelAkickResult
     {
-        if (!$command->founderEquivalent) {
-            $this->accessPolicy->requireLevel($channel, $actorNickId, ChannelLevel::KEY_AKICK, $command->channelName, $operation);
+        $this->authorize($channel, $command, $actorNickId, 'AKICK SET', ChannelLevel::KEY_AKICK);
+
+        if (!$command->validRequest || null === $command->item || '' === $command->item) {
+            return new ManageChannelAkickResult(ManageChannelAkickOutcome::InvalidRequest);
+        }
+
+        if (null !== $command->reason && ChannelAkick::MAX_REASON_LENGTH < strlen($command->reason)) {
+            return new ManageChannelAkickResult(ManageChannelAkickOutcome::InvalidReason, mask: $command->item);
+        }
+
+        $akick = $this->findByItem($channel->getId(), $command->item);
+        if (null === $akick) {
+            return new ManageChannelAkickResult(ManageChannelAkickOutcome::EntryNotFound, mask: $command->item);
+        }
+
+        $akick->updateReason($command->reason);
+        $this->akicks->save($akick);
+
+        return new ManageChannelAkickResult(
+            ManageChannelAkickOutcome::ReasonUpdated,
+            mask: $akick->getMask(),
+            reason: $command->reason,
+        );
+    }
+
+    private function clear(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId): ManageChannelAkickResult
+    {
+        $this->authorize(
+            $channel,
+            $command,
+            $actorNickId,
+            'AKICK CLEAR',
+            ChannelLevel::KEY_AKICK,
+            ChannelLevel::KEY_AKICKCHANGE,
+        );
+
+        $removed = $this->akicks->deleteByChannelId($channel->getId());
+
+        return new ManageChannelAkickResult(ManageChannelAkickOutcome::Cleared, count: $removed);
+    }
+
+    private function count(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId): ManageChannelAkickResult
+    {
+        $this->authorize($channel, $command, $actorNickId, 'AKICK COUNT', ChannelLevel::KEY_AKICK);
+
+        return new ManageChannelAkickResult(
+            ManageChannelAkickOutcome::Counted,
+            count: $this->akicks->countByChannel($channel->getId()),
+        );
+    }
+
+    private function check(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId): ManageChannelAkickResult
+    {
+        $this->authorize($channel, $command, $actorNickId, 'AKICK CHECK', ChannelLevel::KEY_AKICK);
+
+        if (!$command->validRequest || null === $command->nickname || '' === $command->nickname) {
+            return new ManageChannelAkickResult(ManageChannelAkickOutcome::InvalidRequest);
+        }
+
+        if (null === $command->userMask) {
+            return new ManageChannelAkickResult(
+                ManageChannelAkickOutcome::NicknameNotConnected,
+                nickname: $command->nickname,
+            );
+        }
+
+        $entries = [];
+        foreach ($this->akicks->listByChannel($channel->getId()) as $akick) {
+            $rule = new AkickRule(
+                new AkickMask($akick->getMask()),
+                $akick->getReason(),
+                $akick->getExpiresAt(),
+            );
+            if (null === $this->matchPolicy->firstMatch([$rule], $command->userMask, $command->now, $command->targetIsOperator)) {
+                continue;
+            }
+
+            $creatorId = $akick->getCreatorNickId();
+            $entries[] = new ChannelAkickEntryView(
+                $akick->getMask(),
+                $akick->getReason(),
+                null === $creatorId ? null : $this->accounts->findNicknameById($creatorId),
+                $akick->getExpiresAt(),
+            );
+        }
+
+        return new ManageChannelAkickResult(
+            ManageChannelAkickOutcome::Checked,
+            $entries,
+            nickname: $command->nickname,
+        );
+    }
+
+    private function enforce(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId): ManageChannelAkickResult
+    {
+        $this->authorize($channel, $command, $actorNickId, 'AKICK ENFORCE', ChannelLevel::KEY_AKICK);
+
+        $networkChannel = $this->network->findChannel($channel->getName());
+        if (null === $networkChannel) {
+            return new ManageChannelAkickResult(ManageChannelAkickOutcome::Enforced, count: 0);
+        }
+
+        $expelled = $this->enforcer->handleKnownChannel($channel, $networkChannel->members, $command->now);
+
+        return new ManageChannelAkickResult(ManageChannelAkickOutcome::Enforced, count: $expelled);
+    }
+
+    private function authorize(RegisteredChannel $channel, ManageChannelAkick $command, int $actorNickId, string $operation, string ...$levelKeys): void
+    {
+        if ($command->founderEquivalent) {
+            return;
+        }
+        foreach ($levelKeys as $levelKey) {
+            $this->accessPolicy->requireLevel($channel, $actorNickId, $levelKey, $command->channelName, $operation);
         }
     }
 

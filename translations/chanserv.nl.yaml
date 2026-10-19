@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 is gedehalfopt."
 
 akick:
-  syntax:           "AKICK <#kanaal> {ADD|DEL|LIST} [masker] [verloop] [reden]"
+  syntax:           "AKICK <#kanaal> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [masker] [verloop] [reden]"
   short:            "Beheer auto-kick-lijst."
-  help:             "ADD <masker> [verloop] [reden]: voeg vermelding toe. DEL <masker|nr>: verwijder. LIST: toon vermeldingen."
-  unknown_sub:      "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
+  help:             "Beheert de auto-kicklijst van een kanaal: de vermeldingen die een overeenkomende gebruiker bij het verbinden bannen en wegtrappen, de reden die ze verklaart, de bijnaam die ze heeft toegevoegd en het moment waarop ze verlopen. Het kan ook de reden van een bestaande vermelding wijzigen zonder de auteur te verliezen, de hele lijst legen, de vermeldingen tellen, vertellen welke vermeldingen een verbonden gebruiker zouden pakken en de lijst toepassen op de leden die nu verbonden zijn. De lijst legen is de vernietigende handeling en vraagt naast het AKICK-niveau ook het kanaalniveau AKICKCHANGE."
+  unknown_sub:      "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK of ENFORCE."
   invalid_mask:     "\x0304✗\x03 Ongeldig maskerformaat. Gebruik \x02nick!ident@host\x02 met wildcards (*)."
   dangerous_mask:   "\x0304✗\x03 Het masker \x02%mask%\x02 is te breed. Het moet ten minste 4 alfanumerieke tekens bevatten."
   protected_user:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 heeft toegang in dit kanaal."
@@ -342,6 +342,42 @@ akick:
     no_reason:      "Geen reden"
     never_expires:  "nooit"
     unknown_creator: "onbekend"
+  set:
+    syntax:         "AKICK <#kanaal> SET <masker|nummer> [reden]"
+    short:          "Wijzig de reden van een AKICK-vermelding."
+    help:           "Vervangt de reden van een bestaande vermelding, gekozen op de exacte masker of op het nummer uit de lijst. De bijnaam die hem heeft toegevoegd blijft de auteur en het verloop blijft behouden. Zonder reden houdt de vermelding geen reden."
+    example:        "/msg %bot% AKICK #kanaal SET *!*@bad.host Herhaalde spam"
+    done:           "\x0303✔\x03 Reden van AKICK \x02%mask%\x02 bijgewerkt."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 niet gevonden."
+    invalid_reason: "\x0304✗\x03 De reden mag niet langer zijn dan \x02%max%\x02 tekens."
+    notice_channel: "\x02%from%\x02 wijzigt de reden van AKICK: \x02%mask%\x02 (%reason%)"
+  clear:
+    syntax:         "AKICK <#kanaal> CLEAR"
+    short:          "Verwijder alle AKICK-vermeldingen van het kanaal."
+    help:           "Verwijdert in één keer alle vermeldingen van het kanaal, ook die door andere teamleden zijn toegevoegd. Dit is de vernietigende handeling van de lijst en vraagt naast het AKICK-niveau ook het kanaalniveau AKICKCHANGE."
+    example:        "/msg %bot% AKICK #kanaal CLEAR"
+    done:           "\x0303✔\x03 AKICK-vermeldingen verwijderd uit \x02%channel%\x02: %count%."
+    notice_channel: "\x02%from%\x02 verwijdert alle AKICK-vermeldingen (%count%)."
+  count:
+    syntax:         "AKICK <#kanaal> COUNT"
+    short:          "Tel de AKICK-vermeldingen van het kanaal."
+    help:           "Zegt hoeveel vermeldingen de lijst van het kanaal nu heeft, zonder ze te tonen."
+    example:        "/msg %bot% AKICK #kanaal COUNT"
+    result:         "\x0307ℹ\x03 AKICK-vermeldingen in \x02%channel%\x02: %count%."
+  check:
+    syntax:         "AKICK <#kanaal> CHECK <bijnaam>"
+    short:          "Toon de AKICK-vermeldingen die bij een gebruiker passen."
+    help:           "Zegt welke vermeldingen van de lijst de gegeven gebruiker zouden pakken. De bijnaam moet met het netwerk verbonden zijn, en IRC-operatoren worden nooit door de lijst gepakt."
+    example:        "/msg %bot% AKICK #kanaal CHECK SlechteNick"
+    header:         "\x0303AKICK-vermeldingen die bij \x02%nickname%\x02 passen in \x02%channel%\x02\x03"
+    empty:          "\x0307ℹ\x03 Geen AKICK-vermelding van \x02%channel%\x02 past bij \x02%nickname%\x02."
+    not_connected:  "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet met het netwerk verbonden."
+  enforce:
+    syntax:         "AKICK <#kanaal> ENFORCE"
+    short:          "Pas de AKICK-lijst toe op de nu verbonden leden."
+    help:           "Past de lijst toe op de leden die nu met het kanaal verbonden zijn: elk lid dat door een vermelding wordt gepakt, wordt gebannen en weggetrapt. Het meldt hoeveel leden zijn weggegooid."
+    example:        "/msg %bot% AKICK #kanaal ENFORCE"
+    done:           "\x0303✔\x03 Leden weggegooid uit \x02%channel%\x02 door de AKICK-lijst: %count%."
 
 restore:
   syntax:           "RESTORE <#kanaal>"

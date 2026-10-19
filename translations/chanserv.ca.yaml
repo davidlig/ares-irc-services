@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret el halfop."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [reason]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [màscara] [caducitat] [motiu]"
   short:            "Gestionar la llista d'auto-kick."
-  help:             "ADD <mask> [expiry] [reason]: afegir entrada. DEL <mask|num>: treure. LIST: llistar entrades."
-  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL o LIST."
+  help:             "Gestiona la llista d'auto-kick d'un canal: les entrades que baneixen i expulsen un usuari coincident en connectar-se, el motiu que les explica, el sobrenom que les ha afegit i el moment en què caduquen. També pot canviar el motiu d'una entrada sense perdre-ne l'autor, buidar tota la llista, comptar les entrades, indicar quines entrades agafarien un usuari connectat i aplicar la llista als membres connectats ara mateix. Buidar la llista és l'operació destructiva i requereix el nivell de canal AKICKCHANGE a més del AKICK."
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK o ENFORCE."
   invalid_mask:     "\x0304✗\x03 Format de màscara no vàlid. Utilitzeu \x02nick!ident@host\x02 amb comodins (*)."
   dangerous_mask:   "\x0304✗\x03 La màscara \x02%mask%\x02 és massa àmplia. Ha de contenir almenys 4 caràcters alfanumèrics."
   protected_user:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 té accés en aquest canal."
@@ -342,6 +342,42 @@ akick:
     no_reason:      "Sense motiu"
     never_expires:  "mai"
     unknown_creator: "desconegut"
+  set:
+    syntax:         "AKICK <#channel> SET <màscara|número> [motiu]"
+    short:          "Canviar el motiu d'una entrada AKICK."
+    help:           "Substitueix el motiu d'una entrada existent, triada per la màscara exacta o pel número de la llista. El sobrenom que l'ha afegit continua sent l'autor i la caducitat es conserva. Sense motiu, l'entrada es queda sense cap."
+    example:        "/msg %bot% AKICK #channel SET *!*@bad.host Spam repetit"
+    done:           "\x0303✔\x03 Motiu de l'AKICK \x02%mask%\x02 actualitzat."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 no trobat."
+    invalid_reason: "\x0304✗\x03 El motiu no pot superar els \x02%max%\x02 caràcters."
+    notice_channel: "\x02%from%\x02 canvia el motiu de l'AKICK: \x02%mask%\x02 (%reason%)"
+  clear:
+    syntax:         "AKICK <#channel> CLEAR"
+    short:          "Treure totes les entrades AKICK del canal."
+    help:           "Elimina totes les entrades del canal d'una sola vegada, incloses les que han afegit altres membres de l'equip. És l'operació destructiva de la llista, així que requereix el nivell de canal AKICKCHANGE a més del AKICK."
+    example:        "/msg %bot% AKICK #channel CLEAR"
+    done:           "\x0303✔\x03 Entrades AKICK eliminades de \x02%channel%\x02: %count%."
+    notice_channel: "\x02%from%\x02 elimina totes les entrades AKICK (%count%)."
+  count:
+    syntax:         "AKICK <#channel> COUNT"
+    short:          "Comptar les entrades AKICK del canal."
+    help:           "Indica quantes entrades té ara mateix la llista del canal, sense llisar-les."
+    example:        "/msg %bot% AKICK #channel COUNT"
+    result:         "\x0307ℹ\x03 Entrades AKICK a \x02%channel%\x02: %count%."
+  check:
+    syntax:         "AKICK <#channel> CHECK <sobrenom>"
+    short:          "Mostrar les entrades AKICK que coincideixen amb un usuari."
+    help:           "Indica quines entrades de la llista agafarien l'usuari donat. El sobrenom ha d'estar connectat a la xarxa i els operadors d'IRC mai són agafats per la llista."
+    example:        "/msg %bot% AKICK #channel CHECK MalNick"
+    header:         "\x0303Entrades AKICK que coincideixen amb \x02%nickname%\x02 a \x02%channel%\x02\x03"
+    empty:          "\x0307ℹ\x03 Cap entrada AKICK de \x02%channel%\x02 coincideix amb \x02%nickname%\x02."
+    not_connected:  "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat a la xarxa."
+  enforce:
+    syntax:         "AKICK <#channel> ENFORCE"
+    short:          "Aplicar la llista AKICK als membres connectats ara."
+    help:           "Aplica la llista als membres connectats al canal ara mateix: cada membre capturat per una entrada és banejat i expulsat. Indica quants membres han estat expulsats."
+    example:        "/msg %bot% AKICK #channel ENFORCE"
+    done:           "\x0303✔\x03 Membres expulsats de \x02%channel%\x02 per la llista AKICK: %count%."
 
 restore:
   syntax:           "RESTORE <#channel>"

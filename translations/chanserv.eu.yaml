@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02(r)i halfop modua kendu zaio."
 
 akick:
-  syntax:           "AKICK <#kanala> {ADD|DEL|LIST} [maskara] [iraungitzea] [arrazoia]"
+  syntax:           "AKICK <#kanala> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [maskara] [iraungitzea] [arrazoia]"
   short:            "Kudeatu auto-kick zerrenda."
-  help:             "ADD <maskara> [iraungitzea] [arrazoia]: gehitu sarrera. DEL <maskara|zkia>: kendu. LIST: zerrendatu sarrerak."
-  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
+  help:             "Kudeatu kanal baten auto-kick zerrenda: sarrerak erabiltzaile bat baneatu eta kanpoatzen dituzte connectatzean, arrazoia zein den, gehitu zuen ezizena eta noiz amaitzen den. Eraikuntza baten arrazoia egileari galdu gabe aldatzeko, zerrenda osoa husteko, sarrerak zenbatzeko, zein sarrerak harratuko litzukeen erabiltzaile konektatu bat jakiteko eta zerrenda oraintze konektatutako kideei aplikatzeko auera ematen du. Zerrenda hutsatzea suntsagarri den erakundea da, beraz AKICK kanal mailaz gainera AKICKCHANGE maila behar du."
+  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK edo ENFORCE."
   invalid_mask:     "\x0304✗\x03 Maskara formatu baliogabea. Erabili \x02nick!ident@host\x02 komodinak erabiliz (*)."
   dangerous_mask:   "\x0304✗\x03 \x02%mask%\x02 maskara zabalegia da. Gutxienez 4 karaktere alfanumeriko eduki behar ditu."
   protected_user:   "\x0304✗\x03 \x02%nickname%\x02 ezizenak sarbidea du kanal honetan."
@@ -342,6 +342,42 @@ akick:
     no_reason:      "Arrazoirik ez"
     never_expires:  "inoiz ez"
     unknown_creator: "ezezaguna"
+  set:
+    syntax:         "AKICK <#kanala> SET <maskara|zenbakia> [arrazoia]"
+    short:          "Aldatu AKICK sarrera baten arrazoia."
+    help:           "Ordezkatzen du dagoen sarrera baten arrazoia, maskara zehatzaren edo zerrendako zenbakiaren arabera hautatuta. Gehitu zuen ezizenak egile izaten jarraitzen du eta iraungitzea mantentzen da. Arrazoia gabe, sarrera arrazoigabe geratzen da."
+    example:        "/msg %bot% AKICK #kanala SET *!*@bad.host Spam errepikatuua"
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 arrazoia eguneratu da."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 ez da aurkitu."
+    invalid_reason: "\x0304✗\x03 Arrazoiak ezin du \x02%max%\x02 karaktere baino gehiago izan."
+    notice_channel: "\x02%from%\x02(e)k AKICK arrazoia aldatzen du: \x02%mask%\x02 (%reason%)"
+  clear:
+    syntax:         "AKICK <#kanala> CLEAR"
+    short:          "Kendu kanalaren AKICK sarrera guztiak."
+    help:           "Kanalaren sarrera guztiak aldi berean kentzen ditu, beste taldeko kideek gehitutakoak barne. Zerrendako suntsagarri den erakundea da, beraz AKICK mailaz gainera AKICKCHANGE maila behar du."
+    example:        "/msg %bot% AKICK #kanala CLEAR"
+    done:           "\x0303✔\x03 AKICK sarrerak kendu \x02%channel%\x02 kanaletik: %count%."
+    notice_channel: "\x02%from%\x02(e)k AKICK sarrera guztiak kentzen du (%count%)."
+  count:
+    syntax:         "AKICK <#kanala> COUNT"
+    short:          "Zenbatu kanalaren AKICK sarrerak."
+    help:           "Kanalaren zerrendak oraintze duen sarrera kopurua ematen du, zerrendatu gabe."
+    example:        "/msg %bot% AKICK #kanala COUNT"
+    result:         "\x0307ℹ\x03 AKICK sarrerak \x02%channel%\x02 kanalean: %count%."
+  check:
+    syntax:         "AKICK <#kanala> CHECK <ezizena>"
+    short:          "Erakutsi erabiltzaile batekin bat datozen AKICK sarrerak."
+    help:           "Ematen du zerrendako zein sarrerak harratuko lizukeen erabiltzaile emandua. Ezizenak sarean konektatuta egon behar du, eta IRC operadoreak inoiz ez dira zerrendak harratzen."
+    example:        "/msg %bot% AKICK #kanala CHECK TxarNick"
+    header:         "\x0303\x02%nickname%\x02-rekin bat datozen AKICK sarrerak \x02%channel%\x02 kanalean\x03"
+    empty:          "\x0307ℹ\x03 \x02%channel%\x02 kanalaren AKICK sarreretako bat ez dator bat \x02%nickname%\x02-rekin."
+    not_connected:  "\x0304✗\x03 \x02%nickname%\x02 ezizena sarean konektatuta ez dago."
+  enforce:
+    syntax:         "AKICK <#kanala> ENFORCE"
+    short:          "Aplikatu AKICK zerrenda oraintze konektatutako kideei."
+    help:           "Zerrenda oraintze kanalean konektatutako kideei aplikatzen die: sarrera batek harratzen duen kide bakoitza baneatu eta kanpoatzen da. Zenbat kide kanporatu ziren esaten du."
+    example:        "/msg %bot% AKICK #kanala ENFORCE"
+    done:           "\x0303✔\x03 AKICK zerrendak \x02%channel%\x02 kanaletik kanporatutako kideak: %count%."
 
 restore:
   syntax:           "RESTORE <#kanala>"

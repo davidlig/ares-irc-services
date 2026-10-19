@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 wurde Halfop entzogen."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST} [Maske] [Ablauf] [Grund]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [Maske] [Ablauf] [Grund]"
   short:            "Auto-Kick-Liste verwalten."
-  help:             "ADD <Maske> [Ablauf] [Grund]: Eintrag hinzufügen. DEL <Maske|Nr.>: Entfernen. LIST: Einträge auflisten."
-  unknown_sub:      "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL oder LIST."
+  help:             "Verwaltet die Auto-Kick-Liste eines Channels: die Einträge, die beim Verbinden einen passenden Nutzer  bannen und kicken, den Grund, der sie erklärt, den Nickname, der sie hinzugefügt hat, und den Zeitpunkt, an dem sie ablaufen. Der Grund eines bestehenden Eintrags kann geändert werden, ohne seinen Autor zu verlieren; außerdem lässt sich die ganze Liste leeren, die Anzahl der Einträge zählen, anzeigen, welche Einträge einen verbundenen Nutzer treffen würden, und die Liste auf die gerade verbundenen Mitglieder anwenden. Das Leeren der Liste ist der destruktive Vorgang und benötigt neben AKICK den Channel-Level AKICKCHANGE."
+  unknown_sub:      "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK oder ENFORCE."
   invalid_mask:     "\x0304✗\x03 Ungültiges Maskenformat. Verwenden Sie \x02nick!ident@host\x02 mit Platzhaltern (*)."
   dangerous_mask:   "\x0304✗\x03 Die Maske \x02%mask%\x02 ist zu allgemein. Sie muss mindestens 4 alphanumerische Zeichen enthalten."
   protected_user:   "\x0304✗\x03 Nickname \x02%nickname%\x02 hat Zugriff in diesem Channel."
@@ -342,6 +342,42 @@ akick:
     no_reason:      "Kein Grund"
     never_expires:  "nie"
     unknown_creator: "unbekannt"
+  set:
+    syntax:         "AKICK <#channel> SET <Maske|Nummer> [Grund]"
+    short:          "Grund eines AKICK-Eintrags ändern."
+    help:           "Ersetzt den Grund eines bestehenden Eintrags, ausgewählt über die exakte Maske oder über die Eintragsnummer aus der Liste. Der Nickname, der den Eintrag hinzugefügt hat, bleibt dessen Autor, und der Ablauf bleibt erhalten. Ohne Grund bleibt der Eintrag ohne Grund."
+    example:        "/msg %bot% AKICK #channel SET *!*@bad.host Wiederholter Spam"
+    done:           "\x0303✔\x03 Grund von AKICK \x02%mask%\x02 aktualisiert."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 nicht gefunden."
+    invalid_reason: "\x0304✗\x03 Der Grund darf höchstens \x02%max%\x02 Zeichen lang sein."
+    notice_channel: "\x02%from%\x02 ändert den Grund von AKICK: \x02%mask%\x02 (%reason%)"
+  clear:
+    syntax:         "AKICK <#channel> CLEAR"
+    short:          "Alle AKICK-Einträge des Channels entfernen."
+    help:           "Entfernt alle Einträge des Channels auf einmal, auch die von anderen Teammitgliedern hinzugefügten. Dies ist der destruktive Vorgang der Liste und benötigt neben AKICK den Channel-Level AKICKCHANGE."
+    example:        "/msg %bot% AKICK #channel CLEAR"
+    done:           "\x0303✔\x03 AKICK-Einträge aus \x02%channel%\x02 entfernt: %count%."
+    notice_channel: "\x02%from%\x02 entfernt alle AKICK-Einträge (%count%)."
+  count:
+    syntax:         "AKICK <#channel> COUNT"
+    short:          "AKICK-Einträge des Channels zählen."
+    help:           "Nennt, wie viele Einträge die Liste des Channels gerade enthält, ohne sie aufzulisten."
+    example:        "/msg %bot% AKICK #channel COUNT"
+    result:         "\x0307ℹ\x03 AKICK-Einträge in \x02%channel%\x02: %count%."
+  check:
+    syntax:         "AKICK <#channel> CHECK <Nickname>"
+    short:          "AKICK-Einträge anzeigen, die auf einen Nutzer passen."
+    help:           "Nennt, welche Einträge der Liste den angegebenen Nutzer treffen würden. Der Nickname muss mit dem Netzwerk verbunden sein, und IRC-Operatoren werden von der Liste nie erfasst."
+    example:        "/msg %bot% AKICK #channel CHECK BoeserNick"
+    header:         "\x0303AKICK-Einträge, die auf \x02%nickname%\x02 in \x02%channel%\x02 passen\x03"
+    empty:          "\x0307ℹ\x03 Kein AKICK-Eintrag von \x02%channel%\x02 passt auf \x02%nickname%\x02."
+    not_connected:  "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht mit dem Netzwerk verbunden."
+  enforce:
+    syntax:         "AKICK <#channel> ENFORCE"
+    short:          "AKICK-Liste auf die gerade verbundenen Mitglieder anwenden."
+    help:           "Wendet die Liste auf die gerade mit dem Channel verbundenen Mitglieder an: jedes von einem Eintrag erfasste Mitglied wird gebannt und gekickt. Es meldet, wie viele Mitglieder hinausgeworfen wurden."
+    example:        "/msg %bot% AKICK #channel ENFORCE"
+    done:           "\x0303✔\x03 Durch die AKICK-Liste aus \x02%channel%\x02 hinausgeworfene Mitglieder: %count%."
 
 restore:
   syntax:           "RESTORE <#channel>"

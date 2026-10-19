@@ -21,5 +21,8 @@ final readonly class ManageChannelAkick
         public ?DateTimeImmutable $expiresAt = null,
         public ?string $reason = null,
         public bool $validRequest = true,
+        public ?string $nickname = null,
+        public ?string $userMask = null,
+        public bool $targetIsOperator = false,
     ) {}
 }

@@ -21,6 +21,8 @@ use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelAkickChangedEvent;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
+use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandler;
+use App\ChanServ\Application\UseCase\EnforceAkick\EnforceChannelAkickHandlerInterface;
 use App\ChanServ\Application\UseCase\ManageAkick\ChannelAkickEntryView;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkick;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickHandler;
@@ -29,6 +31,7 @@ use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelAkick;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
+use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
 use App\ChanServ\Domain\Policy\AkickMatchPolicy;
 use App\ChanServ\Domain\Policy\AkickProtectionPolicy;
@@ -68,6 +71,7 @@ final class AkickCommandTest extends TestCase
         ChanServNotifierInterface $notifier,
         TranslatorInterface $translator,
         ?ChannelLookupPort $channelLookup = null,
+        ?NetworkUserLookupPort $userLookup = null,
     ): ChanServContext {
         return new ChanServContext(
             $sender,
@@ -82,7 +86,7 @@ final class AkickCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $channelLookup ?? $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
-            $this->createStub(NetworkUserLookupPort::class),
+            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
     }
@@ -118,6 +122,7 @@ final class AkickCommandTest extends TestCase
         ?ChanServNotifierInterface $notifier = null,
         ?ChannelEntryNetworkQuery $entryNetwork = null,
         ?AkickActions $akickActions = null,
+        ?EnforceChannelAkickHandlerInterface $enforcer = null,
     ): AkickCommand {
         $burstComplete ??= $this->createStub(BurstCompletePort::class);
         $userLookup ??= $this->createStub(NetworkUserLookupPort::class);
@@ -178,6 +183,13 @@ final class AkickCommandTest extends TestCase
             $network,
             $actions,
             new SymfonyChanServEventPublisher($eventDispatcher),
+            $enforcer ?? new EnforceChannelAkickHandler(
+                $channelRepository,
+                $akickRepository,
+                $network,
+                $actions,
+                new AkickMatchPolicy(),
+            ),
         ));
     }
 
@@ -207,6 +219,7 @@ final class AkickCommandTest extends TestCase
     {
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn($channelId);
+        $channel->method('getName')->willReturn('#test');
         $channel->method('getFounderNickId')->willReturn($founderNickId);
         $channel->method('isFounder')->willReturnCallback(static fn (int $id): bool => $id === $founderNickId);
 
@@ -907,7 +920,7 @@ final class AkickCommandTest extends TestCase
         self::assertSame('akick.help', $cmd->getHelpKey());
         self::assertSame(9, $cmd->getOrder());
         self::assertSame('akick.short', $cmd->getShortDescKey());
-        self::assertCount(3, $cmd->getSubCommandHelp());
+        self::assertCount(8, $cmd->getSubCommandHelp());
         self::assertFalse($cmd->isOperOnly());
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
     }
@@ -2368,6 +2381,458 @@ final class AkickCommandTest extends TestCase
         $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
 
         self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    #[Test]
+    public function setChangesTheReasonAndKeepsTheAuthor(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 9, '*!*@*.isp.com', 'Old reason');
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('findByChannelAndMask')->willReturn($akick);
+
+        $saved = null;
+        $akickRepo->method('save')->willReturnCallback(static function (ChannelAkick $entity) use (&$saved): void {
+            $saved = $entity;
+        });
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'SET', '*!*@*.isp.com', 'New', 'reason'], $notifier, $translator));
+
+        self::assertSame(['akick.set.done'], $messages);
+        self::assertSame($akick, $saved);
+        self::assertSame('New reason', $akick->getReason());
+        self::assertSame(9, $akick->getCreatorNickId(), 'The original author must be preserved.');
+    }
+
+    #[Test]
+    public function setByNumberChangesTheReason(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 9, '*!*@*.isp.com', 'Old reason');
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('listByChannel')->willReturn([$akick]);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'SET', '1', 'Changed'], $notifier, $translator));
+
+        self::assertSame(['akick.set.done'], $messages);
+        self::assertSame('Changed', $akick->getReason());
+    }
+
+    #[Test]
+    public function setWithoutReasonClearsTheStoredReason(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 9, '*!*@*.isp.com', 'Old reason');
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('findByChannelAndMask')->willReturn($akick);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'SET', '*!*@*.isp.com'], $notifier, $translator));
+
+        self::assertSame(['akick.set.done'], $messages);
+        self::assertNull($akick->getReason());
+    }
+
+    #[Test]
+    public function setOnAnUnknownEntryRepliesNotFound(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('findByChannelAndMask')->willReturn(null);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'SET', '*!*@*.isp.com', 'Reason'], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('akick.set.not_found', $messages[0]);
+    }
+
+    #[Test]
+    public function setWithAnOverlongReasonRepliesInvalidReason(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 9, '*!*@*.isp.com', 'Old reason');
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('findByChannelAndMask')->willReturn($akick);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'SET', '*!*@*.isp.com', str_repeat('x', 256)], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('akick.set.invalid_reason', $messages[0]);
+    }
+
+    #[Test]
+    public function setWithoutAnEntryRepliesSyntax(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+        [$_, $akickRepo, $nickRepo, $accessRepo, $accessHelper] = $this->createStubReposAndHelper();
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'SET'], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('error.syntax', $messages[0]);
+    }
+
+    #[Test]
+    public function clearRemovesEveryEntryAndReportsTheCount(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akickRepo->expects(self::once())->method('deleteByChannelId')->with(1)->willReturn(4);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'CLEAR'], $notifier, $translator));
+
+        self::assertSame(['akick.clear.done'], $messages);
+    }
+
+    #[Test]
+    public function clearIsRefusedBelowTheAkickChangeLevel(): void
+    {
+        $sender = new SenderView('UID1', 'Helper', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 2);
+
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(450);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+
+        $akickRepo = $this->createMock(ChannelAkickRepositoryInterface::class);
+        $akickRepo->expects(self::never())->method('deleteByChannelId');
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+
+        $this->expectException(InsufficientAccessException::class);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'CLEAR'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function countRepliesTheNumberOfEntries(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('countByChannel')->willReturn(5);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'COUNT'], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('akick.count.result', $messages[0]);
+        self::assertStringContainsString('"%count%":"5"', $messages[0]);
+    }
+
+    #[Test]
+    public function checkListsTheEntriesMatchingAConnectedUser(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akick = ChannelAkick::create(new DateTimeImmutable(), 1, 9, '*!*@*.isp.com', 'Spammer');
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('listByChannel')->willReturn([$akick]);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $nickRepo->method('findNicknameById')->willReturn('Author');
+
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(new SenderView('UID2', 'BadUser', 'ident', 'bad.isp.com', 'bad.isp.com', 'ip'));
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'CHECK', 'BadUser'], $notifier, $translator, userLookup: $userLookup));
+
+        self::assertCount(2, $messages);
+        self::assertStringContainsString('akick.check.header', $messages[0]);
+        self::assertStringContainsString('*!*@*.isp.com', $messages[1]);
+    }
+
+    #[Test]
+    public function checkWithoutMatchingEntryRepliesEmpty(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('listByChannel')->willReturn([]);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(new SenderView('UID2', 'GoodUser', 'ident', 'good.isp.com', 'good.isp.com', 'ip'));
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'CHECK', 'GoodUser'], $notifier, $translator, userLookup: $userLookup));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('akick.check.empty', $messages[0]);
+    }
+
+    #[Test]
+    public function checkWithAnUnknownNicknameRepliesNotConnected(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'CHECK', 'Ghost'], $notifier, $translator, userLookup: $userLookup));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('akick.check.not_connected', $messages[0]);
+    }
+
+    #[Test]
+    public function checkWithoutANicknameRepliesSyntax(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'CHECK'], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('error.syntax', $messages[0]);
+    }
+
+    #[Test]
+    public function enforceAppliesTheListAndReportsTheExpelledMembers(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('listByChannel')->willReturn([
+            ChannelAkick::create(new DateTimeImmutable(), 1, 9, '*!*@*.isp.com', 'Spammer'),
+        ]);
+
+        $nickRepo = $this->createStub(ChanUserAccountPort::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $network = $this->createStub(ChannelEntryNetworkQuery::class);
+        $network->method('findChannel')->willReturn(new ChannelEntryNetworkState('#test', [
+            new ChannelEntryMember('UID2', 'BadUser', 'BadUser!ident@*.isp.com', true, false, false),
+        ]));
+
+        $banned = [];
+        $actions = $this->createStub(AkickActions::class);
+        $actions->method('banAndKick')->willReturnCallback(
+            static function (string $channelName, string $uid, string $mask, string $reason) use (&$banned): void {
+                $banned[] = [$channelName, $uid, $mask, $reason];
+            },
+        );
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = $this->createCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class), entryNetwork: $network, akickActions: $actions);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ENFORCE'], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('akick.enforce.done', $messages[0]);
+        self::assertStringContainsString('"%count%":"1"', $messages[0]);
+        self::assertSame([['#test', 'UID2', '*!*@*.isp.com', 'Spammer']], $banned);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

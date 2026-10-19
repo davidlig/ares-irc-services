@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 has been dehalfopped."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [reason]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [mask] [expiry] [reason]"
   short:            "Manage auto-kick list."
-  help:             "ADD <mask> [expiry] [reason]: add entry. DEL <mask|num>: remove. LIST: list entries."
-  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
+  help:             "Manages the auto-kick list of a channel: the entries that ban and kick a matching user on join, the reason that explains them, the nickname that added them and the moment they expire. It can also change the reason of an existing entry without losing its author, empty the whole list, count the entries, tell which entries would catch a connected user and apply the list to the members connected right now. Emptying the list is the destructive operation and needs the AKICKCHANGE channel level on top of the AKICK one."
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK or ENFORCE."
   invalid_mask:     "\x0304✗\x03 Invalid mask format. Use \x02nick!ident@host\x02 with wildcards (*)."
   dangerous_mask:   "\x0304✗\x03 The mask \x02%mask%\x02 is too broad. It must contain at least 4 alphanumeric characters."
   protected_user:   "\x0304✗\x03 Nickname \x02%nickname%\x02 has access in this channel."
@@ -342,6 +342,42 @@ akick:
     no_reason:      "No reason"
     never_expires:  "never"
     unknown_creator: "unknown"
+  set:
+    syntax:         "AKICK <#channel> SET <mask|number> [reason]"
+    short:          "Change the reason of an AKICK entry."
+    help:           "Replaces the reason of an existing entry, chosen by its exact mask or by its number in the list. The nickname that added the entry stays as its author and the expiry is kept. Without a reason the entry ends up without one."
+    example:        "/msg %bot% AKICK #channel SET *!*@bad.host Repeated spam"
+    done:           "\x0303✔\x03 Reason of AKICK \x02%mask%\x02 updated."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 not found."
+    invalid_reason: "\x0304✗\x03 The reason cannot be longer than \x02%max%\x02 characters."
+    notice_channel: "\x02%from%\x02 changes the reason of AKICK: \x02%mask%\x02 (%reason%)"
+  clear:
+    syntax:         "AKICK <#channel> CLEAR"
+    short:          "Remove every AKICK entry of the channel."
+    help:           "Removes every entry of the channel at once, including the ones added by other staff. It is the destructive operation of the list, so it needs the AKICKCHANGE channel level on top of the AKICK one."
+    example:        "/msg %bot% AKICK #channel CLEAR"
+    done:           "\x0303✔\x03 AKICK entries removed from \x02%channel%\x02: %count%."
+    notice_channel: "\x02%from%\x02 removes every AKICK entry (%count%)."
+  count:
+    syntax:         "AKICK <#channel> COUNT"
+    short:          "Count the AKICK entries of the channel."
+    help:           "Tells how many entries the list of the channel holds right now, without listing them."
+    example:        "/msg %bot% AKICK #channel COUNT"
+    result:         "\x0307ℹ\x03 AKICK entries in \x02%channel%\x02: %count%."
+  check:
+    syntax:         "AKICK <#channel> CHECK <nick>"
+    short:          "Show the AKICK entries that match a user."
+    help:           "Tells which entries of the list would catch the given user. The nickname has to be connected to the network, and IRC operators are never caught by the list."
+    example:        "/msg %bot% AKICK #channel CHECK BadNick"
+    header:         "\x0303AKICK entries matching \x02%nickname%\x02 in \x02%channel%\x02\x03"
+    empty:          "\x0307ℹ\x03 No AKICK entry of \x02%channel%\x02 matches \x02%nickname%\x02."
+    not_connected:  "\x0304✗\x03 Nickname \x02%nickname%\x02 is not connected to the network."
+  enforce:
+    syntax:         "AKICK <#channel> ENFORCE"
+    short:          "Apply the AKICK list to the members connected now."
+    help:           "Applies the list to the members connected to the channel right now: every member caught by an entry is banned and kicked. It reports how many members were expelled."
+    example:        "/msg %bot% AKICK #channel ENFORCE"
+    done:           "\x0303✔\x03 Members expelled from \x02%channel%\x02 by the AKICK list: %count%."
 
 restore:
   syntax:           "RESTORE <#channel>"

@@ -9,5 +9,10 @@ enum ManageChannelAkickAction
     case List;
     case Add;
     case Delete;
+    case Set;
+    case Clear;
+    case Count;
+    case Check;
+    case Enforce;
     case Unknown;
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Domain\Entity;
 
 use App\ChanServ\Domain\Entity\ChannelLevel;
+use App\ChanServ\Domain\ValueObject\ChannelLevel as ChannelLevelPolicy;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -12,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
 #[CoversClass(ChannelLevel::class)]
+#[CoversClass(ChannelLevelPolicy::class)]
 final class ChannelLevelTest extends TestCase
 {
     #[Test]
@@ -121,5 +123,12 @@ final class ChannelLevelTest extends TestCase
     public function nojoinDefaultValueIsMinusOne(): void
     {
         self::assertSame(-1, ChannelLevel::getDefault(ChannelLevel::KEY_NOJOIN));
+    }
+
+    #[Test]
+    public function akickChangeDefaultValueIsFourHundredNinetyNine(): void
+    {
+        self::assertSame(499, ChannelLevel::getDefault(ChannelLevel::KEY_AKICKCHANGE));
+        self::assertSame(499, ChannelLevelPolicy::AkickChange->defaultValue());
     }
 }

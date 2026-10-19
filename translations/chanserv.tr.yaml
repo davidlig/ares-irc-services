@@ -310,10 +310,10 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nickname%\x02 adlı kullanıcının halfop'u alındı."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST} [maske] [süre] [sebep]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST|SET|CLEAR|COUNT|CHECK|ENFORCE} [maske] [süre] [sebep]"
   short:            "Otomatik atma listesini yönetin."
-  help:             "ADD <maske> [süre] [sebep]: giriş ekler. DEL <maske|no>: kaldırır. LIST: girişleri listeler."
-  unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
+  help:             "Bir kanalın otomatik atma listesini yönetir: bağlanan eşleşen kullanıcıyı yasaklayıp atan girişler, onları açıklayan sebep, onları ekleyen rumuz ve sona erme anları. Var olan bir girişin sebebini ekleyenini kaybetmeden değiştirebilir, listenin tamamını boşaltabilir, giriş sayısını bildirebilir, hangi girişlerin bağlı bir kullanıcıyı yakalayacağını söyleyebilir ve listeyi şu anda bağlı üyelere uygulayabilir. Listeyi boşaltmak yıkıcı işlemdir ve AKICK düzeyinin yanında AKICKCHANGE kanal düzeyini gerektirir."
+  unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL, LIST, SET, CLEAR, COUNT, CHECK veya ENFORCE kullanın."
   invalid_mask:     "\x0304✗\x03 Geçersiz maske formatı. Joker karakterler (*) ile \x02nick!ident@host\x02 kullanın."
   dangerous_mask:   "\x0304✗\x03 \x02%mask%\x02 maskesi çok geniş. En az 4 alfanümerik karakter içermelidir."
   protected_user:   "\x0304✗\x03 \x02%nickname%\x02 rumuzunun bu kanalda erişimi var."
@@ -342,6 +342,42 @@ akick:
     no_reason:      "Sebep yok"
     never_expires:  "hiçbir zaman"
     unknown_creator: "bilinmiyor"
+  set:
+    syntax:         "AKICK <#channel> SET <maske|numara> [sebep]"
+    short:          "Bir AKICK girişinin sebebini değiştirin."
+    help:           "Var olan bir girişin sebebini, tam maskesiyle veya listedeki numarasıyla seçilerek değiştirir. Girişi ekleyen rumuz onun yazarı olarak kalır ve süre korunur. Sebep verilmezse giriş sebepsiz kalır."
+    example:        "/msg %bot% AKICK #channel SET *!*@bad.host Tekrarlanan spam"
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 sebebi güncellendi."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 bulunamadı."
+    invalid_reason: "\x0304✗\x03 Sebep \x02%max%\x02 karakterden uzun olamaz."
+    notice_channel: "\x02%from%\x02 AKICK sebebini değiştiriyor: \x02%mask%\x02 (%reason%)"
+  clear:
+    syntax:         "AKICK <#channel> CLEAR"
+    short:          "Kanaldaki tüm AKICK girişlerini kaldırın."
+    help:           "Kanalın tüm girişlerini tek seferde kaldırır; ekipteki diğer üyelerin ekledikleri dahil. Bu, listenin yıkıcı işlemidir ve AKICK düzeyinin yanında AKICKCHANGE kanal düzeyi gerektirir."
+    example:        "/msg %bot% AKICK #channel CLEAR"
+    done:           "\x0303✔\x03 \x02%channel%\x02 kanalından kaldırılan AKICK girişleri: %count%."
+    notice_channel: "\x02%from%\x02 tüm AKICK girişlerini kaldırıyor (%count%)."
+  count:
+    syntax:         "AKICK <#channel> COUNT"
+    short:          "Kanaldaki AKICK girişlerini sayın."
+    help:           "Kanalın listesinin şu anda kaç giriş içerdiğini listelemeden bildirir."
+    example:        "/msg %bot% AKICK #channel COUNT"
+    result:         "\x0307ℹ\x03 \x02%channel%\x02 kanalındaki AKICK girişleri: %count%."
+  check:
+    syntax:         "AKICK <#channel> CHECK <rumuz>"
+    short:          "Bir kullanıcıyla eşleşen AKICK girişlerini gösterin."
+    help:           "Listenin hangi girişlerinin verilen kullanıcıyı yakalayacağını söyler. Rumuz ağa bağlı olmalıdır ve IRC operatörleri liste tarafından hiçbir zaman yakalanmaz."
+    example:        "/msg %bot% AKICK #channel CHECK KötüRumuz"
+    header:         "\x0303\x02%channel%\x02 kanalında \x02%nickname%\x02 ile eşleşen AKICK girişleri\x03"
+    empty:          "\x0307ℹ\x03 \x02%channel%\x02 kanalının AKICK girişlerinden hiçbiri \x02%nickname%\x02 ile eşleşmiyor."
+    not_connected:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu ağa bağlı değil."
+  enforce:
+    syntax:         "AKICK <#channel> ENFORCE"
+    short:          "AKICK listesini şu anda bağlı üyelere uygulayın."
+    help:           "Listeyi şu anda kanala bağlı üyelere uygular: bir girişin yakaladığı her üye yasaklanır ve atılır. Kaç üyenin atıldığını bildirir."
+    example:        "/msg %bot% AKICK #channel ENFORCE"
+    done:           "\x0303✔\x03 AKICK listesiyle \x02%channel%\x02 kanalından atılan üyeler: %count%."
 
 restore:
   syntax:           "RESTORE <#channel>"

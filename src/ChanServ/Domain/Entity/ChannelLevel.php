@@ -58,6 +58,9 @@ class ChannelLevel
     /** ChanServ: manage AKICK list (default 450). */
     public const string KEY_AKICK = 'AKICK';
 
+    /** ChanServ: clear the whole AKICK list (default 499). */
+    public const string KEY_AKICKCHANGE = 'AKICKCHANGE';
+
     /** ChanServ: minimum level to join channel (default -1, disabled). Users below are kicked. */
     public const string KEY_NOJOIN = 'NOJOIN';
 
@@ -79,6 +82,7 @@ class ChannelLevel
         self::KEY_MEMOREAD => 200,
         self::KEY_MEMOCHANGE => 300,
         self::KEY_AKICK => 450,
+        self::KEY_AKICKCHANGE => 499,
         self::KEY_NOJOIN => -1,
     ];
 
