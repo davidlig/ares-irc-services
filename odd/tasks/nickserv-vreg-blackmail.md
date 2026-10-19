@@ -35,11 +35,21 @@ the end via `./scripts/check-coverage.sh 100 --issues`).
 
 ## Tasks
 
-- [ ] T1 — Swap the command: delete `EMAILVERIFY` and everything only it needs, add NickServ `VREG`
+- [x] T1 — Swap the command: delete `EMAILVERIFY` and everything only it needs, add NickServ `VREG`
       with its permission, translations, wiring, tests and example. Command count unchanged.
-- [ ] T2 — Add `BLACKMAIL`: entity, XML mapping, repository, migration, registration check with its
+      DONE in `163e6158`: the command, its use case (6 files), port, adapter, wiring and tests are
+      gone; `VREG` lives in NickServ behind `nickserv.vreg`; 70 commands still.
+- [x] T2 — Add `BLACKMAIL`: entity, XML mapping, repository, migration, registration check with its
       outcome and reply, the command with its three sub-pages, permission, translations, tests.
-- [ ] T3 — Delivery: work-unit commits, push, issue + PR stacked on #40.
+      DONE in `0d4eb859` (34 files, +1628/−6): the list has its own table
+      (`blocked_email_domains`), repository behind an application port, a migration that dry-runs
+      cleanly, a registration outcome that rejects a blocked domain, and 56 example keys over the
+      parent page plus its three sub-pages. The parent had to remove 42 inline `Syntax:` lines (3
+      sub-pages × 14 locales) that the implementation pass reintroduced: the sub-page help must never
+      restate what the formatter renders, and that rule belongs in the brief, not in the review.
+- [x] T3 — Delivery: work-unit commits, push, issue + PR stacked on #40. DONE: issue `#41` and PR
+      `#42` on `davidlig/ares-irc-services`, with the obsolete `EMAILVERIFY` examples from #40
+      removed here and the merge-order note in the PR body.
 
 ## Log
 
@@ -57,3 +67,12 @@ the end via `./scripts/check-coverage.sh 100 --issues`).
   an adapter, so moving the command needs no data migration: only the command, its permission and its
   strings move. `BLACKMAIL` does need new persistence, modelled on `EmailVerificationSetting`
   (entity + XML mapping under `config/doctrine/nickserv/` + Doctrine repository + a migration).
+- L4 — 2026-10-19: T1 delivered as `163e6158`. Two files outside the planned surfaces were required
+  and are part of the swap: `OperServHelpFormatterContextAdapter` held a hard-coded help-group entry
+  for `EMAILVERIFY`, and `tests/Bootstrap/Security/NickServPermissionProviderTest.php` mirrors
+  `allIrcop()` exactly, so a new permission needs its paired update.
+- L5 — 2026-10-19: T2 delivered as `0d4eb859`, after the parent removed 42 inline `Syntax:` lines
+  the implementation pass had put back into the three `BLACKMAIL` sub-pages in every locale. Gate
+  numbers: NickServ 1328/6669, Shared 49/36685 with 71 commands, Bootstrap 78/1132; mapping valid,
+  migration dry-run clean, `MigrationEditorEquivalenceTest` counts 32 migrations; PHPStan max 0,
+  Deptrac 0/0/0, CS-Fixer 0/2134, coverage 100.00% (22902/22902).
