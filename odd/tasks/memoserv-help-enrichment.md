@@ -115,5 +115,10 @@ line coverage (equality of covered/total statements, not a rounded display).
   (`getExampleKeyReturnsCorrectKey()` in each command's own test file), not by weakening the gate.
   Re-run: 100.00% (22840/22840).
 - **L6 (2026-10-19)** — User delivery instruction, verbatim: "Cuando acabes, sube tambien a mi
-  repo aparte de hacer issue o pr a David". Delivery: push `feat/memoserv-help-enrichment` to the
-  `juanjiyo` fork, then open the upstream issue and PR against `davidlig/ares-irc-services`.
+  repo aparte de hacer issue o pr a David". Delivered: branch pushed to the `juanjiyo` fork,
+  issue `davidlig/ares-irc-services#35`, PR `#36` (`Closes #35`). Both carry the fork's 39
+  unmerged CReG commits as payload because the branch is based on the fork's `main`; the user
+  chose that explicitly ("Dejarlo como ChanServ #34") after seeing the evidence, and the PR body
+  states it. ChanServ PR #34 has the same shape (44 commits / 295 files / +17,961).
+  Labels (`type:feature`, `status:approved`, `size:exception`) need maintainer application —
+  the `juanjiyo` token has read-only access to upstream.
