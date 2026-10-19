@@ -13,6 +13,7 @@ final readonly class RegisterNickResult
         public ?string $guestPrefix = null,
         public int $retryAfterSeconds = 0,
         public ?int $maxNicksPerEmail = null,
+        public ?string $emailDomain = null,
     ) {}
 
     public static function verificationRequired(string $email): self
@@ -38,6 +39,11 @@ final readonly class RegisterNickResult
     public static function invalidEmail(): self
     {
         return new self(RegisterNickOutcome::InvalidEmail);
+    }
+
+    public static function emailDomainBlocked(string $emailDomain): self
+    {
+        return new self(RegisterNickOutcome::EmailDomainBlocked, emailDomain: $emailDomain);
     }
 
     public static function emailAlreadyUsed(string $email, int $maxNicksPerEmail): self

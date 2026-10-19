@@ -228,6 +228,9 @@ services:
     App\NickServ\Application\Port\Out\EmailVerificationSettingRepositoryInterface:
         alias: App\NickServ\Adapter\Out\Persistence\Doctrine\EmailVerificationSettingDoctrineRepository
 
+    App\NickServ\Application\Port\Out\BlockedEmailDomainRepositoryInterface:
+        alias: App\NickServ\Adapter\Out\Persistence\Doctrine\BlockedEmailDomainDoctrineRepository
+
     App\NickServ\Application\Port\Out\RegistrationThrottle:
         alias: App\NickServ\Adapter\Out\InMemory\InMemoryRegistrationThrottle
 
@@ -1836,6 +1839,9 @@ services:
         tags: ['nickserv.command']
 
     App\NickServ\Adapter\In\Irc\Command\ForbidVhostCommand:
+        tags: ['nickserv.command']
+
+    App\NickServ\Adapter\In\Irc\Command\BlackmailCommand:
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandler: ~

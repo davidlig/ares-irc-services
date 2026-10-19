@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Register;
 
+use App\NickServ\Application\Port\Out\BlockedEmailDomainRepositoryInterface;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\EmailVerificationSettingRepositoryInterface;
 use App\NickServ\Application\Port\Out\PasswordHasher;
@@ -20,6 +21,7 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -75,6 +77,54 @@ final class RegisterNickHandlerTest extends TestCase
         $result = $this->handler(repository: $repository)->handle($this->input(email: 'invalid'));
 
         self::assertSame(RegisterNickOutcome::InvalidEmail, $result->outcome);
+    }
+
+    #[Test]
+    public function rejectsBlockedEmailDomainWithoutPersistingAnything(): void
+    {
+        $repository = $this->createMock(RegisterNickRepository::class);
+        $repository->expects(self::never())->method('countByEmail');
+        $repository->expects(self::never())->method('findByNick');
+        $repository->expects(self::never())->method('save');
+
+        $blocked = $this->createMock(BlockedEmailDomainRepositoryInterface::class);
+        $blocked->expects(self::once())->method('isBlocked')->with('blocked.example')->willReturn(true);
+
+        $result = $this->handler(
+            repository: $repository,
+            blockedEmailDomains: $blocked,
+        )->handle($this->input(email: 'user@BLOCKED.example'));
+
+        self::assertSame(RegisterNickOutcome::EmailDomainBlocked, $result->outcome);
+        self::assertSame('blocked.example', $result->emailDomain);
+    }
+
+    #[Test]
+    #[DataProvider('verificationModes')]
+    public function registersWhenTheEmailDomainIsNotBlocked(bool $verificationRequired, RegisterNickOutcome $expected): void
+    {
+        $repository = $this->createMock(RegisterNickRepository::class);
+        $repository->method('countByEmail')->willReturn(0);
+        $repository->method('findByNick')->willReturn(null);
+        $repository->expects(self::once())->method('save');
+
+        $blocked = $this->createMock(BlockedEmailDomainRepositoryInterface::class);
+        $blocked->expects(self::once())->method('isBlocked')->with('example.com')->willReturn(false);
+
+        $result = $this->handler(
+            repository: $repository,
+            emailVerificationSettings: $this->emailVerificationSettings($verificationRequired),
+            blockedEmailDomains: $blocked,
+        )->handle($this->input());
+
+        self::assertSame($expected, $result->outcome);
+    }
+
+    /** @return iterable<string, array{bool, RegisterNickOutcome}> */
+    public static function verificationModes(): iterable
+    {
+        yield 'verification required' => [true, RegisterNickOutcome::VerificationRequired];
+        yield 'verification disabled' => [false, RegisterNickOutcome::RegisteredWithoutVerification];
     }
 
     #[Test]
@@ -247,6 +297,7 @@ final class RegisterNickHandlerTest extends TestCase
         int $tokenTtl = 3600,
         string $guestPrefix = 'Guest-',
         ?EmailVerificationSettingRepositoryInterface $emailVerificationSettings = null,
+        ?BlockedEmailDomainRepositoryInterface $blockedEmailDomains = null,
     ): RegisterNickHandler {
         if (null === $repository) {
             $repository = $this->createStub(RegisterNickRepository::class);
@@ -268,6 +319,7 @@ final class RegisterNickHandlerTest extends TestCase
             $throttle,
             $mail ?? $this->createStub(RegistrationMailSender::class),
             $emailVerificationSettings ?? $this->emailVerificationSettings(),
+            $blockedEmailDomains ?? $this->blockedEmailDomains(),
             300,
             3,
             $tokenTtl,
@@ -289,6 +341,14 @@ final class RegisterNickHandlerTest extends TestCase
         $settings->method('isVerificationRequired')->willReturn($required);
 
         return $settings;
+    }
+
+    private function blockedEmailDomains(bool $blocked = false): BlockedEmailDomainRepositoryInterface
+    {
+        $domains = $this->createStub(BlockedEmailDomainRepositoryInterface::class);
+        $domains->method('isBlocked')->willReturn($blocked);
+
+        return $domains;
     }
 
     private function passwordHasher(): PasswordHasher

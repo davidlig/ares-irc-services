@@ -58,6 +58,9 @@ final readonly class NickServPermission
     /** IRCop permission to change the network-wide e-mail verification policy for registration. */
     public const string VREG = 'nickserv.vreg';
 
+    /** IRCop permission to manage the e-mail domains blocked from user registration. */
+    public const string BLACKMAIL = 'nickserv.blackmail';
+
     /** @return list<string> */
     public static function allIrcop(): array
     {
@@ -77,6 +80,7 @@ final readonly class NickServPermission
             self::LIST,
             self::SAREGISTER,
             self::VREG,
+            self::BLACKMAIL,
         ];
     }
 

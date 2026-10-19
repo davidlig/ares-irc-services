@@ -120,6 +120,7 @@ final class RegisterCommandTest extends TestCase
         yield 'throttled rounds up minutes' => [RegisterNickResult::throttled(61), 'register.throttled', ['%minutes%' => '2']];
         yield 'guest prefix' => [RegisterNickResult::guestPrefixForbidden('Guest-'), 'register.guest_prefix_forbidden', ['%prefix%' => 'Guest-']];
         yield 'invalid email' => [RegisterNickResult::invalidEmail(), 'register.invalid_email', []];
+        yield 'blocked email domain' => [RegisterNickResult::emailDomainBlocked('example.com'), 'register.email_domain_blocked', ['%domain%' => 'example.com']];
         yield 'email used' => [RegisterNickResult::emailAlreadyUsed('a@b.test', 3), 'register.email_already_used', ['%email%' => 'a@b.test', '%max%' => '3']];
         yield 'already pending' => [RegisterNickResult::alreadyPending('Nick'), 'register.already_pending', ['%nickname%' => 'Nick']];
         yield 'forbidden' => [RegisterNickResult::forbidden('Nick'), 'register.forbidden', ['%nickname%' => 'Nick']];

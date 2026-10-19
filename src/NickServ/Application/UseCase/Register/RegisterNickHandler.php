@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Register;
 
+use App\NickServ\Application\Port\Out\BlockedEmailDomainRepositoryInterface;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\EmailVerificationSettingRepositoryInterface;
 use App\NickServ\Application\Port\Out\PasswordHasher;
@@ -12,12 +13,15 @@ use App\NickServ\Application\Port\Out\RegistrationMailSender;
 use App\NickServ\Application\Port\Out\RegistrationThrottle;
 use App\NickServ\Application\Port\Out\RegistrationVerificationStore;
 use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
+use App\NickServ\Domain\Entity\BlockedEmailDomain;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use Throwable;
 
 use function sprintf;
 use function str_starts_with;
+use function strrpos;
+use function substr;
 
 use const FILTER_VALIDATE_EMAIL;
 
@@ -32,6 +36,7 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         private RegistrationThrottle $throttle,
         private RegistrationMailSender $mailSender,
         private EmailVerificationSettingRepositoryInterface $emailVerificationSettings,
+        private BlockedEmailDomainRepositoryInterface $blockedEmailDomains,
         private int $minimumIntervalSeconds,
         private int $maxNicksPerEmail,
         private int $verificationTokenTtlSeconds = 3600,
@@ -57,6 +62,11 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
 
         if (false === filter_var($command->email, FILTER_VALIDATE_EMAIL)) {
             return RegisterNickResult::invalidEmail();
+        }
+
+        $emailDomain = self::emailDomain($command->email);
+        if ($this->blockedEmailDomains->isBlocked($emailDomain)) {
+            return RegisterNickResult::emailDomainBlocked($emailDomain);
         }
 
         if (0 < $this->maxNicksPerEmail
@@ -118,5 +128,12 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         $this->throttle->recordAttempt($command->clientKey, $now);
 
         return RegisterNickResult::verificationRequired($command->email);
+    }
+
+    private static function emailDomain(string $email): string
+    {
+        $separator = strrpos($email, '@');
+
+        return BlockedEmailDomain::normalize(false === $separator ? $email : substr($email, $separator + 1));
     }
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\NickServ\Domain\Entity\BlockedEmailDomain" table="blocked_email_domains">
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="domain" type="string" column="domain" length="253"/>
+        <field name="createdAt" type="datetime_immutable" column="created_at"/>
+        <unique-constraints>
+            <unique-constraint name="uniq_blocked_email_domain" columns="domain"/>
+        </unique-constraints>
+    </entity>
+</doctrine-mapping>
