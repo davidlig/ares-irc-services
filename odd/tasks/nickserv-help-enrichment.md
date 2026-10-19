@@ -68,8 +68,12 @@ at the end via `./scripts/check-coverage.sh 100 --issues`).
       declares the key and absent for one that does not, including an IRCop-gated command rendered
       with an identified sender + operator-access stub (`HelpFormatterContextAdapter:107-109,154`).
       DONE in `9d34aac7`.
-- [ ] T5 — Delivery: work-unit commits, push to the fork, issue + PR against `davidlig:main`
+- [x] T5 — Delivery: work-unit commits, push to the fork, issue + PR against `davidlig:main`
       (issue-first), correction note in the PR body, labels requested (a human must apply them).
+      DONE: issue `#37` and PR `#38` on `davidlig/ares-irc-services`, both carrying the scope guard
+      that names the option and sub-command pages as a follow-up decision rather than as done. The
+      labels (`type:feature`, `status:approved`, `size:exception`) cannot be applied by this account:
+      it has no triage permission on the upstream repository, so a maintainer must set them.
 
 ## Log
 
@@ -109,3 +113,9 @@ at the end via `./scripts/check-coverage.sh 100 --issues`).
   chain, run by the parent on the frozen tree: `lint:container` OK, `lint:yaml` OK (139 files),
   PHPStan max 0 errors, CS-Fixer 0 of 2136 files fixable, `tests/NickServ` 1297 tests / 6672
   assertions, `tests/Shared` 49 / 36144, `check-coverage.sh 100` at 100.00% (22856/22856 lines).
+- L9 — 2026-10-19: delivered as issue `#37` + PR `#38` on `davidlig/ares-irc-services`, mirroring the
+  ChanServ/MemoServ shape: the PR carries this branch's three commits plus the fork commits upstream
+  `main` has not merged. Open decision left with the user: the option pages of SET and SASET and the
+  sub-command pages of FORBIDVHOST and HISTORY still restate their syntax above the formatter's
+  `Syntax:` line, and giving them a structured example would require extending `renderSubCommandHelp`
+  in all four service copies — out of this unit by design, never silently declared done.
