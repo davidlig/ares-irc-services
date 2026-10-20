@@ -577,7 +577,9 @@ class Reconciler:
             # Retain the SHA before attempting the write, so failure cleanup retries
             # invalidation without treating an ambiguous mutation as approval.
             self.held.add(commit)
-            self.checks.set(commit)
+            # A terminal check need not reopen as in_progress. Explicit failure
+            # blocks merging for both new and reused checks during evaluation.
+            self.checks.set(commit, "failure")
 
     @diagnosed(operation=Operation.HISTORY_LIST, principal=Principal.METADATA)
     def _history(self):

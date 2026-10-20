@@ -176,6 +176,10 @@ class Server:
             return Response(deepcopy(run))
         if parts[0] == "check-runs" and method == "PATCH":
             run = next(c for c in self.checks if c["id"] == int(parts[1]))
+            if run.get("status") == "completed" and data.get("status") == "in_progress":
+                # Model a terminal response, not an assumed successful reopening.
+                # Live diagnostics proved non-in_progress, not its exact value.
+                return Response(deepcopy(run))
             run.update(data)
             # Omitted fields are retained, not silently reset by the test server.
             return Response(deepcopy(run))
@@ -239,6 +243,70 @@ def request_counts(server):
     graphql = len(metadata) - rest
     app = sum(call[0] == "checks" for call in server.calls)
     return rest, graphql, app
+
+
+class CheckHoldTests(unittest.TestCase):
+    def test_completed_failure_and_success_are_blocked_before_metadata_on_replays(self):
+        for previous in ("failure", "success"):
+            with self.subTest(previous=previous):
+                server = Server()
+                if previous == "failure":
+                    server.reviews[1] = []
+                self.assertTrue(server.engine().run().ok)
+                self.assertEqual(previous, server.conclusion(HEAD))
+                server.reviews[1] = [review()]
+                first_details = []
+                def before_details(s, call):
+                    if call[1:3] == ("GET", PREFIX + "/pulls/1") and not first_details:
+                        first_details.append(True)
+                        self.assertEqual({("completed", "failure")},
+                                         {(r["status"], r["conclusion"]) for r in s.checks})
+                server.hook = before_details
+                for _ in range(2):
+                    first_details.clear()
+                    self.assertTrue(server.engine().run().ok)
+                    self.assertTrue(first_details)
+                    self.assertEqual({"success"}, {r["conclusion"] for r in server.checks})
+                    self.assertEqual(2, len(server.checks))
+
+    def test_new_checks_are_explicit_completed_failures_during_snapshot(self):
+        server = Server()
+        server.engine()._snapshot()
+        self.assertEqual({HEAD, MERGE}, {r["head_sha"] for r in server.checks})
+        self.assertEqual({("completed", "failure")},
+                         {(r["status"], r.get("conclusion")) for r in server.checks})
+
+    def test_shared_head_merge_roles_hold_every_unique_existing_sha_once(self):
+        server = valid_distinct_prs(2)
+        server.prs[2]["head"]["sha"] = server.prs[1]["merge_commit_sha"]
+        server.reviews[2] = [review(sha=server.prs[2]["head"]["sha"])]
+        self.assertTrue(server.engine().run().ok)
+        server.calls.clear()
+        server.engine()._snapshot()
+        shas = {sha for p in server.prs.values() for sha in (p["head"]["sha"], p["merge_commit_sha"])}
+        self.assertEqual(3, len(shas))
+        self.assertEqual(shas, {r["head_sha"] for r in server.checks})
+        self.assertTrue(all(r["conclusion"] == "failure" for r in server.checks))
+        updates = [c for c in server.calls if c[0:2] == ("checks", "PATCH")]
+        self.assertEqual(3, len(updates))
+        self.assertTrue(all(c[3].get("conclusion") == "failure" for c in updates))
+
+    def test_partial_initial_hold_write_failure_never_claims_revocation_or_success(self):
+        server = Server()
+        self.assertTrue(server.engine().run().ok)
+        identifier = next(r["id"] for r in server.checks if r["head_sha"] == MERGE)
+        server.calls.clear()
+        server.fail = lambda c: 403 if c[1:3] == ("PATCH", PREFIX + f"/check-runs/{identifier}") else None
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("check_update", result.primary_error.operation.value)
+        self.assertEqual(403, result.primary_error.http_status)
+        self.assertTrue(result.cleanup_errors)
+        self.assertEqual("failure", server.conclusion(HEAD))
+        self.assertEqual("success", server.conclusion(MERGE))  # Write outage prevents revocation.
+        self.assertFalse(any(c[1] == "PATCH" and c[3].get("conclusion") == "success"
+                             for c in server.calls))
+        self.assertFalse(any(c[2] == PREFIX + "/pulls/1" for c in server.calls))
 
 
 class PublicationBudgetTests(unittest.TestCase):
@@ -481,7 +549,8 @@ class AdapterTests(unittest.TestCase):
         writes = [(m, p, d) for _, m, p, d in server.calls if m != "GET"]
         close = next(i for i, (m, p, _) in enumerate(writes) if m == "PATCH" and p == PREFIX + "/pulls/1")
         comment = next(i for i, (m, p, _) in enumerate(writes) if m == "POST" and p.endswith("/comments"))
-        blocked = [i for i, (_, p, d) in enumerate(writes) if "/check-runs" in p and d.get("status") == "in_progress"]
+        blocked = [i for i, (_, p, d) in enumerate(writes) if "/check-runs" in p
+                   and d.get("status") == "completed" and d.get("conclusion") == "failure"]
         self.assertTrue(blocked)
         self.assertLess(max(blocked[:2]), comment)
         self.assertLess(comment, close)
@@ -1146,7 +1215,7 @@ class DiagnosticTests(unittest.TestCase):
             response = original(request, timeout)
             if request.get_method() == "PATCH" and "/check-runs/" in request.full_url:
                 value = json.loads(response.getvalue())
-                value["status"] = "completed"
+                value["status"] = "queued"
                 return Response(value)
             return response
         server.client = lambda token: Github(token, open_url=mismatch, sleep=lambda _: None)
@@ -1190,13 +1259,16 @@ class DiagnosticTests(unittest.TestCase):
         self.assertNotIn("TOKEN", text)
         self.assertNotIn("PRIVATE", text)
 
-    def test_completed_checks_can_be_held_without_fake_conclusion_reset(self):
+    def test_terminal_reopening_mismatch_is_rejected_without_resetting_conclusion(self):
         server = Server()
         self.assertTrue(server.engine().run().ok)
         writer = server.engine().checks
-        writer.set(HEAD)
+        with self.assertRaises(ApiError) as raised:
+            writer.set(HEAD)
+        self.assertEqual("response_mismatch", raised.exception.diagnostic.category.value)
+        self.assertEqual("check_update", raised.exception.diagnostic.operation.value)
         run = next(c for c in server.checks if c["head_sha"] == HEAD)
-        self.assertEqual("in_progress", run["status"])
+        self.assertEqual("completed", run["status"])
         self.assertEqual("success", run["conclusion"])
         writer.set(HEAD, "failure")
         self.assertEqual("failure", run["conclusion"])
