@@ -48,7 +48,11 @@ the end via `./scripts/check-coverage.sh 100 --issues`).
       `Version20261020000001` adds the two columns reversibly; the enforcement stamps the entry that
       caught a member through a small `AkickUseRecorder`; `VIEW` shows mask, reason, author, creation,
       expiry, uses and last use, and `LASTUSE` orders by last use with the never-used entries last.
-- [ ] T3 — Delivery: commits, push, issue + PR.
+- [x] T3 — Delivery: commits, push, issue + PR. DONE: issue `#45` and PR `#46` on
+      `davidlig/ares-irc-services`, stacked on the UNBAN unit (#44). The integration branch
+      `integration/verify-all` merges every open unit and needed two order-dependent counters fixed:
+      the registered command count (71 → 72) and the migration count (32 → 33). Both are noted in the
+      affected PRs.
 
 ## Log
 
