@@ -10,6 +10,8 @@ final class OperServPermission
 
     public const string GLINE = 'operserv.gline';
 
+    public const string GEOIP = 'operserv.geoip';
+
     public const string GLOBAL = 'operserv.global';
 
     public const string RAW = 'operserv.raw';

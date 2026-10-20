@@ -224,6 +224,41 @@ gline:
     unknown_creator: "sconosciuto"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, scade: %expiration%)"
 
+# --- GEOIP --------------------------------------------------------------------
+geoip:
+  syntax:           "GEOIP {ADD|DEL|LIST} [paese] [motivo]"
+  short:            "Gestisce l'elenco dei paesi bloccati."
+  help:             "Gestisce i paesi bloccati al gate della rete.\nIl demone IRC risolve il paese di ogni client che si connette, quindi un paese bloccato viene respinto al momento della connessione.\nADD registra un codice paese con il suo motivo.\nDEL rimuove un paese dall'elenco.\nLIST mostra i paesi bloccati con motivo e data di registrazione.\nQuesto comando richiede il permesso operserv.geoip."
+  example:          "/msg %bot% GEOIP ADD ES Non consentito su questa rete"
+  unknown_sub:      "\x0304✗\x03 Sotto-comando sconosciuto \x02%sub%\x02. Usi ADD, DEL o LIST."
+  unknown_country:  "\x0304✗\x03 \x02%country%\x03 non è un codice paese ISO 3166-1 alpha-2 valido."
+  already_exists:   "\x0304✗\x03 Il paese \x02%country%\x03 è già bloccato."
+  not_found:        "\x0304✗\x03 Il paese \x02%country%\x03 non è bloccato."
+  default_reason:   "Paese bloccato dalla policy della rete"
+
+  add:
+    syntax:         "GEOIP ADD <paese> [motivo]"
+    short:          "Blocca un paese al gate della rete."
+    help:           "Blocca tutti i client che si connettono dal paese indicato.\nIl codice paese deve essere un codice ISO 3166-1 alpha-2.\nIl motivo viene mostrato ai client respinti e può essere omesso.\nQuesto comando richiede il permesso operserv.geoip."
+    example:        "/msg %bot% GEOIP ADD ES Non consentito su questa rete"
+    done:           "\x0303✓\x03 Paese \x02%country%\x03 bloccato - %reason%"
+
+  del:
+    syntax:         "GEOIP DEL <paese>"
+    short:          "Sblocca un paese."
+    help:           "Rimuove un paese dall'elenco dei paesi bloccati.\nQuesto comando richiede il permesso operserv.geoip."
+    example:        "/msg %bot% GEOIP DEL ES"
+    done:           "\x0303✓\x03 Paese \x02%country%\x03 sbloccato."
+
+  list:
+    syntax:         "GEOIP LIST"
+    short:          "Elenca i paesi bloccati."
+    help:           "Mostra tutti i paesi bloccati con motivo e data di registrazione.\nQuesto comando richiede il permesso operserv.geoip."
+    example:        "/msg %bot% GEOIP LIST"
+    header:         "\x0307---\x03 \x02Paesi bloccati (%count%)\x02 \x0307---\x03"
+    empty:          "Non ci sono paesi bloccati."
+    entry:          "\x0310%index%.\x03 \x02%country%\x02 - %reason% (\x0314%nickname%\x03, registrato: %registered%)"
+
 # --- GLOBAL -------------------------------------------------------------------
 global:
   syntax:           "GLOBAL {servizio|nick!ident@vhost} {PRIVMSG|NOTICE} <messaggio>"

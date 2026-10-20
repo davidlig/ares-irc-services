@@ -90,6 +90,43 @@ final class ActiveConnectionGlineNetworkActionsTest extends TestCase
         $this->adapter($actions)->remove('ident@host.test');
     }
 
+    #[Test]
+    public function addsByMaskWithoutSplittingTheExtban(): void
+    {
+        $actions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $actions->expects(self::once())->method('addGlineByMask')->with('001', '~country:ES', 'Not allowed');
+        $actions->expects(self::never())->method('addGline');
+
+        $this->adapter($actions)->addByMask('~country:ES', 'Not allowed');
+    }
+
+    #[Test]
+    public function removesByMaskWithoutSplittingTheExtban(): void
+    {
+        $actions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $actions->expects(self::once())->method('removeGlineByMask')->with('001', '~country:ES');
+        $actions->expects(self::never())->method('removeGline');
+
+        $this->adapter($actions)->removeByMask('~country:ES');
+    }
+
+    #[Test]
+    public function reportsMissingConnectionForMaskOperations(): void
+    {
+        $connection = $this->createStub(ActiveProtocolModuleHolderInterface::class);
+        $connection->method('getProtocolModule')->willReturn(null);
+        $connection->method('getServerSid')->willReturn(null);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::exactly(2))->method('error')->with(self::logicalOr(
+            'GLINE mask: no active protocol module or server SID',
+            'GLINE mask DEL: no active protocol module or server SID',
+        ));
+        $adapter = new ActiveConnectionGlineNetworkActions($connection, $logger);
+
+        $adapter->addByMask('~country:ES', 'Not allowed');
+        $adapter->removeByMask('~country:ES');
+    }
+
     private function adapter(ProtocolServiceActionsInterface $actions): ActiveConnectionGlineNetworkActions
     {
         $module = $this->createStub(ProtocolModuleInterface::class);

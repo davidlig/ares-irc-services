@@ -224,6 +224,41 @@ gline:
     unknown_creator: "unbekannt"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, läuft ab: %expiration%)"
 
+# --- GEOIP --------------------------------------------------------------------
+geoip:
+  syntax:           "GEOIP {ADD|DEL|LIST} [Land] [Grund]"
+  short:            "Verwalte die Liste gesperrter Länder."
+  help:             "Verwaltet die Länder, die an der Netzwerkpforte gesperrt sind.\nDer IRC-Daemon ermittelt das Land jedes Clients, der sich verbindet, daher wird ein gesperrtes Land bereits beim Verbinden abgewiesen.\nADD trägt einen Ländercode mit seinem Grund ein.\nDEL entfernt ein Land aus der Liste.\nLIST zeigt die gesperrten Länder mit Grund und Registrierungsdatum.\nDieser Befehl erfordert die Berechtigung operserv.geoip."
+  example:          "/msg %bot% GEOIP ADD ES In diesem Netzwerk nicht erlaubt"
+  unknown_sub:      "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL oder LIST."
+  unknown_country:  "\x0304✗\x03 \x02%country%\x03 ist kein gültiger ISO-3166-1-alpha-2-Ländercode."
+  already_exists:   "\x0304✗\x03 Land \x02%country%\x03 ist bereits gesperrt."
+  not_found:        "\x0304✗\x03 Land \x02%country%\x03 ist nicht gesperrt."
+  default_reason:   "Land durch die Netzwerkrichtlinie gesperrt"
+
+  add:
+    syntax:         "GEOIP ADD <Land> [Grund]"
+    short:          "Sperrt ein Land an der Netzwerkpforte."
+    help:           "Sperrt alle Clients, die sich aus dem angegebenen Land verbinden.\nDer Ländercode muss ein ISO-3166-1-alpha-2-Code sein.\nDer Grund wird den abgewiesenen Clients angezeigt und kann weggelassen werden.\nDieser Befehl erfordert die Berechtigung operserv.geoip."
+    example:        "/msg %bot% GEOIP ADD ES In diesem Netzwerk nicht erlaubt"
+    done:           "\x0303✓\x03 Land \x02%country%\x03 gesperrt - %reason%"
+
+  del:
+    syntax:         "GEOIP DEL <Land>"
+    short:          "Hebt die Sperre eines Landes auf."
+    help:           "Entfernt ein Land aus der Liste gesperrter Länder.\nDieser Befehl erfordert die Berechtigung operserv.geoip."
+    example:        "/msg %bot% GEOIP DEL ES"
+    done:           "\x0303✓\x03 Sperre für Land \x02%country%\x03 aufgehoben."
+
+  list:
+    syntax:         "GEOIP LIST"
+    short:          "Listet gesperrte Länder auf."
+    help:           "Zeigt alle gesperrten Länder mit Grund und Registrierungsdatum.\nDieser Befehl erfordert die Berechtigung operserv.geoip."
+    example:        "/msg %bot% GEOIP LIST"
+    header:         "\x0307---\x03 \x02Gesperrte Länder (%count%)\x02 \x0307---\x03"
+    empty:          "Es sind keine Länder gesperrt."
+    entry:          "\x0310%index%.\x03 \x02%country%\x02 - %reason% (\x0314%nickname%\x03, registriert: %registered%)"
+
 # --- GLOBAL -------------------------------------------------------------------
 global:
   syntax:           "GLOBAL {Service|nick!ident@vhost} {PRIVMSG|NOTICE} <Nachricht>"

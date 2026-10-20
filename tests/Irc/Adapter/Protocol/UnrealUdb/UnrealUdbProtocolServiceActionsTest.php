@@ -456,6 +456,40 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
+    public function addGlineByMaskWritesTheRawCountryGlineInsteadOfAUdbRecord(): void
+    {
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::never())->method('insert');
+        $writer->expects(self::never())->method('delete');
+        $actions = new UnrealUdbProtocolServiceActions(
+            $this->connectionHolder,
+            $writer,
+            clock: new MutableUdbClock(1_800_000_000),
+        );
+
+        $actions->addGlineByMask('001', '~country:ES', 'Not allowed');
+
+        self::assertSame([':001 GLINE ~country:ES :Not allowed'], $this->written);
+    }
+
+    #[Test]
+    public function removeGlineByMaskWritesTheRawCountryGlineInsteadOfAUdbRecord(): void
+    {
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects(self::never())->method('insert');
+        $writer->expects(self::never())->method('delete');
+        $actions = new UnrealUdbProtocolServiceActions(
+            $this->connectionHolder,
+            $writer,
+            clock: new MutableUdbClock(1_800_000_000),
+        );
+
+        $actions->removeGlineByMask('001', '~country:ES');
+
+        self::assertSame([':001 GLINE -~country:ES'], $this->written);
+    }
+
+    #[Test]
     public function removeGlineWithWildcards(): void
     {
         $actions = $this->createActions();

@@ -59,6 +59,10 @@ final class RecordingOperclassActions implements ProtocolServiceActionsInterface
 
     public function removeGline(string $serverSid, string $userMask, string $hostMask): void {}
 
+    public function addGlineByMask(string $serverSid, string $mask, string $reason): void {}
+
+    public function removeGlineByMask(string $serverSid, string $mask): void {}
+
     public function introducePseudoClient(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname): void {}
 
     public function quitPseudoClient(string $serverSid, string $uid, string $reason): void {}

@@ -108,6 +108,29 @@ interface ProtocolServiceActionsInterface
     public function removeGline(string $serverSid, string $userMask, string $hostMask): void;
 
     /**
+     * Add a network-wide G-line whose mask is sent verbatim.
+     *
+     * The mask is not split into a user and a host part, so it may be an extban
+     * such as ~country:ES.
+     *
+     * @param string $serverSid Server SID (source of the GLINE command)
+     * @param string $mask      Full mask sent verbatim (e.g., "~country:ES")
+     * @param string $reason    Reason shown to the user
+     */
+    public function addGlineByMask(string $serverSid, string $mask, string $reason): void;
+
+    /**
+     * Remove a network-wide G-line whose mask is sent verbatim.
+     *
+     * The mask is not split into a user and a host part, so it may be an extban
+     * such as ~country:ES.
+     *
+     * @param string $serverSid Server SID (source of the GLINE command)
+     * @param string $mask      Full mask sent verbatim (e.g., "~country:ES")
+     */
+    public function removeGlineByMask(string $serverSid, string $mask): void;
+
+    /**
      * Introduce a temporary pseudo-client to the network.
      *
      * Used for GLOBAL messages where a temporary client is needed to send messages.

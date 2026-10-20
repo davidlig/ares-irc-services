@@ -2268,6 +2268,17 @@ services:
             $handler: '@App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface'
         tags: ['operserv.command.new']
 
+    App\OperServ\Application\UseCase\ManageGeoip\ManageGeoipHandlerInterface:
+        alias: App\OperServ\Application\UseCase\ManageGeoip\ManageGeoipHandler
+
+    App\OperServ\Application\Port\Out\GeoipCountryRepository:
+        alias: App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineGeoipCountryRepository
+
+    App\OperServ\Adapter\In\Irc\Command\GeoipCommand:
+        arguments:
+            $handler: '@App\OperServ\Application\UseCase\ManageGeoip\ManageGeoipHandlerInterface'
+        tags: ['operserv.command.new']
+
     App\OperServ\Application\UseCase\ManageMotd\ManageMotdHandlerInterface:
         alias: App\OperServ\Application\UseCase\ManageMotd\ManageMotdHandler
 

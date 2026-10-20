@@ -224,6 +224,41 @@ gline:
     unknown_creator: "necunoscut"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, expiră: %expiration%)"
 
+# --- GEOIP --------------------------------------------------------------------
+geoip:
+  syntax:           "GEOIP {ADD|DEL|LIST} [țară] [motiv]"
+  short:            "Gestionați lista țărilor blocate."
+  help:             "Gestionați țările blocate la poarta rețelei.\nDemonul IRC determină țara fiecărui client care se conectează, astfel o țară blocată este respinsă chiar la conectare.\nADD înregistrează un cod de țară împreună cu motivul.\nDEL elimină o țară din listă.\nLIST afișează țările blocate cu motivul și data înregistrării.\nAceastă comandă necesită permisiunea operserv.geoip."
+  example:          "/msg %bot% GEOIP ADD ES Nu este permis în această rețea"
+  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL sau LIST."
+  unknown_country:  "\x0304✗\x03 \x02%country%\x03 nu este un cod de țară ISO 3166-1 alpha-2 valid."
+  already_exists:   "\x0304✗\x03 Țara \x02%country%\x03 este deja blocată."
+  not_found:        "\x0304✗\x03 Țara \x02%country%\x03 nu este blocată."
+  default_reason:   "Țară blocată conform politicii rețelei"
+
+  add:
+    syntax:         "GEOIP ADD <țară> [motiv]"
+    short:          "Blocați o țară la poarta rețelei."
+    help:           "Blochează toți clienții care se conectează din țara indicată.\nCodul de țară trebuie să fie un cod ISO 3166-1 alpha-2.\nMotivul este afișat clienților respinși și poate fi omis.\nAceastă comandă necesită permisiunea operserv.geoip."
+    example:        "/msg %bot% GEOIP ADD ES Nu este permis în această rețea"
+    done:           "\x0303✓\x03 Țara \x02%country%\x03 a fost blocată - %reason%"
+
+  del:
+    syntax:         "GEOIP DEL <țară>"
+    short:          "Deblocați o țară."
+    help:           "Elimină o țară din lista țărilor blocate.\nAceastă comandă necesită permisiunea operserv.geoip."
+    example:        "/msg %bot% GEOIP DEL ES"
+    done:           "\x0303✓\x03 Țara \x02%country%\x03 a fost deblocată."
+
+  list:
+    syntax:         "GEOIP LIST"
+    short:          "Afișați țările blocate."
+    help:           "Afișează toate țările blocate cu motivul și data înregistrării.\nAceastă comandă necesită permisiunea operserv.geoip."
+    example:        "/msg %bot% GEOIP LIST"
+    header:         "\x0307---\x03 \x02Țări blocate (%count%)\x02 \x0307---\x03"
+    empty:          "Nu există țări blocate."
+    entry:          "\x0310%index%.\x03 \x02%country%\x02 - %reason% (\x0314%nickname%\x03, înregistrat: %registered%)"
+
 # --- GLOBAL -------------------------------------------------------------------
 global:
   syntax:           "GLOBAL {serviciu|poreclă!ident@vhost} {PRIVMSG|NOTICE} <mesaj>"

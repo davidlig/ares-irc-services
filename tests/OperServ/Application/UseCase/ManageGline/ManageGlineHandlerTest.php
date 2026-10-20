@@ -326,6 +326,10 @@ final class RecordingGlineNetworkActions implements GlineNetworkActions
     {
         $this->removed[] = $mask;
     }
+
+    public function addByMask(string $mask, string $reason): void {}
+
+    public function removeByMask(string $mask): void {}
 }
 
 final readonly class GlineTestUserLookup implements GlineUserLookup

@@ -187,6 +187,30 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     }
 
     /**
+     * InspIRCd has no G-lines, so a full-mask G-line cannot be applied.
+     *
+     * The mask is not split into a user and a host part, so it may be an extban
+     * such as ~country:ES. The refusal is explicit instead of silent so the
+     * operator can see that the country gate is unavailable on this IRCd.
+     */
+    public function addGlineByMask(string $serverSid, string $mask, string $reason): void
+    {
+        $this->logger->warning('Refusing G-line by mask: InspIRCd has no G-lines.', ['mask' => $mask]);
+    }
+
+    /**
+     * InspIRCd has no G-lines, so a full-mask G-line cannot be removed.
+     *
+     * The mask is not split into a user and a host part, so it may be an extban
+     * such as ~country:ES. The refusal is explicit instead of silent so the
+     * operator can see that the country gate is unavailable on this IRCd.
+     */
+    public function removeGlineByMask(string $serverSid, string $mask): void
+    {
+        $this->logger->warning('Refusing G-line removal by mask: InspIRCd has no G-lines.', ['mask' => $mask]);
+    }
+
+    /**
      * InspIRCd: introduce a temporary pseudo-client with UID.
      * Format (1206+): :serverSid UID uuid ts nick real_host displayed_host real_user displayed_user ip connect_time modes :realname
      * Umodes: +B (bot only, not a full service like NickServ).

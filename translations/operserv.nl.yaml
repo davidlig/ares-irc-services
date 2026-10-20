@@ -224,6 +224,41 @@ gline:
     unknown_creator: "onbekend"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, verloopt: %expiration%)"
 
+# --- GEOIP --------------------------------------------------------------------
+geoip:
+  syntax:           "GEOIP {ADD|DEL|LIST} [land] [reden]"
+  short:            "Beheer de lijst met geblokkeerde landen."
+  help:             "Beheer de landen die bij de netwerkpoort worden geblokkeerd.\nDe IRC-daemon bepaalt het land van elke client die verbindt, dus een geblokkeerd land wordt al bij het verbinden geweigerd.\nADD registreert een landcode met de reden.\nDEL verwijdert een land uit de lijst.\nLIST toont de geblokkeerde landen met reden en registratiedatum.\nDit commando vereist de operserv.geoip-permissie."
+  example:          "/msg %bot% GEOIP ADD ES Niet toegestaan in dit netwerk"
+  unknown_sub:      "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
+  unknown_country:  "\x0304✗\x03 \x02%country%\x03 is geen geldige ISO 3166-1 alpha-2-landcode."
+  already_exists:   "\x0304✗\x03 Land \x02%country%\x03 is al geblokkeerd."
+  not_found:        "\x0304✗\x03 Land \x02%country%\x03 is niet geblokkeerd."
+  default_reason:   "Land geblokkeerd door het netwerkbeleid"
+
+  add:
+    syntax:         "GEOIP ADD <land> [reden]"
+    short:          "Blokkeer een land bij de netwerkpoort."
+    help:           "Blokkeert alle clients die vanuit het opgegeven land verbinden.\nDe landcode moet een ISO 3166-1 alpha-2-code zijn.\nDe reden wordt aan de geweigerde clients getoond en mag worden weggelaten.\nDit commando vereist de operserv.geoip-permissie."
+    example:        "/msg %bot% GEOIP ADD ES Niet toegestaan in dit netwerk"
+    done:           "\x0303✓\x03 Land \x02%country%\x03 geblokkeerd - %reason%"
+
+  del:
+    syntax:         "GEOIP DEL <land>"
+    short:          "Deblokkeer een land."
+    help:           "Verwijdert een land uit de lijst met geblokkeerde landen.\nDit commando vereist de operserv.geoip-permissie."
+    example:        "/msg %bot% GEOIP DEL ES"
+    done:           "\x0303✓\x03 Land \x02%country%\x03 gedeblokkeerd."
+
+  list:
+    syntax:         "GEOIP LIST"
+    short:          "Toon de geblokkeerde landen."
+    help:           "Toont alle geblokkeerde landen met reden en registratiedatum.\nDit commando vereist de operserv.geoip-permissie."
+    example:        "/msg %bot% GEOIP LIST"
+    header:         "\x0307---\x03 \x02Geblokkeerde landen (%count%)\x02 \x0307---\x03"
+    empty:          "Er zijn geen geblokkeerde landen."
+    entry:          "\x0310%index%.\x03 \x02%country%\x02 - %reason% (\x0314%nickname%\x03, geregistreerd: %registered%)"
+
 # --- GLOBAL -------------------------------------------------------------------
 global:
   syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <bericht>"

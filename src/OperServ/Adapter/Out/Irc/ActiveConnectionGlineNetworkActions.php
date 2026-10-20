@@ -55,6 +55,32 @@ final readonly class ActiveConnectionGlineNetworkActions implements GlineNetwork
         $module->getServiceActions()->removeGline($serverSid, $parts['user'], $parts['host']);
     }
 
+    public function addByMask(string $mask, string $reason): void
+    {
+        $module = $this->connection->getProtocolModule();
+        $serverSid = $this->connection->getServerSid();
+        if (null === $module || null === $serverSid) {
+            $this->logger->error('GLINE mask: no active protocol module or server SID');
+
+            return;
+        }
+
+        $module->getServiceActions()->addGlineByMask($serverSid, $mask, $reason);
+    }
+
+    public function removeByMask(string $mask): void
+    {
+        $module = $this->connection->getProtocolModule();
+        $serverSid = $this->connection->getServerSid();
+        if (null === $module || null === $serverSid) {
+            $this->logger->error('GLINE mask DEL: no active protocol module or server SID');
+
+            return;
+        }
+
+        $module->getServiceActions()->removeGlineByMask($serverSid, $mask);
+    }
+
     /** @return array{user: string, host: string} */
     private function parts(string $mask): array
     {

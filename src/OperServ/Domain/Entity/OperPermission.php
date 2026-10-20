@@ -10,6 +10,8 @@ class OperPermission
 
     public const string GLINE = 'operserv.gline';
 
+    public const string GEOIP = 'operserv.geoip';
+
     private int $id;
 
     private string $name;

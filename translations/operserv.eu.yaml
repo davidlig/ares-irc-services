@@ -224,6 +224,41 @@ gline:
     unknown_creator: "ezezaguna"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, iraungitzea: %expiration%)"
 
+# --- GEOIP --------------------------------------------------------------------
+geoip:
+  syntax:           "GEOIP {ADD|DEL|LIST} [herrialdea] [arrazela]"
+  short:            "Kudeatu herrialde debekatuen zerrenda."
+  help:             "Kudeatu sarearen atean debekatuen dauden herrialdeak.\nIRC zerbitzariak konektatzen den bezeroaren herrialdea zehazten du, beraz debekatutako herrialde bat konektatzean bertan ukitzen da.\nADD herrialde kodea eta arrazela gaitzen ditu.\nDEL herrialde bat zerrendatik kentzen du.\nLIST debekatutako herrialdeak arrazela eta erregistratze datarekin erakusten ditu.\nKomando honek operserv.geoip baimena behar du."
+  example:          "/msg %bot% GEOIP ADD ES Sare honetan ez da baimatzen"
+  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
+  unknown_country:  "\x0304✗\x03 \x02%country%\x03 ez da ISO 3166-1 alpha-2 herrialde kode baliozkoa."
+  already_exists:   "\x0304✗\x03 \x02%country%\x03 herrialdea dagoeneko debekatuta dago."
+  not_found:        "\x0304✗\x03 \x02%country%\x03 herrialdea ez dago debekatuta."
+  default_reason:   "Herrialdea sarearen politikagatik debekatuta"
+
+  add:
+    syntax:         "GEOIP ADD <herrialdea> [arrazela]"
+    short:          "Debekatu herrialde bat sarearen atean."
+    help:           "Ematen den herrialdetik konektatzen diren bezero guztiak debekatzen ditu.\nHerrialde kodea ISO 3166-1 alpha-2 kodea izan behar du.\nArrazela uko den bezeroei erakusten zaie eta hutsik utzi daiteke.\nKomando honek operserv.geoip baimena behar du."
+    example:        "/msg %bot% GEOIP ADD ES Sare honetan ez da baimatzen"
+    done:           "\x0303✓\x03 \x02%country%\x03 herrialdea debekatuta - %reason%"
+
+  del:
+    syntax:         "GEOIP DEL <herrialdea>"
+    short:          "Desblokeatu herrialde bat."
+    help:           "Herrialde bat debekatuen zerrendatik kentzen du.\nKomando honek operserv.geoip baimena behar du."
+    example:        "/msg %bot% GEOIP DEL ES"
+    done:           "\x0303✓\x03 \x02%country%\x03 herrialdea desblokeatuta."
+
+  list:
+    syntax:         "GEOIP LIST"
+    short:          "Zerrendatu debekatutako herrialdeak."
+    help:           "Debekatutako herrialde guztiak arrazela eta erregistratze datarekin erakusten ditu.\nKomando honek operserv.geoip baimena behar du."
+    example:        "/msg %bot% GEOIP LIST"
+    header:         "\x0307---\x03 \x02Debekatutako herrialdeak (%count%)\x02 \x0307---\x03"
+    empty:          "Ez dago herrialde debekaturik."
+    entry:          "\x0310%index%.\x03 \x02%country%\x02 - %reason% (\x0314%nickname%\x03, erregistratua: %registered%)"
+
 # --- GLOBAL -------------------------------------------------------------------
 global:
   syntax:           "GLOBAL {zerbitzua|nick!ident@vhost} {PRIVMSG|NOTICE} <mezua>"

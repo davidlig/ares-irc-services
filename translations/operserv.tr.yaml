@@ -224,6 +224,41 @@ gline:
     unknown_creator: "bilinmiyor"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, bitiş: %expiration%)"
 
+# --- GEOIP --------------------------------------------------------------------
+geoip:
+  syntax:           "GEOIP {ADD|DEL|LIST} [ülke] [gerekçe]"
+  short:            "Engelli ülke listesini yönetin."
+  help:             "Ağ kapısında engellenen ülkeleri yönetin.\nIRC sunucusu, bağlanan her istemcinin ülkesini çözer; bu nedenle engelli bir ülke bağlantı anında reddedilir.\nADD bir ülke kodunu ve gerekçesini kaydeder.\nDEL bir ülkeyi listeden kaldırır.\nLIST engellenen ülkeleri gerekçeleri ve kayıt tarihleriyle gösterir.\nBu komut operserv.geoip iznini gerektirir."
+  example:          "/msg %bot% GEOIP ADD ES Bu ağda izin verilmiyor"
+  unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
+  unknown_country:  "\x0304✗\x03 \x02%country%\x03 geçerli bir ISO 3166-1 alpha-2 ülke kodu değil."
+  already_exists:   "\x0304✗\x03 \x02%country%\x03 ülkesi zaten engelli."
+  not_found:        "\x0304✗\x03 \x02%country%\x03 ülkesi engelli değil."
+  default_reason:   "Ağ politikası gereği engelli ülke"
+
+  add:
+    syntax:         "GEOIP ADD <ülke> [gerekçe]"
+    short:          "Ağ kapısında bir ülkeyi engelleyin."
+    help:           "Belirtilen ülkeden bağlanan tüm istemcileri engeller.\nÜlke kodu ISO 3166-1 alpha-2 olmalıdır.\nGerekçe reddedilen istemcilere gösterilir ve isteğe bağlıdır.\nBu komut operserv.geoip iznini gerektirir."
+    example:        "/msg %bot% GEOIP ADD ES Bu ağda izin verilmiyor"
+    done:           "\x0303✓\x03 \x02%country%\x03 ülkesi engellendi - %reason%"
+
+  del:
+    syntax:         "GEOIP DEL <ülke>"
+    short:          "Bir ülkenin engelini kaldırın."
+    help:           "Bir ülkeyi engelli ülkeler listesinden kaldırır.\nBu komut operserv.geoip iznini gerektirir."
+    example:        "/msg %bot% GEOIP DEL ES"
+    done:           "\x0303✓\x03 \x02%country%\x03 ülkesinin engeli kaldırıldı."
+
+  list:
+    syntax:         "GEOIP LIST"
+    short:          "Engelli ülkeleri listeleyin."
+    help:           "Engelli ülkeleri gerekçeleri ve kayıt tarihleriyle listeler.\nBu komut operserv.geoip iznini gerektirir."
+    example:        "/msg %bot% GEOIP LIST"
+    header:         "\x0307---\x03 \x02Engelli Ülkeler (%count%)\x02 \x0307---\x03"
+    empty:          "Engelli ülke bulunmuyor."
+    entry:          "\x0310%index%.\x03 \x02%country%\x02 - %reason% (\x0314%nickname%\x03, kayıt: %registered%)"
+
 # --- GLOBAL -------------------------------------------------------------------
 global:
   syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <mesaj>"

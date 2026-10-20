@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\OperServ\Domain\Entity\GeoipCountry" table="geoip_countries">
+        <unique-constraints>
+            <unique-constraint name="uniq_geoip_country_code" columns="country_code"/>
+        </unique-constraints>
+        <indexes>
+            <index name="idx_geoip_registered_at" columns="registered_at"/>
+        </indexes>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="countryCode" type="string" length="2" column="country_code"/>
+        <field name="reason" type="string" length="255" column="reason"/>
+        <field name="registeredByNick" type="string" length="32" column="registered_by_nick"/>
+        <field name="registeredAt" type="datetime_immutable" column="registered_at"/>
+    </entity>
+</doctrine-mapping>

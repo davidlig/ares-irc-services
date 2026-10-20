@@ -34,6 +34,8 @@ use function str_split;
  * - setChannelMemberMode: founder +q is UDB-owned; other ranks keep MODE.
  * - setChannelTopic: persisted as C::<#chan>::topic.
  * - addGline/removeGline: K::G profiles with expires/reason leaves.
+ * - addGlineByMask/removeGlineByMask: raw GLINE command, because an extban mask
+ *   (e.g. ~country:ES) cannot be expressed as a K::G profile.
  * Commands that UDB cannot perform (KILL, INVITE, JOIN/PART, KICK, UID/QUIT)
  * are kept unchanged.
  */
@@ -188,6 +190,32 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
     public function removeGline(string $serverSid, string $userMask, string $hostMask): void
     {
         $this->recordWriter->delete('K', 'G::' . $userMask . '@' . $hostMask);
+    }
+
+    /**
+     * UnrealUdb GLINE with a full mask.
+     * Format: :serverSid GLINE <mask> :<reason>.
+     *
+     * The mask is sent verbatim so it can be an extban such as ~country:ES.
+     * Extbans are not representable in the UDB K::G profile, so this travels
+     * as the raw command instead of a DB record.
+     */
+    public function addGlineByMask(string $serverSid, string $mask, string $reason): void
+    {
+        $this->write(sprintf(':%s GLINE %s :%s', $serverSid, $mask, $reason));
+    }
+
+    /**
+     * UnrealUdb GLINE removal with a full mask.
+     * Format: :serverSid GLINE -<mask>.
+     *
+     * The mask is sent verbatim so it can be an extban such as ~country:ES.
+     * Extbans are not representable in the UDB K::G profile, so this travels
+     * as the raw command instead of a DB record.
+     */
+    public function removeGlineByMask(string $serverSid, string $mask): void
+    {
+        $this->write(sprintf(':%s GLINE -%s', $serverSid, $mask));
     }
 
     /**

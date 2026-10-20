@@ -178,6 +178,26 @@ final readonly class UnrealStandaloneProtocolServiceActions implements ProtocolS
     }
 
     /**
+     * UnrealIRCd GLINE with a full mask.
+     * Format: :serverSid GLINE <mask> :<reason>
+     * The mask is sent verbatim so it can be an extban such as ~country:ES.
+     */
+    public function addGlineByMask(string $serverSid, string $mask, string $reason): void
+    {
+        $this->write(sprintf(':%s GLINE %s :%s', $serverSid, $mask, $reason));
+    }
+
+    /**
+     * UnrealIRCd GLINE removal with a full mask.
+     * Format: :serverSid GLINE -<mask>
+     * The mask is sent verbatim so it can be an extban such as ~country:ES.
+     */
+    public function removeGlineByMask(string $serverSid, string $mask): void
+    {
+        $this->write(sprintf(':%s GLINE -%s', $serverSid, $mask));
+    }
+
+    /**
      * UnrealIRCd: introduce a temporary pseudo-client with UID.
      * Format: :serverSid UID nick hopcount timestamp ident vhost uid servicestamp umodes * * * :realname
      * Umodes: +B (bot only, not a full service like NickServ).

@@ -10,6 +10,7 @@ use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use ReflectionClass;
 
 #[CoversClass(InspIRCdProtocolServiceActions::class)]
@@ -419,6 +420,32 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
 
         self::assertCount(1, $this->written);
         self::assertSame(':001 DELLINE G *@192.168.*', $this->written[0]);
+    }
+
+    #[Test]
+    public function addGlineByMaskIsRefusedBecauseInspIRCdHasNoGlines(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')
+            ->with('Refusing G-line by mask: InspIRCd has no G-lines.', ['mask' => '~country:ES']);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, logger: $logger);
+
+        $actions->addGlineByMask('001', '~country:ES', 'Not allowed');
+
+        self::assertEmpty($this->written);
+    }
+
+    #[Test]
+    public function removeGlineByMaskIsRefusedBecauseInspIRCdHasNoGlines(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')
+            ->with('Refusing G-line removal by mask: InspIRCd has no G-lines.', ['mask' => '~country:ES']);
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder, logger: $logger);
+
+        $actions->removeGlineByMask('001', '~country:ES');
+
+        self::assertEmpty($this->written);
     }
 
     #[Test]

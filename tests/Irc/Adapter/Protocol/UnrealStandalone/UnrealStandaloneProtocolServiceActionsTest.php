@@ -297,6 +297,28 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
+    public function addGlineByMaskSendsTheCountryExtbanVerbatim(): void
+    {
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+
+        $actions->addGlineByMask('001', '~country:ES', 'Not allowed');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 GLINE ~country:ES :Not allowed', $this->written[0]);
+    }
+
+    #[Test]
+    public function removeGlineByMaskSendsTheCountryExtbanWithoutSpace(): void
+    {
+        $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
+
+        $actions->removeGlineByMask('001', '~country:ES');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 GLINE -~country:ES', $this->written[0]);
+    }
+
+    #[Test]
     public function introducePseudoClientSendsUidCommand(): void
     {
         $actions = new UnrealStandaloneProtocolServiceActions($this->connectionHolder);
