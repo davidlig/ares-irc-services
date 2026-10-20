@@ -1,81 +1,114 @@
 # Contributing to Ares IRC Services
 
-Start with an issue, not a pull request. Develop only changes whose issue scope a
-maintainer has approved. This keeps contributions aligned with the project and
-avoids asking contributors to build work that cannot be accepted.
+Start with an issue, not a pull request. Develop only the scope explicitly
+authorized for your contributor identity and source branch by an authorized maintainer.
 
-> **Automation is not active yet.** The policy core alone does not enforce these
-> rules. The dedicated GitHub App, workflows, required checks and branch protection
-> must be activated before automatic closure or merge blocking can be relied on.
-> See the [maintainer activation guide](docs/contribution-policy-setup.md) for the
-> pending external setup and acceptance checks.
+> **Deployment state, 2026-10-20:** the dedicated App and native main protections
+> are active. The branch-bound grant protocol below is **v2** and is not active on
+> trusted main until this change is merged and deployed. Positive v2 live admission
+> has not been tested. See the [maintainer guide](docs/contribution-policy-setup.md)
+> for verified setup, migration and remaining acceptance checks.
 
 ## Contribution path
 
-1. **Open an issue** describing the problem, proposed behavior and acceptance criteria.
-2. **Wait for a maintainer's approval.** The exact `approved` issue label must be
-   applied by an authorized human maintainer with current write/admin-equivalent
-   access. The older `status:approved` label, a comment, or a label on a PR is not
-   authorization. Maintainer identities are pinned by numeric GitHub user ID in
-   [the policy configuration](.github/contribution-policy.json), not by username.
-3. **Develop only the approved scope.** Every feature needs its own approved issue
-   and acceptance criteria. Unrelated improvements or extra features need their
-   own prior issue approval. Tests, documentation and incidental implementation
-   necessary for the approved behavior can belong to that same issue.
-4. **Open a PR with real closing references in its description.** Map each feature
-   to its approved issue and criteria using the PR template. Multiple issues are
-   allowed, but **every** closing or manually linked issue must be an actual issue
-   in this repository with valid approval provenance. A manually linked issue
-   alone does not replace a closing-keyword reference in the body.
-5. **Complete review and CI.** Non-owner-authored PRs need an independent approval
-   from an authorized human maintainer on the current HEAD commit, alongside all
-   existing CI and main-branch protection requirements. New commits invalidate
-   the current-HEAD approval, including empty commits. Address requests for changes
-   before requesting approval again.
+1. **Open an issue** with the problem, proposed behavior and acceptance criteria.
+   Each feature needs its own issue. Unrelated extras require separate prior
+   authorization; necessary tests, documentation and incidental implementation may
+   belong to the feature they support. The issue must remain **open**.
+2. **Agree the contributor and branch before development.** Supply your numeric
+   GitHub user ID, source repository ID (your fork for a fork PR), exact branch name
+   and target `main`. A username or branch name alone is not an identity.
+3. **Wait for a maintainer's grant and both labels.** An allowlisted human with
+   current write/admin-equivalent permission posts a standalone, unedited issue
+   comment in this exact format, replacing the example values:
 
-## Issue references and timing
+   ```text
+   /authorize-contribution {"version":1,"author_id":123,"head_repository_id":456,"head_ref":"feat/example","base_ref":"main"}
+   ```
 
-Use `Fixes`, `Closes` or `Resolves` followed by issue references. Their supported
-verb forms are case-insensitive and may include a colon. Local `#N`, qualified
-`davidlig/ares-irc-services#N` and full GitHub issue URLs are accepted. For example:
+   The maintainer then applies **`approved-grant:<comment_id>`**, followed by
+   **`approved`**, in separate, strictly later steps. The issue must carry exactly
+   one grant-pointer label. Extra/duplicate JSON keys, invalid IDs, edited comments,
+   renamed pointers without provenance, and legacy `status:approved` do not qualify.
+   Both label applications and the comment author require trusted current human
+   authority. A PR label, self-approval or ordinary comment is not a grant.
+4. **Develop only the authorized scope**, then open the PR on that exact source
+   repository/branch. Every feature must map to its own issue, grant and acceptance
+   criteria in the template. Multiple issues are allowed, but **all** closing and
+   manually linked issues must qualify. The body also needs a real closing-keyword
+   declaration, not only a manual link or an example in comments/code fences.
+5. **Complete independent review and CI.** External-author PRs need an allowlisted
+   human maintainer's independent approval on the current HEAD. New commits,
+   including empty commits, invalidate that approval. CI, the dedicated App check
+   and main protection remain mandatory; address active requests for changes.
+
+## One PR per grant, not parallel work
+
+A grant belongs to the author's **first PR creation or reopening in this repository
+strictly after its original approval epoch**, including closed or merged PRs.
+That opening consumes it even if the PR uses another branch, has no issue reference,
+changes its body later or is closed. Only that same stable PR identity may reopen
+using the consumed grant; a new PR needs a **new comment and approval**.
+
+Do not authorize separate parallel PRs for one author. Grants for multiple issues
+supporting the same PR must all qualify; otherwise an earlier unrelated opening can
+consume them. Other authors' PRs and ordinary comments do not consume your grant.
+The selected PR must still match the grant's author, source repository, exact branch
+and `main` target. Choosing a different branch does not leave the grant available.
+
+The **original approval epoch** is the first `approved` application after the first
+trusted application of that grant's pointer. Removing/reapplying either label does
+not reset consumption or create a fresh epoch for the old comment. Missing or
+invalid current pointers never fall back to an older comment.
+
+## References, timing and recovery
+
+Supported closing keywords include `Fixes`, `Closes` and `Resolves` and their verb
+forms, case-insensitively, with an optional colon. Examples:
 
 ```text
 Fixes #123, #456
 Resolves: https://github.com/davidlig/ares-irc-services/issues/789
 ```
 
-Replace example numbers with your actual approved issues in **plain PR description
-text**, outside comments or code fences. Separate explanatory prose into its own
-sentence. Foreign repositories, PR links, malformed references, or any unapproved
-linked issue invalidate admission; the policy never silently accepts just the
-first reference. Ordinary mentions do not grant authorization.
+Replace the numbers with actual issues in plain PR text. Qualified
+`davidlig/ares-irc-services#N` is also accepted. Foreign repositories, PR links,
+malformed extra references or any invalid linked issue block admission; ordinary
+mentions do not grant authorization.
 
-Approval must precede the PR's opening or **latest reopening**. Applying or
-reapplying `approved` after opening is not prior approval. Once automation is
-activated, an invalid or unrequested PR will be automatically closed with a
-friendly explanation. Correct the description or issue approval, then reopen the
-PR yourself after all approvals are in place. Automation never reopens PRs.
-An otherwise admitted PR missing review stays open, but cannot pass the policy
-check. Removing approval or the approving maintainer's write access also invalidates
-admission. Issue closure alone does not revoke approval.
+All steps use GitHub timestamps and must be strictly ordered:
+**latest issue scope edit/reopening < grant comment < grant-pointer application <
+original approved application < PR opening/latest reopening**. Equal timestamps
+fail conservatively. Do not batch both labels; verify distinct times before opening.
 
-Editing an approved issue's body or title changes the scope being authorized.
-The approval must be reapplied by a maintainer after the latest edit; an old label
-cannot authorize rewritten requirements. If a PR is already open, obtain that
-fresh issue approval, then reopen the PR after approval as described above.
+Closing an issue revokes admission. Reopening it, changing its body/title, editing
+or deleting the grant, losing maintainer authority, or consuming it with another PR
+requires recovery:
 
-## Scope and exceptions
+1. Keep/reopen the issue only if its scope is still wanted; finalize its content.
+2. Remove `approved` and old `approved-grant:*` labels. A maintainer posts a **new,
+   unedited command comment**, applies its new pointer, then applies `approved`.
+3. After all linked issues qualify, manually reopen the intended PR. If it is still
+   open, close it before reopening after authorization. The next author opening must
+   be this PR, not unrelated work. A new PR also requires a fresh grant and approval.
 
-Maintainers must verify that each change actually matches its issue's approved
-scope and acceptance criteria. Reference validation **does not automatically detect
-unrelated features or prove semantic scope**. List each feature separately so this
-review is straightforward.
+Automation never reopens PRs or retroactively approves work, including owner work.
+Under v2, old `approved` labels alone are invalid; there is no grandfathering.
+GitHub permits PR creation before validation. Reconciliation is asynchronous and
+closes invalid PRs only after blocking checks and posting a friendly comment. An
+admitted PR missing review stays open but cannot pass. API failures are unknown,
+not proof of a contribution violation; never bypass checks to work around an outage.
 
-Only PRs authored by the repository owner, stable user ID `561369`, are exempt from
-independent PR review. That exemption does **not** waive prior issue approval,
-current CI, the `Contribution policy` check, or main-branch protection.
+## Scope and owner exception
 
-For implementation and verification conventions, read [AGENTS.md](AGENTS.md).
-Maintainers: follow the [activation guide](docs/contribution-policy-setup.md) for
-App installation, trusted check source selection and branch protection. All external
-configuration remains pending separate authorization.
+Maintainers must verify each feature against its issue's authorized scope and
+criteria. Binding a grant **does not automatically detect unrelated features or
+prove semantic scope**. No AI semantic approval is part of this policy.
+
+Only PR author ID `561369` is exempt from independent PR review. The exemption does
+not waive issue/grant requirements, current CI, the `Contribution policy` check or
+main protection. It is not an exemption for anyone else's PR merged by the owner.
+
+Read [AGENTS.md](AGENTS.md) for implementation/testing conventions and the
+[maintainer guide](docs/contribution-policy-setup.md#grant-issuance-and-v2-migration)
+for numeric-ID lookup, grant issuance and migration.
