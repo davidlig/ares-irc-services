@@ -1,17 +1,21 @@
 """Exercise the real HTTP adapter and reconciler against an in-memory GitHub API."""
 
 from copy import deepcopy
+from contextlib import redirect_stdout
 from io import BytesIO
+from io import StringIO
 import json
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from policy import PolicyConfig
 from reconcile import ApiError, Github, NoRedirect, Reconciler
+import reconcile
 
 REPO = "davidlig/ares-irc-services"
 PREFIX = "/repos/" + REPO
@@ -26,7 +30,25 @@ CONFIG = PolicyConfig(1167938167, REPO, 561369, frozenset({561369}))
 
 
 def issue(number=12):
-    return {"number": number, "labels": [{"name": "approved"}], "state": "open"}
+    return {"number": number, "labels": [{"name": "approved"}, {"name": "approved-grant:" + str(grant_id(number))}], "state": "open"}
+
+
+def grant_id(number):
+    return 100 if number == 12 else 100 + number
+
+
+def grant_comment(number=12, author_id=123, identifier=None, head_ref="feat/example", when="2026-10-17T00:00:00Z"):
+    identifier = grant_id(number) if identifier is None else identifier
+    return {"id": identifier, "user": deepcopy(OWNER), "issue_url": "https://api.github.com" + PREFIX + f"/issues/{number}",
+            "created_at": when, "updated_at": when,
+            "body": "/authorize-contribution " + json.dumps({"version": 1, "author_id": author_id,
+                    "head_repository_id": 456, "head_ref": head_ref, "base_ref": "main"})}
+
+
+def grant_event(identifier=2, comment_id=100, when="2026-10-17T12:00:00Z", actor=None):
+    event = label_event(identifier, actor, when=when)
+    event["label"]["name"] = "approved-grant:" + str(comment_id)
+    return event
 
 
 def label_event(identifier=1, actor=None, action="labeled", when="2026-10-18T00:00:00Z"):
@@ -37,7 +59,8 @@ def label_event(identifier=1, actor=None, action="labeled", when="2026-10-18T00:
 def pull(number=1, author=None, head=HEAD, merge=MERGE, body="Fixes #12"):
     return {"id": 1000 + number, "number": number, "state": "open", "body": body,
             "user": deepcopy(author or AUTHOR), "created_at": "2026-10-19T00:00:00Z",
-            "head": {"sha": head}, "base": {"sha": BASE, "ref": "main", "repo": {"id": 1167938167}},
+            "head": {"sha": head, "repo": {"id": 456}, "ref": "feat/example"},
+            "base": {"sha": BASE, "ref": "main", "repo": {"id": 1167938167}},
             "merge_commit_sha": merge, "mergeable": True, "mergeable_state": "clean"}
 
 
@@ -58,20 +81,21 @@ class Server:
     def __init__(self):
         self.prs = {1: pull()}
         self.issues = {12: issue()}
-        self.events = {12: [label_event()]}
+        self.events = {12: [grant_event(), label_event()]}
         self.scope_edits = {}
         self.pr_events = {1: []}
         self.reviews = {1: [review()]}
         self.links = {1: []}
         self.permissions = {561369: "admin"}
         self.checks = []
-        self.comments = {1: []}
+        self.comments = {1: [], 12: [grant_comment()]}
         self.calls = []
         self.hook = None
         self.fail = None
         self.graphql_page_size = 100
         self.repo_id = 1167938167
         self.next_id = 100
+        self.history_scans = 0
 
     def client(self, token):
         return Github(token, open_url=self.open, sleep=lambda _: None)
@@ -109,7 +133,10 @@ class Server:
                     "pageInfo": {"hasNextPage": end < len(all_links), "endCursor": str(end)}}}}}})
         relative = path.removeprefix(PREFIX)
         if relative == "/pulls" and method == "GET":
-            return self.page([p for p in self.prs.values() if p["state"] == "open"], path, query)
+            state = query.get("state", ["open"])[0]
+            if state == "all":
+                self.history_scans += 1
+            return self.page([p for p in self.prs.values() if state == "all" or p["state"] == state], path, query)
         if relative == "/issues" and method == "GET":
             return self.page([i for i in self.issues.values() if any(l["name"] == "approved" for l in i["labels"])], path, query)
         parts = relative.strip("/").split("/")
@@ -130,8 +157,12 @@ class Server:
             return self.page(self.events.get(number, []) if number in self.issues else self.pr_events.get(number, []), path, query)
         if parts[0] == "issues" and len(parts) == 4 and parts[2] == "labels":
             number = int(parts[1])
-            self.issues[number]["labels"] = [l for l in self.issues[number]["labels"] if l["name"] != "approved"]
-            self.events.setdefault(number, []).append(label_event(9999, BOT, "unlabeled", "2026-10-20T00:00:00Z"))
+            from urllib.parse import unquote
+            label = unquote(parts[-1])
+            self.issues[number]["labels"] = [l for l in self.issues[number]["labels"] if l["name"] != label]
+            event = label_event(9999, BOT, "unlabeled", "2026-10-20T00:00:00Z")
+            event["label"]["name"] = label
+            self.events.setdefault(number, []).append(event)
             return Response(self.issues[number]["labels"])
         if parts[0] == "collaborators":
             return Response({"permission": self.permissions.get(561369, "read"), "user": deepcopy(OWNER)})
@@ -145,9 +176,12 @@ class Server:
             return Response(deepcopy(run))
         if parts[0] == "check-runs" and method == "PATCH":
             run = next(c for c in self.checks if c["id"] == int(parts[1]))
+            if run.get("status") == "completed" and data.get("status") == "in_progress":
+                # Model a terminal response, not an assumed successful reopening.
+                # Live diagnostics proved non-in_progress, not its exact value.
+                return Response(deepcopy(run))
             run.update(data)
-            if data["status"] == "in_progress":
-                run["conclusion"] = None
+            # Omitted fields are retained, not silently reset by the test server.
             return Response(deepcopy(run))
         if parts[0] == "issues" and parts[-1] == "comments":
             number = int(parts[1])
@@ -195,8 +229,10 @@ def valid_distinct_prs(count):
         issue_number = max(100, count) + number
         head, merge = f"{number:040x}", f"{1000 + number:040x}"
         server.prs[number] = pull(number, head=head, merge=merge, body=f"Fixes #{issue_number}")
+        server.prs[number]["user"]["id"] += number - 1
         server.issues[issue_number] = issue(issue_number)
-        server.events[issue_number] = [label_event()]
+        server.events[issue_number] = [grant_event(comment_id=grant_id(issue_number)), label_event()]
+        server.comments[issue_number] = [grant_comment(issue_number, 123 + number - 1)]
         server.reviews[number] = [review(sha=head)]
     return server
 
@@ -207,6 +243,70 @@ def request_counts(server):
     graphql = len(metadata) - rest
     app = sum(call[0] == "checks" for call in server.calls)
     return rest, graphql, app
+
+
+class CheckHoldTests(unittest.TestCase):
+    def test_completed_failure_and_success_are_blocked_before_metadata_on_replays(self):
+        for previous in ("failure", "success"):
+            with self.subTest(previous=previous):
+                server = Server()
+                if previous == "failure":
+                    server.reviews[1] = []
+                self.assertTrue(server.engine().run().ok)
+                self.assertEqual(previous, server.conclusion(HEAD))
+                server.reviews[1] = [review()]
+                first_details = []
+                def before_details(s, call):
+                    if call[1:3] == ("GET", PREFIX + "/pulls/1") and not first_details:
+                        first_details.append(True)
+                        self.assertEqual({("completed", "failure")},
+                                         {(r["status"], r["conclusion"]) for r in s.checks})
+                server.hook = before_details
+                for _ in range(2):
+                    first_details.clear()
+                    self.assertTrue(server.engine().run().ok)
+                    self.assertTrue(first_details)
+                    self.assertEqual({"success"}, {r["conclusion"] for r in server.checks})
+                    self.assertEqual(2, len(server.checks))
+
+    def test_new_checks_are_explicit_completed_failures_during_snapshot(self):
+        server = Server()
+        server.engine()._snapshot()
+        self.assertEqual({HEAD, MERGE}, {r["head_sha"] for r in server.checks})
+        self.assertEqual({("completed", "failure")},
+                         {(r["status"], r.get("conclusion")) for r in server.checks})
+
+    def test_shared_head_merge_roles_hold_every_unique_existing_sha_once(self):
+        server = valid_distinct_prs(2)
+        server.prs[2]["head"]["sha"] = server.prs[1]["merge_commit_sha"]
+        server.reviews[2] = [review(sha=server.prs[2]["head"]["sha"])]
+        self.assertTrue(server.engine().run().ok)
+        server.calls.clear()
+        server.engine()._snapshot()
+        shas = {sha for p in server.prs.values() for sha in (p["head"]["sha"], p["merge_commit_sha"])}
+        self.assertEqual(3, len(shas))
+        self.assertEqual(shas, {r["head_sha"] for r in server.checks})
+        self.assertTrue(all(r["conclusion"] == "failure" for r in server.checks))
+        updates = [c for c in server.calls if c[0:2] == ("checks", "PATCH")]
+        self.assertEqual(3, len(updates))
+        self.assertTrue(all(c[3].get("conclusion") == "failure" for c in updates))
+
+    def test_partial_initial_hold_write_failure_never_claims_revocation_or_success(self):
+        server = Server()
+        self.assertTrue(server.engine().run().ok)
+        identifier = next(r["id"] for r in server.checks if r["head_sha"] == MERGE)
+        server.calls.clear()
+        server.fail = lambda c: 403 if c[1:3] == ("PATCH", PREFIX + f"/check-runs/{identifier}") else None
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("check_update", result.primary_error.operation.value)
+        self.assertEqual(403, result.primary_error.http_status)
+        self.assertTrue(result.cleanup_errors)
+        self.assertEqual("failure", server.conclusion(HEAD))
+        self.assertEqual("success", server.conclusion(MERGE))  # Write outage prevents revocation.
+        self.assertFalse(any(c[1] == "PATCH" and c[3].get("conclusion") == "success"
+                             for c in server.calls))
+        self.assertFalse(any(c[2] == PREFIX + "/pulls/1" for c in server.calls))
 
 
 class PublicationBudgetTests(unittest.TestCase):
@@ -221,15 +321,17 @@ class PublicationBudgetTests(unittest.TestCase):
                 self.assertTrue(result.ok)
                 self.assertTrue(all(run["conclusion"] == "success" for run in server.checks))
                 # Three fresh snapshots, one approval audit, two unique SHAs per PR.
-                # REST: 3*(5n+2) + 3n+2; GraphQL: 3*2n+n; App: 6n+1.
-                self.assertLessEqual(rest, 18 * count + 8)
+                # Each snapshot adds one history page and one grant-comment read per issue.
+                # REST: 3*(6n+3) + 4n+2; GraphQL: 3*2n+n; App: 6n+1.
+                self.assertLessEqual(rest, 22 * count + 11)
                 self.assertLessEqual(graphql, 7 * count)
                 self.assertEqual(6 * count + 1, app)
-                self.assertEqual(3, sum(token == "metadata" and method == "GET" and path == PREFIX + "/pulls"
+                self.assertEqual(6, sum(token == "metadata" and method == "GET" and path == PREFIX + "/pulls"
                                         for token, method, path, _ in server.calls))
+                self.assertEqual(3, server.history_scans)
         # Exact fixture coefficients guard against concealing quadratic work
         # behind a generous one-size-fits-all request cap.
-        self.assertEqual([(n, 18 * n + 8, 7 * n, 6 * n + 1) for n in (1, 5, 10, 20)], observed)
+        self.assertEqual([(n, 22 * n + 11, 7 * n, 6 * n + 1) for n in (1, 5, 10, 20)], observed)
 
     def test_twenty_valid_prs_complete_under_separate_rest_budget(self):
         server = valid_distinct_prs(20)
@@ -295,7 +397,10 @@ class PublicationSafetyTests(unittest.TestCase):
         def hook(s, call):
             if call[0] == "checks" and call[1] == "PATCH" and call[3].get("conclusion") == "success" and not changed:
                 changed.append(True)
-                s.prs[3] = pull(3, head=shared, merge="e" * 40, body="Fixes #101")
+                s.prs[3] = pull(3, author={**AUTHOR, "id": 125}, head=shared, merge="e" * 40, body="Fixes #103")
+                s.issues[103] = issue(103)
+                s.comments[103] = [grant_comment(103, 125)]
+                s.events[103] = [grant_event(comment_id=grant_id(103)), label_event()]
         server.hook = hook
         result = server.engine().run()
         self.assertTrue(result.ok)
@@ -310,7 +415,7 @@ class PublicationSafetyTests(unittest.TestCase):
         self.assertEqual(["success", "failure", "success"], conclusions)
 
     def test_pre_or_post_batch_metadata_failure_cleans_up_without_false_closure(self):
-        for phase, fail_scan in (("pre", 2), ("post", 3)):
+        for phase, fail_scan in (("pre", 3), ("post", 5)):
             with self.subTest(phase=phase):
                 server = valid_distinct_prs(2)
                 scans = []
@@ -431,6 +536,7 @@ class AdapterTests(unittest.TestCase):
     def test_owner_author_exception_not_merger_exception(self):
         server = Server()
         server.prs[1]["user"] = deepcopy(OWNER)
+        server.comments[12] = [grant_comment(author_id=OWNER["id"])]
         server.reviews[1] = []
         self.assertTrue(server.engine().run().ok)
         self.assertEqual("success", server.conclusion(HEAD))
@@ -443,7 +549,8 @@ class AdapterTests(unittest.TestCase):
         writes = [(m, p, d) for _, m, p, d in server.calls if m != "GET"]
         close = next(i for i, (m, p, _) in enumerate(writes) if m == "PATCH" and p == PREFIX + "/pulls/1")
         comment = next(i for i, (m, p, _) in enumerate(writes) if m == "POST" and p.endswith("/comments"))
-        blocked = [i for i, (_, p, d) in enumerate(writes) if "/check-runs" in p and d.get("status") == "in_progress"]
+        blocked = [i for i, (_, p, d) in enumerate(writes) if "/check-runs" in p
+                   and d.get("status") == "completed" and d.get("conclusion") == "failure"]
         self.assertTrue(blocked)
         self.assertLess(max(blocked[:2]), comment)
         self.assertLess(comment, close)
@@ -519,7 +626,7 @@ class AdapterTests(unittest.TestCase):
 
     def test_post_open_approval_and_reopening_timing(self):
         server = Server()
-        server.events[12] = [label_event(when="2026-10-20T00:00:00Z")]
+        server.events[12] = [grant_event(), label_event(when="2026-10-20T00:00:00Z")]
         self.assertTrue(server.engine().run().ok)
         self.assertEqual("closed", server.prs[1]["state"])
         server.prs[1]["state"] = "open"
@@ -537,7 +644,10 @@ class AdapterTests(unittest.TestCase):
 
     def test_shared_sha_missing_review_blocks_head_merge_cross_role(self):
         server = Server()
-        server.prs[2] = pull(2, head=MERGE, merge="d" * 40)
+        server.prs[2] = pull(2, author={**AUTHOR, "id": 124}, head=MERGE, merge="d" * 40, body="Fixes #13")
+        server.issues[13] = issue(13)
+        server.comments[13] = [grant_comment(13, 124)]
+        server.events[13] = [grant_event(comment_id=grant_id(13)), label_event()]
         self.assertTrue(server.engine().run().ok)
         self.assertEqual("failure", server.conclusion(MERGE))
         self.assertEqual("open", server.prs[2]["state"])
@@ -596,7 +706,7 @@ class AdapterTests(unittest.TestCase):
         def hook(s, c):
             if c[1] == "POST" and c[2].endswith("/comments") and not changed:
                 changed.append(True)
-                s.issues[12]["labels"] = [{"name": "approved"}]
+                s.issues[12]["labels"] = issue()["labels"]
         server.hook = hook
         self.assertTrue(server.engine().run().ok)
         self.assertEqual("open", server.prs[1]["state"])
@@ -620,11 +730,13 @@ class AdapterTests(unittest.TestCase):
     def test_reviews_label_events_and_graphql_paginate_past_first_hundred(self):
         server = Server()
         server.reviews[1] = [review(i, state="COMMENTED") for i in range(1, 101)] + [review(101)]
-        server.events[12] = [label_event(i, actor=AUTHOR) for i in range(1, 101)] + [label_event(101)]
+        server.events[12] = [label_event(i, actor=AUTHOR, when="2026-10-16T00:00:00Z") for i in range(1, 101)] + [
+            grant_event(1000), label_event(101)]
         server.links[1] = [{"number": n, "repository": {"nameWithOwner": REPO, "databaseId": 1167938167}} for n in range(12, 113)]
         for number in range(13, 113):
             server.issues[number] = issue(number)
-            server.events[number] = [label_event()]
+            server.events[number] = [grant_event(comment_id=grant_id(number)), label_event()]
+            server.comments[number] = [grant_comment(number)]
         self.assertTrue(server.engine().run().ok)
         self.assertEqual("success", server.conclusion(HEAD))
 
@@ -713,7 +825,9 @@ class AdapterTests(unittest.TestCase):
             self.assertFalse(server.issues[12]["labels"])
             self.assertEqual("closed", server.prs[1]["state"])
             server.events[12].append(label_event(10000, when="2026-10-20T00:00:00Z"))
-            server.issues[12]["labels"] = [{"name": "approved"}]
+            server.events[12].append(grant_event(10001, comment_id=101, when="2026-10-19T12:00:00Z"))
+            server.comments[12].append(grant_comment(identifier=101, when="2026-10-19T00:00:00Z"))
+            server.issues[12]["labels"] = [{"name": "approved"}, {"name": "approved-grant:101"}]
             server.prs[1]["state"] = "open"
             server.pr_events[1] = [{"id": 10, "event": "reopened", "created_at": "2026-10-21T00:00:00Z"}]
             self.assertTrue(server.engine().run().ok)
@@ -805,6 +919,362 @@ class HttpSafetyTests(unittest.TestCase):
             self.assertFalse(server.engine().run().ok)
             self.assertEqual("open", server.prs[1]["state"])
             self.assertNotEqual("success", server.conclusion(HEAD))
+
+
+class GrantAdapterTests(unittest.TestCase):
+    def test_incident_legacy_issue47_cannot_authorize_external_geoip_pr(self):
+        for state in ("open", "closed"):
+            server = Server()
+            server.issues = {47: {"number": 47, "state": state, "labels": [{"name": "approved"}]}}
+            server.events = {47: [label_event()]}
+            server.prs[1]["body"] = "Closes #47\nGEOIP feature from another issue"
+            result = server.engine().run()
+            self.assertTrue(result.ok)
+            self.assertEqual((1,), result.closed)
+            self.assertEqual("failure", server.conclusion(HEAD))
+
+    def test_same_pr_can_reopen_with_unspent_first_epoch_without_new_pr_identity(self):
+        server = Server()
+        self.assertTrue(server.engine().run().ok)
+        server.pr_events[1] = [{"id": 101, "event": "reopened", "created_at": "2026-10-20T00:00:00Z"}]
+        result = server.engine().run()
+        self.assertTrue(result.ok)
+        self.assertEqual((), result.closed)
+        self.assertEqual("success", server.conclusion(HEAD))
+
+    def test_approved_pointer_reapplication_requires_new_comment_not_just_reopen(self):
+        server = Server()
+        server.events[12].append(label_event(10, when="2026-10-20T00:00:00Z"))
+        server.pr_events[1] = [{"id": 101, "event": "reopened", "created_at": "2026-10-21T00:00:00Z"}]
+        result = server.engine().run()
+        self.assertEqual((1,), result.closed)
+
+    def test_issue_comment_configuration_routes_trigger_issue_without_payload_authority(self):
+        values = {"GITHUB_TOKEN": "metadata", "CONTRIBUTION_CHECK_TOKEN": "checks", "CONTRIBUTION_APP_ID": str(APP_ID),
+                  "GITHUB_EVENT_NAME": "issue_comment", "GITHUB_EVENT_PATH": "/event.json"}
+        config = json.loads((Path(__file__).resolve().parents[3] / ".github/contribution-policy.json").read_text())
+        with patch.dict(reconcile.os.environ, values, clear=True), patch.object(reconcile, "Reconciler") as engine, patch.object(
+                reconcile.Path, "read_text", side_effect=(json.dumps(config), json.dumps({"issue": {"number": 12}}))):
+            reconcile.configured_run()
+        engine.return_value.run.assert_called_once_with(12)
+
+    def test_missing_permission_or_dependent_resource_is_not_missing_issue(self):
+        for suffix in ("/collaborators/davidlig/permission", "/issues/12/comments", "/issues/12/events"):
+            server = Server()
+            server.fail = lambda c: 404 if c[2] == PREFIX + suffix else None
+            result = server.engine().run()
+            self.assertFalse(result.ok)
+            self.assertEqual((), result.closed)
+            self.assertEqual("open", server.prs[1]["state"])
+            self.assertFalse(server.comments[1])
+
+    def test_history_missing_author_and_duplicate_comment_pages_are_unknown(self):
+        for kind in ("author", "duplicate"):
+            server = Server()
+            if kind == "author":
+                server.prs[1]["state"] = "closed"
+                server.prs[1]["user"] = None
+            else:
+                server.comments[12].append(deepcopy(server.comments[12][0]))
+            self.assertFalse(server.engine().run().ok)
+
+    def test_pointer_delete_failure_has_fixed_safe_operation(self):
+        server = Server()
+        server.prs = {}
+        server.issues[12]["labels"] = [{"name": "approved-grant:100"}]
+        server.events[12] = [grant_event(actor=AUTHOR)]
+        server.fail = lambda c: 403 if c[1] == "DELETE" else None
+        result = server.engine().run(trigger_issue=12)
+        self.assertFalse(result.ok)
+        self.assertEqual("label_delete", result.primary_error.operation.value)
+
+    def test_history_and_grant_comments_paginate_beyond_first_hundred(self):
+        server = Server()
+        for number in range(2, 103):
+            old = pull(number, body="No issue")
+            old.update(state="closed", created_at="2026-10-16T00:00:00Z")
+            server.prs[number] = old
+        server.comments[12] = [{"id": 1000 + i, "body": "untrusted text"} for i in range(101)] + [grant_comment()]
+        self.assertEqual((), server.engine().run().closed)
+        server.prs[102]["created_at"] = "2026-10-18T12:00:00Z"
+        server.prs[102]["head"]["repo"] = None
+        self.assertEqual((1,), server.engine().run().closed)
+
+    def test_incomplete_history_page_and_comment_api_failure_never_close(self):
+        for failure in ("history", "comment"):
+            server = Server()
+            for number in range(2, 103):
+                old = pull(number)
+                old.update(state="closed", created_at="2026-10-16T00:00:00Z")
+                server.prs[number] = old
+            original = server.open
+            def unavailable(request, timeout):
+                parsed = urlsplit(request.full_url)
+                query = parse_qs(parsed.query)
+                if ((failure == "history" and parsed.path == PREFIX + "/pulls" and query.get("state") == ["all"]
+                     and query.get("page") == ["2"]) or
+                    (failure == "comment" and parsed.path == PREFIX + "/issues/12/comments")):
+                    raise HTTPError(request.full_url, 403, "withheld", {}, BytesIO(b'{}'))
+                return original(request, timeout)
+            server.client = lambda token: Github(token, open_url=unavailable, sleep=lambda _: None)
+            result = server.engine().run()
+            self.assertFalse(result.ok)
+            self.assertEqual((), result.closed)
+            self.assertEqual("failure", server.conclusion(HEAD))
+            self.assertFalse(server.comments[1])
+
+    def test_new_pr_cannot_reuse_consumed_grant_after_first_pr_closed(self):
+        server = Server()
+        self.assertTrue(server.engine().run().ok)
+        server.prs[1]["state"] = "closed"
+        server.prs[2] = pull(2, head="e" * 40, merge="f" * 40)
+        server.prs[2]["created_at"] = "2026-10-20T00:00:00Z"
+        result = server.engine().run()
+        self.assertEqual((2,), result.closed)
+        self.assertEqual("failure", server.conclusion("e" * 40))
+
+    def test_grant_and_consumption_changes_during_publication_invalidate_success(self):
+        for change in ("comment", "issue_closed", "pointer", "source_ref", "source_repo", "history"):
+            server = valid_distinct_prs(2)
+            changed = []
+            def hook(s, call):
+                if call[0] == "checks" and call[1] == "PATCH" and call[3].get("conclusion") == "success" and not changed:
+                    changed.append(True)
+                    if change == "comment": s.comments[101] = []
+                    elif change == "issue_closed": s.issues[101]["state"] = "closed"
+                    elif change == "pointer": s.issues[101]["labels"] = [{"name": "approved"}]
+                    elif change == "source_ref": s.prs[1]["head"]["ref"] = "other"
+                    elif change == "source_repo": s.prs[1]["head"]["repo"]["id"] = 789
+                    else:
+                        old = pull(99, body="No issue")
+                        old.update(state="closed", created_at="2026-10-18T12:00:00Z")
+                        s.prs[99] = old
+            server.hook = hook
+            result = server.engine().run()
+            self.assertTrue(changed)
+            self.assertTrue(result.ok)
+            self.assertIn(1, result.closed)
+            self.assertEqual("failure", server.conclusion(f"{1:040x}"))
+            self.assertEqual("failure", server.conclusion(f"{1001:040x}"))
+
+    def test_untrusted_pointer_is_removed_on_triggered_issue_without_pr(self):
+        server = Server()
+        server.prs = {}
+        server.issues[12]["labels"] = [{"name": "approved-grant:100"}]
+        server.events[12] = [grant_event(actor=AUTHOR)]
+        result = server.engine().run(trigger_issue=12)
+        self.assertTrue(result.ok)
+        self.assertEqual([], server.issues[12]["labels"])
+
+    def test_missing_current_source_and_historical_identity_are_unavailable(self):
+        for target in ("source", "history"):
+            server = Server()
+            if target == "source": server.prs[1]["head"]["repo"] = None
+            else: server.prs[1].pop("id")
+            result = server.engine().run()
+            self.assertFalse(result.ok)
+            self.assertEqual((), result.closed)
+            self.assertEqual("open", server.prs[1]["state"])
+
+    def test_valid_grant_is_loaded_from_real_paginated_metadata(self):
+        server = Server()
+        result = server.engine().run()
+        self.assertTrue(result.ok)
+        self.assertEqual((), result.closed)
+        self.assertEqual("success", server.conclusion(HEAD))
+
+    def test_closed_wrong_branch_historical_pr_consumes_without_body_reference(self):
+        server = Server()
+        old = pull(9, body="No issue reference")
+        old.update(state="closed", created_at="2026-10-18T12:00:00Z")
+        old["head"]["ref"] = "wrong-branch"
+        server.prs[9] = old
+        result = server.engine().run()
+        self.assertTrue(result.ok)
+        self.assertEqual((1,), result.closed)
+
+    def test_historical_reopening_consumes_and_missing_history_is_unavailable(self):
+        server = Server()
+        old = pull(9, body="No issue")
+        old.update(state="closed", created_at="2026-10-16T00:00:00Z")
+        server.prs[9] = old
+        server.pr_events[9] = [{"id": 10, "event": "reopened", "created_at": "2026-10-18T12:00:00Z"}]
+        self.assertEqual((1,), server.engine().run().closed)
+        server = Server()
+        server.fail = lambda c: 403 if c[1:3] == ("GET", PREFIX + "/issues/1/events") else None
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual((), result.closed)
+        self.assertEqual("open", server.prs[1]["state"])
+
+    def test_pointer_deletion_comment_edit_and_issue_reopening_revoke(self):
+        for change in ("closed", "reopened", "edited", "deleted", "pointer", "fork"):
+            with self.subTest(change=change):
+                server = Server()
+                if change == "closed": server.issues[12]["state"] = "closed"
+                elif change == "reopened":
+                    server.events[12].append({"id": 9, "event": "reopened", "created_at": "2026-10-18T00:00:00Z"})
+                elif change == "edited": server.comments[12][0]["updated_at"] = "2026-10-19T00:00:00Z"
+                elif change == "deleted": server.comments[12] = []
+                elif change == "pointer": server.issues[12]["labels"].append({"name": "approved-grant:101"})
+                else: server.prs[1]["head"]["repo"]["id"] = 789
+                result = server.engine().run()
+                self.assertTrue(result.ok)
+                self.assertEqual((1,), result.closed)
+
+
+class DiagnosticTests(unittest.TestCase):
+    def test_configuration_error_has_fixed_category_and_no_traceback(self):
+        output = StringIO()
+        with patch.dict(reconcile.os.environ, {"GITHUB_TOKEN": "TOKEN",
+                        "CONTRIBUTION_CHECK_TOKEN": "PRIVATE", "CONTRIBUTION_APP_ID": "PEM secret"}, clear=True):
+            with redirect_stdout(output):
+                self.assertEqual(1, reconcile.main())
+        self.assertIn("stage=configuration", output.getvalue())
+        self.assertIn("category=configuration", output.getvalue())
+        self.assertNotIn("PEM", output.getvalue())
+
+    def test_check_list_validation_uses_check_context(self):
+        server = Server()
+        server.checks = [{"id": "invalid secret", "name": CONFIG.check_name, "app": {"id": APP_ID},
+                          "external_id": server.engine().checks.external_id(HEAD), "head_sha": HEAD}]
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("check_list", result.primary_error.operation.value)
+        self.assertEqual("checks", result.primary_error.principal.value)
+        self.assertNotIn("secret", repr(result))
+
+    def test_comment_response_mismatch_retains_comment_operation(self):
+        server = Server()
+        server.issues[12]["labels"] = []
+        original = server.open
+        def wrong_author(request, timeout):
+            response = original(request, timeout)
+            if request.get_method() == "POST" and request.full_url.endswith("/comments"):
+                value = json.loads(response.getvalue())
+                value["user"] = AUTHOR
+                return Response(value)
+            return response
+        server.client = lambda token: Github(token, open_url=wrong_author, sleep=lambda _: None)
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("comment", result.primary_error.stage.value)
+        self.assertEqual("comment_create", result.primary_error.operation.value)
+        self.assertEqual("response_mismatch", result.primary_error.category.value)
+        self.assertEqual("open", server.prs[1]["state"])
+
+    def test_graphql_upstream_message_is_not_retained(self):
+        server = Server()
+        original = server.open
+        def malformed(request, timeout):
+            return Response({"errors": [{"message": "TOKEN body https://private.invalid"}]}) if (
+                request.full_url.endswith("/graphql")) else original(request, timeout)
+        server.client = lambda token: Github(token, open_url=malformed, sleep=lambda _: None)
+        result = server.engine().run()
+        self.assertEqual("graphql", result.primary_error.operation.value)
+        self.assertEqual("malformed_response", result.primary_error.category.value)
+        self.assertNotIn("TOKEN", repr(result))
+        self.assertNotIn("private.invalid", repr(result))
+
+    def test_rescan_cleanup_failure_cannot_resume_and_lose_diagnostics(self):
+        server = Server()
+        reads = 0
+        def mutate(s, call):
+            nonlocal reads
+            if call[1:3] == ("GET", PREFIX + "/pulls/1"):
+                reads += 1
+                if reads == 2:
+                    s.prs[1]["body"] += "\nExplanatory detail."
+        server.hook = mutate
+        server.fail = lambda c: 503 if c[1] == "PATCH" and c[3].get("conclusion") == "failure" else None
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertTrue(result.cleanup_errors)
+        self.assertTrue(all(e.stage.value == "cleanup" for e in result.cleanup_errors))
+
+    def test_permission_http_failure_retains_primary_and_cleanup_errors(self):
+        server = Server()
+        server.fail = lambda c: 403 if "/collaborators/" in c[2] else (
+            503 if c[1] == "PATCH" and "/check-runs/" in c[2] else None)
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("metadata_or_write_unavailable", result.reason)
+        self.assertEqual("permission_read", result.primary_error.operation.value)
+        self.assertEqual("metadata", result.primary_error.principal.value)
+        self.assertEqual("snapshot", result.primary_error.stage.value)
+        self.assertEqual(403, result.primary_error.http_status)
+        self.assertTrue(result.cleanup_errors)
+        self.assertTrue(all(e.stage.value == "cleanup" and e.http_status == 503
+                            and e.principal.value == "checks" for e in result.cleanup_errors))
+        self.assertEqual("open", server.prs[1]["state"])
+
+    def test_check_response_mismatch_is_distinct_from_http_error(self):
+        server = Server()
+        original = server.open
+        def mismatch(request, timeout):
+            response = original(request, timeout)
+            if request.get_method() == "PATCH" and "/check-runs/" in request.full_url:
+                value = json.loads(response.getvalue())
+                value["status"] = "queued"
+                return Response(value)
+            return response
+        server.client = lambda token: Github(token, open_url=mismatch, sleep=lambda _: None)
+        server.engine().run()
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("response_mismatch", result.primary_error.category.value)
+        self.assertEqual("check_update", result.primary_error.operation.value)
+        self.assertIsNone(result.primary_error.http_status)
+
+    def test_unknown_transport_exception_is_sanitized_and_blocks(self):
+        server = Server()
+        server.hook = lambda *_: (_ for _ in ()).throw(RuntimeError("TOKEN PEM private body https://evil.invalid"))
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("unexpected", result.primary_error.category.value)
+        self.assertNotIn("TOKEN", repr(result))
+        self.assertNotIn("evil", repr(result))
+
+    def test_api_error_rejects_untrusted_diagnostic_fields(self):
+        error = ApiError("secret", operation="TOKEN", stage="PEM", principal="private", category="body")
+        self.assertEqual("unknown", error.diagnostic.operation.value)
+        self.assertEqual("unknown", error.diagnostic.stage.value)
+        self.assertIsNone(error.status)
+        self.assertNotIn("secret", str(error))
+        self.assertNotIn("TOKEN", str(error))
+
+    def test_main_outputs_only_safe_structured_diagnostics(self):
+        output = StringIO()
+        server = Server()
+        server.fail = lambda c: 422 if "/collaborators/" in c[2] else None
+        result = server.engine().run()
+        with patch.object(reconcile, "Reconciler") as engine, patch.dict(
+                reconcile.os.environ, {"GITHUB_TOKEN": "TOKEN", "CONTRIBUTION_CHECK_TOKEN": "PRIVATE",
+                                       "CONTRIBUTION_APP_ID": str(APP_ID)}, clear=True):
+            engine.return_value.run.return_value = result
+            with redirect_stdout(output):
+                self.assertEqual(1, reconcile.main())
+        text = output.getvalue()
+        self.assertIn("role=primary stage=snapshot operation=permission_read principal=metadata category=http_error http_status=422", text)
+        self.assertNotIn("TOKEN", text)
+        self.assertNotIn("PRIVATE", text)
+
+    def test_terminal_reopening_mismatch_is_rejected_without_resetting_conclusion(self):
+        server = Server()
+        self.assertTrue(server.engine().run().ok)
+        writer = server.engine().checks
+        with self.assertRaises(ApiError) as raised:
+            writer.set(HEAD)
+        self.assertEqual("response_mismatch", raised.exception.diagnostic.category.value)
+        self.assertEqual("check_update", raised.exception.diagnostic.operation.value)
+        run = next(c for c in server.checks if c["head_sha"] == HEAD)
+        self.assertEqual("completed", run["status"])
+        self.assertEqual("success", run["conclusion"])
+        writer.set(HEAD, "failure")
+        self.assertEqual("failure", run["conclusion"])
+        writer.set(HEAD, "success")
+        self.assertEqual("success", run["conclusion"])
+        self.assertEqual(2, len(server.checks))
 
 
 if __name__ == "__main__":
