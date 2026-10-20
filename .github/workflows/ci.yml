@@ -38,6 +38,9 @@ jobs:
       - name: Test deployment infrastructure
         run: python3 -m unittest discover -s scripts/deploy/tests -v
 
+      - name: Test contribution policy
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/contribution/tests -v
+
       - name: Create DB directory
         run: mkdir -p var/data
 

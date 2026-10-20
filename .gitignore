@@ -11,7 +11,6 @@
 /.php-cs-fixer.cache
 /.deptrac.cache
 /.vscode/
-/docs/
 /backups/
 /.opencode/mcp.env
 
@@ -24,11 +23,6 @@
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
-
-# Local agent and code intelligence caches
-.atl/
-/specs/
-/.codegraph/
 
 # Docker local overrides
 docker-compose.override.yml
