@@ -7,7 +7,8 @@ avoids asking contributors to build work that cannot be accepted.
 > **Automation is not active yet.** The policy core alone does not enforce these
 > rules. The dedicated GitHub App, workflows, required checks and branch protection
 > must be activated before automatic closure or merge blocking can be relied on.
-> Maintainer activation instructions will accompany that integration.
+> See the [maintainer activation guide](docs/contribution-policy-setup.md) for the
+> pending external setup and acceptance checks.
 
 ## Contribution path
 
@@ -58,6 +59,11 @@ An otherwise admitted PR missing review stays open, but cannot pass the policy
 check. Removing approval or the approving maintainer's write access also invalidates
 admission. Issue closure alone does not revoke approval.
 
+Editing an approved issue's body or title changes the scope being authorized.
+The approval must be reapplied by a maintainer after the latest edit; an old label
+cannot authorize rewritten requirements. If a PR is already open, obtain that
+fresh issue approval, then reopen the PR after approval as described above.
+
 ## Scope and exceptions
 
 Maintainers must verify that each change actually matches its issue's approved
@@ -70,5 +76,6 @@ independent PR review. That exemption does **not** waive prior issue approval,
 current CI, the `Contribution policy` check, or main-branch protection.
 
 For implementation and verification conventions, read [AGENTS.md](AGENTS.md).
-Maintainers: the upcoming activation guide will cover App installation, trusted
-check source selection and branch protection; these remain pending external setup.
+Maintainers: follow the [activation guide](docs/contribution-policy-setup.md) for
+App installation, trusted check source selection and branch protection. All external
+configuration remains pending separate authorization.

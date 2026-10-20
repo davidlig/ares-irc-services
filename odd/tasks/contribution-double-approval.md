@@ -31,8 +31,8 @@ until the independent review and existing CI requirements are satisfied.
   Checks: focused Python unittest suite; observed RED -> GREEN before completion.
   Evidence: observed RED (missing policy module), then 40 passing Python tests;
   parent rerun passed all 40. Native assessment: medium; RDD off, writer verification.
-  Commit: pending creation.
-- [ ] T2 — Connect trusted API reconciliation, dedicated-App check publication, safe
+  Commit: `10ca281a` — `feat(ci): define approved-issue contribution policy`.
+- [x] T2 — Connect trusted API reconciliation, dedicated-App check publication, safe
   workflows, existing CI tests, CODEOWNERS and activation/runbook documentation.
   Route: delegated direct; network orchestration, workflows and security tests.
   Acceptance: invalidate -> deduplicated comment -> closure; revocation/edit recovery;
@@ -40,19 +40,25 @@ until the independent review and existing CI requirements are satisfied.
   changes; pending external activation is explicit.
   Checks: focused policy/API/workflow/deployment tests; final PHP container/YAML lint,
   PHPStan, architecture, formatting normalization and one full 100% coverage run.
-  Commit: pending.
+  Evidence: 87 contribution tests and 54 deployment tests passed with warnings as
+  errors; native assessment high, independent verification passed locally. App and
+  actual GitHub merge enforcement remain pending external activation.
+  Commit: pending creation.
 
 ## Delivery and review
 
 - Branch point: `6dca587b`.
 - Branch: `feat/contribution-double-approval`.
-- Forecast: approximately 1,200–1,800 authored changed lines, mostly policy/security tests.
+- Initial forecast: approximately 1,200–1,800 authored changed lines; T2 exceeded this
+  forecast because complete pagination, mutable-scope, race and fake-API tests belong
+  with the adapter. Actual T2 implementation is 1,626 authored changed lines.
   The 400-line task heuristic is advisory; keep coherent behavior and tests together.
 - Delivery strategy: `ask-on-risk`; user selected `feature-branch-chain`.
+- Running authored count: T1 commit 771 lines (includes the recovery tracker).
 - No PRs are created now. Planned review slices follow T1 and T2 work-unit boundaries;
   split further during future PR preparation if necessary to meet review budgets.
 - RDD: off, decided by the global preference (observed before implementation).
-- Native assessment: pending on each writer diff; unassessable means high risk.
+- Native assessments: T1 medium; T2 high. RDD stays off, no native review started.
 - Independent verification: required for high/unassessable security changes.
 - Mirror: `odd/contribution-double-approval/tasks` in project `ares-irc-services`.
 
@@ -64,6 +70,21 @@ until the independent review and existing CI requirements are satisfied.
 - T1: 40 Python policy tests passed, including parent spot check; no skips/failures.
 - Initial untracked assessment was unassessable/high; explicit staging resolved it to
   medium. No review lifecycle was started while RDD is disabled.
+- T2 writer: 87 contribution and 54 deployment tests; container lint; 442 YAML files;
+  PHPStan exit 0; architecture 0 violations/uncovered/warnings/errors; normalizer and
+  final formatter dry-run 0/1974 changes. Existing deployment bytes unchanged.
+- Independent verifier: 87 contribution and 54 deployment tests with warnings as
+  errors; stale-head, shared-SHA, feature-base and edited-scope adversarial probes.
+- Full coverage executed exactly once: 6,190 tests, 85,287 assertions; exactly
+  21,720/21,720 statements covered. Zero failures/skips/warnings/notices/incomplete/
+  risky/deprecations. No PHP source changed; php -l is not applicable.
+- Parent final spot check: all 87 contribution tests and container lint passed.
+- Verified staged executable candidate: a3d6a30f870516680ac6e275cfa0f16ad3b35fe5;
+  later changes only record verification in this tracker.
+- Known conservative grammar limitation: comma followed by a bullet on the next
+  line is rejected. Use one closing keyword per issue or the documented plain lists.
+- Live App installation/API writes, workflow execution and merge-rule acceptance
+  are NOT tested or active. Read docs/contribution-policy-setup.md before activation.
 
 ## Rollback boundary
 
@@ -73,4 +94,6 @@ changed by this implementation and require a separate authorized activation/reve
 
 ## Next step
 
-Commit verified T1, then implement T2 through the same sole bounded writer.
+Commit verified T2 and record its identity. Then the maintainer must authorize and
+perform App/secret/label/protection setup and default-branch activation; no push,
+pull request, merge or remote mutation has been performed by this implementation.

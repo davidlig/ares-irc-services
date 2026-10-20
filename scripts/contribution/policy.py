@@ -85,6 +85,7 @@ class Issue:
     labels: frozenset[str]
     is_pull_request: bool
     events: tuple[LabelEvent, ...]
+    scope_changed_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -205,6 +206,11 @@ def parse_closing_references(body: str, repository: str) -> ParsedReferences:
             if sentence_end:
                 break
             segment = segment[token_match.end():]
+            # A new paragraph or Markdown heading ends this declaration's list.
+            # Explicit comma/and continuations still reject malformed extra items.
+            if (re.match(r"^[ \t]*\n[ \t]*\n", segment)
+                    or re.match(r"^[ \t]*\n[ \t]*#{1,6}\s", segment)):
+                break
             separator = re.match(r"\s*(?:[,;]\s*(?:and\b\s*)?|and\b\s*|&\s*)", segment, re.IGNORECASE)
             required = separator is not None
             if separator:
@@ -243,6 +249,8 @@ def _issue_errors(config: PolicyConfig, issue: Issue, opening: datetime,
     latest = max(events, key=lambda event: (_timestamp(event.created_at), event.id))
     if latest.action != "labeled" or not _trusted(latest.actor, config, permissions):
         return (f"#{issue.number} approval is not from a currently authorized human maintainer",)
+    if issue.scope_changed_at is not None and _timestamp(latest.created_at) <= _timestamp(issue.scope_changed_at):
+        return (f"#{issue.number} scope changed after approval; maintainer reapproval is required",)
     if _timestamp(latest.created_at) >= opening:
         return (f"#{issue.number} approval must precede the latest PR opening; reopen after approval",)
     return ()

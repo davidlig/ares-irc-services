@@ -1,0 +1,62 @@
+name: Contribution reconciliation
+
+on:
+  pull_request_target:
+    types: [opened, reopened, edited, synchronize, ready_for_review, closed]
+  issues:
+    types: [opened, labeled, unlabeled, edited, transferred, deleted]
+  label:
+    types: [edited, deleted]
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: [Contribution review signal]
+    types: [completed]
+  workflow_dispatch:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+
+permissions: {}
+
+concurrency:
+  group: contribution-policy
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    if: >-
+      github.repository_id == '1167938167' &&
+      github.repository_owner_id == '561369' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.repository.id == 1167938167)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout trusted policy only
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: davidlig/ares-irc-services
+          ref: refs/heads/main
+          persist-credentials: false
+
+      - name: Obtain repository-scoped check writer
+        id: contribution-app
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.CONTRIBUTION_APP_ID }}
+          private-key: ${{ secrets.CONTRIBUTION_APP_PRIVATE_KEY }}
+          owner: davidlig
+          repositories: ares-irc-services
+          permission-checks: write
+
+      - name: Reconcile live metadata without executing PR code
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CONTRIBUTION_CHECK_TOKEN: ${{ steps.contribution-app.outputs.token }}
+          CONTRIBUTION_APP_ID: ${{ vars.CONTRIBUTION_APP_ID }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 scripts/contribution/reconcile.py

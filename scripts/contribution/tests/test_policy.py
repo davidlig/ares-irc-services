@@ -106,6 +106,13 @@ class ReferenceTests(unittest.TestCase):
     def test_malformed_first_declaration_cannot_be_hidden_by_valid_later_one(self):
         self.assertTrue(self.parse("Fixes: invalid\nCloses #12").errors)
 
+    def test_reference_section_ends_before_headings_and_unrelated_checklists(self):
+        for suffix in ("\n\n## Tests\nunit tests", "\n## Tests\nunit tests",
+                       "\n\n1. See #13 for background", "\n- [ ] Test #13 manually"):
+            parsed = self.parse("Fixes #12" + suffix)
+            self.assertEqual((IssueReference(REPO, 12),), parsed.references)
+            self.assertEqual((), parsed.errors)
+
     def test_period_ends_list_and_other_mentions_stay_explanatory(self):
         parsed = self.parse("Fixes #12. See #13 for background; this fixes parsing too.")
         self.assertEqual((IssueReference(REPO, 12),), parsed.references)
@@ -196,6 +203,14 @@ class AdmissionTests(unittest.TestCase):
     def test_closed_issue_state_is_not_an_admission_requirement(self):
         # State is deliberately absent: approval, not open/closed state, authorizes work.
         self.assertTrue(decision().admitted)
+
+    def test_issue_scope_edit_after_approval_requires_reapproval(self):
+        edited = NOW - timedelta(hours=12)
+        snapshot = issue(scope_changed_at=edited)
+        self.assertFalse(decision(issues={12: snapshot}).admitted)
+        reapproved = replace(snapshot, events=(event(when=NOW - timedelta(hours=6)),))
+        self.assertTrue(decision(issues={12: reapproved}).admitted)
+        self.assertFalse(decision(issues={12: replace(snapshot, events=(event(when=edited),))}).admitted)
 
     def test_owner_author_exemption_never_bypasses_issue_approval(self):
         result = decision(pull(author=OWNER), reviews=())
