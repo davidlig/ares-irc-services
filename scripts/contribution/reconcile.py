@@ -5,8 +5,12 @@ scoped installation token is the ONLY writer of the required App check runs.
 No event payload, workflow conclusion, artifact, username or PR file is authority.
 """
 
-from dataclasses import dataclass
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass, replace
 from datetime import datetime
+from enum import Enum
+from functools import wraps
 import json
 import os
 from pathlib import Path
@@ -32,16 +36,147 @@ COMMENT = (MARKER + "\nThanks for the contribution. This PR needs prior maintain
 SHA = re.compile(r"[0-9a-f]{40}")
 
 
+class Stage(Enum):
+    UNKNOWN = "unknown"
+    CONFIGURATION = "configuration"
+    IDENTITY = "identity"
+    SNAPSHOT = "snapshot"
+    LABEL_AUDIT = "label_audit"
+    INVALIDATION = "invalidation"
+    COMMENT = "comment"
+    CLOSURE = "closure"
+    PUBLICATION = "publication"
+    FINAL_VALIDATION = "final_validation"
+    CLEANUP = "cleanup"
+
+
+class Operation(Enum):
+    UNKNOWN = "unknown"
+    REPOSITORY_READ = "repository_read"
+    PULL_LIST = "pull_list"
+    PULL_READ = "pull_read"
+    PULL_CLOSE = "pull_close"
+    ISSUE_LIST = "issue_list"
+    ISSUE_READ = "issue_read"
+    ISSUE_EVENTS = "issue_events"
+    REVIEW_LIST = "review_list"
+    PERMISSION_READ = "permission_read"
+    GRAPHQL = "graphql"
+    LABEL_DELETE = "label_delete"
+    COMMENT_LIST = "comment_list"
+    COMMENT_CREATE = "comment_create"
+    COMMENT_UPDATE = "comment_update"
+    CHECK_LIST = "check_list"
+    CHECK_CREATE = "check_create"
+    CHECK_UPDATE = "check_update"
+
+
+class Principal(Enum):
+    UNKNOWN = "unknown"
+    METADATA = "metadata"
+    CHECKS = "checks"
+
+
+class Category(Enum):
+    UNKNOWN = "unknown"
+    CONFIGURATION = "configuration"
+    HTTP_ERROR = "http_error"
+    TRANSPORT = "transport"
+    MALFORMED_RESPONSE = "malformed_response"
+    RESPONSE_MISMATCH = "response_mismatch"
+    INVALID_REQUEST = "invalid_request"
+    UNEXPECTED = "unexpected"
+
+
+@dataclass(frozen=True)
+class Diagnostic:
+    stage: Stage = Stage.UNKNOWN
+    operation: Operation = Operation.UNKNOWN
+    principal: Principal = Principal.UNKNOWN
+    category: Category = Category.UNKNOWN
+    http_status: int | None = None
+
+    def __post_init__(self):
+        # Accept only enum instances, never user-controlled strings or messages.
+        for name, kind in (("stage", Stage), ("operation", Operation),
+                           ("principal", Principal), ("category", Category)):
+            if not isinstance(getattr(self, name), kind):
+                object.__setattr__(self, name, kind.UNKNOWN)
+        if type(self.http_status) is not int or not 100 <= self.http_status <= 599:
+            object.__setattr__(self, "http_status", None)
+
+    def format(self):
+        return (f"stage={self.stage.value} operation={self.operation.value} principal={self.principal.value} "
+                f"category={self.category.value} http_status={self.http_status or 'none'}")
+
+
+_DIAGNOSTIC = ContextVar("contribution_diagnostic", default=Diagnostic())
+
+
+@contextmanager
+def diagnostic_scope(**fields):
+    token = _DIAGNOSTIC.set(replace(_DIAGNOSTIC.get(), **fields))
+    try:
+        yield
+    finally:
+        _DIAGNOSTIC.reset(token)
+
+
+def diagnosed(**fields):
+    """Attach safe context before parsing, without retaining an exception message."""
+    def decorate(function):
+        @wraps(function)
+        def call(*args, **kwargs):
+            with diagnostic_scope(**fields):
+                try:
+                    return function(*args, **kwargs)
+                except ApiError:
+                    raise
+                except (ValueError, TypeError, KeyError, OSError):
+                    category = (Category.CONFIGURATION if _DIAGNOSTIC.get().stage == Stage.CONFIGURATION
+                                else Category.MALFORMED_RESPONSE)
+                    raise ApiError(category=category) from None
+                except Exception:
+                    raise ApiError(category=Category.UNEXPECTED) from None
+        return call
+    return decorate
+
+
 class ApiError(Exception):
     """Unknown/unavailable metadata, never evidence of a policy violation."""
-    def __init__(self, status=None):
-        self.status = status
-        super().__init__(f"GitHub API unavailable (HTTP {status})" if status else "GitHub API data unavailable")
+    def __init__(self, status=None, *, category=Category.MALFORMED_RESPONSE, **fields):
+        self.diagnostic = replace(_DIAGNOSTIC.get(), category=category, http_status=status, **fields)
+        self.status = self.diagnostic.http_status
+        super().__init__(self.diagnostic.format())
+
+
+def request_operation(method, path):
+    # Do not copy an arbitrary path, query, method or upstream error into output.
+    routes = (("GET", re.escape(PREFIX), Operation.REPOSITORY_READ),
+              ("POST", "/graphql", Operation.GRAPHQL),
+              ("GET", re.escape(PREFIX) + "/pulls", Operation.PULL_LIST),
+              ("GET", re.escape(PREFIX) + r"/pulls/\d+", Operation.PULL_READ),
+              ("PATCH", re.escape(PREFIX) + r"/pulls/\d+", Operation.PULL_CLOSE),
+              ("GET", re.escape(PREFIX) + "/issues", Operation.ISSUE_LIST),
+              ("GET", re.escape(PREFIX) + r"/issues/\d+", Operation.ISSUE_READ),
+              ("GET", re.escape(PREFIX) + r"/issues/\d+/events", Operation.ISSUE_EVENTS),
+              ("GET", re.escape(PREFIX) + r"/pulls/\d+/reviews", Operation.REVIEW_LIST),
+              ("GET", re.escape(PREFIX) + r"/collaborators/[^/]+/permission", Operation.PERMISSION_READ),
+              ("DELETE", re.escape(PREFIX) + r"/issues/\d+/labels/approved", Operation.LABEL_DELETE),
+              ("GET", re.escape(PREFIX) + r"/issues/\d+/comments", Operation.COMMENT_LIST),
+              ("POST", re.escape(PREFIX) + r"/issues/\d+/comments", Operation.COMMENT_CREATE),
+              ("PATCH", re.escape(PREFIX) + r"/issues/comments/\d+", Operation.COMMENT_UPDATE),
+              ("GET", re.escape(PREFIX) + r"/commits/[0-9a-f]{40}/check-runs", Operation.CHECK_LIST),
+              ("POST", re.escape(PREFIX) + "/check-runs", Operation.CHECK_CREATE),
+              ("PATCH", re.escape(PREFIX) + r"/check-runs/\d+", Operation.CHECK_UPDATE))
+    target = path.split("?", 1)[0] if isinstance(path, str) else ""
+    return next((operation for verb, pattern, operation in routes
+                 if verb == method and re.fullmatch(pattern, target)), Operation.UNKNOWN)
 
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        raise ApiError(code)
+        raise ApiError(code, category=Category.HTTP_ERROR)
 
 
 def mapping(value):
@@ -85,19 +220,32 @@ def sha(value):
 
 
 class Github:
-    def __init__(self, token, *, open_url=None, sleep=time.sleep):
+    def __init__(self, token, *, open_url=None, sleep=time.sleep, principal=Principal.UNKNOWN):
         if not token:
-            raise ApiError()
+            raise ApiError(category=Category.CONFIGURATION)
         self.token = token
+        self.principal = principal
         self.open_url = open_url or build_opener(NoRedirect()).open
         self.sleep = sleep
 
     def request(self, method, path, data=None):
+        return self._contextual(method, path, self._request, method, path, data)
+
+    def _contextual(self, method, path, function, *args):
+        with diagnostic_scope(operation=request_operation(method, path), principal=self.principal):
+            try:
+                return function(*args)
+            except ApiError:
+                raise
+            except Exception:
+                raise ApiError(category=Category.UNEXPECTED) from None
+
+    def _request(self, method, path, data=None):
         parsed = urlsplit(path)
         if (parsed.scheme or parsed.netloc or parsed.fragment or ".." in path or "\\" in path
                 or any(ord(c) < 32 for c in path)
                 or not (parsed.path == "/graphql" or parsed.path == PREFIX or parsed.path.startswith(PREFIX + "/"))):
-            raise ApiError()
+            raise ApiError(category=Category.INVALID_REQUEST)
         read_only = method == "GET" or (method == "POST" and parsed.path == "/graphql")
         for attempt in range(3 if read_only else 1):
             try:
@@ -110,7 +258,7 @@ class Github:
                                            "User-Agent": "ares-contribution-policy"})
                 with self.open_url(request, timeout=20) as response:
                     if response.status >= 300:
-                        raise ApiError(response.status)
+                        raise ApiError(response.status, category=Category.HTTP_ERROR)
                     raw = response.read(4 * 1024 * 1024 + 1)
                     if len(raw) > 4 * 1024 * 1024:
                         raise ApiError()
@@ -122,10 +270,10 @@ class Github:
                                                       or error.headers.get("X-RateLimit-Remaining") == "0")))
                 error.close()
                 if not read_only or not retryable or attempt == 2:
-                    raise ApiError(error.code) from None
+                    raise ApiError(error.code, category=Category.HTTP_ERROR) from None
             except (URLError, TimeoutError, OSError):
                 if not read_only or attempt == 2:
-                    raise ApiError() from None
+                    raise ApiError(category=Category.TRANSPORT) from None
             except (json.JSONDecodeError, UnicodeDecodeError):
                 raise ApiError() from None
             self.sleep(attempt + 1)
@@ -135,6 +283,9 @@ class Github:
         return self.request("GET", path)[0]
 
     def pages(self, path, key=None, on_page=None):
+        return self._contextual("GET", path, self._pages, path, key, on_page)
+
+    def _pages(self, path, key=None, on_page=None):
         base = urlsplit(path)
         parameters = dict(parse_qs(base.query))
         parameters = {k: v[0] for k, v in parameters.items()}
@@ -189,15 +340,17 @@ class Checks:
             raise ApiError()
         return integer(run.get("id"))
 
+    @diagnosed(principal=Principal.CHECKS)
     def set(self, commit, conclusion=None):
         sha(commit)
         if commit not in self.identities:
-            runs = self.api.pages(PREFIX + "/commits/" + commit + "/check-runs?" + urlencode({
-                "check_name": self.config.check_name, "filter": "all"}), "check_runs")
-            self.identities[commit] = [self.validate(run, commit) for run in runs
-                                      if mapping(run).get("name") == self.config.check_name
-                                      and mapping(run.get("app")).get("id") == self.app_id
-                                      and run.get("external_id") == self.external_id(commit)]
+            with diagnostic_scope(operation=Operation.CHECK_LIST):
+                runs = self.api.pages(PREFIX + "/commits/" + commit + "/check-runs?" + urlencode({
+                    "check_name": self.config.check_name, "filter": "all"}), "check_runs")
+                self.identities[commit] = [self.validate(run, commit) for run in runs
+                                          if mapping(run).get("name") == self.config.check_name
+                                          and mapping(run.get("app")).get("id") == self.app_id
+                                          and run.get("external_id") == self.external_id(commit)]
         payload = {"name": self.config.check_name, "external_id": self.external_id(commit),
                    "status": "completed" if conclusion else "in_progress",
                    "output": {"title": "Contribution policy", "summary":
@@ -206,20 +359,22 @@ class Checks:
         if conclusion:
             payload["conclusion"] = conclusion
         if not self.identities[commit]:
-            run, _ = self.api.request("POST", PREFIX + "/check-runs", {**payload, "head_sha": commit})
-            self.identities[commit] = [self.validate(run, commit)]
-            self._status(run, payload)
+            with diagnostic_scope(operation=Operation.CHECK_CREATE):
+                run, _ = self.api.request("POST", PREFIX + "/check-runs", {**payload, "head_sha": commit})
+                self.identities[commit] = [self.validate(run, commit)]
+                self._status(run, payload)
         else:
             # Invalidate/update all exact duplicates after an ambiguous past create.
             for identifier in self.identities[commit]:
-                run, _ = self.api.request("PATCH", PREFIX + f"/check-runs/{identifier}", payload)
-                self.validate(run, commit)
-                self._status(run, payload)
+                with diagnostic_scope(operation=Operation.CHECK_UPDATE):
+                    run, _ = self.api.request("PATCH", PREFIX + f"/check-runs/{identifier}", payload)
+                    self.validate(run, commit)
+                    self._status(run, payload)
 
     @staticmethod
     def _status(run, payload):
         if run.get("status") != payload["status"] or (payload.get("conclusion") and run.get("conclusion") != payload["conclusion"]):
-            raise ApiError()
+            raise ApiError(category=Category.RESPONSE_MISMATCH)
 
 
 @dataclass(frozen=True)
@@ -247,22 +402,27 @@ class RunResult:
     closed: tuple[int, ...]
     blocked: tuple[int, ...]
     reason: str
+    primary_error: Diagnostic | None = None
+    cleanup_errors: tuple[Diagnostic, ...] = ()
 
 
 class Reconciler:
     def __init__(self, config, metadata, checks, app_id):
+        metadata.principal, checks.principal = Principal.METADATA, Principal.CHECKS
         self.config, self.api = config, metadata
         self.checks = Checks(checks, app_id, config)
         self.held = set()
         self.logins = {}
         self.issue_cache = {}
         self.permission_cache = {}
+        self.cleanup_errors = []
 
     def _identity(self, api):
-        repo = mapping(api.get(PREFIX))
-        if (repo.get("id") != self.config.repository_id or repo.get("full_name") != self.config.repository
-                or mapping(repo.get("owner")).get("id") != self.config.owner_id or repo.get("default_branch") != "main"):
-            raise ApiError()
+        with diagnostic_scope(operation=Operation.REPOSITORY_READ, principal=api.principal):
+            repo = mapping(api.get(PREFIX))
+            if (repo.get("id") != self.config.repository_id or repo.get("full_name") != self.config.repository
+                    or mapping(repo.get("owner")).get("id") != self.config.owner_id or repo.get("default_branch") != "main"):
+                raise ApiError(category=Category.RESPONSE_MISMATCH)
 
     def _actor(self, raw):
         if raw is None:
@@ -275,6 +435,7 @@ class Reconciler:
         self.logins[actor.id] = login
         return actor
 
+    @diagnosed(operation=Operation.PERMISSION_READ, principal=Principal.METADATA)
     def _permission(self, actor):
         if actor.id not in self.config.maintainer_ids or actor.kind != "User":
             return "none"
@@ -297,6 +458,7 @@ class Reconciler:
                 self.permission_cache[actor.id] = permission
         return self.permission_cache[actor.id]
 
+    @diagnosed(operation=Operation.ISSUE_READ, principal=Principal.METADATA)
     def _issue(self, number):
         if number in self.issue_cache:
             return self.issue_cache[number]
@@ -340,6 +502,7 @@ class Reconciler:
         self.issue_cache[number] = value
         return value
 
+    @diagnosed(operation=Operation.GRAPHQL, principal=Principal.METADATA)
     def _links(self, number):
         query = ('query($number:Int!,$cursor:String){repository(owner:"davidlig",name:"ares-irc-services"){'
                  'databaseId pullRequest(number:$number){closingIssuesReferences(first:100,after:$cursor,'
@@ -387,6 +550,7 @@ class Reconciler:
             self.held.add(commit)
             self.checks.set(commit)
 
+    @diagnosed(operation=Operation.PULL_READ, principal=Principal.METADATA)
     def _snapshot(self):
         self.issue_cache, self.permission_cache, self.logins = {}, {}, {}
         numbers = []
@@ -461,6 +625,7 @@ class Reconciler:
                     and latest.actor.id in self.config.maintainer_ids
                     and self.permission_cache.get(latest.actor.id) in {"write", "admin", "maintain"})
 
+    @diagnosed(operation=Operation.ISSUE_LIST, principal=Principal.METADATA)
     def _sanitize_labels(self, trigger_issue):
         numbers = {integer(mapping(raw).get("number")) for raw in self.api.pages(PREFIX + "/issues?state=all&labels=approved")}
         if trigger_issue is not None:
@@ -485,68 +650,91 @@ class Reconciler:
                     raise
         self.issue_cache, self.permission_cache = {}, {}
 
+    @diagnosed(operation=Operation.COMMENT_LIST, principal=Principal.METADATA)
     def _comment(self, number):
         comments = self.api.pages(PREFIX + f"/issues/{number}/comments")
         own = [mapping(item) for item in comments if MARKER in string(mapping(item).get("body"))
                and mapping(item.get("user")).get("id") == 41898282 and item["user"].get("type") == "Bot"]
-        if own:
-            existing = min(own, key=lambda item: integer(item.get("id")))
-            if existing["body"] == COMMENT:
-                return
-            result, _ = self.api.request("PATCH", PREFIX + "/issues/comments/" + str(integer(existing.get("id"))), {"body": COMMENT})
-        else:
-            result, _ = self.api.request("POST", PREFIX + f"/issues/{number}/comments", {"body": COMMENT})
-        result = mapping(result)
-        if (result.get("body") != COMMENT or mapping(result.get("user")).get("id") != 41898282
-                or result["user"].get("type") != "Bot"):
-            raise ApiError()
-        integer(result.get("id"))
+        with diagnostic_scope(operation=Operation.COMMENT_UPDATE if own else Operation.COMMENT_CREATE):
+            if own:
+                existing = min(own, key=lambda item: integer(item.get("id")))
+                if existing["body"] == COMMENT:
+                    return
+                result, _ = self.api.request("PATCH", PREFIX + "/issues/comments/" + str(integer(existing.get("id"))), {"body": COMMENT})
+            else:
+                result, _ = self.api.request("POST", PREFIX + f"/issues/{number}/comments", {"body": COMMENT})
+            result = mapping(result)
+            if (result.get("body") != COMMENT or mapping(result.get("user")).get("id") != 41898282
+                    or result["user"].get("type") != "Bot"):
+                raise ApiError(category=Category.RESPONSE_MISMATCH)
+            integer(result.get("id"))
 
     def _block_all(self):
         complete = True
         for commit in sorted(self.held):
             try:
-                self.checks.set(commit, "failure")
-            except ApiError:
+                self._at(Stage.CLEANUP, self.checks.set, commit, "failure")
+            except ApiError as error:
                 # A failed write cannot invalidate a previous success. Report the
                 # run as unavailable, never pretend GitHub state was changed.
                 complete = False
+                self.cleanup_errors.append(error.diagnostic)
         return complete
+
+    @staticmethod
+    def _at(stage, function, *args):
+        with diagnostic_scope(stage=stage):
+            try:
+                return function(*args)
+            except ApiError:
+                raise
+            except (ValueError, TypeError, KeyError):
+                raise ApiError(category=Category.MALFORMED_RESPONSE) from None
+            except Exception:
+                raise ApiError(category=Category.UNEXPECTED) from None
+
+    def _failure(self, closed, error=None):
+        return RunResult(False, tuple(closed), (), "metadata_or_write_unavailable",
+                         error.diagnostic if error else None, tuple(self.cleanup_errors))
 
     def run(self, trigger_issue=None):
         closed = []
         try:
-            self._identity(self.api)
-            self._identity(self.checks.api)
+            self._at(Stage.IDENTITY, self._identity, self.api)
+            self._at(Stage.IDENTITY, self._identity, self.checks.api)
             # Hold known current SHAs before audit mutations. Every run scans all
             # open PRs, rather than trusting an event snapshot or queued run order.
-            baseline = self._snapshot()
-            self._sanitize_labels(trigger_issue)
+            baseline = self._at(Stage.SNAPSHOT, self._snapshot)
+            self._at(Stage.LABEL_AUDIT, self._sanitize_labels, trigger_issue)
             for _ in range(MAX_ROUNDS):
-                current = self._snapshot()
+                current = self._at(Stage.SNAPSHOT, self._snapshot)
                 if current != baseline:
-                    self._block_all()
+                    if not self._block_all():
+                        return self._failure(closed)
                     baseline = current
                     continue
                 invalid = next((candidate for candidate in current if not candidate.decision.admitted), None)
                 if invalid:
                     for commit in invalid.shas:
-                        self.checks.set(commit, "failure")
-                    if self._snapshot() != current:
-                        self._block_all()
-                        baseline = self._snapshot()
+                        self._at(Stage.INVALIDATION, self.checks.set, commit, "failure")
+                    if self._at(Stage.FINAL_VALIDATION, self._snapshot) != current:
+                        if not self._block_all():
+                            return self._failure(closed)
+                        baseline = self._at(Stage.SNAPSHOT, self._snapshot)
                         continue
-                    self._comment(invalid.number)
-                    if self._snapshot() != current:
-                        self._block_all()
-                        baseline = self._snapshot()
+                    self._at(Stage.COMMENT, self._comment, invalid.number)
+                    if self._at(Stage.FINAL_VALIDATION, self._snapshot) != current:
+                        if not self._block_all():
+                            return self._failure(closed)
+                        baseline = self._at(Stage.SNAPSHOT, self._snapshot)
                         continue
-                    result, _ = self.api.request("PATCH", PREFIX + f"/pulls/{invalid.number}", {"state": "closed"})
-                    if mapping(result).get("state") != "closed" or result.get("number") != invalid.number:
-                        raise ApiError()
+                    with diagnostic_scope(stage=Stage.CLOSURE, operation=Operation.PULL_CLOSE, principal=Principal.METADATA):
+                        result, _ = self.api.request("PATCH", PREFIX + f"/pulls/{invalid.number}", {"state": "closed"})
+                        if mapping(result).get("state") != "closed" or result.get("number") != invalid.number:
+                            raise ApiError(category=Category.RESPONSE_MISMATCH)
                     closed.append(invalid.number)
                     # Recompute all shared head/merge roles after closing a sibling.
-                    baseline = self._snapshot()
+                    baseline = self._at(Stage.SNAPSHOT, self._snapshot)
                     continue
                 groups = {}
                 for candidate in current:
@@ -558,37 +746,52 @@ class Reconciler:
                 # The final fresh scan includes membership and all dependencies;
                 # any drift invalidates the whole batch before a successful return.
                 for commit, approvals in sorted(groups.items()):
-                    self.checks.set(commit, "success" if all(approvals) else "failure")
-                if self._snapshot() == current:
+                    self._at(Stage.PUBLICATION, self.checks.set, commit, "success" if all(approvals) else "failure")
+                if self._at(Stage.FINAL_VALIDATION, self._snapshot) == current:
                     blocked = tuple(c.number for c in current if not c.merge_ready or not c.decision.review_satisfied)
                     return RunResult(True, tuple(closed), blocked, "reconciled")
                 if not self._block_all():
-                    return RunResult(False, tuple(closed), (), "metadata_or_write_unavailable")
-                baseline = self._snapshot()
+                    return self._failure(closed)
+                baseline = self._at(Stage.SNAPSHOT, self._snapshot)
             self._block_all()
-            return RunResult(False, tuple(closed), (), "snapshot_changed_or_work_budget_exhausted")
-        except (ApiError, ValueError, TypeError, KeyError):
+            return RunResult(False, tuple(closed), (), "snapshot_changed_or_work_budget_exhausted",
+                             cleanup_errors=tuple(self.cleanup_errors))
+        except ApiError as error:
             self._block_all()
-            return RunResult(False, tuple(closed), (), "metadata_or_write_unavailable")
+            return self._failure(closed, error)
+        except Exception:
+            error = ApiError(category=Category.UNEXPECTED)
+            self._block_all()
+            return self._failure(closed, error)
+
+
+@diagnosed(stage=Stage.CONFIGURATION)
+def configured_run():
+    # Only the trusted checkout's fixed configuration is loaded. No CLI allows
+    # redirecting the host/repository/script/config to contributor-controlled data.
+    config = PolicyConfig.from_mapping(json.loads((Path(__file__).resolve().parents[2] / ".github/contribution-policy.json").read_text()))
+    metadata = Github(os.environ.get("GITHUB_TOKEN"))
+    checks = Github(os.environ.get("CONTRIBUTION_CHECK_TOKEN"))
+    app_id = int(os.environ.get("CONTRIBUTION_APP_ID", ""))
+    trigger = None
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if event_path and os.environ.get("GITHUB_EVENT_NAME") == "issues":
+        event = mapping(json.loads(Path(event_path).read_text()))
+        trigger = integer(mapping(event.get("issue")).get("number"))
+    return Reconciler(config, metadata, checks, app_id).run(trigger)
 
 
 def main():
-    # Only the trusted checkout's fixed configuration is loaded. No CLI allows
-    # redirecting the host/repository/script/config to contributor-controlled data.
     try:
-        config = PolicyConfig.from_mapping(json.loads((Path(__file__).resolve().parents[2] / ".github/contribution-policy.json").read_text()))
-        metadata = Github(os.environ.get("GITHUB_TOKEN"))
-        checks = Github(os.environ.get("CONTRIBUTION_CHECK_TOKEN"))
-        app_id = int(os.environ.get("CONTRIBUTION_APP_ID", ""))
-        trigger = None
-        event_path = os.environ.get("GITHUB_EVENT_PATH")
-        if event_path and os.environ.get("GITHUB_EVENT_NAME") == "issues":
-            event = mapping(json.loads(Path(event_path).read_text()))
-            trigger = integer(mapping(event.get("issue")).get("number"))
-        result = Reconciler(config, metadata, checks, app_id).run(trigger)
-    except (ApiError, ValueError, TypeError, OSError, KeyError):
+        result = configured_run()
+    except ApiError as error:
         print("Contribution reconciliation unavailable; external configuration or API access needs attention.")
+        print("Contribution diagnostic: role=primary " + error.diagnostic.format())
         return 1
+    if result.primary_error:
+        print("Contribution diagnostic: role=primary " + result.primary_error.format())
+    for error in result.cleanup_errors:
+        print("Contribution diagnostic: role=cleanup " + error.format())
     print(f"Contribution reconciliation: {result.reason}; closed={len(result.closed)}; blocked={len(result.blocked)}")
     return 0 if result.ok else 1
 

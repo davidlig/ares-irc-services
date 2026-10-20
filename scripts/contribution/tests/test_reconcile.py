@@ -1,17 +1,21 @@
 """Exercise the real HTTP adapter and reconciler against an in-memory GitHub API."""
 
 from copy import deepcopy
+from contextlib import redirect_stdout
 from io import BytesIO
+from io import StringIO
 import json
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from policy import PolicyConfig
 from reconcile import ApiError, Github, NoRedirect, Reconciler
+import reconcile
 
 REPO = "davidlig/ares-irc-services"
 PREFIX = "/repos/" + REPO
@@ -146,8 +150,7 @@ class Server:
         if parts[0] == "check-runs" and method == "PATCH":
             run = next(c for c in self.checks if c["id"] == int(parts[1]))
             run.update(data)
-            if data["status"] == "in_progress":
-                run["conclusion"] = None
+            # Omitted fields are retained, not silently reset by the test server.
             return Response(deepcopy(run))
         if parts[0] == "issues" and parts[-1] == "comments":
             number = int(parts[1])
@@ -805,6 +808,157 @@ class HttpSafetyTests(unittest.TestCase):
             self.assertFalse(server.engine().run().ok)
             self.assertEqual("open", server.prs[1]["state"])
             self.assertNotEqual("success", server.conclusion(HEAD))
+
+
+class DiagnosticTests(unittest.TestCase):
+    def test_configuration_error_has_fixed_category_and_no_traceback(self):
+        output = StringIO()
+        with patch.dict(reconcile.os.environ, {"GITHUB_TOKEN": "TOKEN",
+                        "CONTRIBUTION_CHECK_TOKEN": "PRIVATE", "CONTRIBUTION_APP_ID": "PEM secret"}, clear=True):
+            with redirect_stdout(output):
+                self.assertEqual(1, reconcile.main())
+        self.assertIn("stage=configuration", output.getvalue())
+        self.assertIn("category=configuration", output.getvalue())
+        self.assertNotIn("PEM", output.getvalue())
+
+    def test_check_list_validation_uses_check_context(self):
+        server = Server()
+        server.checks = [{"id": "invalid secret", "name": CONFIG.check_name, "app": {"id": APP_ID},
+                          "external_id": server.engine().checks.external_id(HEAD), "head_sha": HEAD}]
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("check_list", result.primary_error.operation.value)
+        self.assertEqual("checks", result.primary_error.principal.value)
+        self.assertNotIn("secret", repr(result))
+
+    def test_comment_response_mismatch_retains_comment_operation(self):
+        server = Server()
+        server.issues[12]["labels"] = []
+        original = server.open
+        def wrong_author(request, timeout):
+            response = original(request, timeout)
+            if request.get_method() == "POST" and request.full_url.endswith("/comments"):
+                value = json.loads(response.getvalue())
+                value["user"] = AUTHOR
+                return Response(value)
+            return response
+        server.client = lambda token: Github(token, open_url=wrong_author, sleep=lambda _: None)
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("comment", result.primary_error.stage.value)
+        self.assertEqual("comment_create", result.primary_error.operation.value)
+        self.assertEqual("response_mismatch", result.primary_error.category.value)
+        self.assertEqual("open", server.prs[1]["state"])
+
+    def test_graphql_upstream_message_is_not_retained(self):
+        server = Server()
+        original = server.open
+        def malformed(request, timeout):
+            return Response({"errors": [{"message": "TOKEN body https://private.invalid"}]}) if (
+                request.full_url.endswith("/graphql")) else original(request, timeout)
+        server.client = lambda token: Github(token, open_url=malformed, sleep=lambda _: None)
+        result = server.engine().run()
+        self.assertEqual("graphql", result.primary_error.operation.value)
+        self.assertEqual("malformed_response", result.primary_error.category.value)
+        self.assertNotIn("TOKEN", repr(result))
+        self.assertNotIn("private.invalid", repr(result))
+
+    def test_rescan_cleanup_failure_cannot_resume_and_lose_diagnostics(self):
+        server = Server()
+        reads = 0
+        def mutate(s, call):
+            nonlocal reads
+            if call[1:3] == ("GET", PREFIX + "/pulls/1"):
+                reads += 1
+                if reads == 2:
+                    s.prs[1]["body"] += "\nExplanatory detail."
+        server.hook = mutate
+        server.fail = lambda c: 503 if c[1] == "PATCH" and c[3].get("conclusion") == "failure" else None
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertTrue(result.cleanup_errors)
+        self.assertTrue(all(e.stage.value == "cleanup" for e in result.cleanup_errors))
+
+    def test_permission_http_failure_retains_primary_and_cleanup_errors(self):
+        server = Server()
+        server.fail = lambda c: 403 if "/collaborators/" in c[2] else (
+            503 if c[1] == "PATCH" and "/check-runs/" in c[2] else None)
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("metadata_or_write_unavailable", result.reason)
+        self.assertEqual("permission_read", result.primary_error.operation.value)
+        self.assertEqual("metadata", result.primary_error.principal.value)
+        self.assertEqual("snapshot", result.primary_error.stage.value)
+        self.assertEqual(403, result.primary_error.http_status)
+        self.assertTrue(result.cleanup_errors)
+        self.assertTrue(all(e.stage.value == "cleanup" and e.http_status == 503
+                            and e.principal.value == "checks" for e in result.cleanup_errors))
+        self.assertEqual("open", server.prs[1]["state"])
+
+    def test_check_response_mismatch_is_distinct_from_http_error(self):
+        server = Server()
+        original = server.open
+        def mismatch(request, timeout):
+            response = original(request, timeout)
+            if request.get_method() == "PATCH" and "/check-runs/" in request.full_url:
+                value = json.loads(response.getvalue())
+                value["status"] = "completed"
+                return Response(value)
+            return response
+        server.client = lambda token: Github(token, open_url=mismatch, sleep=lambda _: None)
+        server.engine().run()
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("response_mismatch", result.primary_error.category.value)
+        self.assertEqual("check_update", result.primary_error.operation.value)
+        self.assertIsNone(result.primary_error.http_status)
+
+    def test_unknown_transport_exception_is_sanitized_and_blocks(self):
+        server = Server()
+        server.hook = lambda *_: (_ for _ in ()).throw(RuntimeError("TOKEN PEM private body https://evil.invalid"))
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("unexpected", result.primary_error.category.value)
+        self.assertNotIn("TOKEN", repr(result))
+        self.assertNotIn("evil", repr(result))
+
+    def test_api_error_rejects_untrusted_diagnostic_fields(self):
+        error = ApiError("secret", operation="TOKEN", stage="PEM", principal="private", category="body")
+        self.assertEqual("unknown", error.diagnostic.operation.value)
+        self.assertEqual("unknown", error.diagnostic.stage.value)
+        self.assertIsNone(error.status)
+        self.assertNotIn("secret", str(error))
+        self.assertNotIn("TOKEN", str(error))
+
+    def test_main_outputs_only_safe_structured_diagnostics(self):
+        output = StringIO()
+        server = Server()
+        server.fail = lambda c: 422 if "/collaborators/" in c[2] else None
+        result = server.engine().run()
+        with patch.object(reconcile, "Reconciler") as engine, patch.dict(
+                reconcile.os.environ, {"GITHUB_TOKEN": "TOKEN", "CONTRIBUTION_CHECK_TOKEN": "PRIVATE",
+                                       "CONTRIBUTION_APP_ID": str(APP_ID)}, clear=True):
+            engine.return_value.run.return_value = result
+            with redirect_stdout(output):
+                self.assertEqual(1, reconcile.main())
+        text = output.getvalue()
+        self.assertIn("role=primary stage=snapshot operation=permission_read principal=metadata category=http_error http_status=422", text)
+        self.assertNotIn("TOKEN", text)
+        self.assertNotIn("PRIVATE", text)
+
+    def test_completed_checks_can_be_held_without_fake_conclusion_reset(self):
+        server = Server()
+        self.assertTrue(server.engine().run().ok)
+        writer = server.engine().checks
+        writer.set(HEAD)
+        run = next(c for c in server.checks if c["head_sha"] == HEAD)
+        self.assertEqual("in_progress", run["status"])
+        self.assertEqual("success", run["conclusion"])
+        writer.set(HEAD, "failure")
+        self.assertEqual("failure", run["conclusion"])
+        writer.set(HEAD, "success")
+        self.assertEqual("success", run["conclusion"])
+        self.assertEqual(2, len(server.checks))
 
 
 if __name__ == "__main__":
