@@ -55,6 +55,11 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("561369", workflow)
         self.assertIn("python3 scripts/contribution/reconcile.py", workflow)
 
+    def test_grant_comment_and_issue_lifecycle_wakeups(self):
+        workflow = self.policy()
+        self.assertRegex(workflow, r"issue_comment:\s+types: \[created, edited, deleted\]")
+        self.assertRegex(workflow, r"issues:\s+types: \[[^\]]*closed[^\]]*reopened[^\]]*\]")
+
     def test_review_signal_has_no_privileges_checkout_artifacts_or_event_text(self):
         workflow = (ROOT / ".github/workflows/contribution-review-signal.yml").read_text()
         self.assertIn("name: Contribution review signal", workflow)

@@ -12,6 +12,7 @@ from policy import (
     Actor, Issue, IssueReference, LabelEvent, PolicyConfig, PullRequest, Review,
     evaluate, parse_closing_references,
 )
+from grants import GrantComment, Opening
 
 ROOT = Path(__file__).resolve().parents[3]
 NOW = datetime(2026, 10, 20, tzinfo=timezone.utc)
@@ -27,12 +28,21 @@ def event(actor=OWNER, when=NOW - timedelta(days=1), action="labeled", identifie
     return LabelEvent(identifier, action, "approved", actor, when)
 
 
-def issue(number=12, **changes):
-    return replace(Issue(number, 1167938167, frozenset({"approved"}), False, (event(),)), **changes)
+def issue(number=12, author_id=AUTHOR.id, **changes):
+    created = NOW - timedelta(days=3)
+    command = '/authorize-contribution ' + json.dumps({"version": 1, "author_id": author_id,
+        "head_repository_id": 456, "head_ref": "feat/example", "base_ref": "main"})
+    comment = GrantComment(100, number, OWNER.id, "User", created, created, command)
+    pointer = LabelEvent(50, "labeled", "approved-grant:100", OWNER, NOW - timedelta(days=2))
+    events = changes.pop("events", (event(),))
+    if events:
+        events = (pointer,) + events
+    return replace(Issue(number, 1167938167, frozenset({"approved", pointer.label}), False, events,
+                         comments=(comment,)), **changes)
 
 
 def pull(**changes):
-    return replace(PullRequest(AUTHOR, "head", NOW, (), "Fixes #12"), **changes)
+    return replace(PullRequest(AUTHOR, "head", NOW, (), "Fixes #12", 1001, 456, "feat/example", "main"), **changes)
 
 
 def review(actor=OWNER, state="APPROVED", sha="head", identifier=1, when=NOW):
@@ -40,10 +50,13 @@ def review(actor=OWNER, state="APPROVED", sha="head", identifier=1, when=NOW):
 
 
 def decision(pr=None, issues=None, reviews=None, links=(), permissions=None):
+    pr = pr or pull()
     return evaluate(
-        CONFIG, pr or pull(), issues if issues is not None else {12: issue()},
+        CONFIG, pr, issues if issues is not None else {12: issue(author_id=pr.author.id)},
         reviews if reviews is not None else (review(),), links,
         permissions if permissions is not None else {561369: "admin", 777: "write", 888: "write"},
+        (Opening(pr.id, pr.author.id, pr.created_at, 0),) + tuple(
+            Opening(pr.id, pr.author.id, at, i + 1) for i, at in enumerate(pr.reopened_at)),
     )
 
 
@@ -190,7 +203,8 @@ class AdmissionTests(unittest.TestCase):
         updated = issue(events=(event(), later))
         self.assertFalse(decision(issues={12: updated}).admitted)
         reopened = pull(reopened_at=(NOW + timedelta(hours=2),))
-        self.assertTrue(decision(reopened, {12: updated}).admitted)
+        # Reopening cannot recycle an old grant's original approval epoch.
+        self.assertFalse(decision(reopened, {12: updated}).admitted)
         self.assertFalse(decision(pull(reopened_at=(NOW - timedelta(hours=2),)), {12: updated}).admitted)
 
     def test_equal_timestamps_are_not_prior_approval(self):
@@ -200,16 +214,15 @@ class AdmissionTests(unittest.TestCase):
         pr = pull(reopened_at=(NOW + timedelta(hours=2), NOW + timedelta(hours=1)))
         self.assertTrue(decision(pr, {12: issue(events=(event(when=NOW + timedelta(minutes=30)),))}).admitted)
 
-    def test_closed_issue_state_is_not_an_admission_requirement(self):
-        # State is deliberately absent: approval, not open/closed state, authorizes work.
-        self.assertTrue(decision().admitted)
+    def test_issue_must_remain_open(self):
+        self.assertFalse(decision(issues={12: issue(state="closed")}).admitted)
 
     def test_issue_scope_edit_after_approval_requires_reapproval(self):
         edited = NOW - timedelta(hours=12)
         snapshot = issue(scope_changed_at=edited)
         self.assertFalse(decision(issues={12: snapshot}).admitted)
         reapproved = replace(snapshot, events=(event(when=NOW - timedelta(hours=6)),))
-        self.assertTrue(decision(issues={12: reapproved}).admitted)
+        self.assertFalse(decision(issues={12: reapproved}).admitted)
         self.assertFalse(decision(issues={12: replace(snapshot, events=(event(when=edited),))}).admitted)
 
     def test_owner_author_exemption_never_bypasses_issue_approval(self):

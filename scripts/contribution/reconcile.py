@@ -22,6 +22,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from policy import (Actor, Decision, Issue, IssueReference, LabelEvent, PolicyConfig,
                     PullRequest, Review, evaluate, parse_closing_references)
+from grants import GrantComment, Opening, POINTER_PREFIX, pointer_id, valid_ref
 
 REPOSITORY = "davidlig/ares-irc-services"
 PREFIX = "/repos/" + REPOSITORY
@@ -29,10 +30,14 @@ API = "https://api.github.com"
 MAX_PAGES = 200
 MAX_ROUNDS = 8
 MARKER = "<!-- ares-contribution-policy:v1 -->"
-COMMENT = (MARKER + "\nThanks for the contribution. This PR needs prior maintainer approval on every linked issue.\n\n"
-           "Please check the closing references and approved issue scopes in CONTRIBUTING.md. "
-           "After all issues have valid approval, correct the description and reopen the PR yourself. "
-           "Approval must precede that reopening. Missing code review alone does not cause closure.")
+COMMENT = (MARKER + "\nThanks for the contribution. Every linked issue must remain open and authorize this contributor and branch.\n\n"
+           "Ask a maintainer to post an unedited /authorize-contribution command on each issue, then apply "
+           "approved-grant:<comment_id> followed by approved before opening or reopening this PR. "
+           "The grant binds your numeric author ID, source repository ID and exact branch. "
+           "The first subsequent PR opening or reopening by that author consumes it, even on another branch; "
+           "only that same PR can reuse it. A closed or edited issue needs a fresh grant and approval. "
+           "See CONTRIBUTING.md for scope review. Correct the references and reopen yourself after approval. "
+           "Missing code review alone does not cause closure.")
 SHA = re.compile(r"[0-9a-f]{40}")
 
 
@@ -54,6 +59,7 @@ class Operation(Enum):
     UNKNOWN = "unknown"
     REPOSITORY_READ = "repository_read"
     PULL_LIST = "pull_list"
+    HISTORY_LIST = "history_list"
     PULL_READ = "pull_read"
     PULL_CLOSE = "pull_close"
     ISSUE_LIST = "issue_list"
@@ -152,6 +158,9 @@ class ApiError(Exception):
 
 def request_operation(method, path):
     # Do not copy an arbitrary path, query, method or upstream error into output.
+    if method == "GET" and isinstance(path, str) and path.split("?", 1)[0] == PREFIX + "/pulls":
+        if parse_qs(urlsplit(path).query).get("state") == ["all"]:
+            return Operation.HISTORY_LIST
     routes = (("GET", re.escape(PREFIX), Operation.REPOSITORY_READ),
               ("POST", "/graphql", Operation.GRAPHQL),
               ("GET", re.escape(PREFIX) + "/pulls", Operation.PULL_LIST),
@@ -162,7 +171,7 @@ def request_operation(method, path):
               ("GET", re.escape(PREFIX) + r"/issues/\d+/events", Operation.ISSUE_EVENTS),
               ("GET", re.escape(PREFIX) + r"/pulls/\d+/reviews", Operation.REVIEW_LIST),
               ("GET", re.escape(PREFIX) + r"/collaborators/[^/]+/permission", Operation.PERMISSION_READ),
-              ("DELETE", re.escape(PREFIX) + r"/issues/\d+/labels/approved", Operation.LABEL_DELETE),
+              ("DELETE", re.escape(PREFIX) + r"/issues/\d+/labels/[^/]+", Operation.LABEL_DELETE),
               ("GET", re.escape(PREFIX) + r"/issues/\d+/comments", Operation.COMMENT_LIST),
               ("POST", re.escape(PREFIX) + r"/issues/\d+/comments", Operation.COMMENT_CREATE),
               ("PATCH", re.escape(PREFIX) + r"/issues/comments/\d+", Operation.COMMENT_UPDATE),
@@ -443,19 +452,13 @@ class Reconciler:
             login = self.logins.get(actor.id)
             if not login:
                 raise ApiError()
-            try:
-                result = mapping(self.api.get(PREFIX + "/collaborators/" + quote(login, safe="") + "/permission"))
-            except ApiError as error:
-                if error.status != 404:
-                    raise
-                self.permission_cache[actor.id] = "none"
-            else:
-                if mapping(result.get("user")).get("id") != actor.id:
-                    raise ApiError()
-                permission = string(result.get("permission"))
-                if permission not in {"admin", "write", "maintain", "triage", "read", "none"}:
-                    raise ApiError()
-                self.permission_cache[actor.id] = permission
+            result = mapping(self.api.get(PREFIX + "/collaborators/" + quote(login, safe="") + "/permission"))
+            if mapping(result.get("user")).get("id") != actor.id:
+                raise ApiError()
+            permission = string(result.get("permission"))
+            if permission not in {"admin", "write", "maintain", "triage", "read", "none"}:
+                raise ApiError()
+            self.permission_cache[actor.id] = permission
         return self.permission_cache[actor.id]
 
     @diagnosed(operation=Operation.ISSUE_READ, principal=Principal.METADATA)
@@ -464,41 +467,67 @@ class Reconciler:
             return self.issue_cache[number]
         try:
             raw = mapping(self.api.get(PREFIX + f"/issues/{number}"))
-            if integer(raw.get("number")) != number:
-                raise ApiError()
-            labels = frozenset(string(mapping(label).get("name")) for label in array(raw.get("labels")))
-            events, scope_changes = [], []
-            if "pull_request" not in raw:
-                for item in self.api.pages(PREFIX + f"/issues/{number}/events"):
-                    item = mapping(item)
-                    if item.get("event") == "renamed":
-                        scope_changes.append(timestamp(item.get("created_at")))
-                    if item.get("event") in {"labeled", "unlabeled"} and mapping(item.get("label")).get("name") == "approved":
-                        actor = self._actor(item.get("actor"))
-                        self._permission(actor)
-                        events.append(LabelEvent(integer(item.get("id")), item["event"], "approved", actor,
-                                                 timestamp(item.get("created_at"))))
-                edit_query = ('query($number:Int!){repository(owner:"davidlig",name:"ares-irc-services"){'
-                              'databaseId issue(number:$number){lastEditedAt}}}')
-                edit_result, _ = self.api.request("POST", "/graphql", {"query": edit_query, "variables": {"number": number}})
-                edit_result = mapping(edit_result)
-                if edit_result.get("errors"):
-                    raise ApiError()
-                repo = mapping(mapping(edit_result.get("data")).get("repository"))
-                if repo.get("databaseId") != self.config.repository_id:
-                    raise ApiError()
-                scope = mapping(repo.get("issue"))
-                if "lastEditedAt" not in scope:
-                    raise ApiError()
-                if scope["lastEditedAt"] is not None:
-                    scope_changes.append(timestamp(scope["lastEditedAt"]))
-            value = Issue(number, self.config.repository_id, labels, "pull_request" in raw,
-                          tuple(sorted(events, key=lambda event: (event.created_at, event.id))),
-                          max(scope_changes) if scope_changes else None)
         except ApiError as error:
             if error.status not in {404, 410}:
                 raise
-            value = None
+            self.issue_cache[number] = None
+            return None
+        if integer(raw.get("number")) != number:
+            raise ApiError()
+        labels = frozenset(string(mapping(label).get("name")) for label in array(raw.get("labels")))
+        state = string(raw.get("state"))
+        if state not in {"open", "closed"}:
+            raise ApiError()
+        events, scope_changes, reopened, comments = [], [], [], []
+        if "pull_request" not in raw:
+            for item in self.api.pages(PREFIX + f"/issues/{number}/events"):
+                item = mapping(item)
+                if item.get("event") == "renamed":
+                    scope_changes.append(timestamp(item.get("created_at")))
+                if item.get("event") == "reopened":
+                    reopened.append(timestamp(item.get("created_at")))
+                if item.get("event") in {"labeled", "unlabeled"}:
+                    label = string(mapping(item.get("label")).get("name"))
+                    if label != "approved" and not label.startswith(POINTER_PREFIX):
+                        continue
+                    actor = self._actor(item.get("actor"))
+                    self._permission(actor)
+                    events.append(LabelEvent(integer(item.get("id")), item["event"], label, actor,
+                                             timestamp(item.get("created_at"))))
+            edit_query = ('query($number:Int!){repository(owner:"davidlig",name:"ares-irc-services"){'
+                          'databaseId issue(number:$number){lastEditedAt}}}')
+            edit_result, _ = self.api.request("POST", "/graphql", {"query": edit_query, "variables": {"number": number}})
+            edit_result = mapping(edit_result)
+            if edit_result.get("errors"):
+                raise ApiError()
+            repo = mapping(mapping(edit_result.get("data")).get("repository"))
+            if repo.get("databaseId") != self.config.repository_id:
+                raise ApiError()
+            scope = mapping(repo.get("issue"))
+            if "lastEditedAt" not in scope:
+                raise ApiError()
+            if scope["lastEditedAt"] is not None:
+                scope_changes.append(timestamp(scope["lastEditedAt"]))
+            identifier = pointer_id(labels)
+            if identifier is not None:
+                seen_comments = set()
+                for item in self.api.pages(PREFIX + f"/issues/{number}/comments"):
+                    item = mapping(item)
+                    comment_id = integer(item.get("id"))
+                    if comment_id in seen_comments:
+                        raise ApiError()
+                    seen_comments.add(comment_id)
+                    if comment_id != identifier:
+                        continue
+                    actor = self._actor(item.get("user"))
+                    self._permission(actor)
+                    local = item.get("issue_url") == API + PREFIX + f"/issues/{number}"
+                    comments.append(GrantComment(identifier, number if local else 0, actor.id, actor.kind,
+                                                 timestamp(item.get("created_at")), timestamp(item.get("updated_at")),
+                                                 string(item.get("body"))))
+        value = Issue(number, self.config.repository_id, labels, "pull_request" in raw,
+                      tuple(sorted(events, key=lambda event: (event.created_at, event.id))),
+                      max(scope_changes) if scope_changes else None, state, tuple(comments), tuple(sorted(reopened)))
         self.issue_cache[number] = value
         return value
 
@@ -550,6 +579,34 @@ class Reconciler:
             self.held.add(commit)
             self.checks.set(commit)
 
+    @diagnosed(operation=Operation.HISTORY_LIST, principal=Principal.METADATA)
+    def _history(self):
+        """Read all openings once; mutable references or branches cannot free a grant."""
+        history, records, seen_ids = [], {}, set()
+        for raw in self.api.pages(PREFIX + "/pulls?state=all&sort=created&direction=asc"):
+            raw = mapping(raw)
+            number, identifier = integer(raw.get("number")), integer(raw.get("id"))
+            if number in records or identifier in seen_ids or raw.get("state") not in {"open", "closed"}:
+                raise ApiError()
+            if mapping(mapping(raw.get("base")).get("repo")).get("id") != self.config.repository_id:
+                raise ApiError()
+            actor, created = self._actor(raw.get("user")), timestamp(raw.get("created_at"))
+            integer(actor.id)
+            history.append(Opening(identifier, actor.id, created, 0))
+            reopened, seen_events = [], set()
+            for item in self.api.pages(PREFIX + f"/issues/{number}/events"):
+                item = mapping(item)
+                if item.get("event") == "reopened":
+                    event_id, at = integer(item.get("id")), timestamp(item.get("created_at"))
+                    if event_id in seen_events or at < created:
+                        raise ApiError()
+                    seen_events.add(event_id)
+                    reopened.append(at)
+                    history.append(Opening(identifier, actor.id, at, event_id))
+            records[number] = (identifier, actor, created, tuple(sorted(reopened)))
+            seen_ids.add(identifier)
+        return tuple(sorted(history, key=lambda e: (e.at, e.pr_id, e.event_id))), records
+
     @diagnosed(operation=Operation.PULL_READ, principal=Principal.METADATA)
     def _snapshot(self):
         self.issue_cache, self.permission_cache, self.logins = {}, {}, {}
@@ -566,6 +623,7 @@ class Reconciler:
         self.api.pages(PREFIX + "/pulls?state=open&sort=created&direction=asc", on_page=hold_headers)
         if len(numbers) != len(set(numbers)):
             raise ApiError()
+        history, records = self._history()
         candidates = []
         for number in sorted(numbers):
             raw = mapping(self.api.get(PREFIX + f"/pulls/{number}"))
@@ -579,14 +637,17 @@ class Reconciler:
             head = sha(mapping(raw.get("head")).get("sha"))
             merge = sha(raw["merge_commit_sha"]) if raw.get("merge_commit_sha") else None
             self._hold([head, *([merge] if merge else [])])
-            reopened = []
-            for item in self.api.pages(PREFIX + f"/issues/{number}/events"):
-                item = mapping(item)
-                if item.get("event") == "reopened":
-                    reopened.append(timestamp(item.get("created_at")))
             author = self._actor(raw.get("user"))
-            pr = PullRequest(author, head, timestamp(raw.get("created_at")), tuple(sorted(reopened)),
-                             "" if raw.get("body") is None else string(raw["body"]))
+            identifier, known_author, created, reopened = records[number]
+            if identifier != integer(raw.get("id")) or known_author != author or created != timestamp(raw.get("created_at")):
+                raise ApiError()
+            source = mapping(raw.get("head"))
+            source_repo = integer(mapping(source.get("repo")).get("id"))
+            source_ref, base_ref = string(source.get("ref")), string(base.get("ref"))
+            if not valid_ref(source_ref) or not valid_ref(base_ref):
+                raise ApiError()
+            pr = PullRequest(author, head, created, reopened, "" if raw.get("body") is None else string(raw["body"]),
+                             identifier, source_repo, source_ref, base_ref)
             reviews = []
             for item in self.api.pages(PREFIX + f"/pulls/{number}/reviews"):
                 item = mapping(item)
@@ -610,18 +671,23 @@ class Reconciler:
                         issues[reference.number] = value
             permission_ids = {event.actor.id for value in issues.values() for event in value.events}
             permission_ids.update(review.actor.id for review in reviews)
+            permission_ids.update(comment.author_id for value in issues.values() for comment in value.comments)
             permissions = {identifier: self.permission_cache.get(identifier, "none") for identifier in permission_ids}
-            decision = evaluate(self.config, pr, issues, reviews, links, permissions)
+            decision = evaluate(self.config, pr, issues, reviews, links, permissions, history)
             merge_ready = bool(merge and raw.get("mergeable") is True and raw.get("mergeable_state") not in {None, "unknown"})
             candidates.append(Candidate(number, pr, sha(base.get("sha")), string(base.get("ref")), merge,
                                         merge_ready, links, tuple(issues[k] for k in sorted(issues)), reviews,
                                         tuple(sorted(permissions.items())), decision))
         return tuple(candidates)
 
-    def _label_authorized(self, value):
-        latest = max(value.events, key=lambda e: (e.created_at, e.id)) if value.events else None
+    def _label_authorized(self, value, label="approved"):
+        if label == "approved" and pointer_id(value.labels) is None:
+            return False
+        events = [event for event in value.events if event.label == label]
+        latest = max(events, key=lambda e: (e.created_at, e.id)) if events else None
         return bool(latest and latest.action == "labeled" and latest.actor.kind == "User"
                     and (value.scope_changed_at is None or latest.created_at > value.scope_changed_at)
+                    and all(latest.created_at > at for at in value.reopened_at)
                     and latest.actor.id in self.config.maintainer_ids
                     and self.permission_cache.get(latest.actor.id) in {"write", "admin", "maintain"})
 
@@ -633,21 +699,26 @@ class Reconciler:
         for number in sorted(numbers):
             self.issue_cache, self.permission_cache = {}, {}
             value = self._issue(number)
-            if value is None or value.is_pull_request or "approved" not in value.labels:
-                continue
-            if self._label_authorized(value):
+            if value is None or value.is_pull_request:
                 continue
             # Sender is irrelevant. A second fresh history/permission read avoids
             # deleting a later legitimate label merely because an older event fired.
-            self.issue_cache, self.permission_cache = {}, {}
-            fresh = self._issue(number)
-            if fresh != value or (fresh is not None and self._label_authorized(fresh)):
-                continue
-            try:
-                self.api.request("DELETE", PREFIX + f"/issues/{number}/labels/approved")
-            except ApiError as error:
-                if error.status != 404:
-                    raise
+            for label in sorted(value.labels):
+                if (label != "approved" and not label.startswith(POINTER_PREFIX)) or self._label_authorized(value, label):
+                    continue
+                self.issue_cache, self.permission_cache = {}, {}
+                fresh = self._issue(number)
+                if fresh != value or (fresh is not None and self._label_authorized(fresh, label)):
+                    continue
+                try:
+                    self.api.request("DELETE", PREFIX + f"/issues/{number}/labels/" + quote(label, safe=""))
+                except ApiError as error:
+                    if error.status != 404:
+                        raise
+                self.issue_cache, self.permission_cache = {}, {}
+                value = self._issue(number)
+                if value is None:
+                    break
         self.issue_cache, self.permission_cache = {}, {}
 
     @diagnosed(operation=Operation.COMMENT_LIST, principal=Principal.METADATA)
@@ -775,7 +846,7 @@ def configured_run():
     app_id = int(os.environ.get("CONTRIBUTION_APP_ID", ""))
     trigger = None
     event_path = os.environ.get("GITHUB_EVENT_PATH")
-    if event_path and os.environ.get("GITHUB_EVENT_NAME") == "issues":
+    if event_path and os.environ.get("GITHUB_EVENT_NAME") in {"issues", "issue_comment"}:
         event = mapping(json.loads(Path(event_path).read_text()))
         trigger = integer(mapping(event.get("issue")).get("number"))
     return Reconciler(config, metadata, checks, app_id).run(trigger)

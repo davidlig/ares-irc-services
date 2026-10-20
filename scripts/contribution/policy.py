@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import re
 from typing import Mapping
+from grants import GrantComment, Opening, POINTER_PREFIX, first_consumer, parse_grant, pointer_id, valid_ref
 
 
 @dataclass(frozen=True)
@@ -86,6 +87,9 @@ class Issue:
     is_pull_request: bool
     events: tuple[LabelEvent, ...]
     scope_changed_at: datetime | None = None
+    state: str = "open"
+    comments: tuple[GrantComment, ...] = ()
+    reopened_at: tuple[datetime, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -95,6 +99,10 @@ class PullRequest:
     created_at: datetime
     reopened_at: tuple[datetime, ...]
     body: str
+    id: int | None = None
+    head_repository_id: int | None = None
+    head_ref: str | None = None
+    base_ref: str | None = None
 
 
 @dataclass(frozen=True)
@@ -256,6 +264,55 @@ def _issue_errors(config: PolicyConfig, issue: Issue, opening: datetime,
     return ()
 
 
+def _grant_errors(config, issue, pr, permissions, history):
+    if (any(type(identifier) is not int or identifier <= 0 for identifier in (pr.id, pr.author.id, pr.head_repository_id))
+            or not valid_ref(pr.head_ref) or not valid_ref(pr.base_ref)):
+        raise ValueError("Complete PR identity is required")
+    if issue.state != "open":
+        return (f"#{issue.number} must remain open; reopening requires fresh authorization",)
+    identifier = pointer_id(issue.labels)
+    comments = [comment for comment in issue.comments if comment.id == identifier]
+    if identifier is None or len(comments) != 1:
+        return (f"#{issue.number} requires exactly one valid approved-grant pointer and its comment",)
+    comment = comments[0]
+    grant = parse_grant(comment.body)
+    if (comment.issue_number != issue.number or not _trusted(Actor(comment.author_id, comment.author_kind), config, permissions)
+            or _timestamp(comment.created_at) != _timestamp(comment.updated_at) or grant is None):
+        return (f"#{issue.number} grant must be an unedited, authorized human command on this issue",)
+    boundaries = (*issue.reopened_at, *((issue.scope_changed_at,) if issue.scope_changed_at else ()))
+    if any(_timestamp(comment.created_at) <= _timestamp(boundary) for boundary in boundaries):
+        return (f"#{issue.number} requires a fresh grant after its latest scope edit or reopening",)
+    pointer = POINTER_PREFIX + str(identifier)
+    events = [event for event in issue.events if event.label == pointer and event.action in {"labeled", "unlabeled"}]
+    if not events:
+        return (f"#{issue.number} grant label lacks provenance",)
+    current = max(events, key=lambda e: (_timestamp(e.created_at), e.id))
+    trusted_applications = [event for event in events if event.action == "labeled"
+                            and event.actor.kind == "User" and event.actor.id in config.maintainer_ids]
+    if (current.action != "labeled" or not _trusted(current.actor, config, permissions) or not trusted_applications):
+        return (f"#{issue.number} grant label is not from a currently authorized human",)
+    original = min(trusted_applications, key=lambda e: (_timestamp(e.created_at), e.id))
+    if not _trusted(original.actor, config, permissions):
+        return (f"#{issue.number} original grant approver is no longer authorized",)
+    approvals = [event for event in issue.events if event.label == config.approval_label and event.action == "labeled"]
+    following = [event for event in approvals if (_timestamp(event.created_at), event.id)
+                 > (_timestamp(original.created_at), original.id)]
+    if not following:
+        return (f"#{issue.number} grant must precede its original approval",)
+    epoch = min(following, key=lambda e: (_timestamp(e.created_at), e.id))
+    latest = max(approvals, key=lambda e: (_timestamp(e.created_at), e.id))
+    if (epoch.id != latest.id or not (_timestamp(comment.created_at) < _timestamp(original.created_at)
+                                    <= _timestamp(current.created_at) < _timestamp(epoch.created_at))):
+        return (f"#{issue.number} old grants cannot be reused by reapplying approval or pointer labels",)
+    if (grant.author_id != pr.author.id or pr.author.kind != "User"
+            or grant.head_repository_id != pr.head_repository_id or grant.head_ref != pr.head_ref
+            or grant.base_ref != pr.base_ref):
+        return (f"#{issue.number} grant does not authorize this author, source repository and exact branch",)
+    if first_consumer(grant.author_id, _timestamp(epoch.created_at), history) != pr.id:
+        return (f"#{issue.number} grant was consumed by another PR; request a fresh grant and approval",)
+    return ()
+
+
 def _review_errors(config: PolicyConfig, pr: PullRequest, reviews: tuple[Review, ...],
                    permissions: Mapping[int, str | None]) -> tuple[str, ...]:
     if type(pr.author.id) is int and pr.author.id == config.owner_id and pr.author.kind == "User":
@@ -278,7 +335,7 @@ def _review_errors(config: PolicyConfig, pr: PullRequest, reviews: tuple[Review,
 
 def evaluate(config: PolicyConfig, pr: PullRequest, issues: Mapping[int, Issue],
              reviews: tuple[Review, ...], linked_references: tuple[IssueReference, ...],
-             permissions: Mapping[int, str | None]) -> Decision:
+             permissions: Mapping[int, str | None], history: tuple[Opening, ...] | None = None) -> Decision:
     """Authorize supplied snapshots, not comments or labels on the PR.
 
     The adapter must paginate all linked references, issue label events, PR
@@ -303,6 +360,7 @@ def evaluate(config: PolicyConfig, pr: PullRequest, issues: Mapping[int, Issue],
         if snapshot is None or snapshot.number != reference.number:
             errors.append(f"Missing issue snapshot for #{reference.number}")
         else:
-            errors.extend(_issue_errors(config, snapshot, opening, permissions))
+            issue_errors = _issue_errors(config, snapshot, opening, permissions)
+            errors.extend(issue_errors or _grant_errors(config, snapshot, pr, permissions, history))
     review_errors = _review_errors(config, pr, reviews, permissions)
     return Decision(not errors, not review_errors, tuple(sorted(numbers)), tuple(errors), review_errors)

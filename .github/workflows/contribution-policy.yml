@@ -4,7 +4,9 @@ on:
   pull_request_target:
     types: [opened, reopened, edited, synchronize, ready_for_review, closed]
   issues:
-    types: [opened, labeled, unlabeled, edited, transferred, deleted]
+    types: [opened, labeled, unlabeled, edited, transferred, deleted, closed, reopened]
+  issue_comment:
+    types: [created, edited, deleted]
   label:
     types: [edited, deleted]
   push:
