@@ -503,13 +503,15 @@ class Reconciler:
         integer(result.get("id"))
 
     def _block_all(self):
+        complete = True
         for commit in sorted(self.held):
             try:
                 self.checks.set(commit, "failure")
             except ApiError:
                 # A failed write cannot invalidate a previous success. Report the
                 # run as unavailable, never pretend GitHub state was changed.
-                pass
+                complete = False
+        return complete
 
     def run(self, trigger_issue=None):
         closed = []
@@ -551,15 +553,17 @@ class Reconciler:
                     valid = candidate.merge_ready and candidate.decision.review_satisfied
                     for commit in candidate.shas:
                         groups.setdefault(commit, []).append(valid)
+                # The fresh current snapshot matched baseline before aggregation.
+                # Publish one finite batch, not a repository-wide read per SHA.
+                # The final fresh scan includes membership and all dependencies;
+                # any drift invalidates the whole batch before a successful return.
                 for commit, approvals in sorted(groups.items()):
-                    if self._snapshot() != current:
-                        break
                     self.checks.set(commit, "success" if all(approvals) else "failure")
-                else:
-                    if self._snapshot() == current:
-                        blocked = tuple(c.number for c in current if not c.merge_ready or not c.decision.review_satisfied)
-                        return RunResult(True, tuple(closed), blocked, "reconciled")
-                self._block_all()
+                if self._snapshot() == current:
+                    blocked = tuple(c.number for c in current if not c.merge_ready or not c.decision.review_satisfied)
+                    return RunResult(True, tuple(closed), blocked, "reconciled")
+                if not self._block_all():
+                    return RunResult(False, tuple(closed), (), "metadata_or_write_unavailable")
                 baseline = self._snapshot()
             self._block_all()
             return RunResult(False, tuple(closed), (), "snapshot_changed_or_work_budget_exhausted")

@@ -206,12 +206,33 @@ Use disposable branches/issues/PRs with explicit authorization and no production
   fail conservatively). Issue `updated_at` is deliberately not used, because
   comments/labels also change it. This detects edits, not semantic scope alignment.
   The [public GitHub schema](https://docs.github.com/public/fpt/schema.docs.graphql)
-  defines the body-edit timestamp. The adapter re-reads before final writes
-  and closure and again after publication, with at most eight rounds per run.
+  defines the body-edit timestamp. A stable run takes three complete fresh
+  snapshots: the initial baseline, validation after the approval-label audit, and
+  a final guard after one finite batch of App check writes. Every snapshot clears
+  its issue/permission caches and re-reads actual metadata. Repository-wide scans
+  are never nested inside the per-SHA publication loop. A changed final snapshot,
+  including new shared-SHA siblings, invalidates every held SHA before a rescan;
+  if invalidation fails, the run stops unavailable rather than claiming success.
+  An intermediate App write error also attempts all held-SHA invalidations and
+  returns unsuccessful. If writes remain unavailable, earlier greens may remain
+  visible; the run never claims they were revoked or returns partial success.
+  Closure still has fresh checks before the comment and before closing. There are
+  at most eight rounds (at most 33 full snapshots), independent of PR/SHA count.
   Closing an invalid sibling consumes a round; larger backlogs remain blocked and
   require subsequent runs. Pagination is capped at 200 pages per connection; reads
   use a 20-second timeout and at most three bounded attempts. Mutations are never
   blindly retried after uncertain outcomes.
+- Metadata request complexity is linear in open PRs and their unique dependencies
+  and paginated records for a fixed round budget, not quadratic in SHA count. The
+  regression fixture gives each external PR its own approved issue, current-HEAD
+  owner review and two unique SHAs. With no extra pages, `n` stable PRs use exactly
+  `18n + 8` metadata REST requests and `7n` GraphQL requests, plus `6n + 1` requests
+  through the separate App client. The 20-PR fixture completes with 368 metadata
+  REST requests under a simulated 1,000-REST-request budget. GraphQL request counts
+  are measured separately, **not** treated as REST quota or measured primary-point
+  costs. Four scheduled scans per hour would already use 1,472 metadata REST
+  requests for that fixture, before events, retries or churn. This per-run proof
+  is not a guarantee that aggregate hourly traffic fits every installation's quota.
 - Mutable App check runs cover current HEAD **and** known test-merge SHAs. Every open
   PR sharing a SHA, across either role, must qualify. Unknown mergeability/missing
   merge SHA blocks the known head rather than claiming complete coverage. Fork

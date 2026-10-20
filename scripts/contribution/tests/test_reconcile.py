@@ -186,6 +186,231 @@ class Server:
         return [r.get("conclusion") for r in self.checks if r["head_sha"] == sha and r["app"]["id"] == APP_ID][-1]
 
 
+def valid_distinct_prs(count):
+    """Give each external author PR its own issue, HEAD, merge and owner review."""
+    server = Server()
+    server.prs, server.issues, server.events = {}, {}, {}
+    server.pr_events, server.reviews, server.links, server.comments = {}, {}, {}, {}
+    for number in range(1, count + 1):
+        issue_number = max(100, count) + number
+        head, merge = f"{number:040x}", f"{1000 + number:040x}"
+        server.prs[number] = pull(number, head=head, merge=merge, body=f"Fixes #{issue_number}")
+        server.issues[issue_number] = issue(issue_number)
+        server.events[issue_number] = [label_event()]
+        server.reviews[number] = [review(sha=head)]
+    return server
+
+
+def request_counts(server):
+    metadata = [call for call in server.calls if call[0] == "metadata"]
+    rest = sum(call[2] != "/graphql" for call in metadata)
+    graphql = len(metadata) - rest
+    app = sum(call[0] == "checks" for call in server.calls)
+    return rest, graphql, app
+
+
+class PublicationBudgetTests(unittest.TestCase):
+    def test_stable_metadata_reads_scale_linearly_with_distinct_prs(self):
+        observed = []
+        for count in (1, 5, 10, 20):
+            with self.subTest(prs=count):
+                server = valid_distinct_prs(count)
+                result = server.engine().run()
+                rest, graphql, app = request_counts(server)
+                observed.append((count, rest, graphql, app))
+                self.assertTrue(result.ok)
+                self.assertTrue(all(run["conclusion"] == "success" for run in server.checks))
+                # Three fresh snapshots, one approval audit, two unique SHAs per PR.
+                # REST: 3*(5n+2) + 3n+2; GraphQL: 3*2n+n; App: 6n+1.
+                self.assertLessEqual(rest, 18 * count + 8)
+                self.assertLessEqual(graphql, 7 * count)
+                self.assertEqual(6 * count + 1, app)
+                self.assertEqual(3, sum(token == "metadata" and method == "GET" and path == PREFIX + "/pulls"
+                                        for token, method, path, _ in server.calls))
+        # Exact fixture coefficients guard against concealing quadratic work
+        # behind a generous one-size-fits-all request cap.
+        self.assertEqual([(n, 18 * n + 8, 7 * n, 6 * n + 1) for n in (1, 5, 10, 20)], observed)
+
+    def test_twenty_valid_prs_complete_under_separate_rest_budget(self):
+        server = valid_distinct_prs(20)
+        rest_calls = []
+        def budget(call):
+            if call[0] == "metadata" and call[2] != "/graphql":
+                rest_calls.append(call)
+                if len(rest_calls) > 1000:
+                    return 403
+            return None
+        server.fail = budget
+        result = server.engine().run()
+        self.assertTrue(result.ok)
+        self.assertEqual((), result.closed)
+        self.assertEqual((), result.blocked)
+        self.assertLessEqual(len(rest_calls), 1000)
+        self.assertEqual(40, len(server.checks))
+        self.assertTrue(all(run["conclusion"] == "success" for run in server.checks))
+
+
+class PublicationSafetyTests(unittest.TestCase):
+    def test_intra_batch_mutations_are_detected_by_fresh_global_guard(self):
+        for change in ("head", "body", "base", "removed_label", "reapplied_label", "scope", "review", "permission"):
+            with self.subTest(change=change):
+                server = valid_distinct_prs(2)
+                changed = []
+                def hook(s, call):
+                    if call[0] != "checks" or call[1] != "PATCH" or call[3].get("conclusion") != "success" or changed:
+                        return
+                    changed.append(True)
+                    if change == "head":
+                        s.prs[1]["head"]["sha"] = "e" * 40
+                        s.prs[1]["merge_commit_sha"] = "f" * 40
+                    elif change == "body":
+                        s.prs[1]["body"] = "Fixes #9999"
+                    elif change == "base":
+                        s.prs[1]["base"]["sha"] = "e" * 40
+                        s.prs[1]["merge_commit_sha"] = None
+                    elif change == "removed_label":
+                        s.issues[101]["labels"] = []
+                    elif change == "reapplied_label":
+                        s.events[101].append(label_event(2, when="2026-10-20T00:00:00Z"))
+                    elif change == "scope":
+                        s.scope_edits[101] = "2026-10-20T00:00:00Z"
+                    elif change == "review":
+                        s.reviews[1][0]["state"] = "DISMISSED"
+                    else:
+                        s.permissions[561369] = "read"
+                server.hook = hook
+                result = server.engine().run()
+                self.assertTrue(changed)
+                self.assertTrue(result.ok)
+                self.assertEqual("failure", server.conclusion(f"{1:040x}"))
+                self.assertEqual("failure", server.conclusion(f"{1001:040x}"))
+                if change == "head":
+                    self.assertEqual("failure", server.conclusion("e" * 40))
+                    self.assertEqual("failure", server.conclusion("f" * 40))
+
+    def test_new_cross_role_shared_sha_sibling_invalidates_batch_before_rescan(self):
+        server = valid_distinct_prs(2)
+        shared = server.prs[1]["merge_commit_sha"]
+        changed = []
+        def hook(s, call):
+            if call[0] == "checks" and call[1] == "PATCH" and call[3].get("conclusion") == "success" and not changed:
+                changed.append(True)
+                s.prs[3] = pull(3, head=shared, merge="e" * 40, body="Fixes #101")
+        server.hook = hook
+        result = server.engine().run()
+        self.assertTrue(result.ok)
+        self.assertEqual((3,), result.blocked)
+        self.assertEqual("open", server.prs[3]["state"])
+        self.assertEqual("failure", server.conclusion(shared))
+        # An unrelated qualified role can succeed only in the subsequent batch.
+        unrelated = f"{1:040x}"
+        identifier = next(run["id"] for run in server.checks if run["head_sha"] == unrelated)
+        conclusions = [data.get("conclusion") for _, method, path, data in server.calls
+                       if method == "PATCH" and path == PREFIX + f"/check-runs/{identifier}"]
+        self.assertEqual(["success", "failure", "success"], conclusions)
+
+    def test_pre_or_post_batch_metadata_failure_cleans_up_without_false_closure(self):
+        for phase, fail_scan in (("pre", 2), ("post", 3)):
+            with self.subTest(phase=phase):
+                server = valid_distinct_prs(2)
+                scans = []
+                def failure(call):
+                    if call[0] == "metadata" and call[1] == "GET" and call[2] == PREFIX + "/pulls":
+                        scans.append(call)
+                        if len(scans) >= fail_scan:
+                            return 403
+                    return None
+                server.fail = failure
+                result = server.engine().run()
+                self.assertFalse(result.ok)
+                self.assertEqual((), result.closed)
+                self.assertTrue(all(pr["state"] == "open" for pr in server.prs.values()))
+                self.assertTrue(all(run["conclusion"] == "failure" for run in server.checks))
+                successes = [call for call in server.calls if call[0] == "checks" and call[1] == "PATCH"
+                             and call[3].get("conclusion") == "success"]
+                self.assertEqual(0 if phase == "pre" else 4, len(successes))
+
+    def test_app_write_error_after_early_success_invalidates_every_held_sha(self):
+        server = valid_distinct_prs(2)
+        publications = []
+        def failure(call):
+            if call[0] == "checks" and call[1] == "PATCH" and call[3].get("conclusion") == "success":
+                publications.append(call)
+                if len(publications) == 2:
+                    return 503
+            return None
+        server.fail = failure
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual(2, len(publications))  # No blind mutation retry.
+        self.assertEqual((), result.closed)
+        self.assertTrue(all(run["conclusion"] == "failure" for run in server.checks))
+
+    def test_failed_drift_invalidation_cannot_resume_into_success(self):
+        server = valid_distinct_prs(2)
+        changed, failed = [], []
+        old_head = f"{1:040x}"
+        def hook(s, call):
+            if call[0] == "checks" and call[1] == "PATCH" and call[3].get("conclusion") == "success" and not changed:
+                changed.append(True)
+                s.prs[1]["head"]["sha"] = "e" * 40
+                s.prs[1]["merge_commit_sha"] = "f" * 40
+        def failure(call):
+            if call[0] == "checks" and call[1] == "PATCH" and call[3].get("conclusion") == "failure" and not failed:
+                identifier = next(run["id"] for run in server.checks if run["head_sha"] == old_head)
+                if call[2] == PREFIX + f"/check-runs/{identifier}":
+                    failed.append(call)
+                    return 503
+            return None
+        server.hook, server.fail = hook, failure
+        result = server.engine().run()
+        self.assertTrue(changed)
+        self.assertTrue(failed)
+        self.assertFalse(result.ok)
+        self.assertEqual("metadata_or_write_unavailable", result.reason)
+
+    def test_persistent_app_write_outage_never_returns_partial_success(self):
+        server = valid_distinct_prs(2)
+        publications = []
+        def failure(call):
+            if call[0] == "checks" and call[1] == "PATCH":
+                if call[3].get("conclusion") == "success":
+                    publications.append(call)
+                if len(publications) >= 2:
+                    return 403
+            return None
+        server.fail = failure
+        result = server.engine().run()
+        self.assertFalse(result.ok)
+        self.assertEqual("metadata_or_write_unavailable", result.reason)
+        # Invalidation is impossible during a persistent write outage. Never
+        # misreport the old green as successfully revoked, or return ok=True.
+        self.assertTrue(any(run["conclusion"] == "success" for run in server.checks))
+        self.assertTrue(any(call[0] == "checks" and call[1] == "PATCH" and call[3].get("conclusion") == "failure"
+                            for call in server.calls))
+
+    def test_incomplete_post_batch_pagination_fails_all_known_checks(self):
+        server = valid_distinct_prs(101)
+        published = []
+        def hook(s, call):
+            if call[0] == "checks" and call[1] == "PATCH" and call[3].get("conclusion") == "success":
+                published.append(call)
+        server.hook = hook
+        original = server.open
+        def unavailable(request, timeout):
+            parsed = urlsplit(request.full_url)
+            if published and parsed.path == PREFIX + "/pulls" and parse_qs(parsed.query).get("page") == ["2"]:
+                raise HTTPError(request.full_url, 403, "withheld", {}, BytesIO(b'{}'))
+            return original(request, timeout)
+        server.client = lambda token: Github(token, open_url=unavailable, sleep=lambda _: None)
+        result = server.engine().run()
+        self.assertTrue(published)
+        self.assertFalse(result.ok)
+        self.assertEqual((), result.closed)
+        self.assertEqual(202, len(server.checks))
+        self.assertTrue(all(run["conclusion"] == "failure" for run in server.checks))
+
+
 class AdapterTests(unittest.TestCase):
     def test_valid_external_pr_gets_head_and_merge_success(self):
         server = Server()
