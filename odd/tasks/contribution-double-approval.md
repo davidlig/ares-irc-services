@@ -43,7 +43,7 @@ until the independent review and existing CI requirements are satisfied.
   Evidence: 87 contribution tests and 54 deployment tests passed with warnings as
   errors; native assessment high, independent verification passed locally. App and
   actual GitHub merge enforcement remain pending external activation.
-  Commit: pending creation.
+  Commit: `6f454ca8` — `feat(ci): enforce contribution admission with trusted checks`.
 
 ## Delivery and review
 
@@ -54,7 +54,8 @@ until the independent review and existing CI requirements are satisfied.
   with the adapter. Actual T2 implementation is 1,626 authored changed lines.
   The 400-line task heuristic is advisory; keep coherent behavior and tests together.
 - Delivery strategy: `ask-on-risk`; user selected `feature-branch-chain`.
-- Running authored count: T1 commit 771 lines (includes the recovery tracker).
+- Running authored count: T1 771 + T2 1,661 = 2,432 lines across work-unit commits
+  (includes recovery-tracker updates; excludes this final bookkeeping commit).
 - No PRs are created now. Planned review slices follow T1 and T2 work-unit boundaries;
   split further during future PR preparation if necessary to meet review budgets.
 - RDD: off, decided by the global preference (observed before implementation).
@@ -94,6 +95,6 @@ changed by this implementation and require a separate authorized activation/reve
 
 ## Next step
 
-Commit verified T2 and record its identity. Then the maintainer must authorize and
-perform App/secret/label/protection setup and default-branch activation; no push,
+Implementation and local verification are complete. The maintainer must authorize
+and perform App/secret/label/protection setup and default-branch activation; no push,
 pull request, merge or remote mutation has been performed by this implementation.
