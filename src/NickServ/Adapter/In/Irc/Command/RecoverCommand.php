@@ -6,13 +6,14 @@ namespace App\NickServ\Adapter\In\Irc\Command;
 
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Model\NetworkUser;
 use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
+use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Recover\RecoverNick;
 use App\NickServ\Application\UseCase\Recover\RecoverNickHandlerInterface;
 use App\NickServ\Application\UseCase\Recover\RecoverNickOutcome;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
-use App\Shared\Application\EmailHintMasker;
 
 use function base64_decode;
 use function ceil;
@@ -101,6 +102,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
             senderAccountId: $context->senderAccount?->getId(),
             senderIp: $ip,
             senderHost: $host,
+            clientKey: new NickServClientKeyResolver()->getClientKey(new NetworkUser($sender->uid, $sender->nick, $sender->ident, $sender->hostname, $sender->cloakedHost, $sender->ipBase64)),
         ));
 
         $this->present($context, $result);
@@ -126,20 +128,18 @@ final readonly class RecoverCommand implements NickServCommandInterface
             case RecoverNickOutcome::Forbidden:
                 $context->reply('recover.forbidden', ['nickname' => $result->nickname ?? '']);
                 break;
-            case RecoverNickOutcome::NoEmail:
-                $context->reply('recover.no_email', ['nickname' => $result->nickname ?? '']);
+            case RecoverNickOutcome::Instructions:
+                $context->reply('recover.instructions', ['nickname' => $result->nickname ?? '']);
+                break;
+            case RecoverNickOutcome::CredentialUnavailable:
+                $context->reply('rescue.unavailable');
+                break;
+            case RecoverNickOutcome::PendingDeletion:
+                $context->reply('recover.pending_deletion', ['nickname' => $result->nickname ?? '']);
                 break;
             case RecoverNickOutcome::Throttled:
                 $context->reply('recover.throttled', [
                     'minutes' => (string) (int) ceil($result->retryAfterSeconds / 60),
-                ]);
-                break;
-            case RecoverNickOutcome::MailDeliveryFailed:
-                $context->reply('error.mail_failed');
-                break;
-            case RecoverNickOutcome::TokenSent:
-                $context->reply('recover.email_sent', [
-                    'email_hint' => EmailHintMasker::mask($result->email ?? ''),
                 ]);
                 break;
             case RecoverNickOutcome::InvalidToken:
@@ -149,6 +149,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
                 $identifyCmd = $this->passwordResetAuthenticationCommand($result);
                 $context->reply('recover.success_identify', ['identify_cmd' => $identifyCmd]);
                 $context->reply('recover.success_then_change');
+                $context->reply('rescue.replaced', ['token' => $result->rescueToken]);
                 break;
         }
     }

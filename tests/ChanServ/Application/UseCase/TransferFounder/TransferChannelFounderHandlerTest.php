@@ -8,11 +8,11 @@ use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
-use App\ChanServ\Application\Port\Out\FounderChangeMailSender;
-use App\ChanServ\Application\Port\Out\FounderChangeTokenGenerator;
-use App\ChanServ\Application\Port\Out\FounderChangeTokenPort;
+use App\ChanServ\Application\Port\Out\FounderRescueTokenValidator;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
+use App\ChanServ\Application\UseCase\TransferFounder\FounderRescueTokenOutcome;
+use App\ChanServ\Application\UseCase\TransferFounder\FounderRescueTokenResult;
 use App\ChanServ\Application\UseCase\TransferFounder\FounderTransferActor;
 use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounder;
 use App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderHandler;
@@ -30,7 +30,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
-use RuntimeException;
 
 #[CoversClass(TransferChannelFounderHandler::class)]
 #[CoversClass(TransferChannelFounder::class)]
@@ -111,235 +110,61 @@ final class TransferChannelFounderHandlerTest extends TestCase
         self::assertSame(3, $result->maximumChannelsPerNick);
     }
 
-    /** @return iterable<string, array{?string}> */
-    public static function missingFounderEmails(): iterable
+    #[Test]
+    public function missingTokenReturnsInstructionsWithoutGeneratingOrSending(): void
     {
-        yield 'null' => [null];
-        yield 'empty' => [''];
+        $validator = $this->createMock(FounderRescueTokenValidator::class);
+        $validator->expects(self::never())->method('validate');
+        $result = $this->handler(accounts: $this->accounts($this->target()), tokens: $validator)->handle($this->command());
+        self::assertSame(TransferFounderOutcome::TokenRequired, $result->outcome);
+    }
+
+    /** @return iterable<string, array{FounderRescueTokenOutcome, TransferFounderOutcome}> */
+    public static function credentialOutcomes(): iterable
+    {
+        yield 'invalid' => [FounderRescueTokenOutcome::Invalid, TransferFounderOutcome::InvalidToken];
+        yield 'unavailable' => [FounderRescueTokenOutcome::Unavailable, TransferFounderOutcome::CredentialUnavailable];
+        yield 'throttled' => [FounderRescueTokenOutcome::Throttled, TransferFounderOutcome::Throttled];
     }
 
     #[Test]
-    #[DataProvider('missingFounderEmails')]
-    public function tokenFlowRequiresCurrentFounderEmail(?string $email): void
+    #[DataProvider('credentialOutcomes')]
+    public function credentialFailuresDoNotTransferOrPublish(FounderRescueTokenOutcome $validation, TransferFounderOutcome $expected): void
     {
-        $accounts = $this->accounts($this->target(), new ChanAccountView(10, 'Founder', 'en', email: $email));
-
-        $result = $this->handler(accounts: $accounts)->handle($this->command());
-
-        self::assertSame(TransferFounderOutcome::CurrentFounderWithoutEmail, $result->outcome);
-    }
-
-    /** @return iterable<string, array{string, string}> */
-    public static function maskedEmails(): iterable
-    {
-        yield 'normal' => ['founder@example.com', 'fo****@e****.***'];
-        yield 'single-character prefix' => ['a@example.com', 'a****@e****.***'];
-        yield 'at at start' => ['@example.com', '***@***'];
-        yield 'without at' => ['invalid', '***@***'];
-    }
-
-    #[Test]
-    #[DataProvider('maskedEmails')]
-    public function tokenRequestStoresThrottleAndSendsSemanticMail(string $email, string $expectedHint): void
-    {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00 UTC');
-        $channel = $this->channel();
-        $accounts = $this->accounts($this->target(), new ChanAccountView(10, 'Founder', 'en', email: $email));
-        $tokens = $this->createMock(FounderChangeTokenPort::class);
-        $tokens->expects(self::once())->method('getLastRequestAt')->with(1)->willReturn(null);
-        $tokens->expects(self::once())->method('store')->with(1, 20, 'generated-token', $now->modify('+3600 seconds'));
-        $tokens->expects(self::once())->method('recordRequest')->with(1);
-        $generator = $this->createStub(FounderChangeTokenGenerator::class);
-        $generator->method('generate')->willReturn('generated-token');
-        $mail = $this->createMock(FounderChangeMailSender::class);
-        $mail->expects(self::once())->method('sendFounderChangeToken')->with(
-            $email,
-            '#test',
-            'Target',
-            'generated-token',
-            'ChanServ',
-            'es',
-        );
-
-        $result = $this->handler(accounts: $accounts, tokens: $tokens, generator: $generator, mail: $mail)->handle(
-            $this->command(channel: $channel, requestedAt: $now),
-        );
-
-        self::assertSame(TransferFounderOutcome::TokenSent, $result->outcome);
-        self::assertSame($expectedHint, $result->emailHint);
-    }
-
-    #[Test]
-    public function recentTokenRequestIsThrottled(): void
-    {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00 UTC');
-        $tokens = $this->createStub(FounderChangeTokenPort::class);
-        $tokens->method('getLastRequestAt')->willReturn($now->modify('-599 seconds'));
-
-        $result = $this->handler(
-            accounts: $this->accountsWithFounderEmail(),
-            tokens: $tokens,
-        )->handle($this->command(requestedAt: $now));
-
-        self::assertSame(TransferFounderOutcome::Throttled, $result->outcome);
-    }
-
-    #[Test]
-    public function elapsedThrottleAllowsRequest(): void
-    {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00 UTC');
-        $tokens = $this->createStub(FounderChangeTokenPort::class);
-        $tokens->method('getLastRequestAt')->willReturn($now->modify('-600 seconds'));
-        $generator = $this->createStub(FounderChangeTokenGenerator::class);
-        $generator->method('generate')->willReturn('token');
-
-        $result = $this->handler(
-            accounts: $this->accountsWithFounderEmail(),
-            tokens: $tokens,
-            generator: $generator,
-        )->handle($this->command(requestedAt: $now));
-
-        self::assertSame(TransferFounderOutcome::TokenSent, $result->outcome);
-    }
-
-    #[Test]
-    public function disabledThrottleIgnoresRecentRequest(): void
-    {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00 UTC');
-        $tokens = $this->createStub(FounderChangeTokenPort::class);
-        $tokens->method('getLastRequestAt')->willReturn($now);
-        $generator = $this->createStub(FounderChangeTokenGenerator::class);
-        $generator->method('generate')->willReturn('token');
-
-        $result = $this->handler(
-            accounts: $this->accountsWithFounderEmail(),
-            tokens: $tokens,
-            generator: $generator,
-            minInterval: 0,
-        )->handle($this->command(requestedAt: $now));
-
-        self::assertSame(TransferFounderOutcome::TokenSent, $result->outcome);
-    }
-
-    #[Test]
-    public function mailFailureKeepsStoredRequestAndReturnsSemanticError(): void
-    {
-        $tokens = $this->createMock(FounderChangeTokenPort::class);
-        $tokens->expects(self::once())->method('store');
-        $tokens->expects(self::once())->method('recordRequest');
-        $generator = $this->createStub(FounderChangeTokenGenerator::class);
-        $generator->method('generate')->willReturn('secret-token');
-        $mail = $this->createStub(FounderChangeMailSender::class);
-        $mail->method('sendFounderChangeToken')->willThrowException(new RuntimeException('transport failed'));
-
-        $result = $this->handler(
-            accounts: $this->accountsWithFounderEmail(),
-            tokens: $tokens,
-            generator: $generator,
-            mail: $mail,
-        )->handle($this->command());
-
-        self::assertSame(TransferFounderOutcome::MailDeliveryFailed, $result->outcome);
-    }
-
-    #[Test]
-    public function invalidTokenIsRejected(): void
-    {
-        $tokens = $this->createStub(FounderChangeTokenPort::class);
-        $tokens->method('consume')->willReturn(null);
-
-        $result = $this->handler(accounts: $this->accountsWithFounderEmail(), tokens: $tokens)->handle(
-            $this->command(token: 'wrong-token'),
-        );
-
-        self::assertSame(TransferFounderOutcome::InvalidToken, $result->outcome);
-    }
-
-    /** @return iterable<string, array{int, ?int, TransferFounderOutcome}> */
-    public static function invalidStoredFounderIds(): iterable
-    {
-        yield 'current founder' => [10, null, TransferFounderOutcome::SameFounder];
-        yield 'successor' => [30, 30, TransferFounderOutcome::TargetIsSuccessor];
-    }
-
-    #[Test]
-    #[DataProvider('invalidStoredFounderIds')]
-    public function consumedTokenRevalidatesStoredFounderId(
-        int $storedNickId,
-        ?int $successorNickId,
-        TransferFounderOutcome $expected,
-    ): void {
-        $tokens = $this->createStub(FounderChangeTokenPort::class);
-        $tokens->method('consume')->willReturn($storedNickId);
-
-        $result = $this->handler(accounts: $this->accountsWithFounderEmail(), tokens: $tokens)->handle(
-            $this->command(channel: $this->channel(successorNickId: $successorNickId), token: 'valid-token'),
-        );
-
+        $tokens = $this->createMock(FounderRescueTokenValidator::class);
+        $tokens->expects(self::once())->method('validate')->with(10, 'wrong', 'ip:client')->willReturn(new FounderRescueTokenResult($validation, 123));
+        $events = $this->createMock(ChanServEventPublisher::class);
+        $events->expects(self::never())->method('publish');
+        $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channels->method('findByFounderNickId')->willReturn([]);
+        $channels->expects(self::never())->method('save');
+        $result = $this->handler(channels: $channels, accounts: $this->accounts($this->target()), tokens: $tokens, events: $events)->handle($this->command(token: 'wrong'));
         self::assertSame($expected, $result->outcome);
     }
 
     #[Test]
-    public function validTokenWithoutActorIsConsumedButDoesNotTransfer(): void
+    public function tokenBelongsToCurrentFounderNotActorOrTargetAndRemainsReusable(): void
     {
-        $tokens = $this->createMock(FounderChangeTokenPort::class);
-        $tokens->expects(self::once())->method('consume')->willReturn(20);
+        $channel = $this->mockChannel();
+        $channel->expects(self::once())->method('changeFounder')->with(20);
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByFounderNickId')->willReturn([]);
-        $channels->expects(self::never())->method('save');
-
-        $result = $this->handler(
-            channels: $channels,
-            accounts: $this->accountsWithFounderEmail(),
-            tokens: $tokens,
-        )->handle($this->command(token: 'valid-token', actor: null));
-
-        self::assertSame(TransferFounderOutcome::Ignored, $result->outcome);
+        $channels->method('findByFounderNickId')->willReturn([]);
+        $channels->expects(self::once())->method('save')->with($channel);
+        $tokens = $this->createMock(FounderRescueTokenValidator::class);
+        $tokens->expects(self::once())->method('validate')->with(10, 'valid-token', 'ip:client')->willReturn(new FounderRescueTokenResult(FounderRescueTokenOutcome::Valid));
+        $events = $this->createMock(ChanServEventPublisher::class);
+        $events->expects(self::once())->method('publish')->with(self::callback(static fn (object $event): bool => $event instanceof ChannelFounderChangedEvent && 10 === $event->oldFounderNickId && 20 === $event->newFounderNickId && !$event->byOperator && 'Actor' === $event->performedBy));
+        $result = $this->handler(channels: $channels, accounts: $this->accounts($this->target()), tokens: $tokens, events: $events)->handle($this->command(channel: $channel, token: 'valid-token'));
+        self::assertSame(TransferFounderOutcome::Updated, $result->outcome);
+        self::assertSame('20', $result->targetNickname);
     }
 
     #[Test]
-    public function validTokenTransfersFounderWithoutAccessAndPublishesOwnerEvent(): void
+    public function ordinaryTransferWithoutActorDoesNothing(): void
     {
-        $now = new DateTimeImmutable('2026-09-07 12:00:00 UTC');
-        $channel = $this->mockChannel();
-        $channel->expects(self::once())->method('changeFounder')->with(25);
-        $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channels->expects(self::once())->method('findByFounderNickId')->with(20)->willReturn([]);
-        $channels->expects(self::once())->method('save')->with($channel);
-        $access = $this->createMock(ChannelAccessRepositoryInterface::class);
-        $access->expects(self::once())->method('findByChannelAndNick')->with(1, 25)->willReturn(null);
-        $access->expects(self::never())->method('remove');
-        $accounts = $this->createStub(ChanUserAccountPort::class);
-        $accounts->method('findAccountByNick')->willReturn($this->target());
-        $accounts->method('findAccountById')->willReturnMap([
-            [10, new ChanAccountView(10, 'Founder', 'en', email: 'founder@example.com')],
-            [25, null],
-        ]);
-        $tokens = $this->createStub(FounderChangeTokenPort::class);
-        $tokens->method('consume')->willReturn(25);
-        $events = $this->createMock(ChanServEventPublisher::class);
-        $events->expects(self::once())->method('publish')->with(self::callback(
-            static fn (object $event): bool => $event instanceof ChannelFounderChangedEvent
-                && 10 === $event->oldFounderNickId
-                && 25 === $event->newFounderNickId
-                && 'Actor' === $event->performedBy
-                && 99 === $event->performedByNickId
-                && '127.0.0.1' === $event->performedByIp
-                && 'ident@host.test' === $event->performedByHost
-                && !$event->byOperator
-                && $now == $event->occurredAt,
-        ));
-
-        $result = $this->handler(
-            channels: $channels,
-            access: $access,
-            accounts: $accounts,
-            tokens: $tokens,
-            events: $events,
-        )->handle($this->command(channel: $channel, token: 'valid-token', requestedAt: $now));
-
-        self::assertSame(TransferFounderOutcome::Updated, $result->outcome);
-        self::assertSame('25', $result->targetNickname);
+        $tokens = $this->createMock(FounderRescueTokenValidator::class);
+        $tokens->expects(self::never())->method('validate');
+        self::assertSame(TransferFounderOutcome::Ignored, $this->handler(accounts: $this->accounts($this->target()), tokens: $tokens)->handle($this->command(token: 'valid', actor: null))->outcome);
     }
 
     #[Test]
@@ -361,8 +186,8 @@ final class TransferChannelFounderHandlerTest extends TestCase
         $events->expects(self::once())->method('publish')->with(self::callback(
             static fn (object $event): bool => $event instanceof ChannelFounderChangedEvent && $event->byOperator,
         ));
-        $tokens = $this->createMock(FounderChangeTokenPort::class);
-        $tokens->expects(self::never())->method('getLastRequestAt');
+        $tokens = $this->createMock(FounderRescueTokenValidator::class);
+        $tokens->expects(self::never())->method('validate');
 
         $result = $this->handler(
             channels: $channels,
@@ -404,11 +229,8 @@ final class TransferChannelFounderHandlerTest extends TestCase
         ?RegisteredChannelRepositoryInterface $channels = null,
         ?ChannelAccessRepositoryInterface $access = null,
         ?ChanUserAccountPort $accounts = null,
-        ?FounderChangeTokenPort $tokens = null,
+        ?FounderRescueTokenValidator $tokens = null,
         ?ChanServEventPublisher $events = null,
-        ?FounderChangeTokenGenerator $generator = null,
-        ?FounderChangeMailSender $mail = null,
-        int $minInterval = 600,
         int $maxChannels = 3,
     ): TransferChannelFounderHandler {
         if (null === $channels) {
@@ -421,13 +243,9 @@ final class TransferChannelFounderHandlerTest extends TestCase
             $channels,
             $access ?? $this->createStub(ChannelAccessRepositoryInterface::class),
             $accounts ?? $this->createStub(ChanUserAccountPort::class),
-            $tokens ?? $this->createStub(FounderChangeTokenPort::class),
+            $tokens ?? $this->createStub(FounderRescueTokenValidator::class),
             $events ?? $this->createStub(ChanServEventPublisher::class),
-            $generator ?? $this->createStub(FounderChangeTokenGenerator::class),
-            $mail ?? $this->createStub(FounderChangeMailSender::class),
             new FounderTransferPolicy(),
-            3600,
-            $minInterval,
             $maxChannels,
         );
     }
@@ -436,7 +254,7 @@ final class TransferChannelFounderHandlerTest extends TestCase
         ?RegisteredChannel $channel = null,
         string $targetNickname = 'Target',
         ?string $token = null,
-        ?FounderTransferActor $actor = new FounderTransferActor('Actor', 99, '127.0.0.1', 'ident@host.test'),
+        ?FounderTransferActor $actor = new FounderTransferActor('Actor', 99, '127.0.0.1', 'ident@host.test', 'ip:client'),
         bool $founderEquivalent = false,
         ?DateTimeImmutable $requestedAt = null,
     ): TransferChannelFounder {
@@ -487,13 +305,5 @@ final class TransferChannelFounderHandlerTest extends TestCase
         $accounts->method('findAccountById')->willReturn($currentFounder);
 
         return $accounts;
-    }
-
-    private function accountsWithFounderEmail(): ChanUserAccountPort
-    {
-        return $this->accounts(
-            $this->target(),
-            new ChanAccountView(10, 'Founder', 'en', email: 'founder@example.com'),
-        );
     }
 }

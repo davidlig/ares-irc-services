@@ -8,6 +8,7 @@ use App\NickServ\Adapter\Out\InMemory\InMemoryRescueAttemptLimiter;
 use App\NickServ\Adapter\Out\Security\UuidRescueTokenCodec;
 use App\NickServ\Application\Port\In\RescueTokenValidation;
 use App\NickServ\Application\Port\In\RescueTokenValidationOutcome;
+use App\NickServ\Application\Port\In\RescueTokenValidationResult;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\UseCase\RescueToken\ValidateRescueTokenHandler;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ValidateRescueTokenHandler::class)]
 #[CoversClass(RescueTokenValidation::class)]
+#[CoversClass(RescueTokenValidationResult::class)]
 final class ValidateRescueTokenHandlerTest extends TestCase
 {
     public function testOnlyActiveConfirmedCredentialCanAuthorize(): void

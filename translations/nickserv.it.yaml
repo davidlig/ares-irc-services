@@ -22,12 +22,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  syntax:           "REGISTER <password> <email>"
+  token_unavailable: "La registrazione è in attesa, ma non è stato possibile consegnare il token.\nAttendi la sua scadenza prima di registrarti nuovamente."
+  syntax: "REGISTER <password> [email]"
   short:            "Registra il suo nickname con i servizi."
-  help:             "Avvia la registrazione del suo nickname attuale. Un token di verifica\nsarà inviato all'indirizzo email fornito. Completi la registrazione\neseguendo \x0303/msg %bot% VERIFY <token>\x03. Il token scade in 1 ora.\nSe non arriva, controlli la cartella spam o usi \x0303RESEND\x03."
+  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nEMAIL invia il token per email. TOKEN lo mostra in privato e richiede VERIFY. L’email è facoltativa solo in modalità TOKEN.\nConferma una registrazione in attesa oppure, se identificato, il token di recupero di un account esistente. Il token confermato resta la credenziale di recupero."
   pending:          "\x0307→\x03 Un token di verifica è stato inviato a \x02%email%\x02.\n  Esegua \x0303/msg %bot% VERIFY <token>\x03 per completare la registrazione.\n  Non l'ha ricevuto? Controlli lo spam o usi \x0303/msg %bot% RESEND\x03\n  Il token scadrà in \x021 ora\x02."
   already_registered: "\x0304✗\x03 Il nickname \x02%nickname%\x02 è già registrato."
-  already_pending:  "\x0304✗\x03 Il nickname \x02%nickname%\x02 ha già una verifica in sospeso.\n  Usi \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
+  already_pending: "Esiste già una registrazione in attesa per %nickname%. Usa VERIFY con il suo token. I token TOKEN non vengono riemessi; se perso, attendi la scadenza della registrazione."
   forbidden:        "\x0304✗\x03 Il nickname \x02%nickname%\x02 non può essere registrato su questa rete."
   pending_deletion: "\x0304✗\x03 Il nickname \x02%nickname%\x02 è in attesa di cancellazione e non può essere registrato."
   invalid_email:    "\x0304✗\x03 L'indirizzo email fornito non è valido."
@@ -38,35 +39,36 @@ register:
 # --- VERIFY -----------------------------------------------------------------
 verify:
   syntax:           "VERIFY <token>"
-  short:            "Conferma il suo indirizzo email e attiva il suo nickname."
-  help:             "Completa la registrazione verificando il token inviato alla sua email.\nIl token è valido per 1 ora dal momento della registrazione."
+  short: "Conferma una registrazione o un token di recupero."
+  help: "Conferma una registrazione in attesa oppure, se identificato, il token di recupero di un account esistente. Il token confermato resta la credenziale di recupero."
   success:          "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato registrato con successo e ora è identificato."
   success_native:   "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato registrato correttamente. Utilizzi l’autenticazione nativa mostrata di seguito."
-  invalid_token:    "\x0304✗\x03 Il token non è valido o è scaduto. Usi \x0303/msg %bot% REGISTER\x03 per ricominciare."
+  invalid_token: "Il token non è valido o è scaduto. Le registrazioni TOKEN non possono richiederne un altro; attendi la scadenza della registrazione in attesa."
   no_pending:       "\x0304✗\x03 Non ha nessuna registrazione in sospeso da verificare."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
+  disabled: "RESEND è disabilitato in modalità TOKEN e non è mai disponibile per le registrazioni TOKEN."
   syntax:           "RESEND"
   short:            "Reinvia il token di verifica alla sua email."
-  help:             "Reinvia il token di verifica all'indirizzo email fornito durante\nla registrazione. Funziona solo se ha una registrazione in sospeso."
+  help: "EMAIL invia il token per email. TOKEN lo mostra in privato e richiede VERIFY. L’email è facoltativa solo in modalità TOKEN.\nRESEND è disabilitato in modalità TOKEN e non è mai disponibile per le registrazioni TOKEN."
   success:          "\x0307→\x03 Token di verifica reinviato a \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Non ha nessuna registrazione in sospeso per cui reinviare un token."
   throttled:        "\x0304✗\x03 Deve attendere \x02%minutes%\x02 minuto/i prima di richiedere un'altra email di verifica."
 
 # --- RECOVER -----------------------------------------------------------------
 recover:
+  pending_deletion: "Il nickname %nickname% è in attesa di eliminazione e non può essere recuperato."
+  instructions: "Usa RECOVER %nickname% <token> con il token di recupero confermato. Il recupero non invia email."
   syntax:           "RECOVER <nickname> [token]"
   short:            "Recuperi il suo nickname se ha perso la password."
-  help:             "Recupera l'accesso a un nickname registrato quando ha perso la password.\n1) \x0303RECOVER <nickname>\x03 — un token viene inviato all'email del nickname.\n2) \x0303RECOVER <nickname> <token>\x03 — inserisca il token dall'email per reimpostare la password.\nRiceverà quindi una password temporanea e il comando per cambiarla."
-  email_sent:       "\x0307→\x03 Un token di recupero è stato inviato a \x02%email_hint%\x02. Controlli la posta in arrivo (e la cartella spam)."
+  help: "Usa RECOVER %nickname% <token> con il token di recupero confermato. Il recupero non invia email.\nNuovo token di recupero: <token>. Il precedente non è più valido. Conservalo al sicuro; non verrà più mostrato."
   not_registered:   "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è registrato."
-  pending:          "\x0304✗\x03 Il nickname \x02%nickname%\x02 è in attesa di verifica email."
+  pending: "Esiste già una registrazione in attesa per %nickname%. Usa VERIFY con il suo token. I token TOKEN non vengono riemessi; se perso, attendi la scadenza della registrazione."
   suspended:        "\x0304✗\x03 Il nickname \x02%nickname%\x02 è sospeso. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 Il nickname \x02%nickname%\x02 non può essere usato su questa rete."
-  no_email:         "\x0304✗\x03 Nessuna email impostata per il nickname \x02%nickname%\x02. Il recupero non è disponibile."
-  throttled:        "\x0304✗\x03 Deve attendere \x02%minutes%\x02 minuto/i prima di richiedere un'altra email di recupero."
-  invalid_token:    "\x0304✗\x03 Il token non è valido o è scaduto. Ne richieda uno nuovo con \x0303RECOVER %nickname%\x03."
+  throttled: "Troppi token errati. Riprova tra %minutes% minuto/i."
+  invalid_token: "Il token di recupero non è valido."
   success_identify: "\x0303✔\x03 Password reimpostata. Si identifichi ora: \x0303%identify_cmd%\x03"
   success_then_change: "Poi cambi la sua password: \x0303/msg %bot% SET PASSWORD <nuova_password>\x03"
 
@@ -164,9 +166,10 @@ set:
     success:        "\x0303✔\x03 La sua password è stata aggiornata con successo."
 
   email:
-    syntax:         "SET EMAIL <nuova_email> [token]"
+    token_required: "Usa SET EMAIL <email> <token> con il token di recupero confermato."
+    syntax: "SET EMAIL <email> <token>"
     short:          "Cambia l'indirizzo email collegato al suo nickname (conferma in due passaggi)."
-    help:           "Cambio email in due passaggi per sicurezza.\n1) \x0303SET EMAIL <nuova_email>\x03 — un token viene inviato alla sua email attuale.\n2) \x0303SET EMAIL <nuova_email> <token>\x03 — confermi con il token ricevuto.\nIl token scade in 1 ora."
+    help: "SET EMAIL cambia l’indirizzo di contatto dopo aver verificato il token di recupero, senza consumarlo. Controlla formato e unicità; non invia email di conferma."
     success:        "\x0303✔\x03 La sua email è stata aggiornata a \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Un token di conferma è stato inviato a \x02%current_email%\x02.\n  Per confermare il cambio a \x02%new_email%\x02 esegua:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Il token scade in 1 ora."
     invalid_token:  "\x0304✗\x03 Il token non è valido o è scaduto. Ne richieda uno nuovo con \x0303SET EMAIL <nuova_email>\x03."
@@ -688,3 +691,12 @@ regmode:
   help: "Imposta EMAIL o TOKEN come politica di registrazione per i nuovi account. STATUS mostra la politica attuale senza modificarla. Gli account in attesa mantengono la modalità di registrazione originale. In modalità TOKEN, RESEND è disabilitato globalmente. Richiede il permesso nickserv.regmode."
   status: "Modalità di registrazione attuale: %mode%."
   changed: "Modalità di registrazione impostata su %mode%."
+
+# --- Unified rescue credential -----------------------------------------------
+rescue:
+  issued: "Token di recupero: %token%.\nConfermalo con /msg %bot% VERIFY %token%.\nConservalo al sicuro.\nÈ valido solo l’ultimo token;\ndopo la conferma non verrà più mostrato."
+  confirmed: "Il token di recupero è stato confermato. Conservalo al sicuro."
+  unavailable: "Autenticati e conferma il token di recupero con VERIFY prima di usare questa operazione."
+  locked_out: "Troppi token errati. Riprova tra %seconds% secondi."
+  throttled: "Troppi token errati. Riprova tra %minutes% minuto/i."
+  replaced: "Nuovo token di recupero: %token%.\nIl precedente non è più valido.\nConservalo al sicuro;\nnon verrà più mostrato."

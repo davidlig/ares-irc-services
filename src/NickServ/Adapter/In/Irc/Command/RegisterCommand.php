@@ -14,7 +14,7 @@ use App\NickServ\Application\UseCase\Register\RegisterNickResult;
 
 use function ceil;
 
-/** IRC parsing and presentation adapter for REGISTER <password> <email>. */
+/** IRC parsing and presentation adapter for REGISTER <password> [email]. */
 final readonly class RegisterCommand implements NickServCommandInterface
 {
     public function __construct(private RegisterNickHandlerInterface $handler) {}
@@ -31,7 +31,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 2;
+        return 1;
     }
 
     public function getSyntaxKey(): string
@@ -84,7 +84,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         $this->present($context, $this->handler->handle(new RegisterNick(
             nickname: $sender->nick,
             password: $context->args[0],
-            email: $context->args[1],
+            email: $context->args[1] ?? null,
             language: $context->getLanguage(),
             clientKey: self::clientKey($sender),
         )));
@@ -95,6 +95,12 @@ final readonly class RegisterCommand implements NickServCommandInterface
     private function present(NickServContext $context, RegisterNickResult $result): void
     {
         switch ($result->outcome) {
+            case RegisterNickOutcome::TokenVerificationRequired:
+                $context->reply('rescue.issued', ['token' => $result->token]);
+                break;
+            case RegisterNickOutcome::TemporarilyUnavailable:
+                $context->reply('register.token_unavailable');
+                break;
             case RegisterNickOutcome::VerificationRequired:
                 $context->reply('register.pending', ['email' => $result->email]);
                 break;

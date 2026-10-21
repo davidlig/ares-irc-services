@@ -58,6 +58,13 @@ final readonly class SensitiveDataRedactor
                 break;
 
             case 'SET':
+                if (isset($parts[1], $parts[2], $parts[3]) && 1 === preg_match('/^[#&+!]/', $parts[1]) && 'FOUNDER' === strtoupper($parts[2])) {
+                    $targetAndToken = preg_split('/\\s+/', $parts[3], 2) ?: [$parts[3]];
+                    if (isset($targetAndToken[1])) {
+                        $parts[3] = $targetAndToken[0] . ' ' . self::MASK;
+                    }
+                    break;
+                }
                 if (isset($parts[1]) && in_array(strtoupper($parts[1]), ['EMAIL', 'PASSWORD'], true)) {
                     if (isset($parts[2])) {
                         $parts[2] = self::MASK;

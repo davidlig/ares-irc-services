@@ -9,7 +9,18 @@ final readonly class VerifyNickResult
     private function __construct(
         public VerifyNickOutcome $outcome,
         public ?string $nickname = null,
+        public int $retryAfterSeconds = 0,
     ) {}
+
+    public static function credentialConfirmed(): self
+    {
+        return new self(VerifyNickOutcome::CredentialConfirmed);
+    }
+
+    public static function lockedOut(int $seconds): self
+    {
+        return new self(VerifyNickOutcome::LockedOut, retryAfterSeconds: $seconds);
+    }
 
     public static function success(string $nickname): self
     {

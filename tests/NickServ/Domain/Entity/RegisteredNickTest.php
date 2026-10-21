@@ -756,4 +756,11 @@ final class RegisteredNickTest extends TestCase
         $this->expectException(LogicException::class);
         $nick->replaceRescueTokenHash(str_repeat('a', 64));
     }
+
+    #[Test]
+    public function emailModeCannotCreatePendingAccountWithoutEmail(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        RegisteredNick::createPending('Alice', 'hash', null, 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+    }
 }

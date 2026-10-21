@@ -100,7 +100,8 @@ final class SetCommandTest extends TestCase
                 && SetNickSettingOption::Email === $input->option
                 && 'new@example.com TOKEN' === $input->value
                 && !$input->operatorMode
-                && 'en' === $input->locale,
+                && 'en' === $input->locale
+                && 'ip:fwAAAQ==' === $input->clientKey,
         ))->willReturn(new SetNickSettingResult(
             SetNickSettingOutcome::Changed,
             SetNickSettingOption::Email,

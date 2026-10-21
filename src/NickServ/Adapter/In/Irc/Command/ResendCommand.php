@@ -92,6 +92,9 @@ final readonly class ResendCommand implements NickServCommandInterface
     private function present(NickServContext $context, ResendVerificationResult $result): void
     {
         switch ($result->outcome) {
+            case ResendVerificationOutcome::Disabled:
+                $context->reply('resend.disabled');
+                break;
             case ResendVerificationOutcome::Success:
                 $context->reply('resend.success', ['email' => $result->email ?? '']);
                 break;

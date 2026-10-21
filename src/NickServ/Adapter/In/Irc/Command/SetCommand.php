@@ -7,8 +7,10 @@ namespace App\NickServ\Adapter\In\Irc\Command;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Model\NetworkUser;
 use App\NickServ\Application\Model\NickOperationActor;
 use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Set\SetNickSetting;
 use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
@@ -121,6 +123,7 @@ final readonly class SetCommand implements NickServCommandInterface
             implode(' ', array_slice($context->args, 1)),
             false,
             $context->getLanguage(),
+            clientKey: new NickServClientKeyResolver()->getClientKey(new NetworkUser($sender->uid, $sender->nick, $sender->ident, $sender->hostname, $sender->cloakedHost, $sender->ipBase64)),
         ));
 
         return SetNickSettingPresentation::present($context, $result)

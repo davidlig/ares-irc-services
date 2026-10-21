@@ -85,7 +85,7 @@ With just 5 steps and a running IRCd you should see `NickServ`, `ChanServ`, `Mem
 
 ### NickServ
 
-Nickname registration with **email verification**. Users register a nick, confirm via email token, and then identify with a password. Registered nicks are protected — unauthenticated users are renamed to a configurable **guest prefix** (default `Ares-`).
+Nickname registration with **REGMODE TOKEN** (default, no SMTP) or **REGMODE EMAIL**. Users register a nick and confirm the delivered rescue token with `VERIFY` before activation. TOKEN delivers it privately and accepts an optional email; EMAIL requires an address and delivers it by mail. Registered nicks are protected — unauthenticated users are renamed to a configurable **guest prefix** (default `Ares-`).
 
 Key features: password identification, **brute-force lockout** after repeated failures, token-based **RECOVER**, custom **VHOST** with configurable suffix, forbidden nick/vhost lists, suspension with auto-expiry, inactivity-based expiry, a full **action history** log, and IRCop **WHOIP** / paginated **LIST** searches. Manually dropped registrations remain restorable by IRCops during a configurable grace period.
 
@@ -228,8 +228,6 @@ DATABASE_URL="postgresql://user:pass@host:5432/db?serverVersion=16&charset=utf8"
 | `NICKSERV_IDENTIFY_MAX_FAILED_ATTEMPTS` | `5` | Failed attempts before lockout |
 | `NICKSERV_IDENTIFY_FAILED_WINDOW_SECONDS` | `900` | Window to count failed attempts |
 | `NICKSERV_IDENTIFY_LOCKOUT_SECONDS` | `600` | Lockout duration |
-| `NICKSERV_RECOVER_TOKEN_TTL` | `3600` | RECOVER token TTL (seconds) |
-| `NICKSERV_RECOVER_MIN_INTERVAL` | `600` | Seconds between RECOVER attempts |
 | `NICKSERV_INACTIVITY_EXPIRY_DAYS` | `90` | Drop after days of inactivity (`0` = disabled) |
 | `NICKSERV_DROP_GRACE_DAYS` | `7` | Days a manually dropped nick remains restorable (`0` = deletion on maintenance) |
 | `NICKSERV_LIST_PAGE_SIZE` | `50` | Matching registrations per IRCop LIST page |
@@ -245,8 +243,6 @@ DATABASE_URL="postgresql://user:pass@host:5432/db?serverVersion=16&charset=utf8"
 | `CHANSERV_REALNAME` | `Channel Registration Services` | Bot realname |
 | `CHANSERV_MAX_CHANNELS_PER_NICK` | `3` | Max registered channels per nick |
 | `CHANSERV_REGISTER_MIN_INTERVAL` | `21600` | Seconds between channel registrations |
-| `CHANSERV_FOUNDER_TOKEN_TTL` | `3600` | SET FOUNDER token TTL |
-| `CHANSERV_FOUNDER_MIN_INTERVAL` | `600` | Seconds between SET FOUNDER attempts |
 | `CHANSERV_INACTIVITY_EXPIRY_DAYS` | `45` | Drop after days of inactivity (`0` = disabled) |
 | `CHANSERV_DROP_GRACE_DAYS` | `7` | Days a manually dropped channel remains restorable (`0` = deletion on maintenance) |
 | `CHANSERV_LIST_PAGE_SIZE` | `50` | Matching registrations per IRCop LIST page |
@@ -367,15 +363,16 @@ connection writer, reducing write overhead while preserving line order and NOTIC
 
 | Command | Parameters | Description |
 |---------|------------|-------------|
-| `REGISTER` | `<password> <email>` | Register a nickname |
-| `VERIFY` | `<token>` | Confirm email verification |
-| `RESEND` | — | Re-send verification email |
-| `RECOVER` | `<nick> [token]` | Recover a registered nick |
+| `REGISTER` | `<password> [email]` | Start registration; EMAIL mode requires an email |
+| `VERIFY` | `<token>` | Activate a pending registration or confirm a migrated rescue credential |
+| `RESEND` | — | Replace and email an EMAIL pending token; disabled globally in TOKEN mode |
+| `RECOVER` | `<nick> [token]` | Show instructions or recover using a confirmed rescue token |
 | `IDENTIFY` | `<nick> <password>` | Identify to your registered nick |
+| `REGMODE` | `{EMAIL\|TOKEN\|STATUS}` | Read or change the persisted network registration policy (authorized IRCops) |
 | `STATUS` | `<nick>` | Show nick registration status |
 | `INFO` | `<nick>` | Show nick registration details |
 | `SET PASSWORD` | `<new-password>` | Change your password |
-| `SET EMAIL` | `<email> [token]` | Change your email address |
+| `SET EMAIL` | `<email> <token>` | Change contact email using the reusable rescue credential |
 | `SET LANGUAGE` | `<ca\|de\|el\|en\|es\|eu\|fr\|gl\|it\|nl\|pl\|pt\|ro\|tr>` | Set your preferred language |
 | `SET TIMEZONE` | `<tz>` | Set your timezone |
 | `SET PRIVATE` | `<on\|off>` | Hide registration in STATUS |
@@ -401,6 +398,31 @@ For `unreal` and `inspircd`, identify with `/msg NickServ IDENTIFY <nick> <passw
 For `unrealudb`, authentication is native: use `/NICK <nick>:<password>` or
 `/NICK <nick>!<password>`; NickServ IDENTIFY only explains this native flow.
 VERIFY and RESEND apply to the sender's current nickname.
+
+### Rescue-token upgrade notes
+
+Apply the database migrations before starting this version. Existing active accounts keep their
+password and state. Until their first rescue credential is confirmed, each successful password
+identification (or trusted native authentication) displays a replacement token. Only the latest
+works; use `VERIFY <token>` while identified. No TOKEN onboarding hash is stored in SQL before
+confirmation. Confirmed tokens survive restarts and are not displayed on subsequent logins.
+
+A new TOKEN registration remains pending until VERIFY. Its unconfirmed challenge exists only in
+memory. If it is lost, expires, or disappears on restart, wait for the pending registration to
+expire before registering again: neither RESEND nor repeating REGISTER reissues it. Existing
+EMAIL pending registrations retain their delivery mode and can VERIFY after a mode change,
+but RESEND is unavailable whenever the global policy is TOKEN.
+
+Recovery no longer uses email. Without a password and a confirmed rescue token, administrative
+help is required. Successful RECOVER replaces both the password and token and shows the new
+credential once; it does not require another VERIFY. SET EMAIL and ordinary founder transfers
+validate the reusable confirmed token without consuming it. The existing administrative founder
+bypass remains unchanged.
+
+The former recovery/founder email-token TTL and resend interval environment settings are retired.
+Rescue checks now share five failures per 15-minute window and a ten-minute lockout per account
+and client. See [registration mode](docs/registration-mode.md) and
+[rescue credential storage](docs/rescue-credentials.md) for command and security details.
 
 ### ChanServ
 

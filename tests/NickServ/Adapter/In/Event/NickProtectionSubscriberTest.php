@@ -21,10 +21,12 @@ use App\NickServ\Adapter\In\Event\NickProtectionSubscriber;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
 use App\NickServ\Application\Model\NetworkUser;
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\GuestNicknameGenerator;
 use App\NickServ\Application\Port\Out\NickChangeIdentificationPolicy;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
 use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
 use App\NickServ\Application\Port\Out\NickProtectionNotifier;
@@ -37,6 +39,7 @@ use App\NickServ\Application\Service\ForbiddenNickService;
 use App\NickServ\Application\Service\IdentifiedUserVhostSyncService;
 use App\NickServ\Application\Service\NickProtectionService;
 use App\NickServ\Application\Service\VhostDisplayResolver;
+use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
@@ -91,6 +94,8 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickChangeIdentificationPolicy::class),
             $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->serviceAuthenticationMode(),
         );
 
         $ircopRepository = $this->createStub(ForcedVhostCheckerInterface::class);
@@ -430,6 +435,8 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $nickChangePolicy,
             $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->serviceAuthenticationMode(),
         );
         $vhostSync = new IdentifiedUserVhostSyncService(
             $nickRepository,
@@ -496,6 +503,8 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $nickChangePolicy,
             $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->serviceAuthenticationMode(),
         );
         $vhostSync = new IdentifiedUserVhostSyncService(
             $nickRepository,
@@ -966,6 +975,8 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickChangeIdentificationPolicy::class),
             $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->serviceAuthenticationMode(),
         );
     }
 
@@ -983,6 +994,14 @@ final class NickProtectionSubscriberTest extends TestCase
             isOper: false,
             serverSid: '001',
         );
+    }
+
+    private function serviceAuthenticationMode(): NicknameAuthenticationModeQuery
+    {
+        $mode = $this->createStub(NicknameAuthenticationModeQuery::class);
+        $mode->method('current')->willReturn(NicknameAuthenticationMode::ServiceCommand);
+
+        return $mode;
     }
 
     private function guestNicknameGenerator(): GuestNicknameGenerator

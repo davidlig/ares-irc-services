@@ -173,4 +173,23 @@ final class IRCEventSubscriberTest extends TestCase
             true,
         );
     }
+
+    #[Test]
+    public function founderSecretsNeverReachPrivmsgOrSqueryLogFields(): void
+    {
+        foreach (['PRIVMSG', 'SQUERY'] as $command) {
+            $this->subscriber->onIncomingMessage(new IncomingIrcMessageEvent(new IRCMessage(
+                prefix: 'UID001',
+                command: $command,
+                params: ['ChanServ'],
+                trailing: 'SET #channel FOUNDER NewOwner rescue-token extra-secret',
+            )));
+            $record = $this->record();
+            $context = serialize($record->context);
+            self::assertStringNotContainsString('rescue-token', $context);
+            self::assertStringNotContainsString('extra-secret', $context);
+            self::assertSame('SET #channel FOUNDER NewOwner ******', $record->context['trailing']);
+            $this->handler->clear();
+        }
+    }
 }

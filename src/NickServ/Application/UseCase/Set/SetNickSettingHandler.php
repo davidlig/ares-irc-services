@@ -6,18 +6,18 @@ namespace App\NickServ\Application\UseCase\Set;
 
 use App\NickServ\Application\Event\NickEmailChangedEvent;
 use App\NickServ\Application\Event\NickPasswordChangedEvent;
+use App\NickServ\Application\Port\In\RescueTokenValidation;
+use App\NickServ\Application\Port\In\RescueTokenValidationOutcome;
+use App\NickServ\Application\Port\In\RescueTokenValidator;
 use App\NickServ\Application\Port\Out\Clock;
-use App\NickServ\Application\Port\Out\EmailChangeMailSender;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
 use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
 use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PasswordHasher;
-use App\NickServ\Application\Port\Out\PendingEmailChangeStore;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\SessionLanguageTracker;
-use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\PublishedEvent\NickVhostChangedEvent;
 use App\NickServ\Application\Service\NickProtectabilityStatus;
@@ -26,7 +26,6 @@ use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use InvalidArgumentException;
-use Throwable;
 
 use function explode;
 use function filter_var;
@@ -45,9 +44,7 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
         private PasswordHasher $passwordHasher,
         private NickServEventPublisher $eventPublisher,
         private Clock $clock,
-        private PendingEmailChangeStore $pendingEmailChanges,
-        private VerificationTokenGenerator $tokenGenerator,
-        private EmailChangeMailSender $mailSender,
+        private RescueTokenValidator $tokenValidator,
         private SessionLanguageTracker $sessionLanguages,
         private VhostValidator $vhostValidator,
         private VhostDisplayResolver $displayResolver,
@@ -140,49 +137,27 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
             return $this->result(SetNickSettingOutcome::InvalidEmail, $input, value: $newEmail);
         }
 
-        $currentEmail = $account->getEmail();
-        if (null === $currentEmail) {
-            return $this->result(SetNickSettingOutcome::NoCurrentEmail, $input);
-        }
-
         if ($input->operatorMode) {
             return $this->applyEmailChange($input, $account, $newEmail, false);
         }
-
-        if (null !== $token && '' !== $token) {
-            if (!$this->pendingEmailChanges->consume($account->getNickname(), $newEmail, $token, $this->clock->now())) {
-                return $this->result(SetNickSettingOutcome::InvalidEmailToken, $input);
-            }
-
-            return $this->applyEmailChange($input, $account, $newEmail, true);
+        if (null === $token || '' === $token) {
+            return $this->result(SetNickSettingOutcome::TokenRequired, $input);
         }
-
         if ($this->emailBelongsToAnotherAccount($newEmail, $account)) {
             return $this->result(SetNickSettingOutcome::EmailAlreadyUsed, $input, value: $newEmail);
         }
-
-        $token = $this->tokenGenerator->generate();
-        $this->pendingEmailChanges->store($account->getNickname(), $newEmail, $token, $this->clock->now());
-
-        try {
-            $this->mailSender->sendVerification(
-                $currentEmail,
-                $account->getNickname(),
-                $newEmail,
-                $token,
-                $input->locale,
-            );
-        } catch (Throwable) {
-            return $this->result(SetNickSettingOutcome::MailDeliveryFailed, $input);
+        $validation = $this->tokenValidator->validate(new RescueTokenValidation($account->getId(), $token, $input->clientKey));
+        if (RescueTokenValidationOutcome::Throttled === $validation->outcome) {
+            return new SetNickSettingResult(SetNickSettingOutcome::TokenThrottled, $input->option, $input->targetNickname, retryAfterSeconds: $validation->retryAfterSeconds);
+        }
+        if (RescueTokenValidationOutcome::Unavailable === $validation->outcome) {
+            return $this->result(SetNickSettingOutcome::CredentialUnavailable, $input);
+        }
+        if (RescueTokenValidationOutcome::Valid !== $validation->outcome) {
+            return $this->result(SetNickSettingOutcome::InvalidEmailToken, $input);
         }
 
-        return new SetNickSettingResult(
-            SetNickSettingOutcome::EmailConfirmationSent,
-            $input->option,
-            $input->targetNickname,
-            currentEmail: $currentEmail,
-            newEmail: $newEmail,
-        );
+        return $this->applyEmailChange($input, $account, $newEmail, true);
     }
 
     /** @return array{string, string|null} */

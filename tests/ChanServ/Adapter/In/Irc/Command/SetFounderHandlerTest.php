@@ -85,6 +85,24 @@ final class SetFounderHandlerTest extends TestCase
         );
     }
 
+    /** @return iterable<string, array{string,string,string,string}> */
+    public static function clientIdentities(): iterable
+    {
+        yield 'raw IP' => ['raw-ip', 'cloak', 'host', 'ip:raw-ip'];
+        yield 'cloak' => ['*', 'cloak', 'host', 'cloak:cloak'];
+        yield 'host' => ['', '', 'host', 'host:host'];
+        yield 'UID' => ['', '', '', 'uid:UID1'];
+    }
+
+    #[Test]
+    #[DataProvider('clientIdentities')]
+    public function sharesStableRescueBudgetIdentity(string $ip, string $cloak, string $host, string $expected): void
+    {
+        $application = $this->createMock(TransferChannelFounderHandlerInterface::class);
+        $application->expects(self::once())->method('handle')->with(self::callback(static fn (TransferChannelFounder $input): bool => $expected === $input->actor?->clientKey))->willReturn(new TransferChannelFounderResult(TransferFounderOutcome::Ignored));
+        new SetFounderHandler($application)->handle($this->context($this->notifier(), ['#test', 'FOUNDER', 'Target', 'token'], $ip, hostname: $host, cloakedHost: $cloak), $this->createStub(RegisteredChannel::class), 'Target');
+    }
+
     /** @return iterable<string, array{TransferChannelFounderResult, ?string}> */
     public static function replyOutcomes(): iterable
     {
@@ -95,11 +113,10 @@ final class SetFounderHandlerTest extends TestCase
         yield 'same founder' => [new TransferChannelFounderResult(TransferFounderOutcome::SameFounder), 'set.founder.cannot_be_self'];
         yield 'successor' => [new TransferChannelFounderResult(TransferFounderOutcome::TargetIsSuccessor), 'set.founder.cannot_be_successor'];
         yield 'limit' => [new TransferChannelFounderResult(TransferFounderOutcome::ChannelLimitReached, 'Target', maximumChannelsPerNick: 3), 'set.founder.limit_exceeded'];
-        yield 'no email' => [new TransferChannelFounderResult(TransferFounderOutcome::CurrentFounderWithoutEmail), 'set.founder.no_email'];
+        yield 'missing token' => [new TransferChannelFounderResult(TransferFounderOutcome::TokenRequired), 'set.founder.token_required'];
+        yield 'unavailable' => [new TransferChannelFounderResult(TransferFounderOutcome::CredentialUnavailable), 'set.founder.token_unavailable'];
         yield 'throttled' => [new TransferChannelFounderResult(TransferFounderOutcome::Throttled), 'set.founder.throttled'];
-        yield 'sent' => [new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo****@e****.***'), 'set.founder.token_sent'];
         yield 'invalid token' => [new TransferChannelFounderResult(TransferFounderOutcome::InvalidToken), 'set.founder.invalid_token'];
-        yield 'mail failure' => [new TransferChannelFounderResult(TransferFounderOutcome::MailDeliveryFailed), 'error.mail_failed'];
         yield 'ignored' => [new TransferChannelFounderResult(TransferFounderOutcome::Ignored), null];
     }
 
@@ -127,7 +144,8 @@ final class SetFounderHandlerTest extends TestCase
     {
         $results = [
             new TransferChannelFounderResult(TransferFounderOutcome::ChannelLimitReached, 'Busy', maximumChannelsPerNick: 7),
-            new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo****@e****.***'),
+            new TransferChannelFounderResult(TransferFounderOutcome::TokenRequired),
+            new TransferChannelFounderResult(TransferFounderOutcome::Throttled, retryAfterSeconds: 61),
         ];
         $application = $this->createStub(TransferChannelFounderHandlerInterface::class);
         $application->method('handle')->willReturnCallback(static function () use (&$results): TransferChannelFounderResult {
@@ -147,9 +165,12 @@ final class SetFounderHandlerTest extends TestCase
         $handler->handle($context, $this->createStub(RegisteredChannel::class), 'Target');
         $handler->handle($context, $this->createStub(RegisteredChannel::class), 'Target');
 
+        $handler->handle($context, $this->createStub(RegisteredChannel::class), 'Target');
+
         self::assertSame('Busy', $translated['set.founder.limit_exceeded']['%nickname%']);
         self::assertSame('7', $translated['set.founder.limit_exceeded']['%max%']);
-        self::assertSame('fo****@e****.***', $translated['set.founder.token_sent']['%email_hint%']);
+        self::assertArrayHasKey('set.founder.token_required', $translated);
+        self::assertSame('2', $translated['set.founder.throttled']['%minutes%']);
     }
 
     #[Test]
@@ -183,9 +204,11 @@ final class SetFounderHandlerTest extends TestCase
         bool $founderEquivalent = false,
         ?TranslatorInterface $translator = null,
         bool $withoutSender = false,
+        string $hostname = 'host.test',
+        string $cloakedHost = 'cloak',
     ): ChanServContext {
         return new ChanServContext(
-            $withoutSender ? null : new SenderView('UID1', 'Founder', 'ident', 'host.test', 'cloak', $ipBase64),
+            $withoutSender ? null : new SenderView('UID1', 'Founder', 'ident', $hostname, $cloakedHost, $ipBase64),
             new ChanAccountView(10, 'Founder', 'es'),
             'SET',
             $args,

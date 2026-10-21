@@ -32,7 +32,7 @@ final class RegisterCommandTest extends TestCase
 
         self::assertSame('REGISTER', $command->getName());
         self::assertSame([], $command->getAliases());
-        self::assertSame(2, $command->getMinArgs());
+        self::assertSame(1, $command->getMinArgs());
         self::assertSame('register.syntax', $command->getSyntaxKey());
         self::assertSame('register.help', $command->getHelpKey());
         self::assertSame(1, $command->getOrder());
@@ -115,6 +115,8 @@ final class RegisterCommandTest extends TestCase
     /** @return iterable<string, array{RegisterNickResult, string, array<string, mixed>}> */
     public static function presentations(): iterable
     {
+        yield 'token verification' => [RegisterNickResult::tokenVerificationRequired('uuid'), 'rescue.issued', ['%token%' => 'uuid']];
+        yield 'token unavailable' => [RegisterNickResult::temporarilyUnavailable(), 'register.token_unavailable', []];
         yield 'verification required' => [RegisterNickResult::verificationRequired('a@b.test'), 'register.pending', ['%email%' => 'a@b.test']];
         yield 'throttled rounds up minutes' => [RegisterNickResult::throttled(61), 'register.throttled', ['%minutes%' => '2']];
         yield 'guest prefix' => [RegisterNickResult::guestPrefixForbidden('Guest-'), 'register.guest_prefix_forbidden', ['%prefix%' => 'Guest-']];
@@ -139,8 +141,20 @@ final class RegisterCommandTest extends TestCase
         self::assertSame([], $messages);
     }
 
-    /** @param list<mixed> $messages */
-    private function context(?SenderView $sender, array &$messages, bool $captureParams = false): NickServContext
+    #[Test]
+    public function mapsAbsentOptionalEmailWithoutAnUndefinedArgument(): void
+    {
+        $handler = $this->createMock(RegisterNickHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(static fn (RegisterNick $input): bool => null === $input->email && 'plain-secret' === $input->password))->willReturn(RegisterNickResult::tokenVerificationRequired('uuid'));
+        $messages = [];
+        new RegisterCommand($handler)->execute($this->context(new SenderView('UID1', 'Alice', 'i', 'h', 'c', 'ip'), $messages, args: ['plain-secret']));
+        self::assertSame(['rescue.issued'], $messages);
+    }
+
+    /** @param list<mixed> $messages
+     * @param list<string> $args
+     */
+    private function context(?SenderView $sender, array &$messages, bool $captureParams = false, array $args = ['plain-secret', 'user@example.com']): NickServContext
     {
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $key, array $params) use (&$messages, $captureParams): string {
@@ -155,7 +169,7 @@ final class RegisterCommandTest extends TestCase
             $sender,
             null,
             'REGISTER',
-            ['plain-secret', 'user@example.com'],
+            $args,
             $notifier,
             $translator,
             'es',

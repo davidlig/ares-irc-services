@@ -15,12 +15,12 @@ use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SQLiteSchemaManager;
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-#[CoversClass(Version20261021000002::class)]
+#[CoversNothing]
 final class RegistrationPolicyMigrationTest extends TestCase
 {
     #[DataProvider('platforms')]

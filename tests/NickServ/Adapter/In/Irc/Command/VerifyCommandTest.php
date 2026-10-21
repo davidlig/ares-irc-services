@@ -112,6 +112,8 @@ final class VerifyCommandTest extends TestCase
     public static function outcomes(): iterable
     {
         yield 'success' => [VerifyNickResult::success('Alice'), 'verify.success', ['%nickname%' => 'Alice']];
+        yield 'migration confirmed' => [VerifyNickResult::credentialConfirmed(), 'rescue.confirmed', []];
+        yield 'locked out' => [VerifyNickResult::lockedOut(60), 'rescue.locked_out', ['%seconds%' => '60']];
         yield 'no pending' => [VerifyNickResult::noPending(), 'verify.no_pending', []];
         yield 'invalid token' => [VerifyNickResult::invalidToken(), 'verify.invalid_token', []];
     }

@@ -22,12 +22,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  syntax:           "REGISTER <motdepasse> <e-mail>"
+  token_unavailable: "L’inscription est en attente, mais le jeton n’a pas pu être remis.\nAttendez son expiration avant de vous réinscrire."
+  syntax: "REGISTER <password> [email]"
   short:            "Enregistrer votre surnom auprès des services."
-  help:             "Démarre l'enregistrement de votre surnom actuel. Un jeton de vérification\nsera envoyé à l'adresse e-mail fournie. Terminez l'enregistrement\nen exécutant \x0303/msg %bot% VERIFY <jeton>\x03. Le jeton expire dans 1 heure.\nS'il n'arrive pas, vérifiez vos spams ou utilisez \x0303RESEND\x03."
+  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nEMAIL envoie le jeton par courriel. TOKEN l’affiche en privé et exige VERIFY. Le courriel n’est facultatif qu’en mode TOKEN.\nConfirme une inscription en attente ou, une fois identifié, le jeton de secours d’un compte existant. Le jeton confirmé reste votre moyen de secours."
   pending:          "\x0307→\x03 Un jeton de vérification a été envoyé à \x02%email%\x02.\n  Exécutez \x0303/msg %bot% VERIFY <jeton>\x03 pour terminer l'enregistrement.\n  Vous ne l'avez pas reçu ? Vérifiez vos spams ou utilisez \x0303/msg %bot% RESEND\x03\n  Le jeton expirera dans \x021 heure\x02."
   already_registered: "\x0304✗\x03 Le surnom \x02%nickname%\x02 est déjà enregistré."
-  already_pending:  "\x0304✗\x03 Le surnom \x02%nickname%\x02 a déjà une vérification en attente.\n  Utilisez \x0303/msg %bot% VERIFY <jeton>\x03 ou \x0303/msg %bot% RESEND\x03."
+  already_pending: "Une inscription est déjà en attente pour %nickname%. Utilisez VERIFY avec son jeton. Les jetons TOKEN ne sont pas réémis ; en cas de perte, attendez l’expiration de l’inscription."
   forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être enregistré sur ce réseau."
   pending_deletion: "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de suppression et ne peut pas être enregistré."
   invalid_email:    "\x0304✗\x03 L'adresse e-mail fournie n'est pas valide."
@@ -38,35 +39,36 @@ register:
 # --- VERIFY -----------------------------------------------------------------
 verify:
   syntax:           "VERIFY <jeton>"
-  short:            "Confirmer votre adresse e-mail et activer votre surnom."
-  help:             "Termine l'enregistrement en vérifiant le jeton envoyé à votre e-mail.\nLe jeton est valable 1 heure à partir du moment de l'enregistrement."
+  short: "Confirme une inscription ou un jeton de secours."
+  help: "Confirme une inscription en attente ou, une fois identifié, le jeton de secours d’un compte existant. Le jeton confirmé reste votre moyen de secours."
   success:          "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été enregistré avec succès et vous êtes maintenant identifié."
   success_native:   "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été enregistré avec succès. Utilisez l’authentification native indiquée ci-dessous."
-  invalid_token:    "\x0304✗\x03 Le jeton est invalide ou a expiré. Utilisez \x0303/msg %bot% REGISTER\x03 pour recommencer."
+  invalid_token: "Le jeton est incorrect ou expiré. Une inscription TOKEN ne permet pas d’en demander un autre ; attendez son expiration."
   no_pending:       "\x0304✗\x03 Vous n'avez aucun enregistrement en attente à vérifier."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
+  disabled: "RESEND est désactivé en mode TOKEN et reste indisponible pour les inscriptions TOKEN."
   syntax:           "RESEND"
   short:            "Renvoyer le jeton de vérification à votre e-mail."
-  help:             "Renvoie le jeton de vérification à l'adresse e-mail fournie lors de\nl'enregistrement. Ne fonctionne que si vous avez un enregistrement en attente."
+  help: "EMAIL envoie le jeton par courriel. TOKEN l’affiche en privé et exige VERIFY. Le courriel n’est facultatif qu’en mode TOKEN.\nRESEND est désactivé en mode TOKEN et reste indisponible pour les inscriptions TOKEN."
   success:          "\x0307→\x03 Jeton de vérification renvoyé à \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Vous n'avez aucun enregistrement en attente pour renvoyer un jeton."
   throttled:        "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de demander un autre e-mail de vérification."
 
 # --- RECOVER -----------------------------------------------------------------
 recover:
+  pending_deletion: "Le pseudonyme %nickname% est en attente de suppression et ne peut pas être récupéré."
+  instructions: "Utilisez RECOVER %nickname% <token> avec votre jeton de secours confirmé. La récupération n’envoie aucun courriel."
   syntax:           "RECOVER <surnom> [jeton]"
   short:            "Récupérer votre surnom si vous avez perdu votre mot de passe."
-  help:             "Récupère l'accès à un surnom enregistré lorsque vous avez perdu votre mot de passe.\n1) \x0303RECOVER <surnom>\x03 — un jeton est envoyé à l'e-mail du surnom.\n2) \x0303RECOVER <surnom> <jeton>\x03 — saisissez le jeton de l'e-mail pour réinitialiser votre mot de passe.\nVous recevrez alors un mot de passe temporaire et la commande pour le changer."
-  email_sent:       "\x0307→\x03 Un jeton de récupération a été envoyé à \x02%email_hint%\x02. Vérifiez votre boîte de réception (et vos spams)."
+  help: "Utilisez RECOVER %nickname% <token> avec votre jeton de secours confirmé. La récupération n’envoie aucun courriel.\nNouveau jeton de secours : <token>. Le précédent est invalidé. Conservez-le en lieu sûr ; il ne sera plus affiché."
   not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
-  pending:          "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de vérification e-mail."
+  pending: "Une inscription est déjà en attente pour %nickname%. Utilisez VERIFY avec son jeton. Les jetons TOKEN ne sont pas réémis ; en cas de perte, attendez l’expiration de l’inscription."
   suspended:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu. Raison : %reason%"
   forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être utilisé sur ce réseau."
-  no_email:         "\x0304✗\x03 Aucun e-mail n'est défini pour le surnom \x02%nickname%\x02. La récupération n'est pas disponible."
-  throttled:        "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de demander un autre e-mail de récupération."
-  invalid_token:    "\x0304✗\x03 Le jeton est invalide ou a expiré. Demandez-en un nouveau avec \x0303RECOVER %nickname%\x03."
+  throttled: "Trop de jetons incorrects. Réessayez dans %minutes% minute(s)."
+  invalid_token: "Le jeton de secours est incorrect."
   success_identify: "\x0303✔\x03 Mot de passe réinitialisé. Identifiez-vous maintenant : \x0303%identify_cmd%\x03"
   success_then_change: "Puis changez votre mot de passe : \x0303/msg %bot% SET PASSWORD <nouveau_motdepasse>\x03"
 
@@ -164,9 +166,10 @@ set:
     success:        "\x0303✔\x03 Votre mot de passe a été mis à jour avec succès."
 
   email:
-    syntax:         "SET EMAIL <nouvel_e-mail> [jeton]"
+    token_required: "Utilisez SET EMAIL <email> <token> avec votre jeton de secours confirmé."
+    syntax: "SET EMAIL <email> <token>"
     short:          "Changer l'adresse e-mail liée à votre surnom (confirmation en deux étapes)."
-    help:           "Changement d'e-mail en deux étapes pour la sécurité.\n1) \x0303SET EMAIL <nouvel_e-mail>\x03 — un jeton est envoyé à votre e-mail actuel.\n2) \x0303SET EMAIL <nouvel_e-mail> <jeton>\x03 — confirmez avec le jeton reçu.\nLe jeton expire dans 1 heure."
+    help: "SET EMAIL change l’adresse de contact après validation du jeton de secours, sans le consommer. Format et unicité sont vérifiés ; aucun courriel de confirmation n’est envoyé."
     success:        "\x0303✔\x03 Votre e-mail a été mis à jour en \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Un jeton de confirmation a été envoyé à \x02%current_email%\x02.\n  Pour confirmer le changement vers \x02%new_email%\x02, exécutez :\n  \x0303/msg %bot% SET EMAIL %new_email% <jeton>\x03\n  Le jeton expire dans 1 heure."
     invalid_token:  "\x0304✗\x03 Le jeton est invalide ou a expiré. Demandez-en un nouveau avec \x0303SET EMAIL <nouvel_e-mail>\x03."
@@ -688,3 +691,12 @@ regmode:
   help: "Définit EMAIL ou TOKEN comme politique d’inscription des nouveaux comptes. STATUS affiche la politique actuelle sans la modifier. Les comptes en attente conservent leur mode d’inscription initial. En mode TOKEN, RESEND est désactivé globalement. Nécessite la permission nickserv.regmode."
   status: "Mode d’inscription actuel : %mode%."
   changed: "Mode d’inscription modifié : %mode%."
+
+# --- Unified rescue credential -----------------------------------------------
+rescue:
+  issued: "Jeton de secours : %token%.\nConfirmez-le avec /msg %bot% VERIFY %token%.\nConservez-le en lieu sûr.\nSeul le dernier jeton est valable ;\naprès confirmation, il ne sera plus affiché."
+  confirmed: "Votre jeton de secours est confirmé. Conservez-le en lieu sûr."
+  unavailable: "Authentifiez-vous et confirmez votre jeton de secours avec VERIFY avant cette opération."
+  locked_out: "Trop de jetons incorrects. Réessayez dans %seconds% secondes."
+  throttled: "Trop de jetons incorrects. Réessayez dans %minutes% minute(s)."
+  replaced: "Nouveau jeton de secours : %token%.\nLe précédent est invalidé.\nConservez-le en lieu sûr ;\nil ne sera plus affiché."

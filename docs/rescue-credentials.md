@@ -43,3 +43,30 @@ expired buckets. All time-dependent decisions receive an explicit current time.
 These primitives do not expose hashes through public account DTOs, events, logs or UDB.
 Their command integration, private delivery and maintenance wiring belong to the consuming
 use cases and inbound adapters.
+
+## Confirmed-credential operations
+
+`RECOVER <nickname>` only explains how to supply a rescue token; it does not send
+mail or issue a new credential. `RECOVER <nickname> <token>` accepts only a confirmed
+credential belonging to an active account. Successful recovery atomically replaces
+the password and rescue hash, publishes password/recovery events after persistence,
+and privately displays a temporary password plus the replacement rescue token.
+The old token immediately stops working; the replacement needs no further VERIFY.
+Accounts pending deletion cannot be recovered this way.
+
+`SET EMAIL <email> <token>` validates the confirmed rescue credential, email format
+and uniqueness, then changes the address immediately. It supports accounts without
+an existing address. No email is sent and the rescue credential remains valid.
+Existing privileged SASET authorization and target protection remain unchanged.
+
+`SET #channel FOUNDER <nickname> <token>` validates the CURRENT founder's confirmed
+credential, not the actor's or proposed founder's credential. Target account/status,
+successor and channel-count restrictions remain in force. The existing centralized
+administrative founder-equivalent bypass remains available without a token.
+Transfer still removes redundant target ACCESS and publishes the existing event.
+No temporary founder token is generated, consumed or mailed.
+
+All operations share stable client keys in this order: raw protocol IP value,
+cloaked host, hostname, then UID. Owner email changes and founder transfers do not
+reset shared failure budgets or rotate tokens. Audit metadata excludes credentials,
+including extraneous tokens supplied with privileged account-setting commands.

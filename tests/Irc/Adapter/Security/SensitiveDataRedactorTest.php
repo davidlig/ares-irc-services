@@ -190,4 +190,14 @@ final class SensitiveDataRedactorTest extends TestCase
             'SASET TestNick EMAIL ******',
         ];
     }
+
+    #[Test]
+    public function founderTokenTailIsRedactedWithoutChangingOtherSettings(): void
+    {
+        self::assertSame('SET #channel FOUNDER NewOwner ******', SensitiveDataRedactor::redactNickServCommand('SET #channel FOUNDER NewOwner rescue-token extra-secret'));
+        self::assertSame('set &channel founder NewOwner ******', SensitiveDataRedactor::redactNickServCommand('set &channel founder NewOwner rescue-token'));
+        self::assertSame('SET #channel FOUNDER NewOwner', SensitiveDataRedactor::redactNickServCommand('SET #channel FOUNDER NewOwner'));
+        self::assertSame('SET #channel TOPICLOCK ON', SensitiveDataRedactor::redactNickServCommand('SET #channel TOPICLOCK ON'));
+        self::assertSame('SET EMAIL ****** ******', SensitiveDataRedactor::redactNickServCommand('SET EMAIL address@example.test token'));
+    }
 }

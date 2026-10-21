@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Application\UseCase\Recover;
 
 use App\NickServ\Application\Event\NickRecoveredEvent;
+use App\NickServ\Application\Port\In\RescueTokenValidation;
+use App\NickServ\Application\Port\In\RescueTokenValidationOutcome;
+use App\NickServ\Application\Port\In\RescueTokenValidationResult;
+use App\NickServ\Application\Port\In\RescueTokenValidator;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RecoverEventPublisher;
-use App\NickServ\Application\Port\Out\RecoveryMailSender;
 use App\NickServ\Application\Port\Out\RecoveryPasswordGenerator;
-use App\NickServ\Application\Port\Out\RecoveryTokenStore;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
-use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
+use App\NickServ\Application\Port\Out\RescueCredentialPersistence;
+use App\NickServ\Application\Port\Out\RescueTokenCodec;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\UseCase\Recover\RecoverNick;
 use App\NickServ\Application\UseCase\Recover\RecoverNickHandler;
@@ -20,315 +23,200 @@ use App\NickServ\Application\UseCase\Recover\RecoverNickOutcome;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 #[CoversClass(RecoverNickHandler::class)]
 #[CoversClass(RecoverNick::class)]
 #[CoversClass(RecoverNickResult::class)]
 final class RecoverNickHandlerTest extends TestCase
 {
-    private DateTimeImmutable $now;
-
-    protected function setUp(): void
-    {
-        $this->now = new DateTimeImmutable('2026-09-06 12:00:00 UTC');
-    }
-
-    #[Test]
-    public function returnsNotRegisteredWhenAccountNotFound(): void
+    public function testMissingTokenOnlyReturnsInstructionsWithoutReadingOrMutatingCredentials(): void
     {
         $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('Unknown')->willReturn(null);
+        $repository->expects(self::never())->method('findByNick');
+        $validator = $this->createMock(RescueTokenValidator::class);
+        $validator->expects(self::never())->method('validate');
+        $persistence = $this->createMock(RescueCredentialPersistence::class);
+        $persistence->expects(self::never())->method('rotateAfterRecovery');
+        $result = $this->handler($repository, $validator, $persistence)->handle(new RecoverNick('User'));
+        self::assertSame(RecoverNickOutcome::Instructions, $result->outcome);
+        self::assertSame('User', $result->nickname);
+        self::assertNull($result->temporaryPassword);
+        self::assertNull($result->rescueToken);
+    }
 
-        $handler = $this->createHandler(repository: $repository);
-        $result = $handler->handle(new RecoverNick(nickname: 'Unknown'));
-
+    public function testUnknownNicknameIsRejected(): void
+    {
+        $result = $this->handler()->handle(new RecoverNick('Unknown', 'token'));
         self::assertSame(RecoverNickOutcome::NotRegistered, $result->outcome);
-        self::assertSame('Unknown', $result->nickname);
     }
 
-    #[Test]
-    public function returnsPendingWhenAccountIsPending(): void
+    /** @return iterable<string, array{string, RecoverNickOutcome}> */
+    public static function blockedStatuses(): iterable
+    {
+        yield 'pending' => ['isPending', RecoverNickOutcome::Pending];
+        yield 'suspended' => ['isSuspended', RecoverNickOutcome::Suspended];
+        yield 'forbidden' => ['isForbidden', RecoverNickOutcome::Forbidden];
+        yield 'pending deletion' => ['isPendingDeletion', RecoverNickOutcome::PendingDeletion];
+    }
+
+    #[DataProvider('blockedStatuses')]
+    public function testPreservesAccountStatusRestrictions(string $method, RecoverNickOutcome $expected): void
     {
         $account = $this->createStub(RegisteredNick::class);
-        $account->method('isPending')->willReturn(true);
-
-        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('PendingUser')->willReturn($account);
-
-        $handler = $this->createHandler(repository: $repository);
-        $result = $handler->handle(new RecoverNick(nickname: 'PendingUser'));
-
-        self::assertSame(RecoverNickOutcome::Pending, $result->outcome);
-        self::assertSame('PendingUser', $result->nickname);
+        $account->method($method)->willReturn(true);
+        $account->method('getReason')->willReturn('policy');
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findByNick')->willReturn($account);
+        $validator = $this->createMock(RescueTokenValidator::class);
+        $validator->expects(self::never())->method('validate');
+        $result = $this->handler($repository, $validator)->handle(new RecoverNick('User', 'token'));
+        self::assertSame($expected, $result->outcome);
     }
 
-    #[Test]
-    public function returnsSuspendedWhenAccountIsSuspended(): void
+    /** @return iterable<string, array{RescueTokenValidationOutcome, RecoverNickOutcome}> */
+    public static function rejectedTokens(): iterable
     {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('isPending')->willReturn(false);
-        $account->method('isSuspended')->willReturn(true);
-        $account->method('getReason')->willReturn('Policy violation');
-
-        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('SuspendedUser')->willReturn($account);
-
-        $handler = $this->createHandler(repository: $repository);
-        $result = $handler->handle(new RecoverNick(nickname: 'SuspendedUser'));
-
-        self::assertSame(RecoverNickOutcome::Suspended, $result->outcome);
-        self::assertSame('SuspendedUser', $result->nickname);
-        self::assertSame('Policy violation', $result->reason);
+        yield 'invalid' => [RescueTokenValidationOutcome::Invalid, RecoverNickOutcome::InvalidToken];
+        yield 'missing confirmed credential' => [RescueTokenValidationOutcome::Unavailable, RecoverNickOutcome::CredentialUnavailable];
+        yield 'throttled' => [RescueTokenValidationOutcome::Throttled, RecoverNickOutcome::Throttled];
     }
 
-    #[Test]
-    public function returnsForbiddenWhenAccountIsForbidden(): void
+    #[DataProvider('rejectedTokens')]
+    public function testRejectedTokenNeverChangesCredentials(RescueTokenValidationOutcome $validation, RecoverNickOutcome $expected): void
     {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('isPending')->willReturn(false);
-        $account->method('isSuspended')->willReturn(false);
-        $account->method('isForbidden')->willReturn(true);
-
+        $account = $this->account();
         $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('ForbiddenUser')->willReturn($account);
-
-        $handler = $this->createHandler(repository: $repository);
-        $result = $handler->handle(new RecoverNick(nickname: 'ForbiddenUser'));
-
-        self::assertSame(RecoverNickOutcome::Forbidden, $result->outcome);
-        self::assertSame('ForbiddenUser', $result->nickname);
+        $repository->method('findByNick')->willReturn($account);
+        $repository->expects(self::never())->method('save');
+        $validator = $this->createMock(RescueTokenValidator::class);
+        $validator->expects(self::once())->method('validate')->with(self::callback(static fn (RescueTokenValidation $input): bool => 42 === $input->accountId && 'bad' === $input->token && 'ip:127.0.0.1' === $input->clientKey))->willReturn(new RescueTokenValidationResult($validation, 123));
+        $persistence = $this->createMock(RescueCredentialPersistence::class);
+        $persistence->expects(self::never())->method('rotateAfterRecovery');
+        $events = $this->createMock(RecoverEventPublisher::class);
+        $events->expects(self::never())->method('publish');
+        $result = $this->handler($repository, $validator, $persistence, $events)->handle(new RecoverNick('User', 'bad', clientKey: 'ip:127.0.0.1'));
+        self::assertSame($expected, $result->outcome);
+        self::assertNull($result->temporaryPassword);
+        self::assertNull($result->rescueToken);
+        self::assertSame('old-password', $account->getPasswordHash());
     }
 
-    #[Test]
-    public function returnsNoEmailWhenAccountHasNoEmail(): void
+    public function testAtomicRotationPublishesOnlyAfterSuccessAndPrivatelyReturnsBothSecrets(): void
     {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('isPending')->willReturn(false);
-        $account->method('isSuspended')->willReturn(false);
-        $account->method('isForbidden')->willReturn(false);
-        $account->method('getEmail')->willReturn('');
-
-        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('NoEmailUser')->willReturn($account);
-
-        $handler = $this->createHandler(repository: $repository);
-        $result = $handler->handle(new RecoverNick(nickname: 'NoEmailUser'));
-
-        self::assertSame(RecoverNickOutcome::NoEmail, $result->outcome);
-        self::assertSame('NoEmailUser', $result->nickname);
-    }
-
-    #[Test]
-    public function returnsThrottledWhenWithinMinInterval(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('isPending')->willReturn(false);
-        $account->method('isSuspended')->willReturn(false);
-        $account->method('isForbidden')->willReturn(false);
-        $account->method('getEmail')->willReturn('user@example.com');
-
-        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('ThrottledUser')->willReturn($account);
-
-        $tokenStore = $this->createMock(RecoveryTokenStore::class);
-        $tokenStore->expects(self::once())->method('getLastRecoverAt')
-            ->with('ThrottledUser')
-            ->willReturn($this->now->modify('-60 seconds'));
-
-        $handler = $this->createHandler(repository: $repository, tokenStore: $tokenStore, minIntervalSeconds: 300);
-        $result = $handler->handle(new RecoverNick(nickname: 'ThrottledUser'));
-
-        self::assertSame(RecoverNickOutcome::Throttled, $result->outcome);
-        self::assertSame(240, $result->retryAfterSeconds);
-    }
-
-    #[Test]
-    public function returnsMailDeliveryFailedWhenMailerThrows(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('isPending')->willReturn(false);
-        $account->method('isSuspended')->willReturn(false);
-        $account->method('isForbidden')->willReturn(false);
-        $account->method('getEmail')->willReturn('user@example.com');
-        $account->method('getLanguage')->willReturn('es');
-
-        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('MailFailUser')->willReturn($account);
-
-        $tokenStore = $this->createMock(RecoveryTokenStore::class);
-        $tokenStore->expects(self::once())->method('getLastRecoverAt')->willReturn(null);
-        $tokenStore->expects(self::once())->method('store');
-        $tokenStore->expects(self::never())->method('recordRecover');
-
-        $tokenGenerator = $this->createMock(VerificationTokenGenerator::class);
-        $tokenGenerator->expects(self::once())->method('generate')->willReturn('token-123');
-
-        $mailSender = $this->createMock(RecoveryMailSender::class);
-        $mailSender->expects(self::once())->method('sendRecovery')
-            ->with('MailFailUser', 'user@example.com', 'token-123', 'es')
-            ->willThrowException(new RuntimeException('mail error'));
-
-        $handler = $this->createHandler(
-            repository: $repository,
-            tokenStore: $tokenStore,
-            tokenGenerator: $tokenGenerator,
-            mailSender: $mailSender,
-        );
-
-        $result = $handler->handle(new RecoverNick(nickname: 'MailFailUser'));
-
-        self::assertSame(RecoverNickOutcome::MailDeliveryFailed, $result->outcome);
-    }
-
-    #[Test]
-    public function requestsTokenAndDispatchesEmailSuccessfully(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('isPending')->willReturn(false);
-        $account->method('isSuspended')->willReturn(false);
-        $account->method('isForbidden')->willReturn(false);
-        $account->method('getEmail')->willReturn('user@example.com');
-        $account->method('getLanguage')->willReturn('en');
-
-        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('ValidUser')->willReturn($account);
-
-        $tokenStore = $this->createMock(RecoveryTokenStore::class);
-        $tokenStore->expects(self::once())->method('getLastRecoverAt')->willReturn(null);
-        $tokenStore->expects(self::once())->method('store')
-            ->with('ValidUser', 'token-abc', $this->now->modify('+3600 seconds'));
-        $tokenStore->expects(self::once())->method('recordRecover')->with('ValidUser', $this->now);
-
-        $tokenGenerator = $this->createMock(VerificationTokenGenerator::class);
-        $tokenGenerator->expects(self::once())->method('generate')->willReturn('token-abc');
-
-        $mailSender = $this->createMock(RecoveryMailSender::class);
-        $mailSender->expects(self::once())->method('sendRecovery')->with('ValidUser', 'user@example.com', 'token-abc', 'en');
-
-        $handler = $this->createHandler(
-            repository: $repository,
-            tokenStore: $tokenStore,
-            tokenGenerator: $tokenGenerator,
-            mailSender: $mailSender,
-        );
-
-        $result = $handler->handle(new RecoverNick(nickname: 'ValidUser'));
-
-        self::assertSame(RecoverNickOutcome::TokenSent, $result->outcome);
-        self::assertSame('user@example.com', $result->email);
-    }
-
-    #[Test]
-    public function returnsInvalidTokenWhenTokenStoreRejects(): void
-    {
-        $account = $this->createStub(RegisteredNick::class);
-        $account->method('isPending')->willReturn(false);
-        $account->method('isSuspended')->willReturn(false);
-        $account->method('isForbidden')->willReturn(false);
-
-        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('ConsumeUser')->willReturn($account);
-
-        $tokenStore = $this->createMock(RecoveryTokenStore::class);
-        $tokenStore->expects(self::once())->method('consume')->with('ConsumeUser', 'wrong-token', $this->now)->willReturn(false);
-
-        $handler = $this->createHandler(repository: $repository, tokenStore: $tokenStore);
-        $result = $handler->handle(new RecoverNick(nickname: 'ConsumeUser', token: 'wrong-token'));
-
-        self::assertSame(RecoverNickOutcome::InvalidToken, $result->outcome);
-        self::assertSame('ConsumeUser', $result->nickname);
-    }
-
-    #[Test]
-    public function consumesTokenAndResetsPasswordSuccessfully(): void
-    {
-        $account = $this->createMock(RegisteredNick::class);
-        $account->method('isPending')->willReturn(false);
-        $account->method('isSuspended')->willReturn(false);
-        $account->method('isForbidden')->willReturn(false);
-        $account->method('getId')->willReturn(42);
-        $account->method('getPasswordHash')->willReturn('hashed-pw');
-        $account->expects(self::once())->method('changePassword')->with('hashed-pw');
-
-        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repository->expects(self::once())->method('findByNick')->with('ConsumeUser')->willReturn($account);
-        $repository->expects(self::once())->method('save')->with($account);
-
-        $tokenStore = $this->createMock(RecoveryTokenStore::class);
-        $tokenStore->expects(self::once())->method('consume')->with('ConsumeUser', 'valid-token', $this->now)->willReturn(true);
-
-        $passwordGenerator = $this->createMock(RecoveryPasswordGenerator::class);
-        $passwordGenerator->expects(self::once())->method('generate')->willReturn('temp-secret12');
-
-        $passwordHasher = $this->createMock(PasswordHasher::class);
-        $passwordHasher->expects(self::once())->method('hash')->with('temp-secret12')->willReturn('hashed-pw');
-
-        $publishedEvents = [];
-        $eventPublisher = $this->createMock(RecoverEventPublisher::class);
-        $eventPublisher->expects(self::exactly(2))->method('publish')->with(self::callback(
-            static function (object $event) use (&$publishedEvents): bool {
-                $publishedEvents[] = $event;
-
-                return $event instanceof NickPasswordHashAvailable || $event instanceof NickRecoveredEvent;
-            },
-        ));
-
-        $handler = $this->createHandler(
-            repository: $repository,
-            passwordHasher: $passwordHasher,
-            passwordGenerator: $passwordGenerator,
-            tokenStore: $tokenStore,
-            eventPublisher: $eventPublisher,
-        );
-
-        $result = $handler->handle(new RecoverNick(
-            nickname: 'ConsumeUser',
-            token: 'valid-token',
-            senderNick: 'Oper',
-            senderAccountId: 1,
-            senderIp: '127.0.0.1',
-            senderHost: 'oper@localhost',
-        ));
-
+        $account = $this->account();
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findByNick')->willReturn($account);
+        $validator = $this->createStub(RescueTokenValidator::class);
+        $validator->method('validate')->willReturn(new RescueTokenValidationResult(RescueTokenValidationOutcome::Valid));
+        $persistence = $this->createMock(RescueCredentialPersistence::class);
+        $persistence->expects(self::once())->method('rotateAfterRecovery')->with(42, 'old-token-hash', 'new-password-hash', 'new-token-hash', self::isInstanceOf(DateTimeImmutable::class))->willReturn(true);
+        $published = [];
+        $events = $this->createMock(RecoverEventPublisher::class);
+        $events->expects(self::exactly(2))->method('publish')->willReturnCallback(static function (object $event) use (&$published): void { $published[] = $event; });
+        $result = $this->handler($repository, $validator, $persistence, $events)->handle(new RecoverNick('User', 'valid', 'Actor', 7, 'ip', 'host'));
         self::assertSame(RecoverNickOutcome::PasswordReset, $result->outcome);
-        self::assertSame('ConsumeUser', $result->nickname);
-        self::assertSame('temp-secret12', $result->temporaryPassword);
-        self::assertCount(2, $publishedEvents);
-        self::assertInstanceOf(NickPasswordHashAvailable::class, $publishedEvents[0]);
-        self::assertInstanceOf(NickRecoveredEvent::class, $publishedEvents[1]);
-        self::assertSame('email', $publishedEvents[1]->method);
-        self::assertSame($this->now, $publishedEvents[1]->occurredAt);
+        self::assertSame('new-password', $result->temporaryPassword);
+        self::assertSame('new-token', $result->rescueToken);
+        self::assertInstanceOf(NickPasswordHashAvailable::class, $published[0]);
+        self::assertSame('new-password-hash', $published[0]->passwordHash);
+        self::assertInstanceOf(NickRecoveredEvent::class, $published[1]);
+        self::assertSame('token', $published[1]->method);
+        self::assertSame('Actor', $published[1]->performedBy);
+        self::assertStringNotContainsString('new-token', serialize($published));
     }
 
-    private function createHandler(
-        ?RegisteredNickRepositoryInterface $repository = null,
-        ?PasswordHasher $passwordHasher = null,
-        ?VerificationTokenGenerator $tokenGenerator = null,
-        ?RecoveryPasswordGenerator $passwordGenerator = null,
-        ?RecoveryTokenStore $tokenStore = null,
-        ?RecoveryMailSender $mailSender = null,
-        ?RecoverEventPublisher $eventPublisher = null,
-        int $ttlSeconds = 3600,
-        int $minIntervalSeconds = 300,
-    ): RecoverNickHandler {
-        $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn($this->now);
+    public function testFailedCompareAndSwapLeaksNoGeneratedCredentialsAndPublishesNothing(): void
+    {
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findByNick')->willReturn($this->account());
+        $validator = $this->createStub(RescueTokenValidator::class);
+        $validator->method('validate')->willReturn(new RescueTokenValidationResult(RescueTokenValidationOutcome::Valid));
+        $persistence = $this->createMock(RescueCredentialPersistence::class);
+        $persistence->expects(self::once())->method('rotateAfterRecovery')->willReturn(false);
+        $events = $this->createMock(RecoverEventPublisher::class);
+        $events->expects(self::never())->method('publish');
+        $result = $this->handler($repository, $validator, $persistence, $events)->handle(new RecoverNick('User', 'stale'));
+        self::assertSame(RecoverNickOutcome::InvalidToken, $result->outcome);
+        self::assertNull($result->temporaryPassword);
+        self::assertNull($result->rescueToken);
+    }
 
-        return new RecoverNickHandler(
-            nickRepository: $repository ?? $this->createStub(RegisteredNickRepositoryInterface::class),
-            passwordHasher: $passwordHasher ?? $this->createStub(PasswordHasher::class),
-            tokenGenerator: $tokenGenerator ?? $this->createStub(VerificationTokenGenerator::class),
-            passwordGenerator: $passwordGenerator ?? $this->createStub(RecoveryPasswordGenerator::class),
-            tokenStore: $tokenStore ?? $this->createStub(RecoveryTokenStore::class),
-            mailSender: $mailSender ?? $this->createStub(RecoveryMailSender::class),
-            eventPublisher: $eventPublisher ?? $this->createStub(RecoverEventPublisher::class),
-            clock: $clock,
-            recoverTokenTtlSeconds: $ttlSeconds,
-            recoverMinIntervalSeconds: $minIntervalSeconds,
-        );
+    public function testNullConfirmedHashFailsClosedEvenWhenValidatorReturnsValid(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findByNick')->willReturn($account);
+        $validator = $this->createStub(RescueTokenValidator::class);
+        $validator->method('validate')->willReturn(new RescueTokenValidationResult(RescueTokenValidationOutcome::Valid));
+        self::assertSame(RecoverNickOutcome::CredentialUnavailable, $this->handler($repository, $validator)->handle(new RecoverNick('User', 'token'))->outcome);
+    }
+
+    public function testRecoveryUsesHashSnapshotTakenBeforeValidation(): void
+    {
+        $hash = 'old-token-hash';
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $account->method('getRescueTokenHash')->willReturnCallback(static function () use (&$hash): string { return $hash; });
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findByNick')->willReturn($account);
+        $validator = $this->createStub(RescueTokenValidator::class);
+        $validator->method('validate')->willReturnCallback(static function () use (&$hash): RescueTokenValidationResult {
+            $hash = 'concurrent-new-hash';
+
+            return new RescueTokenValidationResult(RescueTokenValidationOutcome::Valid);
+        });
+        $persistence = $this->createMock(RescueCredentialPersistence::class);
+        $persistence->expects(self::once())->method('rotateAfterRecovery')->with(42, 'old-token-hash', 'new-password-hash', 'new-token-hash', self::isInstanceOf(DateTimeImmutable::class))->willReturn(false);
+        $events = $this->createMock(RecoverEventPublisher::class);
+        $events->expects(self::never())->method('publish');
+        self::assertSame(RecoverNickOutcome::InvalidToken, $this->handler($repository, $validator, $persistence, $events)->handle(new RecoverNick('User', 'token'))->outcome);
+    }
+
+    public function testInvalidGeneratedCredentialFailsClosedBeforePersistence(): void
+    {
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repository->method('findByNick')->willReturn($this->account());
+        $validator = $this->createStub(RescueTokenValidator::class);
+        $validator->method('validate')->willReturn(new RescueTokenValidationResult(RescueTokenValidationOutcome::Valid));
+        $codec = $this->createStub(RescueTokenCodec::class);
+        $codec->method('generate')->willReturn('invalid-generated');
+        $codec->method('hash')->willReturn(null);
+        $credentials = $this->createMock(RescueCredentialPersistence::class);
+        $credentials->expects(self::never())->method('rotateAfterRecovery');
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('The generated rescue token is invalid.');
+        $this->handler($repository, $validator, $credentials, codec: $codec)->handle(new RecoverNick('User', 'token'));
+    }
+
+    private function account(): RegisteredNick
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $account->method('getRescueTokenHash')->willReturn('old-token-hash');
+        $account->method('getPasswordHash')->willReturn('old-password');
+
+        return $account;
+    }
+
+    private function handler(?RegisteredNickRepositoryInterface $repository = null, ?RescueTokenValidator $validator = null, ?RescueCredentialPersistence $persistence = null, ?RecoverEventPublisher $events = null, ?RescueTokenCodec $codec = null): RecoverNickHandler
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-10-21 UTC'));
+        if (null === $codec) {
+            $codec = $this->createStub(RescueTokenCodec::class);
+            $codec->method('generate')->willReturn('new-token');
+            $codec->method('hash')->willReturn('new-token-hash');
+        }
+        $passwords = $this->createStub(RecoveryPasswordGenerator::class);
+        $passwords->method('generate')->willReturn('new-password');
+        $hasher = $this->createStub(PasswordHasher::class);
+        $hasher->method('hash')->willReturn('new-password-hash');
+
+        return new RecoverNickHandler($repository ?? $this->createStub(RegisteredNickRepositoryInterface::class), $hasher, $passwords, $validator ?? $this->createStub(RescueTokenValidator::class), $codec, $persistence ?? $this->createStub(RescueCredentialPersistence::class), $events ?? $this->createStub(RecoverEventPublisher::class), $clock);
     }
 }

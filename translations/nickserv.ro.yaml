@@ -22,12 +22,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  syntax:           "REGISTER <parolă> <e-mail>"
+  token_unavailable: "Înregistrarea este în așteptare, dar tokenul nu a putut fi livrat.\nAșteaptă expirarea înainte de a te înregistra din nou."
+  syntax: "REGISTER <password> [email]"
   short:            "Înregistrați-vă porecla la servicii."
-  help:             "Inițiază înregistrarea poreclei dumneavoastră actuale. Un token de verificare\nva fi trimis la adresa de e-mail furnizată. Finalizați înregistrarea\nexecutând \x0303/msg %bot% VERIFY <token>\x03. Tokenul expiră într-o oră.\nDacă nu sosește, verificați folderul de spam sau folosiți \x0303RESEND\x03."
+  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nEMAIL trimite tokenul prin email. TOKEN îl afișează privat și necesită VERIFY. Adresa email este opțională doar în modul TOKEN.\nConfirmă o înregistrare în așteptare sau, dacă ești identificat, tokenul de salvare al unui cont existent. Tokenul confirmat rămâne credențialul de salvare."
   pending:          "\x0307→\x03 Un token de verificare a fost trimis la \x02%email%\x02.\n  Executați \x0303/msg %bot% VERIFY <token>\x03 pentru a finaliza înregistrarea.\n  Nu l-ați primit? Verificați spamul sau folosiți \x0303/msg %bot% RESEND\x03\n  Tokenul va expira în \x021 oră\x02."
   already_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja înregistrată."
-  already_pending:  "\x0304✗\x03 Porecla \x02%nickname%\x02 are deja o verificare în așteptare.\n  Folosiți \x0303/msg %bot% VERIFY <token>\x03 sau \x0303/msg %bot% RESEND\x03."
+  already_pending: "Există deja o înregistrare în așteptare pentru %nickname%. Folosește VERIFY cu tokenul ei. Tokenurile TOKEN nu se reemit; dacă îl pierzi, așteaptă expirarea înregistrării."
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi înregistrată în această rețea."
   pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptare de ștergere și nu poate fi înregistrată."
   invalid_email:    "\x0304✗\x03 Adresa de e-mail furnizată nu este validă."
@@ -38,35 +39,36 @@ register:
 # --- VERIFY -----------------------------------------------------------------
 verify:
   syntax:           "VERIFY <token>"
-  short:            "Confirmați adresa de e-mail și activați-vă porecla."
-  help:             "Finalizează înregistrarea prin verificarea tokenului trimis la e-mailul dumneavoastră.\nTokenul este valabil timp de 1 oră din momentul înregistrării."
+  short: "Confirmă o înregistrare sau un token de salvare."
+  help: "Confirmă o înregistrare în așteptare sau, dacă ești identificat, tokenul de salvare al unui cont existent. Tokenul confirmat rămâne credențialul de salvare."
   success:          "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes și acum sunteți identificat."
   success_native:   "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes. Folosiți autentificarea nativă afișată mai jos."
-  invalid_token:    "\x0304✗\x03 Tokenul este invalid sau a expirat. Folosiți \x0303/msg %bot% REGISTER\x03 pentru a o lua de la capăt."
+  invalid_token: "Tokenul este invalid sau a expirat. Înregistrările TOKEN nu pot solicita altul; așteaptă expirarea înregistrării în așteptare."
   no_pending:       "\x0304✗\x03 Nu aveți nicio înregistrare în așteptare de verificat."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
+  disabled: "RESEND este dezactivat în modul TOKEN și nu este disponibil niciodată pentru înregistrările TOKEN."
   syntax:           "RESEND"
   short:            "Retrimiteți tokenul de verificare la e-mailul dumneavoastră."
-  help:             "Retrimite tokenul de verificare la adresa de e-mail furnizată în timpul\nînregistrării. Funcționează doar dacă aveți o înregistrare în așteptare."
+  help: "EMAIL trimite tokenul prin email. TOKEN îl afișează privat și necesită VERIFY. Adresa email este opțională doar în modul TOKEN.\nRESEND este dezactivat în modul TOKEN și nu este disponibil niciodată pentru înregistrările TOKEN."
   success:          "\x0307→\x03 Tokenul de verificare a fost retrimis la \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Nu aveți nicio înregistrare în așteptare pentru care să retrimiteți un token."
   throttled:        "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a solicita alt e-mail de verificare."
 
 # --- RECOVER -----------------------------------------------------------------
 recover:
+  pending_deletion: "Porecla %nickname% așteaptă ștergerea și nu poate fi recuperată."
+  instructions: "Folosește RECOVER %nickname% <token> cu tokenul de salvare confirmat. Recuperarea nu trimite emailuri."
   syntax:           "RECOVER <poreclă> [token]"
   short:            "Recuperați-vă porecla dacă v-ați pierdut parola."
-  help:             "Recuperează accesul la o poreclă înregistrată atunci când v-ați pierdut parola.\n1) \x0303RECOVER <poreclă>\x03 — se trimite un token la e-mailul poreclei.\n2) \x0303RECOVER <poreclă> <token>\x03 — introduceți tokenul din e-mail pentru a vă reseta parola.\nVeți primi apoi o parolă temporară și comanda pentru a o schimba."
-  email_sent:       "\x0307→\x03 Un token de recuperare a fost trimis la \x02%email_hint%\x02. Verificați inboxul (și folderul de spam)."
+  help: "Folosește RECOVER %nickname% <token> cu tokenul de salvare confirmat. Recuperarea nu trimite emailuri.\nToken de salvare nou: <token>. Cel anterior este invalid. Păstrează-l în siguranță; nu va mai fi afișat."
   not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
-  pending:          "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptarea verificării e-mailului."
+  pending: "Există deja o înregistrare în așteptare pentru %nickname%. Folosește VERIFY cu tokenul ei. Tokenurile TOKEN nu se reemit; dacă îl pierzi, așteaptă expirarea înregistrării."
   suspended:        "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Motiv: %reason%"
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi folosită în această rețea."
-  no_email:         "\x0304✗\x03 Nu este setat niciun e-mail pentru porecla \x02%nickname%\x02. Recuperarea nu este disponibilă."
-  throttled:        "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a solicita alt e-mail de recuperare."
-  invalid_token:    "\x0304✗\x03 Tokenul este invalid sau a expirat. Solicitați unul nou cu \x0303RECOVER %nickname%\x03."
+  throttled: "Prea multe tokenuri incorecte. Încearcă din nou peste %minutes% minut(e)."
+  invalid_token: "Tokenul de salvare este invalid."
   success_identify: "\x0303✔\x03 Parolă resetată. Identificați-vă acum: \x0303%identify_cmd%\x03"
   success_then_change: "Apoi schimbați-vă parola: \x0303/msg %bot% SET PASSWORD <parolă_nouă>\x03"
 
@@ -164,9 +166,10 @@ set:
     success:        "\x0303✔\x03 Parola dumneavoastră a fost actualizată cu succes."
 
   email:
-    syntax:         "SET EMAIL <e-mail_nou> [token]"
+    token_required: "Folosește SET EMAIL <email> <token> cu tokenul de salvare confirmat."
+    syntax: "SET EMAIL <email> <token>"
     short:          "Schimbați adresa de e-mail asociată poreclei dumneavoastră (confirmare în doi pași)."
-    help:           "Schimbarea e-mailului în doi pași pentru securitate.\n1) \x0303SET EMAIL <e-mail_nou>\x03 — se trimite un token la e-mailul dumneavoastră actual.\n2) \x0303SET EMAIL <e-mail_nou> <token>\x03 — confirmați cu tokenul primit.\nTokenul expiră într-o oră."
+    help: "SET EMAIL schimbă adresa de contact după validarea tokenului de salvare, fără a-l consuma. Verifică formatul și unicitatea; nu trimite email de confirmare."
     success:        "\x0303✔\x03 E-mailul dumneavoastră a fost actualizat la \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Un token de confirmare a fost trimis la \x02%current_email%\x02.\n  Pentru a confirma schimbarea la \x02%new_email%\x02 executați:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Tokenul expiră într-o oră."
     invalid_token:  "\x0304✗\x03 Tokenul este invalid sau a expirat. Solicitați unul nou cu \x0303SET EMAIL <e-mail_nou>\x03."
@@ -688,3 +691,12 @@ regmode:
   help: "Stabilește EMAIL sau TOKEN ca politică de înregistrare pentru conturile noi. STATUS afișează politica actuală fără modificări. Conturile în așteptare păstrează modul inițial de înregistrare. În modul TOKEN, RESEND este dezactivat global. Necesită permisiunea nickserv.regmode."
   status: "Modul actual de înregistrare: %mode%."
   changed: "Modul de înregistrare a fost schimbat în %mode%."
+
+# --- Unified rescue credential -----------------------------------------------
+rescue:
+  issued: "Token de salvare: %token%.\nConfirmă cu /msg %bot% VERIFY %token%.\nPăstrează-l în siguranță.\nNumai cel mai recent este valid;\ndupă confirmare nu va mai fi afișat."
+  confirmed: "Tokenul de salvare a fost confirmat. Păstrează-l în siguranță."
+  unavailable: "Autentifică-te și confirmă tokenul de salvare cu VERIFY înainte de această operație."
+  locked_out: "Prea multe tokenuri incorecte. Încearcă din nou peste %seconds% secunde."
+  throttled: "Prea multe tokenuri incorecte. Încearcă din nou peste %minutes% minut(e)."
+  replaced: "Token de salvare nou: %token%.\nCel anterior este invalid.\nPăstrează-l în siguranță;\nnu va mai fi afișat."

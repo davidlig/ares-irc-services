@@ -76,14 +76,15 @@ final class RecoverCommandTest extends TestCase
                 && null === $dto->token
                 && 'SenderNick' === $dto->senderNick
                 && '192.168.1.1' === $dto->senderIp
-                && 'ident@host.net' === $dto->senderHost,
-        ))->willReturn(RecoverNickResult::tokenSent('user@example.com'));
+                && 'ident@host.net' === $dto->senderHost
+                && 'ip:wKgBAQ==' === $dto->clientKey,
+        ))->willReturn(RecoverNickResult::instructions('TargetNick'));
 
         $command = new RecoverCommand($handler, $this->authenticationMode());
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
-        self::assertSame(['recover.email_sent [%email_hint%: us****@e****.***]'], $messages);
+        self::assertSame(['recover.instructions [%nickname%: TargetNick]'], $messages);
     }
 
     #[Test]
@@ -95,7 +96,7 @@ final class RecoverCommandTest extends TestCase
             static fn (RecoverNick $dto): bool => 'TargetNick' === $dto->nickname
                 && 'my-token' === $dto->token
                 && '*' === $dto->senderIp,
-        ))->willReturn(RecoverNickResult::passwordReset('TargetNick', 'new-secret-12'));
+        ))->willReturn(RecoverNickResult::passwordReset('TargetNick', 'new-secret-12', 'replacement-token'));
 
         $command = new RecoverCommand($handler, $this->authenticationMode());
         $messages = [];
@@ -104,6 +105,7 @@ final class RecoverCommandTest extends TestCase
         self::assertSame([
             'recover.success_identify [%identify_cmd%: /msg NickServ IDENTIFY TargetNick new-secret-12]',
             'recover.success_then_change',
+            'rescue.replaced [%token%: replacement-token]',
         ], $messages);
     }
 
@@ -112,7 +114,7 @@ final class RecoverCommandTest extends TestCase
     {
         $sender = new SenderView('UID1', 'SenderNick', 'ident', 'host.net', 'cloak', '*');
         $handler = $this->createStub(RecoverNickHandlerInterface::class);
-        $handler->method('handle')->willReturn(RecoverNickResult::passwordReset('TargetNick', 'new-secret-12'));
+        $handler->method('handle')->willReturn(RecoverNickResult::passwordReset('TargetNick', 'new-secret-12', 'replacement-token'));
 
         $command = new RecoverCommand(
             $handler,
@@ -124,6 +126,7 @@ final class RecoverCommandTest extends TestCase
         self::assertSame([
             'recover.success_identify [%identify_cmd%: /NICK TargetNick:new-secret-12 | /NICK TargetNick!new-secret-12]',
             'recover.success_then_change',
+            'rescue.replaced [%token%: replacement-token]',
         ], $messages);
     }
 
@@ -167,18 +170,16 @@ final class RecoverCommandTest extends TestCase
                 RecoverNickResult::forbidden('TargetNick'),
                 ['recover.forbidden [%nickname%: TargetNick]'],
             ],
-            'no_email' => [
-                RecoverNickResult::noEmail('TargetNick'),
-                ['recover.no_email [%nickname%: TargetNick]'],
+            'unavailable' => [
+                RecoverNickResult::credentialUnavailable('TargetNick'),
+                ['rescue.unavailable'],
             ],
+            'pending_deletion' => [RecoverNickResult::pendingDeletion('TargetNick'), ['recover.pending_deletion [%nickname%: TargetNick]']],
             'throttled' => [
                 RecoverNickResult::throttled(125),
                 ['recover.throttled [%minutes%: 3]'],
             ],
-            'mail_failed' => [
-                RecoverNickResult::mailDeliveryFailed(),
-                ['error.mail_failed'],
-            ],
+
             'invalid_token' => [
                 RecoverNickResult::invalidToken('TargetNick'),
                 ['recover.invalid_token [%nickname%: TargetNick]'],
@@ -193,13 +194,13 @@ final class RecoverCommandTest extends TestCase
         $handler = $this->createMock(RecoverNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with(self::callback(
             static fn (RecoverNick $dto): bool => '???notbase64???' === $dto->senderIp,
-        ))->willReturn(RecoverNickResult::mailDeliveryFailed());
+        ))->willReturn(RecoverNickResult::instructions('Target'));
 
         $command = new RecoverCommand($handler, $this->authenticationMode());
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Target']));
 
-        self::assertSame(['error.mail_failed'], $messages);
+        self::assertSame(['recover.instructions [%nickname%: Target]'], $messages);
     }
 
     /**

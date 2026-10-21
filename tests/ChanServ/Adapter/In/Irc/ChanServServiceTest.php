@@ -2503,13 +2503,13 @@ final class ChanServServiceTest extends TestCase
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
-        $authorizationChecker->expects(self::exactly(4))
+        $authorizationChecker->expects(self::exactly(6))
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
 
         $events = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::exactly(2))
+        $eventDispatcher->expects(self::exactly(3))
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$events): void {
                 $events[] = $event;
@@ -2544,6 +2544,7 @@ final class ChanServServiceTest extends TestCase
 
         $service->dispatch('SET #test DESC desc', $sender);
         $service->dispatch('SET #test PASSWORD never-audit-this', $sender);
+        $service->dispatch('SET #test FOUNDER NewOwner never-audit-this-token', $sender);
 
         self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
         self::assertTrue($contextHolder->context->isLevelFounder);
@@ -2562,6 +2563,8 @@ final class ChanServServiceTest extends TestCase
             ['founder_action' => true, 'option' => 'PASSWORD', 'value' => null],
             $commandAudit->records[1]->metadata,
         );
+        self::assertSame(['founder_action' => true, 'option' => 'FOUNDER', 'value' => 'NewOwner'], $commandAudit->records[2]->metadata);
+        self::assertStringNotContainsString('never-audit-this-token', serialize($commandAudit->records[2]->metadata));
     }
 
     #[Test]

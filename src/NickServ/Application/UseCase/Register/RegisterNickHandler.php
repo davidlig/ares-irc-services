@@ -8,11 +8,15 @@ use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
+use App\NickServ\Application\Port\Out\RegistrationModeQuery;
 use App\NickServ\Application\Port\Out\RegistrationThrottle;
-use App\NickServ\Application\Port\Out\RegistrationVerificationStore;
-use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
+use App\NickServ\Application\Port\Out\RescueTokenCodec;
+use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\NickServ\Domain\ValueObject\RegistrationMode;
+use LogicException;
+use OverflowException;
 use Throwable;
 
 use function sprintf;
@@ -25,9 +29,10 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
     public function __construct(
         private RegisterNickRepository $nickRepository,
         private PasswordHasher $passwordHasher,
-        private VerificationTokenGenerator $tokenGenerator,
+        private RescueTokenCodec $tokenGenerator,
         private Clock $clock,
-        private RegistrationVerificationStore $verificationStore,
+        private TemporaryRescueTokenStore $verificationStore,
+        private RegistrationModeQuery $registrationMode,
         private RegistrationThrottle $throttle,
         private RegistrationMailSender $mailSender,
         private int $minimumIntervalSeconds,
@@ -52,11 +57,13 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
             return RegisterNickResult::guestPrefixForbidden($this->guestPrefix);
         }
 
-        if (false === filter_var($command->email, FILTER_VALIDATE_EMAIL)) {
+        $mode = $this->registrationMode->current();
+        if ((RegistrationMode::Email === $mode && null === $command->email)
+            || (null !== $command->email && false === filter_var($command->email, FILTER_VALIDATE_EMAIL))) {
             return RegisterNickResult::invalidEmail();
         }
 
-        if (null !== $this->nickRepository->findByEmail($command->email)) {
+        if (null !== $command->email && null !== $this->nickRepository->findByEmail($command->email)) {
             return RegisterNickResult::emailAlreadyUsed($command->email);
         }
 
@@ -80,14 +87,29 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
             language: $command->language,
             expiresAt: $expiresAt,
             registeredAt: $now,
+            registrationMode: $mode,
         );
 
+        $hash = $this->tokenGenerator->hash($token) ?? throw new LogicException('Generated rescue token is invalid.');
+        if (RegistrationMode::Email === $mode) {
+            $nick->replaceRescueTokenHash($hash);
+        }
         $this->nickRepository->save($nick);
-        $this->verificationStore->store($command->nickname, $token, $expiresAt);
+        if (RegistrationMode::Token === $mode) {
+            $this->verificationStore->prune($now);
+            try {
+                $this->verificationStore->replace($nick->getId(), $hash, $expiresAt);
+            } catch (OverflowException) {
+                return RegisterNickResult::temporarilyUnavailable();
+            }
+            $this->throttle->recordAttempt($command->clientKey, $now);
+
+            return RegisterNickResult::tokenVerificationRequired($token);
+        }
         try {
             $this->mailSender->sendVerification(
                 $command->nickname,
-                $command->email,
+                $command->email ?? throw new LogicException('Email registration requires an address.'),
                 $token,
                 $command->language,
             );
@@ -97,6 +119,6 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
 
         $this->throttle->recordAttempt($command->clientKey, $now);
 
-        return RegisterNickResult::verificationRequired($command->email);
+        return RegisterNickResult::verificationRequired($command->email ?? '');
     }
 }

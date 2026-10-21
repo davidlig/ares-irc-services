@@ -10,14 +10,22 @@ use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
-use App\NickServ\Application\Port\Out\VerificationTokenConsumer;
+use App\NickServ\Application\Port\Out\RescueAttemptLimiter;
+use App\NickServ\Application\Port\Out\RescueCredentialPersistence;
+use App\NickServ\Application\Port\Out\RescueTokenCodec;
+use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\NickServ\Domain\ValueObject\NickStatus;
+use App\NickServ\Domain\ValueObject\RegistrationMode;
 
 final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
-        private VerificationTokenConsumer $tokenConsumer,
+        private RescueTokenCodec $codec,
+        private TemporaryRescueTokenStore $temporaryTokens,
+        private RescueAttemptLimiter $limiter,
+        private RescueCredentialPersistence $credentials,
         private IdentifiedSessionTracker $identifiedRegistry,
         private Clock $clock,
         private NicknameAuthenticationModeQuery $authenticationMode,
@@ -28,16 +36,42 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
     {
         $account = $this->nickRepository->findByNick($command->nickname);
 
-        if (null === $account || !$account->isPending()) {
+        if (null === $account || (!$account->isPending() && !$account->isRegistered())
+            || ($account->isRegistered() && null !== $account->getRescueTokenHash())) {
             return VerifyNickResult::noPending();
         }
+        $now = $this->clock->now();
+        $clientKey = '' !== $command->clientKey ? $command->clientKey : 'uid:' . $command->senderUid;
+        $cooldown = $this->limiter->remainingCooldownSeconds($account->getId(), $clientKey, $now);
+        if (0 < $cooldown) {
+            return VerifyNickResult::lockedOut($cooldown);
+        }
+        $hash = $this->codec->hash($command->token);
+        $expectedHash = $account->getRescueTokenHash();
+        $migration = $account->isRegistered();
+        $authenticatedNick = $this->identifiedRegistry->findNick($command->senderUid);
+        $authenticated = $command->authenticatedAccountId === $account->getId()
+            || (null !== $authenticatedNick && 0 === strcasecmp($authenticatedNick, $account->getNickname()));
+        $expired = $account->isPending() && (null === $account->getExpiresAt() || $account->getExpiresAt() <= $now);
+        $matches = null !== $hash && !$expired && (!$migration || $authenticated)
+            && (($migration || RegistrationMode::Token === $account->getRegistrationMode())
+                ? $this->temporaryTokens->matches($account->getId(), $hash, $now)
+                : (null !== $expectedHash && $this->codec->matches($command->token, $expectedHash)));
+        if (!$matches) {
+            $this->limiter->recordFailure($account->getId(), $clientKey, $now);
 
-        if (!$this->tokenConsumer->consume($command->nickname, $command->token, $this->clock->now())) {
             return VerifyNickResult::invalidToken();
         }
+        if (!$this->credentials->confirm($account->getId(), $migration ? NickStatus::Registered : NickStatus::Pending, $expectedHash, $hash, $now)) {
+            $this->limiter->recordFailure($account->getId(), $clientKey, $now);
 
-        $account->activate();
-        $this->nickRepository->save($account);
+            return VerifyNickResult::invalidToken();
+        }
+        $this->temporaryTokens->removeIfMatches($account->getId(), $hash);
+        if ($migration) {
+            return VerifyNickResult::credentialConfirmed();
+        }
+
         $this->eventPublisher->publish(new NickPasswordHashAvailable(
             nickId: $account->getId(),
             nickname: $account->getNickname(),

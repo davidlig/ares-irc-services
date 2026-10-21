@@ -103,6 +103,26 @@ final class SetNickSettingPresentationTest extends TestCase
         self::assertSame([$expectedKey], $messages);
     }
 
+    #[Test]
+    public function presentsNewRescueCredentialOutcomes(): void
+    {
+        foreach ([
+            [SetNickSettingOutcome::TokenRequired, 'set.email.token_required'],
+            [SetNickSettingOutcome::CredentialUnavailable, 'rescue.unavailable'],
+            [SetNickSettingOutcome::TokenThrottled, 'rescue.throttled'],
+        ] as [$outcome, $key]) {
+            $messages = [];
+            $context = $this->context($messages);
+            self::assertFalse(SetNickSettingPresentation::present($context, new SetNickSettingResult(
+                $outcome,
+                SetNickSettingOption::Email,
+                'Alice',
+                retryAfterSeconds: 61,
+            )));
+            self::assertSame([$key], $messages);
+        }
+    }
+
     /** @param list<string> $messages */
     private function context(array &$messages): NickServContext
     {

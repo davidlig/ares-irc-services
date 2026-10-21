@@ -71,6 +71,31 @@ final readonly class DoctrineRescueCredentialPersistence implements RescueCreden
         });
     }
 
+    public function replacePending(int $accountId, ?string $expectedHash, string $newHash, DateTimeImmutable $now): bool
+    {
+        $this->assertHash($newHash);
+        $params = ['id' => $accountId, 'hash' => $newHash, 'now' => $now];
+        $condition = 'token IS NULL';
+        if (null !== $expectedHash) {
+            $condition = 'token = :expected';
+            $params['expected'] = $expectedHash;
+        }
+
+        return $this->entityManager->getConnection()->transactional(function () use ($accountId, $params, $condition): bool {
+            $affected = $this->entityManager->getConnection()->executeStatement(
+                "UPDATE registered_nicks SET token = :hash WHERE id = :id AND status = 'pending' AND expires_at > :now AND " . $condition,
+                $params,
+                ['now' => Types::DATETIME_IMMUTABLE],
+            );
+            if (1 !== $affected) {
+                return false;
+            }
+            $this->refresh($accountId);
+
+            return true;
+        });
+    }
+
     private function refresh(int $accountId): void
     {
         $account = $this->entityManager->find(RegisteredNick::class, $accountId);

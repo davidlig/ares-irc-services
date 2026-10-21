@@ -7,6 +7,7 @@ namespace App\NickServ\Application\UseCase\Resend;
 enum ResendVerificationOutcome
 {
     case Success;
+    case Disabled;
     case NoPending;
     case Throttled;
     case MailDeliveryFailed;

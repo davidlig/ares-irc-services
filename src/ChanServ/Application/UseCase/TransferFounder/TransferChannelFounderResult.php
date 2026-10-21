@@ -9,7 +9,7 @@ final readonly class TransferChannelFounderResult
     public function __construct(
         public TransferFounderOutcome $outcome,
         public ?string $targetNickname = null,
-        public ?string $emailHint = null,
         public int $maximumChannelsPerNick = 0,
+        public int $retryAfterSeconds = 0,
     ) {}
 }

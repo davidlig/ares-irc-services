@@ -104,6 +104,7 @@ final class ResendCommandTest extends TestCase
     public static function outcomes(): iterable
     {
         yield 'success' => [ResendVerificationResult::success('alice@example.com'), 'resend.success', ['%email%' => 'alice@example.com']];
+        yield 'disabled' => [ResendVerificationResult::disabled(), 'resend.disabled', []];
         yield 'no pending' => [ResendVerificationResult::noPending(), 'resend.no_pending', []];
         yield 'throttled' => [ResendVerificationResult::throttled(65), 'resend.throttled', ['%minutes%' => '2']];
         yield 'mail failed' => [ResendVerificationResult::mailDeliveryFailed(), 'error.mail_failed', []];
