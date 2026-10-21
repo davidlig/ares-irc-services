@@ -25,10 +25,10 @@ S9. Verification: deterministic focused RED→GREEN, existing behavior tests and
 ## Tasks
 - T1 | S8,S9 | delegated foundation | complete original foundation81046ad8; nullable expected hash correction inline | Risk: items1,2,3,4.
 - T2 | S1,S9 | delegated admin | complete069547dd; no changed global policy interface | Risk: items1,2.
-- C1 | S2,S3,S4,S5,S8,S9 | delegated parallel onboarding correction with C2; disjoint interfaces frozen | complete; corrected behavior committed in correction unit below | Risk: items1,2,3,4.
-- C2 | S6,S8,S9 | delegated parallel recovery correction with C1; disjoint surfaces and frozen provisional-store/DB contracts | complete; corrected behavior committed in correction unit below | Risk: items1,2,3,4.
-- C3 | S1-S9 | inline shared DI/14locales/email/help/docs/SQL regression integration | complete; corrected behavior committed in correction unit below | Risk: items1,2,3,4.
-- C4 | S1-S9 | delegated independent verification for persisted/auth/contract/concurrency; final complete quality gates and once coverage for corrected candidate | complete; corrected behavior committed in correction unit below | Risk: items1,2,3,4.
+- C1 | S2,S3,S4,S5,S8,S9 | delegated parallel onboarding correction with C2; disjoint interfaces frozen | complete; correction commit20421943 | Risk: items1,2,3,4.
+- C2 | S6,S8,S9 | delegated parallel recovery correction with C1; disjoint surfaces and frozen provisional-store/DB contracts | complete; correction commit20421943 | Risk: items1,2,3,4.
+- C3 | S1-S9 | inline shared DI/14locales/email/help/docs/SQL regression integration | complete; correction commit20421943 | Risk: items1,2,3,4.
+- C4 | S1-S9 | delegated independent verification for persisted/auth/contract/concurrency; final complete quality gates and once coverage for corrected candidate | complete; correction commit20421943 | Risk: items1,2,3,4.
 
 ## Log
 L1. Original request verbatim: "crea un plan para https://github.com/davidlig/ares-irc-services/issues/29#issuecomment-6299784938". Implementation authorization verbatim: "Implement the plan." Earlier branch request: "crear una rama con esta feature".
@@ -73,3 +73,5 @@ L18. 2026-10-22: User answered "Si, aceptar" to accepting already-issued emailed
 
 L19. Final corrected-candidate proof: preliminary full no-coverage6274/86684, PHPStan max0, Deptrac0 violations/uncovered/warnings/errors, syntax124 files, containerPASS, YAML129 files, fixer0/2027. Exception: standalone suite was already executing when README707 ordering conflict discovered; permitted to finish once, no repeat. Independent verifier PASS126/705 plus public realSQLite1/63 with per-S1-S9 verdicts; no production blockers. Parent ported independent assertions as regression and observed1/63 and PHPStanmax0. Scratch removed.
 L20. Final corrected coverage executed exactly once PASS exit0,6274 tests86698 assertions, zero PHPUnit issues, exact22038/22038 statements4690/4690 methods26728/26728 elements,0 uncovered production files. Candidate digest unchanged throughout. No source changes after coverage; only passive tracking updated. C1-C4 complete. Corrections form one coherent local unit because nullable CAS, provisional registry, onboarding and shared catalogs/DI must agree; splitting source-only or catalogs-only would leave invalid runtime behavior. Advisory400-line target exceeded; chosen feature-branch-chain remains for future publication, none authorized now. Risk items1/2/3/4 independently verified. RDD globallyOFF, no native review started.
+
+L21. Local correction commit20421943 holds C1-C4 and regression proofs; full tested source bytes unchanged. Working tree clean after commit. No push, PR or merge. Final tracker commit only records this identity.
