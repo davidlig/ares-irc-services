@@ -34,6 +34,8 @@ class RegisteredNick
 
     private int $id;
 
+    private ?string $rescueTokenHash = null;
+
     /** Original casing of the nickname (display only). */
     private string $nickname;
 
@@ -358,6 +360,22 @@ class RegisteredNick
     public function isNoExpire(): bool
     {
         return $this->noExpire;
+    }
+
+    public function getRescueTokenHash(): ?string
+    {
+        return $this->rescueTokenHash;
+    }
+
+    public function replaceRescueTokenHash(string $hash): void
+    {
+        if (!$this->isPending() && !$this->isRegistered()) {
+            throw new LogicException('Only pending or registered accounts can own rescue credentials.');
+        }
+        if (1 !== preg_match('/^[0-9a-f]{64}$/D', $hash)) {
+            throw new InvalidArgumentException('Rescue credential must be a lowercase SHA-256 hash.');
+        }
+        $this->rescueTokenHash = $hash;
     }
 
     public function changePassword(string $newHash): void

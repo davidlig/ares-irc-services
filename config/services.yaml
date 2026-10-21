@@ -168,6 +168,17 @@ services:
             $from: '%mailer.from%'
             $senderName: '%irc.server_name%'
 
+    # Unified rescue credentials and runtime registration policy
+    App\NickServ\Application\Port\In\RescueTokenValidator:
+        alias: App\NickServ\Application\UseCase\RescueToken\ValidateRescueTokenHandler
+    App\NickServ\Application\Port\Out\RescueTokenCodec:
+        alias: App\NickServ\Adapter\Out\Security\UuidRescueTokenCodec
+    App\NickServ\Application\Port\Out\TemporaryRescueTokenStore:
+        alias: App\NickServ\Adapter\Out\InMemory\InMemoryTemporaryRescueTokenStore
+    App\NickServ\Application\Port\Out\RescueAttemptLimiter:
+        alias: App\NickServ\Adapter\Out\InMemory\InMemoryRescueAttemptLimiter
+    App\NickServ\Application\Port\Out\RescueCredentialPersistence:
+        alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRescueCredentialPersistence
     App\NickServ\Application\Port\Out\PasswordHasher:
         alias: App\NickServ\Adapter\Out\Security\PhpPasswordHasher
 

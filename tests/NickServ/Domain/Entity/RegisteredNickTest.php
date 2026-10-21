@@ -734,4 +734,26 @@ final class RegisteredNickTest extends TestCase
 
         $nick->restoreFromPendingDeletion();
     }
+
+    #[Test]
+    public function rescueHashIsNullableValidatedAndOwnedByEligibleAccounts(): void
+    {
+        $nick = RegisteredNick::createPending('Rescue', 'password', 'r@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        self::assertNull($nick->getRescueTokenHash());
+        $nick->replaceRescueTokenHash(str_repeat('a', 64));
+        self::assertSame(str_repeat('a', 64), $nick->getRescueTokenHash());
+        $nick->activate();
+        $nick->replaceRescueTokenHash(str_repeat('b', 64));
+        self::assertSame(str_repeat('b', 64), $nick->getRescueTokenHash());
+        $this->expectException(InvalidArgumentException::class);
+        $nick->replaceRescueTokenHash('plaintext');
+    }
+
+    #[Test]
+    public function forbiddenAccountsCannotOwnRescueCredentials(): void
+    {
+        $nick = RegisteredNick::createForbidden('Forbidden', 'reason');
+        $this->expectException(LogicException::class);
+        $nick->replaceRescueTokenHash(str_repeat('a', 64));
+    }
 }
