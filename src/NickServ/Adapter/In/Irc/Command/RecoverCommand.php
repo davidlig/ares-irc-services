@@ -14,6 +14,7 @@ use App\NickServ\Application\UseCase\Recover\RecoverNick;
 use App\NickServ\Application\UseCase\Recover\RecoverNickHandlerInterface;
 use App\NickServ\Application\UseCase\Recover\RecoverNickOutcome;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
+use App\Shared\Application\EmailHintMasker;
 
 use function base64_decode;
 use function ceil;
@@ -145,11 +146,29 @@ final readonly class RecoverCommand implements NickServCommandInterface
             case RecoverNickOutcome::InvalidToken:
                 $context->reply('recover.invalid_token', ['nickname' => $result->nickname ?? '']);
                 break;
+            case RecoverNickOutcome::NoEmail:
+                $context->reply('recover.no_email', ['nickname' => $result->nickname ?? '']);
+                break;
+            case RecoverNickOutcome::MailDeliveryFailed:
+                $context->reply('error.mail_failed');
+                break;
+            case RecoverNickOutcome::TemporarilyUnavailable:
+                $context->reply('rescue.temporarily_unavailable');
+                break;
+            case RecoverNickOutcome::TokenSent:
+                $context->reply('recover.email_sent', ['email_hint' => EmailHintMasker::mask($result->email ?? '')]);
+                break;
             case RecoverNickOutcome::PasswordReset:
                 $identifyCmd = $this->passwordResetAuthenticationCommand($result);
                 $context->reply('recover.success_identify', ['identify_cmd' => $identifyCmd]);
                 $context->reply('recover.success_then_change');
-                $context->reply('rescue.replaced', ['token' => $result->rescueToken]);
+                if ($result->replacementUnavailable) {
+                    $context->reply('rescue.replacement_unavailable');
+                } elseif ($result->tokenPromoted) {
+                    $context->reply('rescue.replaced', ['token' => $result->rescueToken]);
+                } else {
+                    $context->reply('rescue.optional_replacement', ['token' => $result->rescueToken]);
+                }
                 break;
         }
     }

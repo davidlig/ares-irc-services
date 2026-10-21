@@ -15,6 +15,9 @@ register_verification_body: |
 
   Tokenul expiră într-o oră. Dacă nu ați solicitat acest lucru, vă rugăm să ignorați acest e-mail.
 
+  După validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Expirarea de o oră se aplică doar înainte de validare.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — la fel ca register, retrimiterea tokenului
 resend_verification_subject: "%bot%: tokenul dumneavoastră de verificare (retrimitere)"
 resend_verification_body: |
@@ -28,6 +31,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   Tokenul expiră într-o oră. Dacă nu ați solicitat acest lucru, vă rugăm să ignorați acest e-mail.
+
+  După validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Expirarea de o oră se aplică doar înainte de validare.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — token de confirmare trimis la e-mailul actual
 email_change_token_subject: "%bot%: confirmați noua dumneavoastră adresă de e-mail"
@@ -56,6 +62,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   Tokenul expiră într-o oră. Dacă nu ați solicitat acest lucru, vă rugăm să ignorați acest e-mail.
+
+  După validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Expirarea de o oră se aplică doar înainte de validare.
 
 # ChanServ SET FOUNDER — token de schimbare a fondatorului
 founder_change_token_subject: "%bot%: token de schimbare a fondatorului pentru %channel%"

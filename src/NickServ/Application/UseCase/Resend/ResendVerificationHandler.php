@@ -7,13 +7,16 @@ namespace App\NickServ\Application\UseCase\Resend;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\RegistrationModeQuery;
-use App\NickServ\Application\Port\Out\RescueCredentialPersistence;
 use App\NickServ\Application\Port\Out\RescueTokenCodec;
 use App\NickServ\Application\Port\Out\ResendMailSender;
 use App\NickServ\Application\Port\Out\ResendThrottle;
+use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use LogicException;
+use OverflowException;
 use Throwable;
+
+use const FILTER_VALIDATE_EMAIL;
 
 final readonly class ResendVerificationHandler implements ResendVerificationHandlerInterface
 {
@@ -21,7 +24,7 @@ final readonly class ResendVerificationHandler implements ResendVerificationHand
         private RegisteredNickRepositoryInterface $nickRepository,
         private ResendThrottle $throttle,
         private RescueTokenCodec $tokenGenerator,
-        private RescueCredentialPersistence $credentials,
+        private TemporaryRescueTokenStore $temporaryTokens,
         private RegistrationModeQuery $registrationMode,
         private ResendMailSender $mailSender,
         private Clock $clock,
@@ -39,9 +42,6 @@ final readonly class ResendVerificationHandler implements ResendVerificationHand
             return ResendVerificationResult::noPending();
         }
 
-        if (RegistrationMode::Token === $account->getRegistrationMode()) {
-            return ResendVerificationResult::disabled();
-        }
         $now = $this->clock->now();
         if (null === $account->getExpiresAt() || $account->getExpiresAt() <= $now) {
             return ResendVerificationResult::noPending();
@@ -57,13 +57,16 @@ final readonly class ResendVerificationHandler implements ResendVerificationHand
         }
 
         $recipientEmail = $account->getEmail();
-        if (null === $recipientEmail || '' === $recipientEmail) {
+        if (null === $recipientEmail || false === filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
             return ResendVerificationResult::noPending();
         }
         $token = $this->tokenGenerator->generate();
         $hash = $this->tokenGenerator->hash($token) ?? throw new LogicException('Generated rescue token is invalid.');
-        if (!$this->credentials->replacePending($account->getId(), $account->getRescueTokenHash(), $hash, $now)) {
-            return ResendVerificationResult::noPending();
+        $this->temporaryTokens->prune($now);
+        try {
+            $this->temporaryTokens->replace($account->getId(), $hash, $account->getExpiresAt());
+        } catch (OverflowException) {
+            return ResendVerificationResult::mailDeliveryFailed();
         }
 
         try {

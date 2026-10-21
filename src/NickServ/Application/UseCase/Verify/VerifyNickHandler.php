@@ -16,7 +16,6 @@ use App\NickServ\Application\Port\Out\RescueTokenCodec;
 use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use App\NickServ\Domain\ValueObject\RegistrationMode;
 
 final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
 {
@@ -36,8 +35,7 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
     {
         $account = $this->nickRepository->findByNick($command->nickname);
 
-        if (null === $account || (!$account->isPending() && !$account->isRegistered())
-            || ($account->isRegistered() && null !== $account->getRescueTokenHash())) {
+        if (null === $account || (!$account->isPending() && !$account->isRegistered())) {
             return VerifyNickResult::noPending();
         }
         $now = $this->clock->now();
@@ -54,9 +52,7 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
             || (null !== $authenticatedNick && 0 === strcasecmp($authenticatedNick, $account->getNickname()));
         $expired = $account->isPending() && (null === $account->getExpiresAt() || $account->getExpiresAt() <= $now);
         $matches = null !== $hash && !$expired && (!$migration || $authenticated)
-            && (($migration || RegistrationMode::Token === $account->getRegistrationMode())
-                ? $this->temporaryTokens->matches($account->getId(), $hash, $now)
-                : (null !== $expectedHash && $this->codec->matches($command->token, $expectedHash)));
+            && $this->temporaryTokens->matches($account->getId(), $hash, $now);
         if (!$matches) {
             $this->limiter->recordFailure($account->getId(), $clientKey, $now);
 

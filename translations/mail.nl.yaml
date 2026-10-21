@@ -15,6 +15,9 @@ register_verification_body: |
 
   De token verloopt binnen 1 uur. Als u dit niet heeft aangevraagd, negeer deze e-mail dan.
 
+  Na bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — hetzelfde als registratie, opnieuw verzenden van token
 resend_verification_subject: "%bot%: uw verificatietoken (opnieuw verzonden)"
 resend_verification_body: |
@@ -28,6 +31,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   De token verloopt binnen 1 uur. Als u dit niet heeft aangevraagd, negeer deze e-mail dan.
+
+  Na bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — bevestigingstoken verzonden naar huidig e-mailadres
 email_change_token_subject: "%bot%: bevestig uw nieuwe e-mailadres"
@@ -56,6 +62,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   De token verloopt binnen 1 uur. Als u dit niet heeft aangevraagd, negeer deze e-mail dan.
+
+  Na bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging.
 
 # ChanServ SET FOUNDER — oprichter-wijzigingstoken
 founder_change_token_subject: "%bot%: oprichter-wijzigingstoken voor %channel%"

@@ -9,21 +9,20 @@ comparison. The high-entropy random credential is not a human-chosen password.
 
 ## Confirmation and replacement
 
-TOKEN challenges exist only in bounded daemon memory before VERIFY. Each account has
-at most one challenge: replacing it invalidates the previous value. Expiration and
-conditional removal never delete a newer challenge. Restarting the daemon loses these
-unconfirmed challenges, not confirmed SQL credentials. The store defaults to 10,000
-accounts and refuses new insertions at capacity; maintenance must prune expired entries.
-An existing account's challenge can still be replaced at capacity.
+All provisional registration, migration and optional replacement challenges exist only
+as hashes in bounded daemon memory before VERIFY. Each account has at most one current
+VERIFY challenge; replacement invalidates the previous provisional value, not the confirmed
+SQL credential. Recovery-mail challenges use a separate bounded hash-only registry.
+Restart loses provisional values, never confirmed SQL credentials.
 
-The persistence boundary uses conditional SQL updates to reject stale status or hashes.
-Pending confirmation requires an unexpired pending account, activates it and clears its
-registration expiry in the same statement. Active migration confirms a credential
-without changing account status. Recovery replaces the password and rescue hash together,
-only for active accounts whose expected hash still matches. Disabled, forbidden, deleted,
-expired or nonexistent accounts cannot be changed by these operations. A transaction
-refreshes Doctrine's managed account after successful writes, preventing a later flush
-from restoring stale credentials. Callers must not rely on unflushed account edits.
+The SQL token column represents only a confirmed recoveryToken. Pending confirmation
+requires an unexpired account and atomically activates it while storing the validated hash.
+Active VERIFY confirmation requires the account's authenticated session and a matching
+current memory challenge, then conditionally replaces the old hash without activation.
+Recovery atomically changes the password together with the expected confirmed hash:
+email proof promotes its own hash; existing confirmed proof leaves that hash unchanged
+and offers a separate optional memory-only replacement. Successful writes refresh managed
+Doctrine entities. Failed writes preserve prior credentials and unconsumed challenges.
 
 ## Attempt limits
 
@@ -46,13 +45,16 @@ use cases and inbound adapters.
 
 ## Confirmed-credential operations
 
-`RECOVER <nickname>` only explains how to supply a rescue token; it does not send
-mail or issue a new credential. `RECOVER <nickname> <token>` accepts only a confirmed
-credential belonging to an active account. Successful recovery atomically replaces
-the password and rescue hash, publishes password/recovery events after persistence,
-and privately displays a temporary password plus the replacement rescue token.
-The old token immediately stops working; the replacement needs no further VERIFY.
-Accounts pending deletion cannot be recovered this way.
+`RECOVER <nickname>` in TOKEN mode shows instructions without sending mail. EMAIL mode
+issues a provisional email token subject to its dedicated TTL and request interval. A
+missing valid account email prevents delivery. Requesting or receiving a token does not
+revoke the old confirmed credential.
+
+`RECOVER <nickname> <token>` accepts valid proof for an active account. Confirming an
+emailed provisional token promotes that same hash; confirming the stored recoveryToken
+preserves it and offers an optional new token through authenticated VERIFY. Until VERIFY,
+the old credential remains valid; the user can ignore the optional replacement message.
+Accounts pending deletion cannot use this recovery flow.
 
 `SET EMAIL <email> <token>` validates the confirmed rescue credential, email format
 and uniqueness, then changes the address immediately. It supports accounts without

@@ -15,6 +15,9 @@ register_verification_body: |
 
   Il token scade in 1 ora. Se non ha richiesto questa operazione, ignori questa email.
 
+  Dopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di un’ora vale solo prima della verifica.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — uguale a register, rinvio del token
 resend_verification_subject: "%bot%: il suo token di verifica (rinvio)"
 resend_verification_body: |
@@ -28,6 +31,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   Il token scade in 1 ora. Se non ha richiesto questa operazione, ignori questa email.
+
+  Dopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di un’ora vale solo prima della verifica.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — token di conferma inviato all'email attuale
 email_change_token_subject: "%bot%: confermi il suo nuovo indirizzo email"
@@ -56,6 +62,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   Il token scade in 1 ora. Se non ha richiesto questa operazione, ignori questa email.
+
+  Dopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di un’ora vale solo prima della verifica.
 
 # ChanServ SET FOUNDER — token cambio fondatore
 founder_change_token_subject: "%bot%: token cambio fondatore per %channel%"

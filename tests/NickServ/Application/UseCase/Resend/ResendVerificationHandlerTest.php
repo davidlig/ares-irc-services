@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Resend;
 
+use App\NickServ\Adapter\Out\InMemory\InMemoryTemporaryRescueTokenStore;
 use App\NickServ\Adapter\Out\Security\UuidRescueTokenCodec;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\RegistrationModeQuery;
-use App\NickServ\Application\Port\Out\RescueCredentialPersistence;
 use App\NickServ\Application\Port\Out\ResendMailSender;
 use App\NickServ\Application\Port\Out\ResendThrottle;
+use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Application\UseCase\Resend\ResendVerification;
 use App\NickServ\Application\UseCase\Resend\ResendVerificationHandler;
 use App\NickServ\Application\UseCase\Resend\ResendVerificationOutcome;
@@ -18,6 +19,7 @@ use App\NickServ\Application\UseCase\Resend\ResendVerificationResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use DateTimeImmutable;
+use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
@@ -35,11 +37,6 @@ final class ResendVerificationHandlerTest extends TestCase
         self::assertSame(ResendVerificationOutcome::Disabled, $this->handler($this->account(), mode: RegistrationMode::Token, repo: $repo)->handle($this->input())->outcome);
     }
 
-    public function testPendingTokenAlwaysDisablesResendEvenUnderEmailPolicy(): void
-    {
-        self::assertSame(ResendVerificationOutcome::Disabled, $this->handler($this->account(RegistrationMode::Token))->handle($this->input())->outcome);
-    }
-
     public function testMissingActiveExpiredAndMissingEmailAccountsCannotResend(): void
     {
         $active = $this->account();
@@ -47,7 +44,6 @@ final class ResendVerificationHandlerTest extends TestCase
         $expired = RegisteredNick::createPending('Alice', 'hash', 'alice@example.com', 'en', $this->now(), $this->now());
         $missingEmail = $this->createStub(RegisteredNick::class);
         $missingEmail->method('isPending')->willReturn(true);
-        $missingEmail->method('getRegistrationMode')->willReturn(RegistrationMode::Email);
         $missingEmail->method('getExpiresAt')->willReturn($this->now()->modify('+1 hour'));
         foreach ([null, $active, $expired, $missingEmail] as $account) {
             self::assertSame(ResendVerificationOutcome::NoPending, $this->handler($account)->handle($this->input())->outcome);
@@ -63,48 +59,55 @@ final class ResendVerificationHandlerTest extends TestCase
         self::assertSame(45, $result->retryAfterSeconds);
     }
 
-    public function testPendingEmailHashIsReplacedBeforeMailWithoutExtendingExpiry(): void
+    public function testResendReplacesOnlyMemoryChallengeBeforeMailWithoutChangingDatabaseOrExpiry(): void
     {
         $account = $this->account();
-        $account->replaceRescueTokenHash(str_repeat('a', 64));
         $expiry = $account->getExpiresAt();
-        $persisted = false;
-        $credentials = $this->createMock(RescueCredentialPersistence::class);
-        $credentials->expects(self::once())->method('replacePending')->with(42, str_repeat('a', 64), self::matchesRegularExpression('/^[0-9a-f]{64}$/D'), $this->now())->willReturnCallback(static function () use (&$persisted): bool {
-            $persisted = true;
-
-            return true;
-        });
+        self::assertInstanceOf(DateTimeImmutable::class, $expiry);
+        $temporary = new InMemoryTemporaryRescueTokenStore();
+        $oldHash = str_repeat('a', 64);
+        $temporary->replace(42, $oldHash, $expiry);
+        $newToken = null;
         $mail = $this->createMock(ResendMailSender::class);
-        $mail->expects(self::once())->method('sendResend')->with('Alice', 'alice@example.com', self::matchesRegularExpression('/^[0-9a-f-]{36}$/D'), 'es')->willReturnCallback(static function () use (&$persisted): void {
-            self::assertTrue($persisted);
+        $mail->expects(self::once())->method('sendResend')->with('Alice', 'alice@example.com', self::anything(), 'es')->willReturnCallback(function (string $nick, string $email, string $token) use ($temporary, &$newToken): void {
+            $newToken = $token;
+            $hash = new UuidRescueTokenCodec()->hash($token);
+            self::assertIsString($hash);
+            self::assertTrue($temporary->matches(42, $hash, $this->now()));
         });
         $throttle = $this->createMock(ResendThrottle::class);
         $throttle->method('remainingCooldownSeconds')->willReturn(0);
         $throttle->expects(self::once())->method('recordResend')->with('Alice', $this->now());
-        $result = $this->handler($account, credentials: $credentials, mail: $mail, throttle: $throttle)->handle($this->input());
+        $result = $this->handler($account, temporary: $temporary, mail: $mail, throttle: $throttle)->handle($this->input());
         self::assertSame(ResendVerificationOutcome::Success, $result->outcome);
         self::assertSame('alice@example.com', $result->email);
         self::assertSame($expiry, $account->getExpiresAt());
+        self::assertNull($account->getRescueTokenHash());
+        self::assertFalse($temporary->matches(42, $oldHash, $this->now()));
+        self::assertIsString($newToken);
     }
 
-    public function testMailFailureIsHonestAndLeavesPendingRetryable(): void
+    public function testMailFailureLeavesPendingAndNewMemoryChallengeRetryable(): void
     {
         $account = $this->account();
-        $credentials = $this->createMock(RescueCredentialPersistence::class);
-        $credentials->expects(self::once())->method('replacePending')->with(42, null, self::anything(), $this->now())->willReturn(true);
+        $temporary = $this->createMock(TemporaryRescueTokenStore::class);
+        $temporary->expects(self::once())->method('prune')->with($this->now());
+        $temporary->expects(self::once())->method('replace')->with(42, self::matchesRegularExpression('/^[0-9a-f]{64}$/D'), $account->getExpiresAt());
         $mail = $this->createStub(ResendMailSender::class);
         $mail->method('sendResend')->willThrowException(new RuntimeException('mail failed'));
-        $result = $this->handler($account, credentials: $credentials, mail: $mail)->handle($this->input());
+        $result = $this->handler($account, temporary: $temporary, mail: $mail)->handle($this->input());
         self::assertSame(ResendVerificationOutcome::MailDeliveryFailed, $result->outcome);
         self::assertTrue($account->isPending());
+        self::assertNull($account->getRescueTokenHash());
     }
 
-    public function testConcurrentActivationOrReplacementCannotSendAnUncommittedToken(): void
+    public function testCapacityFailureDoesNotClaimDelivery(): void
     {
+        $temporary = $this->createStub(TemporaryRescueTokenStore::class);
+        $temporary->method('replace')->willThrowException(new OverflowException());
         $mail = $this->createMock(ResendMailSender::class);
         $mail->expects(self::never())->method('sendResend');
-        self::assertSame(ResendVerificationOutcome::NoPending, $this->handler($this->account(), mail: $mail)->handle($this->input())->outcome);
+        self::assertSame(ResendVerificationOutcome::MailDeliveryFailed, $this->handler($this->account(), temporary: $temporary, mail: $mail)->handle($this->input())->outcome);
     }
 
     private function input(): ResendVerification
@@ -117,15 +120,15 @@ final class ResendVerificationHandlerTest extends TestCase
         return new DateTimeImmutable('2026-09-06 14:00:00 UTC');
     }
 
-    private function account(RegistrationMode $mode = RegistrationMode::Email): RegisteredNick
+    private function account(): RegisteredNick
     {
-        $account = RegisteredNick::createPending('Alice', 'hash', 'alice@example.com', 'en', $this->now()->modify('+1 hour'), $this->now(), $mode);
+        $account = RegisteredNick::createPending('Alice', 'hash', 'alice@example.com', 'en', $this->now()->modify('+1 hour'), $this->now());
         new ReflectionProperty($account, 'id')->setValue($account, 42);
 
         return $account;
     }
 
-    private function handler(?RegisteredNick $account, RegistrationMode $mode = RegistrationMode::Email, ?RescueCredentialPersistence $credentials = null, ?ResendMailSender $mail = null, ?ResendThrottle $throttle = null, ?RegisteredNickRepositoryInterface $repo = null): ResendVerificationHandler
+    private function handler(?RegisteredNick $account, RegistrationMode $mode = RegistrationMode::Email, ?TemporaryRescueTokenStore $temporary = null, ?ResendMailSender $mail = null, ?ResendThrottle $throttle = null, ?RegisteredNickRepositoryInterface $repo = null): ResendVerificationHandler
     {
         if (null === $repo) {
             $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -136,6 +139,6 @@ final class ResendVerificationHandlerTest extends TestCase
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn($this->now());
 
-        return new ResendVerificationHandler($repo, $throttle ?? $this->createStub(ResendThrottle::class), new UuidRescueTokenCodec(), $credentials ?? $this->createStub(RescueCredentialPersistence::class), $policy, $mail ?? $this->createStub(ResendMailSender::class), $clock, 60);
+        return new ResendVerificationHandler($repo, $throttle ?? $this->createStub(ResendThrottle::class), new UuidRescueTokenCodec(), $temporary ?? new InMemoryTemporaryRescueTokenStore(), $policy, $mail ?? $this->createStub(ResendMailSender::class), $clock, 60);
     }
 }

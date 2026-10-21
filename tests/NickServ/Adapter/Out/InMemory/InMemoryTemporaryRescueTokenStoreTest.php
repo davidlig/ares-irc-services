@@ -34,6 +34,17 @@ final class InMemoryTemporaryRescueTokenStoreTest extends TestCase
         self::assertFalse($store->matches(1, 'c', $now));
     }
 
+    public function testConfirmedMailRecoveryDiscardsOlderOptionalChallenges(): void
+    {
+        $store = new InMemoryTemporaryRescueTokenStore();
+        $now = new DateTimeImmutable('2026-01-01');
+        $store->replace(1, 'old-optional-hash', $now->modify('+1 hour'));
+        $store->discard(1);
+        self::assertFalse($store->matches(1, 'old-optional-hash', $now));
+        $store->discard(1);
+        self::assertSame(0, $store->prune($now));
+    }
+
     public function testCapacityFailsClosedWithoutDiscardingExistingChallenge(): void
     {
         $store = new InMemoryTemporaryRescueTokenStore(1);

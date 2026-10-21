@@ -6,6 +6,7 @@ namespace App\Tests\NickServ\Adapter\Out\InMemory;
 
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use DateTimeImmutable;
+use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -117,6 +118,50 @@ final class RecoveryTokenRegistryTest extends TestCase
         $removed = $registry->pruneExpired($this->now(), 1);
 
         self::assertSame(4, $removed);
+    }
+
+    #[Test]
+    public function matchingIsNonConsumingCanonicalAndNeverStoresPlaintext(): void
+    {
+        $registry = new RecoveryTokenRegistry();
+        $registry->store('Nick', 'SECRET', $this->now()->modify('+1 hour'));
+        self::assertTrue($registry->matches('nick', ' secret ', $this->now()));
+        self::assertTrue($registry->matches('NICK', 'SECRET', $this->now()));
+        self::assertStringNotContainsString('SECRET', serialize($registry));
+        self::assertStringNotContainsString('secret', serialize($registry));
+        $registry->store('Nick', 'replacement', $this->now()->modify('+1 hour'));
+        $registry->removeIfMatches('Nick', 'secret');
+        self::assertTrue($registry->matches('Nick', 'replacement', $this->now()));
+        $registry->removeIfMatches('Nick', 'replacement');
+        self::assertFalse($registry->matches('Nick', 'replacement', $this->now()));
+    }
+
+    #[Test]
+    public function expiresExactlyAtBoundaryAndPrunesAtBoundary(): void
+    {
+        $registry = new RecoveryTokenRegistry();
+        $registry->store('Nick', 'secret', $this->now());
+        self::assertFalse($registry->matches('Nick', 'secret', $this->now()));
+        $registry->store('Nick', 'secret', $this->now());
+        self::assertSame(1, $registry->pruneExpired($this->now()));
+    }
+
+    #[Test]
+    public function boundedCapacityPreservesExistingEntriesAndAllowsReplacement(): void
+    {
+        $registry = new RecoveryTokenRegistry(1);
+        $registry->store('Nick', 'one', $this->now()->modify('+1 hour'));
+        $registry->store('Nick', 'two', $this->now()->modify('+1 hour'));
+        try {
+            $registry->store('Other', 'three', $this->now()->modify('+1 hour'));
+            self::fail('Capacity must fail closed.');
+        } catch (OverflowException) {
+            self::assertTrue($registry->matches('Nick', 'two', $this->now()));
+        }
+        $registry->recordRecover('Nick', $this->now());
+        $registry->recordRecover('Nick', $this->now());
+        $this->expectException(OverflowException::class);
+        $registry->recordRecover('Other', $this->now());
     }
 
     private function now(): DateTimeImmutable

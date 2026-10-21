@@ -22,7 +22,6 @@ use App\NickServ\Application\UseCase\Verify\VerifyNickOutcome;
 use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
-use App\NickServ\Domain\ValueObject\RegistrationMode;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -56,14 +55,14 @@ final class VerifyNickHandlerTest extends TestCase
         $confirmed->replaceRescueTokenHash(str_repeat('a', 64));
         $disabled = $this->account();
         $disabled->suspend('disabled');
-        foreach ([null, $confirmed, $disabled] as $account) {
+        foreach ([null, $disabled] as $account) {
             self::assertSame(VerifyNickOutcome::NoPending, $this->handler($account)->handle($this->input())->outcome);
         }
     }
 
     public function testTokenRegistrationActivatesThroughCasAndPublishesExistingPasswordEvent(): void
     {
-        $account = $this->account(RegistrationMode::Token);
+        $account = $this->account();
         $hash = $this->challenge();
         $persistence = $this->createMock(RescueCredentialPersistence::class);
         $persistence->expects(self::once())->method('confirm')->with(42, NickStatus::Pending, null, $hash, $this->now())->willReturn(true);
@@ -76,18 +75,17 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertFalse($this->temporary->matches(42, $hash, $this->now()));
     }
 
-    public function testEmailHashSurvivesVerificationAndNativeModeDoesNotIdentify(): void
+    public function testEmailPendingUsesTemporaryChallengeAndNativeModeDoesNotIdentify(): void
     {
         $account = $this->account();
-        $hash = $this->codec->hash(self::TOKEN);
-        self::assertIsString($hash);
-        $account->replaceRescueTokenHash($hash);
+        $hash = $this->challenge();
+        self::assertNull($account->getRescueTokenHash());
         $persistence = $this->createMock(RescueCredentialPersistence::class);
-        $persistence->expects(self::once())->method('confirm')->with(42, NickStatus::Pending, $hash, $hash, $this->now())->willReturn(true);
+        $persistence->expects(self::once())->method('confirm')->with(42, NickStatus::Pending, null, $hash, $this->now())->willReturn(true);
         $result = $this->handler($account, $persistence, mode: NicknameAuthenticationMode::NativeNick)->handle($this->input());
         self::assertSame(VerifyNickOutcome::SuccessNativeAuthenticationRequired, $result->outcome);
         self::assertNull($this->sessions->findNick('UID1'));
-        self::assertSame($hash, $account->getRescueTokenHash());
+        self::assertNull($account->getRescueTokenHash());
     }
 
     public function testLegacyConfirmationRequiresSameAuthenticatedAccountAndDoesNotRepeatActivation(): void
@@ -119,7 +117,7 @@ final class VerifyNickHandlerTest extends TestCase
 
     public function testMalformedStaleMissingAndExpiredChallengesAreRejectedWithoutPersistence(): void
     {
-        $account = $this->account(RegistrationMode::Token);
+        $account = $this->account();
         $persistence = $this->createMock(RescueCredentialPersistence::class);
         $persistence->expects(self::never())->method('confirm');
         $handler = $this->handler($account, $persistence);
@@ -130,21 +128,51 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertSame(VerifyNickOutcome::InvalidToken, $handler->handle($this->input())->outcome);
         $this->temporary->replace(42, $hash, $this->now());
         self::assertSame(VerifyNickOutcome::InvalidToken, $handler->handle($this->input())->outcome);
-        $expired = RegisteredNick::createPending('Alice', 'password', null, 'en', $this->now(), $this->now(), RegistrationMode::Token);
+        $expired = RegisteredNick::createPending('Alice', 'password', null, 'en', $this->now(), $this->now());
         new ReflectionProperty($expired, 'id')->setValue($expired, 42);
         self::assertSame(VerifyNickOutcome::InvalidToken, $this->handler($expired, $persistence)->handle($this->input())->outcome);
     }
 
-    public function testOldEmailPendingWithoutHashCannotUseLegacyEphemeralToken(): void
+    public function testConfirmedActiveAccountCanConfirmOptionalReplacementWithoutRevokingOldHashFirst(): void
     {
-        $this->challenge();
-        self::assertSame(VerifyNickOutcome::InvalidToken, $this->handler($this->account())->handle($this->input())->outcome);
+        $account = $this->account();
+        $account->activate();
+        $oldHash = str_repeat('a', 64);
+        $account->replaceRescueTokenHash($oldHash);
+        $hash = $this->challenge();
+        $credentials = $this->createMock(RescueCredentialPersistence::class);
+        $credentials->expects(self::once())->method('confirm')->with(42, NickStatus::Registered, $oldHash, $hash, $this->now())->willReturn(true);
+        $publisher = $this->createMock(RegistrationEventPublisher::class);
+        $publisher->expects(self::never())->method('publish');
+        $handler = $this->handler($account, $credentials, publisher: $publisher);
+        self::assertSame(VerifyNickOutcome::InvalidToken, $handler->handle($this->input())->outcome);
+        self::assertSame($oldHash, $account->getRescueTokenHash());
+        self::assertSame(VerifyNickOutcome::CredentialConfirmed, $handler->handle($this->input(authenticatedAccountId: 42))->outcome);
+        self::assertFalse($this->temporary->matches(42, $hash, $this->now()));
+    }
+
+    public function testIgnoredExpiredOrWrongOptionalReplacementPreservesConfirmedCredential(): void
+    {
+        $account = $this->account();
+        $account->activate();
+        $oldHash = str_repeat('a', 64);
+        $account->replaceRescueTokenHash($oldHash);
+        $hash = $this->challenge();
+        $credentials = $this->createMock(RescueCredentialPersistence::class);
+        $credentials->expects(self::never())->method('confirm');
+        $handler = $this->handler($account, $credentials);
+        self::assertSame(VerifyNickOutcome::InvalidToken, $handler->handle($this->input('wrong', 42))->outcome);
+        self::assertSame($oldHash, $account->getRescueTokenHash());
+        self::assertTrue($this->temporary->matches(42, $hash, $this->now()));
+        $this->temporary->replace(42, $hash, $this->now());
+        self::assertSame(VerifyNickOutcome::InvalidToken, $handler->handle($this->input(authenticatedAccountId: 42))->outcome);
+        self::assertSame($oldHash, $account->getRescueTokenHash());
     }
 
     public function testCasFailureRetainsChallengeAndReturnsInvalid(): void
     {
         $hash = $this->challenge();
-        $result = $this->handler($this->account(RegistrationMode::Token))->handle($this->input());
+        $result = $this->handler($this->account())->handle($this->input());
         self::assertSame(VerifyNickOutcome::InvalidToken, $result->outcome);
         self::assertTrue($this->temporary->matches(42, $hash, $this->now()));
     }
@@ -155,7 +183,7 @@ final class VerifyNickHandlerTest extends TestCase
         $store = $this->createStub(RescueCredentialPersistence::class);
         $store->method('confirm')->willThrowException(new RuntimeException('database failed'));
         try {
-            $this->handler($this->account(RegistrationMode::Token), $store)->handle($this->input());
+            $this->handler($this->account(), $store)->handle($this->input());
             self::fail('Storage failure must propagate.');
         } catch (RuntimeException $exception) {
             self::assertSame('database failed', $exception->getMessage());
@@ -181,9 +209,9 @@ final class VerifyNickHandlerTest extends TestCase
         return $hash;
     }
 
-    private function account(RegistrationMode $mode = RegistrationMode::Email): RegisteredNick
+    private function account(): RegisteredNick
     {
-        $account = RegisteredNick::createPending('Alice', 'password-hash', 'alice@example.com', 'en', $this->now()->modify('+1 hour'), $this->now(), $mode);
+        $account = RegisteredNick::createPending('Alice', 'password-hash', 'alice@example.com', 'en', $this->now()->modify('+1 hour'), $this->now());
         new ReflectionProperty($account, 'id')->setValue($account, 42);
 
         return $account;

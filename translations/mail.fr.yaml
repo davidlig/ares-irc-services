@@ -15,6 +15,9 @@ register_verification_body: |
 
   Le jeton expire dans 1 heure. Si vous n'avez pas fait cette demande, veuillez ignorer cet e-mail.
 
+  Après validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. L’expiration d’une heure ne concerne que la période avant validation.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — identique à register, renvoi du jeton
 resend_verification_subject: "%bot% : votre jeton de vérification (renvoi)"
 resend_verification_body: |
@@ -28,6 +31,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   Le jeton expire dans 1 heure. Si vous n'avez pas fait cette demande, veuillez ignorer cet e-mail.
+
+  Après validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. L’expiration d’une heure ne concerne que la période avant validation.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — jeton de confirmation envoyé à l'e-mail actuel
 email_change_token_subject: "%bot% : confirmez votre nouvelle adresse e-mail"
@@ -56,6 +62,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   Le jeton expire dans 1 heure. Si vous n'avez pas fait cette demande, veuillez ignorer cet e-mail.
+
+  Après validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. L’expiration d’une heure ne concerne que la période avant validation.
 
 # ChanServ SET FOUNDER — jeton de changement de fondateur
 founder_change_token_subject: "%bot% : jeton de changement de fondateur pour %channel%"

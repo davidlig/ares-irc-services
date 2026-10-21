@@ -15,4 +15,6 @@ interface TemporaryRescueTokenStore
     public function removeIfMatches(int $accountId, string $hash): void;
 
     public function prune(DateTimeImmutable $now): int;
+
+    public function discard(int $accountId): void;
 }

@@ -105,7 +105,7 @@ final class RecoverCommandTest extends TestCase
         self::assertSame([
             'recover.success_identify [%identify_cmd%: /msg NickServ IDENTIFY TargetNick new-secret-12]',
             'recover.success_then_change',
-            'rescue.replaced [%token%: replacement-token]',
+            'rescue.optional_replacement [%token%: replacement-token]',
         ], $messages);
     }
 
@@ -126,7 +126,7 @@ final class RecoverCommandTest extends TestCase
         self::assertSame([
             'recover.success_identify [%identify_cmd%: /NICK TargetNick:new-secret-12 | /NICK TargetNick!new-secret-12]',
             'recover.success_then_change',
-            'rescue.replaced [%token%: replacement-token]',
+            'rescue.optional_replacement [%token%: replacement-token]',
         ], $messages);
     }
 
@@ -185,6 +185,26 @@ final class RecoverCommandTest extends TestCase
                 ['recover.invalid_token [%nickname%: TargetNick]'],
             ],
         ];
+    }
+
+    #[Test]
+    public function recoveryMessagesDistinguishPromotedTokenAndUnavailableOptionalChallenge(): void
+    {
+        foreach ([
+            [RecoverNickResult::passwordReset('User', 'password', 'emailed', true), 'rescue.replaced [%token%: emailed]'],
+            [RecoverNickResult::passwordReset('User', 'password', null, replacementUnavailable: true), 'rescue.replacement_unavailable'],
+            [RecoverNickResult::tokenSent('user@example.com'), 'recover.email_sent [%email_hint%: us****@e****.***]'],
+            [RecoverNickResult::noEmail('User'), 'recover.no_email [%nickname%: User]'],
+            [RecoverNickResult::mailDeliveryFailed(), 'error.mail_failed'],
+            [RecoverNickResult::temporarilyUnavailable(), 'rescue.temporarily_unavailable'],
+        ] as [$result, $last]) {
+            $handler = $this->createStub(RecoverNickHandlerInterface::class);
+            $handler->method('handle')->willReturn($result);
+            $messages = [];
+            new RecoverCommand($handler, $this->authenticationMode())->execute($this->createContext(new SenderView('UID', 'User', 'i', 'h', 'c', '*'), $messages, ['User']));
+            self::assertNotEmpty($messages);
+            self::assertSame($last, $messages[array_key_last($messages)]);
+        }
     }
 
     #[Test]

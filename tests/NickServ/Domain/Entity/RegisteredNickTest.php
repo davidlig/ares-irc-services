@@ -758,9 +758,10 @@ final class RegisteredNickTest extends TestCase
     }
 
     #[Test]
-    public function emailModeCannotCreatePendingAccountWithoutEmail(): void
+    public function pendingAccountCanOmitEmailWithoutPersistingDeliveryMode(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        RegisteredNick::createPending('Alice', 'hash', null, 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        $nick = RegisteredNick::createPending('Alice', 'hash', null, 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        self::assertNull($nick->getEmail());
+        self::assertFalse(new ReflectionClass($nick)->hasProperty('registrationMode'));
     }
 }

@@ -45,6 +45,11 @@ final class InMemoryTemporaryRescueTokenStore implements TemporaryRescueTokenSto
         }
     }
 
+    public function discard(int $accountId): void
+    {
+        unset($this->challenges[$accountId]);
+    }
+
     public function prune(DateTimeImmutable $now): int
     {
         $removed = 0;

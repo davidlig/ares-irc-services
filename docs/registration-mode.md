@@ -1,56 +1,73 @@
-# NickServ registration and rescue confirmation
+# Registration mode and provisional tokens
 
-`REGMODE EMAIL|TOKEN|STATUS` controls new registrations globally. TOKEN is the default
-when no policy has been stored. Changing it never rewrites the delivery mode of an
-existing pending account. Preexisting pending accounts use EMAIL delivery.
+`REGMODE EMAIL|TOKEN|STATUS` controls the network-wide delivery policy. An absent
+policy means TOKEN. Authorized operators can change it without restarting services.
+There is no per-account registration mode or `registration_mode` database column.
 
-## TOKEN registrations
+## Registration and VERIFY
 
-Use `REGISTER <password> [email]`. A supplied email is validated for format and uniqueness,
-but it is not an alternative recovery factor. Registration creates a pending account,
-not an active account. NickServ privately shows a UUIDv4 rescue token, its VERIFY command
-and a warning to store it safely. Only the hash exists in daemon memory before confirmation;
-the SQL token column remains NULL. `VERIFY <token>` atomically activates the unexpired
-pending account and stores that same hash as the permanent rescue credential.
+Both modes create a pending account with an expiration time and **NULL confirmed
+recovery-token hash**. The provisional UUIDv4 is hashed and kept in bounded daemon
+memory, never stored as a recovery credential before validation.
 
-Repeated REGISTER does not resend, replace or extend a pending registration's challenge.
-There is no TOKEN reissue command. If the token is lost, expires or disappears in a daemon
-restart, wait for pending registration expiry and cleanup before registering again.
-Capacity exhaustion is reported honestly: the pending account is not activated, and no
-successful token delivery is claimed.
+- TOKEN: `REGISTER <password> [email]` privately delivers the token and VERIFY instructions.
+- EMAIL: `REGISTER <password> <email>` mails the token. The email explains that after
+  validation this same token becomes the permanent recovery credential and must be saved.
 
-## EMAIL registrations and RESEND
+`VERIFY <token>` validates the latest unexpired memory challenge, atomically activates
+the pending account and stores its hash as the confirmed recoveryToken. The confirmation
+period expires; the permanent credential does not inherit that expiration. If registration
+is not completed before the pending-account deadline, maintenance removes it and the
+nickname becomes available again. Repeating REGISTER never extends that deadline.
 
-EMAIL mode requires `REGISTER <password> <email>`. The pending account stores the UUIDv4
-hash and NickServ mails the original credential. VERIFY activates the account without
-consuming or replacing its permanent rescue token. Failed mail delivery leaves the
-pending account retryable; no silent activation occurs.
+Unconfirmed challenges disappear on daemon restart. In TOKEN mode there is no reissue:
+wait for pending-account expiration before registering again if the token is lost.
 
-RESEND is disabled globally whenever the current policy is TOKEN, including older EMAIL
-pendings. A TOKEN pending never uses RESEND even if global policy changes to EMAIL. An
-unexpired EMAIL pending under EMAIL policy can RESEND: conditional persistence replaces
-its previous credential before mail enqueue without activating the account or extending
-its expiry. A concurrent VERIFY prevents stale RESEND from rotating an active credential.
-Legacy EMAIL pending accounts lacking a persistent credential must use RESEND first.
+## RESEND
 
-## Migrating active accounts
+RESEND is disabled while global REGMODE is TOKEN. Under EMAIL, an unexpired pending
+account with a valid email can request another token. RESEND generates a new UUID,
+replaces the temporary hash and mails it without writing a confirmed credential or
+extending the registration deadline. The previous provisional token stops working.
+Global policy controls this behavior; no original account registration method is stored.
 
-Accounts without a confirmed credential remain active. Every successful explicit IDENTIFY
-creates a new temporary token, including password-checked IDENTIFY while already identified.
-Incorrect passwords do not rotate the challenge. An already-identified account with a
-confirmed token retains the established shortcut behavior.
+## Existing accounts and optional replacements
 
-For native nickname authentication, issuance occurs only after a trusted IRCd identified
-state is bound to the current registered nickname and UID. This includes reconstruction
-after a burst or service restart. Repeated events for the same tracked identification do
-not issue again. In native mode IDENTIFY remains an instructional command, not a password
-authentication bypass.
+Accounts without a confirmed credential remain active. Successful explicit IDENTIFY
+verifies the password before issuing a replacement memory challenge, including when
+already identified. Trusted native authentication uses the same issuance boundary after
+binding the identified UID to the current account, including burst reconstruction.
+Duplicate native identification notifications do not regenerate a challenge.
 
-Only the latest account-wide challenge works. VERIFY for an active account requires a
-session authenticated as that same account. It stores the hash without reactivating the
-account, resetting identification or repeating registration/password-availability events.
-Once confirmed, authentication never emits another token. Confirmation and recovery use
-the shared rescue attempt limits documented in [rescue credential storage](rescue-credentials.md).
+Active-account VERIFY requires an authenticated session belonging to the account. It
+stores the latest memory hash without repeating registration or identification effects.
+It can confirm an initial migration credential or an optional replacement issued after
+RECOVER. Until optional replacement is confirmed, the old recoveryToken remains valid.
+Ignoring the replacement message or allowing it to expire preserves the old credential.
 
-Private token delivery uses the account language and NOTICE/PRIVMSG preference. Tokens
-are not published on generic events, and these flows never persist plaintext tokens.
+## Recovery
+
+In TOKEN mode, `RECOVER <nickname>` explains that the user must provide their confirmed
+recoveryToken. No email is sent.
+
+In EMAIL mode, `RECOVER <nickname> [token]` sends a new provisional recovery token unless
+the supplied credential is valid. An absent or invalid account email produces an explicit
+cannot-recover response. Requests do not modify the password or confirmed recoveryToken.
+`NICKSERV_RECOVER_TOKEN_TTL` defaults to 3600 seconds and applies only to this provisional
+token. `NICKSERV_RECOVER_MIN_INTERVAL` defaults to 600 seconds between email requests;
+a failed mail attempt also keeps its reserved request interval.
+
+A correct emailed provisional token supplied to RECOVER resets the password and promotes
+**that same validated token hash** to the confirmed recoveryToken. The user is informed
+of the replacement and must save the token. Older optional challenges are discarded only
+after the update succeeds.
+
+A correct confirmed recoveryToken supplied to RECOVER resets the password but preserves
+the existing credential. A new optional token is generated in memory and displayed with
+`/msg <service> VERIFY <new_token>`. The message explicitly says to ignore it if the user
+does not want to change their recovery token. No replacement hash is persisted until VERIFY.
+
+All secret delivery is private and localized. Tokens/hashes never appear on generic
+events, audit/staff records or UDB projections. See [rescue credential storage](rescue-credentials.md).
+
+An emailed recovery token already issued in EMAIL mode remains valid until its expiry even if the network switches to TOKEN. TOKEN prevents new recovery emails; it does not revoke existing provisional proof.

@@ -64,6 +64,21 @@ final class TranslationCatalogTest extends TestCase
     ];
 
     #[Test]
+    public function registrationEmailsDocumentVerificationAndFutureRecoveryInEveryLocale(): void
+    {
+        foreach (self::LOCALES as $locale) {
+            $catalog = Yaml::parseFile(__DIR__ . '/../../../translations/mail.' . $locale . '.yaml');
+            self::assertIsArray($catalog);
+            foreach (['register_verification_body', 'resend_verification_body'] as $key) {
+                $body = $catalog[$key] ?? null;
+                self::assertIsString($body);
+                self::assertStringContainsString('/msg %bot% VERIFY %token%', $body, $locale . ':' . $key);
+                self::assertStringContainsString('/msg %bot% RECOVER %nickname% %token%', $body, $locale . ':' . $key);
+            }
+        }
+    }
+
+    #[Test]
     public function serviceCatalogValuesDoNotHardcodeConfigurableNicknames(): void
     {
         foreach (self::SERVICE_DIRS as $domain) {

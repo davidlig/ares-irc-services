@@ -15,6 +15,9 @@ register_verification_body: |
 
   Das Token läuft in 1 Stunde ab. Falls Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail.
 
+  Nach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — wie REGISTER, erneutes Senden des Tokens
 resend_verification_subject: "%bot%: Ihr Verifizierungs-Token (erneut gesendet)"
 resend_verification_body: |
@@ -28,6 +31,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   Das Token läuft in 1 Stunde ab. Falls Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail.
+
+  Nach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — Bestätigungs-Token an aktuelle E-Mail gesendet
 email_change_token_subject: "%bot%: Bestätigen Sie Ihre neue E-Mail-Adresse"
@@ -56,6 +62,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   Das Token läuft in 1 Stunde ab. Falls Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail.
+
+  Nach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung.
 
 # ChanServ SET FOUNDER — Founder-Wechsel-Token
 founder_change_token_subject: "%bot%: Founder-Wechsel-Token für %channel%"

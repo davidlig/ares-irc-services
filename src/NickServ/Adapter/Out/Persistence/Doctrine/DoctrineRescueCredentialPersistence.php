@@ -53,39 +53,20 @@ final readonly class DoctrineRescueCredentialPersistence implements RescueCreden
         });
     }
 
-    public function rotateAfterRecovery(int $accountId, string $expectedHash, string $newPasswordHash, string $newTokenHash, DateTimeImmutable $now): bool
+    public function rotateAfterRecovery(int $accountId, ?string $expectedHash, string $newPasswordHash, string $newTokenHash, DateTimeImmutable $now): bool
     {
         $this->assertHash($newTokenHash);
-
-        return $this->entityManager->getConnection()->transactional(function () use ($accountId, $expectedHash, $newPasswordHash, $newTokenHash): bool {
-            $affected = $this->entityManager->getConnection()->executeStatement(
-                "UPDATE registered_nicks SET password_hash = :password, token = :hash WHERE id = :id AND status = 'registered' AND token = :expected",
-                ['password' => $newPasswordHash, 'hash' => $newTokenHash, 'id' => $accountId, 'expected' => $expectedHash],
-            );
-            if (1 !== $affected) {
-                return false;
-            }
-            $this->refresh($accountId);
-
-            return true;
-        });
-    }
-
-    public function replacePending(int $accountId, ?string $expectedHash, string $newHash, DateTimeImmutable $now): bool
-    {
-        $this->assertHash($newHash);
-        $params = ['id' => $accountId, 'hash' => $newHash, 'now' => $now];
+        $params = ['password' => $newPasswordHash, 'hash' => $newTokenHash, 'id' => $accountId];
         $condition = 'token IS NULL';
         if (null !== $expectedHash) {
-            $condition = 'token = :expected';
             $params['expected'] = $expectedHash;
+            $condition = 'token = :expected';
         }
 
         return $this->entityManager->getConnection()->transactional(function () use ($accountId, $params, $condition): bool {
             $affected = $this->entityManager->getConnection()->executeStatement(
-                "UPDATE registered_nicks SET token = :hash WHERE id = :id AND status = 'pending' AND expires_at > :now AND " . $condition,
+                "UPDATE registered_nicks SET password_hash = :password, token = :hash WHERE id = :id AND status = 'registered' AND " . $condition,
                 $params,
-                ['now' => Types::DATETIME_IMMUTABLE],
             );
             if (1 !== $affected) {
                 return false;

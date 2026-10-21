@@ -87,21 +87,19 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
             language: $command->language,
             expiresAt: $expiresAt,
             registeredAt: $now,
-            registrationMode: $mode,
         );
 
         $hash = $this->tokenGenerator->hash($token) ?? throw new LogicException('Generated rescue token is invalid.');
-        if (RegistrationMode::Email === $mode) {
-            $nick->replaceRescueTokenHash($hash);
-        }
         $this->nickRepository->save($nick);
+        $this->verificationStore->prune($now);
+        try {
+            $this->verificationStore->replace($nick->getId(), $hash, $expiresAt);
+        } catch (OverflowException) {
+            return RegistrationMode::Token === $mode
+                ? RegisterNickResult::temporarilyUnavailable()
+                : RegisterNickResult::mailDeliveryFailed();
+        }
         if (RegistrationMode::Token === $mode) {
-            $this->verificationStore->prune($now);
-            try {
-                $this->verificationStore->replace($nick->getId(), $hash, $expiresAt);
-            } catch (OverflowException) {
-                return RegisterNickResult::temporarilyUnavailable();
-            }
             $this->throttle->recordAttempt($command->clientKey, $now);
 
             return RegisterNickResult::tokenVerificationRequired($token);

@@ -17,6 +17,9 @@ register_verification_body: |
 
   O token caduca en 1 hora. Se non solicitou isto, ignore este correo.
 
+  Unha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade dunha hora só se aplica antes de validalo.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — same as register, resend of token
 # RESEND — igual que register, reenvío do token
 resend_verification_subject: "%bot%: o seu token de verificación (reenvío)"
@@ -31,6 +34,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   O token caduca en 1 hora. Se non solicitou isto, ignore este correo.
+
+  Unha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade dunha hora só se aplica antes de validalo.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — confirmation token sent to current email
 # SET EMAIL — token de confirmación enviado ao correo electrónico actual
@@ -61,6 +67,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   O token caduca en 1 hora. Se non solicitou isto, ignore este correo.
+
+  Unha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade dunha hora só se aplica antes de validalo.
 
 # ChanServ SET FOUNDER — founder change token
 # ChanServ SET FOUNDER — token de cambio de fundador

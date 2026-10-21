@@ -15,6 +15,9 @@ register_verification_body: |
 
   Tokena ordubetean iraungitzen da. Zuk eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.
 
+  Balioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — erregistroaren berdina, tokenaren berbidalketa
 resend_verification_subject: "%bot%: zure egiaztapen tokena (berbidalita)"
 resend_verification_body: |
@@ -28,6 +31,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   Tokena ordubetean iraungitzen da. Zuk eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.
+
+  Balioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — baieztapen tokena uneko posta elektronikora bidalia
 email_change_token_subject: "%bot%: baieztatu zure posta elektronikoko helbide berria"
@@ -56,6 +62,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   Tokena ordubetean iraungitzen da. Zuk eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.
+
+  Balioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da.
 
 # ChanServ SET FOUNDER — sortzaile aldaketa tokena
 founder_change_token_subject: "%bot%: sortzaile aldaketa tokena %channel% kanalerako"

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\NickServ\Domain\Entity;
 
 use App\NickServ\Domain\ValueObject\NickStatus;
-use App\NickServ\Domain\ValueObject\RegistrationMode;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
@@ -36,8 +35,6 @@ class RegisteredNick
     private int $id;
 
     private ?string $rescueTokenHash = null;
-
-    private RegistrationMode $registrationMode = RegistrationMode::Email;
 
     /** Original casing of the nickname (display only). */
     private string $nickname;
@@ -106,19 +103,14 @@ class RegisteredNick
         string $language,
         DateTimeImmutable $expiresAt,
         DateTimeImmutable $registeredAt,
-        RegistrationMode $registrationMode = RegistrationMode::Email,
     ): self {
         $nick = new self();
         $nick->nickname = $nickname;
         $nick->nicknameLower = strtolower($nickname);
         $nick->status = NickStatus::Pending;
         $nick->passwordHash = $passwordHash;
-        if (RegistrationMode::Email === $registrationMode && null === $email) {
-            throw new InvalidArgumentException('Email registration requires an email address.');
-        }
         self::assertValidEmail($email);
         $nick->email = $email;
-        $nick->registrationMode = $registrationMode;
         $nick->language = self::normalizeLanguage($language);
         $nick->registeredAt = $registeredAt;
         $nick->expiresAt = $expiresAt;
@@ -368,11 +360,6 @@ class RegisteredNick
     public function isNoExpire(): bool
     {
         return $this->noExpire;
-    }
-
-    public function getRegistrationMode(): RegistrationMode
-    {
-        return $this->registrationMode;
     }
 
     public function getRescueTokenHash(): ?string

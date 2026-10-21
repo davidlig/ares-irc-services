@@ -13,6 +13,9 @@ final readonly class RecoverNickResult
         public int $retryAfterSeconds = 0,
         public ?string $temporaryPassword = null,
         public ?string $rescueToken = null,
+        public bool $tokenPromoted = false,
+        public bool $replacementUnavailable = false,
+        public ?string $email = null,
     ) {}
 
     public static function notRegistered(string $nickname): self
@@ -60,13 +63,35 @@ final readonly class RecoverNickResult
         return new self(RecoverNickOutcome::InvalidToken, nickname: $nickname);
     }
 
-    public static function passwordReset(string $nickname, string $temporaryPassword, string $rescueToken): self
+    public static function passwordReset(string $nickname, string $temporaryPassword, ?string $rescueToken, bool $tokenPromoted = false, bool $replacementUnavailable = false): self
     {
         return new self(
             RecoverNickOutcome::PasswordReset,
             nickname: $nickname,
             temporaryPassword: $temporaryPassword,
             rescueToken: $rescueToken,
+            tokenPromoted: $tokenPromoted,
+            replacementUnavailable: $replacementUnavailable,
         );
+    }
+
+    public static function tokenSent(string $email): self
+    {
+        return new self(RecoverNickOutcome::TokenSent, email: $email);
+    }
+
+    public static function noEmail(string $nickname): self
+    {
+        return new self(RecoverNickOutcome::NoEmail, nickname: $nickname);
+    }
+
+    public static function mailDeliveryFailed(): self
+    {
+        return new self(RecoverNickOutcome::MailDeliveryFailed);
+    }
+
+    public static function temporarilyUnavailable(): self
+    {
+        return new self(RecoverNickOutcome::TemporarilyUnavailable);
     }
 }

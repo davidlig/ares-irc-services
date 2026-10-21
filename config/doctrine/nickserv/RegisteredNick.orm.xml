@@ -16,9 +16,6 @@
         <field name="nickname" type="string" length="32" column="nickname"/>
         <field name="nicknameLower" type="string" length="32" unique="true" column="nickname_lower"/>
         <field name="status" type="string" length="20" enum-type="App\NickServ\Domain\ValueObject\NickStatus"/>
-        <field name="registrationMode" type="string" length="5" column="registration_mode" enum-type="App\NickServ\Domain\ValueObject\RegistrationMode">
-            <options><option name="default">EMAIL</option></options>
-        </field>
         <field name="rescueTokenHash" type="string" length="64" nullable="true" column="token"/>
         <field name="passwordHash" type="string" length="255" nullable="true" column="password_hash"/>
         <field name="email" type="string" length="255" nullable="true" unique="true" column="email"/>

@@ -16,4 +16,8 @@ enum RecoverNickOutcome
     case Throttled;
     case InvalidToken;
     case PasswordReset;
+    case TokenSent;
+    case NoEmail;
+    case MailDeliveryFailed;
+    case TemporarilyUnavailable;
 }

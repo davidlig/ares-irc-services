@@ -130,25 +130,19 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         self::assertSame($b, $loaded->getRescueTokenHash());
     }
 
-    public function testPendingReplacementNeverActivatesExtendsOrChangesConfirmedCredential(): void
+    public function testEmailRecoveryCanPromoteFirstCredentialAndRejectStaleNullExpectation(): void
     {
-        $now = new DateTimeImmutable('2026-01-01');
-        $expires = $now->modify('+1 hour');
-        $nick = RegisteredNick::createPending('Resend', 'password', 'resend@example.test', 'en', $expires, $now);
-        $this->entityManager->persist($nick);
+        $nick = $this->account('Legacy');
+        $nick->activate();
         $this->entityManager->flush();
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
-        $a = str_repeat('a', 64);
-        $b = str_repeat('b', 64);
-        self::assertTrue($store->replacePending($nick->getId(), null, $a, $now));
-        self::assertTrue($nick->isPending());
-        self::assertSame($expires->format('c'), $nick->getExpiresAt()?->format('c'));
-        self::assertFalse($store->replacePending($nick->getId(), null, $b, $now));
-        self::assertFalse($store->replacePending($nick->getId(), $a, $b, $expires));
-        self::assertSame($a, $nick->getRescueTokenHash());
-        self::assertTrue($store->replacePending($nick->getId(), $a, $b, $now));
-        self::assertTrue($store->confirm($nick->getId(), NickStatus::Pending, $b, $b, $now));
-        self::assertFalse($store->replacePending($nick->getId(), $b, $a, $now));
-        self::assertSame($b, $nick->getRescueTokenHash());
+        $now = new DateTimeImmutable('2026-01-01');
+        $hash = str_repeat('a', 64);
+        self::assertTrue($store->rotateAfterRecovery($nick->getId(), null, 'new-password', $hash, $now));
+        self::assertSame($hash, $nick->getRescueTokenHash());
+        self::assertSame('new-password', $nick->getPasswordHash());
+        self::assertFalse($store->rotateAfterRecovery($nick->getId(), null, 'stale', str_repeat('b', 64), $now));
+        self::assertSame($hash, $nick->getRescueTokenHash());
+        self::assertSame('new-password', $nick->getPasswordHash());
     }
 }

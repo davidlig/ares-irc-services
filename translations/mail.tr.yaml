@@ -15,6 +15,9 @@ register_verification_body: |
 
   Token 1 saat içinde sona erer. Bu isteği siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.
 
+  Doğrulandıktan sonra bu, kalıcı kurtarma belirteciniz olur. Güvenli yerde saklayın: takma adınızı kurtarmak için kullanabilirsiniz. Bir saatlik süre yalnızca doğrulamadan önce geçerlidir.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — aynı register, tokenın yeniden gönderimi
 resend_verification_subject: "%bot%: doğrulama tokenınız (yeniden gönderme)"
 resend_verification_body: |
@@ -28,6 +31,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   Token 1 saat içinde sona erer. Bu isteği siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.
+
+  Doğrulandıktan sonra bu, kalıcı kurtarma belirteciniz olur. Güvenli yerde saklayın: takma adınızı kurtarmak için kullanabilirsiniz. Bir saatlik süre yalnızca doğrulamadan önce geçerlidir.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — mevcut e-postaya gönderilen onay tokenı
 email_change_token_subject: "%bot%: yeni e-posta adresinizi onaylayın"
@@ -56,6 +62,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   Token 1 saat içinde sona erer. Bu isteği siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.
+
+  Doğrulandıktan sonra bu, kalıcı kurtarma belirteciniz olur. Güvenli yerde saklayın: takma adınızı kurtarmak için kullanabilirsiniz. Bir saatlik süre yalnızca doğrulamadan önce geçerlidir.
 
 # ChanServ SET FOUNDER — kurucu değişikliği tokenı
 founder_change_token_subject: "%bot%: %channel% için kurucu değişikliği tokenı"
