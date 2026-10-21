@@ -680,3 +680,11 @@ debug:
   action_with_value: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%=%value%. %reason%"
   action_duration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
   prefix_reason: "Sebep: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "Ağın kayıt kipini yönetir."
+  help: "Yeni hesapların kayıt ilkesini EMAIL veya TOKEN olarak ayarlar. STATUS geçerli ilkeyi değiştirmeden gösterir. Bekleyen hesaplar ilk kayıt kiplerini korur. TOKEN kipinde RESEND genel olarak devre dışıdır. nickserv.regmode izni gerektirir."
+  status: "Geçerli kayıt kipi: %mode%."
+  changed: "Kayıt kipi %mode% olarak değiştirildi."

@@ -680,3 +680,11 @@ debug:
   action_with_value: "%operator% voert commando %command% uit op %target%. Optie: %option%=%value%. %reason%"
   action_duration: "%operator% voert commando %command% uit op %target%. Duur: %duration%. %reason%"
   prefix_reason: "Reden: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "De registratiemodus van het netwerk beheren."
+  help: "Stelt EMAIL of TOKEN in als registratiebeleid voor nieuwe accounts. STATUS toont het huidige beleid zonder wijzigingen. Openstaande accounts behouden hun oorspronkelijke registratiemodus. In TOKEN-modus is RESEND wereldwijd uitgeschakeld. Vereist de machtiging nickserv.regmode."
+  status: "Huidige registratiemodus: %mode%."
+  changed: "Registratiemodus gewijzigd naar %mode%."

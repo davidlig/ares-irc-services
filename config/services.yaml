@@ -179,6 +179,15 @@ services:
         alias: App\NickServ\Adapter\Out\InMemory\InMemoryRescueAttemptLimiter
     App\NickServ\Application\Port\Out\RescueCredentialPersistence:
         alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRescueCredentialPersistence
+    App\NickServ\Application\Port\Out\RegistrationModeQuery:
+        alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
+    App\NickServ\Application\Port\Out\RegistrationPolicyRepository:
+        alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
+    App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandlerInterface:
+        alias: App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandler
+    App\NickServ\Adapter\In\Irc\Command\RegmodeCommand:
+        tags: ['nickserv.command']
+
     App\NickServ\Application\Port\Out\PasswordHasher:
         alias: App\NickServ\Adapter\Out\Security\PhpPasswordHasher
 

@@ -680,3 +680,11 @@ debug:
   action_with_value: "%operator% ejecuta el comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
   action_duration: "%operator% ejecuta el comando %command% sobre %target%. Duración: %duration%. %reason%"
   prefix_reason: "Razón: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "Administrar el modo de registro de la red."
+  help: "Establece EMAIL o TOKEN como política de registro para las cuentas nuevas. STATUS muestra la política actual sin modificarla. Las cuentas pendientes conservan su modo de registro original. En modo TOKEN, RESEND está deshabilitado globalmente. Requiere el permiso nickserv.regmode."
+  status: "Modo de registro actual: %mode%."
+  changed: "Modo de registro cambiado a %mode%."

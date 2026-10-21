@@ -680,3 +680,11 @@ debug:
   action_with_value: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%=%value%. %reason%"
   action_duration: "%operator% εκτελεί την εντολή %command% σε %target%. Διάρκεια: %duration%. %reason%"
   prefix_reason: "Αιτία: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "Διαχείριση του τρόπου εγγραφής του δικτύου."
+  help: "Ορίζει EMAIL ή TOKEN ως πολιτική εγγραφής νέων λογαριασμών. Το STATUS εμφανίζει την τρέχουσα πολιτική χωρίς αλλαγή. Οι εκκρεμείς λογαριασμοί διατηρούν τον αρχικό τρόπο εγγραφής. Στη λειτουργία TOKEN, το RESEND απενεργοποιείται καθολικά. Απαιτεί το δικαίωμα nickserv.regmode."
+  status: "Τρέχων τρόπος εγγραφής: %mode%."
+  changed: "Ο τρόπος εγγραφής άλλαξε σε %mode%."

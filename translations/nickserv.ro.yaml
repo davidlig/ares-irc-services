@@ -680,3 +680,11 @@ debug:
   action_with_value: "%operator% execută comanda %command% asupra %target%. Opțiune: %option%=%value%. %reason%"
   action_duration: "%operator% execută comanda %command% asupra %target%. Durată: %duration%. %reason%"
   prefix_reason: "Motiv: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "Gestionează modul de înregistrare al rețelei."
+  help: "Stabilește EMAIL sau TOKEN ca politică de înregistrare pentru conturile noi. STATUS afișează politica actuală fără modificări. Conturile în așteptare păstrează modul inițial de înregistrare. În modul TOKEN, RESEND este dezactivat global. Necesită permisiunea nickserv.regmode."
+  status: "Modul actual de înregistrare: %mode%."
+  changed: "Modul de înregistrare a fost schimbat în %mode%."

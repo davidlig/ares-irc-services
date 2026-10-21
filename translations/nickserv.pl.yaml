@@ -680,3 +680,11 @@ debug:
   action_with_value: "%operator% wykonuje komendę %command% na %target%. Opcja: %option%=%value%. %reason%"
   action_duration: "%operator% wykonuje komendę %command% na %target%. Czas trwania: %duration%. %reason%"
   prefix_reason: "Powód: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "Zarządzanie trybem rejestracji w sieci."
+  help: "Ustawia EMAIL lub TOKEN jako zasady rejestracji nowych kont. STATUS wyświetla bieżące zasady bez zmian. Oczekujące konta zachowują pierwotny tryb rejestracji. W trybie TOKEN polecenie RESEND jest globalnie wyłączone. Wymaga uprawnienia nickserv.regmode."
+  status: "Bieżący tryb rejestracji: %mode%."
+  changed: "Tryb rejestracji zmieniono na %mode%."

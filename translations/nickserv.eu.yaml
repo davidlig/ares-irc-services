@@ -680,3 +680,11 @@ debug:
   action_with_value: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Aukera: %option%=%value%. %reason%"
   action_duration: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Iraupena: %duration%. %reason%"
   prefix_reason: "Arrazoia: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "Sareko erregistro modua kudeatu."
+  help: "EMAIL edo TOKEN ezartzen du kontu berrien erregistro politika gisa. STATUS aukerak uneko politika erakusten du aldatu gabe. Zain dauden kontuek jatorrizko erregistro modua mantentzen dute. TOKEN moduan RESEND globalki desgaituta dago. nickserv.regmode baimena behar du."
+  status: "Uneko erregistro modua: %mode%."
+  changed: "Erregistro modua %mode% modura aldatu da."

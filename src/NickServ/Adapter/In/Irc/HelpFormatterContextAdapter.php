@@ -21,7 +21,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         ['group_key' => 'help.group.registration_auth', 'commands' => ['REGISTER', 'IDENTIFY', 'VERIFY', 'RESEND', 'RECOVER'], 'admin' => false, 'subgroup' => false],
         ['group_key' => 'help.group.account_security', 'commands' => ['STATUS', 'INFO', 'SET'], 'admin' => false, 'subgroup' => false],
         ['group_key' => 'help.ircop_group.lookup', 'commands' => ['USERIP', 'WHOIP', 'LIST', 'HISTORY'], 'admin' => true, 'subgroup' => true],
-        ['group_key' => 'help.ircop_group.account_management', 'commands' => ['SASET', 'RENAME', 'NOEXPIRE'], 'admin' => true, 'subgroup' => true],
+        ['group_key' => 'help.ircop_group.account_management', 'commands' => ['SASET', 'RENAME', 'NOEXPIRE', 'REGMODE'], 'admin' => true, 'subgroup' => true],
         ['group_key' => 'help.ircop_group.suspensions_bans', 'commands' => ['SUSPEND', 'UNSUSPEND', 'FORBID', 'UNFORBID', 'FORBIDVHOST'], 'admin' => true, 'subgroup' => true],
         ['group_key' => 'help.ircop_group.deletion', 'commands' => ['DROP', 'RESTORE'], 'admin' => true, 'subgroup' => true],
     ];
