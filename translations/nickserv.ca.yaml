@@ -22,13 +22,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  token_unavailable: "El registre està pendent, però no s’ha pogut lliurar el testimoni.\nEspera que caduqui abans de registrar-te de nou."
+  token_unavailable: "\x0304✗\x03 El registre està pendent, però no s’ha pogut lliurar el testimoni.\nEspera que caduqui abans de registrar-te de nou."
   syntax: "REGISTER <password> [email]"
   short:            "Registrar el vostre sobrenom amb els serveis."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nUn cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo."
   pending:          "\x0307→\x03 S'ha enviat un token de verificació a \x02%email%\x02.\n  Executeu \x0303/msg %bot% VERIFY <token>\x03 per completar el registre.\n  No l'heu rebut? Comproveu el correu brossa o utilitzeu \x0303/msg %bot% RESEND\x03\n  El token expirarà en \x021 hora\x02."
   already_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està registrat."
-  already_pending: "El registre de %nickname% està pendent. Utilitza VERIFY <token>. RESEND només està disponible amb REGMODE EMAIL i un correu vàlid assignat."
+  already_pending: "\x0307→\x03 El registre de \x02%nickname%\x02 està pendent. Utilitza \x0303VERIFY <token>\x03. \x0303RESEND\x03 només està disponible amb REGMODE EMAIL i un correu vàlid assignat."
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot registrar en aquesta xarxa."
   pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no pot ser registrat."
   invalid_email:    "\x0304✗\x03 L'adreça de correu proporcionada no és vàlida."
@@ -43,12 +43,12 @@ verify:
   help: "Un cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo."
   success:          "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat amb èxit i ara esteu identificat."
   success_native:   "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat correctament. Utilitzeu l'autenticació nativa que es mostra a continuació."
-  invalid_token: "El testimoni de rescat no és vàlid."
+  invalid_token: "\x0304✗\x03 El testimoni de rescat no és vàlid."
   no_pending:       "\x0304✗\x03 No teniu cap registre pendent per verificar."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
-  disabled: "RESEND està desactivat mentre REGMODE sigui TOKEN."
+  disabled: "\x0307ℹ\x03 \x0303RESEND\x03 està desactivat mentre REGMODE sigui TOKEN."
   syntax:           "RESEND"
   short:            "Reenviar el token de verificació al vostre correu."
   help: "RESEND està desactivat mentre REGMODE sigui TOKEN.\nUn cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo.\nEn mode EMAIL, RESEND renova durant una hora el token i el termini del registre pendent."
@@ -60,17 +60,17 @@ resend:
 recover:
   no_email: "\u000304✗\u0003 No hi ha cap correu establert per al sobrenom \u0002%nickname%\u0002. La recuperació no està disponible."
   email_sent: "\u000307→\u0003 S'ha enviat un token de recuperació a \u0002%email_hint%\u0002. Comproveu la vostra bústia (i la carpeta de correu brossa)."
-  pending_deletion: "El sobrenom %nickname% està pendent d’eliminació i no es pot recuperar."
-  instructions: "EMAIL: RECOVER %nickname% sol·licita un testimoni provisional per correu. TOKEN: proporciona el testimoni confirmat. RECOVER %nickname% <token> accepta el del correu o el confirmat. El del correu substitueix el desat només en validar-lo. Utilitzar el desat ofereix un reemplaçament opcional amb VERIFY; ignora el missatge per conservar l’actual."
+  pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d’eliminació i no es pot recuperar."
+  instructions: "\x0307ℹ\x03 EMAIL: \x0303RECOVER %nickname%\x03 sol·licita un testimoni provisional per correu. TOKEN: proporciona el testimoni confirmat. \x0303RECOVER %nickname% <token>\x03 accepta el del correu o el confirmat. El del correu substitueix el desat només en validar-lo. Utilitzar el desat ofereix un reemplaçament opcional amb \x0303VERIFY\x03; ignora el missatge per conservar l’actual."
   syntax:           "RECOVER <nickname> [token]"
   short:            "Recuperar el vostre sobrenom si heu perdut la contrasenya."
   help: "EMAIL: RECOVER <nickname> sol·licita un testimoni provisional per correu. TOKEN: proporciona el testimoni confirmat. RECOVER <nickname> <token> accepta el del correu o el confirmat. El del correu substitueix el desat només en validar-lo. Utilitzar el desat ofereix un reemplaçament opcional amb VERIFY; ignora el missatge per conservar l’actual."
   not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  pending: "El registre de %nickname% està pendent. Utilitza VERIFY <token>. RESEND només està disponible amb REGMODE EMAIL i un correu vàlid assignat."
+  pending: "\x0307→\x03 El registre de \x02%nickname%\x02 està pendent. Utilitza \x0303VERIFY <token>\x03. \x0303RESEND\x03 només està disponible amb REGMODE EMAIL i un correu vàlid assignat."
   suspended:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Motiu: %reason%"
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot utilitzar en aquesta xarxa."
-  throttled: "Massa testimonis incorrectes. Torna-ho a provar d’aquí a %minutes% minut(s)."
-  invalid_token: "El testimoni de rescat no és vàlid."
+  throttled: "\x0304✗\x03 Massa testimonis incorrectes. Torna-ho a provar d’aquí a \x02%minutes%\x02 minut(s)."
+  invalid_token: "\x0304✗\x03 El testimoni de rescat no és vàlid."
   success_identify: "\x0303✔\x03 Contrasenya restablerta. Identifiqueu-vos ara: \x0303%identify_cmd%\x03"
   success_then_change: "Després canvieu la vostra contrasenya: \x0303/msg %bot% SET PASSWORD <new_password>\x03"
 
@@ -168,7 +168,7 @@ set:
     success:        "\x0303✔\x03 La vostra contrasenya s'ha actualitzat correctament."
 
   email:
-    token_required: "Utilitza SET EMAIL <email> <token> amb el testimoni de rescat confirmat."
+    token_required: "\x0304✗\x03 Utilitza \x0303SET EMAIL <email> <token>\x03 amb el testimoni de rescat confirmat."
     syntax: "SET EMAIL <email> <token>"
     short:          "Canviar l'adreça de correu vinculada al vostre sobrenom (confirmació en dos passos)."
     help: "SET EMAIL canvia el correu de contacte després de validar el testimoni de rescat, sense consumir-lo. Comprova el format i la unicitat; no envia cap confirmació per correu."
@@ -688,21 +688,21 @@ debug:
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
-  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "Administrar el mode de registre de la xarxa."
-  help: "Estableix EMAIL o TOKEN com a política de registre per als comptes nous. STATUS mostra la política actual sense modificar-la. Els comptes pendents conserven el mode de registre original. En mode TOKEN, RESEND està deshabilitat globalment. Requereix el permís nickserv.regmode."
-  status: "Mode de registre actual: %mode%."
-  changed: "Mode de registre canviat a %mode%."
+  help: "Configura el mode de registre dels comptes nous.\nAmb \x02EMAIL\x02 el testimoni de verificació s’envia per correu.\nAmb \x02TOKEN\x02 el testimoni es lliura directament per IRC.\nAmb \x02STATUS\x02 es consulta el mode actual sense modificar-lo.\nEls registres pendents conserven el seu mode original.\nEn mode \x02TOKEN\x02, \x02RESEND\x02 està deshabilitat per a tothom.\nRequereix el permís nickserv.regmode."
+  status: "\x0307ℹ\x03 Mode de registre actual: \x02%mode%\x02."
+  changed: "\x0303✔\x03 Mode de registre canviat a \x02%mode%\x02."
 
 # --- Unified rescue credential -----------------------------------------------
 rescue:
-  issued: "Testimoni de rescat: %token%.\nConfirma’l amb /msg %bot% VERIFY %token%.\nDesa’l en un lloc segur.\nNomés és vàlid l’últim;\ndesprés de confirmar-lo no es tornarà a mostrar."
-  confirmed: "El testimoni de rescat s’ha confirmat. Desa’l en un lloc segur."
-  unavailable: "Autentica’t i confirma el testimoni de rescat amb VERIFY abans d’utilitzar aquesta operació."
-  locked_out: "Massa testimonis incorrectes. Torna-ho a provar d’aquí a %seconds% segons."
-  throttled: "Massa testimonis incorrectes. Torna-ho a provar d’aquí a %minutes% minut(s)."
-  replaced: "El testimoni de recuperació s’ha substituït pel del correu que acabes de validar. Desa’l en un lloc segur."
+  issued: "Testimoni de rescat: \x0303%token%\x03\n\nDesa aquest testimoni en un lloc segur. El necessitaràs per recuperar el teu sobrenom si oblides la contrasenya.\n\nPer confirmar-lo, utilitza: /msg %bot% \x0303VERIFY %token%\x03\n\n\x0304⚠\x03 IMPORTANT: Només és vàlid l’últim testimoni generat. Un cop confirmat, no es tornarà a mostrar. No el comparteixis amb ningú."
+  confirmed: "\x0303✔\x03 El testimoni de rescat s’ha confirmat. Desa’l en un lloc segur."
+  unavailable: "\x0304✗\x03 Autentica’t i confirma el testimoni de rescat amb \x0303VERIFY\x03 abans d’utilitzar aquesta operació."
+  locked_out: "\x0304✗\x03 Massa testimonis incorrectes. Torna-ho a provar d’aquí a \x02%seconds%\x02 segons."
+  throttled: "\x0304✗\x03 Massa testimonis incorrectes. Torna-ho a provar d’aquí a \x02%minutes%\x02 minut(s)."
+  replaced: "\x0303✔\x03 El testimoni de recuperació s’ha substituït pel del correu que acabes de validar. Desa’l en un lloc segur."
 
-  optional_replacement: "Nou testimoni de recuperació opcional: %token%.\nPer substituir l’actual, utilitza /msg %bot% VERIFY %token%.\nL’actual continua sent vàlid fins a la confirmació.\nSi no el vols canviar, ignora aquest missatge."
-  replacement_unavailable: "La contrasenya s’ha restablert, però no s’ha pogut emetre un testimoni nou. L’actual continua sent vàlid."
-  temporarily_unavailable: "El lliurament del testimoni de recuperació no està disponible temporalment. Torna-ho a provar més tard."
+  optional_replacement: "\x0307→\x03 Nou testimoni de recuperació opcional: \x0303%token%\x03\n\nPer substituir el testimoni actual, utilitza: /msg %bot% \x0303VERIFY %token%\x03\n\nL’actual continua sent vàlid fins a la confirmació.\n\nSi no el vols canviar, ignora aquest missatge."
+  replacement_unavailable: "\x0307ℹ\x03 La contrasenya s’ha restablert, però no s’ha pogut emetre un testimoni nou. L’actual continua sent vàlid."
+  temporarily_unavailable: "\x0304✗\x03 El lliurament del testimoni de recuperació no està disponible temporalment. Torna-ho a provar més tard."
