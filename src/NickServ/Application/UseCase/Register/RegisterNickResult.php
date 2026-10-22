@@ -12,11 +12,22 @@ final readonly class RegisterNickResult
         public ?string $email = null,
         public ?string $guestPrefix = null,
         public int $retryAfterSeconds = 0,
+        public ?string $token = null,
     ) {}
 
     public static function verificationRequired(string $email): self
     {
         return new self(RegisterNickOutcome::VerificationRequired, email: $email);
+    }
+
+    public static function tokenVerificationRequired(string $token): self
+    {
+        return new self(RegisterNickOutcome::TokenVerificationRequired, token: $token);
+    }
+
+    public static function temporarilyUnavailable(): self
+    {
+        return new self(RegisterNickOutcome::TemporarilyUnavailable);
     }
 
     public static function throttled(int $retryAfterSeconds): self

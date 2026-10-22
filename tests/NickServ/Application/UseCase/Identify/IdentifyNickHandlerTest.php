@@ -16,11 +16,14 @@ use App\NickServ\Application\UseCase\Identify\IdentifyNick;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickHandler;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickOutcome;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickResult;
+use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
+use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 #[CoversClass(IdentifyNickHandler::class)]
 #[CoversClass(IdentifyNick::class)]
@@ -36,7 +39,12 @@ final class IdentifyNickHandlerTest extends TestCase
             ->with('UID1')
             ->willReturn('alice');
 
-        $handler = $this->createHandler(sessionTracker: $sessionTracker);
+        $account = RegisteredNick::createPending('alice', 'hash', 'alice@example.com', 'en', $this->now()->modify('+1 hour'), $this->now());
+        $account->activate();
+        $account->replaceRescueTokenHash(str_repeat('a', 64));
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+        $handler = $this->createHandler(nickRepo: $repo, sessionTracker: $sessionTracker);
         $result = $handler->handle(new IdentifyNick(
             senderUid: 'UID1',
             senderNick: 'alice',
@@ -62,7 +70,12 @@ final class IdentifyNickHandlerTest extends TestCase
             ->method('register')
             ->with('UID1', 'alice');
 
-        $handler = $this->createHandler(sessionTracker: $sessionTracker);
+        $account = RegisteredNick::createPending('alice', 'hash', 'alice@example.com', 'en', $this->now()->modify('+1 hour'), $this->now());
+        $account->activate();
+        $account->replaceRescueTokenHash(str_repeat('a', 64));
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+        $handler = $this->createHandler(nickRepo: $repo, sessionTracker: $sessionTracker);
         $result = $handler->handle(new IdentifyNick(
             senderUid: 'UID1',
             senderNick: 'ALICE',
@@ -257,6 +270,7 @@ final class IdentifyNickHandlerTest extends TestCase
             $forcedVhostChecker,
             $this->passwordHasherThatVerifies('$2y$hash'),
             $this->fixedClock(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             5,
             900,
             1800,
@@ -306,6 +320,7 @@ final class IdentifyNickHandlerTest extends TestCase
             $forcedVhostChecker,
             $this->passwordHasherThatVerifies('$2y$hash'),
             $this->fixedClock(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             5,
             900,
             1800,
@@ -317,6 +332,26 @@ final class IdentifyNickHandlerTest extends TestCase
         self::assertSame('Alice', $result->nickname);
         self::assertNull($result->displayVhost);
         self::assertSame('en', $result->accountLanguage);
+    }
+
+    #[Test]
+    public function legacyAlreadyIdentifiedSessionRechecksPasswordBeforeIssuingToken(): void
+    {
+        $account = RegisteredNick::createPending('Alice', 'hash', 'a@example.com', 'en', $this->now()->modify('+1 hour'), $this->now());
+        $account->activate();
+        new ReflectionProperty($account, 'id')->setValue($account, 42);
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+        $sessions = $this->createStub(IdentifiedSessionTracker::class);
+        $sessions->method('findNick')->willReturn('Alice');
+        $hasher = $this->createMock(PasswordHasher::class);
+        $hasher->expects(self::exactly(2))->method('verify')->willReturnOnConsecutiveCalls(false, true);
+        $issuer = $this->createMock(IssueMigrationRescueTokenHandlerInterface::class);
+        $issuer->expects(self::once())->method('handle')->with(self::callback(static fn (IssueMigrationRescueToken $input): bool => 42 === $input->accountId && 'UID1' === $input->senderUid));
+        $handler = $this->createHandler(nickRepo: $repo, sessionTracker: $sessions, passwordHasher: $hasher, migrationTokens: $issuer);
+        self::assertSame(IdentifyNickOutcome::InvalidCredentials, $handler->handle($this->createCommand('Alice', 'wrong'))->outcome);
+        self::assertSame(IdentifyNickOutcome::AlreadyIdentified, $handler->handle($this->createCommand('Alice', 'correct'))->outcome);
+        self::assertNull($account->getRescueTokenHash());
     }
 
     private function createCommand(string $nickname, string $password = 'secret'): IdentifyNick
@@ -335,6 +370,7 @@ final class IdentifyNickHandlerTest extends TestCase
         RegisteredNick $account,
         ?IdentifyLockoutTracker $lockoutTracker = null,
         ?PasswordHasher $passwordHasher = null,
+        ?IssueMigrationRescueTokenHandlerInterface $migrationTokens = null,
     ): IdentifyNickHandler {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
@@ -360,6 +396,7 @@ final class IdentifyNickHandlerTest extends TestCase
         ?IdentifyEventPublisher $eventPublisher = null,
         ?ForcedVhostCheckerInterface $forcedVhostChecker = null,
         ?PasswordHasher $passwordHasher = null,
+        ?IssueMigrationRescueTokenHandlerInterface $migrationTokens = null,
     ): IdentifyNickHandler {
         return new IdentifyNickHandler(
             $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -370,6 +407,7 @@ final class IdentifyNickHandlerTest extends TestCase
             $forcedVhostChecker ?? $this->createStub(ForcedVhostCheckerInterface::class),
             $passwordHasher ?? $this->createStub(PasswordHasher::class),
             $this->fixedClock(),
+            $migrationTokens ?? $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
             5,
             900,
             1800,

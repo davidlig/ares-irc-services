@@ -158,6 +158,17 @@ final class SasetCommandTest extends TestCase
         self::assertSame(['option' => 'LANGUAGE', 'value' => 'es'], $outcome->auditData?->extra);
     }
 
+    #[Test]
+    public function emailAuditNeverIncludesAnExtraneousCredential(): void
+    {
+        $handler = $this->createStub(SetNickSettingHandlerInterface::class);
+        $handler->method('handle')->willReturn(new SetNickSettingResult(SetNickSettingOutcome::Changed, SetNickSettingOption::Email, 'Target', 'new@example.com'));
+        $outcome = new SasetCommand($handler)->execute($this->context($this->sender(), ['Target', 'EMAIL', 'new@example.com', 'never-audit-token']));
+        self::assertTrue($outcome->success);
+        self::assertSame(['option' => 'EMAIL', 'value' => 'new@example.com'], $outcome->auditData?->extra);
+        self::assertStringNotContainsString('never-audit-token', serialize($outcome->auditData));
+    }
+
     /**
      * @param list<string> $args
      * @param list<string> $messages

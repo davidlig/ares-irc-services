@@ -10,10 +10,14 @@ enum RecoverNickOutcome
     case Pending;
     case Suspended;
     case Forbidden;
-    case NoEmail;
+    case Instructions;
+    case CredentialUnavailable;
+    case PendingDeletion;
     case Throttled;
-    case MailDeliveryFailed;
-    case TokenSent;
     case InvalidToken;
     case PasswordReset;
+    case TokenSent;
+    case NoEmail;
+    case MailDeliveryFailed;
+    case TemporarilyUnavailable;
 }

@@ -4,23 +4,29 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Register;
 
+use App\NickServ\Adapter\Out\InMemory\InMemoryRegistrationThrottle;
+use App\NickServ\Adapter\Out\InMemory\RegisterThrottleRegistry;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
+use App\NickServ\Application\Port\Out\RegistrationModeQuery;
 use App\NickServ\Application\Port\Out\RegistrationThrottle;
-use App\NickServ\Application\Port\Out\RegistrationVerificationStore;
-use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
+use App\NickServ\Application\Port\Out\RescueTokenCodec;
+use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Application\UseCase\Register\RegisterNickHandler;
 use App\NickServ\Application\UseCase\Register\RegisterNickOutcome;
 use App\NickServ\Application\UseCase\Register\RegisterNickResult;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\NickServ\Domain\ValueObject\RegistrationMode;
 use DateTimeImmutable;
+use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use RuntimeException;
 
 #[CoversClass(RegisterNickHandler::class)]
@@ -122,7 +128,8 @@ final class RegisterNickHandlerTest extends TestCase
         $repository = $this->createMock(RegisterNickRepository::class);
         $repository->expects(self::once())->method('findByEmail')->with('user@example.com')->willReturn(null);
         $repository->expects(self::once())->method('findByNick')->with('NewNick')->willReturn(null);
-        $repository->expects(self::once())->method('save')->with(self::callback(fn (RegisteredNick $nick): bool => 'NewNick' === $nick->getNickname()
+        $repository->expects(self::once())->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new ReflectionProperty($nick, 'id')->setValue($nick, 42))->with(self::callback(fn (RegisteredNick $nick): bool => 'NewNick' === $nick->getNickname()
+                && null === $nick->getRescueTokenHash()
                 && 'hashed-password' === $nick->getPasswordHash()
                 && 'user@example.com' === $nick->getEmail()
                 && 'es' === $nick->getLanguage()
@@ -131,19 +138,16 @@ final class RegisterNickHandlerTest extends TestCase
 
         $hasher = $this->createMock(PasswordHasher::class);
         $hasher->expects(self::once())->method('hash')->with('plain-password')->willReturn('hashed-password');
-        $tokenGenerator = $this->createMock(VerificationTokenGenerator::class);
-        $tokenGenerator->expects(self::once())->method('generate')->willReturn('deterministic-token');
-        $verificationStore = $this->createMock(RegistrationVerificationStore::class);
-        $verificationStore->expects(self::once())->method('store')->with(
-            'NewNick',
-            'deterministic-token',
-            self::callback(fn (DateTimeImmutable $expiresAt): bool => $this->now->modify('+1800 seconds') == $expiresAt),
-        );
+        $tokenGenerator = $this->createMock(RescueTokenCodec::class);
+        $tokenGenerator->expects(self::once())->method('generate')->willReturn('12345678-1234-4234-8234-123456789abc');
+        $tokenGenerator->method('hash')->willReturn(str_repeat('a', 64));
+        $verificationStore = $this->createMock(TemporaryRescueTokenStore::class);
+        $verificationStore->expects(self::once())->method('replace');
         $mail = $this->createMock(RegistrationMailSender::class);
         $mail->expects(self::once())->method('sendVerification')->with(
             'NewNick',
             'user@example.com',
-            'deterministic-token',
+            '12345678-1234-4234-8234-123456789abc',
             'es',
         );
         $throttle = $this->createMock(RegistrationThrottle::class);
@@ -165,19 +169,19 @@ final class RegisterNickHandlerTest extends TestCase
     }
 
     #[Test]
-    public function mailFailureLeavesPendingStateAndDoesNotConsumeThrottle(): void
+    public function mailFailureLeavesPendingStateAndRecordsIpCooldown(): void
     {
         $repository = $this->createMock(RegisterNickRepository::class);
         $repository->method('findByEmail')->willReturn(null);
         $repository->method('findByNick')->willReturn(null);
-        $repository->expects(self::once())->method('save');
-        $verificationStore = $this->createMock(RegistrationVerificationStore::class);
-        $verificationStore->expects(self::once())->method('store');
+        $repository->expects(self::once())->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new ReflectionProperty($nick, 'id')->setValue($nick, 42));
+        $verificationStore = $this->createMock(TemporaryRescueTokenStore::class);
+        $verificationStore->expects(self::once())->method('replace');
         $mail = $this->createMock(RegistrationMailSender::class);
         $mail->expects(self::once())->method('sendVerification')->willThrowException(new RuntimeException('transport failed'));
         $throttle = $this->createMock(RegistrationThrottle::class);
         $throttle->method('remainingCooldownSeconds')->willReturn(0);
-        $throttle->expects(self::never())->method('recordAttempt');
+        $throttle->expects(self::once())->method('recordAttempt')->with('ip:client', $this->now);
 
         $result = $this->handler(
             repository: $repository,
@@ -191,9 +195,102 @@ final class RegisterNickHandlerTest extends TestCase
         self::assertSame(RegisterNickOutcome::MailDeliveryFailed, $result->outcome);
     }
 
+    #[Test]
+    public function tokenModeStoresOnlyTemporaryHashAndAllowsAbsentEmail(): void
+    {
+        $repo = $this->createMock(RegisterNickRepository::class);
+        $repo->expects(self::never())->method('findByEmail');
+        $repo->method('findByNick')->willReturn(null);
+        $repo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredNick $nick): void {
+            self::assertNull($nick->getRescueTokenHash());
+            self::assertNull($nick->getEmail());
+            new ReflectionProperty($nick, 'id')->setValue($nick, 42);
+        });
+        $store = $this->createMock(TemporaryRescueTokenStore::class);
+        $store->expects(self::once())->method('prune')->with($this->now);
+        $store->expects(self::once())->method('replace')->with(42, str_repeat('a', 64), $this->now->modify('+3600 seconds'));
+        $mail = $this->createMock(RegistrationMailSender::class);
+        $mail->expects(self::never())->method('sendVerification');
+        $result = $this->handler(repository: $repo, verificationStore: $store, mail: $mail, mode: RegistrationMode::Token)->handle($this->input(email: null));
+        self::assertSame(RegisterNickOutcome::TokenVerificationRequired, $result->outcome);
+        self::assertSame('12345678-1234-4234-8234-123456789abc', $result->token);
+    }
+
+    #[Test]
+    public function storeOverflowStillLimitsRegistrationsByIpAcrossNicknames(): void
+    {
+        foreach ([RegistrationMode::Email, RegistrationMode::Token] as $mode) {
+            $repo = $this->createMock(RegisterNickRepository::class);
+            $repo->expects(self::exactly(2))->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new ReflectionProperty($nick, 'id')->setValue($nick, 42));
+            $store = $this->createStub(TemporaryRescueTokenStore::class);
+            $store->method('replace')->willThrowException(new OverflowException());
+            $throttle = new InMemoryRegistrationThrottle(new RegisterThrottleRegistry());
+            $handler = $this->handler(repository: $repo, verificationStore: $store, throttle: $throttle, mode: $mode);
+            $expected = RegistrationMode::Token === $mode ? RegisterNickOutcome::TemporarilyUnavailable : RegisterNickOutcome::MailDeliveryFailed;
+            self::assertSame($expected, $handler->handle(new RegisterNick('First', 'password', 'a@example.com', 'en', 'ip:A'))->outcome);
+            $blocked = $handler->handle(new RegisterNick('Second', 'password', 'b@example.com', 'en', 'ip:A'));
+            self::assertSame(RegisterNickOutcome::Throttled, $blocked->outcome);
+            self::assertSame(300, $blocked->retryAfterSeconds);
+            self::assertSame($expected, $handler->handle(new RegisterNick('Third', 'password', 'c@example.com', 'en', 'ip:B'))->outcome);
+        }
+    }
+
+    #[Test]
+    public function emailModeRequiresEmail(): void
+    {
+        self::assertSame(RegisterNickOutcome::InvalidEmail, $this->handler()->handle($this->input(email: null))->outcome);
+    }
+
+    #[Test]
+    public function fullTemporaryStoreReportsUnavailableWithoutClaimingDelivery(): void
+    {
+        $repo = $this->createStub(RegisterNickRepository::class);
+        $repo->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new ReflectionProperty($nick, 'id')->setValue($nick, 42));
+        $store = $this->createStub(TemporaryRescueTokenStore::class);
+        $store->method('replace')->willThrowException(new OverflowException());
+        $result = $this->handler(repository: $repo, verificationStore: $store, mode: RegistrationMode::Token)->handle($this->input(email: null));
+        self::assertSame(RegisterNickOutcome::TemporarilyUnavailable, $result->outcome);
+        self::assertNull($result->token);
+    }
+
+    #[Test]
+    public function tokenPendingRegistrationNeverReissuesOrExtendsChallenge(): void
+    {
+        $pending = RegisteredNick::createPending('NewNick', 'hash', null, 'en', $this->now->modify('+1 hour'), $this->now);
+        $expiry = $pending->getExpiresAt();
+        $repo = $this->createMock(RegisterNickRepository::class);
+        $repo->method('findByNick')->willReturn($pending);
+        $repo->expects(self::never())->method('save');
+        $temporary = $this->createMock(TemporaryRescueTokenStore::class);
+        $temporary->expects(self::never())->method('replace');
+        $result = $this->handler(repository: $repo, verificationStore: $temporary, mode: RegistrationMode::Token)->handle($this->input(email: null));
+        self::assertSame(RegisterNickOutcome::AlreadyPending, $result->outcome);
+        self::assertSame($expiry, $pending->getExpiresAt());
+        self::assertNull($result->token);
+        self::assertNull($pending->getRescueTokenHash());
+    }
+
+    #[Test]
+    public function emailRegistrationKeepsOnlyTemporaryHashBeforeVerify(): void
+    {
+        $repo = $this->createMock(RegisterNickRepository::class);
+        $repo->expects(self::once())->method('save')->willReturnCallback(static function (RegisteredNick $nick): void {
+            self::assertTrue($nick->isPending());
+            self::assertNull($nick->getRescueTokenHash());
+            new ReflectionProperty($nick, 'id')->setValue($nick, 42);
+        });
+        $store = $this->createMock(TemporaryRescueTokenStore::class);
+        $store->expects(self::once())->method('replace')->with(42, str_repeat('a', 64), $this->now->modify('+3600 seconds'));
+        $mail = $this->createMock(RegistrationMailSender::class);
+        $mail->expects(self::once())->method('sendVerification')->with('NewNick', 'user@example.com', '12345678-1234-4234-8234-123456789abc', 'es');
+        $result = $this->handler(repository: $repo, verificationStore: $store, mail: $mail)->handle($this->input());
+        self::assertSame(RegisterNickOutcome::VerificationRequired, $result->outcome);
+        self::assertNull($result->token);
+    }
+
     private function input(
         string $nickname = 'NewNick',
-        string $email = 'user@example.com',
+        ?string $email = 'user@example.com',
     ): RegisterNick {
         return new RegisterNick($nickname, 'plain-password', $email, 'es', 'ip:client');
     }
@@ -201,12 +298,13 @@ final class RegisterNickHandlerTest extends TestCase
     private function handler(
         ?RegisterNickRepository $repository = null,
         ?PasswordHasher $passwordHasher = null,
-        ?VerificationTokenGenerator $tokenGenerator = null,
-        ?RegistrationVerificationStore $verificationStore = null,
+        ?RescueTokenCodec $tokenGenerator = null,
+        ?TemporaryRescueTokenStore $verificationStore = null,
         ?RegistrationThrottle $throttle = null,
         ?RegistrationMailSender $mail = null,
         int $tokenTtl = 3600,
         string $guestPrefix = 'Guest-',
+        RegistrationMode $mode = RegistrationMode::Email,
     ): RegisterNickHandler {
         if (null === $repository) {
             $repository = $this->createStub(RegisterNickRepository::class);
@@ -219,12 +317,16 @@ final class RegisterNickHandlerTest extends TestCase
             $throttle->method('remainingCooldownSeconds')->willReturn(0);
         }
 
+        $policy = $this->createStub(RegistrationModeQuery::class);
+        $policy->method('current')->willReturn($mode);
+
         return new RegisterNickHandler(
             $repository,
             $passwordHasher ?? $this->passwordHasher(),
             $tokenGenerator ?? $this->tokenGenerator(),
             $this->clock(),
-            $verificationStore ?? $this->createStub(RegistrationVerificationStore::class),
+            $verificationStore ?? $this->createStub(TemporaryRescueTokenStore::class),
+            $policy,
             $throttle,
             $mail ?? $this->createStub(RegistrationMailSender::class),
             300,
@@ -249,10 +351,11 @@ final class RegisterNickHandlerTest extends TestCase
         return $hasher;
     }
 
-    private function tokenGenerator(): VerificationTokenGenerator
+    private function tokenGenerator(): RescueTokenCodec
     {
-        $generator = $this->createStub(VerificationTokenGenerator::class);
-        $generator->method('generate')->willReturn('deterministic-token');
+        $generator = $this->createStub(RescueTokenCodec::class);
+        $generator->method('generate')->willReturn('12345678-1234-4234-8234-123456789abc');
+        $generator->method('hash')->willReturn(str_repeat('a', 64));
 
         return $generator;
     }

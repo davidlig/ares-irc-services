@@ -31,6 +31,9 @@ final class SetNickSettingPresentation
             SetNickSettingOutcome::InvalidEmail => self::reject($context, 'register.invalid_email'),
             SetNickSettingOutcome::EmailAlreadyUsed => self::reject($context, 'register.email_already_used', ['email' => $result->value]),
             SetNickSettingOutcome::InvalidEmailToken => self::reject($context, 'set.email.invalid_token'),
+            SetNickSettingOutcome::TokenRequired => self::reject($context, 'set.email.token_required'),
+            SetNickSettingOutcome::CredentialUnavailable => self::reject($context, 'rescue.unavailable'),
+            SetNickSettingOutcome::TokenThrottled => self::reject($context, 'rescue.throttled', ['minutes' => (int) ceil($result->retryAfterSeconds / 60)]),
             SetNickSettingOutcome::MailDeliveryFailed => self::reject($context, 'error.mail_failed'),
             SetNickSettingOutcome::InvalidLanguage => self::reject($context, 'set.language.invalid', [
                 'languages' => implode(', ', RegisteredNick::SUPPORTED_LANGUAGES),

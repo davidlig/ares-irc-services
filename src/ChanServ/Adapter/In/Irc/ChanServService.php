@@ -291,9 +291,11 @@ final readonly class ChanServService
                         $auditExtra['option'] = strtoupper($args[1]);
                     }
                     if (count($args) >= 3) {
-                        $auditExtra['value'] = 'PASSWORD' === $auditExtra['option']
-                            ? null
-                            : implode(' ', array_slice($args, 2));
+                        $auditExtra['value'] = match ($auditExtra['option']) {
+                            'PASSWORD' => null,
+                            'FOUNDER' => $args[2],
+                            default => implode(' ', array_slice($args, 2)),
+                        };
                     }
 
                     $this->commandAudit->record(new CommandAuditRecord(

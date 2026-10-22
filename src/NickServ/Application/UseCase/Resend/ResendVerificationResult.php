@@ -12,6 +12,11 @@ final readonly class ResendVerificationResult
         public int $retryAfterSeconds = 0,
     ) {}
 
+    public static function disabled(): self
+    {
+        return new self(ResendVerificationOutcome::Disabled);
+    }
+
     public static function success(string $email): self
     {
         return new self(ResendVerificationOutcome::Success, email: $email);

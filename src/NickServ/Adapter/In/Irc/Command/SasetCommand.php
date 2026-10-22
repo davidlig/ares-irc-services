@@ -133,7 +133,11 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
 
         return CommandOutcome::success(new IrcopAuditData(
             target: $targetNickname,
-            extra: ['option' => $rawOption, 'value' => SetNickSettingOption::Password === $option ? null : $value],
+            extra: ['option' => $rawOption, 'value' => match ($option) {
+                SetNickSettingOption::Password => null,
+                SetNickSettingOption::Email => $result->value,
+                default => $value,
+            }],
         ));
     }
 

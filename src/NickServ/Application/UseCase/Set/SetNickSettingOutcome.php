@@ -7,6 +7,9 @@ namespace App\NickServ\Application\UseCase\Set;
 enum SetNickSettingOutcome
 {
     case Changed;
+    case TokenRequired;
+    case CredentialUnavailable;
+    case TokenThrottled;
     case SessionLanguageChanged;
     case EmailConfirmationSent;
     case TargetNotRegistered;

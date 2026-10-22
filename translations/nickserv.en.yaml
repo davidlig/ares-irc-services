@@ -22,12 +22,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  syntax:           "REGISTER <password> <email>"
+  token_unavailable: "The registration is pending, but its token could not be delivered.\nWait for this registration to expire before registering again."
+  syntax: "REGISTER <password> [email]"
   short:            "Register your nickname with the services."
-  help:             "Starts the registration of your current nickname. A verification token\nwill be sent to the provided email address. Complete the registration\nby running \x0303/msg %bot% VERIFY <token>\x03. The token expires in 1 hour.\nIf it does not arrive, check your spam folder or use \x0303RESEND\x03."
+  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nAfter you validate this token, it becomes your permanent recovery token. Store it safely: you can use it to recover your nickname. The one-hour expiry applies only before validation."
   pending:          "\x0307→\x03 A verification token has been sent to \x02%email%\x02.\n  Run \x0303/msg %bot% VERIFY <token>\x03 to complete registration.\n  Didn't receive it? Check spam or use \x0303/msg %bot% RESEND\x03\n  The token will expire in \x021 hour\x02."
   already_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is already registered."
-  already_pending:  "\x0304✗\x03 Nickname \x02%nickname%\x02 already has a pending verification.\n  Use \x0303/msg %bot% VERIFY <token>\x03 or \x0303/msg %bot% RESEND\x03."
+  already_pending: "Registration for %nickname% is pending. Use VERIFY <token>. RESEND is available only while REGMODE is EMAIL and a valid email is assigned."
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be registered on this network."
   pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending deletion and cannot be registered."
   invalid_email:    "\x0304✗\x03 The email address provided is not valid."
@@ -38,35 +39,38 @@ register:
 # --- VERIFY -----------------------------------------------------------------
 verify:
   syntax:           "VERIFY <token>"
-  short:            "Confirm your email address and activate your nickname."
-  help:             "Completes the registration by verifying the token sent to your email.\nThe token is valid for 1 hour from the moment of registration."
+  short: "Confirms a registration or rescue token."
+  help: "After you validate this token, it becomes your permanent recovery token. Store it safely: you can use it to recover your nickname. The one-hour expiry applies only before validation."
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 has been successfully registered and you are now identified."
   success_native:   "\x0303✔\x03 Nickname \x02%nickname%\x02 has been successfully registered. Use the native authentication shown below."
-  invalid_token:    "\x0304✗\x03 The token is invalid or has expired. Use \x0303/msg %bot% REGISTER\x03 to start over."
+  invalid_token: "The rescue token is invalid."
   no_pending:       "\x0304✗\x03 You have no pending registration to verify."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
+  disabled: "RESEND is disabled while REGMODE is TOKEN."
   syntax:           "RESEND"
   short:            "Resend the verification token to your email."
-  help:             "Resends the verification token to the email address provided during\nregistration. Only works if you have a pending registration."
+  help: "RESEND is disabled while REGMODE is TOKEN.\nAfter you validate this token, it becomes your permanent recovery token. Store it safely: you can use it to recover your nickname. The one-hour expiry applies only before validation.\nIn EMAIL mode, RESEND renews the token and pending registration period for one hour."
   success:          "\x0307→\x03 Verification token resent to \x02%email%\x02."
   no_pending:       "\x0304✗\x03 You have no pending registration to resend a token for."
   throttled:        "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another verification email."
 
 # --- RECOVER -----------------------------------------------------------------
 recover:
+  no_email: "\u000304✗\u0003 No email is set for nickname \u0002%nickname%\u0002. Recovery is not available."
+  email_sent: "\u000307→\u0003 A recovery token has been sent to \u0002%email_hint%\u0002. Check your inbox (and spam folder)."
+  pending_deletion: "Nickname %nickname% is pending deletion and cannot be recovered."
+  instructions: "Use RECOVER %nickname% <token> with your confirmed recovery token. REGMODE TOKEN does not send email."
   syntax:           "RECOVER <nickname> [token]"
   short:            "Recover your nickname if you lost your password."
-  help:             "Recovers access to a registered nickname when you have lost your password.\n1) \x0303RECOVER <nickname>\x03 — a token is sent to the nickname's email.\n2) \x0303RECOVER <nickname> <token>\x03 — enter the token from the email to reset your password.\nYou will then receive a temporary password and the command to change it."
-  email_sent:       "\x0307→\x03 A recovery token has been sent to \x02%email_hint%\x02. Check your inbox (and spam folder)."
+  help: "EMAIL: RECOVER <nickname> requests a provisional token by email. TOKEN: provide your confirmed recovery token. RECOVER <nickname> <token> accepts a valid emailed token or confirmed recovery token. An emailed token replaces the stored credential only after validation. Using the stored credential offers an optional replacement through VERIFY; ignore that message to keep your current token."
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
-  pending:          "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending email verification."
+  pending: "Registration for %nickname% is pending. Use VERIFY <token>. RESEND is available only while REGMODE is EMAIL and a valid email is assigned."
   suspended:        "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended. Reason: %reason%"
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be used on this network."
-  no_email:         "\x0304✗\x03 No email is set for nickname \x02%nickname%\x02. Recovery is not available."
-  throttled:        "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another recovery email."
-  invalid_token:    "\x0304✗\x03 The token is invalid or has expired. Request a new one with \x0303RECOVER %nickname%\x03."
+  throttled: "Too many invalid tokens. Try again in %minutes% minute(s)."
+  invalid_token: "The rescue token is invalid."
   success_identify: "\x0303✔\x03 Password reset. Identify now: \x0303%identify_cmd%\x03"
   success_then_change: "Then change your password: \x0303/msg %bot% SET PASSWORD <new_password>\x03"
 
@@ -164,9 +168,10 @@ set:
     success:        "\x0303✔\x03 Your password has been updated successfully."
 
   email:
-    syntax:         "SET EMAIL <new_email> [token]"
+    token_required: "Use SET EMAIL <email> <token> with your confirmed rescue token."
+    syntax: "SET EMAIL <email> <token>"
     short:          "Change the email address linked to your nickname (two-step confirmation)."
-    help:           "Email change in two steps for security.\n1) \x0303SET EMAIL <new_email>\x03 — a token is sent to your current email.\n2) \x0303SET EMAIL <new_email> <token>\x03 — confirm with the token received.\nThe token expires in 1 hour."
+    help: "SET EMAIL changes the contact address after validating your rescue token, without consuming it. Format and uniqueness are checked; no confirmation email is sent."
     success:        "\x0303✔\x03 Your email has been updated to \x02%email%\x02."
     pending_sent:   "\x0307→\x03 A confirmation token has been sent to \x02%current_email%\x02.\n  To confirm the change to \x02%new_email%\x02 run:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  The token expires in 1 hour."
     invalid_token:  "\x0304✗\x03 The token is invalid or has expired. Request a new one with \x0303SET EMAIL <new_email>\x03."
@@ -680,3 +685,24 @@ debug:
   action_with_value: "%operator% executes command %command% on %target%. Option: %option%=%value%. %reason%"
   action_duration: "%operator% executes command %command% on %target%. Duration: %duration%. %reason%"
   prefix_reason: "Reason: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "Manage the network registration mode."
+  help: "Sets the registration policy for new accounts to EMAIL or TOKEN. STATUS displays the current policy without changing it. Existing pending accounts keep their original registration mode. In TOKEN mode RESEND is disabled globally. Requires the nickserv.regmode permission."
+  status: "Current registration mode: %mode%."
+  changed: "Registration mode changed to %mode%."
+
+# --- Unified rescue credential -----------------------------------------------
+rescue:
+  issued: "Rescue token: %token%.\nConfirm with /msg %bot% VERIFY %token%.\nStore it safely.\nOnly the latest token is valid;\nafter confirmation it will not be displayed again."
+  confirmed: "Your rescue token has been confirmed. Store it safely."
+  unavailable: "Authenticate and confirm your rescue token with VERIFY before using this operation."
+  locked_out: "Too many invalid tokens. Try again in %seconds% seconds."
+  throttled: "Too many invalid tokens. Try again in %minutes% minute(s)."
+  replaced: "Your recovery token has been replaced by the token validated from the email. Store that token safely."
+
+  optional_replacement: "Optional new recovery token: %token%.\nTo replace your current recovery token, use /msg %bot% VERIFY %token%.\nYour current token remains valid until confirmation.\nIf you do not want to change it, ignore this message."
+  replacement_unavailable: "Your password was reset, but a replacement token could not be issued. Your current recovery token is still valid."
+  temporarily_unavailable: "Recovery token delivery is temporarily unavailable. Try again later."

@@ -51,6 +51,11 @@ parameters:
     nickserv.register_min_interval_default: 300
     nickserv.register_min_interval: '%env(int:default:nickserv.register_min_interval_default:NICKSERV_REGISTER_MIN_INTERVAL)%'
     nickserv.verification_token_ttl_seconds: 3600
+    # Provisional RECOVER email challenge; confirmed recoveryToken has no TTL.
+    nickserv.recover_token_ttl_seconds_default: 3600
+    nickserv.recover_token_ttl_seconds: '%env(int:default:nickserv.recover_token_ttl_seconds_default:NICKSERV_RECOVER_TOKEN_TTL)%'
+    nickserv.recover_min_interval_seconds_default: 600
+    nickserv.recover_min_interval_seconds: '%env(int:default:nickserv.recover_min_interval_seconds_default:NICKSERV_RECOVER_MIN_INTERVAL)%'
     # IDENTIFY lockout after repeated failures (anti brute-force)
     nickserv.identify_max_failed_attempts_default: 5
     nickserv.identify_max_failed_attempts: '%env(int:default:nickserv.identify_max_failed_attempts_default:NICKSERV_IDENTIFY_MAX_FAILED_ATTEMPTS)%'
@@ -58,11 +63,6 @@ parameters:
     nickserv.identify_failed_window_seconds: '%env(int:default:nickserv.identify_failed_window_seconds_default:NICKSERV_IDENTIFY_FAILED_WINDOW_SECONDS)%'
     nickserv.identify_lockout_seconds_default: 600
     nickserv.identify_lockout_seconds: '%env(int:default:nickserv.identify_lockout_seconds_default:NICKSERV_IDENTIFY_LOCKOUT_SECONDS)%'
-    # RECOVER: token TTL and throttle
-    nickserv.recover_token_ttl_seconds_default: 3600
-    nickserv.recover_token_ttl_seconds: '%env(int:default:nickserv.recover_token_ttl_seconds_default:NICKSERV_RECOVER_TOKEN_TTL)%'
-    nickserv.recover_min_interval_seconds_default: 600
-    nickserv.recover_min_interval_seconds: '%env(int:default:nickserv.recover_min_interval_seconds_default:NICKSERV_RECOVER_MIN_INTERVAL)%'
     # Inactivity expiry: days without use after which a registered nick is dropped (0 = disabled)
     nickserv.inactivity_expiry_days_default: 0
     nickserv.inactivity_expiry_days: '%env(int:default:nickserv.inactivity_expiry_days_default:NICKSERV_INACTIVITY_EXPIRY_DAYS)%'
@@ -99,11 +99,6 @@ parameters:
     # Minimum seconds between channel registrations per nick (default: 21600 = 6 hours)
     chanserv.register_min_interval_default: 21600
     chanserv.register_min_interval: '%env(int:default:chanserv.register_min_interval_default:CHANSERV_REGISTER_MIN_INTERVAL)%'
-    # SET FOUNDER: token TTL and throttle (same defaults as NickServ RECOVER)
-    chanserv.founder_token_ttl_seconds_default: 3600
-    chanserv.founder_token_ttl_seconds: '%env(int:default:chanserv.founder_token_ttl_seconds_default:CHANSERV_FOUNDER_TOKEN_TTL)%'
-    chanserv.founder_min_interval_seconds_default: 600
-    chanserv.founder_min_interval_seconds: '%env(int:default:chanserv.founder_min_interval_seconds_default:CHANSERV_FOUNDER_MIN_INTERVAL)%'
     # Inactivity expiry: days without use after which a registered channel is dropped (0 = disabled)
     chanserv.inactivity_expiry_days_default: 0
     chanserv.inactivity_expiry_days: '%env(int:default:chanserv.inactivity_expiry_days_default:CHANSERV_INACTIVITY_EXPIRY_DAYS)%'
@@ -167,6 +162,35 @@ services:
         arguments:
             $from: '%mailer.from%'
             $senderName: '%irc.server_name%'
+
+    # Unified rescue credentials and runtime registration policy
+    App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface:
+        alias: App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandler
+    App\NickServ\Application\Port\Out\RescueTokenNotifier:
+        alias: App\NickServ\Adapter\Out\User\IrcRescueTokenNotifier
+    App\ChanServ\Application\Port\Out\FounderRescueTokenValidator:
+        alias: App\ChanServ\Adapter\Out\NickServ\FounderRescueTokenValidatorAdapter
+    App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandler:
+        arguments:
+            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
+    App\NickServ\Application\Port\In\RescueTokenValidator:
+        alias: App\NickServ\Application\UseCase\RescueToken\ValidateRescueTokenHandler
+    App\NickServ\Application\Port\Out\RescueTokenCodec:
+        alias: App\NickServ\Adapter\Out\Security\UuidRescueTokenCodec
+    App\NickServ\Application\Port\Out\TemporaryRescueTokenStore:
+        alias: App\NickServ\Adapter\Out\InMemory\InMemoryTemporaryRescueTokenStore
+    App\NickServ\Application\Port\Out\RescueAttemptLimiter:
+        alias: App\NickServ\Adapter\Out\InMemory\InMemoryRescueAttemptLimiter
+    App\NickServ\Application\Port\Out\RescueCredentialPersistence:
+        alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRescueCredentialPersistence
+    App\NickServ\Application\Port\Out\RegistrationModeQuery:
+        alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
+    App\NickServ\Application\Port\Out\RegistrationPolicyRepository:
+        alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository
+    App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandlerInterface:
+        alias: App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandler
+    App\NickServ\Adapter\In\Irc\Command\RegmodeCommand:
+        tags: ['nickserv.command']
 
     App\NickServ\Application\Port\Out\PasswordHasher:
         alias: App\NickServ\Adapter\Out\Security\PhpPasswordHasher
@@ -1285,8 +1309,6 @@ services:
 
     App\ChanServ\Application\UseCase\TransferFounder\TransferChannelFounderHandler:
         arguments:
-            $founderTokenTtlSeconds: '%chanserv.founder_token_ttl_seconds%'
-            $founderMinIntervalSeconds: '%chanserv.founder_min_interval_seconds%'
             $maxChannelsPerNick: '%chanserv.max_channels_per_nick%'
 
     # Commands
@@ -1611,6 +1633,7 @@ services:
     App\NickServ\Application\UseCase\Resend\ResendVerificationHandler:
         arguments:
             $resendMinIntervalSeconds: '%nickserv.resend_min_interval%'
+            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
 
     App\NickServ\Adapter\In\Irc\Command\ResendCommand:
         tags: ['nickserv.command']
@@ -1619,6 +1642,7 @@ services:
         arguments:
             $recoverTokenTtlSeconds: '%nickserv.recover_token_ttl_seconds%'
             $recoverMinIntervalSeconds: '%nickserv.recover_min_interval_seconds%'
+
 
     App\NickServ\Adapter\In\Irc\Command\RecoverCommand:
         tags: ['nickserv.command']
@@ -1948,6 +1972,9 @@ services:
 
 
     # --- In-memory pruners (tagged for PruneMemoryRegistriesTask) -----------------
+    App\NickServ\Adapter\In\Maintenance\Pruner\RescueSecurityPruner:
+        tags: ['maintenance.prunable']
+
     App\NickServ\Adapter\In\Maintenance\Pruner\IdentifyFailedAttemptPruner:
         arguments:
             $windowSeconds: '%nickserv.identify_failed_window_seconds%'

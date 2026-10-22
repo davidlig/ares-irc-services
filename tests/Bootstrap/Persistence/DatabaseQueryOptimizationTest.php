@@ -51,6 +51,9 @@ final class DatabaseQueryOptimizationTest extends TestCase
 
     private bool $createdSqliteStatistics = false;
 
+    /** @var array<string, list<string>> Original columns whose data migrations must preserve. */
+    private array $snapshotColumns = [];
+
     protected function setUp(): void
     {
         $config = new Configuration();
@@ -179,9 +182,13 @@ final class DatabaseQueryOptimizationTest extends TestCase
     {
         $result = [];
         foreach (['registered_nicks', 'registered_channels'] as $table) {
-            $columns = array_keys($this->connection->createSchemaManager()->listTableColumns($table));
-            $columns = array_values(array_diff($columns, ['list_search_key']));
-            sort($columns);
+            if (!isset($this->snapshotColumns[$table])) {
+                $columns = array_keys($this->connection->createSchemaManager()->listTableColumns($table));
+                $columns = array_values(array_diff($columns, ['list_search_key']));
+                sort($columns);
+                $this->snapshotColumns[$table] = $columns;
+            }
+            $columns = $this->snapshotColumns[$table];
             $sql = 'SELECT ' . implode(', ', $columns) . ' FROM ' . $table . ' ORDER BY id';
             $digest = hash_init('sha256');
             foreach ($this->connection->iterateAssociative($sql) as $row) {

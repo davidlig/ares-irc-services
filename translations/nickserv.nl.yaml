@@ -22,12 +22,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  syntax:           "REGISTER <wachtwoord> <e-mail>"
+  token_unavailable: "De registratie is in behandeling, maar het token kon niet worden verstrekt.\nWacht tot deze registratie verloopt voordat je opnieuw registreert."
+  syntax: "REGISTER <password> [email]"
   short:            "Registreer uw bijnaam bij de services."
-  help:             "Start de registratie van uw huidige bijnaam. Er wordt een verificatietoken\nnaar het opgegeven e-mailadres gestuurd. Voltooi de registratie\ndoor \x0303/msg %bot% VERIFY <token>\x03 uit te voeren. De token verloopt binnen 1 uur.\nAls deze niet aankomt, controleer uw spammap of gebruik \x0303RESEND\x03."
+  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nNa bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging."
   pending:          "\x0307→\x03 Er is een verificatietoken verzonden naar \x02%email%\x02.\n  Voer \x0303/msg %bot% VERIFY <token>\x03 uit om de registratie te voltooien.\n  Niet ontvangen? Controleer spam of gebruik \x0303/msg %bot% RESEND\x03\n  De token verloopt over \x021 uur\x02."
   already_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is al geregistreerd."
-  already_pending:  "\x0304✗\x03 Bijnaam \x02%nickname%\x02 heeft al een lopende verificatie.\n  Gebruik \x0303/msg %bot% VERIFY <token>\x03 of \x0303/msg %bot% RESEND\x03."
+  already_pending: "De registratie van %nickname% is in behandeling. Gebruik VERIFY <token>. RESEND is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
   forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden geregistreerd op dit netwerk."
   pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat op het punt verwijderd te worden en kan niet worden geregistreerd."
   invalid_email:    "\x0304✗\x03 Het opgegeven e-mailadres is niet geldig."
@@ -38,35 +39,38 @@ register:
 # --- VERIFY -----------------------------------------------------------------
 verify:
   syntax:           "VERIFY <token>"
-  short:            "Bevestig uw e-mailadres en activeer uw bijnaam."
-  help:             "Voltooit de registratie door de token te verifiëren die naar uw e-mail is verzonden.\nDe token is 1 uur geldig vanaf het moment van registratie."
+  short: "Bevestigt een registratie of hersteltoken."
+  help: "Na bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging."
   success:          "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is succesvol geregistreerd en u bent nu geïdentificeerd."
   success_native:   "\x0303✔\x03 De bijnaam \x02%nickname%\x02 is succesvol geregistreerd. Gebruik de hieronder weergegeven native authenticatie."
-  invalid_token:    "\x0304✗\x03 De token is ongeldig of verlopen. Gebruik \x0303/msg %bot% REGISTER\x03 om opnieuw te beginnen."
+  invalid_token: "Het hersteltoken is ongeldig."
   no_pending:       "\x0304✗\x03 U heeft geen lopende registratie om te verifiëren."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
+  disabled: "RESEND is uitgeschakeld zolang REGMODE TOKEN is."
   syntax:           "RESEND"
   short:            "Verstuur de verificatietoken opnieuw naar uw e-mail."
-  help:             "Verstuurt de verificatietoken opnieuw naar het e-mailadres dat is opgegeven tijdens\nde registratie. Werkt alleen als u een lopende registratie heeft."
+  help: "RESEND is uitgeschakeld zolang REGMODE TOKEN is.\nNa bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging.\nIn EMAIL-modus vernieuwt RESEND de geldigheid van het token en de wachtende registratie voor één uur."
   success:          "\x0307→\x03 Verificatietoken opnieuw verzonden naar \x02%email%\x02."
   no_pending:       "\x0304✗\x03 U heeft geen lopende registratie om een token voor opnieuw te verzenden."
   throttled:        "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een nieuwe verificatie-e-mail aanvraagt."
 
 # --- RECOVER -----------------------------------------------------------------
 recover:
+  no_email: "\u000304✗\u0003 Er is geen e-mail ingesteld voor bijnaam \u0002%nickname%\u0002. Herstel is niet beschikbaar."
+  email_sent: "\u000307→\u0003 Er is een hersteltoken verzonden naar \u0002%email_hint%\u0002. Controleer uw inbox (en spammap)."
+  pending_deletion: "Bijnaam %nickname% staat klaar voor verwijdering en kan niet worden hersteld."
+  instructions: "EMAIL: RECOVER %nickname% vraagt een voorlopig token per e-mail aan. TOKEN: geef je bevestigde token op. RECOVER %nickname% <token> accepteert een geldig e-mailtoken of bevestigd token. Het e-mailtoken vervangt het opgeslagen token pas na validatie. Het opgeslagen token biedt een optionele vervanging via VERIFY; negeer het bericht om het te behouden."
   syntax:           "RECOVER <bijnaam> [token]"
   short:            "Herstel uw bijnaam als u uw wachtwoord bent kwijtgeraakt."
-  help:             "Herstelt de toegang tot een geregistreerde bijnaam wanneer u uw wachtwoord bent vergeten.\n1) \x0303RECOVER <bijnaam>\x03 — er wordt een token naar de e-mail van de bijnaam gestuurd.\n2) \x0303RECOVER <bijnaam> <token>\x03 — voer de token uit de e-mail in om uw wachtwoord te resetten.\nU ontvangt dan een tijdelijk wachtwoord en het commando om het te wijzigen."
-  email_sent:       "\x0307→\x03 Er is een hersteltoken verzonden naar \x02%email_hint%\x02. Controleer uw inbox (en spammap)."
+  help: "EMAIL: RECOVER <nickname> vraagt een voorlopig token per e-mail aan. TOKEN: geef je bevestigde token op. RECOVER <nickname> <token> accepteert een geldig e-mailtoken of bevestigd token. Het e-mailtoken vervangt het opgeslagen token pas na validatie. Het opgeslagen token biedt een optionele vervanging via VERIFY; negeer het bericht om het te behouden."
   not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
-  pending:          "\x0304✗\x03 Bijnaam \x02%nickname%\x02 wacht op e-mailverificatie."
+  pending: "De registratie van %nickname% is in behandeling. Gebruik VERIFY <token>. RESEND is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
   suspended:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Reden: %reason%"
   forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden gebruikt op dit netwerk."
-  no_email:         "\x0304✗\x03 Er is geen e-mail ingesteld voor bijnaam \x02%nickname%\x02. Herstel is niet beschikbaar."
-  throttled:        "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een nieuwe herstel-e-mail aanvraagt."
-  invalid_token:    "\x0304✗\x03 De token is ongeldig of verlopen. Vraag een nieuwe aan met \x0303RECOVER %nickname%\x03."
+  throttled: "Te veel ongeldige tokens. Probeer het over %minutes% minuten opnieuw."
+  invalid_token: "Het hersteltoken is ongeldig."
   success_identify: "\x0303✔\x03 Wachtwoord gereset. Identificeer nu: \x0303%identify_cmd%\x03"
   success_then_change: "Wijzig daarna uw wachtwoord: \x0303/msg %bot% SET PASSWORD <nieuw_wachtwoord>\x03"
 
@@ -164,9 +168,10 @@ set:
     success:        "\x0303✔\x03 Uw wachtwoord is succesvol bijgewerkt."
 
   email:
-    syntax:         "SET EMAIL <nieuwe_e-mail> [token]"
+    token_required: "Gebruik SET EMAIL <email> <token> met je bevestigde hersteltoken."
+    syntax: "SET EMAIL <email> <token>"
     short:          "Wijzig het e-mailadres dat aan uw bijnaam is gekoppeld (tweestapsbevestiging)."
-    help:           "E-mailwijziging in twee stappen voor veiligheid.\n1) \x0303SET EMAIL <nieuwe_e-mail>\x03 — er wordt een token naar uw huidige e-mail gestuurd.\n2) \x0303SET EMAIL <nieuwe_e-mail> <token>\x03 — bevestig met de ontvangen token.\nDe token verloopt binnen 1 uur."
+    help: "SET EMAIL wijzigt het contactadres na validatie van je hersteltoken, zonder het te verbruiken. Formaat en uniciteit worden gecontroleerd; er wordt geen bevestigingsmail verstuurd."
     success:        "\x0303✔\x03 Uw e-mail is bijgewerkt naar \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Er is een bevestigingstoken verzonden naar \x02%current_email%\x02.\n  Om de wijziging naar \x02%new_email%\x02 te bevestigen, voer uit:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  De token verloopt binnen 1 uur."
     invalid_token:  "\x0304✗\x03 De token is ongeldig of verlopen. Vraag een nieuwe aan met \x0303SET EMAIL <nieuwe_e-mail>\x03."
@@ -680,3 +685,24 @@ debug:
   action_with_value: "%operator% voert commando %command% uit op %target%. Optie: %option%=%value%. %reason%"
   action_duration: "%operator% voert commando %command% uit op %target%. Duur: %duration%. %reason%"
   prefix_reason: "Reden: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "De registratiemodus van het netwerk beheren."
+  help: "Stelt EMAIL of TOKEN in als registratiebeleid voor nieuwe accounts. STATUS toont het huidige beleid zonder wijzigingen. Openstaande accounts behouden hun oorspronkelijke registratiemodus. In TOKEN-modus is RESEND wereldwijd uitgeschakeld. Vereist de machtiging nickserv.regmode."
+  status: "Huidige registratiemodus: %mode%."
+  changed: "Registratiemodus gewijzigd naar %mode%."
+
+# --- Unified rescue credential -----------------------------------------------
+rescue:
+  issued: "Hersteltoken: %token%.\nBevestig met /msg %bot% VERIFY %token%.\nBewaar het veilig.\nAlleen het nieuwste token is geldig;\nna bevestiging wordt het niet meer getoond."
+  confirmed: "Je hersteltoken is bevestigd. Bewaar het veilig."
+  unavailable: "Authenticeer je en bevestig je hersteltoken met VERIFY voordat je deze bewerking gebruikt."
+  locked_out: "Te veel ongeldige tokens. Probeer het over %seconds% seconden opnieuw."
+  throttled: "Te veel ongeldige tokens. Probeer het over %minutes% minuten opnieuw."
+  replaced: "Je hersteltoken is vervangen door het zojuist bevestigde token uit de e-mail. Bewaar het veilig."
+
+  optional_replacement: "Optioneel nieuw hersteltoken: %token%.\nGebruik /msg %bot% VERIFY %token% om het huidige te vervangen.\nJe huidige token blijft geldig tot bevestiging.\nWil je het niet wijzigen, negeer dan dit bericht."
+  replacement_unavailable: "Je wachtwoord is hersteld, maar een nieuw token kon niet worden uitgegeven. Je huidige token blijft geldig."
+  temporarily_unavailable: "De uitgifte van hersteltokens is tijdelijk niet beschikbaar. Probeer het later opnieuw."

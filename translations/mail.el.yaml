@@ -15,6 +15,9 @@ register_verification_body: |
 
   Το token λήγει σε 1 ώρα. Αν δεν ζητήσατε εσείς αυτό, παρακαλώ αγνοήστε αυτό το email.
 
+  Μετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η λήξη μίας ώρας ισχύει μόνο πριν την επικύρωση.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — same as register, resend of token
 resend_verification_subject: "%bot%: το token επαλήθευσής σας (επανάληψη αποστολής)"
 resend_verification_body: |
@@ -28,6 +31,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   Το token λήγει σε 1 ώρα. Αν δεν ζητήσατε εσείς αυτό, παρακαλώ αγνοήστε αυτό το email.
+
+  Μετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η λήξη μίας ώρας ισχύει μόνο πριν την επικύρωση.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — confirmation token sent to current email
 email_change_token_subject: "%bot%: επιβεβαιώστε τη νέα σας διεύθυνση email"
@@ -56,6 +62,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   Το token λήγει σε 1 ώρα. Αν δεν ζητήσατε εσείς αυτό, παρακαλώ αγνοήστε αυτό το email.
+
+  Μετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η λήξη μίας ώρας ισχύει μόνο πριν την επικύρωση.
 
 # ChanServ SET FOUNDER — founder change token
 founder_change_token_subject: "%bot%: token αλλαγής ιδρυτή για %channel%"

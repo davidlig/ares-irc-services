@@ -7,8 +7,10 @@ namespace App\Tests\NickServ\Application\UseCase\SyncNetworkIdentification;
 use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
 use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
 use App\NickServ\Application\Model\NetworkUser;
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Port\Out\GuestNicknameGenerator;
 use App\NickServ\Application\Port\Out\NickChangeIdentificationPolicy;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
 use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
 use App\NickServ\Application\Port\Out\NickProtectionNotifier;
@@ -20,6 +22,7 @@ use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
 use App\NickServ\Application\Service\BurstState;
 use App\NickServ\Application\Service\ForbiddenNickService;
 use App\NickServ\Application\Service\NickProtectionService;
+use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentification;
 use App\NickServ\Application\UseCase\SyncNetworkIdentification\SyncNetworkIdentificationHandler;
 use App\NickServ\Domain\Entity\RegisteredNick;
@@ -176,6 +179,8 @@ final class SyncNetworkIdentificationHandlerTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickChangeIdentificationPolicy::class),
             $this->guestNicknameGenerator(),
+            $this->createStub(IssueMigrationRescueTokenHandlerInterface::class),
+            $this->authenticationModeQuery(),
         );
 
         return new SyncNetworkIdentificationHandler(
@@ -211,5 +216,13 @@ final class SyncNetworkIdentificationHandlerTest extends TestCase
         $generator->method('generate')->willReturn('Guest-ABC1234');
 
         return $generator;
+    }
+
+    private function authenticationModeQuery(): NicknameAuthenticationModeQuery
+    {
+        $query = $this->createStub(NicknameAuthenticationModeQuery::class);
+        $query->method('current')->willReturn(NicknameAuthenticationMode::ServiceCommand);
+
+        return $query;
     }
 }

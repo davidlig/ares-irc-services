@@ -13,11 +13,10 @@ enum TransferFounderOutcome: string
     case SameFounder = 'same_founder';
     case TargetIsSuccessor = 'target_is_successor';
     case ChannelLimitReached = 'channel_limit_reached';
-    case CurrentFounderWithoutEmail = 'current_founder_without_email';
+    case TokenRequired = 'token_required';
+    case CredentialUnavailable = 'credential_unavailable';
     case Throttled = 'throttled';
-    case TokenSent = 'token_sent';
     case InvalidToken = 'invalid_token';
     case Updated = 'updated';
     case Ignored = 'ignored';
-    case MailDeliveryFailed = 'mail_delivery_failed';
 }

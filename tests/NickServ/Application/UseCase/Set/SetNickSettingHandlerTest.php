@@ -6,8 +6,11 @@ namespace App\Tests\NickServ\Application\UseCase\Set;
 
 use App\NickServ\Application\Model\NetworkUser;
 use App\NickServ\Application\Model\NickOperationActor;
+use App\NickServ\Application\Port\In\RescueTokenValidation;
+use App\NickServ\Application\Port\In\RescueTokenValidationOutcome;
+use App\NickServ\Application\Port\In\RescueTokenValidationResult;
+use App\NickServ\Application\Port\In\RescueTokenValidator;
 use App\NickServ\Application\Port\Out\Clock;
-use App\NickServ\Application\Port\Out\EmailChangeMailSender;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
@@ -15,10 +18,8 @@ use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
 use App\NickServ\Application\Port\Out\NickProtectionExemption;
 use App\NickServ\Application\Port\Out\NickServEventPublisher;
 use App\NickServ\Application\Port\Out\PasswordHasher;
-use App\NickServ\Application\Port\Out\PendingEmailChangeStore;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\SessionLanguageTracker;
-use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Application\Service\NickTargetValidator;
 use App\NickServ\Application\Service\VhostDisplayResolver;
 use App\NickServ\Application\Service\VhostValidator;
@@ -35,7 +36,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use RuntimeException;
 
 #[CoversClass(SetNickSettingHandler::class)]
 #[CoversClass(SetNickSetting::class)]
@@ -127,72 +127,59 @@ final class SetNickSettingHandlerTest extends TestCase
             $this->input(SetNickSettingOption::Email, 'other@example.com', true),
         )->outcome);
         self::assertSame(SetNickSettingOutcome::EmailAlreadyUsed, $handler->handle(
-            $this->input(SetNickSettingOption::Email, 'other@example.com'),
+            $this->input(SetNickSettingOption::Email, 'other@example.com token'),
         )->outcome);
     }
 
     #[Test]
-    public function changesEmailDirectlyAndRejectsAccountWithoutCurrentEmail(): void
+    public function operatorEmailChangeAllowsAnAbsentCurrentAddressWithoutToken(): void
     {
         $account = $this->account();
-        $repository = $this->repositoryReturning($account);
-        $repository->method('findByEmail')->willReturn(null);
-        $result = $this->handler($repository)->handle($this->input(SetNickSettingOption::Email, 'new@example.com', true));
-
+        new ReflectionClass(RegisteredNick::class)->getProperty('email')->setValue($account, null);
+        $validator = $this->createMock(RescueTokenValidator::class);
+        $validator->expects(self::never())->method('validate');
+        $result = $this->handler($this->repositoryReturning($account), validator: $validator)->handle($this->input(SetNickSettingOption::Email, 'new@example.com', true));
         self::assertSame(SetNickSettingOutcome::Changed, $result->outcome);
         self::assertSame('new@example.com', $account->getEmail());
-
-        $withoutEmail = $this->account('NoMail', 3);
-        new ReflectionClass(RegisteredNick::class)->getProperty('email')->setValue($withoutEmail, null);
-        self::assertSame(SetNickSettingOutcome::NoCurrentEmail, $this->handler(
-            $this->repositoryReturning($withoutEmail),
-        )->handle($this->input(SetNickSettingOption::Email, 'new@example.com'))->outcome);
     }
 
     #[Test]
-    public function requestsAndConfirmsEmailChange(): void
+    public function ownerEmailRequiresConfirmedReusableRescueCredentialWithoutEmail(): void
     {
         $account = $this->account();
+        new ReflectionClass(RegisteredNick::class)->getProperty('email')->setValue($account, null);
         $repository = $this->repositoryReturning($account);
-        $repository->method('findByEmail')->willReturn(null);
-        $pending = $this->createMock(PendingEmailChangeStore::class);
-        $pending->expects(self::once())->method('store')->with('TestNick', 'new@example.com', 'TOKEN', self::isInstanceOf(DateTimeImmutable::class));
-        $tokens = $this->createStub(VerificationTokenGenerator::class);
-        $tokens->method('generate')->willReturn('TOKEN');
-        $mailer = $this->createMock(EmailChangeMailSender::class);
-        $mailer->expects(self::once())->method('sendVerification');
-        $handler = $this->handler($repository, pending: $pending, tokens: $tokens, mailer: $mailer);
-
-        $requested = $handler->handle($this->input(SetNickSettingOption::Email, 'new@example.com'));
-        self::assertSame(SetNickSettingOutcome::EmailConfirmationSent, $requested->outcome);
-
-        $consume = $this->createStub(PendingEmailChangeStore::class);
-        $consume->method('consume')->willReturnOnConsecutiveCalls(false, true);
-        $confirmationHandler = $this->handler($repository, pending: $consume);
-        self::assertSame(SetNickSettingOutcome::InvalidEmailToken, $confirmationHandler->handle(
-            $this->input(SetNickSettingOption::Email, 'new@example.com WRONG'),
-        )->outcome);
-        self::assertSame(SetNickSettingOutcome::Changed, $confirmationHandler->handle(
-            $this->input(SetNickSettingOption::Email, 'new@example.com RIGHT'),
-        )->outcome);
+        $validator = $this->createMock(RescueTokenValidator::class);
+        $validator->expects(self::exactly(2))->method('validate')->with(self::callback(static fn (RescueTokenValidation $input): bool => 1 === $input->accountId && 'RIGHT' === $input->token && 'ip:client' === $input->clientKey))->willReturn(new RescueTokenValidationResult(RescueTokenValidationOutcome::Valid));
+        $events = $this->createMock(NickServEventPublisher::class);
+        $events->expects(self::exactly(2))->method('publish');
+        $handler = $this->handler($repository, events: $events, validator: $validator);
+        self::assertSame(SetNickSettingOutcome::TokenRequired, $handler->handle($this->input(SetNickSettingOption::Email, 'new@example.com'))->outcome);
+        self::assertSame(SetNickSettingOutcome::Changed, $handler->handle($this->input(SetNickSettingOption::Email, 'new@example.com RIGHT'))->outcome);
+        self::assertSame('new@example.com', $account->getEmail());
+        self::assertSame(SetNickSettingOutcome::Changed, $handler->handle($this->input(SetNickSettingOption::Email, 'again@example.com RIGHT'))->outcome);
+        self::assertSame('again@example.com', $account->getEmail());
     }
 
     #[Test]
-    public function reportsEmailDeliveryFailure(): void
+    public function emailCredentialFailuresDoNotMutateAccountOrPublish(): void
     {
-        $account = $this->account();
-        $repository = $this->repositoryReturning($account);
-        $repository->method('findByEmail')->willReturn(null);
-        $tokens = $this->createStub(VerificationTokenGenerator::class);
-        $tokens->method('generate')->willReturn('TOKEN');
-        $mailer = $this->createStub(EmailChangeMailSender::class);
-        $mailer->method('sendVerification')->willThrowException(new RuntimeException('mail failed'));
-
-        self::assertSame(SetNickSettingOutcome::MailDeliveryFailed, $this->handler(
-            $repository,
-            tokens: $tokens,
-            mailer: $mailer,
-        )->handle($this->input(SetNickSettingOption::Email, 'new@example.com'))->outcome);
+        foreach ([[RescueTokenValidationOutcome::Invalid, SetNickSettingOutcome::InvalidEmailToken], [RescueTokenValidationOutcome::Unavailable, SetNickSettingOutcome::CredentialUnavailable], [RescueTokenValidationOutcome::Throttled, SetNickSettingOutcome::TokenThrottled]] as [$validation, $expected]) {
+            $account = $this->account();
+            $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
+            $repository->method('findByNick')->willReturn($account);
+            $repository->expects(self::never())->method('save');
+            $validator = $this->createStub(RescueTokenValidator::class);
+            $validator->method('validate')->willReturn(new RescueTokenValidationResult($validation, 123));
+            $events = $this->createMock(NickServEventPublisher::class);
+            $events->expects(self::never())->method('publish');
+            $result = $this->handler($repository, events: $events, validator: $validator)->handle($this->input(SetNickSettingOption::Email, 'new@example.com WRONG'));
+            self::assertSame($expected, $result->outcome);
+            self::assertSame('testnick@example.com', $account->getEmail());
+            if (RescueTokenValidationOutcome::Throttled === $validation) {
+                self::assertSame(123, $result->retryAfterSeconds);
+            }
+        }
     }
 
     #[Test]
@@ -312,9 +299,7 @@ final class SetNickSettingHandlerTest extends TestCase
         ?NickProtectionExemption $exemption = null,
         ?PasswordHasher $hasher = null,
         ?NickServEventPublisher $events = null,
-        ?PendingEmailChangeStore $pending = null,
-        ?VerificationTokenGenerator $tokens = null,
-        ?EmailChangeMailSender $mailer = null,
+        ?RescueTokenValidator $validator = null,
         ?SessionLanguageTracker $languages = null,
         ?NickNetworkUserLookup $lookup = null,
         ?NickNetworkActions $network = null,
@@ -331,9 +316,7 @@ final class SetNickSettingHandlerTest extends TestCase
             $hasher ?? $this->createStub(PasswordHasher::class),
             $events ?? $this->createStub(NickServEventPublisher::class),
             $clock,
-            $pending ?? $this->createStub(PendingEmailChangeStore::class),
-            $tokens ?? $this->createStub(VerificationTokenGenerator::class),
-            $mailer ?? $this->createStub(EmailChangeMailSender::class),
+            $validator ?? $this->createStub(RescueTokenValidator::class),
             $languages ?? $this->createStub(SessionLanguageTracker::class),
             new VhostValidator(),
             $display ?? new VhostDisplayResolver(''),
@@ -353,6 +336,7 @@ final class SetNickSettingHandlerTest extends TestCase
             $value,
             $operator,
             'en',
+            clientKey: 'ip:client',
         );
     }
 

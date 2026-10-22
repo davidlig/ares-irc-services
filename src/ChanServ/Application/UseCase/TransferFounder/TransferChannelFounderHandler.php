@@ -4,23 +4,17 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\TransferFounder;
 
-use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
-use App\ChanServ\Application\Port\Out\FounderChangeMailSender;
-use App\ChanServ\Application\Port\Out\FounderChangeTokenGenerator;
-use App\ChanServ\Application\Port\Out\FounderChangeTokenPort;
+use App\ChanServ\Application\Port\Out\FounderRescueTokenValidator;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelFounderChangedEvent;
 use App\ChanServ\Domain\Policy\FounderTransferPolicy;
 use App\ChanServ\Domain\ValueObject\FounderTransferDecision;
-use App\Shared\Application\EmailHintMasker;
 use LogicException;
-use Throwable;
 
 use function count;
-use function sprintf;
 use function trim;
 
 final readonly class TransferChannelFounderHandler implements TransferChannelFounderHandlerInterface
@@ -29,13 +23,9 @@ final readonly class TransferChannelFounderHandler implements TransferChannelFou
         private RegisteredChannelRepositoryInterface $channels,
         private ChannelAccessRepositoryInterface $access,
         private ChanUserAccountPort $accounts,
-        private FounderChangeTokenPort $tokens,
+        private FounderRescueTokenValidator $tokens,
         private ChanServEventPublisher $events,
-        private FounderChangeTokenGenerator $tokenGenerator,
-        private FounderChangeMailSender $mailSender,
         private FounderTransferPolicy $policy,
-        private int $founderTokenTtlSeconds = 3600,
-        private int $founderMinIntervalSeconds = 600,
         private int $maxChannelsPerNick = 3,
     ) {}
 
@@ -74,80 +64,24 @@ final readonly class TransferChannelFounderHandler implements TransferChannelFou
             return $this->transfer($command, $target->id, true);
         }
 
-        return $this->handleTokenFlow($command, $target, $targetNickname);
-    }
-
-    private function handleTokenFlow(
-        TransferChannelFounder $command,
-        ChanAccountView $target,
-        string $targetNickname,
-    ): TransferChannelFounderResult {
-        $currentFounder = $this->accounts->findAccountById($command->channel->getFounderNickId());
-        $founderEmail = $currentFounder?->email;
-        if (null === $founderEmail || '' === $founderEmail) {
-            return new TransferChannelFounderResult(TransferFounderOutcome::CurrentFounderWithoutEmail);
+        if (null === $command->actor) {
+            return new TransferChannelFounderResult(TransferFounderOutcome::Ignored);
         }
-
         if (null === $command->token || '' === $command->token) {
-            return $this->requestToken($command, $target, $targetNickname, $founderEmail);
+            return new TransferChannelFounderResult(TransferFounderOutcome::TokenRequired);
         }
-
-        return $this->consumeToken($command);
-    }
-
-    private function requestToken(
-        TransferChannelFounder $command,
-        ChanAccountView $target,
-        string $targetNickname,
-        string $founderEmail,
-    ): TransferChannelFounderResult {
-        $channelId = $command->channel->getId();
-        $lastAt = $this->tokens->getLastRequestAt($channelId);
-        if (null !== $lastAt && 0 < $this->founderMinIntervalSeconds) {
-            $nextAllowed = $lastAt->modify(sprintf('+%d seconds', $this->founderMinIntervalSeconds));
-            if ($command->requestedAt < $nextAllowed) {
-                return new TransferChannelFounderResult(TransferFounderOutcome::Throttled);
-            }
+        $validation = $this->tokens->validate($command->channel->getFounderNickId(), $command->token, $command->actor->clientKey);
+        if (FounderRescueTokenOutcome::Throttled === $validation->outcome) {
+            return new TransferChannelFounderResult(TransferFounderOutcome::Throttled, retryAfterSeconds: $validation->retryAfterSeconds);
         }
-
-        $token = $this->tokenGenerator->generate();
-        $expiresAt = $command->requestedAt->modify(sprintf('+%d seconds', $this->founderTokenTtlSeconds));
-        $this->tokens->store($channelId, $target->id, $token, $expiresAt);
-        $this->tokens->recordRequest($channelId);
-
-        try {
-            $this->mailSender->sendFounderChangeToken(
-                $founderEmail,
-                $command->channel->getName(),
-                $targetNickname,
-                $token,
-                $command->serviceNickname,
-                $command->locale,
-            );
-        } catch (Throwable) {
-            return new TransferChannelFounderResult(TransferFounderOutcome::MailDeliveryFailed);
+        if (FounderRescueTokenOutcome::Unavailable === $validation->outcome) {
+            return new TransferChannelFounderResult(TransferFounderOutcome::CredentialUnavailable);
         }
-
-        return new TransferChannelFounderResult(
-            TransferFounderOutcome::TokenSent,
-            emailHint: EmailHintMasker::mask($founderEmail),
-        );
-    }
-
-    private function consumeToken(TransferChannelFounder $command): TransferChannelFounderResult
-    {
-        $newFounderNickId = $this->tokens->consume($command->channel->getId(), $command->token ?? '');
-        if (null === $newFounderNickId) {
+        if (FounderRescueTokenOutcome::Valid !== $validation->outcome) {
             return new TransferChannelFounderResult(TransferFounderOutcome::InvalidToken);
         }
-        if ($command->channel->getFounderNickId() === $newFounderNickId) {
-            return new TransferChannelFounderResult(TransferFounderOutcome::SameFounder);
-        }
-        if ($command->channel->getSuccessorNickId() === $newFounderNickId) {
-            return new TransferChannelFounderResult(TransferFounderOutcome::TargetIsSuccessor);
-        }
 
-        return $this->transfer($command, $newFounderNickId, false);
+        return $this->transfer($command, $target->id, false);
     }
 
     private function transfer(

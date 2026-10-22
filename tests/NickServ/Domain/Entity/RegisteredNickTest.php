@@ -734,4 +734,73 @@ final class RegisteredNickTest extends TestCase
 
         $nick->restoreFromPendingDeletion();
     }
+
+    #[Test]
+    public function rescueHashIsNullableValidatedAndOwnedByEligibleAccounts(): void
+    {
+        $nick = RegisteredNick::createPending('Rescue', 'password', 'r@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        self::assertNull($nick->getRescueTokenHash());
+        $nick->replaceRescueTokenHash(str_repeat('a', 64));
+        self::assertSame(str_repeat('a', 64), $nick->getRescueTokenHash());
+        $nick->activate();
+        $nick->replaceRescueTokenHash(str_repeat('b', 64));
+        self::assertSame(str_repeat('b', 64), $nick->getRescueTokenHash());
+        $this->expectException(InvalidArgumentException::class);
+        $nick->replaceRescueTokenHash('plaintext');
+    }
+
+    #[Test]
+    public function forbiddenAccountsCannotOwnRescueCredentials(): void
+    {
+        $nick = RegisteredNick::createForbidden('Forbidden', 'reason');
+        $this->expectException(LogicException::class);
+        $nick->replaceRescueTokenHash(str_repeat('a', 64));
+    }
+
+    #[Test]
+    public function pendingAccountCanOmitEmailWithoutPersistingDeliveryMode(): void
+    {
+        $nick = RegisteredNick::createPending('Alice', 'hash', null, 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
+        self::assertNull($nick->getEmail());
+        self::assertFalse(new ReflectionClass($nick)->hasProperty('registrationMode'));
+    }
+
+    #[Test]
+    public function pendingDeadlineRenewalPreservesIdentityAndCredential(): void
+    {
+        $now = new DateTimeImmutable('2026-10-22T12:59:00Z');
+        $nick = RegisteredNick::createPending('Renew', 'hash', 'a@example.com', 'en', $now->modify('+60 seconds'), $now->modify('-59 minutes'));
+        $nick->renewPendingRegistration($now, $now->modify('+1 hour'));
+        self::assertSame($now->modify('+1 hour')->format('c'), $nick->getExpiresAt()?->format('c'));
+        self::assertTrue($nick->isPending());
+        self::assertNull($nick->getRescueTokenHash());
+        self::assertSame('hash', $nick->getPasswordHash());
+    }
+
+    #[Test]
+    public function renewalCannotReviveExpiredOrActiveAccounts(): void
+    {
+        $now = new DateTimeImmutable('2026-10-22T12:59:00Z');
+        foreach ([false, true] as $active) {
+            $nick = RegisteredNick::createPending('Renew', 'hash', 'a@example.com', 'en', $now, $now->modify('-1 hour'));
+            if ($active) {
+                $nick->activate();
+            }
+            try {
+                $nick->renewPendingRegistration($now, $now->modify('+1 hour'));
+                self::fail('An expired or active registration cannot be renewed.');
+            } catch (LogicException) {
+                self::assertSame($active, $nick->isRegistered());
+            }
+        }
+    }
+
+    #[Test]
+    public function renewalRequiresFutureDeadline(): void
+    {
+        $now = new DateTimeImmutable('2026-10-22T12:59:00Z');
+        $nick = RegisteredNick::createPending('Renew', 'hash', 'a@example.com', 'en', $now->modify('+1 minute'), $now);
+        $this->expectException(InvalidArgumentException::class);
+        $nick->renewPendingRegistration($now, $now);
+    }
 }

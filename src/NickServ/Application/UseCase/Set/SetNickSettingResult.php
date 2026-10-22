@@ -13,5 +13,6 @@ final readonly class SetNickSettingResult
         public ?string $value = null,
         public ?string $currentEmail = null,
         public ?string $newEmail = null,
+        public int $retryAfterSeconds = 0,
     ) {}
 }

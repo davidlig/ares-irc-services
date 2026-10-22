@@ -14,6 +14,8 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\NickServ\Application\Service\VhostDisplayResolver;
+use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
+use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 
 use function strcasecmp;
 
@@ -28,6 +30,7 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
         private ForcedVhostCheckerInterface $forcedVhostChecker,
         private PasswordHasher $passwordHasher,
         private Clock $clock,
+        private IssueMigrationRescueTokenHandlerInterface $migrationTokens,
         private int $identifyMaxFailedAttempts,
         private int $identifyFailedWindowSeconds,
         private int $identifyLockoutSeconds,
@@ -36,12 +39,13 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
     public function handle(IdentifyNick $command): IdentifyNickResult
     {
         $alreadyTrackedNick = $this->identifiedRegistry->findNick($command->senderUid);
-        if (null !== $alreadyTrackedNick && 0 === strcasecmp($alreadyTrackedNick, $command->nickname)) {
-            return IdentifyNickResult::alreadyIdentified($command->nickname);
-        }
-
-        if ($command->senderIsIdentified && 0 === strcasecmp($command->senderNick, $command->nickname)) {
-            $this->identifiedRegistry->register($command->senderUid, $command->nickname);
+        $alreadyIdentified = (null !== $alreadyTrackedNick && 0 === strcasecmp($alreadyTrackedNick, $command->nickname))
+            || ($command->senderIsIdentified && 0 === strcasecmp($command->senderNick, $command->nickname));
+        $account = $alreadyIdentified ? $this->nickRepository->findByNick($command->nickname) : null;
+        if ($alreadyIdentified && null !== $account && $account->isRegistered() && null !== $account->getRescueTokenHash()) {
+            if (null === $alreadyTrackedNick) {
+                $this->identifiedRegistry->register($command->senderUid, $command->nickname);
+            }
 
             return IdentifyNickResult::alreadyIdentified($command->nickname);
         }
@@ -59,7 +63,7 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
             return IdentifyNickResult::lockedOut($remaining);
         }
 
-        $account = $this->nickRepository->findByNick($command->nickname);
+        $account ??= $this->nickRepository->findByNick($command->nickname);
         if (null === $account) {
             return IdentifyNickResult::notRegistered($command->nickname);
         }
@@ -88,6 +92,12 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
         }
 
         $this->lockoutTracker->clearFailedAttempts($command->clientKey);
+        if ($alreadyIdentified) {
+            $this->identifiedRegistry->register($command->senderUid, $account->getNickname());
+            $this->migrationTokens->handle(new IssueMigrationRescueToken($account->getId(), $command->senderUid, $now));
+
+            return IdentifyNickResult::alreadyIdentified($command->nickname);
+        }
         $account->markSeen($now);
         $this->nickRepository->save($account);
         $this->identifiedRegistry->register($command->senderUid, $account->getNickname());
@@ -108,6 +118,8 @@ final readonly class IdentifyNickHandler implements IdentifyNickHandlerInterface
             $account->getNickname(),
             $account->getPasswordHash(),
         ));
+
+        $this->migrationTokens->handle(new IssueMigrationRescueToken($account->getId(), $command->senderUid, $now));
 
         return IdentifyNickResult::success(
             nickname: $account->getNickname(),

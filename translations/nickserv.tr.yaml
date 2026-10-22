@@ -22,12 +22,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  syntax:           "REGISTER <şifre> <e-posta>"
+  token_unavailable: "Kayıt beklemede ancak belirteç teslim edilemedi.\nYeniden kaydolmadan önce bu kaydın süresinin dolmasını bekleyin."
+  syntax: "REGISTER <password> [email]"
   short:            "Rumuzunuzu hizmetlere kaydedin."
-  help:             "Mevcut rumuzunuzun kaydını başlatır. Sağlanan e-posta adresine bir doğrulama tokenı\ngönderilecektir. Kaydı \x0303/msg %bot% VERIFY <token>\x03 komutunu çalıştırarak\ntamamlayın. Token 1 saat içinde sona erer.\nGelmezse, spam klasörünüzü kontrol edin veya \x0303RESEND\x03 kullanın."
+  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nDoğrulandıktan sonra bu, kalıcı kurtarma belirteciniz olur. Güvenli yerde saklayın: takma adınızı kurtarmak için kullanabilirsiniz. Bir saatlik süre yalnızca doğrulamadan önce geçerlidir."
   pending:          "\x0307→\x03 \x02%email%\x02 adresine bir doğrulama tokenı gönderildi.\n  Kaydı tamamlamak için \x0303/msg %bot% VERIFY <token>\x03 komutunu çalıştırın.\n  Almadınız mı? Spam'i kontrol edin veya \x0303/msg %bot% RESEND\x03 kullanın.\n  Token \x021 saat\x02 içinde sona erecek."
   already_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu zaten kayıtlı."
-  already_pending:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu için zaten bekleyen bir doğrulama var.\n  \x0303/msg %bot% VERIFY <token>\x03 veya \x0303/msg %bot% RESEND\x03 kullanın."
+  already_pending: "%nickname% kaydı beklemede. VERIFY <token> kullanın. RESEND yalnızca REGMODE EMAIL olduğunda ve geçerli e-posta adresi atandığında kullanılabilir."
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kaydedilemez."
   pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi bekliyor ve kaydedilemez."
   invalid_email:    "\x0304✗\x03 Sağlanan e-posta adresi geçerli değil."
@@ -38,35 +39,38 @@ register:
 # --- VERIFY -----------------------------------------------------------------
 verify:
   syntax:           "VERIFY <token>"
-  short:            "E-posta adresinizi onaylayın ve rumuzunuzu etkinleştirin."
-  help:             "E-postanıza gönderilen tokenı doğrulayarak kaydı tamamlar.\nToken, kayıt anından itibaren 1 saat geçerlidir."
+  short: "Kaydı veya kurtarma belirtecini onaylar."
+  help: "Doğrulandıktan sonra bu, kalıcı kurtarma belirteciniz olur. Güvenli yerde saklayın: takma adınızı kurtarmak için kullanabilirsiniz. Bir saatlik süre yalnızca doğrulamadan önce geçerlidir."
   success:          "\x0303✔\x03 \x02%nickname%\x02 rumuzu başarıyla kaydedildi ve artık kimliğiniz doğrulandı."
   success_native:   "\x0303✔\x03 \x02%nickname%\x02 rumuzu başarıyla kaydedildi. Aşağıda gösterilen yerel kimlik doğrulamayı kullanın."
-  invalid_token:    "\x0304✗\x03 Token geçersiz veya süresi dolmuş. Yeniden başlamak için \x0303/msg %bot% REGISTER\x03 kullanın."
+  invalid_token: "Kurtarma belirteci geçersiz."
   no_pending:       "\x0304✗\x03 Doğrulayacak bekleyen bir kaydınız yok."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
+  disabled: "REGMODE TOKEN olduğunda RESEND devre dışıdır."
   syntax:           "RESEND"
   short:            "Doğrulama tokenını e-postanıza yeniden gönderin."
-  help:             "Kayıt sırasında sağlanan e-posta adresine doğrulama tokenını yeniden gönderir.\nYalnızca bekleyen bir kaydınız varsa çalışır."
+  help: "REGMODE TOKEN olduğunda RESEND devre dışıdır.\nDoğrulandıktan sonra bu, kalıcı kurtarma belirteciniz olur. Güvenli yerde saklayın: takma adınızı kurtarmak için kullanabilirsiniz. Bir saatlik süre yalnızca doğrulamadan önce geçerlidir.\nEMAIL modunda RESEND, tokenin ve bekleyen kaydın süresini bir saat olarak yeniler."
   success:          "\x0307→\x03 Doğrulama tokenı \x02%email%\x02 adresine yeniden gönderildi."
   no_pending:       "\x0304✗\x03 Token göndermek için bekleyen bir kaydınız yok."
   throttled:        "\x0304✗\x03 Başka bir doğrulama e-postası istemeden önce \x02%minutes%\x02 dakika beklemelisiniz."
 
 # --- RECOVER -----------------------------------------------------------------
 recover:
+  no_email: "\u000304✗\u0003 \u0002%nickname%\u0002 rumuzu için e-posta ayarlanmamış. Kurtarma kullanılamaz."
+  email_sent: "\u000307→\u0003 \u0002%email_hint%\u0002 adresine bir kurtarma tokenı gönderildi. Gelen kutunuzu (ve spam klasörünü) kontrol edin."
+  pending_deletion: "%nickname% takma adı silinmeyi bekliyor ve kurtarılamaz."
+  instructions: "EMAIL: RECOVER %nickname% e-postayla geçici belirteç ister. TOKEN: onaylanmış belirtecinizi girin. RECOVER %nickname% <token> geçerli e-posta belirtecini veya onaylanmış belirteci kabul eder. E-posta belirteci ancak doğrulandıktan sonra saklananı değiştirir. Saklanan belirteç VERIFY ile isteğe bağlı değişiklik sunar; korumak için mesajı yok sayın."
   syntax:           "RECOVER <nickname> [token]"
   short:            "Şifrenizi kaybettiyseniz rumuzunuzu kurtarın."
-  help:             "Şifrenizi kaybettiğinizde kayıtlı bir rumuza erişimi kurtarır.\n1) \x0303RECOVER <nickname>\x03 — rumuzun e-postasına bir token gönderilir.\n2) \x0303RECOVER <nickname> <token>\x03 — şifrenizi sıfırlamak için e-postadan gelen tokenı girin.\nArdından geçici bir şifre ve değiştirme komutunu alacaksınız."
-  email_sent:       "\x0307→\x03 \x02%email_hint%\x02 adresine bir kurtarma tokenı gönderildi. Gelen kutunuzu (ve spam klasörünü) kontrol edin."
+  help: "EMAIL: RECOVER <nickname> e-postayla geçici belirteç ister. TOKEN: onaylanmış belirtecinizi girin. RECOVER <nickname> <token> geçerli e-posta belirtecini veya onaylanmış belirteci kabul eder. E-posta belirteci ancak doğrulandıktan sonra saklananı değiştirir. Saklanan belirteç VERIFY ile isteğe bağlı değişiklik sunar; korumak için mesajı yok sayın."
   not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
-  pending:          "\x0304✗\x03 \x02%nickname%\x02 rumuzu e-posta doğrulaması bekliyor."
+  pending: "%nickname% kaydı beklemede. VERIFY <token> kullanın. RESEND yalnızca REGMODE EMAIL olduğunda ve geçerli e-posta adresi atandığında kullanılabilir."
   suspended:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Sebep: %reason%"
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kullanılamaz."
-  no_email:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu için e-posta ayarlanmamış. Kurtarma kullanılamaz."
-  throttled:        "\x0304✗\x03 Başka bir kurtarma e-postası istemeden önce \x02%minutes%\x02 dakika beklemelisiniz."
-  invalid_token:    "\x0304✗\x03 Token geçersiz veya süresi dolmuş. \x0303RECOVER %nickname%\x03 ile yeni bir tane isteyin."
+  throttled: "Çok fazla geçersiz belirteç. %minutes% dakika sonra tekrar deneyin."
+  invalid_token: "Kurtarma belirteci geçersiz."
   success_identify: "\x0303✔\x03 Şifre sıfırlandı. Şimdi kimlik doğrulayın: \x0303%identify_cmd%\x03"
   success_then_change: "Ardından şifrenizi değiştirin: \x0303/msg %bot% SET PASSWORD <yeni_şifre>\x03"
 
@@ -164,9 +168,10 @@ set:
     success:        "\x0303✔\x03 Şifreniz başarıyla güncellendi."
 
   email:
-    syntax:         "SET EMAIL <yeni_e-posta> [token]"
+    token_required: "Onaylanmış kurtarma belirtecinizle SET EMAIL <email> <token> kullanın."
+    syntax: "SET EMAIL <email> <token>"
     short:          "Rumuzunuza bağlı e-posta adresini değiştirin (iki aşamalı onay)."
-    help:           "Güvenlik için iki aşamada e-posta değişikliği.\n1) \x0303SET EMAIL <yeni_e-posta>\x03 — mevcut e-postanıza bir token gönderilir.\n2) \x0303SET EMAIL <yeni_e-posta> <token>\x03 — alınan token ile onaylayın.\nToken 1 saat içinde sona erer."
+    help: "SET EMAIL, kurtarma belirtecini tüketmeden doğrulayarak iletişim adresini değiştirir. Biçim ve benzersizlik denetlenir; onay e-postası gönderilmez."
     success:        "\x0303✔\x03 E-postanız \x02%email%\x02 olarak güncellendi."
     pending_sent:   "\x0307→\x03 \x02%current_email%\x02 adresine bir onay tokenı gönderildi.\n  \x02%new_email%\x02 adresine değişikliği onaylamak için çalıştırın:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Token 1 saat içinde sona erer."
     invalid_token:  "\x0304✗\x03 Token geçersiz veya süresi dolmuş. \x0303SET EMAIL <yeni_e-posta>\x03 ile yeni bir tane isteyin."
@@ -680,3 +685,24 @@ debug:
   action_with_value: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%=%value%. %reason%"
   action_duration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
   prefix_reason: "Sebep: %reason%"
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  short: "Ağın kayıt kipini yönetir."
+  help: "Yeni hesapların kayıt ilkesini EMAIL veya TOKEN olarak ayarlar. STATUS geçerli ilkeyi değiştirmeden gösterir. Bekleyen hesaplar ilk kayıt kiplerini korur. TOKEN kipinde RESEND genel olarak devre dışıdır. nickserv.regmode izni gerektirir."
+  status: "Geçerli kayıt kipi: %mode%."
+  changed: "Kayıt kipi %mode% olarak değiştirildi."
+
+# --- Unified rescue credential -----------------------------------------------
+rescue:
+  issued: "Kurtarma belirteci: %token%.\n/msg %bot% VERIFY %token% ile doğrulayın.\nGüvenli yerde saklayın.\nYalnızca en son belirteç geçerlidir;\ndoğrulandıktan sonra tekrar gösterilmez."
+  confirmed: "Kurtarma belirteciniz doğrulandı. Güvenli yerde saklayın."
+  unavailable: "Bu işlemden önce kimliğinizi doğrulayın ve kurtarma belirtecinizi VERIFY ile onaylayın."
+  locked_out: "Çok fazla geçersiz belirteç. %seconds% saniye sonra tekrar deneyin."
+  throttled: "Çok fazla geçersiz belirteç. %minutes% dakika sonra tekrar deneyin."
+  replaced: "Kurtarma belirteciniz doğruladığınız e-posta belirteciyle değiştirildi. Güvenli yerde saklayın."
+
+  optional_replacement: "İsteğe bağlı yeni kurtarma belirteci: %token%.\nMevcut olanı değiştirmek için /msg %bot% VERIFY %token% kullanın.\nMevcut belirteç onaya kadar geçerlidir.\nDeğiştirmek istemiyorsanız bu mesajı yok sayın."
+  replacement_unavailable: "Parolanız sıfırlandı ancak yeni belirteç verilemedi. Mevcut belirteciniz geçerlidir."
+  temporarily_unavailable: "Kurtarma belirteci teslimi geçici olarak kullanılamıyor. Daha sonra deneyin."

@@ -32,6 +32,12 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
                 registeredNickId: $context->senderAccount?->id,
                 ipAddress: $this->decodeIp($sender->ipBase64),
                 hostmask: sprintf('%s@%s', $sender->ident, $sender->hostname),
+                clientKey: match (true) {
+                    '' !== $sender->ipBase64 && '*' !== $sender->ipBase64 => 'ip:' . $sender->ipBase64,
+                    '' !== $sender->cloakedHost => 'cloak:' . $sender->cloakedHost,
+                    '' !== $sender->hostname => 'host:' . $sender->hostname,
+                    default => 'uid:' . $sender->uid,
+                },
             );
         }
 
@@ -70,11 +76,10 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
                 '%nickname%' => $result->targetNickname,
                 '%max%' => (string) $result->maximumChannelsPerNick,
             ]),
-            TransferFounderOutcome::CurrentFounderWithoutEmail => $context->reply('set.founder.no_email'),
-            TransferFounderOutcome::Throttled => $context->reply('set.founder.throttled'),
-            TransferFounderOutcome::TokenSent => $context->reply('set.founder.token_sent', ['%email_hint%' => $result->emailHint]),
+            TransferFounderOutcome::TokenRequired => $context->reply('set.founder.token_required'),
+            TransferFounderOutcome::CredentialUnavailable => $context->reply('set.founder.token_unavailable'),
+            TransferFounderOutcome::Throttled => $context->reply('set.founder.throttled', ['%minutes%' => (string) (int) ceil($result->retryAfterSeconds / 60)]),
             TransferFounderOutcome::InvalidToken => $context->reply('set.founder.invalid_token'),
-            TransferFounderOutcome::MailDeliveryFailed => $context->reply('error.mail_failed'),
             TransferFounderOutcome::Updated => $this->presentUpdated($context, $channel, $result, $actorNickname),
             TransferFounderOutcome::Ignored => null,
         };

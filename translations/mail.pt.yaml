@@ -15,6 +15,9 @@ register_verification_body: |
 
   O token expira em 1 hora. Se não solicitou este registo, ignore este email.
 
+  Depois de validado, este será o token de recuperação permanente. Guarde-o em segurança: poderá usá-lo para recuperar o apelido. A expiração de uma hora aplica-se apenas antes da validação.
+    /msg %bot% RECOVER %nickname% %token%
+
 # RESEND — igual ao registo, reenvio do token
 resend_verification_subject: "%bot%: o seu token de verificação (reenvio)"
 resend_verification_body: |
@@ -28,6 +31,9 @@ resend_verification_body: |
     /msg %bot% VERIFY %token%
 
   O token expira em 1 hora. Se não solicitou este registo, ignore este email.
+
+  Depois de validado, este será o token de recuperação permanente. Guarde-o em segurança: poderá usá-lo para recuperar o apelido. A expiração de uma hora aplica-se apenas antes da validação.
+    /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — token de confirmação enviado para o email atual
 email_change_token_subject: "%bot%: confirme o seu novo endereço de email"
@@ -56,6 +62,8 @@ recovery_token_body: |
     /msg %bot% RECOVER %nickname% %token%
 
   O token expira em 1 hora. Se não solicitou esta recuperação, ignore este email.
+
+  Depois de validado, este será o token de recuperação permanente. Guarde-o em segurança: poderá usá-lo para recuperar o apelido. A expiração de uma hora aplica-se apenas antes da validação.
 
 # ChanServ SET FOUNDER — token de alteração de fundador
 founder_change_token_subject: "%bot%: token de alteração de fundador para %channel%"

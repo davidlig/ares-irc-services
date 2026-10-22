@@ -6,6 +6,8 @@ namespace App\NickServ\Adapter\In\Irc\Command;
 
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Adapter\Out\User\IrcNetworkUserMapper;
+use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Verify\VerifyNick;
 use App\NickServ\Application\UseCase\Verify\VerifyNickHandlerInterface;
 use App\NickServ\Application\UseCase\Verify\VerifyNickOutcome;
@@ -83,6 +85,8 @@ final readonly class VerifyCommand implements NickServCommandInterface
             nickname: $sender->nick,
             token: $token,
             senderUid: $sender->uid,
+            clientKey: new NickServClientKeyResolver()->getClientKey(IrcNetworkUserMapper::map($sender)),
+            authenticatedAccountId: $context->isSenderIdentified() ? $context->getSenderAccountId() : null,
         ));
 
         $this->present($context, $result);
@@ -93,6 +97,12 @@ final readonly class VerifyCommand implements NickServCommandInterface
     private function present(NickServContext $context, VerifyNickResult $result): void
     {
         switch ($result->outcome) {
+            case VerifyNickOutcome::CredentialConfirmed:
+                $context->reply('rescue.confirmed');
+                break;
+            case VerifyNickOutcome::LockedOut:
+                $context->reply('rescue.locked_out', ['seconds' => (string) $result->retryAfterSeconds]);
+                break;
             case VerifyNickOutcome::Success:
                 if (null !== $context->sender && null !== $result->nickname) {
                     $context->getNotifier()->setUserAccount($context->sender->uid, $result->nickname);

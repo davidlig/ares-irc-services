@@ -450,7 +450,7 @@ final class SetCommandTest extends TestCase
         $founderHandler = $this->createMock(TransferChannelFounderHandlerInterface::class);
         $founderHandler->expects(self::once())->method('handle')->with(self::callback(
             static fn (TransferChannelFounder $command): bool => 'NewFounder' === $command->targetNickname,
-        ))->willReturn(new TransferChannelFounderResult(TransferFounderOutcome::TokenSent, emailHint: 'fo****@t****.***'));
+        ))->willReturn(new TransferChannelFounderResult(TransferFounderOutcome::TokenRequired));
 
         $cmd = $this->createSetCommand($channelRepo, $accessHelper, $nickRepo, new SetFounderHandler($founderHandler));
         $cmd->execute($this->createContext(
@@ -461,7 +461,7 @@ final class SetCommandTest extends TestCase
             $translator,
         ));
 
-        self::assertSame(['set.founder.token_sent'], $messages);
+        self::assertSame(['set.founder.token_required'], $messages);
     }
 
     #[Test]

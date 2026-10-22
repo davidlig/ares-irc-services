@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\NickServ\Application\Service;
 
 use App\NickServ\Application\Model\NetworkUser;
+use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Model\UserMessagePreference;
 use App\NickServ\Application\Port\Out\GuestNicknameGenerator;
 use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
 use App\NickServ\Application\Port\Out\NickChangeIdentificationPolicy;
+use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
 use App\NickServ\Application\Port\Out\NickNetworkUserLookup;
 use App\NickServ\Application\Port\Out\NickProtectionNotifier;
@@ -19,6 +21,8 @@ use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\SessionLanguageTracker;
 use App\NickServ\Application\PublishedEvent\NickIdentifiedEvent;
 use App\NickServ\Application\PublishedEvent\UserDeidentifiedEvent;
+use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
+use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
 
@@ -46,6 +50,8 @@ final readonly class NickProtectionService
         private ForbiddenNickService $forbiddenService,
         private NickChangeIdentificationPolicy $nickChangePolicy,
         private GuestNicknameGenerator $guestNicknameGenerator,
+        private IssueMigrationRescueTokenHandlerInterface $migrationTokens,
+        private NicknameAuthenticationModeQuery $authenticationMode,
         private string $guestPrefix = 'Guest-',
         private string $defaultLanguage = 'en',
         private ?NickServActivitySink $logger = null,
@@ -329,6 +335,9 @@ final readonly class NickProtectionService
         if (null === $identifiedNick && 0 === strcasecmp($user->nick, $account->getNickname())) {
             $this->identifiedRegistry->register($user->uid, $account->getNickname());
             $identifiedNick = $account->getNickname();
+            if (NicknameAuthenticationMode::NativeNick === $this->authenticationMode->current()) {
+                $this->migrationTokens->handle(new IssueMigrationRescueToken($account->getId(), $user->uid, $occurredAt));
+            }
         }
 
         if (null !== $identifiedNick && 0 === strcasecmp($identifiedNick, $account->getNickname())) {

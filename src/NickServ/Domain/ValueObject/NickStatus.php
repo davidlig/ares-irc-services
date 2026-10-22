@@ -6,7 +6,7 @@ namespace App\NickServ\Domain\ValueObject;
 
 enum NickStatus: string
 {
-    /** Registration started; email verification pending. */
+    /** Registration started; credential verification pending. */
     case Pending = 'pending';
 
     /** Fully registered and active account. */

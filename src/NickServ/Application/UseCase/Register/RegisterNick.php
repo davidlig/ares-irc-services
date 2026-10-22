@@ -9,7 +9,7 @@ final readonly class RegisterNick
     public function __construct(
         public string $nickname,
         public string $password,
-        public string $email,
+        public ?string $email,
         public string $language,
         public string $clientKey,
     ) {}

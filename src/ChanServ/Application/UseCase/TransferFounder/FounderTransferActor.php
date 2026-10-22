@@ -11,5 +11,6 @@ final readonly class FounderTransferActor
         public ?int $registeredNickId,
         public string $ipAddress,
         public string $hostmask,
+        public string $clientKey = '',
     ) {}
 }
