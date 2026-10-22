@@ -30,7 +30,7 @@ S9. Verification: deterministic focused RED→GREEN, existing behavior tests and
 - C3 | S1-S9 | inline shared DI/14locales/email/help/docs/SQL regression integration | complete; correction commit20421943 | Risk: items1,2,3,4.
 - C4 | S1-S9 | delegated independent verification for persisted/auth/contract/concurrency; final complete quality gates and once coverage for corrected candidate | complete; correction commit20421943 | Risk: items1,2,3,4.
 
-- C5 | S4,S8,S9 | inline review P2/P3 corrections; independent risk verifier and final gates delegated | complete; commit recorded below | Risk: items1,2,3,4.
+- C5 | S4,S8,S9 | inline review P2/P3 corrections; independent risk verifier and final gates delegated | complete; commit2b3519ab | Risk: items1,2,3,4.
 
 ## Log
 L1. Original request verbatim: "crea un plan para https://github.com/davidlig/ares-irc-services/issues/29#issuecomment-6299784938". Implementation authorization verbatim: "Implement the plan." Earlier branch request: "crear una rama con esta feature".
@@ -84,3 +84,5 @@ P3. si, se renueva el plazo." Parent explained existing10000challengebound and m
 
 L23. C5 RED:3 focused failures (overflow cooldown/mailfailure cooldown/renewal deadline), Domain operation absent errors. GREEN focused102/34767 plus realSQL1/67. Independent verifier realSQLite3/33, focused64/358 and unaffected differential12/70 normalizedstdout/stderr/exits equal baseline69b6ded5. Parent ported independent probes as RegistrationReviewRegressionTest3/42PASS. Capacity10000 and IP-first fallback routing unchanged; no revival of expired accounts, no confirmed credential persisted by RESEND. Configured7200 TTL verified independently.
 L24. C5 final quality: PHPStanmax0 after test typing corrections, syntax allchangedPHP and newprobePASS, container/YAML129PASS, Deptrac0violations/uncovered/warnings/errors, fixercheck0/2028, diffcheckPASS. Fullcoverage exactlyonce exit0:6281tests86773assertions, zeroPHPUnitissues, exact22045/22045statements. Candidatebefore/after digest identical ac4306b030385a128c8870af1e8f73a92fc201873006f62d0daafc31237d521f. Coverage process completed despite final reporting worker interruption; parent recovered and verified stored exit/log/Clover, no rerun. No source edits after coverage, passive taskrecord only. Verifier scratch removed. No remoteoperations, RDD remains globallyOFF. Risk items1/2/3 (persisteddeadline/authcooldown/sharedentity contracts); independentverification complete. No new asyncordering introduced.
+
+L25. C5 local work-unit commit2b3519ab includes behavior, tests and docs/HELP; authored349lines additions+deletions. Clean working tree; no push/PR/merge. Final passive record stores commit identity only.
