@@ -1,6 +1,6 @@
 # Registration mode and provisional tokens
 
-`REGMODE EMAIL|TOKEN|STATUS` controls the network-wide delivery policy. An absent
+`REGMODE {EMAIL|TOKEN|STATUS}` controls the network-wide delivery policy. An absent
 policy means TOKEN. Authorized operators can change it without restarting services.
 There is no per-account registration mode or `registration_mode` database column.
 

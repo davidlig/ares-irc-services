@@ -30,13 +30,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  token_unavailable: "O rexistro está pendente, pero non se puido entregar o token.\nAgarda a que caduque antes de rexistrarte de novo."
+  token_unavailable: "\x0304✗\x03 O rexistro está pendente, pero non se puido entregar o token.\nAgarda a que caduque antes de rexistrarte de novo."
   syntax: "REGISTER <password> [email]"
   short:            "Rexistrar o seu alcume cos servizos."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nUnha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade dunha hora só se aplica antes de validalo."
   pending:          "\x0307→\x03 Enviouse un token de verificación a \x02%email%\x02.\n  Execute \x0303/msg %bot% VERIFY <token>\x03 para completar o rexistro.\n  Non o recibiu? Comprobe spam ou use \x0303/msg %bot% RESEND\x03\n  O token caducará en \x021 hora\x02."
   already_registered: "\x0304✗\x03 O alcume \x02%nickname%\x02 xa está rexistrado."
-  already_pending: "O rexistro de %nickname% está pendente. Usa VERIFY <token>. RESEND só está dispoñible con REGMODE EMAIL e un correo válido asignado."
+  already_pending: "\x0307→\x03 O rexistro de \x02%nickname%\x02 está pendente. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 só está dispoñible con REGMODE EMAIL e un correo válido asignado."
   forbidden:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non se pode rexistrar nesta rede."
   pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 está pendente de eliminación e non se pode rexistrar."
   invalid_email:    "\x0304✗\x03 O enderezo de correo electrónico proporcionado non é válido."
@@ -51,12 +51,12 @@ verify:
   help: "Unha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade dunha hora só se aplica antes de validalo."
   success:          "\x0303✔\x03 O alcume \x02%nickname%\x02 foi rexistrado con éxito e agora está identificado."
   success_native:   "\x0303✔\x03 O alcume \x02%nickname%\x02 rexistrouse correctamente. Usa a autenticación nativa que se mostra a continuación."
-  invalid_token: "O token de rescate non é válido."
+  invalid_token: "\x0304✗\x03 O token de rescate non é válido."
   no_pending:       "\x0304✗\x03 Non ten ningún rexistro pendente que verificar."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
-  disabled: "RESEND está desactivado mentres REGMODE sexa TOKEN."
+  disabled: "\x0307ℹ\x03 \x0303RESEND\x03 está desactivado mentres REGMODE sexa TOKEN."
   syntax:           "RESEND"
   short:            "Reenviar o token de verificación ao seu correo electrónico."
   help: "RESEND está desactivado mentres REGMODE sexa TOKEN.\nUnha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade dunha hora só se aplica antes de validalo.\nNo modo EMAIL, RESEND renova durante unha hora o token e o prazo do rexistro pendente."
@@ -68,17 +68,17 @@ resend:
 recover:
   no_email: "\u000304✗\u0003 Non hai un correo electrónico configurado para o alcume \u0002%nickname%\u0002. A recuperación non está dispoñible."
   email_sent: "\u000307→\u0003 Enviouse un token de recuperación a \u0002%email_hint%\u0002. Comprobe a súa caixa de entrada (e o cartafol de spam)."
-  pending_deletion: "O alcume %nickname% está pendente de eliminación e non se pode recuperar."
-  instructions: "EMAIL: RECOVER %nickname% solicita un token provisional por correo. TOKEN: proporciona o token confirmado. RECOVER %nickname% <token> acepta o token válido do correo ou o confirmado. O do correo substitúe o gardado só tras validalo. Usar o gardado ofrece un reemplazo opcional con VERIFY; ignora a mensaxe para conservalo."
+  pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 está pendente de eliminación e non se pode recuperar."
+  instructions: "\x0307ℹ\x03 EMAIL: \x0303RECOVER %nickname%\x03 solicita un token provisional por correo. TOKEN: proporciona o token confirmado. \x0303RECOVER %nickname% <token>\x03 acepta o token válido do correo ou o confirmado. O do correo substitúe o gardado só tras validalo. Usar o gardado ofrece un reemplazo opcional con \x0303VERIFY\x03; ignora a mensaxe para conservalo."
   syntax:           "RECOVER <alcume> [token]"
   short:            "Recuperar o seu alcume se perdeu o contrasinal."
   help: "EMAIL: RECOVER <nickname> solicita un token provisional por correo. TOKEN: proporciona o token confirmado. RECOVER <nickname> <token> acepta o token válido do correo ou o confirmado. O do correo substitúe o gardado só tras validalo. Usar o gardado ofrece un reemplazo opcional con VERIFY; ignora a mensaxe para conservalo."
   not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
-  pending: "O rexistro de %nickname% está pendente. Usa VERIFY <token>. RESEND só está dispoñible con REGMODE EMAIL e un correo válido asignado."
+  pending: "\x0307→\x03 O rexistro de \x02%nickname%\x02 está pendente. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 só está dispoñible con REGMODE EMAIL e un correo válido asignado."
   suspended:        "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non se pode usar nesta rede."
-  throttled: "Demasiados tokens incorrectos. Téntao de novo en %minutes% minuto(s)."
-  invalid_token: "O token de rescate non é válido."
+  throttled: "\x0304✗\x03 Demasiados tokens incorrectos. Téntao de novo en \x02%minutes%\x02 minuto(s)."
+  invalid_token: "\x0304✗\x03 O token de rescate non é válido."
   success_identify: "\x0303✔\x03 Contrasinal restablecido. Identifíquese agora: \x0303%identify_cmd%\x03"
   success_then_change: "Despois cambie o seu contrasinal: \x0303/msg %bot% SET PASSWORD <novo_contrasinal>\x03"
 
@@ -176,7 +176,7 @@ set:
     success:        "\x0303✔\x03 O seu contrasinal foi actualizado con éxito."
 
   email:
-    token_required: "Usa SET EMAIL <email> <token> co token de rescate confirmado."
+    token_required: "\x0304✗\x03 Usa \x0303SET EMAIL <email> <token>\x03 co token de rescate confirmado."
     syntax: "SET EMAIL <email> <token>"
     short:          "Cambiar o enderezo de correo electrónico ligado ao seu alcume (confirmación en dous pasos)."
     help: "SET EMAIL cambia o correo de contacto tras validar o token de rescate, sen consumilo. Comproba formato e unicidade; non envía correo de confirmación."
@@ -698,21 +698,21 @@ debug:
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
-  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "Administrar o modo de rexistro da rede."
-  help: "Establece EMAIL ou TOKEN como política de rexistro para as contas novas. STATUS mostra a política actual sen modificala. As contas pendentes conservan o modo de rexistro orixinal. No modo TOKEN, RESEND está desactivado globalmente. Require o permiso nickserv.regmode."
-  status: "Modo de rexistro actual: %mode%."
-  changed: "Modo de rexistro cambiado a %mode%."
+  help: "Configura o modo de rexistro das contas novas.\nCon \x02EMAIL\x02 envíase o token de verificación por correo.\nCon \x02TOKEN\x02 o token entrégase directamente por IRC.\nCon \x02STATUS\x02 consúltase o modo actual sen modificalo.\nOs rexistros pendentes conservan o seu modo orixinal.\nNo modo \x02TOKEN\x02, \x02RESEND\x02 está desactivado para todos.\nRequire o permiso nickserv.regmode."
+  status: "\x0307ℹ\x03 Modo de rexistro actual: \x02%mode%\x02."
+  changed: "\x0303✔\x03 Modo de rexistro cambiado a \x02%mode%\x02."
 
 # --- Unified rescue credential -----------------------------------------------
 rescue:
-  issued: "Token de rescate: %token%.\nConfírmao con /msg %bot% VERIFY %token%.\nGárdao nun lugar seguro.\nSó é válido o último token;\ntras confirmalo non volverá mostrarse."
-  confirmed: "O token de rescate foi confirmado. Gárdao nun lugar seguro."
-  unavailable: "Autentícate e confirma o token de rescate con VERIFY antes de usar esta operación."
-  locked_out: "Demasiados tokens incorrectos. Téntao de novo en %seconds% segundos."
-  throttled: "Demasiados tokens incorrectos. Téntao de novo en %minutes% minuto(s)."
-  replaced: "O token de recuperación foi substituído polo token do correo que acabas de validar. Gárdao nun lugar seguro."
+  issued: "Token de rescate: \x0303%token%\x03\n\nGarda este token nun lugar seguro. Necesitaralo para recuperar o teu alcume se esqueces o contrasinal.\n\nPara confirmalo, utiliza: /msg %bot% \x0303VERIFY %token%\x03\n\n\x0304⚠\x03 IMPORTANTE: Só é válido o último token xerado. Unha vez confirmado, non volverá mostrarse. Non o compartas con ninguén."
+  confirmed: "\x0303✔\x03 O token de rescate foi confirmado. Gárdao nun lugar seguro."
+  unavailable: "\x0304✗\x03 Autentícate e confirma o token de rescate con \x0303VERIFY\x03 antes de usar esta operación."
+  locked_out: "\x0304✗\x03 Demasiados tokens incorrectos. Téntao de novo en \x02%seconds%\x02 segundos."
+  throttled: "\x0304✗\x03 Demasiados tokens incorrectos. Téntao de novo en \x02%minutes%\x02 minuto(s)."
+  replaced: "\x0303✔\x03 O token de recuperación foi substituído polo token do correo que acabas de validar. Gárdao nun lugar seguro."
 
-  optional_replacement: "Novo token de recuperación opcional: %token%.\nPara substituír o actual, usa /msg %bot% VERIFY %token%.\nO token actual segue sendo válido ata a confirmación.\nSe non queres cambialo, ignora esta mensaxe."
-  replacement_unavailable: "O contrasinal restableceuse, pero non se puido emitir un token novo. O actual segue sendo válido."
-  temporarily_unavailable: "A entrega do token de recuperación non está dispoñible temporalmente. Téntao máis tarde."
+  optional_replacement: "\x0307→\x03 Novo token de recuperación opcional: \x0303%token%\x03\n\nPara substituír o teu token de recuperación actual, utiliza: /msg %bot% \x0303VERIFY %token%\x03\n\nO token actual segue sendo válido ata a confirmación.\n\nSe non queres cambialo, ignora esta mensaxe."
+  replacement_unavailable: "\x0307ℹ\x03 O contrasinal restableceuse, pero non se puido emitir un token novo. O actual segue sendo válido."
+  temporarily_unavailable: "\x0304✗\x03 A entrega do token de recuperación non está dispoñible temporalmente. Téntao máis tarde."

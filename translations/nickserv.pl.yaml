@@ -22,13 +22,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  token_unavailable: "Rejestracja oczekuje, ale nie udało się dostarczyć tokenu.\nPoczekaj na jej wygaśnięcie przed ponowną rejestracją."
+  token_unavailable: "\x0304✗\x03 Rejestracja oczekuje, ale nie udało się dostarczyć tokenu.\nPoczekaj na jej wygaśnięcie przed ponowną rejestracją."
   syntax: "REGISTER <password> [email]"
   short:            "Zarejestruj swój nick w serwisach."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nPo weryfikacji ten token stanie się stałym tokenem odzyskiwania. Zachowaj go bezpiecznie: pozwoli odzyskać pseudonim. Ważność jednej godziny dotyczy tylko czasu przed weryfikacją."
   pending:          "\x0307→\x03 Token weryfikacyjny został wysłany na \x02%email%\x02.\n  Uruchom \x0303/msg %bot% VERIFY <token>\x03 aby zakończyć rejestrację.\n  Nie otrzymałeś? Sprawdź spam lub użyj \x0303/msg %bot% RESEND\x03\n  Token wygaśnie za \x021 godzinę\x02."
   already_registered: "\x0304✗\x03 Nick \x02%nickname%\x02 jest już zarejestrowany."
-  already_pending: "Rejestracja %nickname% oczekuje. Użyj VERIFY <token>. RESEND jest dostępne tylko przy REGMODE EMAIL i przypisanym poprawnym adresie email."
+  already_pending: "\x0307→\x03 Rejestracja \x02%nickname%\x02 oczekuje. Użyj \x0303VERIFY <token>\x03. \x0303RESEND\x03 jest dostępne tylko przy REGMODE EMAIL i przypisanym poprawnym adresie email."
   forbidden:        "\x0304✗\x03 Nick \x02%nickname%\x02 nie może być zarejestrowany w tej sieci."
   pending_deletion: "\x0304✗\x03 Nick \x02%nickname%\x02 oczekuje na usunięcie i nie może być zarejestrowany."
   invalid_email:    "\x0304✗\x03 Podany adres e-mail jest nieprawidłowy."
@@ -43,12 +43,12 @@ verify:
   help: "Po weryfikacji ten token stanie się stałym tokenem odzyskiwania. Zachowaj go bezpiecznie: pozwoli odzyskać pseudonim. Ważność jednej godziny dotyczy tylko czasu przed weryfikacją."
   success:          "\x0303✔\x03 Nick \x02%nickname%\x02 został pomyślnie zarejestrowany i jesteś teraz zidentyfikowany."
   success_native:   "\x0303✔\x03 Nick \x02%nickname%\x02 został pomyślnie zarejestrowany. Użyj natywnego uwierzytelniania pokazanego poniżej."
-  invalid_token: "Token ratunkowy jest nieprawidłowy."
+  invalid_token: "\x0304✗\x03 Token ratunkowy jest nieprawidłowy."
   no_pending:       "\x0304✗\x03 Nie masz oczekującej rejestracji do zweryfikowania."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
-  disabled: "RESEND jest wyłączone, gdy REGMODE ma wartość TOKEN."
+  disabled: "\x0307ℹ\x03 \x0303RESEND\x03 jest wyłączone, gdy REGMODE ma wartość TOKEN."
   syntax:           "RESEND"
   short:            "Wyślij ponownie token weryfikacyjny na Twój e-mail."
   help: "RESEND jest wyłączone, gdy REGMODE ma wartość TOKEN.\nPo weryfikacji ten token stanie się stałym tokenem odzyskiwania. Zachowaj go bezpiecznie: pozwoli odzyskać pseudonim. Ważność jednej godziny dotyczy tylko czasu przed weryfikacją.\nW trybie EMAIL polecenie RESEND odnawia token i termin oczekującej rejestracji na jedną godzinę."
@@ -60,17 +60,17 @@ resend:
 recover:
   no_email: "\u000304✗\u0003 Brak ustawionego e-maila dla nicka \u0002%nickname%\u0002. Odzyskiwanie nie jest dostępne."
   email_sent: "\u000307→\u0003 Token odzyskiwania został wysłany na \u0002%email_hint%\u0002. Sprawdź skrzynkę odbiorczą (i folder spam)."
-  pending_deletion: "Pseudonim %nickname% oczekuje na usunięcie i nie można go odzyskać."
-  instructions: "EMAIL: RECOVER %nickname% żąda tymczasowego tokenu emailem. TOKEN: podaj potwierdzony token. RECOVER %nickname% <token> akceptuje poprawny token z emaila lub potwierdzony token. Token z emaila zastępuje zapisany dopiero po weryfikacji. Użycie zapisanego proponuje opcjonalną zmianę przez VERIFY; zignoruj wiadomość, aby go zachować."
+  pending_deletion: "\x0304✗\x03 Pseudonim \x02%nickname%\x02 oczekuje na usunięcie i nie można go odzyskać."
+  instructions: "\x0307ℹ\x03 EMAIL: \x0303RECOVER %nickname%\x03 żąda tymczasowego tokenu emailem. TOKEN: podaj potwierdzony token. \x0303RECOVER %nickname% <token>\x03 akceptuje poprawny token z emaila lub potwierdzony token. Token z emaila zastępuje zapisany dopiero po weryfikacji. Użycie zapisanego proponuje opcjonalną zmianę przez \x0303VERIFY\x03; zignoruj wiadomość, aby go zachować."
   syntax:           "RECOVER <nick> [token]"
   short:            "Odzyskaj nick jeśli zgubiłeś hasło."
   help: "EMAIL: RECOVER <nickname> żąda tymczasowego tokenu emailem. TOKEN: podaj potwierdzony token. RECOVER <nickname> <token> akceptuje poprawny token z emaila lub potwierdzony token. Token z emaila zastępuje zapisany dopiero po weryfikacji. Użycie zapisanego proponuje opcjonalną zmianę przez VERIFY; zignoruj wiadomość, aby go zachować."
   not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
-  pending: "Rejestracja %nickname% oczekuje. Użyj VERIFY <token>. RESEND jest dostępne tylko przy REGMODE EMAIL i przypisanym poprawnym adresie email."
+  pending: "\x0307→\x03 Rejestracja \x02%nickname%\x02 oczekuje. Użyj \x0303VERIFY <token>\x03. \x0303RESEND\x03 jest dostępne tylko przy REGMODE EMAIL i przypisanym poprawnym adresie email."
   suspended:        "\x0304✗\x03 Nick \x02%nickname%\x02 jest zawieszony. Powód: %reason%"
   forbidden:        "\x0304✗\x03 Nick \x02%nickname%\x02 nie może być używany w tej sieci."
-  throttled: "Zbyt wiele błędnych tokenów. Spróbuj ponownie za %minutes% minut."
-  invalid_token: "Token ratunkowy jest nieprawidłowy."
+  throttled: "\x0304✗\x03 Zbyt wiele błędnych tokenów. Spróbuj ponownie za \x02%minutes%\x02 minut."
+  invalid_token: "\x0304✗\x03 Token ratunkowy jest nieprawidłowy."
   success_identify: "\x0303✔\x03 Hasło zresetowane. Zidentyfikuj się teraz: \x0303%identify_cmd%\x03"
   success_then_change: "Następnie zmień hasło: \x0303/msg %bot% SET PASSWORD <nowe_hasło>\x03"
 
@@ -168,7 +168,7 @@ set:
     success:        "\x0303✔\x03 Twoje hasło zostało pomyślnie zaktualizowane."
 
   email:
-    token_required: "Użyj SET EMAIL <email> <token> z potwierdzonym tokenem ratunkowym."
+    token_required: "\x0304✗\x03 Użyj \x0303SET EMAIL <email> <token>\x03 z potwierdzonym tokenem ratunkowym."
     syntax: "SET EMAIL <email> <token>"
     short:          "Zmień adres e-mail powiązany z Twoim nickiem (dwuetapowe potwierdzenie)."
     help: "SET EMAIL zmienia adres kontaktowy po walidacji tokenu ratunkowego bez jego zużywania. Sprawdza format i unikalność; nie wysyła wiadomości potwierdzającej."
@@ -688,21 +688,21 @@ debug:
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
-  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "Zarządzanie trybem rejestracji w sieci."
-  help: "Ustawia EMAIL lub TOKEN jako zasady rejestracji nowych kont. STATUS wyświetla bieżące zasady bez zmian. Oczekujące konta zachowują pierwotny tryb rejestracji. W trybie TOKEN polecenie RESEND jest globalnie wyłączone. Wymaga uprawnienia nickserv.regmode."
-  status: "Bieżący tryb rejestracji: %mode%."
-  changed: "Tryb rejestracji zmieniono na %mode%."
+  help: "Ustawia tryb rejestracji nowych kont.\nW trybie \x02EMAIL\x02 token weryfikacyjny jest wysyłany e-mailem.\nW trybie \x02TOKEN\x02 token jest przekazywany bezpośrednio przez IRC.\n\x02STATUS\x02 wyświetla bieżący tryb bez jego zmiany.\nOczekujące rejestracje zachowują pierwotny tryb.\nW trybie \x02TOKEN\x02 polecenie \x02RESEND\x02 jest wyłączone dla wszystkich.\nWymaga uprawnienia nickserv.regmode."
+  status: "\x0307ℹ\x03 Bieżący tryb rejestracji: \x02%mode%\x02."
+  changed: "\x0303✔\x03 Tryb rejestracji zmieniono na \x02%mode%\x02."
 
 # --- Unified rescue credential -----------------------------------------------
 rescue:
-  issued: "Token ratunkowy: %token%.\nPotwierdź przez /msg %bot% VERIFY %token%.\nZachowaj go bezpiecznie.\nWażny jest tylko najnowszy token;\npo potwierdzeniu nie będzie ponownie wyświetlany."
-  confirmed: "Token ratunkowy został potwierdzony. Zachowaj go bezpiecznie."
-  unavailable: "Uwierzytelnij się i potwierdź token ratunkowy przez VERIFY przed użyciem tej operacji."
-  locked_out: "Zbyt wiele błędnych tokenów. Spróbuj ponownie za %seconds% sekund."
-  throttled: "Zbyt wiele błędnych tokenów. Spróbuj ponownie za %minutes% minut."
-  replaced: "Token odzyskiwania został zastąpiony właśnie zweryfikowanym tokenem z emaila. Zachowaj go bezpiecznie."
+  issued: "Token ratunkowy: \x0303%token%\x03\n\nPrzechowuj ten token w bezpiecznym miejscu. Będzie potrzebny do odzyskania pseudonimu, jeśli zapomnisz hasła.\n\nAby go potwierdzić, użyj: /msg %bot% \x0303VERIFY %token%\x03\n\n\x0304⚠\x03 WAŻNE: Ważny jest tylko ostatnio wygenerowany token. Po potwierdzeniu nie zostanie ponownie wyświetlony. Nie udostępniaj go nikomu."
+  confirmed: "\x0303✔\x03 Token ratunkowy został potwierdzony. Zachowaj go bezpiecznie."
+  unavailable: "\x0304✗\x03 Uwierzytelnij się i potwierdź token ratunkowy przez \x0303VERIFY\x03 przed użyciem tej operacji."
+  locked_out: "\x0304✗\x03 Zbyt wiele błędnych tokenów. Spróbuj ponownie za \x02%seconds%\x02 sekund."
+  throttled: "\x0304✗\x03 Zbyt wiele błędnych tokenów. Spróbuj ponownie za \x02%minutes%\x02 minut."
+  replaced: "\x0303✔\x03 Token odzyskiwania został zastąpiony właśnie zweryfikowanym tokenem z emaila. Zachowaj go bezpiecznie."
 
-  optional_replacement: "Opcjonalny nowy token odzyskiwania: %token%.\nAby zastąpić obecny, użyj /msg %bot% VERIFY %token%.\nObecny token pozostaje ważny do potwierdzenia.\nJeśli nie chcesz go zmieniać, zignoruj tę wiadomość."
-  replacement_unavailable: "Hasło zostało zresetowane, ale nie udało się wydać nowego tokenu. Obecny token pozostaje ważny."
-  temporarily_unavailable: "Wydawanie tokenu odzyskiwania jest chwilowo niedostępne. Spróbuj później."
+  optional_replacement: "\x0307→\x03 Opcjonalny nowy token odzyskiwania: \x0303%token%\x03\n\nAby zastąpić obecny token odzyskiwania, użyj: /msg %bot% \x0303VERIFY %token%\x03\n\nObecny token pozostaje ważny do potwierdzenia.\n\nJeśli nie chcesz go zmieniać, zignoruj tę wiadomość."
+  replacement_unavailable: "\x0307ℹ\x03 Hasło zostało zresetowane, ale nie udało się wydać nowego tokenu. Obecny token pozostaje ważny."
+  temporarily_unavailable: "\x0304✗\x03 Wydawanie tokenu odzyskiwania jest chwilowo niedostępne. Spróbuj później."

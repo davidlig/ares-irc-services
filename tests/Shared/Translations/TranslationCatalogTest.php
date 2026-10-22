@@ -21,6 +21,7 @@ use function array_flip;
 use function array_keys;
 use function array_unique;
 use function array_values;
+use function explode;
 use function file_get_contents;
 use function implode;
 use function in_array;
@@ -37,6 +38,7 @@ use function str_ends_with;
 use function str_replace;
 use function str_starts_with;
 use function strlen;
+use function substr_count;
 
 use const PREG_SET_ORDER;
 
@@ -62,6 +64,182 @@ final class TranslationCatalogTest extends TestCase
         'MemoServ' => 'memoserv',
         'OperServ' => 'operserv',
     ];
+
+    #[Test]
+    public function rescueTokenInstructionsUseSafeLocalizedFormattingInEveryLocale(): void
+    {
+        foreach (self::LOCALES as $locale) {
+            $translator = new Translator($locale);
+            $translator->addLoader('array', new ArrayLoader());
+            $translator->addResource('array', self::flatten(self::parseDomain('nickserv', $locale)), $locale, 'nickserv');
+            $message = $translator->trans('rescue.issued', ['%token%' => 'example-rescue-token', '%bot%' => 'IdentityKeeper'], 'nickserv');
+            $paragraphs = explode("\n\n", $message);
+
+            self::assertCount(4, $paragraphs, $locale);
+            self::assertStringEndsWith("\x0303example-rescue-token\x03", $paragraphs[0], $locale);
+            self::assertStringEndsWith("/msg IdentityKeeper \x0303VERIFY example-rescue-token\x03", $paragraphs[2], $locale);
+            self::assertStringStartsWith("\x0304⚠\x03 ", $paragraphs[3], $locale);
+            self::assertSame(6, substr_count($message, "\x03"), $locale);
+            self::assertStringNotContainsString("\x02", $message, $locale);
+            self::assertDoesNotMatchRegularExpression('/%[a-z_]+%/', $message, $locale);
+            foreach ($paragraphs as $paragraph) {
+                self::assertStringNotContainsString("\n", $paragraph, $locale);
+            }
+        }
+
+        $catalog = self::flatten(self::parseDomain('nickserv', 'es'));
+        self::assertSame(
+            "Token de rescate: \x0303%token%\x03\n\n"
+            . "Guarda este token en un lugar seguro. Lo necesitarás para recuperar tu apodo si olvidas tu contraseña.\n\n"
+            . "Para confirmarlo, utiliza: /msg %bot% \x0303VERIFY %token%\x03\n\n"
+            . "\x0304⚠\x03 IMPORTANTE: Solo el último token generado es válido. Una vez confirmado, no volverá a mostrarse. No lo compartas con nadie.",
+            $catalog['rescue.issued'],
+        );
+    }
+
+    #[Test]
+    public function registrationModeHelpExplainsEachOptionOnItsOwnLineInEveryLocale(): void
+    {
+        foreach (self::LOCALES as $locale) {
+            $catalog = self::flatten(self::parseDomain('nickserv', $locale));
+            $help = $catalog['regmode.help'];
+            self::assertIsString($help);
+            $lines = explode("\n", $help);
+
+            self::assertCount(7, $lines, $locale);
+            foreach ([1 => 'EMAIL', 2 => 'TOKEN', 3 => 'STATUS'] as $index => $option) {
+                self::assertStringContainsString("\x02" . $option . "\x02", $lines[$index], $locale);
+            }
+            self::assertStringContainsString("\x02TOKEN\x02", $lines[5], $locale);
+            self::assertStringContainsString("\x02RESEND\x02", $lines[5], $locale);
+            self::assertStringContainsString('nickserv.regmode', $lines[6], $locale);
+            self::assertStringNotContainsString("\x03", $help, $locale);
+        }
+    }
+
+    #[Test]
+    public function registrationModeHelpAndSyntaxErrorsUseRequiredChoiceBracesInEveryLocale(): void
+    {
+        foreach (self::LOCALES as $locale) {
+            $catalog = self::flatten(self::parseDomain('nickserv', $locale));
+            $translator = new Translator($locale);
+            $translator->addLoader('array', new ArrayLoader());
+            $translator->addResource('array', $catalog, $locale, 'nickserv');
+            $syntax = $translator->trans('regmode.syntax', [], 'nickserv');
+
+            self::assertSame('REGMODE {EMAIL|TOKEN|STATUS}', $syntax, $locale);
+            $error = $translator->trans('error.syntax', ['%syntax%' => $syntax], 'nickserv');
+            self::assertStringContainsString("\x02REGMODE {EMAIL|TOKEN|STATUS}\x02", $error, $locale);
+            self::assertStringNotContainsString('REGMODE EMAIL|TOKEN|STATUS', $error, $locale);
+        }
+    }
+
+    #[Test]
+    public function registrationModeChangesUseServiceSuccessStylingInEveryLocale(): void
+    {
+        foreach (self::LOCALES as $locale) {
+            $translator = new Translator($locale);
+            $translator->addLoader('array', new ArrayLoader());
+            $translator->addResource('array', self::flatten(self::parseDomain('nickserv', $locale)), $locale, 'nickserv');
+
+            foreach (['EMAIL', 'TOKEN'] as $mode) {
+                $message = $translator->trans('regmode.changed', ['%mode%' => $mode], 'nickserv');
+                self::assertStringStartsWith("\x0303✔\x03 ", $message, $locale);
+                self::assertStringContainsString("\x02" . $mode . "\x02", $message, $locale);
+                self::assertStringNotContainsString('%mode%', $message, $locale);
+            }
+        }
+    }
+
+    #[Test]
+    public function registrationModeAndRescueRepliesUseConsistentOutcomeStylesInEveryLocale(): void
+    {
+        $styles = [
+            'regmode.status' => "\x0307ℹ\x03 ",
+            'rescue.confirmed' => "\x0303✔\x03 ",
+            'rescue.unavailable' => "\x0304✗\x03 ",
+            'rescue.locked_out' => "\x0304✗\x03 ",
+            'rescue.throttled' => "\x0304✗\x03 ",
+            'rescue.replaced' => "\x0303✔\x03 ",
+            'rescue.replacement_unavailable' => "\x0307ℹ\x03 ",
+            'rescue.temporarily_unavailable' => "\x0304✗\x03 ",
+        ];
+
+        foreach (self::LOCALES as $locale) {
+            $catalog = self::flatten(self::parseDomain('nickserv', $locale));
+            foreach ($styles as $key => $prefix) {
+                $message = $catalog[$key];
+                self::assertIsString($message);
+                self::assertStringStartsWith($prefix, $message, $locale . ':' . $key);
+            }
+            foreach (['regmode.status' => 'mode', 'rescue.locked_out' => 'seconds', 'rescue.throttled' => 'minutes'] as $key => $parameter) {
+                $message = $catalog[$key];
+                self::assertIsString($message);
+                self::assertStringContainsString("\x02%" . $parameter . "%\x02", $message, $locale . ':' . $key);
+            }
+            self::assertIsString($catalog['rescue.unavailable']);
+            self::assertStringContainsString("\x0303VERIFY\x03", $catalog['rescue.unavailable'], $locale);
+        }
+    }
+
+    #[Test]
+    public function optionalRescueTokensAndConfirmationCommandsAreCopyableInEveryLocale(): void
+    {
+        foreach (self::LOCALES as $locale) {
+            $catalog = self::flatten(self::parseDomain('nickserv', $locale));
+            $message = $catalog['rescue.optional_replacement'];
+            self::assertIsString($message);
+            $paragraphs = explode("\n\n", $message);
+
+            self::assertCount(4, $paragraphs, $locale);
+            self::assertStringStartsWith("\x0307→\x03 ", $paragraphs[0], $locale);
+            self::assertStringEndsWith("\x0303%token%\x03", $paragraphs[0], $locale);
+            self::assertStringEndsWith("/msg %bot% \x0303VERIFY %token%\x03", $paragraphs[1], $locale);
+            self::assertNotEmpty($paragraphs[2], $locale);
+            self::assertNotEmpty($paragraphs[3], $locale);
+        }
+    }
+
+    #[Test]
+    public function registrationAndRecoveryGuidanceUsesServiceStylesInEveryLocale(): void
+    {
+        $styles = [
+            'register.token_unavailable' => "\x0304✗\x03 ",
+            'register.already_pending' => "\x0307→\x03 ",
+            'verify.invalid_token' => "\x0304✗\x03 ",
+            'resend.disabled' => "\x0307ℹ\x03 ",
+            'recover.pending_deletion' => "\x0304✗\x03 ",
+            'recover.instructions' => "\x0307ℹ\x03 ",
+            'recover.pending' => "\x0307→\x03 ",
+            'recover.throttled' => "\x0304✗\x03 ",
+            'recover.invalid_token' => "\x0304✗\x03 ",
+            'set.email.token_required' => "\x0304✗\x03 ",
+        ];
+
+        foreach (self::LOCALES as $locale) {
+            $catalog = self::flatten(self::parseDomain('nickserv', $locale));
+            foreach ($styles as $key => $prefix) {
+                $message = $catalog[$key];
+                self::assertIsString($message);
+                self::assertStringStartsWith($prefix, $message, $locale . ':' . $key);
+            }
+            foreach (['register.already_pending', 'recover.pending', 'recover.pending_deletion'] as $key) {
+                $message = $catalog[$key];
+                self::assertIsString($message);
+                self::assertStringContainsString("\x02%nickname%\x02", $message, $locale . ':' . $key);
+            }
+            foreach (['register.already_pending', 'recover.pending'] as $key) {
+                $message = $catalog[$key];
+                self::assertIsString($message);
+                self::assertStringContainsString("\x0303VERIFY <token>\x03", $message, $locale . ':' . $key);
+                self::assertStringContainsString("\x0303RESEND\x03", $message, $locale . ':' . $key);
+            }
+            self::assertIsString($catalog['recover.throttled']);
+            self::assertIsString($catalog['set.email.token_required']);
+            self::assertStringContainsString("\x02%minutes%\x02", $catalog['recover.throttled'], $locale);
+            self::assertStringContainsString("\x0303SET EMAIL <email> <token>\x03", $catalog['set.email.token_required'], $locale);
+        }
+    }
 
     #[Test]
     public function registrationEmailsDocumentVerificationAndFutureRecoveryInEveryLocale(): void

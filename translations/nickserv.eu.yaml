@@ -22,13 +22,13 @@ error:
 
 # --- REGISTER ---------------------------------------------------------------
 register:
-  token_unavailable: "Erregistroa zain dago, baina ezin izan da tokena bidali.\nItxaron erregistroa iraungi arte berriro erregistratu aurretik."
+  token_unavailable: "\x0304✗\x03 Erregistroa zain dago, baina ezin izan da tokena bidali.\nItxaron erregistroa iraungi arte berriro erregistratu aurretik."
   syntax: "REGISTER <password> [email]"
   short:            "Erregistratu zure ezizena zerbitzuetan."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nBalioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da."
   pending:          "\x0307→\x03 Egiaztapen token bat bidali da \x02%email%\x02 helbidera.\n  Exekutatu \x0303/msg %bot% VERIFY <token>\x03 erregistroa osatzeko.\n  Ez duzu jaso? Egiaztatu spam-a edo erabili \x0303/msg %bot% RESEND\x03\n  Tokena \x021 ordu\x02 barru iraungiko da."
   already_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena jada erregistratuta dago."
-  already_pending: "%nickname% ezizenaren erregistroa zain dago. Erabili VERIFY <token>. RESEND erabilgarri dago REGMODE EMAIL denean eta baliozko posta-helbidea esleituta dagoenean bakarrik."
+  already_pending: "\x0307→\x03 \x02%nickname%\x02 ezizenaren erregistroa zain dago. Erabili \x0303VERIFY <token>\x03. \x0303RESEND\x03 erabilgarri dago REGMODE EMAIL denean eta baliozko posta-helbidea esleituta dagoenean bakarrik."
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erregistratu."
   pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ezabatzearen zain dago eta ezin da erregistratu."
   invalid_email:    "\x0304✗\x03 Emandako posta elektronikoko helbidea ez da baliozkoa."
@@ -43,12 +43,12 @@ verify:
   help: "Balioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da."
   success:          "\x0303✔\x03 \x02%nickname%\x02 ezizena arrakastaz erregistratu da eta orain identifikatuta zaude."
   success_native:   "\x0303✔\x03 \x02%nickname%\x02 ezizena behar bezala erregistratu da. Erabili behean agertzen den jatorrizko autentifikazioa."
-  invalid_token: "Erreskate-tokena baliogabea da."
+  invalid_token: "\x0304✗\x03 Erreskate-tokena baliogabea da."
   no_pending:       "\x0304✗\x03 Ez duzu egiaztatzeko zain dagoen erregistrorik."
 
 # --- RESEND -----------------------------------------------------------------
 resend:
-  disabled: "RESEND desgaituta dago REGMODE TOKEN denean."
+  disabled: "\x0307ℹ\x03 \x0303RESEND\x03 desgaituta dago \x02REGMODE TOKEN\x02 denean."
   syntax:           "RESEND"
   short:            "Berbidali egiaztapen tokena zure posta elektronikora."
   help: "RESEND desgaituta dago REGMODE TOKEN denean.\nBalioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da.\nEMAIL moduan, RESEND komandoak tokenaren eta zain dagoen erregistroaren epea ordubetez berritzen du."
@@ -60,17 +60,17 @@ resend:
 recover:
   no_email: "\u000304✗\u0003 Ez dago posta elektronikorik ezarrita \u0002%nickname%\u0002 ezizenarentzat. Berreskurapena ez dago erabilgarri."
   email_sent: "\u000307→\u0003 Berreskuratze token bat bidali da \u0002%email_hint%\u0002 helbidera. Egiaztatu sarrera-ontzia (eta spam karpeta)."
-  pending_deletion: "%nickname% ezizena ezabatzeko zain dago eta ezin da berreskuratu."
-  instructions: "EMAIL: RECOVER %nickname% komandoak behin-behineko tokena eskatzen du postaz. TOKEN: eman berretsitako tokena. RECOVER %nickname% <token> komandoak posta-token balioduna edo berretsitakoa onartzen du. Postakoak gordetakoa balioztatu ondoren bakarrik ordezten du. Gordetakoak aukerako ordezkapena eskaintzen du VERIFY bidez; ez ikusi egin mezua mantentzeko."
+  pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ezabatzeko zain dago eta ezin da berreskuratu."
+  instructions: "\x0307ℹ\x03 EMAIL: \x0303RECOVER %nickname%\x03 komandoak behin-behineko tokena eskatzen du postaz. TOKEN: eman berretsitako tokena. \x0303RECOVER %nickname% <token>\x03 komandoak posta-token balioduna edo berretsitakoa onartzen du. Postakoak gordetakoa balioztatu ondoren bakarrik ordezten du. Gordetakoak aukerako ordezkapena eskaintzen du \x0303VERIFY\x03 bidez; ez ikusi egin mezua mantentzeko."
   syntax:           "RECOVER <ezizena> [tokena]"
   short:            "Berreskuratu zure ezizena pasahitza galdu baduzu."
   help: "EMAIL: RECOVER <nickname> komandoak behin-behineko tokena eskatzen du postaz. TOKEN: eman berretsitako tokena. RECOVER <nickname> <token> komandoak posta-token balioduna edo berretsitakoa onartzen du. Postakoak gordetakoa balioztatu ondoren bakarrik ordezten du. Gordetakoak aukerako ordezkapena eskaintzen du VERIFY bidez; ez ikusi egin mezua mantentzeko."
   not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
-  pending: "%nickname% ezizenaren erregistroa zain dago. Erabili VERIFY <token>. RESEND erabilgarri dago REGMODE EMAIL denean eta baliozko posta-helbidea esleituta dagoenean bakarrik."
+  pending: "\x0307→\x03 \x02%nickname%\x02 ezizenaren erregistroa zain dago. Erabili \x0303VERIFY <token>\x03. \x0303RESEND\x03 erabilgarri dago REGMODE EMAIL denean eta baliozko posta-helbidea esleituta dagoenean bakarrik."
   suspended:        "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago. Arrazoia: %reason%"
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erabili."
-  throttled: "Token oker gehiegi. Saiatu berriro %minutes% minutu barru."
-  invalid_token: "Erreskate-tokena baliogabea da."
+  throttled: "\x0304✗\x03 Token oker gehiegi. Saiatu berriro \x02%minutes%\x02 minutu barru."
+  invalid_token: "\x0304✗\x03 Erreskate-tokena baliogabea da."
   success_identify: "\x0303✔\x03 Pasahitza berrezarrita. Identifikatu orain: \x0303%identify_cmd%\x03"
   success_then_change: "Ondoren aldatu zure pasahitza: \x0303/msg %bot% SET PASSWORD <pasahitz_berria>\x03"
 
@@ -168,7 +168,7 @@ set:
     success:        "\x0303✔\x03 Zure pasahitza arrakastaz eguneratu da."
 
   email:
-    token_required: "Erabili SET EMAIL <email> <token> berretsitako erreskate-tokenarekin."
+    token_required: "\x0304✗\x03 Erabili \x0303SET EMAIL <email> <token>\x03 berretsitako erreskate-tokenarekin."
     syntax: "SET EMAIL <email> <token>"
     short:          "Aldatu zure ezizenari lotutako posta elektroniko helbidea (bi urratseko berrespena)."
     help: "SET EMAIL komandoak kontaktu-helbidea aldatzen du erreskate-tokena balioztatu ondoren, kontsumitu gabe. Formatua eta bakartasuna egiaztatzen ditu; ez du berrespen-mezurik bidaltzen."
@@ -688,21 +688,21 @@ debug:
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
-  syntax: "REGMODE EMAIL|TOKEN|STATUS"
+  syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "Sareko erregistro modua kudeatu."
-  help: "EMAIL edo TOKEN ezartzen du kontu berrien erregistro politika gisa. STATUS aukerak uneko politika erakusten du aldatu gabe. Zain dauden kontuek jatorrizko erregistro modua mantentzen dute. TOKEN moduan RESEND globalki desgaituta dago. nickserv.regmode baimena behar du."
-  status: "Uneko erregistro modua: %mode%."
-  changed: "Erregistro modua %mode% modura aldatu da."
+  help: "Kontu berrien erregistro modua ezartzen du.\n\x02EMAIL\x02 moduan egiaztapen-tokena posta elektronikoz bidaltzen da.\n\x02TOKEN\x02 moduan tokena zuzenean IRC bidez ematen da.\n\x02STATUS\x02 aukerak uneko modua erakusten du, aldatu gabe.\nZain dauden erregistroek jatorrizko modua mantentzen dute.\n\x02TOKEN\x02 moduan, \x02RESEND\x02 guztientzat desgaituta dago.\nnickserv.regmode baimena behar du."
+  status: "\x0307ℹ\x03 Uneko erregistro modua: \x02%mode%\x02."
+  changed: "\x0303✔\x03 Erregistro modua \x02%mode%\x02 modura aldatu da."
 
 # --- Unified rescue credential -----------------------------------------------
 rescue:
-  issued: "Erreskate-tokena: %token%.\nBerretsi /msg %bot% VERIFY %token% erabiliz.\nGorde leku seguruan.\nAzken tokenak bakarrik balio du;\nberretsi ondoren ez da berriro erakutsiko."
-  confirmed: "Erreskate-tokena berretsi da. Gorde leku seguruan."
-  unavailable: "Autentifikatu eta berretsi erreskate-tokena VERIFY erabiliz eragiketa hau egin aurretik."
-  locked_out: "Token oker gehiegi. Saiatu berriro %seconds% segundo barru."
-  throttled: "Token oker gehiegi. Saiatu berriro %minutes% minutu barru."
-  replaced: "Berreskuratze-tokena balioztatu berri duzun posta-tokenarekin ordeztu da. Gorde leku seguruan."
+  issued: "Erreskate-tokena: \x0303%token%\x03\n\nGorde token hau leku seguru batean. Pasahitza ahazten baduzu, zure ezizena berreskuratzeko beharko duzu.\n\nBerresteko, erabili: /msg %bot% \x0303VERIFY %token%\x03\n\n\x0304⚠\x03 GARRANTZITSUA: Sortutako azken tokenak bakarrik balio du. Berretsi ondoren, ez da berriro erakutsiko. Ez partekatu inorekin."
+  confirmed: "\x0303✔\x03 Erreskate-tokena berretsi da. Gorde leku seguruan."
+  unavailable: "\x0304✗\x03 Autentifikatu eta berretsi erreskate-tokena \x0303VERIFY\x03 erabiliz eragiketa hau egin aurretik."
+  locked_out: "\x0304✗\x03 Token oker gehiegi. Saiatu berriro \x02%seconds%\x02 segundo barru."
+  throttled: "\x0304✗\x03 Token oker gehiegi. Saiatu berriro \x02%minutes%\x02 minutu barru."
+  replaced: "\x0303✔\x03 Berreskuratze-tokena balioztatu berri duzun posta-tokenarekin ordeztu da. Gorde leku seguruan."
 
-  optional_replacement: "Aukerako berreskuratze-token berria: %token%.\nOraingoa ordezteko, erabili /msg %bot% VERIFY %token%.\nOraingo tokenak balio du berretsi arte.\nAldatu nahi ez baduzu, ez ikusi egin mezu honi."
-  replacement_unavailable: "Pasahitza berrezarri da, baina ezin izan da token berririk eman. Oraingo tokenak balio du oraindik."
-  temporarily_unavailable: "Berreskuratze-tokenaren bidalketa ez dago une honetan erabilgarri. Saiatu geroago."
+  optional_replacement: "\x0307→\x03 Aukerako berreskuratze-token berria: \x0303%token%\x03\n\nUneko berreskuratze-tokena ordezkatzeko, erabili: /msg %bot% \x0303VERIFY %token%\x03\n\nOraingo tokenak balio du berretsi arte.\n\nAldatu nahi ez baduzu, ez ikusi egin mezu honi."
+  replacement_unavailable: "\x0307ℹ\x03 Pasahitza berrezarri da, baina ezin izan da token berririk eman. Oraingo tokenak balio du oraindik."
+  temporarily_unavailable: "\x0304✗\x03 Berreskuratze-tokenaren bidalketa ez dago une honetan erabilgarri. Saiatu geroago."
