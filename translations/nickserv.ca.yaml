@@ -51,7 +51,7 @@ resend:
   disabled: "RESEND està desactivat mentre REGMODE sigui TOKEN."
   syntax:           "RESEND"
   short:            "Reenviar el token de verificació al vostre correu."
-  help: "RESEND està desactivat mentre REGMODE sigui TOKEN.\nUn cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo."
+  help: "RESEND està desactivat mentre REGMODE sigui TOKEN.\nUn cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo.\nEn mode EMAIL, RESEND renova durant una hora el token i el termini del registre pendent."
   success:          "\x0307→\x03 Token de verificació reenviat a \x02%email%\x02."
   no_pending:       "\x0304✗\x03 No teniu cap registre pendent per reenviar un token."
   throttled:        "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de sol·licitar un altre correu de verificació."

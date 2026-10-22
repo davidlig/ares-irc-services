@@ -51,7 +51,7 @@ resend:
   disabled: "RESEND está deshabilitado mientras REGMODE sea TOKEN."
   syntax:           "RESEND"
   short:            "Reenvía el token de verificación a tu correo."
-  help: "RESEND está deshabilitado mientras REGMODE sea TOKEN.\nUna vez validado, este token será tu token de recuperación permanente. Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo. La caducidad de una hora solo se aplica antes de validarlo."
+  help: "RESEND está deshabilitado mientras REGMODE sea TOKEN.\nUna vez validado, este token será tu token de recuperación permanente. Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo. La caducidad de una hora solo se aplica antes de validarlo.\nEn modo EMAIL, RESEND renueva durante una hora el token y el plazo del registro pendiente."
   success:          "\x0307→\x03 Token de verificación reenviado a \x02%email%\x02."
   no_pending:       "\x0304✗\x03 No tienes ningún registro pendiente de verificación."
   throttled:        "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar otro correo de verificación."

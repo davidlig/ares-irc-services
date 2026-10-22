@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Register;
 
+use App\NickServ\Adapter\Out\InMemory\InMemoryRegistrationThrottle;
+use App\NickServ\Adapter\Out\InMemory\RegisterThrottleRegistry;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
@@ -167,7 +169,7 @@ final class RegisterNickHandlerTest extends TestCase
     }
 
     #[Test]
-    public function mailFailureLeavesPendingStateAndDoesNotConsumeThrottle(): void
+    public function mailFailureLeavesPendingStateAndRecordsIpCooldown(): void
     {
         $repository = $this->createMock(RegisterNickRepository::class);
         $repository->method('findByEmail')->willReturn(null);
@@ -179,7 +181,7 @@ final class RegisterNickHandlerTest extends TestCase
         $mail->expects(self::once())->method('sendVerification')->willThrowException(new RuntimeException('transport failed'));
         $throttle = $this->createMock(RegistrationThrottle::class);
         $throttle->method('remainingCooldownSeconds')->willReturn(0);
-        $throttle->expects(self::never())->method('recordAttempt');
+        $throttle->expects(self::once())->method('recordAttempt')->with('ip:client', $this->now);
 
         $result = $this->handler(
             repository: $repository,
@@ -212,6 +214,25 @@ final class RegisterNickHandlerTest extends TestCase
         $result = $this->handler(repository: $repo, verificationStore: $store, mail: $mail, mode: RegistrationMode::Token)->handle($this->input(email: null));
         self::assertSame(RegisterNickOutcome::TokenVerificationRequired, $result->outcome);
         self::assertSame('12345678-1234-4234-8234-123456789abc', $result->token);
+    }
+
+    #[Test]
+    public function storeOverflowStillLimitsRegistrationsByIpAcrossNicknames(): void
+    {
+        foreach ([RegistrationMode::Email, RegistrationMode::Token] as $mode) {
+            $repo = $this->createMock(RegisterNickRepository::class);
+            $repo->expects(self::exactly(2))->method('save')->willReturnCallback(static fn (RegisteredNick $nick) => new ReflectionProperty($nick, 'id')->setValue($nick, 42));
+            $store = $this->createStub(TemporaryRescueTokenStore::class);
+            $store->method('replace')->willThrowException(new OverflowException());
+            $throttle = new InMemoryRegistrationThrottle(new RegisterThrottleRegistry());
+            $handler = $this->handler(repository: $repo, verificationStore: $store, throttle: $throttle, mode: $mode);
+            $expected = RegistrationMode::Token === $mode ? RegisterNickOutcome::TemporarilyUnavailable : RegisterNickOutcome::MailDeliveryFailed;
+            self::assertSame($expected, $handler->handle(new RegisterNick('First', 'password', 'a@example.com', 'en', 'ip:A'))->outcome);
+            $blocked = $handler->handle(new RegisterNick('Second', 'password', 'b@example.com', 'en', 'ip:A'));
+            self::assertSame(RegisterNickOutcome::Throttled, $blocked->outcome);
+            self::assertSame(300, $blocked->retryAfterSeconds);
+            self::assertSame($expected, $handler->handle(new RegisterNick('Third', 'password', 'c@example.com', 'en', 'ip:B'))->outcome);
+        }
     }
 
     #[Test]

@@ -51,7 +51,7 @@ resend:
   disabled: "RESEND desgaituta dago REGMODE TOKEN denean."
   syntax:           "RESEND"
   short:            "Berbidali egiaztapen tokena zure posta elektronikora."
-  help: "RESEND desgaituta dago REGMODE TOKEN denean.\nBalioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da."
+  help: "RESEND desgaituta dago REGMODE TOKEN denean.\nBalioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da.\nEMAIL moduan, RESEND komandoak tokenaren eta zain dagoen erregistroaren epea ordubetez berritzen du."
   success:          "\x0307→\x03 Egiaztapen tokena \x02%email%\x02 helbidera berbidali da."
   no_pending:       "\x0304✗\x03 Ez duzu tokena berbidaltzeko zain dagoen erregistrorik."
   throttled:        "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar duzu beste egiaztapen posta elektroniko bat eskatu aurretik."

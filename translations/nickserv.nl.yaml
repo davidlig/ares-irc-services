@@ -51,7 +51,7 @@ resend:
   disabled: "RESEND is uitgeschakeld zolang REGMODE TOKEN is."
   syntax:           "RESEND"
   short:            "Verstuur de verificatietoken opnieuw naar uw e-mail."
-  help: "RESEND is uitgeschakeld zolang REGMODE TOKEN is.\nNa bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging."
+  help: "RESEND is uitgeschakeld zolang REGMODE TOKEN is.\nNa bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging.\nIn EMAIL-modus vernieuwt RESEND de geldigheid van het token en de wachtende registratie voor één uur."
   success:          "\x0307→\x03 Verificatietoken opnieuw verzonden naar \x02%email%\x02."
   no_pending:       "\x0304✗\x03 U heeft geen lopende registratie om een token voor opnieuw te verzenden."
   throttled:        "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een nieuwe verificatie-e-mail aanvraagt."

@@ -409,9 +409,9 @@ registration mode stay hashed in memory; only successful VERIFY persists a recov
 Registration expires if not confirmed, releasing the nickname. EMAIL registration mail
 explains that the validated token must be saved for subsequent nickname recovery.
 
-In TOKEN mode RESEND is disabled. In EMAIL mode it generates another provisional token
-for a pending account with valid email, without extending the registration deadline or
-persisting a recovery credential. Unconfirmed tokens do not survive daemon restart.
+In TOKEN mode RESEND is disabled. In EMAIL mode, a pending account with valid email
+receives a new provisional token and a renewed registration deadline, without persisting
+a recovery credential. Unconfirmed tokens do not survive daemon restart.
 
 EMAIL RECOVER sends a provisional token while preserving the confirmed DB credential.
 Successful RECOVER with the emailed token promotes that same token and notifies the user.

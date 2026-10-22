@@ -51,7 +51,7 @@ resend:
   disabled: "RESEND è disabilitato quando REGMODE è TOKEN."
   syntax:           "RESEND"
   short:            "Reinvia il token di verifica alla sua email."
-  help: "RESEND è disabilitato quando REGMODE è TOKEN.\nDopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di un’ora vale solo prima della verifica."
+  help: "RESEND è disabilitato quando REGMODE è TOKEN.\nDopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di un’ora vale solo prima della verifica.\nIn modalità EMAIL, RESEND rinnova per un’ora il token e il termine della registrazione in attesa."
   success:          "\x0307→\x03 Token di verifica reinviato a \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Non ha nessuna registrazione in sospeso per cui reinviare un token."
   throttled:        "\x0304✗\x03 Deve attendere \x02%minutes%\x02 minuto/i prima di richiedere un'altra email di verifica."

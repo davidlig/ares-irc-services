@@ -1633,6 +1633,7 @@ services:
     App\NickServ\Application\UseCase\Resend\ResendVerificationHandler:
         arguments:
             $resendMinIntervalSeconds: '%nickserv.resend_min_interval%'
+            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
 
     App\NickServ\Adapter\In\Irc\Command\ResendCommand:
         tags: ['nickserv.command']

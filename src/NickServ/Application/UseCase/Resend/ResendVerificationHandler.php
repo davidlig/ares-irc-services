@@ -16,6 +16,8 @@ use LogicException;
 use OverflowException;
 use Throwable;
 
+use function sprintf;
+
 use const FILTER_VALIDATE_EMAIL;
 
 final readonly class ResendVerificationHandler implements ResendVerificationHandlerInterface
@@ -29,6 +31,7 @@ final readonly class ResendVerificationHandler implements ResendVerificationHand
         private ResendMailSender $mailSender,
         private Clock $clock,
         private int $resendMinIntervalSeconds,
+        private int $verificationTokenTtlSeconds = 3600,
     ) {}
 
     public function handle(ResendVerification $command): ResendVerificationResult
@@ -62,12 +65,16 @@ final readonly class ResendVerificationHandler implements ResendVerificationHand
         }
         $token = $this->tokenGenerator->generate();
         $hash = $this->tokenGenerator->hash($token) ?? throw new LogicException('Generated rescue token is invalid.');
+        $expiresAt = $now->modify(sprintf('+%d seconds', $this->verificationTokenTtlSeconds));
         $this->temporaryTokens->prune($now);
         try {
-            $this->temporaryTokens->replace($account->getId(), $hash, $account->getExpiresAt());
+            $this->temporaryTokens->replace($account->getId(), $hash, $expiresAt);
         } catch (OverflowException) {
             return ResendVerificationResult::mailDeliveryFailed();
         }
+
+        $account->renewPendingRegistration($now, $expiresAt);
+        $this->nickRepository->save($account);
 
         try {
             $this->mailSender->sendResend(

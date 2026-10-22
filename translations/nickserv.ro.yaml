@@ -51,7 +51,7 @@ resend:
   disabled: "RESEND este dezactivat când REGMODE este TOKEN."
   syntax:           "RESEND"
   short:            "Retrimiteți tokenul de verificare la e-mailul dumneavoastră."
-  help: "RESEND este dezactivat când REGMODE este TOKEN.\nDupă validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Expirarea de o oră se aplică doar înainte de validare."
+  help: "RESEND este dezactivat când REGMODE este TOKEN.\nDupă validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Expirarea de o oră se aplică doar înainte de validare.\nÎn modul EMAIL, RESEND reînnoiește tokenul și termenul înregistrării în așteptare pentru o oră."
   success:          "\x0307→\x03 Tokenul de verificare a fost retrimis la \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Nu aveți nicio înregistrare în așteptare pentru care să retrimiteți un token."
   throttled:        "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a solicita alt e-mail de verificare."

@@ -51,7 +51,7 @@ resend:
   disabled: "RESEND ist deaktiviert, solange REGMODE auf TOKEN steht."
   syntax:           "RESEND"
   short:            "Das Verifizierungs-Token erneut an Ihre E-Mail senden."
-  help: "RESEND ist deaktiviert, solange REGMODE auf TOKEN steht.\nNach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung."
+  help: "RESEND ist deaktiviert, solange REGMODE auf TOKEN steht.\nNach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung.\nIm EMAIL-Modus verlängert RESEND die Gültigkeit des Tokens und der ausstehenden Registrierung um eine Stunde ab dem Versand."
   success:          "\x0307→\x03 Verifizierungs-Token erneut an \x02%email%\x02 gesendet."
   no_pending:       "\x0304✗\x03 Sie haben keine ausstehende Registrierung, für die ein Token erneut gesendet werden kann."
   throttled:        "\x0304✗\x03 Sie müssen \x02%minutes%\x02 Minute(n) warten, bevor Sie eine weitere Verifizierungs-E-Mail anfordern."

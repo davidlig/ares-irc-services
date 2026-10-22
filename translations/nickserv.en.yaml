@@ -51,7 +51,7 @@ resend:
   disabled: "RESEND is disabled while REGMODE is TOKEN."
   syntax:           "RESEND"
   short:            "Resend the verification token to your email."
-  help: "RESEND is disabled while REGMODE is TOKEN.\nAfter you validate this token, it becomes your permanent recovery token. Store it safely: you can use it to recover your nickname. The one-hour expiry applies only before validation."
+  help: "RESEND is disabled while REGMODE is TOKEN.\nAfter you validate this token, it becomes your permanent recovery token. Store it safely: you can use it to recover your nickname. The one-hour expiry applies only before validation.\nIn EMAIL mode, RESEND renews the token and pending registration period for one hour."
   success:          "\x0307→\x03 Verification token resent to \x02%email%\x02."
   no_pending:       "\x0304✗\x03 You have no pending registration to resend a token for."
   throttled:        "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another verification email."

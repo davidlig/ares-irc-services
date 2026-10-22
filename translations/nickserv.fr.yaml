@@ -51,7 +51,7 @@ resend:
   disabled: "RESEND est désactivé lorsque REGMODE est TOKEN."
   syntax:           "RESEND"
   short:            "Renvoyer le jeton de vérification à votre e-mail."
-  help: "RESEND est désactivé lorsque REGMODE est TOKEN.\nAprès validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. L’expiration d’une heure ne concerne que la période avant validation."
+  help: "RESEND est désactivé lorsque REGMODE est TOKEN.\nAprès validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. L’expiration d’une heure ne concerne que la période avant validation.\nEn mode EMAIL, RESEND renouvelle le jeton et le délai de l’inscription en attente pour une heure."
   success:          "\x0307→\x03 Jeton de vérification renvoyé à \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Vous n'avez aucun enregistrement en attente pour renvoyer un jeton."
   throttled:        "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de demander un autre e-mail de vérification."

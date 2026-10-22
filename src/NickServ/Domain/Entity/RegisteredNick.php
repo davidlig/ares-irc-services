@@ -148,6 +148,17 @@ class RegisteredNick
         $this->expiresAt = null;
     }
 
+    public function renewPendingRegistration(DateTimeImmutable $now, DateTimeImmutable $expiresAt): void
+    {
+        if (!$this->isPending() || null === $this->expiresAt || $this->expiresAt <= $now) {
+            throw new LogicException('Only an unexpired pending registration can be renewed.');
+        }
+        if ($expiresAt <= $now) {
+            throw new InvalidArgumentException('The renewed deadline must be in the future.');
+        }
+        $this->expiresAt = $expiresAt;
+    }
+
     /**
      * Suspends the account with a reason and optional expiration date.
      *

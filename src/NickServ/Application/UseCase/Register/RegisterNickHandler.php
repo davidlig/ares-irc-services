@@ -91,6 +91,7 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
 
         $hash = $this->tokenGenerator->hash($token) ?? throw new LogicException('Generated rescue token is invalid.');
         $this->nickRepository->save($nick);
+        $this->throttle->recordAttempt($command->clientKey, $now);
         $this->verificationStore->prune($now);
         try {
             $this->verificationStore->replace($nick->getId(), $hash, $expiresAt);
@@ -100,8 +101,6 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
                 : RegisterNickResult::mailDeliveryFailed();
         }
         if (RegistrationMode::Token === $mode) {
-            $this->throttle->recordAttempt($command->clientKey, $now);
-
             return RegisterNickResult::tokenVerificationRequired($token);
         }
         try {
@@ -114,8 +113,6 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         } catch (Throwable) {
             return RegisterNickResult::mailDeliveryFailed();
         }
-
-        $this->throttle->recordAttempt($command->clientKey, $now);
 
         return RegisterNickResult::verificationRequired($command->email ?? '');
     }

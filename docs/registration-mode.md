@@ -27,8 +27,8 @@ wait for pending-account expiration before registering again if the token is los
 
 RESEND is disabled while global REGMODE is TOKEN. Under EMAIL, an unexpired pending
 account with a valid email can request another token. RESEND generates a new UUID,
-replaces the temporary hash and mails it without writing a confirmed credential or
-extending the registration deadline. The previous provisional token stops working.
+replaces the temporary hash and mails it without writing a confirmed credential. Both the provisional token and the pending
+registration receive a fresh verification period from the RESEND time. The previous provisional token stops working.
 Global policy controls this behavior; no original account registration method is stored.
 
 ## Existing accounts and optional replacements
@@ -71,3 +71,6 @@ All secret delivery is private and localized. Tokens/hashes never appear on gene
 events, audit/staff records or UDB projections. See [rescue credential storage](rescue-credentials.md).
 
 An emailed recovery token already issued in EMAIL mode remains valid until its expiry even if the network switches to TOKEN. TOKEN prevents new recovery emails; it does not revoke existing provisional proof.
+
+REGISTER cooldown is shared by IP across nickname changes. Once a pending account is
+persisted, its IP cooldown applies even if challenge capacity or mail delivery fails.

@@ -63,7 +63,7 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $limiter = new InMemoryRescueAttemptLimiter();
         $sessions = new IdentifiedSessionRegistry();
         $clock = $this->createStub(Clock::class);
-        $clock->method('now')->willReturn($now);
+        $clock->method('now')->willReturnCallback(static function () use (&$now): DateTimeImmutable { return $now; });
         $hasher = $this->createStub(PasswordHasher::class);
         $hasher->method('hash')->willReturnCallback(static fn (string $s): string => 'hash:' . $s);
         $throttle = $this->createStub(RegistrationThrottle::class);
@@ -137,14 +137,22 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $resentToken = null;
         $resendMail->expects(self::once())->method('sendResend')->willReturnCallback(static function (string $n, string $e, string $t) use (&$resentToken): void {$resentToken = $t; });
         $resend = new ResendVerificationHandler($repo, $resendThrottle, $codec, $temp, $policy, $resendMail, $clock, 600);
-        $pendingDigest = $digest();
+        $originalDeadline = $mailAccount->getExpiresAt();
+        $now = $now->modify('+59 minutes');
         $resend->handle(new ResendVerification('Mail', 'en'));
-        self::assertSame($pendingDigest, $digest());
+        self::assertSame($now->modify('+1 hour')->format('c'), $mailAccount->getExpiresAt()?->format('c'));
+        $persistedExpiry = $db->fetchOne('SELECT expires_at FROM registered_nicks WHERE id=?', [$mailAccount->getId()]);
+        self::assertIsString($persistedExpiry);
+        self::assertSame($mailAccount->getExpiresAt()->getTimestamp(), new DateTimeImmutable($persistedExpiry)->getTimestamp());
+        $pendingDigest = $digest();
         self::assertNotNull($resentToken);
         self::assertNotSame($mailToken, $resentToken);
         self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Mail', $mailToken, 'MAILUID', 'clientB'))->outcome);
         self::assertSame($pendingDigest, $digest());
         $mailToken = $resentToken;
+        $now = $now->modify('+2 minutes');
+        self::assertNotNull($originalDeadline);
+        self::assertGreaterThan($originalDeadline->getTimestamp(), $now->getTimestamp());
         $this->entityManager->clear();
         // Unconfirmed EMAIL tokens are memory-only too; restart cannot promote them.
         self::assertSame(VerifyNickOutcome::InvalidToken, $makeVerify(new InMemoryTemporaryRescueTokenStore())->handle(new VerifyNick('Mail', $mailToken, 'MAILUID', 'clientB'))->outcome);
