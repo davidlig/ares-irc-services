@@ -253,6 +253,9 @@ services:
     App\NickServ\Application\UseCase\Register\RegisterNickHandlerInterface:
         alias: App\NickServ\Application\UseCase\Register\RegisterNickHandler
 
+    App\NickServ\Application\UseCase\Saregister\SaregisterNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Saregister\SaregisterNickHandler
+
     App\NickServ\Application\Port\Out\IdentifiedSessionTracker:
         alias: App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry
 
@@ -1623,6 +1626,9 @@ services:
             $guestPrefix: '%services.guest_prefix%'
 
     App\NickServ\Adapter\In\Irc\Command\RegisterCommand:
+        tags: ['nickserv.command']
+
+    App\NickServ\Adapter\In\Irc\Command\SaregisterCommand:
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Verify\VerifyNickHandler: ~

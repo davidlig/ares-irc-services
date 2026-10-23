@@ -119,6 +119,33 @@ class RegisteredNick
     }
 
     /**
+     * Creates an already active account, bypassing the pending verification state.
+     *
+     * Used by the administrative registration path, where the account is created on behalf of a
+     * third party and no verification step is performed.
+     */
+    public static function createActive(
+        string $nickname,
+        string $passwordHash,
+        ?string $email,
+        string $language,
+        DateTimeImmutable $registeredAt,
+    ): self {
+        $nick = new self();
+        $nick->nickname = $nickname;
+        $nick->nicknameLower = strtolower($nickname);
+        $nick->status = NickStatus::Registered;
+        $nick->passwordHash = $passwordHash;
+        self::assertValidEmail($email);
+        $nick->email = $email;
+        $nick->language = self::normalizeLanguage($language);
+        $nick->registeredAt = $registeredAt;
+        $nick->expiresAt = null;
+
+        return $nick;
+    }
+
+    /**
      * Creates a permanently forbidden nick entry (no owner).
      */
     public static function createForbidden(

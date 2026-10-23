@@ -55,6 +55,9 @@ final readonly class NickServPermission
     /** IRCop permission to change the network registration policy. */
     public const string REGMODE = 'nickserv.regmode';
 
+    /** IRCop permission to register a nickname on behalf of another user. */
+    public const string SAREGISTER = 'nickserv.saregister';
+
     /** @return list<string> */
     public static function allIrcop(): array
     {
@@ -73,6 +76,7 @@ final readonly class NickServPermission
             self::HISTORY,
             self::LIST,
             self::REGMODE,
+            self::SAREGISTER,
         ];
     }
 

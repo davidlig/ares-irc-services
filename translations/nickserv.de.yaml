@@ -686,6 +686,15 @@ debug:
   action_duration: "%operator% führt Befehl %command% auf %target% aus. Dauer: %duration%. %reason%"
   prefix_reason: "Grund: %reason%"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <Nickname> <Passwort> [E-Mail]"
+  short: "Registriert einen Nicknamen im Namen eines anderen Benutzers."
+  help: "Registriert <Nickname> als aktives Konto im Namen des künftigen Besitzers, ohne Verifikationsschritt. Im Registrierungsmodus EMAIL ist die Adresse erforderlich und muss eindeutig sein; im Modus TOKEN ist sie optional. Das Rettungstoken wird im Modus TOKEN einmalig angezeigt und im Modus EMAIL per E-Mail versendet. Passwörter und Token werden nie im Audit-Protokoll gespeichert. Erfordert die Berechtigung nickserv.saregister."
+  created: "\x0303✓\x03 Der Nickname \x02%nickname%\x02 wurde registriert. Das Rettungstoken wurde an \x02%email%\x02 gesendet."
+  created_with_token: "\x0303✓\x03 Der Nickname \x02%nickname%\x02 wurde registriert.\n  \x02RETTUNGSTOKEN:\x02 \x0303%token%\x03\n  Übergeben Sie es dem Besitzer über einen sicheren Kanal.\n  Es wird nur einmal angezeigt und kann später nicht abgerufen werden."
+  created_without_mail: "\x0307→\x03 Der Nickname \x02%nickname%\x02 wurde mit einem gültigen Rettungsnachweis registriert, aber die Nachricht an \x02%email%\x02 konnte nicht gesendet werden. Das Token wurde nicht zugestellt; verwenden Sie RECOVER oder löschen Sie das Konto und registrieren Sie es erneut."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"

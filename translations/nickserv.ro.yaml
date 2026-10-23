@@ -686,6 +686,15 @@ debug:
   action_duration: "%operator% execută comanda %command% asupra %target%. Durată: %duration%. %reason%"
   prefix_reason: "Motiv: %reason%"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <pseudonim> <parolă> [e-mail]"
+  short: "Înregistrează un pseudonim în numele altui utilizator."
+  help: "Înregistrează <pseudonim> ca cont activ în numele viitorului proprietar, fără niciun pas de verificare. În modul de înregistrare EMAIL adresa este obligatorie și trebuie să fie unică; în modul TOKEN este opțională. Tokenul de recuperare este afișat o singură dată în modul TOKEN și trimis prin e-mail în modul EMAIL. Parolele și tokenurile nu sunt niciodată scrise în jurnalul de audit. Necesită permisiunea nickserv.saregister."
+  created: "\x0303✓\x03 Pseudonimul \x02%nickname%\x02 a fost înregistrat. Tokenul de recuperare a fost trimis la \x02%email%\x02."
+  created_with_token: "\x0303✓\x03 Pseudonimul \x02%nickname%\x02 a fost înregistrat.\n  \x02TOKEN DE RECUPERARE:\x02 \x0303%token%\x03\n  Predă-l proprietarului printr-un canal sigur.\n  Este afișat doar o dată și nu poate fi recuperat ulterior."
+  created_without_mail: "\x0307→\x03 Pseudonimul \x02%nickname%\x02 a fost înregistrat cu o acreditare de recuperare validă, dar mesajul către \x02%email%\x02 nu a putut fi trimis. Tokenul nu a fost livrat; folosește RECOVER sau șterge contul și înregistrează-l din nou."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"

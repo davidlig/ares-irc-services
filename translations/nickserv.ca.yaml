@@ -686,6 +686,15 @@ debug:
   action_duration: "%operator% executa l'ordre %command% sobre %target%. Durada: %duration%. %reason%"
   prefix_reason: "Motiu: %reason%"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <àlies> <contrasenya> [correu]"
+  short: "Registra un àlies en nom d'un altre usuari."
+  help: "Registra <àlies> com a compte actiu en nom del seu futur propietari, sense cap pas de verificació. En mode de registre EMAIL l'adreça és obligatòria i ha de ser única; en mode TOKEN és opcional. El testimoni de rescat es mostra una sola vegada en mode TOKEN i s'envia per correu en mode EMAIL. Les contrasenyes i els testimonis mai s'escriuen al registre d'auditoria. Requereix el permís nickserv.saregister."
+  created: "\x0303✓\x03 L'àlies \x02%nickname%\x02 ha estat registrat. El testimoni de rescat s'ha enviat a \x02%email%\x02."
+  created_with_token: "\x0303✓\x03 L'àlies \x02%nickname%\x02 ha estat registrat.\n  \x02TESTIMONI DE RESCAT:\x02 \x0303%token%\x03\n  Lliura'l al seu propietari per un canal segur.\n  Només es mostra una vegada i no es pot recuperar després."
+  created_without_mail: "\x0307→\x03 L'àlies \x02%nickname%\x02 s'ha registrat amb una credencial de rescat vàlida, però no s'ha pogut enviar el missatge a \x02%email%\x02. El testimoni no s'ha lliurat; usa RECOVER o elimina el compte i torna'l a registrar."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
