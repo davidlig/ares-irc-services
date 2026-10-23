@@ -52,6 +52,11 @@ final readonly class ListCommand implements ChanServCommandInterface, IrcopAudit
         return 'list.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'list.example';
+    }
+
     public function getOrder(): int
     {
         return 210;

@@ -30,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function count;
+use function is_string;
 
 #[CoversClass(LevelsCommand::class)]
 #[CoversClass(ManageChannelLevels::class)]
@@ -253,12 +254,20 @@ final class LevelsCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            if ('levels.list.header' === $id) {
+                $channel = $parameters['%channel%'] ?? null;
+
+                return 'Niveles de ' . (is_string($channel) ? $channel : '');
+            }
+
+            return $id;
+        });
 
         $cmd = new LevelsCommand(new ManageChannelLevelsHandler($channelRepo, $levelRepo));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame('levels.list.header', $messages[0]);
+        self::assertSame('Niveles de #test', $messages[0]);
         self::assertGreaterThan(1, count($messages));
     }
 
@@ -596,6 +605,7 @@ final class LevelsCommandTest extends TestCase
         ));
 
         self::assertSame('levels.help', $cmd->getHelpKey());
+        self::assertSame('levels.example', $cmd->getExampleKey());
     }
 
     #[Test]
@@ -631,9 +641,9 @@ final class LevelsCommandTest extends TestCase
         $help = $cmd->getSubCommandHelp();
 
         self::assertSame([
-            ['name' => 'LIST', 'desc_key' => 'levels.list.short', 'help_key' => 'levels.list.help', 'syntax_key' => 'levels.list.syntax'],
-            ['name' => 'SET', 'desc_key' => 'levels.set.short', 'help_key' => 'levels.set.help', 'syntax_key' => 'levels.set.syntax'],
-            ['name' => 'RESET', 'desc_key' => 'levels.reset.short', 'help_key' => 'levels.reset.help', 'syntax_key' => 'levels.reset.syntax'],
+            ['name' => 'LIST', 'desc_key' => 'levels.list.short', 'help_key' => 'levels.list.help', 'example_key' => 'levels.list.example', 'syntax_key' => 'levels.list.syntax'],
+            ['name' => 'SET', 'desc_key' => 'levels.set.short', 'help_key' => 'levels.set.help', 'example_key' => 'levels.set.example', 'syntax_key' => 'levels.set.syntax'],
+            ['name' => 'RESET', 'desc_key' => 'levels.reset.short', 'help_key' => 'levels.reset.help', 'example_key' => 'levels.reset.example', 'syntax_key' => 'levels.reset.syntax'],
         ], $help);
     }
 

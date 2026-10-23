@@ -1,25 +1,35 @@
-# ChanServ translations — Dutch
-# Domain: chanserv
+# ChanServ-vertalingen — Nederlands
+# Domein: chanserv
+#
+# IRC-opmaakcodes (dubbele aanhalingstekens of letterlijke !irc-blokken):
+#   \x02        vet aan/uit
+#   \x03NN      kleur (DECIMAAL: 03=groen, 04=rood, 07=oranje, 14=donkergrijs)
+#   \x03        kleur herstellen
+#   \x0F        alle opmaak herstellen
+#
+# IRC-kleuren gebruiken DECIMALE getallen (0-15), geen hexadecimale.
+#   \x0314 = donkergrijs (14 decimaal): GOED
+#   \x030F = kleur 0 gevolgd door de letter F: FOUT
+#
+# IRC-tekst over meerdere regels: !irc |- met echte regeleinden en spaties.
+# Blokken zonder tag decoderen geen escapes; behoud letterlijke CTCP-waarden.
+# HELP-voorbeelden: example/examples en %command_prefix%.
+# De presentatielaag voegt /msg zonder kleur en een marge van twee spaties toe.
 
-unknown_command: "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
-
+# --- ERROR -----------------------------------------------------------------
 error:
-  syntax:         "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
-  oper_only:      "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
-  not_identified: "\x0304✗\x03 U bent niet geïdentificeerd. Gebruik \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft geen toegang tot dit commando."
   invalid_channel: "\x0304✗\x03 Ongeldige kanaalnaam. Gebruik \x02#kanaal\x02."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
-  generic:        "\x0304✗\x03 Er is een fout opgetreden. Probeer het opnieuw."
-  nick_not_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
-  insufficient_access: "\x0304✗\x03 Onvoldoende toegang voor \x02%operation%\x02 op kanaal \x02%channel%\x02."
-  mail_failed: "\x0304✗\x03 Kon geen e-mail verzenden. Probeer het later opnieuw."
+  generic: "\x0304✗\x03 Er is een fout opgetreden. Probeer het opnieuw."
 
+# --- REGISTER --------------------------------------------------------------
 register:
-  syntax:           "REGISTER <#kanaal> <beschrijving>"
-  short:            "Registreer een kanaal."
-  help:             "Registreer en koppel een kanaal aan uw bijnaam. U moet geïdentificeerd zijn bij %nickserv%."
-  success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is geregistreerd."
+  syntax: "REGISTER <#kanaal> <beschrijving>"
+  example: "%command_prefix%\x02\x0303REGISTER #kanaal Gemeenschapsproject\x03\x0F"
+  short: "Registreer een kanaal."
+  help: |-
+    Registreer en koppel een kanaal aan uw bijnaam. U moet geïdentificeerd zijn bij
+    %nickserv%.
+  success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is geregistreerd."
   already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
   channel_not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 bestaat niet op het netwerk."
   pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat op het punt verwijderd te worden en kan niet worden geregistreerd."
@@ -27,43 +37,55 @@ register:
   limit_exceeded: "\x0304✗\x03 U heeft het maximum van %max% geregistreerde kanalen bereikt."
   throttled: "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een ander kanaal registreert."
 
+# --- INFO ------------------------------------------------------------------
 info:
-  syntax:           "INFO <#kanaal>"
-  short:            "Toon kanaalinformatie."
-  help:             "Toont oprichter, registratiedatum, opvolger, URL, e-mail, beschrijving, laatst gebruikt, onderwerp en opties (TOPICLOCK, MLOCK, SECURE)."
-  header:          "\x02Informatie voor kanaal \x0307%channel%\x03\x02"
-  footer:          "\x0314─────────────────────────────\x03"
-  founder:         "  \x0314Oprichter\x03           : \x02%nickname%\x02"
-  registered:      "  \x0314Geregistreerd\x03       : %date%"
-  successor:       "  \x0314Opvolger\x03            : \x02%nickname%\x02"
-  description:     "  \x0314Beschrijving\x03        : %desc%"
-  url:             "  \x0314URL\x03                 : %url%"
-  email:           "  \x0314E-mail\x03              : %email%"
-  last_used:       "  \x0314Laatst gebruikt\x03     : %date%"
-  topic:           "  \x0314Laatste onderwerp\x03   : %topic%"
-  topic_set_by:    "  \x0314Onderwerp door\x03      : %nickname%"
-  options:         "  \x0314Opties\x03              : %options%"
-  private:         "\x0304✗\x03 De kanaalinformatie van \x02%channel%\x02 is privé."
-  no_expire:       "  \x0314Vervalt nooit\x03       : Ja"
-  mlock_modes:     "  \x0314Mode-vergrendeling\x03  : %modes%"
+  syntax: "INFO <#kanaal>"
+  example: "%command_prefix%\x02\x0303INFO #kanaal\x03\x0F"
+  short: "Toon kanaalinformatie."
+  help: |-
+    Toont uitgebreide informatie over een geregistreerd kanaal, zoals de eigenaar,
+    registratiegegevens, laatste activiteit en instellingen.
+  header: "\x02Informatie voor kanaal \x0307%channel%\x03\x02"
+  founder: "  \x0314Oprichter\x03           : \x02%nickname%\x02"
+  registered: "  \x0314Geregistreerd\x03       : %date%"
+  successor: "  \x0314Opvolger\x03            : \x02%nickname%\x02"
+  description: "  \x0314Beschrijving\x03        : %desc%"
+  url: "  \x0314URL\x03                 : %url%"
+  email: "  \x0314E-mail\x03              : %email%"
+  last_used: "  \x0314Laatst gebruikt\x03     : %date%"
+  topic: "  \x0314Laatste onderwerp\x03   : %topic%"
+  topic_set_by: "  \x0314Onderwerp door\x03      : %nickname%"
+  options: "  \x0314Opties\x03              : %options%"
+  private: "\x0304✗\x03 De kanaalinformatie van \x02%channel%\x02 is privé."
+  no_expire: "  \x0314Vervalt nooit\x03       : Ja"
+  mlock_modes: "  \x0314Mode-vergrendeling\x03  : %modes%"
   suspended_status: "  \x0314Status\x03              : \x0304Geschorst\x03"
   suspended_reason: "  \x0314Reden\x03               : %reason%"
-  suspended_until:  "  \x0314Eindigt op\x03          : %date%"
+  suspended_until: "  \x0314Eindigt op\x03          : %date%"
   suspended_permanent: "  \x0314Eindigt op\x03          : Permanent"
   forbidden_status: "  \x0314Status\x03              : \x0304Verboden\x03"
   forbidden_reason: "  \x0314Reden\x03               : %reason%"
-  pending_deletion_status: "  14Status             : 07In afwachting van verwijdering"
-  pending_deletion_at: "  14Verwijderd         : %date%"
-  pending_deletion_until: "  14Definitief op      : %date%"
-  pending_deletion_notice: "  07Dit kanaal is bevroren en kan niet worden geregistreerd."
+  pending_deletion_status: "  \x0314Status\x03             : \x0307In afwachting van verwijdering\x03"
+  pending_deletion_at: "  \x0314Verwijderd\x03         : %date%"
+  pending_deletion_until: "  \x0314Definitief op\x03      : %date%"
+  pending_deletion_notice: "  \x0307Dit kanaal is bevroren en kan niet worden geregistreerd.\x03"
 
+# --- HELP ------------------------------------------------------------------
 help:
-  syntax:           "HELP [commando [sub-optie]]"
-  short:            "Toon commando's of hulp voor een commando."
-  help:             "Zonder argumenten toont alle commando's. Gebruik \x0303HELP <commando>\x03 voor volledige hulp, of \x0303HELP <commando> <optie>\x03 voor SET sub-opties."
-  header_title:     "%bot%"
+  examples_header: "\x02 ■ Voorbeelden:\x02"
+  syntax: "HELP [commando [sub-optie]]"
+  example: "%command_prefix%\x02\x0303HELP\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
+    - "%command_prefix%\x02\x0303HELP SET EMAIL\x03\x0F"
+  short: "Toon commando's of hulp voor een commando."
+  help: "Toont beschikbare commando’s en uitgebreide hulp bij de opties."
+  header_title: "%bot%"
   header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
-  intro:            "Kanaalregistratie- en beheerservice."
+  intro: |-
+    Met deze dienst kun je kanalen registreren en beheren, instellingen aanpassen
+    en bepalen wie toegang heeft. Beheer toegangslevels en gebruikersrechten om het
+    kanaal onder controle van de verantwoordelijken te houden.
   general_header: "\x02 ■ Beschikbare opdrachten:\x02"
   command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
@@ -71,7 +93,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP <opdracht>\x03\x0F voor meer informatie."
   set_sub_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP %command% <optie>\x03\x0F voor meer informatie."
   syntax_label: "Syntaxis: \x02\x0303%syntax%\x03\x0F"
-  footer:           "\x0314─────────────────────────────\x03\x0F"
+  footer: "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0304⚠\x03\x0F OPMERKING: Kanalen die langer dan \x1F\x0304%days% dagen\x03\x1F niet zijn gebruikt, worden automatisch verwijderd."
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"
@@ -84,487 +106,632 @@ help:
     channel_management: "Kanaalbeheer"
     deletion: "Verwijderen en herstellen"
     restrictions: "Beperkingen"
-    lookup: Opzoeken en onderzoek
-  unknown_command:  "\x0307✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
+    lookup: "Opzoeken en onderzoek"
   ircop_header: "\x02 ■ Beschikbare opdrachten voor IRC-operators:\x02"
 
+# --- OP --------------------------------------------------------------------
 op:
-  syntax:           "OP <#kanaal> <bijnaam>"
-  short:            "Geef kanaaloperator-modus."
-  help:             "Geef kanaaloperator-modus."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 heeft kanaaloperator-status gekregen."
+  syntax: "OP <#kanaal> <bijnaam>"
+  example: "%command_prefix%\x02\x0303OP #kanaal Alice\x03\x0F"
+  short: "Geef kanaaloperator-modus."
+  help: "Geef kanaaloperator-modus."
+  done: "\x0303✔\x03 \x02%nickname%\x02 heeft kanaaloperator-status gekregen."
   user_not_on_channel: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet op het netwerk."
-  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 geeft \x0304%mode%\x03 aan \x0314%to%\x03"
+  notice_grant: "\x0303✔\x03 \x0302%from%\x03 geeft \x0304%mode%\x03 aan \x0314%to%\x03"
 
+# --- DEOP ------------------------------------------------------------------
 deop:
-  syntax:           "DEOP <#kanaal> <bijnaam>"
-  short:            "Verwijder kanaaloperator-modus."
-  help:             "Verwijder kanaaloperator-modus."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 is gedeopt."
+  syntax: "DEOP <#kanaal> <bijnaam>"
+  example: "%command_prefix%\x02\x0303DEOP #kanaal Alice\x03\x0F"
+  short: "Verwijder kanaaloperator-modus."
+  help: "Verwijder kanaaloperator-modus."
+  done: "\x0303✔\x03 \x02%nickname%\x02 is gedeopt."
 
+# --- SECURE ----------------------------------------------------------------
 secure:
   requires_min_level: "\x0304✗\x03 Met SECURE aan moet \x02%nickname%\x02 ten minste niveau \x02%level%\x02 hebben om \x02%mode%\x02 te ontvangen."
 
+# --- SET -------------------------------------------------------------------
 set:
-  syntax:           "SET <#kanaal> <optie> [waarde]"
-  short:            "Wijzig kanaalopties."
-  help:             "Wijzig kanaalopties. Gebruik \x0303HELP SET <optie>\x03 voor elk: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
-  unknown_option:    "\x0304✗\x03 Onbekende optie \x02%option%\x02. Gebruik een van: %options%."
+  syntax: "SET <#kanaal> <optie> [waarde]"
+  example: "%command_prefix%\x02\x0303SET #kanaal DESC Een gemeenschapskanaal\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET #kanaal URL https://example.test\x03\x0F"
+    - "%command_prefix%\x02\x0303SET #kanaal MLOCK ON\x03\x0F"
+  short: "Wijzig kanaalopties."
+  help: |-
+    Wijzigt een kanaaloptie. De hulp bij elke optie beschrijft de vereisten en
+    varianten.
+  unknown_option: "\x0304✗\x03 Onbekende optie \x02%option%\x02. Gebruik een van: %options%."
+
+  # --- SET FOUNDER ---------------------------------------------------------
   founder:
     token_required: "Gebruik SET <#channel> FOUNDER <nickname> <token> met het bevestigde token van de huidige oprichter."
     token_unavailable: "De huidige oprichter heeft geen bevestigd hersteltoken. Die moet zich eerst authenticeren en VERIFY gebruiken."
-    syntax:         "SET <#kanaal> FOUNDER <bijnaam> [token]"
-    short:          "Draag kanaal over aan een andere geregistreerde bijnaam."
-    help: "Wijzigt de oprichter na validatie van het token van de huidige oprichter. De bestaande administratieve uitzondering op oprichterniveau blijft behouden. Het token wordt niet verbruikt."
+    syntax: "SET <#kanaal> FOUNDER <bijnaam> [token]"
+    example: "%command_prefix%\x02\x0303SET #kanaal FOUNDER Alice\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #kanaal FOUNDER Alice bevestigd-token\x03\x0F"
+    short: "Draag kanaal over aan een andere geregistreerde bijnaam."
+    help: |-
+      Wijzigt de oprichter na controle van het token van de huidige oprichter. De
+      uitzondering voor beheerders op oprichtersniveau blijft behouden. Het token
+      wordt niet verbruikt.
     invalid_token: "Het hersteltoken is ongeldig."
-    updated:        "\x0303✔\x03 Oprichter is gewijzigd naar \x02%nickname%\x02."
+    updated: "\x0303✔\x03 Oprichter is gewijzigd naar \x02%nickname%\x02."
     throttled: "Te veel ongeldige tokens. Probeer het over %minutes% minuten opnieuw."
     must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 moet geregistreerd en geactiveerd zijn."
-    suspended:         "\x0304✗\x03 \x02%nickname%\x02 is geschorst en kan niet als oprichter worden ingesteld."
-    cannot_be_self:   "\x0304✗\x03 De nieuwe oprichter kan niet de huidige oprichter zijn."
+    suspended: "\x0304✗\x03 \x02%nickname%\x02 is geschorst en kan niet als oprichter worden ingesteld."
+    cannot_be_self: "\x0304✗\x03 De nieuwe oprichter kan niet de huidige oprichter zijn."
     cannot_be_successor: "\x0304✗\x03 De nieuwe oprichter kan niet de kanaalopvolger zijn."
     limit_exceeded: "\x0304✗\x03 \x02%nickname%\x02 heeft het maximum van %max% geregistreerde kanalen bereikt."
-    notice_channel:   "\x02%from%\x02 wijst \x02%nickname%\x02 aan als kanaaloprichter."
-  successor:
-    syntax:         "SET <#kanaal> SUCCESSOR [bijnaam]"
-    short:          "Stel de kanaalopvolger in."
-    help:           "Stelt een bijnaam in als kanaalopvolger. Laat bijnaam weg om te wissen. Bijnaam moet geregistreerd en geactiveerd zijn."
-    cleared:        "\x0303✔\x03 Opvolger is gewist."
-    updated:        "\x0303✔\x03 Opvolger is ingesteld op \x02%nickname%\x02."
-    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 moet geregistreerd en geactiveerd zijn."
-    suspended:      "\x0304✗\x03 \x02%nickname%\x02 is geschorst en kan niet als opvolger worden ingesteld."
-    cannot_be_founder: "\x0304✗\x03 De oprichter kan niet als opvolger worden ingesteld."
-    notice_channel:   "\x02%from%\x02 wijst \x02%nickname%\x02 aan als kanaalopvolger."
-    notice_channel_cleared: "\x02%from%\x02 heeft de kanaalopvolger gewist."
-  desc:
-    syntax:         "SET <#kanaal> DESC <beschrijving>"
-    short:          "Wijzig kanaalbeschrijving."
-    help:           "Wijzig de kanaalbeschrijving (verplicht)."
-    updated:        "\x0303✔\x03 Beschrijving bijgewerkt."
-  url:
-    syntax:         "SET <#kanaal> URL [url]"
-    short:          "Stel kanaal-URL in."
-    help:           "Wijzig de website (URL) van het kanaal. Laat url weg om te wissen."
-    updated:        "\x0303✔\x03 URL bijgewerkt."
-    cleared:        "\x0303✔\x03 URL gewist."
-  email:
-    syntax:         "SET <#kanaal> EMAIL <e-mail|none>"
-    short:          "Stel kanaal-e-mail in."
-    help:           "Wijzig het e-mailadres van het kanaal. Gebruik \x02none\x02 om te wissen."
-    invalid:        "\x0304✗\x03 Ongeldig e-mailadres."
-    updated:        "\x0303✔\x03 E-mail bijgewerkt."
-    cleared:        "\x0303✔\x03 E-mail gewist."
-  entrymsg:
-    syntax:         "SET <#kanaal> ENTRYMSG <bericht|none>"
-    short:          "Stel kanaal-toegangsbericht in."
-    help:           "Stel het bericht in dat wordt getoond wanneer gebruikers het kanaal betreden (NOTICE). Gebruik \x02none\x02 om te wissen."
-    updated:        "\x0303✔\x03 Toegangsbericht bijgewerkt."
-    too_long:       "\x0304✗\x03 Toegangsbericht mag niet langer zijn dan %max% tekens."
-  topiclock:
-    syntax:         "SET <#kanaal> TOPICLOCK {ON|OFF}"
-    short:          "Vergrendel kanaalonderwerp."
-    help:           "Voorkomt het wijzigen van het kanaalonderwerp. Wanneer ON, wordt het huidige onderwerp opgeslagen en vergrendeld."
-    on:             "\x0303✔\x03 Onderwerpvergrendeling is nu ON."
-    off:            "\x0303✔\x03 Onderwerpvergrendeling is nu OFF."
-    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 schakelt TOPICLOCK in."
-    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 schakelt TOPICLOCK uit."
-  mlock:
-    syntax:         "SET <#kanaal> MLOCK {ON|OFF}"
-    short:          "Vergrendel kanaalmodi."
-    help:           "Vergrendelt de huidige kanaalmodi (bijv. +nt). Wanneer ON, kunnen modi niet worden gewijzigd."
-    no_modes:       "geen modi"
-    on:             "\x0303✔\x03 MLOCK is nu ON (%modes%)."
-    off:            "\x0303✔\x03 MLOCK is nu OFF."
-    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 schakelt MLOCK in (%modes%)."
-    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 schakelt MLOCK uit."
-  private:
-    syntax:         "SET <#kanaal> PRIVATE {ON|OFF}"
-    short:          "Verberg kanaalinformatie voor gebruikers zonder toegang."
-    help:           "Wanneer ON kunnen alleen de oprichter en gebruikers met toegang de kanaalinformatie bekijken."
-    on:             "\x0303✔\x03 Kanaalinformatie is nu privé."
-    off:            "\x0303✔\x03 Kanaalinformatie is nu openbaar."
-  secure:
-    syntax:         "SET <#kanaal> SECURE {ON|OFF}"
-    short:          "Vereis toegangslijst voor kanaalrangen."
-    help:           "Wanneer ON kunnen alleen gebruikers in de toegangslijst kanaalrangen ontvangen (OP, VOICE, etc.)."
-    on:             "\x0303✔\x03 SECURE is nu ON."
-    off:            "\x0303✔\x03 SECURE is nu OFF."
-    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 schakelt SECURE-modus in."
-    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 schakelt SECURE-modus uit."
+    notice_channel: "\x02%from%\x02 wijst \x02%nickname%\x02 aan als kanaaloprichter."
 
+  # --- SET SUCCESSOR -------------------------------------------------------
+  successor:
+    syntax: "SET <#kanaal> SUCCESSOR [bijnaam]"
+    example: "%command_prefix%\x02\x0303SET #kanaal SUCCESSOR Alice\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #kanaal SUCCESSOR\x03\x0F"
+    short: "Stel de kanaalopvolger in."
+    help: |-
+      Stelt een bijnaam in als opvolger van een kanaal. Laat de bijnaam weg om de
+      huidige opvolger te verwijderen. De bijnaam moet geregistreerd en ingeschakeld
+      zijn.
+    cleared: "\x0303✔\x03 Opvolger is gewist."
+    updated: "\x0303✔\x03 Opvolger is ingesteld op \x02%nickname%\x02."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 moet geregistreerd en geactiveerd zijn."
+    suspended: "\x0304✗\x03 \x02%nickname%\x02 is geschorst en kan niet als opvolger worden ingesteld."
+    cannot_be_founder: "\x0304✗\x03 De oprichter kan niet als opvolger worden ingesteld."
+    notice_channel: "\x02%from%\x02 wijst \x02%nickname%\x02 aan als kanaalopvolger."
+    notice_channel_cleared: "\x02%from%\x02 heeft de kanaalopvolger gewist."
+
+  # --- SET DESC ------------------------------------------------------------
+  desc:
+    syntax: "SET <#kanaal> DESC <beschrijving>"
+    example: "%command_prefix%\x02\x0303SET #kanaal DESC Een gemeenschapskanaal\x03\x0F"
+    short: "Wijzig kanaalbeschrijving."
+    help: "Wijzig de kanaalbeschrijving (verplicht)."
+    updated: "\x0303✔\x03 Beschrijving bijgewerkt."
+
+  # --- SET URL -------------------------------------------------------------
+  url:
+    syntax: "SET <#kanaal> URL [url]"
+    example: "%command_prefix%\x02\x0303SET #kanaal URL https://example.test\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #kanaal URL\x03\x0F"
+    short: "Stel kanaal-URL in."
+    help: "Wijzigt de website-URL van een kanaal. Laat de URL weg om deze te verwijderen."
+    updated: "\x0303✔\x03 URL bijgewerkt."
+    cleared: "\x0303✔\x03 URL gewist."
+
+  # --- SET EMAIL -----------------------------------------------------------
+  email:
+    syntax: "SET <#kanaal> EMAIL [e-mail]"
+    example: "%command_prefix%\x02\x0303SET #kanaal EMAIL team@example.test\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #kanaal EMAIL\x03\x0F"
+    short: "Stel kanaal-e-mail in."
+    help: "Wijzigt het e-mailadres van een kanaal. Laat e-mail weg om het te verwijderen."
+    invalid: "\x0304✗\x03 Ongeldig e-mailadres."
+    updated: "\x0303✔\x03 E-mail bijgewerkt."
+    cleared: "\x0303✔\x03 E-mail gewist."
+
+  # --- SET ENTRYMSG --------------------------------------------------------
+  entrymsg:
+    syntax: "SET <#kanaal> ENTRYMSG [bericht]"
+    example: "%command_prefix%\x02\x0303SET #kanaal ENTRYMSG Welkom\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #kanaal ENTRYMSG\x03\x0F"
+    short: "Stel kanaal-toegangsbericht in."
+    help: |-
+      Stelt het welkomstbericht (NOTICE) in. Laat het bericht weg om het te
+      verwijderen.
+    updated: "\x0303✔\x03 Toegangsbericht bijgewerkt."
+    too_long: "\x0304✗\x03 Toegangsbericht mag niet langer zijn dan %max% tekens."
+
+  # --- SET TOPICLOCK -------------------------------------------------------
+  topiclock:
+    syntax: "SET <#kanaal> TOPICLOCK {ON|OFF}"
+    example: "%command_prefix%\x02\x0303SET #kanaal TOPICLOCK ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #kanaal TOPICLOCK OFF\x03\x0F"
+    short: "Vergrendel kanaalonderwerp."
+    help: |-
+      Voorkomt wijzigingen aan het kanaalonderwerp. Bij inschakeling wordt het
+      huidige onderwerp opgeslagen en vergrendeld.
+    on: "\x0303✔\x03 Onderwerpvergrendeling is nu ON."
+    off: "\x0303✔\x03 Onderwerpvergrendeling is nu OFF."
+    notice_on: "\x0303✔\x03 \x0302%nickname%\x03 schakelt TOPICLOCK in."
+    notice_off: "\x0304✗\x03 \x0302%nickname%\x03 schakelt TOPICLOCK uit."
+
+  # --- SET MLOCK -----------------------------------------------------------
+  mlock:
+    syntax: "SET <#kanaal> MLOCK {ON|OFF}"
+    example: "%command_prefix%\x02\x0303SET #kanaal MLOCK ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #kanaal MLOCK OFF\x03\x0F"
+    short: "Vergrendel kanaalmodi."
+    help: |-
+      Vergrendelt de huidige kanaalmodi (bijv. +nt). Wanneer ON, kunnen modi niet
+      worden gewijzigd.
+    no_modes: "geen modi"
+    on: "\x0303✔\x03 MLOCK is nu ON (%modes%)."
+    off: "\x0303✔\x03 MLOCK is nu OFF."
+    notice_on: "\x0303✔\x03 \x0302%nickname%\x03 schakelt MLOCK in (%modes%)."
+    notice_off: "\x0304✗\x03 \x0302%nickname%\x03 schakelt MLOCK uit."
+
+  # --- SET PRIVATE ---------------------------------------------------------
+  private:
+    syntax: "SET <#kanaal> PRIVATE {ON|OFF}"
+    example: "%command_prefix%\x02\x0303SET #kanaal PRIVATE ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #kanaal PRIVATE OFF\x03\x0F"
+    short: "Verberg kanaalinformatie voor gebruikers zonder toegang."
+    help: |-
+      Bij ON kunnen alleen de oprichter en gebruikers met toegang kanaalinformatie
+      zien.
+    on: "\x0303✔\x03 Kanaalinformatie is nu privé."
+    off: "\x0303✔\x03 Kanaalinformatie is nu openbaar."
+
+  # --- SET SECURE ----------------------------------------------------------
+  secure:
+    syntax: "SET <#kanaal> SECURE {ON|OFF}"
+    example: "%command_prefix%\x02\x0303SET #kanaal SECURE ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #kanaal SECURE OFF\x03\x0F"
+    short: "Vereis toegangslijst voor kanaalrangen."
+    help: "Voorkomt dat bijnamen buiten de toegangslijst kanaalrangen krijgen."
+    on: "\x0303✔\x03 SECURE is nu ON."
+    off: "\x0303✔\x03 SECURE is nu OFF."
+    notice_on: "\x0303✔\x03 \x0302%nickname%\x03 schakelt SECURE-modus in."
+    notice_off: "\x0304✗\x03 \x0302%nickname%\x03 schakelt SECURE-modus uit."
+
+# --- ACCESS ----------------------------------------------------------------
 access:
-  syntax:           "ACCESS <#kanaal> {ADD|DEL|LIST} [bijnaam] [niveau]"
-  short:            "Beheer toegangslijst."
-  help:             "LIST: toon toegangslijst (bijnaam en niveau per item). ADD: voeg toe of werk niveau van een bijnaam bij (1-499). DEL: verwijder een bijnaam uit de lijst. Gebruik \x0303HELP ACCESS <optie>\x03 voor elk."
-  unknown_sub:      "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik LIST, ADD of DEL."
-  level_range:      "\x0304✗\x03 Toegangsniveau moet tussen %min% en %max% liggen."
+  syntax: "ACCESS <#kanaal> {ADD|DEL|LIST} [bijnaam] [niveau]"
+  example: "%command_prefix%\x02\x0303ACCESS #kanaal LIST\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303ACCESS #kanaal ADD Alice 100\x03\x0F"
+    - "%command_prefix%\x02\x0303ACCESS #kanaal DEL Alice\x03\x0F"
+  short: "Beheer toegangslijst."
+  help: "Beheert de toegangslijst van het kanaal."
+  unknown_sub: "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik LIST, ADD of DEL."
+  level_range: "\x0304✗\x03 Toegangsniveau moet tussen %min% en %max% liggen."
   cannot_manage_level: "\x0304✗\x03 U kunt alleen bijnamen beheren met een niveau strikt lager dan uw eigen."
   founder_not_in_list: "\x0304✗\x03 De oprichter staat niet in de toegangslijst."
-  max_entries:      "\x0304✗\x03 Maximum %max% toegangsvermeldingen per kanaal."
+  max_entries: "\x0304✗\x03 Maximum %max% toegangsvermeldingen per kanaal."
+
+  # --- ACCESS LIST ---------------------------------------------------------
   list:
-    syntax:         "ACCESS <#kanaal> LIST"
-    short:          "Toon toegangslijst (vereist ACCESSLIST-niveau)."
-    help:           "Toont bijnaam en niveau voor elke vermelding."
-    header:         "\x0303Toegangslijst voor \x02%channel%\x02\x03"
-    empty:          "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen toegangsvermeldingen."
-    entry:          "  #%index%: %nickname% (niveau %level%)"
+    syntax: "ACCESS <#kanaal> LIST"
+    example: "%command_prefix%\x02\x0303ACCESS #kanaal LIST\x03\x0F"
+    short: "Toon toegangslijst (vereist ACCESSLIST-niveau)."
+    help: "Toont bijnaam en niveau voor elke vermelding."
+    header: "\x0303Toegangslijst voor \x02%channel%\x02\x03"
+    empty: "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen toegangsvermeldingen."
+    entry: "  #%index%: %nickname% (niveau %level%)"
+
+  # --- ACCESS ADD ----------------------------------------------------------
   add:
-    syntax:         "ACCESS <#kanaal> ADD <bijnaam> <niveau>"
-    short:          "Voeg toegangsniveau toe of werk bij (vereist ACCESSCHANGE-niveau)."
-    help:           "Niveau 1-499. U kunt alleen niveaus lager dan uw eigen instellen."
-    done:           "\x0303✔\x03 \x02%nickname%\x02 ingesteld op niveau %level%."
+    syntax: "ACCESS <#kanaal> ADD <bijnaam> <niveau>"
+    example: "%command_prefix%\x02\x0303ACCESS #kanaal ADD Alice 100\x03\x0F"
+    short: "Voeg toegangsniveau toe of werk bij (vereist ACCESSCHANGE-niveau)."
+    help: "Niveau 1-499. U kunt alleen niveaus lager dan uw eigen instellen."
+    done: "\x0303✔\x03 \x02%nickname%\x02 ingesteld op niveau %level%."
     notice_channel: "\x0303✔\x03 \x0302%from%\x03 stelt \x0314%to%\x03 in op niveau \x0304%level%\x03"
+
+  # --- ACCESS DEL ----------------------------------------------------------
   del:
-    syntax:         "ACCESS <#kanaal> DEL <bijnaam>"
-    short:          "Verwijder uit toegangslijst (vereist ACCESSCHANGE-niveau)."
-    help:           "U kunt alleen bijnamen verwijderen met een niveau lager dan uw eigen."
-    not_in_list:    "\x0304✗\x03 \x02%nickname%\x02 staat niet in de toegangslijst."
-    done:           "\x0303✔\x03 \x02%nickname%\x02 verwijderd uit toegangslijst."
+    syntax: "ACCESS <#kanaal> DEL <bijnaam>"
+    example: "%command_prefix%\x02\x0303ACCESS #kanaal DEL Alice\x03\x0F"
+    short: "Verwijder uit toegangslijst (vereist ACCESSCHANGE-niveau)."
+    help: "U kunt alleen bijnamen verwijderen met een niveau lager dan uw eigen."
+    not_in_list: "\x0304✗\x03 \x02%nickname%\x02 staat niet in de toegangslijst."
+    done: "\x0303✔\x03 \x02%nickname%\x02 verwijderd uit toegangslijst."
     notice_channel: "\x0304✗\x03 \x0302%from%\x03 verwijdert \x0314%to%\x03 uit de toegangslijst"
 
+# --- DELACCESS -------------------------------------------------------------
 delaccess:
-  syntax:           "DELACCESS <#kanaal>"
-  short:            "Verwijder uw eigen toegang van een kanaal."
-  help:             "Verwijdert uw toegangsvermelding uit de toegangslijst van het kanaal. U moet geïdentificeerd zijn. Oprichter kan dit commando niet gebruiken."
-  done:             "\x0303✔\x03 Uw toegang is verwijderd van \x02%channel%\x02."
-  not_in_list:      "\x0304✗\x03 U heeft geen toegang in \x02%channel%\x02."
+  syntax: "DELACCESS <#kanaal>"
+  example: "%command_prefix%\x02\x0303DELACCESS #kanaal\x03\x0F"
+  short: "Verwijder uw eigen toegang van een kanaal."
+  help: |-
+    Verwijdert je toegang uit de kanaallijst. Je moet geïdentificeerd zijn. De
+    oprichter kan dit commando niet gebruiken.
+  done: "\x0303✔\x03 Uw toegang is verwijderd van \x02%channel%\x02."
+  not_in_list: "\x0304✗\x03 U heeft geen toegang in \x02%channel%\x02."
   founder_not_in_access: "\x0304✗\x03 U bent de oprichter van \x02%channel%\x02 en staat niet in de toegangslijst."
   notice_channel: "\x0304✗\x03 \x0302%nickname%\x03 verwijdert hun toegang van het kanaal"
 
+# --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax:           "LEVELS <#kanaal> {LIST|SET|RESET} [niveau] [waarde]"
-  short:            "Configureer kanaalniveaus."
-  help:             "LIST: toon niveauvereisten (OPDEOP, VOICEDEVOICE, etc.). SET: stel minimum niveau in voor een actie (-1 tot 499). RESET: herstel standaardwaarden. Alleen oprichter voor SET/RESET."
-  unknown_sub:      "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik LIST, SET of RESET."
-  unknown_key:      "\x0304✗\x03 Onbekende niveausleutel \x02%key%\x02 of niet ondersteund door deze IRCd."
-  value_range:      "\x0304✗\x03 Niveauwaarde moet tussen %min% en %max% liggen."
+  syntax: "LEVELS <#kanaal> {LIST|SET|RESET} [niveau] [waarde]"
+  example: "%command_prefix%\x02\x0303LEVELS #kanaal LIST\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LEVELS #kanaal SET OPDEOP 50\x03\x0F"
+    - "%command_prefix%\x02\x0303LEVELS #kanaal RESET\x03\x0F"
+  short: "Configureer kanaalniveaus."
+  help: |-
+    Stelt de minimale toegangslevels voor kanaalacties in. Alleen de oprichter
+    kan levels wijzigen of herstellen.
+  unknown_sub: "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik LIST, SET of RESET."
+  unknown_key: "\x0304✗\x03 Onbekende niveausleutel \x02%key%\x02 of niet ondersteund door deze IRCd."
+  value_range: "\x0304✗\x03 Niveauwaarde moet tussen %min% en %max% liggen."
+
+  # --- LEVELS LIST ---------------------------------------------------------
   list:
-    syntax:         "LEVELS <#kanaal> LIST"
-    short:          "Toon niveauvereisten."
-    help:           "Toont elke niveausleutel en de waarde ervan (standaardwaarden indien niet ingesteld)."
-    header:         "\x0303Niveaus\x03"
+    syntax: "LEVELS <#kanaal> LIST"
+    example: "%command_prefix%\x02\x0303LEVELS #kanaal LIST\x03\x0F"
+    short: "Toon niveauvereisten."
+    help: |-
+      Toont elke niveausleutel en de waarde ervan (standaardwaarden indien niet
+      ingesteld).
+    header: "\x0303Levels voor %channel%\x03"
+
+  # --- LEVELS SET ----------------------------------------------------------
   set:
-    syntax:         "LEVELS <#kanaal> SET <niveau> <waarde>"
-    short:          "Stel een niveauvereiste in."
-    help:           "Waarde -1 tot 499. Alleen oprichter."
-    done:           "\x0303✔\x03 \x02%key%\x02 ingesteld op %value%."
+    syntax: "LEVELS <#kanaal> SET <niveau> <waarde>"
+    example: "%command_prefix%\x02\x0303LEVELS #kanaal SET OPDEOP 50\x03\x0F"
+    short: "Stel een niveauvereiste in."
+    help: "Waarde -1 tot 499. Alleen oprichter."
+    done: "\x0303✔\x03 \x02%key%\x02 ingesteld op %value%."
+
+  # --- LEVELS RESET --------------------------------------------------------
   reset:
-    syntax:         "LEVELS <#kanaal> RESET"
-    short:          "Herstel alle niveaus naar standaardwaarden."
-    help:           "Verwijdert alle overschrijvingen. Alleen oprichter."
-    done:           "\x0303✔\x03 Alle niveaus hersteld naar standaardwaarden."
+    syntax: "LEVELS <#kanaal> RESET"
+    example: "%command_prefix%\x02\x0303LEVELS #kanaal RESET\x03\x0F"
+    short: "Herstel alle niveaus naar standaardwaarden."
+    help: "Verwijdert alle overschrijvingen. Alleen oprichter."
+    done: "\x0303✔\x03 Alle niveaus hersteld naar standaardwaarden."
 
+# --- VOICE -----------------------------------------------------------------
 voice:
-  syntax:           "VOICE <#kanaal> <bijnaam>"
-  short:            "Geef voice-modus in het kanaal."
-  help:             "Geef voice-modus in het kanaal."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 heeft voice gekregen."
+  syntax: "VOICE <#kanaal> <bijnaam>"
+  example: "%command_prefix%\x02\x0303VOICE #kanaal Alice\x03\x0F"
+  short: "Geef voice-modus in het kanaal."
+  help: "Geef voice-modus in het kanaal."
+  done: "\x0303✔\x03 \x02%nickname%\x02 heeft voice gekregen."
   user_not_on_channel: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet op het netwerk."
-  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 geeft \x0304%mode%\x03 aan \x0314%to%\x03"
+  notice_grant: "\x0303✔\x03 \x0302%from%\x03 geeft \x0304%mode%\x03 aan \x0314%to%\x03"
 
+# --- DEVOICE ---------------------------------------------------------------
 devoice:
-  syntax:           "DEVOICE <#kanaal> <bijnaam>"
-  short:            "Verwijder voice-modus in het kanaal."
-  help:             "Verwijder voice-modus in het kanaal."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 is gedevoiced."
+  syntax: "DEVOICE <#kanaal> <bijnaam>"
+  example: "%command_prefix%\x02\x0303DEVOICE #kanaal Alice\x03\x0F"
+  short: "Verwijder voice-modus in het kanaal."
+  help: "Verwijder voice-modus in het kanaal."
+  done: "\x0303✔\x03 \x02%nickname%\x02 is gedevoiced."
 
+# --- INVITE ----------------------------------------------------------------
 invite:
-  syntax:           "INVITE <#kanaal>"
-  short:            "Nodig uzelf uit voor het kanaal."
-  help:             "Nodig uzelf uit voor het kanaal."
-  done:             "\x0303✔\x03 U bent uitgenodigd voor \x02%channel%\x02."
-  notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 nodigt zichzelf uit voor het kanaal."
+  syntax: "INVITE <#kanaal>"
+  example: "%command_prefix%\x02\x0303INVITE #kanaal\x03\x0F"
+  short: "Nodig uzelf uit voor het kanaal."
+  help: "Nodig uzelf uit voor het kanaal."
+  done: "\x0303✔\x03 U bent uitgenodigd voor \x02%channel%\x02."
+  notice_channel: "\x0303✔\x03 \x0302%nickname%\x03 nodigt zichzelf uit voor het kanaal."
 
+# --- ADMIN -----------------------------------------------------------------
 admin:
-  syntax:           "ADMIN <#kanaal> <bijnaam>"
-  short:            "Geef kanaal-admin-modus."
-  help:             "Geef kanaal-admin-modus. Alleen als IRCd +a ondersteunt."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 heeft kanaal-admin gekregen."
+  syntax: "ADMIN <#kanaal> <bijnaam>"
+  example: "%command_prefix%\x02\x0303ADMIN #kanaal Alice\x03\x0F"
+  short: "Geef kanaal-admin-modus."
+  help: "Geef kanaal-admin-modus. Alleen als IRCd +a ondersteunt."
+  done: "\x0303✔\x03 \x02%nickname%\x02 heeft kanaal-admin gekregen."
   user_not_on_channel: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet op het netwerk."
-  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 geeft \x0304%mode%\x03 aan \x0314%to%\x03"
-  not_supported:    "\x0304✗\x03 Dit netwerk ondersteunt geen kanaal-admin (+a) modus."
+  notice_grant: "\x0303✔\x03 \x0302%from%\x03 geeft \x0304%mode%\x03 aan \x0314%to%\x03"
+  not_supported: "\x0304✗\x03 Dit netwerk ondersteunt geen kanaal-admin (+a) modus."
 
+# --- DEADMIN ---------------------------------------------------------------
 deadmin:
-  syntax:           "DEADMIN <#kanaal> <bijnaam>"
-  short:            "Verwijder kanaal-admin-modus."
-  help:             "Verwijder kanaal-admin-modus."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 is gedeadmint."
+  syntax: "DEADMIN <#kanaal> <bijnaam>"
+  example: "%command_prefix%\x02\x0303DEADMIN #kanaal Alice\x03\x0F"
+  short: "Verwijder kanaal-admin-modus."
+  help: "Verwijder kanaal-admin-modus."
+  done: "\x0303✔\x03 \x02%nickname%\x02 is gedeadmint."
 
+# --- HALFOP ----------------------------------------------------------------
 halfop:
-  syntax:           "HALFOP <#kanaal> <bijnaam>"
-  short:            "Geef semi-operator-modus in het kanaal."
-  help:             "Geef semi-operator-modus in het kanaal. Alleen als IRCd +h ondersteunt."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 heeft halfop gekregen."
+  syntax: "HALFOP <#kanaal> <bijnaam>"
+  example: "%command_prefix%\x02\x0303HALFOP #kanaal Alice\x03\x0F"
+  short: "Geef semi-operator-modus in het kanaal."
+  help: "Geef semi-operator-modus in het kanaal. Alleen als IRCd +h ondersteunt."
+  done: "\x0303✔\x03 \x02%nickname%\x02 heeft halfop gekregen."
   user_not_on_channel: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet op het netwerk."
-  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 geeft \x0304%mode%\x03 aan \x0314%to%\x03"
-  not_supported:    "\x0304✗\x03 Dit netwerk ondersteunt geen halfop (+h) modus."
+  notice_grant: "\x0303✔\x03 \x0302%from%\x03 geeft \x0304%mode%\x03 aan \x0314%to%\x03"
+  not_supported: "\x0304✗\x03 Dit netwerk ondersteunt geen halfop (+h) modus."
 
+# --- DEHALFOP --------------------------------------------------------------
 dehalfop:
-  syntax:           "DEHALFOP <#kanaal> <bijnaam>"
-  short:            "Verwijder semi-operator-modus in het kanaal."
-  help:             "Verwijder semi-operator-modus in het kanaal."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 is gedehalfopt."
+  syntax: "DEHALFOP <#kanaal> <bijnaam>"
+  example: "%command_prefix%\x02\x0303DEHALFOP #kanaal Alice\x03\x0F"
+  short: "Verwijder semi-operator-modus in het kanaal."
+  help: "Verwijder semi-operator-modus in het kanaal."
+  done: "\x0303✔\x03 \x02%nickname%\x02 is gedehalfopt."
 
+# --- AKICK -----------------------------------------------------------------
 akick:
-  syntax:           "AKICK <#kanaal> {ADD|DEL|LIST} [masker] [verloop] [reden]"
-  short:            "Beheer auto-kick-lijst."
-  help:             "ADD <masker> [verloop] [reden]: voeg vermelding toe. DEL <masker|nr>: verwijder. LIST: toon vermeldingen."
-  unknown_sub:      "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
-  invalid_mask:     "\x0304✗\x03 Ongeldig maskerformaat. Gebruik \x02nick!ident@host\x02 met wildcards (*)."
-  dangerous_mask:   "\x0304✗\x03 Het masker \x02%mask%\x02 is te breed. Het moet ten minste 4 alfanumerieke tekens bevatten."
-  protected_user:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 heeft toegang in dit kanaal."
-  max_entries:      "\x0304✗\x03 Maximum %max% AKICK-vermeldingen per kanaal."
+  syntax: "AKICK <#kanaal> {ADD|DEL|LIST} [masker] [verloop] [reden]"
+  example: "%command_prefix%\x02\x0303AKICK #kanaal ADD *!*@* 0\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303AKICK #kanaal ADD *!*@* 7d Spam\x03\x0F"
+    - "%command_prefix%\x02\x0303AKICK #kanaal DEL *!*@*\x03\x0F"
+    - "%command_prefix%\x02\x0303AKICK #kanaal DEL 2\x03\x0F"
+    - "%command_prefix%\x02\x0303AKICK #kanaal LIST\x03\x0F"
+  short: "Beheer auto-kick-lijst."
+  help: "Beheert automatische kick-vermeldingen en hun optionele vervaltijd."
+  unknown_sub: "\x0304✗\x03 Onbekende sub-opdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
+  invalid_mask: "\x0304✗\x03 Ongeldig maskerformaat. Gebruik \x02nick!ident@host\x02 met wildcards (*)."
+  dangerous_mask: "\x0304✗\x03 Het masker \x02%mask%\x02 is te breed. Het moet ten minste 4 alfanumerieke tekens bevatten."
+  protected_user: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 heeft toegang in dit kanaal."
+  max_entries: "\x0304✗\x03 Maximum %max% AKICK-vermeldingen per kanaal."
+
+  # --- AKICK ADD -----------------------------------------------------------
   add:
-    syntax:         "AKICK <#kanaal> ADD <masker> [verloop] [reden]"
-    short:          "Voeg AKICK-vermelding toe."
-    help:           "Verloop vereist als reden is opgegeven. Formaten: 0 (permanent), 1d, 7d, 30d, 12h, 60m. Voorbeelden: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'."
-    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 toegevoegd."
+    syntax: "AKICK <#kanaal> ADD <masker> [verloop] [reden]"
+    example: "%command_prefix%\x02\x0303AKICK #kanaal ADD *!*@* 0\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303AKICK #kanaal ADD *!*@* 7d Spam\x03\x0F"
+    short: "Voeg AKICK-vermelding toe."
+    help: |-
+      Voegt een masker toe aan de automatische kick-lijst van het kanaal.
+
+      Je kunt een duur en reden opgeven. Als je een reden opgeeft, moet je ook
+      een duur aangeven: 0 voor permanent, d voor dagen, h voor uren of m voor
+      minuten.
+    done: "\x0303✔\x03 AKICK \x02%mask%\x02 toegevoegd."
     already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 bestaat al."
     notice_channel: "\x02%from%\x02 voegt AKICK toe: \x02%mask%\x02 (%reason%)"
-  del:
-    syntax:         "AKICK <#kanaal> DEL <masker|nummer>"
-    short:          "Verwijder AKICK-vermelding."
-    help:           "Verwijder op exact masker of vermeldingsnummer van LIST."
-    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 niet gevonden."
-    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 verwijderd."
-    notice_channel: "\x02%from%\x02 verwijdert AKICK: \x02%mask%\x02"
-  list:
-    syntax:         "AKICK <#kanaal> LIST"
-    short:          "Toon AKICK-vermeldingen."
-    help:           "Toont masker, reden, verloop en wie heeft toegevoegd."
-    header:         "\x0303AKICK-lijst voor \x02%channel%\x02\x03"
-    empty:          "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen AKICK-vermeldingen."
-    entry:          "  #%index% %mask% %reason% (door %nickname%, verloopt: %expiration%)"
-    no_reason:      "Geen reden"
-    never_expires:  "nooit"
-    unknown_creator: "onbekend"
 
+  # --- AKICK DEL -----------------------------------------------------------
+  del:
+    syntax: "AKICK <#kanaal> DEL <masker|nummer>"
+    example: "%command_prefix%\x02\x0303AKICK #kanaal DEL *!*@*\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303AKICK #kanaal DEL 2\x03\x0F"
+    short: "Verwijder AKICK-vermelding."
+    help: "Verwijder op exact masker of vermeldingsnummer van LIST."
+    not_found: "\x0304✗\x03 AKICK \x02%mask%\x02 niet gevonden."
+    done: "\x0303✔\x03 AKICK \x02%mask%\x02 verwijderd."
+    notice_channel: "\x02%from%\x02 verwijdert AKICK: \x02%mask%\x02"
+
+  # --- AKICK LIST ----------------------------------------------------------
+  list:
+    syntax: "AKICK <#kanaal> LIST"
+    example: "%command_prefix%\x02\x0303AKICK #kanaal LIST\x03\x0F"
+    short: "Toon AKICK-vermeldingen."
+    help: "Toont masker, reden, verloop en wie heeft toegevoegd."
+    header: "\x0303AKICK-lijst voor \x02%channel%\x02\x03"
+    empty: "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen AKICK-vermeldingen."
+    entry: "  #%index% %mask% %reason% (door %nickname%, verloopt: %expiration%)"
+
+# --- RESTORE ---------------------------------------------------------------
 restore:
-  syntax:           "RESTORE <#kanaal>"
-  short:            "Een kanaal dat op verwijdering wacht herstellen."
-  help:             "Herstelt een kanaal dat handmatig is verwijderd en zich nog in de respijtperiode bevindt. Vereist IRCop-toestemming: chanserv.restore."
-  success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is hersteld."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
+  syntax: "RESTORE <#kanaal>"
+  example: "%command_prefix%\x02\x0303RESTORE #kanaal\x03\x0F"
+  short: "Een kanaal dat op verwijdering wacht herstellen."
+  help: |-
+    Herstelt een handmatig verwijderd kanaal als de respijtperiode nog niet is
+    verstreken.
+  success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is hersteld."
   not_pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat niet op het punt verwijderd te worden."
 
+# --- DROP ------------------------------------------------------------------
 drop:
-  syntax:           "DROP <#kanaal> [FORCE]"
-  short:            "Laat een geregistreerd kanaal vallen."
-  help:             "Verwijdert een geregistreerd kanaal uit de database.\nDit commando vereist de IRCop-permissie: chanserv.drop.\nFORCE verwijdert een kanaal dat op verwijdering wacht permanent en vereist de IRCop-permissie: chanserv.drop.force."
-  success:          "03✔ Kanaal %channel% is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
-  force_success:    "\x0303✔\x03 Kanaal \x02%channel%\x02 is definitief verwijderd."
+  syntax: "DROP <#kanaal> [FORCE]"
+  example: "%command_prefix%\x02\x0303DROP #kanaal\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303DROP #kanaal FORCE\x03\x0F"
+  short: "Laat een geregistreerd kanaal vallen."
+  help: |-
+    Verwijdert een geregistreerd kanaal uit de database.
+    FORCE verwijdert een kanaal dat op verwijdering wacht definitief.
+  force:
+    short: "Verwijdert een kanaal dat op verwijdering wacht definitief."
+  success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
+  force_success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is definitief verwijderd."
   pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat al op het punt verwijderd te worden. Gebruik DROP <#kanaal> FORCE om het definitief te verwijderen."
-  invalid_channel:  "\x0304✗\x03 Ongeldige kanaalnaam. Gebruik \x02#kanaal\x02."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
-  pending_deletion_reason: "Kanaal %channel% staat op het punt verwijderd te worden. Meer informatie /msg %bot% INFO %channel%"
+  invalid_channel: "\x0304✗\x03 Ongeldige kanaalnaam. Gebruik \x02#kanaal\x02."
+  pending_deletion_reason: "Kanaal %channel% wordt momenteel verwijderd. Meer informatie: /msg %bot% \x0303INFO %channel%\x03"
 
+# --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax:           "SUSPEND <#kanaal> <duur> <reden>"
-  short:            "Schors een kanaal."
-  help:             "Schakelt tijdelijk een geregistreerd kanaal uit. Duurformaten: 0 = permanent, 1d, 12h, 60m.\nTijdens schorsing zijn kanaalmodi, toegang en handhaving uitgeschakeld.\nDit commando vereist IRCop-toestemming: chanserv.suspend"
-  success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is geschorst tot \x02%duration%\x02."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
+  syntax: "SUSPEND <#kanaal> <duur> <reden>"
+  example: "%command_prefix%\x02\x0303SUSPEND #kanaal 7d Regelovertreding\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND #kanaal 0 Regelovertreding\x03\x0F"
+  short: "Schors een kanaal."
+  help: |-
+    Schort een geregistreerd kanaal tijdelijk op. Duurformaten: 0 = permanent,
+    1d, 12h, 60m.
+    Tijdens de opschorting zijn kanaalmodi, toegang en handhaving uitgeschakeld.
+  success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is geschorst tot \x02%duration%\x02."
   already_suspended: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geschorst."
-  invalid_duration:  "\x0304✗\x03 Ongeldige duur. Gebruik: 0 (permanent), 1d, 12h of 60m."
-  permanent:         "Permanent"
+  invalid_duration: "\x0304✗\x03 Ongeldige duur. Gebruik: 0 (permanent), 1d, 12h of 60m."
   channel_suspended: "\x0304✗\x03 Kanaal \x02%channel%\x02 is geschorst en kan niet worden gebruikt."
-  notice_channel:    "\x0304⚠\x03 Kanaal is geschorst. Reden: %reason%"
+  notice_channel: "\x0304⚠\x03 Kanaal is geschorst. Reden: %reason%"
 
+# --- UNSUSPEND -------------------------------------------------------------
 unsuspend:
-  syntax:           "UNSUSPEND <#kanaal>"
-  short:            "Heef een kanaalschorsing op."
-  help:             "Reactieert een geschorst kanaal, herstelt de modi en handhaving.\nDit commando vereist IRCop-toestemming: chanserv.suspend"
-  success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is niet langer geschorst."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
-  not_suspended:    "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geschorst."
-  reason_expired:   "verlopen schorsing"
+  syntax: "UNSUSPEND <#kanaal>"
+  example: "%command_prefix%\x02\x0303UNSUSPEND #kanaal\x03\x0F"
+  short: "Heef een kanaalschorsing op."
+  help: "Hervat een opgeschort kanaal en herstelt de modi en handhaving."
+  success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is niet langer geschorst."
+  not_suspended: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geschorst."
+  reason_expired: "verlopen schorsing"
 
-# NOJOIN documentation for LEVELS:
-# NOJOIN: Minimum access level required to join channel. Users with level < NOJOIN are kicked.
-# Default: -1 (disabled). Set to 0 to only allow registered users, 50 for level 50+, etc.
-
+# --- NOJOIN ----------------------------------------------------------------
 nojoin:
   reason: "NOJOIN niveau-beperking"
 
-# --- DEBUG CHANNEL -----------------------------------------------------------
+# --- DEBUG CHANNEL ---------------------------------------------------------
 debug_channel:
   kick_reason: "U bent niet geautoriseerd om dit kanaal te betreden."
 
+# --- IRCOPONLY -------------------------------------------------------------
 ircoponly:
-  syntax:           "IRCOPONLY <#kanaal> {ON|OFF}"
-  short:            "Beperk een kanaal tot IRC-operators."
-  help:             "Alleen bevoegde IRC-operators mogen in het kanaal blijven. %bot% komt binnen en beschermt modus +O."
-  on:               "IRCOPONLY is ingeschakeld voor %channel%."
-  off:              "IRCOPONLY is uitgeschakeld voor %channel%."
+  syntax: "IRCOPONLY <#kanaal> {ON|OFF}"
+  example: "%command_prefix%\x02\x0303IRCOPONLY #kanaal ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303IRCOPONLY #kanaal OFF\x03\x0F"
+  short: "Beperk een kanaal tot IRC-operators."
+  help: |-
+    Alleen bevoegde IRC-operators mogen in het kanaal blijven. %bot% handhaaft
+    deze beperking.
+  on: "IRCOPONLY is ingeschakeld voor %channel%."
+  off: "IRCOPONLY is uitgeschakeld voor %channel%."
 
+# --- NOEXPIRE --------------------------------------------------------------
 noexpire:
-  syntax:           "NOEXPIRE <#kanaal> {ON|OFF}"
-  short:            "Stel verloopbescherming in of verwijder deze voor een kanaal."
-  help:             |
-    Bepaalt of een kanaal verloopt door inactiviteit.
-    Wanneer ON, verloopt het kanaal nooit, ongeacht de laatste activiteit.
-    Wanneer OFF, zijn de normale verloopregels van toepassing.
+  syntax: "NOEXPIRE <#kanaal> {ON|OFF}"
+  example: "%command_prefix%\x02\x0303NOEXPIRE #Belangrijk ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE #Belangrijk OFF\x03\x0F"
+  short: "Stel verloopbescherming in of verwijder deze voor een kanaal."
+  help: |-
+    Bepaalt of een kanaal door inactiviteit verloopt.
+    ON voorkomt verval; OFF past de normale regels toe.
+  success_on: "\x0303✔\x03 Kanaal \x02%channel%\x02 is nu beschermd tegen verloop."
+  success_off: "\x0303✔\x03 Kanaal \x02%channel%\x02 verloopt nu normaal."
+  forbidden: "\x0304✗\x03 Kanaal \x02%channel%\x02 is verboden."
+  suspended: "\x0304✗\x03 Kanaal \x02%channel%\x02 is geschorst."
 
-    Alleen IRCops met 'chanserv.noexpire'-toestemming kunnen dit commando gebruiken.
-
-    Syntax: NOEXPIRE <#kanaal> {ON|OFF}
-    Voorbeelden:
-      NOEXPIRE #Belangrijk ON
-      NOEXPIRE #Belangrijk OFF
-  success_on:       "\x0303✔\x03 Kanaal \x02%channel%\x02 is nu beschermd tegen verloop."
-  success_off:      "\x0303✔\x03 Kanaal \x02%channel%\x02 verloopt nu normaal."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
-  forbidden:         "\x0304✗\x03 Kanaal \x02%channel%\x02 is verboden."
-  suspended:         "\x0304✗\x03 Kanaal \x02%channel%\x02 is geschorst."
-
+# --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax:           "FORBID <#kanaal> <reden>"
-  short:             "Verbied een kanaal van gebruik."
-  help:              "Voorkomt dat een kanaal door iemand wordt gebruikt.\nAls het kanaal momenteel geregistreerd is, wordt het eerst verwijderd.\nAlle gebruikers in het kanaal worden gekickt en het kanaal wordt vergrendeld.\nDit commando vereist IRCop-toestemming: chanserv.forbid"
-  reason_required:  "\x0304✗\x03 U moet een reden opgeven."
-  success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is verboden."
-  updated:          "\x0303✔\x03 Verbodsreden voor kanaal \x02%channel%\x02 is bijgewerkt."
+  syntax: "FORBID <#kanaal> <reden>"
+  example: "%command_prefix%\x02\x0303FORBID #kanaal Regelovertreding\x03\x0F"
+  short: "Verbied een kanaal van gebruik."
+  help: |-
+    Verbiedt het gebruik van een kanaal, verwijdert alle gebruikers en voorkomt
+    dat ze terugkeren. Een geregistreerd kanaal wordt eerst verwijderd.
+  reason_required: "\x0304✗\x03 U moet een reden opgeven."
+  success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is verboden."
+  updated: "\x0303✔\x03 Verbodsreden voor kanaal \x02%channel%\x02 is bijgewerkt."
   channel_forbidden: "\x0304✗\x03 Kanaal \x02%channel%\x02 is verboden en kan niet worden gebruikt."
 
+# --- UNFORBID --------------------------------------------------------------
 unforbid:
-  syntax:           "UNFORBID <#kanaal>"
-  short:             "Hef een kanaalverbod op."
-  help:              "Heft een kanaalverbod op, zodat het kanaal opnieuw kan worden geregistreerd.\nDit commando vereist IRCop-toestemming: chanserv.forbid"
-  success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is niet langer verboden."
-  not_forbidden:    "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet verboden."
+  syntax: "UNFORBID <#kanaal>"
+  example: "%command_prefix%\x02\x0303UNFORBID #kanaal\x03\x0F"
+  short: "Hef een kanaalverbod op."
+  help: "Heft een kanaalverbod op, zodat registratie weer mogelijk is."
+  success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is niet langer verboden."
+  not_forbidden: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet verboden."
 
+# --- DEBUG -----------------------------------------------------------------
 debug:
-  action_message: "%operator% voert commando %command% uit op %target%. %reason%"
-  action_with_option: "%operator% voert commando %command% uit op %target%. Optie: %option%. %reason%"
-  action_with_value: "%operator% voert commando %command% uit op %target%. Optie: %option%=%value%. %reason%"
   founder_action: "Niveau-oprichter actie"
-  prefix_reason:  "Reden: %reason%"
 
-# --- HISTORY (IRCop) ---------------------------------------------------------
+# --- HISTORY ---------------------------------------------------------------
 history:
-  syntax:           "HISTORY <#kanaal> {ADD|DEL|VIEW|CLEAR}"
-  short:            "Bekijk of beheer kanaalactiegeschiedenis."
-  help:             |
-    Beheer de actiegeschiedenis voor een kanaal.
-    Alleen IRCops met 'chanserv.history'-toestemming kunnen dit commando gebruiken.
+  syntax: "HISTORY <#kanaal> {ADD|DEL|VIEW|CLEAR}"
+  example: "%command_prefix%\x02\x0303HISTORY #kanaal ADD Moderatiecontrole\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY #kanaal DEL 42\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY #kanaal VIEW\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY #kanaal VIEW 2\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY #kanaal VIEW ALL\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY #kanaal CLEAR\x03\x0F"
+  short: "Bekijk of beheer kanaalactiegeschiedenis."
+  help: "Beheert de act geschiedenis van een kanaal."
 
-    Subcommando's:
-      ADD   — Voeg een handmatige vermelding toe aan de kanaalgeschiedenis.
-      DEL   — Verwijder een specifieke vermelding op ID.
-      VIEW  — Bekijk geschiedenisvermeldingen (gepagineerd, 3 per pagina).
-      CLEAR — Verwijder alle geschiedenisvermeldingen voor het kanaal.
-
-    Syntax: HISTORY <#kanaal> {ADD|DEL|VIEW|CLEAR} [argumenten]
-    Voorbeelden:
-      HISTORY #kanaal VIEW
-      HISTORY #kanaal VIEW 2
-      HISTORY #kanaal VIEW ALL
-      HISTORY #kanaal ADD Vermoedelijke overnamepoging
-      HISTORY #kanaal DEL 42
-      HISTORY #kanaal CLEAR
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
-  unknown_operator: "(onbekend)"
-
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
-    syntax:     "HISTORY <#kanaal> ADD <bericht>"
-    short:      "Voeg een handmatige geschiedenisvermelding toe."
-    help:        |
+    syntax: "HISTORY <#kanaal> ADD <bericht>"
+    example: "%command_prefix%\x02\x0303HISTORY #kanaal ADD Moderatiecontrole\x03\x0F"
+    short: "Voeg een handmatige geschiedenisvermelding toe."
+    help: |-
       Voegt een handmatige vermelding toe aan de kanaalgeschiedenis.
-    success:    "\x0303✔\x03 Geschiedenisvermelding toegevoegd voor \x02%channel%\x02."
+    success: "\x0303✔\x03 Geschiedenisvermelding toegevoegd voor \x02%channel%\x02."
 
+  # --- HISTORY DEL ---------------------------------------------------------
   del:
-    syntax:     "HISTORY <#kanaal> DEL <id>"
-    short:      "Verwijder een geschiedenisvermelding op ID."
-    help:       "Verwijdert een geschiedenisitem op basis van het ID."
-    success:    "\x0303✔\x03 Geschiedenisvermelding \x02%id%\x02 verwijderd."
-    not_found:  "\x0304✗\x03 Geschiedenisvermelding \x02%id%\x02 niet gevonden."
-    invalid_id: "\x0304✗\x03 Ongeldige vermeldings-ID: \x02%id%\x02."
+    syntax: "HISTORY <#kanaal> DEL <id>"
+    example: "%command_prefix%\x02\x0303HISTORY #kanaal DEL 42\x03\x0F"
+    short: "Verwijdert een vermelding uit de geschiedenis."
+    help: "Verwijdert een geschiedenisitem op basis van het ID."
 
+  # --- HISTORY VIEW --------------------------------------------------------
   view:
-    syntax:     "HISTORY <#kanaal> VIEW [PAGINA|ALL]"
-    short:      "Bekijk kanaalactiegeschiedenis."
-    help:       "Toont de geschiedenisitems van het kanaal."
-    header:     "\x02Geschiedenis voor \x0307%channel%\x03\x02 (toont %start%-%end% van %total%):"
-    entry:       "#%id% [%date%] \x0303%action%\x03 door %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
-    no_entries:  "\x0307ℹ\x03 Geen geschiedenisvermeldingen gevonden voor \x02%channel%\x02."
-    page_hint:   "Gebruik \x0303HISTORY %channel% VIEW %next_page%\x03 voor meer vermeldingen."
+    syntax: "HISTORY <#kanaal> VIEW [PAGINA|ALL]"
+    example: "%command_prefix%\x02\x0303HISTORY #kanaal VIEW\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303HISTORY #kanaal VIEW 2\x03\x0F"
+      - "%command_prefix%\x02\x0303HISTORY #kanaal VIEW ALL\x03\x0F"
+    short: "Bekijk kanaalactiegeschiedenis."
+    help: "Toont de geschiedenisitems van het kanaal."
+    header: "\x02Geschiedenis voor \x0307%channel%\x03\x02 (toont %start%-%end% van %total%):"
+    entry: "#%id% [%date%] \x0303%action%\x03 door %operator% — %message%"
+    no_entries: "\x0307ℹ\x03 Geen geschiedenisvermeldingen gevonden voor \x02%channel%\x02."
+    page_hint: "Gebruik \x0303HISTORY %channel% VIEW %next_page%\x03 voor meer vermeldingen."
 
+  # --- HISTORY CLEAR -------------------------------------------------------
   clear:
-    syntax:     "HISTORY <#kanaal> CLEAR"
-    short:      "Verwijder alle geschiedenisvermeldingen voor een kanaal."
-    help:       "Verwijdert alle geschiedenisitems van het kanaal."
-    success:    "\x0303✔\x03 \x02%count%\x02 geschiedenisvermeldingen gewist voor \x02%channel%\x02."
-
-# --- History message translations ---
+    syntax: "HISTORY <#kanaal> CLEAR"
+    example: "%command_prefix%\x02\x0303HISTORY #kanaal CLEAR\x03\x0F"
+    short: "Verwijder alle geschiedenisvermeldingen voor een kanaal."
+    help: "Verwijdert alle geschiedenisitems van het kanaal."
+    success: "\x0303✔\x03 \x02%count%\x02 geschiedenisvermeldingen gewist voor \x02%channel%\x02."
 history.message:
-  unsuspend:                  "Schorsing opgeheven"
-  founder_changed:            "Oprichter gewijzigd van %old_founder% naar %new_founder%"
-  successor_changed:          "Opvolger gewijzigd van %old_successor% naar %new_successor%"
-  successor_cleared:          "Opvolger gewist"
-  access_add:                 "Toegang toegevoegd voor %target_nickname% (niveau %level%)"
-  access_del:                 "Toegang verwijderd voor %target_nickname%"
-  akick_add:                  "AKICK toegevoegd: %mask%"
-  akick_del:                  "AKICK verwijderd: %mask%"
-
-# --- History extra field translations ---
+  founder_changed: "Oprichter gewijzigd van %old_founder% naar %new_founder%"
+  successor_changed: "Opvolger gewijzigd van %old_successor% naar %new_successor%"
+  successor_cleared: "Opvolger gewist"
+  access_add: "Toegang toegevoegd voor %target_nickname% (niveau %level%)"
+  access_del: "Toegang verwijderd voor %target_nickname%"
+  akick_add: "AKICK toegevoegd: %mask%"
+  akick_del: "AKICK verwijderd: %mask%"
 history.extra:
-  duration:      "Duur: %value%"
-  expires_at:    "Verloopt: %value%"
-  old_founder:     "Oude oprichter: %value%"
-  new_founder:     "Nieuwe oprichter: %value%"
-  old_successor:   "Oude opvolger: %value%"
-  new_successor:   "Nieuwe opvolger: %value%"
+  old_founder: "Oude oprichter: %value%"
+  new_founder: "Nieuwe oprichter: %value%"
+  old_successor: "Oude opvolger: %value%"
+  new_successor: "Nieuwe opvolger: %value%"
   target_nickname: "Doel: %value%"
-  level:           "Niveau: %value%"
-  mask:            "Masker: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
+  level: "Niveau: %value%"
+  mask: "Masker: %value%"
 
-# --- CLEARACCESS (IRCop) ---------------------------------------------------------
+# --- LEVEL FOUNDER ---------------------------------------------------------
+level_founder:
+  short: "Staat handelingen toe waarvoor het oprichterslevel van het kanaal vereist is."
+
+# --- CLEARACCESS -----------------------------------------------------------
 clearaccess:
-  syntax:           "CLEARACCESS <#kanaal>"
-  short:            "Wis de volledige toegangslijst van een kanaal."
-  help:             |
-    Verwijdert alle toegangsvermeldingen uit de toegangslijst van een kanaal.
-    Deze actie is onomkeerbaar en kan niet ongedaan worden gemaakt.
-    Alleen IRCops met 'chanserv.clearaccess'-toestemming kunnen dit commando gebruiken.
+  syntax: "CLEARACCESS <#kanaal>"
+  example: "%command_prefix%\x02\x0303CLEARACCESS #kanaal\x03\x0F"
+  short: "Wis de volledige toegangslijst van een kanaal."
+  help: |-
+    Verwijdert alle toegang vermeldingen van het kanaal. Dit kan niet ongedaan
+    worden gemaakt.
+  success: "\x0303✔\x03 \x02%count%\x02 toegangsvermeldingen gewist uit \x02%channel%\x02."
+  empty: "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen toegangsvermeldingen."
 
-    Syntax: CLEARACCESS <#kanaal>
-    Voorbeelden:
-      CLEARACCESS #kanaal
-  success:          "\x0303✔\x03 \x02%count%\x02 toegangsvermeldingen gewist uit \x02%channel%\x02."
-  empty:            "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen toegangsvermeldingen."
-
+# --- CLEARUSERS ------------------------------------------------------------
 clearusers:
-  syntax:           "CLEARUSERS <#kanaal> [reden]"
-  short:            "Kick alle gebruikers uit een kanaal."
-  help:             |
-    Kickt alle gebruikers uit het opgegeven kanaal.
-    Dit is een IRCop-only commando voor kanaalbeheer.
-    Een optionele reden kan worden opgegeven; indien weggelaten wordt een standaardreden gebruikt.
+  syntax: "CLEARUSERS <#kanaal> [reden]"
+  example: "%command_prefix%\x02\x0303CLEARUSERS #kanaal\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303CLEARUSERS #kanaal overstroming\x03\x0F"
+  short: "Kick alle gebruikers uit een kanaal."
+  help: |-
+    Verwijdert alle gebruikers uit het kanaal. Alleen IRC-operators mogen dit;
+    zonder reden wordt een standaardreden gebruikt.
+  not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 is momenteel niet op het netwerk."
+  empty: "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen gebruikers om te kicken."
+  success: "\x0303✔\x03 \x02%count%\x02 gebruiker(s) gekickt uit \x02%channel%\x02."
+  default_reason: "CLEARUSERS commando"
 
-    Alleen IRCops met 'chanserv.clearusers'-toestemming kunnen dit commando gebruiken.
-
-    Syntax: CLEARUSERS <#kanaal> [reden]
-    Voorbeelden:
-      CLEARUSERS #kanaal
-      CLEARUSERS #kanaal flooding
-  not_on_network:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is momenteel niet op het netwerk."
-  empty:            "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen gebruikers om te kicken."
-  success:          "\x0303✔\x03 \x02%count%\x02 gebruiker(s) gekickt uit \x02%channel%\x02."
-  default_reason:   "CLEARUSERS commando"
-
-# --- LIST (IRCop) ------------------------------------------------------------
+# --- LIST ------------------------------------------------------------------
 list:
   syntax: "LIST <patroon> [pagina]"
+  example: "%command_prefix%\x02\x0303LIST #*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST #* 2\x03\x0F"
   short: "Toon geregistreerde kanalen die overeenkomen met een patroon."
-  help: "Toont geregistreerde kanalen die overeenkomen met het opgegeven patroon. De joker * staat voor een willekeurige reeks tekens. De pagina is optioneel en begint bij 1."
+  help: |-
+    Toont geregistreerde kanalen die overeenkomen met het patroon. Het jokerteken
+    * staat voor een willekeurige tekenreeks. De optionele pagina begint bij 1.
   header: "Kanaal | Oprichter | Registratie | Laatst gebruikt | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
-  page: "Pagina %page%/%pages% — %total% overeenkomsten"
   empty: "Geen kanalen komen overeen met patroon %pattern%."
   status_active: "Actief"
-  status_suspended: "Geschorst"
-  status_pending_deletion: "Verwijdering in behandeling"
-  status_forbidden: "Verboden"

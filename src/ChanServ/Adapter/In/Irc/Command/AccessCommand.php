@@ -47,6 +47,11 @@ final readonly class AccessCommand implements ChanServCommandInterface
         return 'access.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'access.example';
+    }
+
     public function getOrder(): int
     {
         return 8;
@@ -60,9 +65,9 @@ final readonly class AccessCommand implements ChanServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'LIST', 'desc_key' => 'access.list.short', 'help_key' => 'access.list.help', 'syntax_key' => 'access.list.syntax'],
-            ['name' => 'ADD', 'desc_key' => 'access.add.short', 'help_key' => 'access.add.help', 'syntax_key' => 'access.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'access.del.short', 'help_key' => 'access.del.help', 'syntax_key' => 'access.del.syntax'],
+            ['name' => 'LIST', 'desc_key' => 'access.list.short', 'help_key' => 'access.list.help', 'example_key' => 'access.list.example', 'syntax_key' => 'access.list.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'access.add.short', 'help_key' => 'access.add.help', 'example_key' => 'access.add.example', 'syntax_key' => 'access.add.syntax'],
+            ['name' => 'DEL', 'desc_key' => 'access.del.short', 'help_key' => 'access.del.help', 'example_key' => 'access.del.example', 'syntax_key' => 'access.del.syntax'],
         ];
     }
 

@@ -770,6 +770,7 @@ final class RegisterCommandTest extends TestCase
         );
 
         self::assertSame('register.help', $cmd->getHelpKey());
+        self::assertSame('register.example', $cmd->getExampleKey());
     }
 
     #[Test]

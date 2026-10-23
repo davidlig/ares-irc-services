@@ -1,25 +1,35 @@
 # ChanServ translations — English
 # Domain: chanserv
+#
+# IRC formatting codes (double-quoted strings or !irc literal blocks):
+#   \x02        bold on/off
+#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark gray)
+#   \x03        reset color
+#   \x0F        reset all formatting
+#
+# IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark gray (14 decimal): CORRECT
+#   \x030F = color 0 followed by the letter F: ERROR
+#
+# Multiline IRC text: !irc |- with physical newlines and real spaces.
+# Untagged blocks do not decode escapes; preserve CTCP literals.
+# HELP examples: example/examples and %command_prefix%.
+# The presenter adds the uncolored /msg prefix and a two-space margin.
 
-unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
-
+# --- ERROR -----------------------------------------------------------------
 error:
-  syntax:         "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
-  oper_only:      "\x0304✗\x03 This command is restricted to IRC Operators."
-  not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Permission denied. You do not have access to this command."
   invalid_channel: "\x0304✗\x03 Invalid channel name. Use \x02#channel\x02."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
-  generic:        "\x0304✗\x03 An error occurred. Please try again."
-  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
-  insufficient_access: "\x0304✗\x03 Insufficient access to \x02%operation%\x02 on channel \x02%channel%\x02."
-  mail_failed: "\x0304✗\x03 Could not send email. Please try again later."
+  generic: "\x0304✗\x03 An error occurred. Please try again."
 
+# --- REGISTER --------------------------------------------------------------
 register:
-  syntax:           "REGISTER <#channel> <description>"
-  short:            "Register a channel."
-  help:             "Register and associate a channel to your nickname. You must be identified with %nickserv%."
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
+  syntax: "REGISTER <#channel> <description>"
+  example: "%command_prefix%\x02\x0303REGISTER #channel Community project\x03\x0F"
+  short: "Register a channel."
+  help: |-
+    Register and associate a channel to your nickname. You must be identified with
+    %nickserv%.
+  success: "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
   already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
   pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."
@@ -27,43 +37,55 @@ register:
   limit_exceeded: "\x0304✗\x03 You have reached the maximum of %max% registered channels."
   throttled: "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before registering another channel."
 
+# --- INFO ------------------------------------------------------------------
 info:
-  syntax:           "INFO <#channel>"
-  short:            "Show channel information."
-  help:             "Shows founder, registered date, successor, URL, email, description, last used, topic, and options (TOPICLOCK, MLOCK, SECURE)."
-  header:          "\x02Information for channel \x0307%channel%\x03\x02"
-  footer:          "\x0314─────────────────────────────\x03"
-  founder:         "  \x0314Founder\x03        : \x02%nickname%\x02"
-  registered:      "  \x0314Registered\x03     : %date%"
-  successor:       "  \x0314Successor\x03      : \x02%nickname%\x02"
-  description:     "  \x0314Description\x03    : %desc%"
-  url:             "  \x0314URL\x03            : %url%"
-  email:           "  \x0314Email\x03          : %email%"
-  last_used:       "  \x0314Last used\x03      : %date%"
-  topic:           "  \x0314Last topic\x03     : %topic%"
-  topic_set_by:    "  \x0314Topic set by\x03   : %nickname%"
-  options:         "  \x0314Options\x03        : %options%"
-  private:         "\x0304✗\x03 Channel information for \x02%channel%\x02 is private."
-  no_expire:       "  \x0314Never Expires\x03  : Yes"
-  mlock_modes:     "  \x0314Mode lock\x03      : %modes%"
+  syntax: "INFO <#channel>"
+  example: "%command_prefix%\x02\x0303INFO #channel\x03\x0F"
+  short: "Show channel information."
+  help: |-
+    Shows detailed information about a registered channel, including its owner,
+    registration details, last activity and configuration options.
+  header: "\x02Information for channel \x0307%channel%\x03\x02"
+  founder: "  \x0314Founder\x03        : \x02%nickname%\x02"
+  registered: "  \x0314Registered\x03     : %date%"
+  successor: "  \x0314Successor\x03      : \x02%nickname%\x02"
+  description: "  \x0314Description\x03    : %desc%"
+  url: "  \x0314URL\x03            : %url%"
+  email: "  \x0314Email\x03          : %email%"
+  last_used: "  \x0314Last used\x03      : %date%"
+  topic: "  \x0314Last topic\x03     : %topic%"
+  topic_set_by: "  \x0314Topic set by\x03   : %nickname%"
+  options: "  \x0314Options\x03        : %options%"
+  private: "\x0304✗\x03 Channel information for \x02%channel%\x02 is private."
+  no_expire: "  \x0314Never Expires\x03  : Yes"
+  mlock_modes: "  \x0314Mode lock\x03      : %modes%"
   suspended_status: "  \x0314Status\x03         : \x0304Suspended\x03"
   suspended_reason: "  \x0314Reason\x03         : %reason%"
-  suspended_until:  "  \x0314Ends on\x03        : %date%"
+  suspended_until: "  \x0314Ends on\x03        : %date%"
   suspended_permanent: "  \x0314Ends on\x03        : Permanent"
   forbidden_status: "  \x0314Status\x03         : \x0304Forbidden\x03"
   forbidden_reason: "  \x0314Reason\x03         : %reason%"
-  pending_deletion_status: "  14Status             : 07Pending deletion"
-  pending_deletion_at: "  14Dropped            : %date%"
-  pending_deletion_until: "  14Hard delete on     : %date%"
-  pending_deletion_notice: "  07This channel is frozen and cannot be registered."
+  pending_deletion_status: "  \x0314Status\x03             : \x0307Pending deletion\x03"
+  pending_deletion_at: "  \x0314Dropped\x03            : %date%"
+  pending_deletion_until: "  \x0314Hard delete on\x03     : %date%"
+  pending_deletion_notice: "  \x0307This channel is frozen and cannot be registered.\x03"
 
+# --- HELP ------------------------------------------------------------------
 help:
-  syntax:           "HELP [command [sub-option]]"
-  short:            "List commands or show help for a command."
-  help:             "Without arguments lists all commands. Use \x0303HELP <command>\x03 for full help, or \x0303HELP <command> <option>\x03 for SET sub-options."
-  header_title:     "%bot%"
+  examples_header: "\x02 ■ Ejemplos:\x02"
+  syntax: "HELP [command [sub-option]]"
+  example: "%command_prefix%\x02\x0303HELP\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
+    - "%command_prefix%\x02\x0303HELP SET EMAIL\x03\x0F"
+  short: "List commands or show help for a command."
+  help: "Shows available commands and detailed help for their options."
+  header_title: "%bot%"
   header: "\x02\x0307🤖 %title%\x03\x0F \x0314%separator%\x03\x0F"
-  intro:            "Channel registration and management service."
+  intro: |-
+    Lets you register and manage channels, configure their options and control
+    who can access them. Manages access levels and user privileges to keep each
+    channel under the control of its owners.
   general_header: "\x02 ■ Available commands:\x02"
   command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
@@ -71,7 +93,7 @@ help:
   general_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP <command>\x03\x0F for more information."
   set_sub_footer: "\x0310ℹ\x03\x0F Use /msg %bot% \x02\x0303HELP %command% <option>\x03\x0F for more information."
   syntax_label: "Syntax: \x02\x0303%syntax%\x03\x0F"
-  footer:           "\x0314─────────────────────────────\x03\x0F"
+  footer: "\x0314─────────────────────────────\x03\x0F"
   intro_expiration: "\x0304⚠\x03\x0F NOTE: Channels unused for more than \x1F\x0304%days% days\x03\x1F are automatically removed."
   group_header: "\x0310  ◆ %group%\x03\x0F"
   subgroup_header: "\x0310  ◆ %group%\x03\x0F"
@@ -84,487 +106,618 @@ help:
     channel_management: "Channel management"
     deletion: "Deletion and restoration"
     restrictions: "Restrictions"
-    lookup: Lookup and investigation
-  unknown_command:  "\x0307✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+    lookup: "Lookup and investigation"
   ircop_header: "\x02 ■ Available commands for IRC Operators:\x02"
 
+# --- OP --------------------------------------------------------------------
 op:
-  syntax:           "OP <#channel> <nickname>"
-  short:            "Give channel operator mode."
-  help:             "Give channel operator mode."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 has been given channel operator status."
+  syntax: "OP <#channel> <nickname>"
+  example: "%command_prefix%\x02\x0303OP #channel Alice\x03\x0F"
+  short: "Give channel operator mode."
+  help: "Give channel operator mode."
+  done: "\x0303✔\x03 \x02%nickname%\x02 has been given channel operator status."
   user_not_on_channel: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not on the network."
-  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
+  notice_grant: "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
 
+# --- DEOP ------------------------------------------------------------------
 deop:
-  syntax:           "DEOP <#channel> <nickname>"
-  short:            "Remove channel operator mode."
-  help:             "Remove channel operator mode."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 has been deopped."
+  syntax: "DEOP <#channel> <nickname>"
+  example: "%command_prefix%\x02\x0303DEOP #channel Alice\x03\x0F"
+  short: "Remove channel operator mode."
+  help: "Remove channel operator mode."
+  done: "\x0303✔\x03 \x02%nickname%\x02 has been deopped."
 
+# --- SECURE ----------------------------------------------------------------
 secure:
   requires_min_level: "\x0304✗\x03 With SECURE on, \x02%nickname%\x02 must have at least level \x02%level%\x02 to receive \x02%mode%\x02."
 
+# --- SET -------------------------------------------------------------------
 set:
-  syntax:           "SET <#channel> <option> [value]"
-  short:            "Change channel options."
-  help:             "Change channel options. Use \x0303HELP SET <option>\x03 for each: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE, PRIVATE."
-  unknown_option:    "\x0304✗\x03 Unknown option \x02%option%\x02. Use one of: %options%."
+  syntax: "SET <#channel> <option> [value]"
+  example: "%command_prefix%\x02\x0303SET #channel DESC A community channel\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET #channel URL https://example.test\x03\x0F"
+    - "%command_prefix%\x02\x0303SET #channel MLOCK ON\x03\x0F"
+  short: "Change channel options."
+  help: |-
+    Changes a channel option. Each option has help explaining its requirements
+    and variations.
+  unknown_option: "\x0304✗\x03 Unknown option \x02%option%\x02. Use one of: %options%."
+
+  # --- SET FOUNDER ---------------------------------------------------------
   founder:
     token_required: "Use SET <#channel> FOUNDER <nickname> <token> with the current founder’s confirmed rescue token."
     token_unavailable: "The current founder has no confirmed rescue token. They must authenticate and use VERIFY first."
-    syntax:         "SET <#channel> FOUNDER <nickname> [token]"
-    short:          "Transfer channel to another registered nickname."
-    help: "Changes the founder after validating the current founder’s rescue token. Administrative founder-level authorization retains its existing bypass. The token is not consumed."
+    syntax: "SET <#channel> FOUNDER <nickname> [token]"
+    example: "%command_prefix%\x02\x0303SET #channel FOUNDER Alice\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #channel FOUNDER Alice confirmed-token\x03\x0F"
+    short: "Transfer channel to another registered nickname."
+    help: |-
+      Changes the founder after validating the current founder's token. The
+      administrative founder-level exception remains available. The token is not
+      consumed.
     invalid_token: "The rescue token is invalid."
-    updated:        "\x0303✔\x03 Founder has been changed to \x02%nickname%\x02."
+    updated: "\x0303✔\x03 Founder has been changed to \x02%nickname%\x02."
     throttled: "Too many invalid tokens. Try again in %minutes% minute(s)."
     must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 must be registered and activated."
-    suspended:         "\x0304✗\x03 \x02%nickname%\x02 is suspended and cannot be set as founder."
-    cannot_be_self:   "\x0304✗\x03 The new founder cannot be the current founder."
+    suspended: "\x0304✗\x03 \x02%nickname%\x02 is suspended and cannot be set as founder."
+    cannot_be_self: "\x0304✗\x03 The new founder cannot be the current founder."
     cannot_be_successor: "\x0304✗\x03 The new founder cannot be the channel successor."
     limit_exceeded: "\x0304✗\x03 \x02%nickname%\x02 has reached the maximum of %max% registered channels."
-    notice_channel:   "\x02%from%\x02 assigns \x02%nickname%\x02 as channel founder."
-  successor:
-    syntax:         "SET <#channel> SUCCESSOR [nickname]"
-    short:          "Set the channel successor."
-    help:           "Sets a nickname as channel successor. Omit nickname to clear. Nick must be registered and activated."
-    cleared:        "\x0303✔\x03 Successor has been cleared."
-    updated:        "\x0303✔\x03 Successor has been set to \x02%nickname%\x02."
-    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 must be registered and activated."
-    suspended:      "\x0304✗\x03 \x02%nickname%\x02 is suspended and cannot be set as successor."
-    cannot_be_founder: "\x0304✗\x03 The founder cannot be set as successor."
-    notice_channel:   "\x02%from%\x02 assigns \x02%nickname%\x02 as channel successor."
-    notice_channel_cleared: "\x02%from%\x02 has cleared the channel successor."
-  desc:
-    syntax:         "SET <#channel> DESC <description>"
-    short:          "Change channel description."
-    help:           "Change the channel description (required)."
-    updated:        "\x0303✔\x03 Description updated."
-  url:
-    syntax:         "SET <#channel> URL [url]"
-    short:          "Set channel URL."
-    help:           "Change the channel website (URL). Omit url to clear."
-    updated:        "\x0303✔\x03 URL updated."
-    cleared:        "\x0303✔\x03 URL cleared."
-  email:
-    syntax:         "SET <#channel> EMAIL <email|none>"
-    short:          "Set channel email."
-    help:           "Change the channel email address. Use \x02none\x02 to clear."
-    invalid:        "\x0304✗\x03 Invalid email address."
-    updated:        "\x0303✔\x03 Email updated."
-    cleared:        "\x0303✔\x03 Email cleared."
-  entrymsg:
-    syntax:         "SET <#channel> ENTRYMSG <message|none>"
-    short:          "Set channel entry message."
-    help:           "Set the message shown when users join the channel (NOTICE). Use \x02none\x02 to clear."
-    updated:        "\x0303✔\x03 Entry message updated."
-    too_long:       "\x0304✗\x03 Entry message cannot exceed %max% characters."
-  topiclock:
-    syntax:         "SET <#channel> TOPICLOCK {ON|OFF}"
-    short:          "Lock channel topic."
-    help:           "Prevents changing the channel topic. When ON, the current topic is stored and locked."
-    on:             "\x0303✔\x03 Topic lock is now ON."
-    off:            "\x0303✔\x03 Topic lock is now OFF."
-    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 enables TOPICLOCK."
-    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 disables TOPICLOCK."
-  mlock:
-    syntax:         "SET <#channel> MLOCK {ON|OFF}"
-    short:          "Lock channel modes."
-    help:           "Locks the current channel modes (e.g. +nt). When ON, modes cannot be changed."
-    no_modes:       "no modes"
-    on:             "\x0303✔\x03 MLOCK is now ON (%modes%)."
-    off:            "\x0303✔\x03 MLOCK is now OFF."
-    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 enables MLOCK (%modes%)."
-    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 disables MLOCK."
-  private:
-    syntax:         "SET <#channel> PRIVATE {ON|OFF}"
-    short:          "Hide channel information from users without access."
-    help:           "When ON, only the founder and users with channel access can view channel information."
-    on:             "\x0303✔\x03 Channel information is now private."
-    off:            "\x0303✔\x03 Channel information is now public."
-  secure:
-    syntax:         "SET <#channel> SECURE {ON|OFF}"
-    short:          "Require access list for channel ranks."
-    help:           "When ON, only users in the access list can receive channel ranks (OP, VOICE, etc.)."
-    on:             "\x0303✔\x03 SECURE is now ON."
-    off:            "\x0303✔\x03 SECURE is now OFF."
-    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 enables SECURE mode."
-    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 disables SECURE mode."
+    notice_channel: "\x02%from%\x02 assigns \x02%nickname%\x02 as channel founder."
 
+  # --- SET SUCCESSOR -------------------------------------------------------
+  successor:
+    syntax: "SET <#channel> SUCCESSOR [nickname]"
+    example: "%command_prefix%\x02\x0303SET #channel SUCCESSOR Alice\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #channel SUCCESSOR\x03\x0F"
+    short: "Set the channel successor."
+    help: |-
+      Assigns a nickname as the channel successor. Omitting the nickname clears the
+      current successor. The nickname must be registered and activated.
+    cleared: "\x0303✔\x03 Successor has been cleared."
+    updated: "\x0303✔\x03 Successor has been set to \x02%nickname%\x02."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 must be registered and activated."
+    suspended: "\x0304✗\x03 \x02%nickname%\x02 is suspended and cannot be set as successor."
+    cannot_be_founder: "\x0304✗\x03 The founder cannot be set as successor."
+    notice_channel: "\x02%from%\x02 assigns \x02%nickname%\x02 as channel successor."
+    notice_channel_cleared: "\x02%from%\x02 has cleared the channel successor."
+
+  # --- SET DESC ------------------------------------------------------------
+  desc:
+    syntax: "SET <#channel> DESC <description>"
+    example: "%command_prefix%\x02\x0303SET #channel DESC A community channel\x03\x0F"
+    short: "Change channel description."
+    help: "Change the channel description (required)."
+    updated: "\x0303✔\x03 Description updated."
+
+  # --- SET URL -------------------------------------------------------------
+  url:
+    syntax: "SET <#channel> URL [url]"
+    example: "%command_prefix%\x02\x0303SET #channel URL https://example.test\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #channel URL\x03\x0F"
+    short: "Set channel URL."
+    help: "Changes the channel website URL. Omit the URL to clear it."
+    updated: "\x0303✔\x03 URL updated."
+    cleared: "\x0303✔\x03 URL cleared."
+
+  # --- SET EMAIL -----------------------------------------------------------
+  email:
+    syntax: "SET <#channel> EMAIL [email]"
+    example: "%command_prefix%\x02\x0303SET #channel EMAIL team@example.test\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #channel EMAIL\x03\x0F"
+    short: "Set channel email."
+    help: "Changes the channel email address. Omit the email to clear it."
+    invalid: "\x0304✗\x03 Invalid email address."
+    updated: "\x0303✔\x03 Email updated."
+    cleared: "\x0303✔\x03 Email cleared."
+
+  # --- SET ENTRYMSG --------------------------------------------------------
+  entrymsg:
+    syntax: "SET <#channel> ENTRYMSG [message]"
+    example: "%command_prefix%\x02\x0303SET #channel ENTRYMSG Welcome\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #channel ENTRYMSG\x03\x0F"
+    short: "Set channel entry message."
+    help: "Sets the entry message (NOTICE). Omit the message to clear it."
+    updated: "\x0303✔\x03 Entry message updated."
+    too_long: "\x0304✗\x03 Entry message cannot exceed %max% characters."
+
+  # --- SET TOPICLOCK -------------------------------------------------------
+  topiclock:
+    syntax: "SET <#channel> TOPICLOCK {ON|OFF}"
+    example: "%command_prefix%\x02\x0303SET #channel TOPICLOCK ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #channel TOPICLOCK OFF\x03\x0F"
+    short: "Lock channel topic."
+    help: "Prevents changes to the channel topic. Enabling it locks the current topic."
+    on: "\x0303✔\x03 Topic lock is now ON."
+    off: "\x0303✔\x03 Topic lock is now OFF."
+    notice_on: "\x0303✔\x03 \x0302%nickname%\x03 enables TOPICLOCK."
+    notice_off: "\x0304✗\x03 \x0302%nickname%\x03 disables TOPICLOCK."
+
+  # --- SET MLOCK -----------------------------------------------------------
+  mlock:
+    syntax: "SET <#channel> MLOCK {ON|OFF}"
+    example: "%command_prefix%\x02\x0303SET #channel MLOCK ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #channel MLOCK OFF\x03\x0F"
+    short: "Lock channel modes."
+    help: "Locks the current channel modes (e.g. +nt). When ON, modes cannot be changed."
+    no_modes: "no modes"
+    on: "\x0303✔\x03 MLOCK is now ON (%modes%)."
+    off: "\x0303✔\x03 MLOCK is now OFF."
+    notice_on: "\x0303✔\x03 \x0302%nickname%\x03 enables MLOCK (%modes%)."
+    notice_off: "\x0304✗\x03 \x0302%nickname%\x03 disables MLOCK."
+
+  # --- SET PRIVATE ---------------------------------------------------------
+  private:
+    syntax: "SET <#channel> PRIVATE {ON|OFF}"
+    example: "%command_prefix%\x02\x0303SET #channel PRIVATE ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #channel PRIVATE OFF\x03\x0F"
+    short: "Hide channel information from users without access."
+    help: "When ON, only the founder and users with access can view channel information."
+    on: "\x0303✔\x03 Channel information is now private."
+    off: "\x0303✔\x03 Channel information is now public."
+
+  # --- SET SECURE ----------------------------------------------------------
+  secure:
+    syntax: "SET <#channel> SECURE {ON|OFF}"
+    example: "%command_prefix%\x02\x0303SET #channel SECURE ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET #channel SECURE OFF\x03\x0F"
+    short: "Require access list for channel ranks."
+    help: "Prevents granting channel ranks to nicknames that are not on the access list."
+    on: "\x0303✔\x03 SECURE is now ON."
+    off: "\x0303✔\x03 SECURE is now OFF."
+    notice_on: "\x0303✔\x03 \x0302%nickname%\x03 enables SECURE mode."
+    notice_off: "\x0304✗\x03 \x0302%nickname%\x03 disables SECURE mode."
+
+# --- ACCESS ----------------------------------------------------------------
 access:
-  syntax:           "ACCESS <#channel> {ADD|DEL|LIST} [nickname] [level]"
-  short:            "Manage access list."
-  help:             "LIST: show access list (nick and level per entry). ADD: add or update a nick's level (1-499). DEL: remove a nick from the list. Use \x0303HELP ACCESS <option>\x03 for each."
-  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use LIST, ADD, or DEL."
-  level_range:      "\x0304✗\x03 Access level must be between %min% and %max%."
+  syntax: "ACCESS <#channel> {ADD|DEL|LIST} [nickname] [level]"
+  example: "%command_prefix%\x02\x0303ACCESS #channel LIST\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303ACCESS #channel ADD Alice 100\x03\x0F"
+    - "%command_prefix%\x02\x0303ACCESS #channel DEL Alice\x03\x0F"
+  short: "Manage access list."
+  help: "Manages the channel access list."
+  unknown_sub: "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use LIST, ADD, or DEL."
+  level_range: "\x0304✗\x03 Access level must be between %min% and %max%."
   cannot_manage_level: "\x0304✗\x03 You can only manage nicks with level strictly below your own."
   founder_not_in_list: "\x0304✗\x03 The founder is not in the access list."
-  max_entries:      "\x0304✗\x03 Maximum %max% access entries per channel."
+  max_entries: "\x0304✗\x03 Maximum %max% access entries per channel."
+
+  # --- ACCESS LIST ---------------------------------------------------------
   list:
-    syntax:         "ACCESS <#channel> LIST"
-    short:          "List access list (requires ACCESSLIST level)."
-    help:           "Shows nickname and level for each entry."
-    header:         "\x0303Access list for \x02%channel%\x02\x03"
-    empty:          "\x0307ℹ\x03 Channel \x02%channel%\x02 has no access entries."
-    entry:          "  #%index%: %nickname% (level %level%)"
+    syntax: "ACCESS <#channel> LIST"
+    example: "%command_prefix%\x02\x0303ACCESS #channel LIST\x03\x0F"
+    short: "List access list (requires ACCESSLIST level)."
+    help: "Shows nickname and level for each entry."
+    header: "\x0303Access list for \x02%channel%\x02\x03"
+    empty: "\x0307ℹ\x03 Channel \x02%channel%\x02 has no access entries."
+    entry: "  #%index%: %nickname% (level %level%)"
+
+  # --- ACCESS ADD ----------------------------------------------------------
   add:
-    syntax:         "ACCESS <#channel> ADD <nickname> <level>"
-    short:          "Add or update access level (requires ACCESSCHANGE level)."
-    help:           "Level 1-499. You can only set levels below your own."
-    done:           "\x0303✔\x03 \x02%nickname%\x02 set to level %level%."
+    syntax: "ACCESS <#channel> ADD <nickname> <level>"
+    example: "%command_prefix%\x02\x0303ACCESS #channel ADD Alice 100\x03\x0F"
+    short: "Add or update access level (requires ACCESSCHANGE level)."
+    help: "Level 1-499. You can only set levels below your own."
+    done: "\x0303✔\x03 \x02%nickname%\x02 set to level %level%."
     notice_channel: "\x0303✔\x03 \x0302%from%\x03 sets \x0314%to%\x03 to level \x0304%level%\x03"
+
+  # --- ACCESS DEL ----------------------------------------------------------
   del:
-    syntax:         "ACCESS <#channel> DEL <nickname>"
-    short:          "Remove from access list (requires ACCESSCHANGE level)."
-    help:           "You can only remove nicks with level below your own."
-    not_in_list:    "\x0304✗\x03 \x02%nickname%\x02 is not in the access list."
-    done:           "\x0303✔\x03 \x02%nickname%\x02 removed from access list."
+    syntax: "ACCESS <#channel> DEL <nickname>"
+    example: "%command_prefix%\x02\x0303ACCESS #channel DEL Alice\x03\x0F"
+    short: "Remove from access list (requires ACCESSCHANGE level)."
+    help: "You can only remove nicks with level below your own."
+    not_in_list: "\x0304✗\x03 \x02%nickname%\x02 is not in the access list."
+    done: "\x0303✔\x03 \x02%nickname%\x02 removed from access list."
     notice_channel: "\x0304✗\x03 \x0302%from%\x03 removes \x0314%to%\x03 from access list"
 
+# --- DELACCESS -------------------------------------------------------------
 delaccess:
-  syntax:           "DELACCESS <#channel>"
-  short:            "Remove your own access from a channel."
-  help:             "Removes your access entry from the channel's access list. You must be identified. Founder cannot use this command."
-  done:             "\x0303✔\x03 Your access has been removed from \x02%channel%\x02."
-  not_in_list:      "\x0304✗\x03 You don't have access in \x02%channel%\x02."
+  syntax: "DELACCESS <#channel>"
+  example: "%command_prefix%\x02\x0303DELACCESS #channel\x03\x0F"
+  short: "Remove your own access from a channel."
+  help: |-
+    Removes your entry from the channel access list. You must be identified.
+    The founder cannot use this command.
+  done: "\x0303✔\x03 Your access has been removed from \x02%channel%\x02."
+  not_in_list: "\x0304✗\x03 You don't have access in \x02%channel%\x02."
   founder_not_in_access: "\x0304✗\x03 You are the founder of \x02%channel%\x02 and are not on the access list."
   notice_channel: "\x0304✗\x03 \x0302%nickname%\x03 removes their access from the channel"
 
+# --- LEVELS ----------------------------------------------------------------
 levels:
-  syntax:           "LEVELS <#channel> {LIST|SET|RESET} [level] [value]"
-  short:            "Configure channel levels."
-  help:             "LIST: show level requirements (OPDEOP, VOICEDEVOICE, etc.). SET: set minimum level for an action (-1 to 499). RESET: restore defaults. Founder only for SET/RESET."
-  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use LIST, SET, or RESET."
-  unknown_key:      "\x0304✗\x03 Unknown level key \x02%key%\x02 or not supported by this IRCd."
-  value_range:      "\x0304✗\x03 Level value must be between %min% and %max%."
+  syntax: "LEVELS <#channel> {LIST|SET|RESET} [level] [value]"
+  example: "%command_prefix%\x02\x0303LEVELS #channel LIST\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LEVELS #channel SET OPDEOP 50\x03\x0F"
+    - "%command_prefix%\x02\x0303LEVELS #channel RESET\x03\x0F"
+  short: "Configure channel levels."
+  help: |-
+    Configures the minimum access levels for channel actions. Only the founder
+    can change or reset levels.
+  unknown_sub: "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use LIST, SET, or RESET."
+  unknown_key: "\x0304✗\x03 Unknown level key \x02%key%\x02 or not supported by this IRCd."
+  value_range: "\x0304✗\x03 Level value must be between %min% and %max%."
+
+  # --- LEVELS LIST ---------------------------------------------------------
   list:
-    syntax:         "LEVELS <#channel> LIST"
-    short:          "List level requirements."
-    help:           "Shows each level key and its value (defaults if not set)."
-    header:         "\x0303Levels\x03"
+    syntax: "LEVELS <#channel> LIST"
+    example: "%command_prefix%\x02\x0303LEVELS #channel LIST\x03\x0F"
+    short: "List level requirements."
+    help: "Shows each level key and its value (defaults if not set)."
+    header: "\x0303Levels for %channel%\x03"
+
+  # --- LEVELS SET ----------------------------------------------------------
   set:
-    syntax:         "LEVELS <#channel> SET <level> <value>"
-    short:          "Set a level requirement."
-    help:           "Value -1 to 499. Founder only."
-    done:           "\x0303✔\x03 \x02%key%\x02 set to %value%."
+    syntax: "LEVELS <#channel> SET <level> <value>"
+    example: "%command_prefix%\x02\x0303LEVELS #channel SET OPDEOP 50\x03\x0F"
+    short: "Set a level requirement."
+    help: "Value -1 to 499. Founder only."
+    done: "\x0303✔\x03 \x02%key%\x02 set to %value%."
+
+  # --- LEVELS RESET --------------------------------------------------------
   reset:
-    syntax:         "LEVELS <#channel> RESET"
-    short:          "Reset all levels to defaults."
-    help:           "Removes all overrides. Founder only."
-    done:           "\x0303✔\x03 All levels reset to defaults."
+    syntax: "LEVELS <#channel> RESET"
+    example: "%command_prefix%\x02\x0303LEVELS #channel RESET\x03\x0F"
+    short: "Reset all levels to defaults."
+    help: "Removes all overrides. Founder only."
+    done: "\x0303✔\x03 All levels reset to defaults."
 
+# --- VOICE -----------------------------------------------------------------
 voice:
-  syntax:           "VOICE <#channel> <nickname>"
-  short:            "Give voice mode in the channel."
-  help:             "Give voice mode in the channel."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 has been given voice."
+  syntax: "VOICE <#channel> <nickname>"
+  example: "%command_prefix%\x02\x0303VOICE #channel Alice\x03\x0F"
+  short: "Give voice mode in the channel."
+  help: "Give voice mode in the channel."
+  done: "\x0303✔\x03 \x02%nickname%\x02 has been given voice."
   user_not_on_channel: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not on the network."
-  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
+  notice_grant: "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
 
+# --- DEVOICE ---------------------------------------------------------------
 devoice:
-  syntax:           "DEVOICE <#channel> <nickname>"
-  short:            "Remove voice mode in the channel."
-  help:             "Remove voice mode in the channel."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 has been devoiced."
+  syntax: "DEVOICE <#channel> <nickname>"
+  example: "%command_prefix%\x02\x0303DEVOICE #channel Alice\x03\x0F"
+  short: "Remove voice mode in the channel."
+  help: "Remove voice mode in the channel."
+  done: "\x0303✔\x03 \x02%nickname%\x02 has been devoiced."
 
+# --- INVITE ----------------------------------------------------------------
 invite:
-  syntax:           "INVITE <#channel>"
-  short:            "Invite yourself to the channel."
-  help:             "Invite yourself to the channel."
-  done:             "\x0303✔\x03 You have been invited to \x02%channel%\x02."
-  notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 invites themselves to the channel."
+  syntax: "INVITE <#channel>"
+  example: "%command_prefix%\x02\x0303INVITE #channel\x03\x0F"
+  short: "Invite yourself to the channel."
+  help: "Invite yourself to the channel."
+  done: "\x0303✔\x03 You have been invited to \x02%channel%\x02."
+  notice_channel: "\x0303✔\x03 \x0302%nickname%\x03 invites themselves to the channel."
 
+# --- ADMIN -----------------------------------------------------------------
 admin:
-  syntax:           "ADMIN <#channel> <nickname>"
-  short:            "Give channel admin mode."
-  help:             "Give channel admin mode. Only if IRCd supports +a."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 has been given channel admin."
+  syntax: "ADMIN <#channel> <nickname>"
+  example: "%command_prefix%\x02\x0303ADMIN #channel Alice\x03\x0F"
+  short: "Give channel admin mode."
+  help: "Give channel admin mode. Only if IRCd supports +a."
+  done: "\x0303✔\x03 \x02%nickname%\x02 has been given channel admin."
   user_not_on_channel: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not on the network."
-  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
-  not_supported:    "\x0304✗\x03 This network does not support channel admin (+a) mode."
+  notice_grant: "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
+  not_supported: "\x0304✗\x03 This network does not support channel admin (+a) mode."
 
+# --- DEADMIN ---------------------------------------------------------------
 deadmin:
-  syntax:           "DEADMIN <#channel> <nickname>"
-  short:            "Remove channel admin mode."
-  help:             "Remove channel admin mode."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 has been deadminned."
+  syntax: "DEADMIN <#channel> <nickname>"
+  example: "%command_prefix%\x02\x0303DEADMIN #channel Alice\x03\x0F"
+  short: "Remove channel admin mode."
+  help: "Remove channel admin mode."
+  done: "\x0303✔\x03 \x02%nickname%\x02 has been deadminned."
 
+# --- HALFOP ----------------------------------------------------------------
 halfop:
-  syntax:           "HALFOP <#channel> <nickname>"
-  short:            "Give semi-operator mode in the channel."
-  help:             "Give semi-operator mode in the channel. Only if IRCd supports +h."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 has been given halfop."
+  syntax: "HALFOP <#channel> <nickname>"
+  example: "%command_prefix%\x02\x0303HALFOP #channel Alice\x03\x0F"
+  short: "Give semi-operator mode in the channel."
+  help: "Give semi-operator mode in the channel. Only if IRCd supports +h."
+  done: "\x0303✔\x03 \x02%nickname%\x02 has been given halfop."
   user_not_on_channel: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not on the network."
-  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
-  not_supported:    "\x0304✗\x03 This network does not support halfop (+h) mode."
+  notice_grant: "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
+  not_supported: "\x0304✗\x03 This network does not support halfop (+h) mode."
 
+# --- DEHALFOP --------------------------------------------------------------
 dehalfop:
-  syntax:           "DEHALFOP <#channel> <nickname>"
-  short:            "Remove semi-operator mode in the channel."
-  help:             "Remove semi-operator mode in the channel."
-  done:             "\x0303✔\x03 \x02%nickname%\x02 has been dehalfopped."
+  syntax: "DEHALFOP <#channel> <nickname>"
+  example: "%command_prefix%\x02\x0303DEHALFOP #channel Alice\x03\x0F"
+  short: "Remove semi-operator mode in the channel."
+  help: "Remove semi-operator mode in the channel."
+  done: "\x0303✔\x03 \x02%nickname%\x02 has been dehalfopped."
 
+# --- AKICK -----------------------------------------------------------------
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [reason]"
-  short:            "Manage auto-kick list."
-  help:             "ADD <mask> [expiry] [reason]: add entry. DEL <mask|num>: remove. LIST: list entries."
-  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
-  invalid_mask:     "\x0304✗\x03 Invalid mask format. Use \x02nick!ident@host\x02 with wildcards (*)."
-  dangerous_mask:   "\x0304✗\x03 The mask \x02%mask%\x02 is too broad. It must contain at least 4 alphanumeric characters."
-  protected_user:   "\x0304✗\x03 Nickname \x02%nickname%\x02 has access in this channel."
-  max_entries:      "\x0304✗\x03 Maximum %max% AKICK entries per channel."
+  syntax: "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [reason]"
+  example: "%command_prefix%\x02\x0303AKICK #channel ADD *!*@* 0\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303AKICK #channel ADD *!*@* 7d Spam\x03\x0F"
+    - "%command_prefix%\x02\x0303AKICK #channel DEL *!*@*\x03\x0F"
+    - "%command_prefix%\x02\x0303AKICK #channel DEL 2\x03\x0F"
+    - "%command_prefix%\x02\x0303AKICK #channel LIST\x03\x0F"
+  short: "Manage auto-kick list."
+  help: "Manages autokick entries and their optional expiry."
+  unknown_sub: "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
+  invalid_mask: "\x0304✗\x03 Invalid mask format. Use \x02nick!ident@host\x02 with wildcards (*)."
+  dangerous_mask: "\x0304✗\x03 The mask \x02%mask%\x02 is too broad. It must contain at least 4 alphanumeric characters."
+  protected_user: "\x0304✗\x03 Nickname \x02%nickname%\x02 has access in this channel."
+  max_entries: "\x0304✗\x03 Maximum %max% AKICK entries per channel."
+
+  # --- AKICK ADD -----------------------------------------------------------
   add:
-    syntax:         "AKICK <#channel> ADD <mask> [expiry] [reason]"
-    short:          "Add AKICK entry."
-    help:           "Expiry required if reason is specified. Formats: 0 (permanent), 1d, 7d, 30d, 12h, 60m. Examples: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'."
-    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 added."
+    syntax: "AKICK <#channel> ADD <mask> [expiry] [reason]"
+    example: "%command_prefix%\x02\x0303AKICK #channel ADD *!*@* 0\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303AKICK #channel ADD *!*@* 7d Spam\x03\x0F"
+    short: "Add AKICK entry."
+    help: |-
+      Adds a mask to the channel autokick list.
+
+      You can specify a duration and a reason. If you include a reason, you must
+      also specify the duration: 0 for permanent, d for days, h for hours or m
+      for minutes.
+    done: "\x0303✔\x03 AKICK \x02%mask%\x02 added."
     already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 already exists."
     notice_channel: "\x02%from%\x02 adds AKICK: \x02%mask%\x02 (%reason%)"
-  del:
-    syntax:         "AKICK <#channel> DEL <mask|number>"
-    short:          "Remove AKICK entry."
-    help:           "Remove by exact mask or entry number from LIST."
-    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 not found."
-    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 removed."
-    notice_channel: "\x02%from%\x02 removes AKICK: \x02%mask%\x02"
-  list:
-    syntax:         "AKICK <#channel> LIST"
-    short:          "List AKICK entries."
-    help:           "Shows mask, reason, expiry, and who added."
-    header:         "\x0303AKICK list for \x02%channel%\x02\x03"
-    empty:          "\x0307ℹ\x03 Channel \x02%channel%\x02 has no AKICK entries."
-    entry:          "  #%index% %mask% %reason% (by %nickname%, expires: %expiration%)"
-    no_reason:      "No reason"
-    never_expires:  "never"
-    unknown_creator: "unknown"
 
+  # --- AKICK DEL -----------------------------------------------------------
+  del:
+    syntax: "AKICK <#channel> DEL <mask|number>"
+    example: "%command_prefix%\x02\x0303AKICK #channel DEL *!*@*\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303AKICK #channel DEL 2\x03\x0F"
+    short: "Remove AKICK entry."
+    help: "Remove by exact mask or entry number from LIST."
+    not_found: "\x0304✗\x03 AKICK \x02%mask%\x02 not found."
+    done: "\x0303✔\x03 AKICK \x02%mask%\x02 removed."
+    notice_channel: "\x02%from%\x02 removes AKICK: \x02%mask%\x02"
+
+  # --- AKICK LIST ----------------------------------------------------------
+  list:
+    syntax: "AKICK <#channel> LIST"
+    example: "%command_prefix%\x02\x0303AKICK #channel LIST\x03\x0F"
+    short: "List AKICK entries."
+    help: "Shows mask, reason, expiry, and who added."
+    header: "\x0303AKICK list for \x02%channel%\x02\x03"
+    empty: "\x0307ℹ\x03 Channel \x02%channel%\x02 has no AKICK entries."
+    entry: "  #%index% %mask% %reason% (by %nickname%, expires: %expiration%)"
+
+# --- RESTORE ---------------------------------------------------------------
 restore:
-  syntax:           "RESTORE <#channel>"
-  short:            "Restore a channel pending deletion."
-  help:             "Restores a channel that was manually dropped and is still within the deletion grace period. Requires IRCop permission: chanserv.restore."
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been restored."
-  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  syntax: "RESTORE <#channel>"
+  example: "%command_prefix%\x02\x0303RESTORE #channel\x03\x0F"
+  short: "Restore a channel pending deletion."
+  help: "Restores a manually deleted channel that is still within its grace period."
+  success: "\x0303✔\x03 Channel \x02%channel%\x02 has been restored."
   not_pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is not pending deletion."
 
+# --- DROP ------------------------------------------------------------------
 drop:
-  syntax:           "DROP <#channel> [FORCE]"
-  short:            "Drop a registered channel."
-  help:             "Removes a registered channel from the database.\nThis command requires IRCop permission: chanserv.drop.\nFORCE permanently deletes a channel pending deletion and requires IRCop permission: chanserv.drop.force."
-  success:          "03✔ Channel %channel% has been marked for deletion and can be restored during the grace period."
-  force_success:    "\x0303✔\x03 Channel \x02%channel%\x02 has been permanently dropped."
+  syntax: "DROP <#channel> [FORCE]"
+  example: "%command_prefix%\x02\x0303DROP #channel\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303DROP #channel FORCE\x03\x0F"
+  short: "Drop a registered channel."
+  help: |-
+    Deletes a registered channel from the database.
+    FORCE permanently deletes a channel that is pending deletion.
+  force:
+    short: "Permanently deletes a channel that is pending deletion."
+  success: "\x0303✔\x03 Channel \x02%channel%\x02 has been marked for deletion and can be restored during the grace period."
+  force_success: "\x0303✔\x03 Channel \x02%channel%\x02 has been permanently dropped."
   pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion. Use DROP <#channel> force to delete it permanently."
-  invalid_channel:  "\x0304✗\x03 Invalid channel name. Use \x02#channel\x02."
-  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
-  pending_deletion_reason: "Channel %channel% is pending deletion. More information /msg %bot% INFO %channel%"
+  invalid_channel: "\x0304✗\x03 Invalid channel name. Use \x02#channel\x02."
+  pending_deletion_reason: "Channel %channel% is being deleted. More information /msg %bot% \x0303INFO %channel%\x03"
 
+# --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax:           "SUSPEND <#channel> <duration> <reason>"
-  short:            "Suspend a channel."
-  help:             "Temporarily disables a registered channel. Duration formats: 0 = permanent, 1d, 12h, 60m.\nWhile suspended, channel modes, access, and enforcement are disabled.\nThis command requires IRCop permission: chanserv.suspend"
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been suspended until \x02%duration%\x02."
-  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  syntax: "SUSPEND <#channel> <duration> <reason>"
+  example: "%command_prefix%\x02\x0303SUSPEND #channel 7d Rule violation\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND #channel 0 Rule violation\x03\x0F"
+  short: "Suspend a channel."
+  help: |-
+    Temporarily disables a registered channel. Duration formats: 0 = permanent,
+    1d, 12h, 60m.
+    While suspended, channel modes, access and enforcement are disabled.
+  success: "\x0303✔\x03 Channel \x02%channel%\x02 has been suspended until \x02%duration%\x02."
   already_suspended: "\x0304✗\x03 Channel \x02%channel%\x02 is already suspended."
-  invalid_duration:  "\x0304✗\x03 Invalid duration. Use: 0 (permanent), 1d, 12h, or 60m."
-  permanent:         "Permanent"
+  invalid_duration: "\x0304✗\x03 Invalid duration. Use: 0 (permanent), 1d, 12h, or 60m."
   channel_suspended: "\x0304✗\x03 Channel \x02%channel%\x02 is suspended and cannot be used."
-  notice_channel:    "\x0304⚠\x03 Channel has been suspended. Reason: %reason%"
+  notice_channel: "\x0304⚠\x03 Channel has been suspended. Reason: %reason%"
 
+# --- UNSUSPEND -------------------------------------------------------------
 unsuspend:
-  syntax:           "UNSUSPEND <#channel>"
-  short:            "Lift a channel suspension."
-  help:             "Reactivates a suspended channel, restoring its modes and enforcement.\nThis command requires IRCop permission: chanserv.suspend"
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 is no longer suspended."
-  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
-  not_suspended:    "\x0304✗\x03 Channel \x02%channel%\x02 is not suspended."
-  reason_expired:   "expired suspension"
+  syntax: "UNSUSPEND <#channel>"
+  example: "%command_prefix%\x02\x0303UNSUSPEND #channel\x03\x0F"
+  short: "Lift a channel suspension."
+  help: "Reactivates a suspended channel, restoring its modes and enforcement."
+  success: "\x0303✔\x03 Channel \x02%channel%\x02 is no longer suspended."
+  not_suspended: "\x0304✗\x03 Channel \x02%channel%\x02 is not suspended."
+  reason_expired: "expired suspension"
 
-# NOJOIN documentation for LEVELS:
-# NOJOIN: Minimum access level required to join channel. Users with level < NOJOIN are kicked.
-# Default: -1 (disabled). Set to 0 to only allow registered users, 50 for level 50+, etc.
-
+# --- NOJOIN ----------------------------------------------------------------
 nojoin:
   reason: "NOJOIN level restriction"
 
-# --- DEBUG CHANNEL -----------------------------------------------------------
+# --- DEBUG CHANNEL ---------------------------------------------------------
 debug_channel:
   kick_reason: "You are not authorized to join this channel."
 
+# --- IRCOPONLY -------------------------------------------------------------
 ircoponly:
-  syntax:           "IRCOPONLY <#channel> {ON|OFF}"
-  short:            "Restrict a channel to IRC operators."
-  help:             "Only authorized IRC operators may remain in the channel. %bot% joins and protects mode +O."
-  on:               "IRCOPONLY is now ON for %channel%."
-  off:              "IRCOPONLY is now OFF for %channel%."
+  syntax: "IRCOPONLY <#channel> {ON|OFF}"
+  example: "%command_prefix%\x02\x0303IRCOPONLY #channel ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303IRCOPONLY #channel OFF\x03\x0F"
+  short: "Restrict a channel to IRC operators."
+  help: |-
+    Only authorized IRC operators can remain in the channel. %bot% enforces
+    this restriction.
+  on: "IRCOPONLY is now ON for %channel%."
+  off: "IRCOPONLY is now OFF for %channel%."
 
+# --- NOEXPIRE --------------------------------------------------------------
 noexpire:
-  syntax:           "NOEXPIRE <#channel> {ON|OFF}"
-  short:            "Set or remove expiration protection for a channel."
-  help:             |
-    Controls whether a channel will expire due to inactivity.
-    When ON, the channel never expires regardless of last activity.
-    When OFF, normal expiration rules apply.
+  syntax: "NOEXPIRE <#channel> {ON|OFF}"
+  example: "%command_prefix%\x02\x0303NOEXPIRE #Important ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE #Important OFF\x03\x0F"
+  short: "Set or remove expiration protection for a channel."
+  help: |-
+    Controls whether the channel expires through inactivity.
+    ON prevents expiry and OFF applies the normal rules.
+  success_on: "\x0303✔\x03 Channel \x02%channel%\x02 is now protected from expiration."
+  success_off: "\x0303✔\x03 Channel \x02%channel%\x02 will now expire normally."
+  forbidden: "\x0304✗\x03 Channel \x02%channel%\x02 is forbidden."
+  suspended: "\x0304✗\x03 Channel \x02%channel%\x02 is suspended."
 
-    Only IRCops with 'chanserv.noexpire' permission can use this command.
-
-    Syntax: NOEXPIRE <#channel> {ON|OFF}
-    Examples:
-      NOEXPIRE #Important ON
-      NOEXPIRE #Important OFF
-  success_on:       "\x0303✔\x03 Channel \x02%channel%\x02 is now protected from expiration."
-  success_off:      "\x0303✔\x03 Channel \x02%channel%\x02 will now expire normally."
-  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
-  forbidden:         "\x0304✗\x03 Channel \x02%channel%\x02 is forbidden."
-  suspended:         "\x0304✗\x03 Channel \x02%channel%\x02 is suspended."
-
+# --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax:           "FORBID <#channel> <reason>"
-  short:             "Forbid a channel from being used."
-  help:              "Prevents a channel from being used by anyone.\nIf the channel is currently registered, it will be dropped first.\nAll users in the channel will be kicked and the channel will be locked down.\nThis command requires IRCop permission: chanserv.forbid"
-  reason_required:  "\x0304✗\x03 You must specify a reason."
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been forbidden."
-  updated:          "\x0303✔\x03 Forbidden reason for channel \x02%channel%\x02 has been updated."
+  syntax: "FORBID <#channel> <reason>"
+  example: "%command_prefix%\x02\x0303FORBID #channel Rule violation\x03\x0F"
+  short: "Forbid a channel from being used."
+  help: |-
+    Forbids a channel, removing all users and preventing them from rejoining.
+    If the channel is registered, its registration is deleted before the ban
+    is applied.
+  reason_required: "\x0304✗\x03 You must specify a reason."
+  success: "\x0303✔\x03 Channel \x02%channel%\x02 has been forbidden."
+  updated: "\x0303✔\x03 Forbidden reason for channel \x02%channel%\x02 has been updated."
   channel_forbidden: "\x0304✗\x03 Channel \x02%channel%\x02 is forbidden and cannot be used."
 
+# --- UNFORBID --------------------------------------------------------------
 unforbid:
-  syntax:           "UNFORBID <#channel>"
-  short:             "Remove a channel forbid."
-  help:              "Removes a channel forbid, allowing the channel to be registered again.\nThis command requires IRCop permission: chanserv.forbid"
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 is no longer forbidden."
-  not_forbidden:    "\x0304✗\x03 Channel \x02%channel%\x02 is not forbidden."
+  syntax: "UNFORBID <#channel>"
+  example: "%command_prefix%\x02\x0303UNFORBID #channel\x03\x0F"
+  short: "Remove a channel forbid."
+  help: "Removes a channel ban so that the channel can be registered again."
+  success: "\x0303✔\x03 Channel \x02%channel%\x02 is no longer forbidden."
+  not_forbidden: "\x0304✗\x03 Channel \x02%channel%\x02 is not forbidden."
 
+# --- DEBUG -----------------------------------------------------------------
 debug:
-  action_message: "%operator% executes command %command% on %target%. %reason%"
-  action_with_option: "%operator% executes command %command% on %target%. Option: %option%. %reason%"
-  action_with_value: "%operator% executes command %command% on %target%. Option: %option%=%value%. %reason%"
   founder_action: "Level-founder action"
-  prefix_reason:  "Reason: %reason%"
 
-# --- HISTORY (IRCop) ---------------------------------------------------------
+# --- HISTORY ---------------------------------------------------------------
 history:
-  syntax:           "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
-  short:            "View or manage channel action history."
-  help:             |
-    Manage the action history for a channel.
-    Only IRCops with 'chanserv.history' permission can use this command.
+  syntax: "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
+  example: "%command_prefix%\x02\x0303HISTORY #channel ADD Moderation review\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY #channel DEL 42\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY #channel VIEW\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY #channel VIEW 2\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY #channel VIEW ALL\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY #channel CLEAR\x03\x0F"
+  short: "View or manage channel action history."
+  help: "Manages the channel action history."
 
-    Subcommands:
-      ADD   — Add a manual entry to the channel's history.
-      DEL   — Delete a specific entry by ID.
-      VIEW  — View history entries (paginated, 3 per page).
-      CLEAR — Delete all history entries for the channel.
-
-    Syntax: HISTORY <#channel> {ADD|DEL|VIEW|CLEAR} [arguments]
-    Examples:
-      HISTORY #channel VIEW
-      HISTORY #channel VIEW 2
-      HISTORY #channel VIEW ALL
-      HISTORY #channel ADD Suspected takeover attempt
-      HISTORY #channel DEL 42
-      HISTORY #channel CLEAR
-  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
-  unknown_operator: "(unknown)"
-
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
-    syntax:     "HISTORY <#channel> ADD <message>"
-    short:      "Add a manual history entry."
-    help:        |
+    syntax: "HISTORY <#channel> ADD <message>"
+    example: "%command_prefix%\x02\x0303HISTORY #channel ADD Moderation review\x03\x0F"
+    short: "Add a manual history entry."
+    help: |-
       Adds a manual entry to the channel's history.
-    success:    "\x0303✔\x03 History entry added for \x02%channel%\x02."
+    success: "\x0303✔\x03 History entry added for \x02%channel%\x02."
 
+  # --- HISTORY DEL ---------------------------------------------------------
   del:
-    syntax:     "HISTORY <#channel> DEL <id>"
-    short:      "Delete a history entry by ID."
-    help:       "Deletes a history entry by its ID."
-    success:    "\x0303✔\x03 History entry \x02%id%\x02 deleted."
-    not_found:  "\x0304✗\x03 History entry \x02%id%\x02 not found."
-    invalid_id: "\x0304✗\x03 Invalid entry ID: \x02%id%\x02."
+    syntax: "HISTORY <#channel> DEL <id>"
+    example: "%command_prefix%\x02\x0303HISTORY #channel DEL 42\x03\x0F"
+    short: "Deletes a history entry."
+    help: "Deletes a history entry by its ID."
 
+  # --- HISTORY VIEW --------------------------------------------------------
   view:
-    syntax:     "HISTORY <#channel> VIEW [PAGE|ALL]"
-    short:      "View channel action history."
-    help:       "Views the channel's history entries."
-    header:     "\x02History for \x0307%channel%\x03\x02 (showing %start%-%end% of %total%):"
-    entry:       "#%id% [%date%] \x0303%action%\x03 by %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
-    no_entries:  "\x0307ℹ\x03 No history entries found for \x02%channel%\x02."
-    page_hint:   "Use \x0303HISTORY %channel% VIEW %next_page%\x03 for more entries."
+    syntax: "HISTORY <#channel> VIEW [PAGE|ALL]"
+    example: "%command_prefix%\x02\x0303HISTORY #channel VIEW\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303HISTORY #channel VIEW 2\x03\x0F"
+      - "%command_prefix%\x02\x0303HISTORY #channel VIEW ALL\x03\x0F"
+    short: "View channel action history."
+    help: "Views the channel's history entries."
+    header: "\x02History for \x0307%channel%\x03\x02 (showing %start%-%end% of %total%):"
+    entry: "#%id% [%date%] \x0303%action%\x03 by %operator% — %message%"
+    no_entries: "\x0307ℹ\x03 No history entries found for \x02%channel%\x02."
+    page_hint: "Use \x0303HISTORY %channel% VIEW %next_page%\x03 for more entries."
 
+  # --- HISTORY CLEAR -------------------------------------------------------
   clear:
-    syntax:     "HISTORY <#channel> CLEAR"
-    short:      "Delete all history entries for a channel."
-    help:       "Deletes all history entries for the channel."
-    success:    "\x0303✔\x03 Cleared \x02%count%\x02 history entries for \x02%channel%\x02."
-
-# --- History message translations ---
+    syntax: "HISTORY <#channel> CLEAR"
+    example: "%command_prefix%\x02\x0303HISTORY #channel CLEAR\x03\x0F"
+    short: "Delete all history entries for a channel."
+    help: "Deletes all history entries for the channel."
+    success: "\x0303✔\x03 Cleared \x02%count%\x02 history entries for \x02%channel%\x02."
 history.message:
-  unsuspend:                  "Suspension lifted"
-  founder_changed:            "Founder changed from %old_founder% to %new_founder%"
-  successor_changed:          "Successor changed from %old_successor% to %new_successor%"
-  successor_cleared:          "Successor cleared"
-  access_add:                 "Access added for %target_nickname% (level %level%)"
-  access_del:                 "Access removed for %target_nickname%"
-  akick_add:                  "AKICK added: %mask%"
-  akick_del:                  "AKICK removed: %mask%"
-
-# --- History extra field translations ---
+  founder_changed: "Founder changed from %old_founder% to %new_founder%"
+  successor_changed: "Successor changed from %old_successor% to %new_successor%"
+  successor_cleared: "Successor cleared"
+  access_add: "Access added for %target_nickname% (level %level%)"
+  access_del: "Access removed for %target_nickname%"
+  akick_add: "AKICK added: %mask%"
+  akick_del: "AKICK removed: %mask%"
 history.extra:
-  duration:      "Duration: %value%"
-  expires_at:    "Expires: %value%"
-  old_founder:     "Old founder: %value%"
-  new_founder:     "New founder: %value%"
-  old_successor:   "Old successor: %value%"
-  new_successor:   "New successor: %value%"
+  old_founder: "Old founder: %value%"
+  new_founder: "New founder: %value%"
+  old_successor: "Old successor: %value%"
+  new_successor: "New successor: %value%"
   target_nickname: "Target: %value%"
-  level:           "Level: %value%"
-  mask:            "Mask: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
+  level: "Level: %value%"
+  mask: "Mask: %value%"
 
-# --- CLEARACCESS (IRCop) ---------------------------------------------------------
+# --- LEVEL FOUNDER ---------------------------------------------------------
+level_founder:
+  short: "Allows operations that require the channel founder level."
+
+# --- CLEARACCESS -----------------------------------------------------------
 clearaccess:
-  syntax:           "CLEARACCESS <#channel>"
-  short:            "Clear the entire access list of a channel."
-  help:             |
-    Removes all access entries from a channel's access list.
-    This action is irreversible and cannot be undone.
-    Only IRCops with 'chanserv.clearaccess' permission can use this command.
+  syntax: "CLEARACCESS <#channel>"
+  example: "%command_prefix%\x02\x0303CLEARACCESS #channel\x03\x0F"
+  short: "Clear the entire access list of a channel."
+  help: "Removes every entry from the channel access list. This action is irreversible."
+  success: "\x0303✔\x03 Cleared \x02%count%\x02 access entries from \x02%channel%\x02."
+  empty: "\x0307ℹ\x03 Channel \x02%channel%\x02 has no access entries."
 
-    Syntax: CLEARACCESS <#channel>
-    Examples:
-      CLEARACCESS #channel
-  success:          "\x0303✔\x03 Cleared \x02%count%\x02 access entries from \x02%channel%\x02."
-  empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 has no access entries."
-
+# --- CLEARUSERS ------------------------------------------------------------
 clearusers:
-  syntax:           "CLEARUSERS <#channel> [reason]"
-  short:            "Kick all users from a channel."
-  help:             |
-    Kicks all users from the specified channel.
-    This is an IRCop-only command used for channel management.
-    An optional reason can be provided; if omitted, a default reason is used.
+  syntax: "CLEARUSERS <#channel> [reason]"
+  example: "%command_prefix%\x02\x0303CLEARUSERS #channel\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303CLEARUSERS #channel flooding\x03\x0F"
+  short: "Kick all users from a channel."
+  help: |-
+    Removes all users from the channel. Restricted to IRC operators; a default
+    reason is used when none is provided.
+  not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 is not currently on the network."
+  empty: "\x0307ℹ\x03 Channel \x02%channel%\x02 has no users to kick."
+  success: "\x0303✔\x03 Kicked \x02%count%\x02 user(s) from \x02%channel%\x02."
+  default_reason: "CLEARUSERS command"
 
-    Only IRCops with 'chanserv.clearusers' permission can use this command.
-
-    Syntax: CLEARUSERS <#channel> [reason]
-    Examples:
-      CLEARUSERS #channel
-      CLEARUSERS #channel flooding
-  not_on_network:   "\x0304✗\x03 Channel \x02%channel%\x02 is not currently on the network."
-  empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 has no users to kick."
-  success:          "\x0303✔\x03 Kicked \x02%count%\x02 user(s) from \x02%channel%\x02."
-  default_reason:   "CLEARUSERS command"
-
-# --- LIST (IRCop) ------------------------------------------------------------
+# --- LIST ------------------------------------------------------------------
 list:
   syntax: "LIST <pattern> [page]"
+  example: "%command_prefix%\x02\x0303LIST #*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST #* 2\x03\x0F"
   short: "List registered channels matching a pattern."
-  help: "Lists registered channels matching the supplied pattern. The * wildcard matches any sequence of characters. The page is optional and starts at 1."
+  help: |-
+    Lists registered channels matching the given pattern. The * wildcard matches
+    any sequence of characters. The page is optional and starts at 1.
   header: "Channel | Founder | Registered | Last used | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
-  page: "Page %page%/%pages% — %total% matches"
   empty: "No channels match the pattern %pattern%."
   status_active: "Active"
-  status_suspended: "Suspended"
-  status_pending_deletion: "Pending deletion"
-  status_forbidden: "Forbidden"

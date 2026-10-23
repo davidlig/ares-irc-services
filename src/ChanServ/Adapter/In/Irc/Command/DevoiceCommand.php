@@ -38,6 +38,11 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         return 'devoice.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'devoice.example';
+    }
+
     public function getOrder(): int
     {
         return 25;

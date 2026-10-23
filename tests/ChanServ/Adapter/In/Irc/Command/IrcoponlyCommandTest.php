@@ -44,6 +44,7 @@ final class IrcoponlyCommandTest extends TestCase
         self::assertSame(2, $command->getMinArgs());
         self::assertSame('ircoponly.syntax', $command->getSyntaxKey());
         self::assertSame('ircoponly.help', $command->getHelpKey());
+        self::assertSame('ircoponly.example', $command->getExampleKey());
         self::assertSame('ircoponly.short', $command->getShortDescKey());
         self::assertSame(77, $command->getOrder());
         self::assertSame([], $command->getSubCommandHelp());

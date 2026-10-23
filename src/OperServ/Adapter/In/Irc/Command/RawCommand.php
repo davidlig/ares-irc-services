@@ -43,6 +43,11 @@ final readonly class RawCommand implements OperServCommandInterface
         return 'raw.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'raw.example';
+    }
+
     public function getOrder(): int
     {
         return 40;

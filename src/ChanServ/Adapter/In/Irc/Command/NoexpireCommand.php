@@ -50,6 +50,11 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
         return 'noexpire.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'noexpire.example';
+    }
+
     public function getOrder(): int
     {
         return 76;
@@ -128,7 +133,7 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
             $enabled ? ChannelLifecycleAction::EnableNoExpire : ChannelLifecycleAction::DisableNoExpire,
         ));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
-            $context->reply('noexpire.not_registered', ['%channel%' => $channelName]);
+            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }

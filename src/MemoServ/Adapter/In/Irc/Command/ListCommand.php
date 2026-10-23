@@ -62,6 +62,11 @@ final readonly class ListCommand implements MemoServCommandInterface
         return 'list.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'list.example';
+    }
+
     public function getOrder(): int
     {
         return 3;
@@ -108,7 +113,7 @@ final readonly class ListCommand implements MemoServCommandInterface
 
         switch ($result->outcome) {
             case ListMemosOutcome::ChannelNotRegistered:
-                $context->reply('list.channel_not_registered', ['channel' => $result->channelName ?? '']);
+                $context->reply('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
             case ListMemosOutcome::AccessDenied:
@@ -129,7 +134,7 @@ final readonly class ListCommand implements MemoServCommandInterface
                     $dateStr = $context->formatDate($item->createdAt);
                     $context->replyRaw(sprintf('  %s#%d ' . self::BLUE . '%s' . self::RESET . ' (%s): %s', $unreadMark, $item->index, $item->senderDisplay, $dateStr, self::preview($item->message)));
                 }
-                $context->reply('list.footer');
+                $context->reply('reply.separator');
                 break;
         }
 

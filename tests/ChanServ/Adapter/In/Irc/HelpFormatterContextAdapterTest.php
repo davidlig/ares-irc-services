@@ -190,6 +190,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return '';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -271,6 +276,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function getHelpKey(): string
+            {
+                return '';
+            }
+
+            public function getExampleKey(): string
             {
                 return '';
             }
@@ -357,6 +367,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return '';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -435,6 +450,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function getHelpKey(): string
+            {
+                return '';
+            }
+
+            public function getExampleKey(): string
             {
                 return '';
             }
@@ -520,6 +540,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function getHelpKey(): string
+            {
+                return '';
+            }
+
+            public function getExampleKey(): string
             {
                 return '';
             }
@@ -687,6 +712,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return '';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -795,6 +825,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function getHelpKey(): string
+            {
+                return '';
+            }
+
+            public function getExampleKey(): string
             {
                 return '';
             }
@@ -1126,6 +1161,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return '';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -1190,6 +1230,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function getHelpKey(): string
+            {
+                return '';
+            }
+
+            public function getExampleKey(): string
             {
                 return '';
             }
@@ -1276,5 +1321,16 @@ final class HelpFormatterContextAdapterTest extends TestCase
     private function createAdapter(ChanServContext $context): HelpFormatterContextAdapter
     {
         return new HelpFormatterContextAdapter($context, $this->createStub(ChanServOperatorAccess::class));
+    }
+
+    #[Test]
+    public function exposesTheConfiguredBotNickname(): void
+    {
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomChan');
+        $context = $this->createContext($notifier, $this->createStub(TranslatorInterface::class), new ChanServCommandRegistry([]));
+        $adapter = new HelpFormatterContextAdapter($context, $this->createStub(ChanServOperatorAccess::class));
+
+        self::assertSame('CustomChan', $adapter->getBotName());
     }
 }

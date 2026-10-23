@@ -30,7 +30,7 @@ interface ChanServCommandInterface extends HelpableCommandInterface
     public function getShortDescKey(): string;
 
     /**
-     * @return array<int, array{name: string, desc_key: string, help_key: string, syntax_key: string}>
+     * @return array<int, array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}>
      */
     public function getSubCommandHelp(): array;
 

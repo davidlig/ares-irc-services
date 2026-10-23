@@ -1,288 +1,442 @@
-# NickServ translations — Catalan
-# Domain: nickserv
+# Traduccions de NickServ — Català
+# Domini: nickserv
 #
-# IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
-#   \x02        bold on/off
-#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
-#   \x03        reset color
-#   \x0F        reset all formatting
+# Codis de format IRC (cometes dobles o blocs literals !irc):
+#   \x02        activa/desactiva la negreta
+#   \x03NN      color (DECIMAL: 03=verd, 04=vermell, 07=taronja, 14=gris fosc)
+#   \x03        restableix el color
+#   \x0F        restableix tot el format
 #
-# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
-#   \x0314 = dark grey (14 decimal)  ← CORRECT
-#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
+# Els colors IRC usen números DECIMALS (0-15), no hexadecimals.
+#   \x0314 = gris fosc (14 decimal): CORRECTE
+#   \x030F = color 0 seguit de la lletra F: ERROR
+#
+# Text IRC multilínia: !irc |- amb salts físics i espais reals.
+# Els blocs sense etiqueta no descodifiquen escapes; conserva els literals CTCP.
+# Exemples HELP: example/examples i %command_prefix%.
+# El presentador afegeix /msg sense color i un marge de dos espais.
 
-unknown_command: "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax:            "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
-  oper_only:         "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
-  not_identified:    "\x0304✗\x03 No esteu identificat. Utilitzeu \x0303/msg %bot% IDENTIFY <nickname> <password>\x03"
-  permission_denied: "\x0304✗\x03 Permís denegat. No teniu accés a aquesta ordre."
-  mail_failed:       "\x0304✗\x03 No s'ha pogut enviar el correu electrònic. Comproveu la vostra adreça o torneu-ho a provar més tard."
-
-# --- REGISTER ---------------------------------------------------------------
+# --- REGISTER --------------------------------------------------------------
 register:
-  token_unavailable: "\x0304✗\x03 El registre està pendent, però no s’ha pogut lliurar el testimoni.\nEspera que caduqui abans de registrar-te de nou."
+  token_unavailable: !irc |-
+    \x0304✗\x03 El registre està pendent, però no s’ha pogut lliurar el testimoni.
+    Espera que caduqui abans de registrar-te de nou.
   syntax: "REGISTER <password> [email]"
-  short:            "Registrar el vostre sobrenom amb els serveis."
-  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nUn cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo."
-  pending:          "\x0307→\x03 S'ha enviat un token de verificació a \x02%email%\x02.\n  Executeu \x0303/msg %bot% VERIFY <token>\x03 per completar el registre.\n  No l'heu rebut? Comproveu el correu brossa o utilitzeu \x0303/msg %bot% RESEND\x03\n  El token expirarà en \x021 hora\x02."
+  short: "Registrar el vostre sobrenom amb els serveis."
+  help: |-
+    Registra el teu sobrenom. La xarxa t'indicarà el token de verificació
+    per xat o per correu, segons la seva configuració.
+    Un cop validat, serà el teu token de recuperació permanent:
+    guarda'l en un lloc segur.
+    La caducitat de %duration% només s'aplica abans de validar-lo.
+  example: "%command_prefix%\x02\x0303REGISTER Clau$egura_123\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303REGISTER Clau$egura_123 usuari@exemple.com\x03\x0F"
+  pending: !irc |-
+    \x0307→\x03 S'ha enviat un token de verificació a \x02%email%\x02.
+      Executa /msg %bot% \x0303VERIFY <token>\x03 per completar el registre.
+      No t'arriba? Revisa el correu brossa o fes servir /msg %bot% \x0303RESEND\x03
+      El token caducarà d'aquí a \x02%duration%\x02.
   already_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està registrat."
-  already_pending: "\x0307→\x03 El registre de \x02%nickname%\x02 està pendent. Utilitza \x0303VERIFY <token>\x03. \x0303RESEND\x03 només està disponible amb REGMODE EMAIL i un correu vàlid assignat."
-  forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot registrar en aquesta xarxa."
+  already_pending: "\x0307→\x03 El registre de \x02%nickname%\x02 està pendent. Fes servir \x0303VERIFY <token>\x03. Si el token s'ha enviat per correu i hi ha una adreça vàlida associada, en pots sol·licitar un altre amb \x0303RESEND\x03."
+  forbidden: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot registrar en aquesta xarxa."
   pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no pot ser registrat."
-  invalid_email:    "\x0304✗\x03 L'adreça de correu proporcionada no és vàlida."
+  invalid_email: "\x0304✗\x03 L'adreça de correu proporcionada no és vàlida."
   email_already_used: "\x0304✗\x03 El correu \x02%email%\x02 ja està en ús per un altre sobrenom. Utilitzeu una adreça diferent."
-  throttled:          "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans d'intentar registrar-vos de nou."
+  throttled: "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans d'intentar registrar-vos de nou."
   guest_prefix_forbidden: "\x0304✗\x03 No podeu registrar un sobrenom que comenci amb \x02%prefix%\x02."
 
-# --- VERIFY -----------------------------------------------------------------
+# --- VERIFY ----------------------------------------------------------------
 verify:
-  syntax:           "VERIFY <token>"
+  syntax: "VERIFY <token>"
   short: "Confirma un registre o testimoni de rescat."
-  help: "Un cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo."
-  success:          "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat amb èxit i ara esteu identificat."
-  success_native:   "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat correctament. Utilitzeu l'autenticació nativa que es mostra a continuació."
+  help: |-
+    Un cop validat, aquest token serà el teu token de recuperació permanent.
+    Guarda'l en un lloc segur: el podràs fer servir per recuperar el sobrenom.
+    La caducitat de %duration% només s'aplica abans de validar-lo.
+  example: "%command_prefix%\x02\x0303VERIFY <token-rebut>\x03\x0F"
+  success: "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat amb èxit i ara esteu identificat."
+  success_native: "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat correctament. Utilitzeu l'autenticació nativa que es mostra a continuació."
   invalid_token: "\x0304✗\x03 El testimoni de rescat no és vàlid."
-  no_pending:       "\x0304✗\x03 No teniu cap registre pendent per verificar."
+  no_pending: "\x0304✗\x03 No teniu cap registre pendent per verificar."
 
-# --- RESEND -----------------------------------------------------------------
+# --- RESEND ----------------------------------------------------------------
 resend:
-  disabled: "\x0307ℹ\x03 \x0303RESEND\x03 està desactivat mentre REGMODE sigui TOKEN."
-  syntax:           "RESEND"
-  short:            "Reenviar el token de verificació al vostre correu."
-  help: "RESEND està desactivat mentre REGMODE sigui TOKEN.\nUn cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo.\nEn mode EMAIL, RESEND renova durant una hora el token i el termini del registre pendent."
-  success:          "\x0307→\x03 Token de verificació reenviat a \x02%email%\x02."
-  no_pending:       "\x0304✗\x03 No teniu cap registre pendent per reenviar un token."
-  throttled:        "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de sol·licitar un altre correu de verificació."
+  disabled: "\x0307ℹ\x03 No pots sol·licitar un altre token amb \x0303RESEND\x03 perquè aquest registre l'envia directament per xat."
+  syntax: "RESEND"
+  short: "Reenviar el token de verificació al vostre correu."
+  help: |-
+    RESEND només està disponible si el token de verificació s'ha enviat per correu.
+    Un cop validat, aquest token serà el teu token de recuperació permanent.
+    Guarda'l en un lloc segur: el podràs fer servir per recuperar el sobrenom.
+    La caducitat de %duration% només s'aplica abans de validar-lo.
+    Si fas servir RESEND, rebràs un token nou per correu.
+    El termini del registre pendent es renovarà durant %duration%.
+  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
+  success: "\x0307→\x03 Token de verificació reenviat a \x02%email%\x02."
+  no_pending: "\x0304✗\x03 No teniu cap registre pendent per verificar."
+  throttled: "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de sol·licitar un altre correu de verificació."
 
-# --- RECOVER -----------------------------------------------------------------
+# --- RECOVER ---------------------------------------------------------------
 recover:
-  no_email: "\u000304✗\u0003 No hi ha cap correu establert per al sobrenom \u0002%nickname%\u0002. La recuperació no està disponible."
-  email_sent: "\u000307→\u0003 S'ha enviat un token de recuperació a \u0002%email_hint%\u0002. Comproveu la vostra bústia (i la carpeta de correu brossa)."
+  no_email: "\x0304✗\x03 No hi ha cap correu establert per al sobrenom \x02%nickname%\x02. La recuperació no està disponible."
+  email_sent: "\x0307→\x03 S'ha enviat un token de recuperació a \x02%email_hint%\x02. Comproveu la vostra bústia (i la carpeta de correu brossa)."
   pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d’eliminació i no es pot recuperar."
   instructions: "\x0307ℹ\x03 EMAIL: \x0303RECOVER %nickname%\x03 sol·licita un testimoni provisional per correu. TOKEN: proporciona el testimoni confirmat. \x0303RECOVER %nickname% <token>\x03 accepta el del correu o el confirmat. El del correu substitueix el desat només en validar-lo. Utilitzar el desat ofereix un reemplaçament opcional amb \x0303VERIFY\x03; ignora el missatge per conservar l’actual."
-  syntax:           "RECOVER <nickname> [token]"
-  short:            "Recuperar el vostre sobrenom si heu perdut la contrasenya."
-  help: "EMAIL: RECOVER <nickname> sol·licita un testimoni provisional per correu. TOKEN: proporciona el testimoni confirmat. RECOVER <nickname> <token> accepta el del correu o el confirmat. El del correu substitueix el desat només en validar-lo. Utilitzar el desat ofereix un reemplaçament opcional amb VERIFY; ignora el missatge per conservar l’actual."
-  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  pending: "\x0307→\x03 El registre de \x02%nickname%\x02 està pendent. Utilitza \x0303VERIFY <token>\x03. \x0303RESEND\x03 només està disponible amb REGMODE EMAIL i un correu vàlid assignat."
-  suspended:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Motiu: %reason%"
-  forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot utilitzar en aquesta xarxa."
+  syntax: "RECOVER <nickname> [token]"
+  short: "Recuperar el vostre sobrenom si heu perdut la contrasenya."
+  help: |-
+    Si no tens el token, demana'n un de provisional per correu.
+    També pots proporcionar un token de recuperació vàlid; si és
+    provisional, substituirà el token desat només després de validar-lo.
+    Quan facis servir el token desat, se t'oferirà un reemplaçament opcional
+    amb VERIFY; ignora aquest missatge si vols conservar l'actual.
+  example: "%command_prefix%\x02\x0303RECOVER Usuari\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303RECOVER Usuari <token-rebut>\x03\x0F"
+  pending: "\x0307→\x03 El registre de \x02%nickname%\x02 està pendent. Fes servir \x0303VERIFY <token>\x03. Si el token s'ha enviat per correu i hi ha una adreça vàlida associada, en pots sol·licitar un altre amb \x0303RESEND\x03."
+  suspended: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Motiu: %reason%"
+  forbidden: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot utilitzar en aquesta xarxa."
   throttled: "\x0304✗\x03 Massa testimonis incorrectes. Torna-ho a provar d’aquí a \x02%minutes%\x02 minut(s)."
   invalid_token: "\x0304✗\x03 El testimoni de rescat no és vàlid."
   success_identify: "\x0303✔\x03 Contrasenya restablerta. Identifiqueu-vos ara: \x0303%identify_cmd%\x03"
-  success_then_change: "Després canvieu la vostra contrasenya: \x0303/msg %bot% SET PASSWORD <new_password>\x03"
+  success_then_change: "Després, canvia la contrasenya: /msg %bot% \x0303SET PASSWORD <contrasenya-nova>\x03"
 
-# --- IDENTIFY ---------------------------------------------------------------
+# --- IDENTIFY --------------------------------------------------------------
 identify:
-  syntax:           "IDENTIFY <nickname> <password>"
-  short:            "Identificar-vos com a propietari d'un sobrenom."
-  help:             "Autentica la vostra sessió amb %nickserv% utilitzant el vostre sobrenom i contrasenya.\nDesprés d'una identificació amb èxit rebreu el mode registrat \x02+r\x02\ni, si estàveu utilitzant un sobrenom de convidat, es restaurarà el vostre sobrenom registrat."
-  native_syntax:    "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
-  native_short:     "Mostra la sintaxi d’autenticació nativa per canvi de sobrenom."
-  native_help:      "Aquest protocol autentica els comptes mitjançant canvis de sobrenom.\nUtilitzeu /NICK <nickname>:<password> o, si el sobrenom està ocupat, /NICK <nickname>!<password>."
+  syntax: "IDENTIFY <nickname> <password>"
+  short: "Identificar-vos com a propietari d'un sobrenom."
+  help: !irc |-
+    Autentica la sessió amb %nickserv% fent servir el sobrenom i la contrasenya.
+    Després d'identificar-te correctament rebràs el mode registrat \x02+r\x02.
+    Si fas servir un sobrenom de convidat, es restaura el sobrenom registrat.
+  example: "%command_prefix%\x02\x0303IDENTIFY Usuari <contrasenya>\x03\x0F"
+  native_syntax: "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
+  native_short: "Mostra la sintaxi d’autenticació nativa per canvi de sobrenom."
+  native_help: |-
+    Fes servir /NICK <nickname>:<password> o, si el
+    sobrenom està ocupat, /NICK <nickname>!<password>.
+  native_example: "\x02\x0303/NICK Usuari:<contrasenya>\x03\x0F"
+  native_examples:
+    - "%command_prefix%\x02\x0303/NICK Usuari!<contrasenya>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Aquest protocol gestiona l’autenticació mitjançant canvis de sobrenom. Utilitzeu \x0303/NICK <nickname>:<password>\x03 o, si el sobrenom està ocupat, \x0303/NICK <nickname>!<password>\x03."
-  success:          "\x0303✔\x03 Ara esteu identificat com a \x02%nickname%\x02."
+  success: "\x0303✔\x03 Ara esteu identificat com a \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Ja esteu identificat com a \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
   invalid_credentials: "\x0304✗\x03 Contrasenya incorrecta. Torneu-ho a provar."
-  locked_out:         "\x0304✗\x03 Massa intents fallits. Torneu-ho a provar d'aquí a \x02%minutes%\x02 minut(s)."
-  ghost_released:   "\x0307⚡\x03 La sessió fantasma que retenia \x02%nickname%\x02 ha estat desconnectada."
-  kill_reason:      "Sobrenom %nickname% reclamat per %source% (el propietari registrat s'ha identificat)"
-  pending:          "\x0304✗\x03 El sobrenom \x02%nickname%\x02 té una verificació de correu pendent.\n  Executeu \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
-  suspended:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Motiu: %reason%"
-  forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot utilitzar en aquesta xarxa."
+  locked_out: "\x0304✗\x03 Massa intents fallits. Torneu-ho a provar d'aquí a \x02%minutes%\x02 minut(s)."
+  ghost_released: "\x0307⚡\x03 La sessió fantasma que retenia \x02%nickname%\x02 ha estat desconnectada."
+  kill_reason: "Sobrenom %nickname% reclamat per %source% (el propietari registrat s'ha identificat)"
+  pending: !irc |-
+    \x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent de verificació del correu electrònic.
+      Executa /msg %bot% \x0303VERIFY <token>\x03 o /msg %bot% \x0303RESEND\x03
+  suspended: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Motiu: %reason%"
+  forbidden: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot utilitzar en aquesta xarxa."
   pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no pot ser utilitzat."
 
-# --- STATUS -----------------------------------------------------------------
+# --- STATUS ----------------------------------------------------------------
 status:
-  syntax:           "STATUS <nickname>"
-  short:            "Mostrar l'estat de registre d'un sobrenom."
-  help:             "Mostra l'estat actual d'un sobrenom: registrat, verificació pendent,\nsuspès o prohibit."
-  header:           "\x02Estat del sobrenom \x0307%nickname%\x03\x02"
-  unregistered:     "  Estat           : No registrat"
+  syntax: "STATUS <nickname>"
+  short: "Mostrar l'estat de registre d'un sobrenom."
+  help: |-
+    Mostra l'estat actual d'un sobrenom: si està registrat,
+    pendent de verificació, suspès, etc.
+  example: "%command_prefix%\x02\x0303STATUS Usuari\x03\x0F"
+  header: "\x02Estat del sobrenom \x0307%nickname%\x03\x02"
+  unregistered: "  Estat           : No registrat"
   not_registered_offline: "  Estat           : \x0315No registrat\x03"
-  pending:          "  Estat           : \x0307Verificació pendent\x03"
-  pending_expires:  "  Expira en       : %minutes% minut(s)"
+  pending: "  Estat           : \x0307Verificació pendent\x03"
+  pending_expires: "  Expira en       : %minutes% minut(s)"
   pending_expires_at: "  Expira el       : %date%"
-  not_connected:    "  Estat           : \x0315No connectat\x03"
-  not_identified:   "  Estat           : \x0307No identificat\x03"
-  identified:       "  Estat           : \x0303Identificat\x03"
-  suspended:        "  Estat           : \x0304Suspès\x03"
+  not_connected: "  Estat           : \x0315No connectat\x03"
+  not_identified: "  Estat           : \x0307No identificat\x03"
+  identified: "  Estat           : \x0303Identificat\x03"
+  suspended: "  Estat           : \x0304Suspès\x03"
   suspended_reason: "  Motiu           : %reason%"
-  suspended_until:  "  Acaba el        : %date%"
+  suspended_until: "  Acaba el        : %date%"
   suspended_permanent: "  Acaba el        : Permanent"
-  forbidden:        "  Estat           : \x0304Prohibit\x03"
+  forbidden: "  Estat           : \x0304Prohibit\x03"
   forbidden_reason: "  Motiu           : %reason%"
-  pending_deletion:   "  \x0314Estat\x03          : \x0307Pendent d'eliminació\x03"
+  pending_deletion: "  \x0314Estat\x03          : \x0307Pendent d'eliminació\x03"
   pending_deletion_at: "  \x0314Eliminat\x03        : %date%"
-  footer:           "\x0314─────────────────────────────\x03"
 
-# --- INFO -------------------------------------------------------------------
+# --- INFO ------------------------------------------------------------------
 info:
-  syntax:           "INFO <nickname>"
-  short:            "Mostrar informació sobre un sobrenom registrat."
-  help:             "Mostra els detalls de registre d'un sobrenom: data de registre, estat de\nconnexió, darrer missatge de sortida i adreça de correu. El correu només és\nvisible per al propietari quan està identificat. Amb PRIVATE ON només el\npropietari i els operadors d'IRC poden veure la informació."
-  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  private:          "\x0304✗\x03 La informació del sobrenom \x02%nickname%\x02 és privada."
-  header:           "\x02Informació del sobrenom \x0307%nickname%\x03\x02"
-  status:           "  \x0314Estat\x03                 : %status%"
-  status_registered:  "\x0303Registrat\x03"
-  status_suspended:   "\x0304Suspès\x03"
-  status_forbidden:   "\x0304Prohibit\x03"
+  syntax: "INFO <nickname>"
+  short: "Mostrar informació sobre un sobrenom registrat."
+  help: |-
+    Mostra les dades de registre d'un sobrenom: data d'alta, estat de
+    connexió, darrer missatge de sortida i correu electrònic.
+
+    El correu només és visible per al propietari identificat.
+    Si el sobrenom és privat, només el propietari i els operadors IRC
+    poden veure'n la informació.
+  example: "%command_prefix%\x02\x0303INFO Usuari\x03\x0F"
+  private: "\x0304✗\x03 La informació del sobrenom \x02%nickname%\x02 és privada."
+  header: "\x02Informació del sobrenom \x0307%nickname%\x03\x02"
+  status: "  \x0314Estat\x03                 : %status%"
+  status_registered: "\x0303Registrat\x03"
+  status_suspended: "\x0304Suspès\x03"
+  status_forbidden: "\x0304Prohibit\x03"
   status_pending_deletion: "\x0307Pendent d'eliminació\x03"
-  reason:           "  \x0314Motiu\x03                 : %reason%"
-  suspended_until:  "  \x0314Acaba el\x03              : %date%"
+  reason: "  \x0314Motiu\x03                 : %reason%"
+  suspended_until: "  \x0314Acaba el\x03              : %date%"
   suspended_permanent: "  \x0314Acaba el\x03              : Permanent"
-  registered_at:    "  \x0314Registrat\x03             : %date%"
+  registered_at: "  \x0314Registrat\x03             : %date%"
   last_seen_online: "  \x0314Darrer vist\x03           : \x0303● EN LÍNIA ARA\x03"
-  last_seen_at:     "  \x0314Darrer vist\x03           : %date%"
-  last_seen_never:  "  \x0314Darrer vist\x03           : Mai"
-  last_quit:        "  \x0314Darrer miss. sortida\x03  : %message%"
-  last_connect:     "  \x0314Darrer vist des de\x03    : %ip% (%host%)"
-  language:         "  \x0314Idioma\x03                : %language%"
-  email:            "  \x0314Correu\x03                : %email%"
-  vhost:            "  \x0314VHost\x03                 : %vhost%"
-  no_expire:        "  \x0314Mai expira\x03            : Sí"
+  last_seen_at: "  \x0314Darrer vist\x03           : %date%"
+  last_seen_never: "  \x0314Darrer vist\x03           : Mai"
+  last_quit: "  \x0314Darrer miss. sortida\x03  : %message%"
+  last_connect: "  \x0314Darrer vist des de\x03    : %ip% (%host%)"
+  language: "  \x0314Idioma\x03                : %language%"
+  email: "  \x0314Correu\x03                : %email%"
+  vhost: "  \x0314VHost\x03                 : %vhost%"
+  no_expire: "  \x0314Mai expira\x03            : Sí"
   pending_deletion_at: "  \x0314Eliminat\x03               : %date%"
   pending_deletion_until: "  \x0314Elim. definitiva\x03       : %date%"
   pending_deletion_notice: "  \x0307Aquest sobrenom està pendent d'eliminació i no pot ser registrat.\x03"
-  footer:           "\x0314─────────────────────────────\x03"
-  channels_header:  "\x0314\x0ACanals amb accés:\x03"
-  channels_entry_founder:   "  %channel% (\x0303Fundador\x03)"
+  channels_header: !irc |-
+    \x0314
+    Canals amb accés:\x03
+  channels_entry_founder: "  %channel% (\x0303Fundador\x03)"
   channels_entry_successor: "  %channel% (\x0303Successor\x03)"
-  channels_entry_access:    "  %channel% (%level%)"
+  channels_entry_access: "  %channel% (%level%)"
 
-# --- SET --------------------------------------------------------------------
+# --- SET -------------------------------------------------------------------
 set:
-  syntax:           "SET <option> <value>"
-  short:            "Canviar les opcions del teu sobrenom."
-  help:             "Modifica la configuració del vostre sobrenom de %nickserv%.\nHeu d'estar identificat per utilitzar aquesta ordre."
-  unknown_option:   "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Opcions disponibles: %options%."
+  syntax: "SET <option> <value>"
+  short: "Canviar les opcions del teu sobrenom."
+  help: |-
+    Modifica la configuració del teu sobrenom. T'has d'haver identificat per canviar
+    aquestes opcions.
+  example: "%command_prefix%\x02\x0303SET LANGUAGE ca\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
+  unknown_option: "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Opcions disponibles: %options%."
 
+  # --- SET PASSWORD --------------------------------------------------------
   password:
-    syntax:         "SET PASSWORD <new_password>"
-    short:          "Canviar la contrasenya del vostre sobrenom."
-    help:           "Canvia la contrasenya del vostre sobrenom. La nova contrasenya\nté efecte immediatament. Trieu una contrasenya forta d'almenys 6 caràcters\nque no utilitzeu en altres serveis."
-    success:        "\x0303✔\x03 La vostra contrasenya s'ha actualitzat correctament."
+    syntax: "SET PASSWORD <new_password>"
+    short: "Canviar la contrasenya del vostre sobrenom."
+    help: |-
+      Canvia la contrasenya del vostre sobrenom. La nova contrasenya
+      té efecte immediatament. Trieu una contrasenya forta d'almenys 6 caràcters
+      que no utilitzeu en altres serveis.
+    example: "%command_prefix%\x02\x0303SET PASSWORD Clau$egura_123\x03\x0F"
+    success: "\x0303✔\x03 La vostra contrasenya s'ha actualitzat correctament."
 
+  # --- SET EMAIL -----------------------------------------------------------
   email:
     token_required: "\x0304✗\x03 Utilitza \x0303SET EMAIL <email> <token>\x03 amb el testimoni de rescat confirmat."
     syntax: "SET EMAIL <email> <token>"
-    short:          "Canviar l'adreça de correu vinculada al vostre sobrenom (confirmació en dos passos)."
-    help: "SET EMAIL canvia el correu de contacte després de validar el testimoni de rescat, sense consumir-lo. Comprova el format i la unicitat; no envia cap confirmació per correu."
-    success:        "\x0303✔\x03 El vostre correu s'ha actualitzat a \x02%email%\x02."
-    pending_sent:   "\x0307→\x03 S'ha enviat un token de confirmació a \x02%current_email%\x02.\n  Per confirmar el canvi a \x02%new_email%\x02 executeu:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  El token expira en 1 hora."
-    invalid_token:  "\x0304✗\x03 El token no és vàlid o ha expirat. Sol·liciteu-ne un de nou amb \x0303SET EMAIL <new_email>\x03."
+    short: "Canvia el correu electrònic amb el teu token de recuperació validat."
+    help: |-
+      SET EMAIL canvia el correu de contacte després de
+      validar el token de recuperació, sense consumir-lo.
+      Comprova el format i la unicitat; no envia confirmació.
+    example: "%command_prefix%\x02\x0303SET EMAIL usuari@exemple.com <token-validat>\x03\x0F"
+    success: "\x0303✔\x03 El vostre correu s'ha actualitzat a \x02%email%\x02."
+    pending_sent: !irc |-
+      \x0307→\x03 S'ha enviat un token de confirmació a \x02%current_email%\x02.
+        Per confirmar el canvi a \x02%new_email%\x02, executa:
+        /msg %bot% \x0303SET EMAIL %new_email% <token>\x03
+        El token caduca al cap d'1 hora.
+    invalid_token: "\x0304✗\x03 El token no és vàlid o ha expirat. Sol·liciteu-ne un de nou amb \x0303SET EMAIL <new_email>\x03."
 
+  # --- SET LANGUAGE --------------------------------------------------------
   language:
-    syntax:         "SET LANGUAGE <code>"
-    short:          "Canviar l'idioma que els serveis utilitzen per comunicar-se amb vós."
-    help:           "Canvia l'idioma que %nickserv% i altres serveis utilitzen quan us parlen.\nIdiomes disponibles:\n  \x02ca\x02 (Català)\n  \x02de\x02 (Alemany)\n  \x02el\x02 (Grec)\n  \x02en\x02 (Anglès)\n  \x02es\x02 (Espanyol)\n  \x02eu\x02 (Basc)\n  \x02fr\x02 (Francès)\n  \x02gl\x02 (Gallec)\n  \x02it\x02 (Italià)\n  \x02nl\x02 (Neerlandès)\n  \x02pl\x02 (Polonès)\n  \x02pt\x02 (Portuguès)\n  \x02ro\x02 (Romanès)\n  \x02tr\x02 (Turc)"
-    success:        "\x0303✔\x03 Idioma canviat a \x02%language%\x02."
-    invalid:        "\x0304✗\x03 Idioma no admès. Idiomes disponibles: %languages%."
+    syntax: "SET LANGUAGE <code>"
+    short: "Canviar l'idioma que els serveis utilitzen per comunicar-se amb vós."
+    help: !irc |-
+      Canvia l'idioma que %nickserv% i altres serveis utilitzen quan us parlen.
+      Idiomes disponibles:
+        \x02ca\x02 (Català)
+        \x02de\x02 (Alemany)
+        \x02el\x02 (Grec)
+        \x02en\x02 (Anglès)
+        \x02es\x02 (Espanyol)
+        \x02eu\x02 (Basc)
+        \x02fr\x02 (Francès)
+        \x02gl\x02 (Gallec)
+        \x02it\x02 (Italià)
+        \x02nl\x02 (Neerlandès)
+        \x02pl\x02 (Polonès)
+        \x02pt\x02 (Portuguès)
+        \x02ro\x02 (Romanès)
+        \x02tr\x02 (Turc)
+    example: "%command_prefix%\x02\x0303SET LANGUAGE ca\x03\x0F"
+    success: "\x0303✔\x03 Idioma canviat a \x02%language%\x02."
+    invalid: "\x0304✗\x03 Idioma no admès. Idiomes disponibles: %languages%."
 
+  # --- SET TIMEZONE --------------------------------------------------------
   timezone:
-    syntax:         "SET TIMEZONE <timezone>"
-    short:          "Establir la zona horària utilitzada en mostrar dates."
-    help:           "Estableix la zona horària que %nickserv% utilitza en mostrar dates.\nUtilitzeu \x02HELP SET TIMEZONE\x02 per a l'índex de regions; \x02HELP SET TIMEZONE <region>\x02 (p. ex. Europe) per a les zones horàries d'aquesta regió. Utilitzeu \x02OFF\x02 per esborrar."
-    success:        "\x0303✔\x03 Zona horària establerta a \x02%timezone%\x02. Les dates es mostraran en aquesta zona horària."
-    cleared:        "\x0303✔\x03 Zona horària esborrada. Les dates utilitzaran el valor predeterminat de la xarxa."
-    invalid:        "\x0304✗\x03 Zona horària no vàlida \x02%timezone%\x02. Utilitzeu un identificador vàlid (p. ex. UTC, Europe/Madrid)."
+    syntax: "SET TIMEZONE <timezone>"
+    short: "Establir la zona horària utilitzada en mostrar dates."
+    help: |-
+      Estableix la zona horària per a les dates de
+      %nickserv%. Consulta HELP SET TIMEZONE per veure les
+      regions. Fes servir OFF per eliminar-la.
+    example: "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET TIMEZONE OFF\x03\x0F"
+    success: "\x0303✔\x03 Zona horària establerta a \x02%timezone%\x02. Les dates es mostraran en aquesta zona horària."
+    cleared: "\x0303✔\x03 Zona horària esborrada. Les dates utilitzaran el valor predeterminat de la xarxa."
+    invalid: "\x0304✗\x03 Zona horària no vàlida \x02%timezone%\x02. Utilitzeu un identificador vàlid (p. ex. UTC, Europe/Madrid)."
 
+  # --- SET PRIVATE ---------------------------------------------------------
   private:
-    syntax:         "SET PRIVATE {ON|OFF}"
-    short:          "Activar o desactivar la privadesa de la informació del vostre sobrenom."
-    help:           "Controla la visibilitat de la informació del vostre sobrenom a l'ordre INFO.\nAmb \x02PRIVATE ON\x02 només vós i els operadors d'IRC podeu veure els vostres detalls.\nAmb \x02PRIVATE OFF\x02 la vostra informació és pública per a tothom."
-    on:             "\x0303✔\x03 La informació del vostre sobrenom ara és \x02privada\x02."
-    off:            "\x0303✔\x03 La informació del vostre sobrenom ara és \x02pública\x02."
+    syntax: "SET PRIVATE {ON|OFF}"
+    short: "Mostra o amaga la informació del teu sobrenom."
+    help: !irc |-
+      Controla la visibilitat de la informació del vostre sobrenom a l'ordre INFO.
+      Amb \x02PRIVATE ON\x02 només vós i els operadors d'IRC podeu veure els vostres detalls.
+      Amb \x02PRIVATE OFF\x02 la vostra informació és pública per a tothom.
+    example: "%command_prefix%\x02\x0303SET PRIVATE ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET PRIVATE OFF\x03\x0F"
+    on: "\x0303✔\x03 La informació del vostre sobrenom ara és \x02privada\x02."
+    off: "\x0303✔\x03 La informació del vostre sobrenom ara és \x02pública\x02."
 
+  # --- SET MSG -------------------------------------------------------------
   msg:
-    syntax:         "SET MSG {ON|OFF}"
-    short:          "Utilitzar PRIVMSG (ON) o NOTICE (OFF) per a les respostes dels serveis."
-    help:           "Controla com %nickserv% i altres serveis us envien missatges.\nAmb \x02MSG ON\x02 les respostes s'envien com a \x02PRIVMSG\x02 (alguns clients poden activar respostes o notificacions).\nAmb \x02MSG OFF\x02 les respostes s'envien com a \x02NOTICE\x02 (predeterminat; normalment sense resposta automàtica)."
-    on:             "\x0303✔\x03 Els missatges del servei s'enviaran ara com a \x02PRIVMSG\x02."
-    off:            "\x0303✔\x03 Els missatges del servei s'enviaran ara com a \x02NOTICE\x02."
+    syntax: "SET MSG {ON|OFF}"
+    short: "Canvia la manera com els serveis es comuniquen amb tu."
+    help: !irc |-
+      Controla com %nickserv% i la resta de serveis t'envien missatges.
+      Amb \x02MSG ON\x02, les respostes s'envien com a \x02PRIVMSG\x02.
+      Amb \x02MSG OFF\x02, les respostes s'envien com a \x02NOTICE\x02.
+    example: "%command_prefix%\x02\x0303SET MSG ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET MSG OFF\x03\x0F"
+    on: "\x0303✔\x03 Els missatges del servei s'enviaran ara com a \x02PRIVMSG\x02."
+    off: "\x0303✔\x03 Els missatges del servei s'enviaran ara com a \x02NOTICE\x02."
 
+  # --- SET VHOST -----------------------------------------------------------
   vhost:
-    syntax:         "SET VHOST [vhost]"
-    short:          "Establir o esborrar el vostre amfitrió virtual personalitzat (nom d'amfitrió mostrat)."
-    help:           "Estableix un nom d'amfitrió personalitzat que els altres veuen quan esteu identificat.\nExecuteu \x02SET VHOST\x02 sense cap valor per esborrar-lo. Només lletres (a-z, A-Z), dígits, guionet i punt;\nsense guionet ni punt al principi/final de cap bloc; màx. 48 caràcters. Únic per sobrenom."
-    success:        "\x0303✔\x03 El vostre amfitrió virtual s'ha establert a \x02%vhost%\x02."
-    cleared:        "\x0303✔\x03 El vostre amfitrió virtual s'ha esborrat."
-    invalid:        "\x0304✗\x03 Vhost no vàlid. Només lletres, dígits, guionet i punt (no al principi/final de bloc); màx. 48 caràcters."
-    taken:          "\x0304✗\x03 Aquest vhost ja està en ús per un altre sobrenom."
-    forced:         "\x0304✗\x03 El vostre vhost es configura automàticament i no es pot canviar amb SET VHOST."
+    syntax: "SET VHOST [vhost]"
+    short: "Estableix o elimina el teu host virtual."
+    help: !irc |-
+      Estableix un nom d'amfitrió personalitzat que veuran altres usuaris quan
+      t'hagis identificat.
 
-# --- SASET (IRCop) --------------------------------------------------------------
+      Per eliminar-lo, executa \x02SET VHOST\x02 sense indicar cap valor.
+
+      Només s'admeten lletres (a-z, A-Z), dígits, guions i punts.
+      Cada segment ha de començar i acabar amb una lletra o un dígit.
+      El nom d'amfitrió pot tenir fins a 48 caràcters i ha de ser únic per sobrenom.
+    example: "%command_prefix%\x02\x0303SET VHOST usuari.exemple.org\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SET VHOST\x03\x0F"
+    success: "\x0303✔\x03 El vostre amfitrió virtual s'ha establert a \x02%vhost%\x02."
+    cleared: "\x0303✔\x03 El vostre amfitrió virtual s'ha esborrat."
+    invalid: "\x0304✗\x03 Vhost no vàlid. Només lletres, dígits, guionet i punt (no al principi/final de bloc); màx. 48 caràcters."
+    taken: "\x0304✗\x03 Aquest vhost ja està en ús per un altre sobrenom."
+    forced: "\x0304✗\x03 El vostre vhost es configura automàticament i no es pot canviar amb SET VHOST."
+
+# --- SASET -----------------------------------------------------------------
 saset:
-  syntax:           "SASET <sobrenom> <opció> <valor>"
-  short:            "Modificar la configuració d'un altre sobrenom."
-  help:             |
-    Permet a un operador d'IRC modificar la configuració d'un sobrenom registrat.
-    El sobrenom objectiu no pot ser un usuari root, un operador d'IRC ni un servei.
-
-    Opcions disponibles: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
-
-    SASET PASSWORD: Canvia la contrasenya directament (sense confirmació per correu).
-    SASET EMAIL: Canvia el correu electrònic directament (sense validació de token).
-
-    Aquesta ordre requereix permís IRCop: nickserv.saset
-
-    Sintaxi: SASET <sobrenom> <opció> <valor>
-    Exemple: SASET Usuari PASSWORD contrasenyanova
-  unknown_option:   "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Opcions disponibles: %options%."
+  syntax: "SASET <sobrenom> <opció> <valor>"
+  short: "Modificar la configuració d'un altre sobrenom."
+  help: |-
+    Permet que un IRCop canviï la configuració d'un altre sobrenom registrat. No
+    admet sobrenoms de Root, IRCop ni serveis.
+  example: "%command_prefix%\x02\x0303SASET Usuari PRIVATE ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SASET Usuari TIMEZONE OFF\x03\x0F"
+  unknown_option: "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Opcions disponibles: %options%."
   cannot_modify_oper: "\x0304✗\x03 No es pot modificar un sobrenom d'Operador d'IRC."
 
+  # --- SASET PASSWORD ------------------------------------------------------
   password:
-    syntax:         "SASET <sobrenom> PASSWORD <nova_contrasenya>"
-    short:          "Canviar la contrasenya d'un sobrenom."
-    help:           "Canvia la contrasenya d'un altre sobrenom.\nEl canvi és immediat.\n\nSintaxi: SASET <sobrenom> PASSWORD <nova_contrasenya>\nExemple: SASET Usuari PASSWORD contrasenyanova123"
+    syntax: "SASET <sobrenom> PASSWORD <nova_contrasenya>"
+    short: "Canviar la contrasenya d'un sobrenom."
+    help: "Canvia la contrasenya d'un altre sobrenom. El canvi és immediat."
+    example: "%command_prefix%\x02\x0303SASET Usuari PASSWORD ClauSegura123\x03\x0F"
 
+  # --- SASET EMAIL ---------------------------------------------------------
   email:
-    syntax:         "SASET <sobrenom> EMAIL <nou_correu>"
-    short:          "Canviar el correu electrònic d'un sobrenom."
-    help:           "Canvia el correu electrònic d'un altre sobrenom.\nNo s'envia cap confirmació—el canvi és immediat.\n\nSintaxi: SASET <sobrenom> EMAIL <nou_correu>\nExemple: SASET Usuari EMAIL usuari@exemple.com"
+    syntax: "SASET <sobrenom> EMAIL <nou_correu>"
+    short: "Canviar el correu electrònic d'un sobrenom."
+    help: |-
+      Canvia el correu electrònic d'un altre sobrenom. El canvi és immediat i no
+      requereix el token de recuperació ni envia cap correu de confirmació.
+    example: "%command_prefix%\x02\x0303SASET Usuari EMAIL usuari@exemple.com\x03\x0F"
 
+  # --- SASET LANGUAGE ------------------------------------------------------
   language:
-    syntax:         "SASET <sobrenom> LANGUAGE <codi>"
-    short:          "Canviar l'idioma d'un sobrenom."
-    help:           "Canvia l'idioma d'un altre sobrenom.\nIdiomes disponibles: en (anglès), es (espanyol).\n\nSintaxi: SASET <sobrenom> LANGUAGE <codi>\nExemple: SASET Usuari LANGUAGE ca"
+    syntax: "SASET <sobrenom> LANGUAGE <codi>"
+    short: "Canviar l'idioma d'un sobrenom."
+    help: |-
+      Canvia l'idioma d'un altre sobrenom. S'admeten
+      en (anglès) i ca (català).
+    example: "%command_prefix%\x02\x0303SASET Usuari LANGUAGE ca\x03\x0F"
 
+  # --- SASET TIMEZONE ------------------------------------------------------
   timezone:
-    syntax:         "SASET <sobrenom> TIMEZONE <zona_horària|OFF>"
-    short:          "Canviar la zona horària d'un sobrenom."
-    help:           "Estableix o esborra la zona horària d'un altre sobrenom.\nUtilitzeu OFF per esborrar-la.\n\nSintaxi: SASET <sobrenom> TIMEZONE <zona_horària>\nExemple: SASET Usuari TIMEZONE Europe/Madrid"
+    syntax: "SASET <sobrenom> TIMEZONE <zona_horària|OFF>"
+    short: "Canviar la zona horària d'un sobrenom."
+    help: |-
+      Estableix o elimina la zona horària d'un altre
+      sobrenom. Fes servir OFF per eliminar-la.
+    example: "%command_prefix%\x02\x0303SASET Usuari TIMEZONE Europe/Madrid\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SASET Usuari TIMEZONE OFF\x03\x0F"
 
+  # --- SASET PRIVATE -------------------------------------------------------
   private:
-    syntax:         "SASET <sobrenom> PRIVATE {ON|OFF}"
-    short:          "Canviar la privadesa d'un sobrenom."
-    help:           "Activa o desactiva la privadesa de la informació d'un altre sobrenom.\n\nSintaxi: SASET <sobrenom> PRIVATE {ON|OFF}\nExemple: SASET Usuari PRIVATE ON"
+    syntax: "SASET <sobrenom> PRIVATE {ON|OFF}"
+    short: "Canviar la privadesa d'un sobrenom."
+    help: "Activa o desactiva la privadesa de la informació d'un altre sobrenom."
+    example: "%command_prefix%\x02\x0303SASET Usuari PRIVATE ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SASET Usuari PRIVATE OFF\x03\x0F"
 
+  # --- SASET MSG -----------------------------------------------------------
   msg:
-    syntax:         "SASET <sobrenom> MSG {ON|OFF}"
-    short:          "Canviar la preferència de missatges d'un sobrenom."
-    help:           "Estableix si un altre sobrenom rep respostes com a PRIVMSG (ON) o NOTICE (OFF).\n\nSintaxi: SASET <sobrenom> MSG {ON|OFF}\nExemple: SASET Usuari MSG ON"
+    syntax: "SASET <sobrenom> MSG {ON|OFF}"
+    short: "Canviar la preferència de missatges d'un sobrenom."
+    help: |-
+      Estableix si un altre sobrenom rep respostes com a
+      PRIVMSG (ON) o NOTICE (OFF).
+    example: "%command_prefix%\x02\x0303SASET Usuari MSG ON\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SASET Usuari MSG OFF\x03\x0F"
 
+  # --- SASET VHOST ---------------------------------------------------------
   vhost:
-    syntax:         "SASET <sobrenom> VHOST [vhost]"
-    short:          "Canviar l'amfitrió virtual d'un sobrenom."
-    help:           "Estableix o esborra l'amfitrió virtual d'un altre sobrenom.\nExecuteu \x02SASET <sobrenom> VHOST\x02 sense cap valor per esborrar-lo.\n\nSintaxi: SASET <sobrenom> VHOST [vhost]\nExemple: SASET Usuari VHOST usuaris.exemple.com"
+    syntax: "SASET <sobrenom> VHOST [vhost]"
+    short: "Canviar l'amfitrió virtual d'un sobrenom."
+    help: |-
+      Estableix o elimina l'host virtual d'un altre sobrenom.
+      Per eliminar-lo, executa SASET <sobrenom> VHOST sense valor.
+    example: "%command_prefix%\x02\x0303SASET Usuari VHOST usuari.exemple.org\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303SASET Usuari VHOST\x03\x0F"
 
-# --- HELP -------------------------------------------------------------------
+# --- HELP ------------------------------------------------------------------
 help:
-  syntax:           "HELP [command]"
-  short:            "Mostrar l'ajuda de les ordres de %nickserv%."
-  help:             "Mostra l'ajuda general de %nickserv% o informació detallada\nper a una ordre específica."
-  header_title:     "%bot%"
-  header:           "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
+  syntax: "HELP [command]"
+  short: "Mostrar l'ajuda de les ordres de %nickserv%."
+  help: |-
+    Mostra l'ajuda general de %nickserv% o informació detallada
+    per a una ordre específica.
+  examples_header: "\x02 ■ Exemples:\x02"
+  example: "%command_prefix%\x02\x0303HELP\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
+    - "%command_prefix%\x02\x0303HELP SET EMAIL\x03\x0F"
+    - "%command_prefix%\x02\x0303HELP SET TIMEZONE Europe\x03\x0F"
+  header_title: "%bot%"
+  header: "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
   navigation_marker: "\x0310›\x03\x0F"
-  info_marker:       "\x0310ℹ\x03\x0F"
-  error_marker:      "\x0307✗\x03\x0F"
-  warning_marker:    "\x0304⚠\x03\x0F"
-  intro:            "Gestió i protecció de sobrenoms."
-  intro_expiration: "%marker% %label%: Els nicks no utilitzats durant més de \x1F\x0304%days% dies\x03\x1F s’eliminen automàticament."
+  info_marker: "\x0310ℹ\x03\x0F"
+  error_marker: "\x0304✗\x03\x0F"
+  warning_marker: "\x0304⚠\x03\x0F"
+  intro: |-
+    Permet registrar i protegir el teu sobrenom perquè
+    altres usuaris no el puguin fer servir. Gestiona la
+    seguretat del compte, personalitza les preferències
+    i recupera l'accés quan ho necessitis.
+  intro_expiration: "%marker% %label%: Els sobrenoms inactius més de \x1F\x0304%days% dies\x03\x1F s'esborren."
   intro_expiration_label: "NOTA"
   general_header: "\x02 ■ Comandes disponibles:\x02"
   command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
@@ -304,405 +458,328 @@ help:
     account_management: "Gestió de comptes"
     suspensions_bans: "Suspensions i prohibicions"
     deletion: "Eliminació i restauració"
-  unknown_command: "%marker% No hi ha ajuda disponible per a \x02%command%\x0F."
   ircop_header: "\x02 ■ Comandes disponibles per als IRCops:\x02"
-
   set_timezone:
-    index_label: "Regions (utilitzeu \x02\x0303%syntax%\x03\x0F per a la llista):"
-    index_syntax:   "HELP SET TIMEZONE <region>"
+    index_label: "Zones per regió (fes servir \x02\x0303%syntax%\x03\x0F per consultar una regió):"
+    index_syntax: "HELP SET TIMEZONE <region>"
     region_header: "\x02 ■ Zones horàries per a %region%:\x02"
     region_unknown: "%marker% Regió desconeguda. Utilitzeu \x02\x0303%syntax%\x03\x0F per a l'índex."
-    region_syntax:  "HELP SET TIMEZONE"
+    region_syntax: "HELP SET TIMEZONE"
 
-# --- Nick Protection --------------------------------------------------------
+# --- NICK PROTECTION -------------------------------------------------------
 protection:
-  nick_in_use:      "\x0304⚠\x03 El sobrenom \x02%nickname%\x02 està registrat. Se us canviarà el nom si no us identifiqueu."
-  renamed_to:       "\x0307→\x03 Heu estat reanomenat a \x02%guest_nick%\x02. Per recuperar el vostre sobrenom:\n\x0303/msg %bot% IDENTIFY %nickname% <password>\x03"
-  nick_forbidden:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit: %reason%"
+  nick_in_use: "\x0304⚠\x03 El sobrenom \x02%nickname%\x02 està registrat. Se us canviarà el nom si no us identifiqueu."
+  renamed_to: !irc |-
+    \x0307→\x03 T'han canviat el sobrenom a \x02%guest_nick%\x02. Per recuperar el teu sobrenom:
+    /msg %bot% \x0303IDENTIFY %nickname% <contrasenya>\x03
+  nick_forbidden: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit: %reason%"
 
-# --- IRCop Commands ---------------------------------------------------------
+# --- USERIP ----------------------------------------------------------------
 userip:
-  syntax:           "USERIP <nickname>"
-  short:            "Obtenir l'adreça IP real i el nom d'amfitrió del sobrenom."
-  help:             |
-    Mostra l'adreça IP real i el nom d'amfitrió del sobrenom especificat.
-    Només disponible per a IRCops amb el permís 'nickserv.userip'.
+  syntax: "USERIP <nickname>"
+  short: "Obtenir l'adreça IP real i el nom d'amfitrió del sobrenom."
+  help: |-
+    Mostra l'adreça IP i el nom d'amfitrió reals d'un sobrenom.
+    Fes-la servir amb responsabilitat: és informació sensible.
+  example: "%command_prefix%\x02\x0303USERIP Usuari\x03\x0F"
+  result: "\x0307ℹ\x03 Sobrenom: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Amfitrió: \x0307%host%\x03"
 
-    Aquesta ordre mostra informació sensible del sobrenom.
-    Utilitzeu-la amb responsabilitat.
-
-    Sintaxi: USERIP <nickname>
-    Exemple: USERIP SomeUser
-  not_online:       "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
-  result:           "\x0307ℹ\x03 Sobrenom: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Amfitrió: \x0307%host%\x03"
-
+# --- WHOIP -----------------------------------------------------------------
 whoip:
-  syntax:           "WHOIP <ip>"
-  short:            "Troba nicks per l'adreça IP de la seva darrera connexió identificada."
-  help:             |
-    Mostra els nicks registrats la darrera connexió identificada dels quals va utilitzar aquesta IP.
-    L'adreça desada pot estar desactualitzada.
-  empty:            "No hi ha cap nick registrat que coincideixi amb aquesta IP."
-  header:           "Sobrenoms coincidents:"
+  syntax: "WHOIP <ip>"
+  short: "Troba nicks per l'adreça IP de la seva darrera connexió identificada."
+  help: |-
+    Mostra els sobrenoms registrats l'última connexió identificada dels quals
+    ha fet servir aquesta adreça IP. L'adreça desada pot estar desactualitzada.
+  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
+  empty: "No hi ha cap nick registrat que coincideixi amb aquesta IP."
+  header: "Sobrenoms coincidents:"
 
-# --- SUSPEND (IRCop) ---------------------------------------------------------
+# --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax:           "SUSPEND <nickname> <duration> <reason>"
-  short:            "Suspendre un sobrenom."
-  help:             |
-    Suspèn un sobrenom, impedint que el propietari s'identifiqui.
-    La suspensió pot ser temporal o permanent.
-
-    Formats de durada: \x0303%d\x03 (dies), \x0303%h\x03 (hores), \x0303%m\x03 (minuts), o \x03030\x03 (permanent).
-
-    Els usuaris suspesos no poden identificar-se amb el seu sobrenom.
-    Els operadors d'IRC i els usuaris root no es poden suspendre.
-
-    Sintaxi: SUSPEND <nickname> <duration> <reason>
-    Exemples:
-      SUSPEND BadUser 7d Spam a #help
-      SUSPEND Abuser 30d Flood repetit
-      SUSPEND ProblemUser 0 Evasió de permaban
-  success:            "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat suspès fins a \x02%duration%\x02."
-  already_suspended:  "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està suspès."
-  not_registered:     "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  forbidden:          "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit i no es pot suspendre."
+  syntax: "SUSPEND <nickname> <duration> <reason>"
+  short: "Suspendre un sobrenom."
+  help: |-
+    Impedeix que el propietari s'identifiqui. La durada es pot expressar en dies
+    (d), hores (h), minuts (m) o 0 per a una suspensió permanent. No es poden
+    suspendre operadors IRC ni usuaris Root.
+  example: "%command_prefix%\x02\x0303SUSPEND UsuariDolent 7d Correu brossa a #ajuda\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND UsuariProblematic 0 Evasió de la prohibició\x03\x0F"
+  success: "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat suspès fins a \x02%duration%\x02."
+  already_suspended: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està suspès."
+  forbidden: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit i no es pot suspendre."
   cannot_suspend_oper: "\x0304✗\x03 No es pot suspendre l'operador d'IRC \x02%nickname%\x02."
   cannot_suspend_root: "\x0304✗\x03 No es pot suspendre l'usuari root \x02%nickname%\x02."
   cannot_suspend_service: "\x0304✗\x03 No es pot suspendre el sobrenom de servei \x02%nickname%\x02."
-  invalid_duration:   "\x0304✗\x03 Durada no vàlida. Utilitzeu: \x0303<d><h><m>\x03 (p. ex., 7d, 12h, 30m) o \x03030\x03 per a permanent."
-  permanent:          "permanent"
+  invalid_duration: "\x0304✗\x03 Durada no vàlida. Utilitzeu: \x0303<d><h><m>\x03 (p. ex., 7d, 12h, 30m) o \x03030\x03 per a permanent."
 
-# --- UNSUSPEND (IRCop) -------------------------------------------------------
+# --- UNSUSPEND -------------------------------------------------------------
 unsuspend:
-  syntax:           "UNSUSPEND <nickname>"
-  short:            "Treure la suspensió d'un sobrenom."
-  help:             |
-    Treu una suspensió activa d'un sobrenom, permetent que el propietari s'identifiqui de nou.
+  syntax: "UNSUSPEND <nickname>"
+  short: "Treure la suspensió d'un sobrenom."
+  help: "Retira una suspensió activa perquè el propietari es pugui tornar a identificar."
+  example: "%command_prefix%\x02\x0303UNSUSPEND Usuari\x03\x0F"
+  success: "\x0303✔\x03 S'ha aixecat la suspensió de \x02%nickname%\x02."
+  not_suspended: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està suspès."
 
-    Sintaxi: UNSUSPEND <nickname>
-    Exemple: UNSUSPEND SomeUser
-  success:          "\x0303✔\x03 S'ha aixecat la suspensió de \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  not_suspended:    "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està suspès."
-
-# --- RENAME (IRCop) -----------------------------------------------------------
+# --- RENAME ----------------------------------------------------------------
 rename:
-  syntax:           "RENAME <nickname>"
-  short:            "Forçar el canvi de nom d'un sobrenom connectat a un sobrenom aleatori."
-  help:             |
-    Obliga un sobrenom connectat a canviar el seu sobrenom a un de generat aleatòriament.
-    Útil per fer complir les polítiques de xarxa sense desconnectar l'usuari.
-
-    El format del nou sobrenom utilitza el prefix de convidat configurat (%prefix%).
-
-    Aquesta ordre requereix el permís d'IRCop: nickserv.rename
-
-    Sintaxi: RENAME <nickname>
-    Exemple: RENAME Troublemaker
-  not_online:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
+  syntax: "RENAME <nickname>"
+  short: "Forçar el canvi de nom d'un sobrenom connectat a un sobrenom aleatori."
+  help: |-
+    Força un sobrenom connectat a canviar a un nom aleatori amb un prefix definit
+    per la xarxa.
+  example: "%command_prefix%\x02\x0303RENAME UsuariProblematic\x03\x0F"
   cannot_rename_root: "\x0304✗\x03 No es pot reanomenar l'usuari root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 No es pot reanomenar l'operador d'IRC \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 No es pot reanomenar el sobrenom de servei \x02%nickname%\x02."
-  success:           "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat reanomenat a \x02%new_nick%\x02."
+  success: "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat reanomenat a \x02%new_nick%\x02."
 
-# --- DROP (IRCop) --------------------------------------------------------------
+# --- DROP ------------------------------------------------------------------
 drop:
-  syntax:           "DROP <nickname> [FORCE]"
-  short:            "Eliminar un sobrenom registrat."
-  help:             |
-    Elimina un sobrenom registrat de la base de dades.
-    Aquesta acció no es pot desfer.
-
-    Si l'usuari està en línia, serà reanomenat a un sobrenom de Convidat.
-    Els usuaris root i els operadors d'IRC no es poden eliminar.
-    No podeu eliminar el vostre propi sobrenom.
-
-    Aquesta ordre requereix el permís d'IRCop: nickserv.drop
-
-    Sintaxi: DROP <nickname>
-    Exemple: DROP OldAccount
-  not_registered:     "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  suspended:         "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Traieu la suspensió primer."
-  forbidden:         "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit."
-  cannot_drop_root:   "\x0304✗\x03 No es pot eliminar l'usuari root \x02%nickname%\x02."
-  cannot_drop_oper:   "\x0304✗\x03 No es pot eliminar l'operador d'IRC \x02%nickname%\x02."
-  cannot_drop_self:    "\x0304✗\x03 No podeu eliminar el vostre propi sobrenom."
-  success:            "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat marcat per a eliminació i pot ser restaurat durant el període de gràcia."
-  force_success:      "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat eliminat permanentment."
-  pending_deletion:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està pendent d'eliminació. Utilitza DROP <nickname> FORCE per eliminar-lo permanentment."
+  syntax: "DROP <nickname> [FORCE]"
+  short: "Eliminar un sobrenom registrat."
+  help: |-
+    Marca un sobrenom registrat per eliminar-lo durant el període de gràcia; es pot
+    restaurar amb RESTORE. Afegeix FORCE per eliminar-lo definitivament. No es poden
+    eliminar usuaris Root, IRCops ni serveis, ni tampoc el teu propi sobrenom.
+  force:
+    short: "Elimina definitivament un sobrenom pendent d'eliminació."
+  example: "%command_prefix%\x02\x0303DROP CompteAntic\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303DROP CompteAntic FORCE\x03\x0F"
+  suspended: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Traieu la suspensió primer."
+  forbidden: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit."
+  cannot_drop_root: "\x0304✗\x03 No es pot eliminar l'usuari root \x02%nickname%\x02."
+  cannot_drop_oper: "\x0304✗\x03 No es pot eliminar l'operador d'IRC \x02%nickname%\x02."
+  cannot_drop_self: "\x0304✗\x03 No podeu eliminar el vostre propi sobrenom."
+  success: "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat marcat per a eliminació i pot ser restaurat durant el període de gràcia."
+  force_success: "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat eliminat permanentment."
+  pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està pendent d'eliminació. Utilitza DROP <nickname> FORCE per eliminar-lo permanentment."
   cannot_drop_service: "\x0304✗\x03 No es pot eliminar el sobrenom de servei \x02%nickname%\x02."
 
-# --- RESTORE (IRCop) -----------------------------------------------------------
+# --- RESTORE ---------------------------------------------------------------
 restore:
-  syntax:           "RESTORE <nickname>"
-  short:            "Restaurar un sobrenom pendent d'eliminació."
-  help:             "Restaura un sobrenom que va ser eliminat manualment i encara està dins del període de gràcia. Requereix permís IRCop: nickserv.restore."
-  success:          "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat restaurat."
-  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
+  syntax: "RESTORE <nickname>"
+  short: "Restaurar un sobrenom pendent d'eliminació."
+  help: |-
+    Restaura un sobrenom pendent d'eliminació mentre encara sigui dins del període
+    de gràcia.
+  example: "%command_prefix%\x02\x0303RESTORE CompteAntic\x03\x0F"
+  success: "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat restaurat."
   not_pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està pendent d'eliminació."
 
-# --- FORBID (IRCop) --------------------------------------------------------------
+# --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax:           "FORBID <nickname> <reason>"
-  short:            "Bloquejar permanentment l'ús d'un sobrenom."
-  help:             |
-    Prohibeix l'ús d'un sobrenom a la xarxa.
-    El sobrenom no es pot registrar ni utilitzar per ningú.
-
-    Si el sobrenom està registrat actualment, s'eliminarà primer.
-    Si algú l'està utilitzant, serà forçat a canviar a un sobrenom de Convidat.
-
-    Els usuaris root, operadors d'IRC i sobrenoms de servei no es poden prohibir.
-
-    Aquesta ordre requereix el permís d'IRCop: nickserv.forbid
-
-    Sintaxi: FORBID <nickname> <reason>
-    Exemple: FORBID BadNick Violacions repetides de les normes
-  success:            "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat prohibit."
-  updated:            "\x0303✔\x03 El motiu de prohibició de \x02%nickname%\x02 ha estat actualitzat."
-  reason_required:    "\x0304✗\x03 Heu de proporcionar un motiu per a la prohibició."
-  cannot_forbid_root:  "\x0304✗\x03 No es pot prohibir l'usuari root \x02%nickname%\x02."
-  cannot_forbid_oper:  "\x0304✗\x03 No es pot prohibir l'operador d'IRC \x02%nickname%\x02."
+  syntax: "FORBID <nickname> <reason>"
+  short: "Bloquejar permanentment l'ús d'un sobrenom."
+  help: |-
+    Prohibeix permanentment un sobrenom perquè ningú no
+    el pugui registrar ni fer servir. Si està registrat,
+    s'elimina; si està connectat, se'l força a canviar a
+    un sobrenom aleatori. No es poden prohibir usuaris
+    Root, IRCops ni serveis.
+  example: "%command_prefix%\x02\x0303FORBID UsuariDolent Incompliments reiterats de la política\x03\x0F"
+  success: "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ha estat prohibit."
+  updated: "\x0303✔\x03 El motiu de prohibició de \x02%nickname%\x02 ha estat actualitzat."
+  reason_required: "\x0304✗\x03 Heu de proporcionar un motiu per a la prohibició."
+  cannot_forbid_root: "\x0304✗\x03 No es pot prohibir l'usuari root \x02%nickname%\x02."
+  cannot_forbid_oper: "\x0304✗\x03 No es pot prohibir l'operador d'IRC \x02%nickname%\x02."
   cannot_forbid_service: "\x0304✗\x03 No es pot prohibir el sobrenom de servei \x02%nickname%\x02."
 
-# --- UNFORBID (IRCop) ------------------------------------------------------------
+# --- UNFORBID --------------------------------------------------------------
 unforbid:
-  syntax:           "UNFORBID <nickname>"
-  short:            "Treure una prohibició de sobrenom."
-  help:             |
-    Treu una prohibició de sobrenom, permetent que el sobrenom es pugui utilitzar de nou.
+  syntax: "UNFORBID <nickname>"
+  short: "Treure una prohibició de sobrenom."
+  help: "Retira la prohibició perquè es pugui tornar a fer servir el sobrenom."
+  example: "%command_prefix%\x02\x0303UNFORBID SobrenomProhibit\x03\x0F"
+  success: "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ja no està prohibit."
+  not_forbidden: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està prohibit."
 
-    Aquesta ordre requereix el permís d'IRCop: nickserv.forbid
-
-    Sintaxi: UNFORBID <nickname>
-    Exemple: UNFORBID SomeNick
-  success:          "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ja no està prohibit."
-  not_forbidden:    "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està prohibit."
-
-# --- FORBIDVHOST (IRCop) ---------------------------------------------------------
+# --- FORBIDVHOST -----------------------------------------------------------
 forbidvhost:
-  syntax:           "FORBIDVHOST {ADD|DEL|LIST} [pattern]"
-  short:            "Gestionar els patrons de vhost prohibits."
-  help:             |
-    Gestiona els patrons que impedeixen als usuaris establir vhosts coincidents
-    mitjançant %bot% SET VHOST.
+  syntax: "FORBIDVHOST {ADD|DEL|LIST} [pattern]"
+  short: "Gestionar els patrons de vhost prohibits."
+  help: |-
+    Gestiona els patrons que impedeixen hosts virtuals
+    coincidents amb SET VHOST. * coincideix amb qualsevol
+    seqüència i ? amb un caràcter. Calen privilegis
+    d'operador IRC.
+  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
+  unknown_sub: "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL o LIST."
 
-    Comodins: * coincideix amb qualsevol seqüència, ? coincideix amb un sol caràcter.
-    Exemple: *.pirated.com bloqueja qualsevol vhost que acabi amb .pirated.com
-
-    Aquesta ordre requereix el permís d'IRCop: nickserv.forbidvhost
-
-    Subordres:
-      ADD <pattern>    Afegir un patró prohibit
-      DEL <pattern>    Treure un patró prohibit
-      LIST             Mostrar tots els patrons prohibits
-
-  unknown_sub: "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, o LIST."
-
+  # --- FORBIDVHOST ADD -----------------------------------------------------
   add:
-    syntax:      "FORBIDVHOST ADD <pattern>"
-    short:       "Afegir un patró de vhost prohibit."
-    help:        |
-      Afegeix un patró a la llista de vhost prohibits. Els usuaris no podran
-      establir vhosts que coincideixin amb aquest patró mitjançant SET VHOST.
+    syntax: "FORBIDVHOST ADD <pattern>"
+    short: "Afegir un patró de vhost prohibit."
+    help: |-
+      Afegeix un patró a la llista. Es bloquejaran els hosts
+      virtuals coincidents mitjançant SET VHOST. * coincideix
+      amb qualsevol seqüència i ? amb un caràcter.
+    example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+    done: "\x0303✓\x03 Patró de vhost prohibit afegit: \x02%pattern%\x02"
+    already_exists: "\x0304✗\x03 El patró \x02%pattern%\x02 ja existeix."
+    invalid: "\x0304✗\x03 Format de patró de vhost no vàlid."
 
-      Comodins: * coincideix amb qualsevol seqüència, ? coincideix amb un sol caràcter.
-
-      Sintaxi: FORBIDVHOST ADD <pattern>
-      Exemple: FORBIDVHOST ADD *.pirated.com
-    done:            "\x0303✓\x03 Patró de vhost prohibit afegit: \x02%pattern%\x02"
-    already_exists:  "\x0304✗\x03 El patró \x02%pattern%\x02 ja existeix."
-    invalid:          "\x0304✗\x03 Format de patró de vhost no vàlid."
-
+  # --- FORBIDVHOST DEL -----------------------------------------------------
   del:
-    syntax:      "FORBIDVHOST DEL <pattern>"
-    short:       "Treure un patró de vhost prohibit."
-    help:        |
-      Treu un patró de la llista de vhost prohibits.
+    syntax: "FORBIDVHOST DEL <pattern>"
+    short: "Treure un patró de vhost prohibit."
+    help: "Elimina un patró de la llista d'hosts virtuals prohibits."
+    example: "%command_prefix%\x02\x0303FORBIDVHOST DEL *.pirata.com\x03\x0F"
+    done: "\x0303✓\x03 Patró de vhost prohibit tret: \x02%pattern%\x02"
+    not_found: "\x0304✗\x03 Patró \x02%pattern%\x02 no trobat."
 
-      Sintaxi: FORBIDVHOST DEL <pattern>
-      Exemple: FORBIDVHOST DEL *.pirated.com
-    done:        "\x0303✓\x03 Patró de vhost prohibit tret: \x02%pattern%\x02"
-    not_found:   "\x0304✗\x03 Patró \x02%pattern%\x02 no trobat."
-
+  # --- FORBIDVHOST LIST ----------------------------------------------------
   list:
-    short:       "Llistar tots els patrons de vhost prohibits."
-    syntax:      "FORBIDVHOST LIST"
-    help:        |
-      Mostra tots els patrons de vhost prohibits.
+    short: "Llistar tots els patrons de vhost prohibits."
+    syntax: "FORBIDVHOST LIST"
+    help: "Mostra tots els patrons d'host virtual prohibits."
+    example: "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
+    header: "\x0307ℹ\x03 Patrons de vhost prohibits (\x02%count%\x02):"
+    entry: "  %index%. \x0304%pattern%\x03 — per %nickname% (%date%)"
+    empty: "\x0307ℹ\x03 No hi ha patrons de vhost prohibits."
 
-      Sintaxi: FORBIDVHOST LIST
-    header:      "\x0307ℹ\x03 Patrons de vhost prohibits (\x02%count%\x02):"
-    entry:       "  %index%. \x0304%pattern%\x03 — per %nickname% (%date%)"
-    empty:       "\x0307ℹ\x03 No hi ha patrons de vhost prohibits."
-    unknown_creator: "desconegut"
-
-# --- HISTORY (IRCop) ---------------------------------------------------------
+# --- HISTORY ---------------------------------------------------------------
 history:
-  syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
-  short:            "Veure o gestionar l'historial d'accions del sobrenom."
-  help:             |
-    Gestiona l'historial d'accions d'un sobrenom.
-    Només els IRCops amb el permís 'nickserv.history' poden utilitzar aquesta ordre.
+  syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  short: "Veure o gestionar l'historial d'accions del sobrenom."
+  help: |-
+    Consulta i gestiona l'historial d'accions d'un sobrenom. Registra automàticament
+    les suspensions, els canvis de contrasenya o de correu i les recuperacions.
+    VIEW mostra tres entrades per pàgina; ALL mostra tot l'historial.
+  example: "%command_prefix%\x02\x0303HISTORY Usuari VIEW\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY Usuari VIEW ALL\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY Usuari ADD Nota manual\x03\x0F"
 
-    Accions registrades automàticament:
-      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
-      SASET EMAIL, RECOVER
-
-    Sintaxi: HISTORY <nickname> ADD <message>
-            HISTORY <nickname> DEL <id>
-            HISTORY <nickname> VIEW [PAGE|ALL]
-            HISTORY <nickname> CLEAR
-
-    Exemples:
-      HISTORY SomeNick VIEW
-      HISTORY SomeNick ADD Nota manual sobre aquest usuari
-      HISTORY SomeNick VIEW 2
-      HISTORY SomeNick VIEW ALL
-      HISTORY SomeNick DEL 123
-      HISTORY SomeNick CLEAR
-
-    Utilitzeu VIEW per veure l'historial (mostra 3 entrades per defecte).
-    Utilitzeu VIEW PAGE 2 per veure la pàgina següent.
-    Utilitzeu VIEW ALL per veure l'historial complet.
-    Utilitzeu ADD per afegir una entrada manual.
-    Utilitzeu DEL per esborrar una entrada específica per ID.
-    Utilitzeu CLEAR per esborrar totes les entrades de l'historial.
-  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  unknown_operator: "(desconegut)"
-
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
-    syntax:     "HISTORY <nickname> ADD <message>"
-    short:      "Afegir una entrada manual a l'historial."
-    help:        |
-      Afegeix una entrada manual a l'historial del sobrenom.
+    syntax: "HISTORY <nickname> ADD <message>"
+    short: "Afegir una entrada manual a l'historial."
+    help: "Afegeix una entrada manual a l'historial del sobrenom."
+    example: "%command_prefix%\x02\x0303HISTORY Usuari ADD Avís per correu brossa\x03\x0F"
+    success: "\x0303✔\x03 Entrada d'historial afegida per a \x02%nickname%\x02."
 
-      Sintaxi: HISTORY <nickname> ADD <message>
-      Exemple: HISTORY SomeNick ADD Usuari denunciat per spam
-    success:    "\x0303✔\x03 Entrada d'historial afegida per a \x02%nickname%\x02."
-
+  # --- HISTORY DEL ---------------------------------------------------------
   del:
-    syntax:     "HISTORY <nickname> DEL <id>"
-    short:      "Esborrar una entrada de l'historial per ID."
-    help:        |
-      Esborra una entrada específica de l'historial pel seu ID.
+    syntax: "HISTORY <nickname> DEL <id>"
+    short: "Esborrar una entrada de l'historial per ID."
+    help: "Elimina una entrada concreta de l'historial pel seu ID."
+    example: "%command_prefix%\x02\x0303HISTORY Usuari DEL 42\x03\x0F"
 
-      Sintaxi: HISTORY <nickname> DEL <id>
-      Exemple: HISTORY SomeNick DEL 42
-    success:    "\x0303✔\x03 Entrada d'historial \x02%id%\x02 esborrada."
-    not_found:  "\x0304✗\x03 Entrada d'historial \x02%id%\x02 no trobada."
-    invalid_id: "\x0304✗\x03 ID d'entrada no vàlid: \x02%id%\x02."
-
+  # --- HISTORY VIEW --------------------------------------------------------
   view:
-    syntax:     "HISTORY <nickname> VIEW [PAGE|ALL]"
-    short:      "Veure l'historial d'accions del sobrenom."
-    help:        |
-      Mostra l'historial d'accions del sobrenom.
+    syntax: "HISTORY <nickname> VIEW [PAGE|ALL]"
+    short: "Veure l'historial d'accions del sobrenom."
+    help: |-
+      Mostra l'historial d'accions del sobrenom. Per defecte, mostra tres entrades
+      per pàgina. Fes servir ALL per veure-les totes.
+    example: "%command_prefix%\x02\x0303HISTORY Usuari VIEW\x03\x0F"
+    examples:
+      - "%command_prefix%\x02\x0303HISTORY Usuari VIEW 2\x03\x0F"
+      - "%command_prefix%\x02\x0303HISTORY Usuari VIEW ALL\x03\x0F"
+    header: "\x02Historial de \x0307%nickname%\x03\x02 (mostrant %start%-%end% de %total%):"
+    entry: "#%id% [%date%] \x0303%action%\x03 per %operator% — %message%"
+    no_entries: "\x0307ℹ\x03 No s'han trobat entrades d'historial per a \x02%nickname%\x02."
+    page_hint: "Utilitzeu \x0303HISTORY %nickname% VIEW %next_page%\x03 per a més entrades."
 
-      Sintaxi: HISTORY <nickname> VIEW
-              HISTORY <nickname> VIEW PAGE
-              HISTORY <nickname> VIEW ALL
-
-      Per defecte mostra 3 entrades a la vegada.
-      Utilitzeu VIEW 2 per veure la segona pàgina.
-      Utilitzeu VIEW ALL per veure l'historial complet.
-    header:     "\x02Historial de \x0307%nickname%\x03\x02 (mostrant %start%-%end% de %total%):"
-    entry:       "#%id% [%date%] \x0303%action%\x03 per %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
-    no_entries:  "\x0307ℹ\x03 No s'han trobat entrades d'historial per a \x02%nickname%\x02."
-    page_hint:   "Utilitzeu \x0303HISTORY %nickname% VIEW %next_page%\x03 per a més entrades."
-
+  # --- HISTORY CLEAR -------------------------------------------------------
   clear:
-    syntax:     "HISTORY <nickname> CLEAR"
-    short:      "Esborrar totes les entrades d'historial d'un sobrenom."
-    help:        |
-      Treu totes les entrades d'historial del sobrenom especificat.
-      Aquesta acció no es pot desfer.
-
-      Sintaxi: HISTORY <nickname> CLEAR
-      Exemple: HISTORY SomeNick CLEAR
-    success:    "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'historial de \x02%nickname%\x02."
-
-# --- History message translations (used when viewing history) ---
+    syntax: "HISTORY <nickname> CLEAR"
+    short: "Esborrar totes les entrades d'historial d'un sobrenom."
+    help: "Elimina irreversiblement totes les entrades de l'historial del sobrenom."
+    example: "%command_prefix%\x02\x0303HISTORY Usuari CLEAR\x03\x0F"
+    success: "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'historial de \x02%nickname%\x02."
 history.message:
-  unsuspend:                  "Suspensió aixecada"
-  password_changed_owner:     "Contrasenya canviada pel propietari"
-  password_changed_operator:  "Contrasenya canviada per l'operador"
-  email_changed_owner:        "Correu canviat de %old_email% a %new_email%"
-  email_changed_operator:     "Correu canviat a %new_email% per l'operador"
-  recover:                    "Contrasenya restablerta via token de correu"
-
-# --- History extra field translations ---
+  password_changed_owner: "Contrasenya canviada pel propietari"
+  password_changed_operator: "Contrasenya canviada per l'operador"
+  email_changed_owner: "Correu canviat de %old_email% a %new_email%"
+  email_changed_operator: "Correu canviat a %new_email% per l'operador"
+  recover: "Contrasenya restablerta via token de correu"
 history.extra:
-  duration:      "Durada: %value%"
-  expires_at:    "Expira: %value%"
-  old_email:     "Correu anterior: %value%"
-  new_email:     "Correu nou: %value%"
-  method:        "Mètode: %value%"
-  ip:            "IP: %value%"
-  host:          "Amfitrió: %value%"
+  old_email: "Correu anterior: %value%"
+  new_email: "Correu nou: %value%"
+  method: "Mètode: %value%"
 
-# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+# --- NOEXPIRE --------------------------------------------------------------
 noexpire:
-  syntax:           "NOEXPIRE <nickname> {ON|OFF}"
-  short:            "Establir o treure la protecció contra l'expiració d'un sobrenom."
-  help:             |
-    Controla si un sobrenom expirarà per inactivitat.
-    Quan està ON, el sobrenom no expira mai independentment de la darrera activitat.
-    Quan està OFF, s'apliquen les regles normals d'expiració.
+  syntax: "NOEXPIRE <nickname> {ON|OFF}"
+  short: "Establir o treure la protecció contra l'expiració d'un sobrenom."
+  help: |-
+    Controla si el sobrenom caduca per inactivitat.
+    ON n'evita la caducitat i OFF aplica les regles normals.
+  example: "%command_prefix%\x02\x0303NOEXPIRE Usuari ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE Usuari OFF\x03\x0F"
+  success_on: "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ara està protegit contra l'expiració."
+  success_off: "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ara expirarà normalment."
+  forbidden: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit."
+  suspended: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès."
 
-    Només els IRCops amb el permís 'nickserv.noexpire' poden utilitzar aquesta ordre.
-
-    Sintaxi: NOEXPIRE <nickname> {ON|OFF}
-    Exemples:
-      NOEXPIRE ImportantUser ON
-      NOEXPIRE ImportantUser OFF
-  success_on:       "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ara està protegit contra l'expiració."
-  success_off:      "\x0303✔\x03 El sobrenom \x02%nickname%\x02 ara expirarà normalment."
-  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  forbidden:         "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està prohibit."
-  suspended:         "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès."
-
-# --- LIST (IRCOP) ------------------------------------------------------------
+# --- LIST ------------------------------------------------------------------
 list:
   syntax: "LIST <patró> [pàgina]"
   short: "Llista els sobrenoms registrats que coincideixen amb un patró."
-  help: "Llista els sobrenoms registrats que coincideixen amb el patró indicat. El comodí * coincideix amb qualsevol seqüència. La pàgina és opcional i comença per 1."
+  help: |-
+    Llista sobrenoms registrats que coincideixen amb el
+    patró. * coincideix amb qualsevol seqüència; la pàgina
+    opcional comença per 1.
+  example: "%command_prefix%\x02\x0303LIST Usuari*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST Usuari* 2\x03\x0F"
   header: "Sobrenom | Registre | Última connexió | IP | Estat"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  page: "Pàgina %page%/%pages% — %total% coincidències"
   empty: "Cap sobrenom coincideix amb el patró %pattern%."
   status_pending: "Pendent"
   status_registered: "Registrat"
-  status_suspended: "Suspès"
-  status_pending_deletion: "Eliminació pendent"
-  status_forbidden: "Prohibit"
-# --- DEBUG -------------------------------------------------------------------
-debug:
-  action_message: "%operator% executa l'ordre %command% sobre %target%. %reason%"
-  action_with_option: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%. %reason%"
-  action_with_value: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%=%value%. %reason%"
-  action_duration: "%operator% executa l'ordre %command% sobre %target%. Durada: %duration%. %reason%"
-  prefix_reason: "Motiu: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
   short: "Administrar el mode de registre de la xarxa."
-  help: "Configura el mode de registre dels comptes nous.\nAmb \x02EMAIL\x02 el testimoni de verificació s’envia per correu.\nAmb \x02TOKEN\x02 el testimoni es lliura directament per IRC.\nAmb \x02STATUS\x02 es consulta el mode actual sense modificar-lo.\nEls registres pendents conserven el seu mode original.\nEn mode \x02TOKEN\x02, \x02RESEND\x02 està deshabilitat per a tothom.\nRequereix el permís nickserv.regmode."
+  help: !irc |-
+    Configura el mode de registre dels comptes nous.
+
+    • \x02EMAIL:\x02 Envia el token de verificació al correu electrònic de l'usuari.
+    • \x02TOKEN:\x02 Lliura el token de verificació directament per IRC.
+    • \x02STATUS:\x02 Mostra el mode de registre actual sense modificar-lo.
+
+    Els registres pendents mantenen el mode amb què s'han iniciat.
+
+    En mode TOKEN, l'ordre RESEND continua desactivada per a tots els usuaris.
+  example: "%command_prefix%\x02\x0303REGMODE STATUS\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303REGMODE EMAIL\x03\x0F"
+    - "%command_prefix%\x02\x0303REGMODE TOKEN\x03\x0F"
   status: "\x0307ℹ\x03 Mode de registre actual: \x02%mode%\x02."
   changed: "\x0303✔\x03 Mode de registre canviat a \x02%mode%\x02."
 
-# --- Unified rescue credential -----------------------------------------------
+# --- RESCUE ----------------------------------------------------------------
 rescue:
-  issued: "Testimoni de rescat: \x0303%token%\x03\n\nDesa aquest testimoni en un lloc segur. El necessitaràs per recuperar el teu sobrenom si oblides la contrasenya.\n\nPer confirmar-lo, utilitza: /msg %bot% \x0303VERIFY %token%\x03\n\n\x0304⚠\x03 IMPORTANT: Només és vàlid l’últim testimoni generat. Un cop confirmat, no es tornarà a mostrar. No el comparteixis amb ningú."
+  issued: !irc |-
+    Testimoni de rescat: \x0303%token%\x03
+
+    Desa aquest testimoni en un lloc segur. El necessitaràs per recuperar el teu sobrenom si oblides la contrasenya.
+
+    Per confirmar-lo, utilitza: /msg %bot% \x0303VERIFY %token%\x03
+
+    \x0304⚠\x03 IMPORTANT: Només és vàlid l’últim testimoni generat. Un cop confirmat, no es tornarà a mostrar. No el comparteixis amb ningú.
   confirmed: "\x0303✔\x03 El testimoni de rescat s’ha confirmat. Desa’l en un lloc segur."
   unavailable: "\x0304✗\x03 Autentica’t i confirma el testimoni de rescat amb \x0303VERIFY\x03 abans d’utilitzar aquesta operació."
   locked_out: "\x0304✗\x03 Massa testimonis incorrectes. Torna-ho a provar d’aquí a \x02%seconds%\x02 segons."
   throttled: "\x0304✗\x03 Massa testimonis incorrectes. Torna-ho a provar d’aquí a \x02%minutes%\x02 minut(s)."
   replaced: "\x0303✔\x03 El testimoni de recuperació s’ha substituït pel del correu que acabes de validar. Desa’l en un lloc segur."
+  optional_replacement: !irc |-
+    \x0307→\x03 Nou testimoni de recuperació opcional: \x0303%token%\x03
 
-  optional_replacement: "\x0307→\x03 Nou testimoni de recuperació opcional: \x0303%token%\x03\n\nPer substituir el testimoni actual, utilitza: /msg %bot% \x0303VERIFY %token%\x03\n\nL’actual continua sent vàlid fins a la confirmació.\n\nSi no el vols canviar, ignora aquest missatge."
+    Per substituir el testimoni actual, utilitza: /msg %bot% \x0303VERIFY %token%\x03
+
+    L’actual continua sent vàlid fins a la confirmació.
+
+    Si no el vols canviar, ignora aquest missatge.
   replacement_unavailable: "\x0307ℹ\x03 La contrasenya s’ha restablert, però no s’ha pogut emetre un testimoni nou. L’actual continua sent vàlid."
   temporarily_unavailable: "\x0304✗\x03 El lliurament del testimoni de recuperació no està disponible temporalment. Torna-ho a provar més tard."

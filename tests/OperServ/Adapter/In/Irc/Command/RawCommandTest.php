@@ -37,6 +37,7 @@ final class RawCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('raw.syntax', $command->getSyntaxKey());
         self::assertSame('raw.help', $command->getHelpKey());
+        self::assertSame('raw.example', $command->getExampleKey());
         self::assertSame(40, $command->getOrder());
         self::assertSame('raw.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

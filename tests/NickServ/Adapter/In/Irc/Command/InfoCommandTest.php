@@ -48,6 +48,7 @@ final class InfoCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('info.syntax', $command->getSyntaxKey());
         self::assertSame('info.help', $command->getHelpKey());
+        self::assertSame('info.example', $command->getExampleKey());
         self::assertSame(5, $command->getOrder());
         self::assertSame('info.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -79,7 +80,7 @@ final class InfoCommandTest extends TestCase
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Target']));
 
-        self::assertSame(['info.not_registered'], $messages);
+        self::assertSame(['error.nick_not_registered'], $messages);
     }
 
     #[Test]
@@ -102,7 +103,7 @@ final class InfoCommandTest extends TestCase
         $messages = [];
         $command->execute($this->createContext(null, $messages, ['Target']));
 
-        self::assertSame(['info.not_registered'], $messages);
+        self::assertSame(['error.nick_not_registered'], $messages);
     }
 
     #[Test]
@@ -113,14 +114,14 @@ final class InfoCommandTest extends TestCase
         $handler1->method('handle')->willReturn(InfoNickResult::forbidden('bad', 'Rule broken'));
         $messages = [];
         new InfoCommand($handler1, $this->createStub(NetworkUserLookupPort::class))->execute($this->createContext(null, $messages, ['bad']));
-        self::assertSame(['info.header', 'info.status_forbidden', 'info.status', 'info.reason', 'info.footer'], $messages);
+        self::assertSame(['info.header', 'info.status_forbidden', 'info.status', 'info.reason', 'reply.separator'], $messages);
 
         // Without reason
         $handler2 = $this->createStub(InfoNickHandlerInterface::class);
         $handler2->method('handle')->willReturn(InfoNickResult::forbidden('bad', null));
         $messages = [];
         new InfoCommand($handler2, $this->createStub(NetworkUserLookupPort::class))->execute($this->createContext(null, $messages, ['bad']));
-        self::assertSame(['info.header', 'info.status_forbidden', 'info.status', 'info.footer'], $messages);
+        self::assertSame(['info.header', 'info.status_forbidden', 'info.status', 'reply.separator'], $messages);
     }
 
     #[Test]
@@ -138,7 +139,7 @@ final class InfoCommandTest extends TestCase
             'info.pending_deletion_at',
             'info.pending_deletion_until',
             'info.pending_deletion_notice',
-            'info.footer',
+            'reply.separator',
         ], $messages);
 
         // Without dates
@@ -151,7 +152,7 @@ final class InfoCommandTest extends TestCase
             'info.status_pending_deletion',
             'info.status',
             'info.pending_deletion_notice',
-            'info.footer',
+            'reply.separator',
         ], $messages);
     }
 
@@ -214,7 +215,7 @@ final class InfoCommandTest extends TestCase
             'info.channels_entry_access',
             'info.channels_entry_founder',
             'info.channels_entry_successor',
-            'info.footer',
+            'reply.separator',
         ], $messages);
     }
 
@@ -254,7 +255,7 @@ final class InfoCommandTest extends TestCase
             'info.registered_at',
             'info.last_seen_online',
             'info.language',
-            'info.footer',
+            'reply.separator',
         ], $messages);
 
         // Registered status, last seen never, single connect IP
@@ -290,7 +291,7 @@ final class InfoCommandTest extends TestCase
             'info.last_seen_never',
             'info.last_connect',
             'info.language',
-            'info.footer',
+            'reply.separator',
         ], $messages2);
     }
 

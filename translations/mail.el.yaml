@@ -1,7 +1,10 @@
-# Email content — domain: mail (plain text, no IRC codes)
-# Placeholders: %nickname%, %token%, %new_email%
+# Μεταφράσεις ηλεκτρονικού ταχυδρομείου — Ελληνικά
+# Τομέας: mail
+#
+# Θέματα και σώματα email σε απλό κείμενο, χωρίς μορφοποίηση IRC.
+# Διατηρήστε τις πραγματικές και τις σκόπιμες τελικές αλλαγές γραμμής.
 
-# REGISTER / VERIFY — verification token
+# --- REGISTER / VERIFY -----------------------------------------------------
 register_verification_subject: "%bot%: επαληθεύστε την καταχώρηση του ψευδωνύμου σας"
 register_verification_body: |
   Γεια σας,
@@ -18,7 +21,7 @@ register_verification_body: |
   Μετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η λήξη μίας ώρας ισχύει μόνο πριν την επικύρωση.
     /msg %bot% RECOVER %nickname% %token%
 
-# RESEND — same as register, resend of token
+# --- RESEND ----------------------------------------------------------------
 resend_verification_subject: "%bot%: το token επαλήθευσής σας (επανάληψη αποστολής)"
 resend_verification_body: |
   Γεια σας,
@@ -35,7 +38,7 @@ resend_verification_body: |
   Μετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η λήξη μίας ώρας ισχύει μόνο πριν την επικύρωση.
     /msg %bot% RECOVER %nickname% %token%
 
-# SET EMAIL — confirmation token sent to current email
+# --- SET EMAIL -------------------------------------------------------------
 email_change_token_subject: "%bot%: επιβεβαιώστε τη νέα σας διεύθυνση email"
 email_change_token_body: |
   Γεια σας,
@@ -49,7 +52,7 @@ email_change_token_body: |
 
   Το token λήγει σε 1 ώρα. Αν δεν ζητήσατε εσείς αυτήν την αλλαγή, παρακαλώ αγνοήστε αυτό το email.
 
-# RECOVER — password recovery token
+# --- RECOVER ---------------------------------------------------------------
 recovery_token_subject: "%bot%: ανάκτηση κωδικού πρόσβασης"
 recovery_token_body: |
   Γεια σας,
@@ -65,7 +68,7 @@ recovery_token_body: |
 
   Μετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η λήξη μίας ώρας ισχύει μόνο πριν την επικύρωση.
 
-# ChanServ SET FOUNDER — founder change token
+# --- CHANSERV SET FOUNDER --------------------------------------------------
 founder_change_token_subject: "%bot%: token αλλαγής ιδρυτή για %channel%"
 founder_change_token_body: |
   Γεια σας,

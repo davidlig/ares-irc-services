@@ -33,6 +33,11 @@ final readonly class OperServHelpFormatterContextAdapter implements HelpFormatte
         return $this->context->trans($key, $params);
     }
 
+    public function getBotName(): string
+    {
+        return $this->context->getBotName();
+    }
+
     /** @return iterable<HelpableCommandInterface> */
     public function getCommandsForGeneralHelp(): iterable
     {

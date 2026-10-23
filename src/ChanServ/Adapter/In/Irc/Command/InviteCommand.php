@@ -42,6 +42,11 @@ final readonly class InviteCommand implements ChanServCommandInterface
         return 'invite.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'invite.example';
+    }
+
     public function getOrder(): int
     {
         return 10;

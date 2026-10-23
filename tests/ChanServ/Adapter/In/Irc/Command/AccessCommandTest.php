@@ -902,6 +902,7 @@ final class AccessCommandTest extends TestCase
         self::assertSame(2, $cmd->getMinArgs());
         self::assertSame('access.syntax', $cmd->getSyntaxKey());
         self::assertSame('access.help', $cmd->getHelpKey());
+        self::assertSame('access.example', $cmd->getExampleKey());
         self::assertSame(8, $cmd->getOrder());
         self::assertSame('access.short', $cmd->getShortDescKey());
         self::assertCount(3, $cmd->getSubCommandHelp());

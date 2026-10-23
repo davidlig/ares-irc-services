@@ -42,6 +42,11 @@ final readonly class HelpCommand implements OperServCommandInterface
         return 'help.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'help.example';
+    }
+
     public function getOrder(): int
     {
         return 99;
@@ -87,7 +92,7 @@ final readonly class HelpCommand implements OperServCommandInterface
         $commandName = strtoupper($context->args[0]);
         $command = $context->commandRegistry()->find($commandName);
         if (null === $command || !$this->canView($context, $command)) {
-            $context->reply('help.unknown_command', ['command' => $commandName]);
+            $context->reply('unknown_command', ['command' => $commandName]);
 
             return;
         }
@@ -97,6 +102,15 @@ final readonly class HelpCommand implements OperServCommandInterface
             : null;
         if (null !== $subcommand) {
             $context->replyRaw(implode("\n", $this->formatter->renderSubCommandHelp($formatterContext, $command->getName(), $subcommand)));
+
+            return;
+        }
+
+        if (isset($context->args[1]) && [] !== $command->getSubCommandHelp()) {
+            $context->reply('unknown_help_option', [
+                'command' => $command->getName(),
+                'option' => strtoupper($context->args[1]),
+            ]);
 
             return;
         }

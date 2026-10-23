@@ -42,6 +42,7 @@ final class IrcopCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('ircop.syntax', $command->getSyntaxKey());
         self::assertSame('ircop.help', $command->getHelpKey());
+        self::assertSame('ircop.example', $command->getExampleKey());
         self::assertSame(1, $command->getOrder());
         self::assertSame('ircop.short', $command->getShortDescKey());
         self::assertTrue($command->isOperOnly());

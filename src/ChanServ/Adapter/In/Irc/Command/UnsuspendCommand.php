@@ -47,6 +47,11 @@ final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditable
         return 'unsuspend.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'unsuspend.example';
+    }
+
     public function getOrder(): int
     {
         return 78;
@@ -104,7 +109,7 @@ final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditable
 
         $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Unsuspend));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
-            $context->reply('unsuspend.not_registered', ['%channel%' => $channelName]);
+            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }

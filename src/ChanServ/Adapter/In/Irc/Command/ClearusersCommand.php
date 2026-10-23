@@ -48,6 +48,11 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
         return 'clearusers.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'clearusers.example';
+    }
+
     public function getOrder(): int
     {
         return 73;

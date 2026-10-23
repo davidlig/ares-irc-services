@@ -46,6 +46,11 @@ final readonly class KillCommand implements OperServCommandInterface
         return 'kill.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'kill.example';
+    }
+
     public function getOrder(): int
     {
         return 10;
@@ -99,7 +104,7 @@ final readonly class KillCommand implements OperServCommandInterface
                 'nickname' => $result->targetNickname,
                 'reason' => $result->reason,
             ]),
-            KillNetworkUserOutcome::NotOnline => $context->reply('kill.user_not_online', ['nickname' => $result->targetNickname]),
+            KillNetworkUserOutcome::NotOnline => $context->reply('error.nick_not_online', ['nickname' => $result->targetNickname]),
             KillNetworkUserOutcome::ProtectedRoot => $context->reply('kill.protected_root', ['nickname' => $result->targetNickname]),
             KillNetworkUserOutcome::ProtectedIrcOperator => $context->reply('kill.protected_ircop', ['nickname' => $result->targetNickname]),
             KillNetworkUserOutcome::NetworkUnavailable => null,

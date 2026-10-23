@@ -42,6 +42,7 @@ final class ListCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('list.syntax', $command->getSyntaxKey());
         self::assertSame('list.help', $command->getHelpKey());
+        self::assertSame('list.example', $command->getExampleKey());
         self::assertSame(210, $command->getOrder());
         self::assertSame('list.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

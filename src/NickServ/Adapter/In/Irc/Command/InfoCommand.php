@@ -45,6 +45,11 @@ final readonly class InfoCommand implements NickServCommandInterface
         return 'info.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'info.example';
+    }
+
     public function getOrder(): int
     {
         return 5;
@@ -97,7 +102,7 @@ final readonly class InfoCommand implements NickServCommandInterface
     private function present(NickServContext $context, InfoNickResult $result): void
     {
         match ($result->outcome) {
-            InfoNickOutcome::NotRegistered => $context->reply('info.not_registered', ['nickname' => $result->nickname]),
+            InfoNickOutcome::NotRegistered => $context->reply('error.nick_not_registered', ['nickname' => $result->nickname]),
             InfoNickOutcome::Forbidden => $this->presentForbidden($context, $result),
             InfoNickOutcome::PendingDeletion => $this->presentPendingDeletion($context, $result),
             InfoNickOutcome::Private => $context->reply('info.private', ['nickname' => $result->nickname]),
@@ -112,7 +117,7 @@ final readonly class InfoCommand implements NickServCommandInterface
         if (null !== $result->reason) {
             $context->reply('info.reason', ['reason' => $result->reason]);
         }
-        $context->reply('info.footer');
+        $context->reply('reply.separator');
     }
 
     private function presentPendingDeletion(NickServContext $context, InfoNickResult $result): void
@@ -126,7 +131,7 @@ final readonly class InfoCommand implements NickServCommandInterface
             $context->reply('info.pending_deletion_until', ['date' => $context->formatDate($result->deletionExpiresAt)]);
         }
         $context->reply('info.pending_deletion_notice');
-        $context->reply('info.footer');
+        $context->reply('reply.separator');
     }
 
     private function presentVisible(NickServContext $context, InfoNickResult $result): void
@@ -211,6 +216,6 @@ final readonly class InfoCommand implements NickServCommandInterface
             }
         }
 
-        $context->reply('info.footer');
+        $context->reply('reply.separator');
     }
 }

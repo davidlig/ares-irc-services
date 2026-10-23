@@ -96,6 +96,11 @@ final class NickServCommandRegistryTest extends TestCase
                 return '';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;

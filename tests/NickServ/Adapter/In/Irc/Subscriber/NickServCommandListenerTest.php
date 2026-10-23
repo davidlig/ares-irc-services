@@ -332,6 +332,11 @@ final class NickServCommandListenerTest extends TestCase
                 return 'dummy.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'dummy.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;

@@ -149,6 +149,11 @@ final class MemoServCommandListenerTest extends TestCase
                 return 'throw.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'throw.example';
+            }
+
             public function getOrder(): int
             {
                 return 1;
@@ -264,6 +269,11 @@ final class MemoServCommandListenerTest extends TestCase
             public function getHelpKey(): string
             {
                 return 's.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 's.example';
             }
 
             public function getOrder(): int

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MemoServ\Adapter\In\Irc\Help;
 
 use function is_array;
+use function ltrim;
 use function strtoupper;
 
 /**
@@ -33,13 +34,13 @@ final readonly class UnifiedHelpFormatter
             }
         }
 
-        $lines = [$this->renderHeader($context, $context->trans('help.header_title'))];
+        $lines = [$this->renderHeader($context, $context->trans('help.header_title')), ' '];
         $lines[] = $context->trans('help.intro');
+        $lines[] = ' ';
         $lines[] = ' ';
         $lines[] = $context->trans('help.general_header');
 
         $shown = [];
-        $generalFooterSent = false;
         $ircopHeaderSent = false;
         foreach ($context->getHelpGroups() as $group) {
             $groupCommands = [];
@@ -56,11 +57,6 @@ final readonly class UnifiedHelpFormatter
             usort($groupCommands, static fn (HelpableCommandInterface $a, HelpableCommandInterface $b): int => $a->getOrder() <=> $b->getOrder());
 
             if ($group['admin']) {
-                if (!$generalFooterSent) {
-                    $lines[] = ' ';
-                    $lines[] = $context->trans('help.general_footer');
-                    $generalFooterSent = true;
-                }
                 if (!$ircopHeaderSent) {
                     $lines[] = ' ';
                     $lines[] = $context->trans('help.ircop_header');
@@ -83,11 +79,6 @@ final readonly class UnifiedHelpFormatter
             }
         }
 
-        if (!$generalFooterSent) {
-            $lines[] = ' ';
-            $lines[] = $context->trans('help.general_footer');
-        }
-
         // Keep a visible fallback for any future command not yet assigned to a group.
         $ungroupedCommands = [];
         foreach ($visibleCommands as $name => $command) {
@@ -102,7 +93,10 @@ final readonly class UnifiedHelpFormatter
                 'description' => $context->trans($command->getShortDescKey()),
             ]);
         }
-        // The caller appends the final help.footer before sending the complete response.
+        $lines[] = ' ';
+        $lines[] = ' ';
+        $lines[] = $context->trans('help.general_footer');
+        // The caller appends the decorative help.footer after the final general-help hint.
 
         return $lines;
     }
@@ -110,7 +104,7 @@ final readonly class UnifiedHelpFormatter
     /** @return list<string> */
     public function renderCommandHelp(HelpFormatterContextInterface $context, HelpableCommandInterface $handler): array
     {
-        $lines = [$this->renderHeader($context, 'HELP ' . $handler->getName())];
+        $lines = [$this->renderHeader($context, 'HELP ' . $handler->getName()), ' '];
 
         $rawParams = method_exists($handler, 'getHelpParams') ? $handler->getHelpParams() : [];
         /** @var array<string, mixed> $params */
@@ -118,7 +112,6 @@ final readonly class UnifiedHelpFormatter
         $lines[] = $context->trans($handler->getHelpKey(), $params);
 
         $subCmds = $handler->getSubCommandHelp();
-
         if ([] !== $subCmds) {
             $lines[] = ' ';
             $lines[] = $context->trans('help.options_header');
@@ -136,28 +129,67 @@ final readonly class UnifiedHelpFormatter
 
         $lines[] = ' ';
         $lines[] = $context->trans('help.syntax_label', ['syntax' => $context->trans($handler->getSyntaxKey())]);
+        $lines = [...$lines, ...$this->renderExamples($context, $handler->getExampleKey())];
+
         $lines[] = $context->trans('help.footer');
 
         return $lines;
     }
 
     /**
-     * @param array{name: string, help_key: string, syntax_key: string, options_key?: string} $sub
+     * @param array{name: string, help_key: string, syntax_key: string, example_key: string, options_key?: string} $sub
      *
      * @return list<string>
      */
     public function renderSubCommandHelp(HelpFormatterContextInterface $context, string $parentName, array $sub): array
     {
-        $lines = [$this->renderHeader($context, 'HELP ' . $parentName . ' ' . $sub['name'])];
+        $lines = [$this->renderHeader($context, 'HELP ' . $parentName . ' ' . $sub['name']), ' '];
         $lines[] = $context->trans($sub['help_key']);
+        $lines[] = ' ';
+        $lines[] = $context->trans('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
+        $lines = [...$lines, ...$this->renderExamples($context, $sub['example_key'])];
         if (isset($sub['options_key'])) {
             $lines[] = ' ';
             $lines[] = $context->trans($sub['options_key']);
         }
-        $lines[] = ' ';
-        $lines[] = $context->trans('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
         $lines[] = $context->trans('help.footer');
 
         return $lines;
+    }
+
+    /** @return list<string> */
+    private function renderExamples(HelpFormatterContextInterface $context, string $exampleKey): array
+    {
+        $headerKey = 'help.examples_header';
+        $header = $context->trans($headerKey);
+        $example = $context->trans($exampleKey);
+        if ($headerKey === $header || $exampleKey === $example) {
+            return [];
+        }
+
+        $lines = [' ', $header, $this->addBotMessagePrefix($context, $example)];
+        for ($index = 0;; ++$index) {
+            $additionalExampleKey = $exampleKey . 's.' . $index;
+            $additionalExample = $context->trans($additionalExampleKey);
+            if ($additionalExampleKey === $additionalExample) {
+                break;
+            }
+
+            $lines[] = $this->addBotMessagePrefix($context, $additionalExample);
+        }
+
+        return $lines;
+    }
+
+    private function addBotMessagePrefix(HelpFormatterContextInterface $context, string $example): string
+    {
+        $prefixPlaceholder = '%command_prefix%';
+        if (!str_contains($example, $prefixPlaceholder)) {
+            return $example;
+        }
+
+        $example = str_replace($prefixPlaceholder, '/msg ' . $context->getBotName() . ' ', $example);
+
+        return '  ' . ltrim($example, " \t");
     }
 }

@@ -29,7 +29,7 @@ interface OperServCommandInterface extends HelpableCommandInterface
 
     public function getShortDescKey(): string;
 
-    /** @return list<array{name: string, desc_key: string, help_key: string, syntax_key: string}> */
+    /** @return list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}> */
     public function getSubCommandHelp(): array;
 
     public function isOperOnly(): bool;

@@ -197,6 +197,11 @@ final class ChanServCommandListenerTest extends TestCase
                 return '';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -273,6 +278,11 @@ final class ChanServCommandListenerTest extends TestCase
             }
 
             public function getHelpKey(): string
+            {
+                return '';
+            }
+
+            public function getExampleKey(): string
             {
                 return '';
             }
@@ -453,7 +463,7 @@ final class ChanServCommandListenerTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'chanserv', 'en')
+            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'common', 'en')
             ->willReturn('Channel #mychan is not registered.');
 
         $exception = ChannelNotRegisteredException::forChannel('#mychan');
@@ -481,7 +491,7 @@ final class ChanServCommandListenerTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'chanserv', 'es')
+            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'common', 'es')
             ->willReturn('El canal #mychan no está registrado.');
 
         $exception = ChannelNotRegisteredException::forChannel('#mychan');
@@ -510,7 +520,7 @@ final class ChanServCommandListenerTest extends TestCase
             ->with(
                 'error.insufficient_access',
                 ['%operation%' => 'OP', '%channel%' => '#mychan', '%bot%' => 'ChanServ'],
-                'chanserv',
+                'common',
                 'en',
             )
             ->willReturn('Insufficient access to OP on channel "#mychan".');

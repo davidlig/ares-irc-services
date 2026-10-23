@@ -1,12 +1,69 @@
-# Common translations — Romanian
-# Domain: common
+# Traduceri mesaje comune — Română
+# Domeniu: common
 #
-# Shared translations used across all IRC services.
+# Coduri de formatare IRC (ghilimele duble sau blocuri literale !irc):
+#   \x02        activează/dezactivează caracterele aldine
+#   \x03NN      culoare (ZECIMAL: 03=verde, 04=roșu, 07=portocaliu, 14=gri închis)
+#   \x03        resetează culoarea
+#   \x0F        resetează întreaga formatare
+#
+# Culorile IRC folosesc numere ZECIMALE (0-15), nu hexazecimale.
+#   \x0314 = gri închis (14 zecimal): CORECT
+#   \x030F = culoarea 0 urmată de litera F: EROARE
+#
+# Text IRC pe mai multe rânduri: !irc |- cu rânduri și spații reale.
+# Blocurile fără etichetă nu decodează secvențe escape; păstrează literalii CTCP.
+# Exemple HELP: example/examples și %command_prefix%.
+# Prezentatorul adaugă /msg fără culoare și o margine de două spații.
 
+# --- UNKNOWN COMMAND -------------------------------------------------------
+unknown_command: "\x0304✗\x03\x0F Comandă necunoscută \x0303%command%\x03\x0F. Folosește /msg %bot% \x0303HELP\x03\x0F"
+
+# --- UNKNOWN HELP OPTION ---------------------------------------------------
+unknown_help_option: "\x0304✗\x03\x0F Opțiune de ajutor necunoscută \x0303%option%\x03\x0F pentru \x0303%command%\x03\x0F. Folosește /msg %bot% \x0303HELP %command%\x03\x0F"
+
+# --- ERROR -----------------------------------------------------------------
+error:
+  syntax: "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
+  not_identified: "\x0304✗\x03 Nu ești identificat. Folosește /msg %nickserv% \x0303IDENTIFY <poreclă> <parolă>\x03"
+  permission_denied: "\x0304✗\x03 Permisiune refuzată. Nu aveți acces la această comandă."
+  mail_failed: "\x0304✗\x03 E-mailul nu a putut fi trimis. Verificați adresa sau încercați mai târziu."
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  nick_not_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
+  insufficient_access: "\x0304✗\x03 Acces insuficient pentru \x02%operation%\x02 pe canalul \x02%channel%\x02."
+  nick_not_online: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este conectată."
+
+# --- DURATION --------------------------------------------------------------
+duration:
+  unit:
+    year:
+      singular: "an"
+      plural: "ani"
+    month:
+      singular: "lună"
+      plural: "luni"
+    day:
+      singular: "zi"
+      plural: "zile"
+    hour:
+      singular: "oră"
+      plural: "ore"
+    minute:
+      singular: "minut"
+      plural: "minute"
+    second:
+      singular: "secundă"
+      plural: "secunde"
+  list_separator: ", "
+  list_join: "%prefix% și %last%"
+
+# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Ați depășit limita de rată a comenzilor. Vă rugăm să încercați din nou în %seconds% secunde."
   debug_channel: "%nick% %command% limită atinsă pentru %host% (mai sunt %seconds%s)"
 
+# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
@@ -25,3 +82,47 @@ ctcp:
       companion pe care l-aș fi putut cere. Spațiul pe care l-ai lăsat lângă mine este acum
       umplut de cele mai fericite amintiri. Vei fi mereu dragul meu prieten și vei avea
       întotdeauna un loc imens în inima mea.
+
+# --- DEBUG -----------------------------------------------------------------
+debug:
+  action_message: "%operator% execută comanda %command% asupra %target%. %reason%"
+  action_with_option: "%operator% execută comanda %command% asupra %target%. Opțiune: %option%. %reason%"
+  action_with_value: "%operator% execută comanda %command% asupra %target%. Opțiune: %option%=%value%. %reason%"
+  prefix_reason: "Motiv: %reason%"
+  action_duration: "%operator% execută comanda %command% asupra %target%. Durată: %duration%. %reason%"
+
+# --- HISTORY ---------------------------------------------------------------
+history:
+  unknown_operator: "(necunoscut)"
+  del:
+    success: "\x0303✔\x03 Intrarea din istoric \x02%id%\x02 a fost ștearsă."
+    not_found: "\x0304✗\x03 Intrarea din istoric \x02%id%\x02 nu a fost găsită."
+    invalid_id: "\x0304✗\x03 ID de intrare invalid: \x02%id%\x02."
+  view:
+    extra: "  Extra \x0307→\x03 %extra%"
+  message:
+    unsuspend: "Suspendare anulată"
+  extra:
+    duration: "Durată: %value%"
+    expires_at: "Expiră: %value%"
+    ip: "IP: %value%"
+    host: "Host: %value%"
+
+# --- LIST ------------------------------------------------------------------
+list:
+  page: "Pagina %page%/%pages% — %total% potriviri"
+  status_suspended: "Suspendat"
+  status_pending_deletion: "Ștergere în așteptare"
+  status_forbidden: "Interzis"
+
+# --- REPLY -----------------------------------------------------------------
+reply:
+  separator: "\x0314─────────────────────────────\x03"
+
+# --- LABEL -----------------------------------------------------------------
+label:
+  no_reason: "Fără motiv"
+  never: "niciodată"
+  unknown_creator: "necunoscut"
+  permanent: "Permanent"
+  permanent_inline: "permanentă"

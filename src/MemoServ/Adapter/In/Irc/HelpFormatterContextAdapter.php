@@ -42,6 +42,11 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         return $this->context->trans($key, $params);
     }
 
+    public function getBotName(): string
+    {
+        return $this->context->getNotifier()->getNick();
+    }
+
     public function getCommandsForGeneralHelp(): iterable
     {
         return $this->context->getRegistry()->all();

@@ -46,6 +46,11 @@ final readonly class UnsuspendCommand implements NickServCommandInterface, Ircop
         return 'unsuspend.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'unsuspend.example';
+    }
+
     public function getOrder(): int
     {
         return 68;
@@ -96,7 +101,7 @@ final readonly class UnsuspendCommand implements NickServCommandInterface, Ircop
         ));
 
         $errorKey = match ($result->outcome) {
-            UnsuspendNickOutcome::NotRegistered => 'unsuspend.not_registered',
+            UnsuspendNickOutcome::NotRegistered => 'error.nick_not_registered',
             UnsuspendNickOutcome::NotSuspended => 'unsuspend.not_suspended',
             UnsuspendNickOutcome::Unsuspended => null,
         };

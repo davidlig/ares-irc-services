@@ -48,6 +48,11 @@ final readonly class IrcoponlyCommand implements ChanServCommandInterface, Ircop
         return 'ircoponly.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'ircoponly.example';
+    }
+
     public function getOrder(): int
     {
         return 77;

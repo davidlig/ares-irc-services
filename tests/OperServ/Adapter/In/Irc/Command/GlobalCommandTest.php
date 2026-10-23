@@ -47,6 +47,7 @@ final class GlobalCommandTest extends TestCase
         self::assertSame(3, $command->getMinArgs());
         self::assertSame('global.syntax', $command->getSyntaxKey());
         self::assertSame('global.help', $command->getHelpKey());
+        self::assertSame('global.example', $command->getExampleKey());
         self::assertSame(35, $command->getOrder());
         self::assertSame('global.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

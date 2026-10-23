@@ -40,6 +40,11 @@ final readonly class OpCommand implements ChanServCommandInterface
         return 'op.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'op.example';
+    }
+
     public function getOrder(): int
     {
         return 20;

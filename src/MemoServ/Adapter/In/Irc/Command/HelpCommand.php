@@ -48,6 +48,11 @@ final readonly class HelpCommand implements MemoServCommandInterface
         return 'help.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'help.example';
+    }
+
     public function getOrder(): int
     {
         return 99;
@@ -88,14 +93,14 @@ final readonly class HelpCommand implements MemoServCommandInterface
         $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler) {
-            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+            $context->reply('unknown_command', ['command' => $targetCmd]);
 
             return null;
         }
 
         $adapter = new HelpFormatterContextAdapter($context);
         if (!$adapter->canViewCommandInHelp($handler)) {
-            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+            $context->reply('unknown_command', ['command' => $targetCmd]);
 
             return null;
         }
@@ -109,6 +114,13 @@ final readonly class HelpCommand implements MemoServCommandInterface
 
                 return null;
             }
+
+            $context->reply('unknown_help_option', [
+                'command' => $handler->getName(),
+                'option' => $subName,
+            ]);
+
+            return null;
         }
 
         $context->replyRaw(implode("\n", $this->formatter->renderCommandHelp($adapter, $handler)));
@@ -117,7 +129,7 @@ final readonly class HelpCommand implements MemoServCommandInterface
     }
 
     /**
-     * @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null
+     * @return array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}|null
      */
     private function findSubCommand(MemoServCommandInterface $handler, string $subName): ?array
     {

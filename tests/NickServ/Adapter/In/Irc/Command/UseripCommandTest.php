@@ -44,6 +44,7 @@ final class UseripCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('userip.syntax', $command->getSyntaxKey());
         self::assertSame('userip.help', $command->getHelpKey());
+        self::assertSame('userip.example', $command->getExampleKey());
         self::assertSame(60, $command->getOrder());
         self::assertSame('userip.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -85,7 +86,7 @@ final class UseripCommandTest extends TestCase
         $outcome = $command->execute($this->createContext($sender, $messages, ['OfflineNick']));
 
         self::assertFalse($outcome->success);
-        self::assertSame(['userip.not_online [%nickname%: OfflineNick]'], $messages);
+        self::assertSame(['error.nick_not_online [%nickname%: OfflineNick]'], $messages);
     }
 
     #[Test]

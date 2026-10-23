@@ -13,6 +13,7 @@ use App\OperServ\Application\Port\In\IrcopAuthorizationSubject;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -85,8 +86,7 @@ readonly class NickServContext implements IrcopAuthorizationSubject
      */
     public function reply(string $key, array $params = []): void
     {
-        $message = $this->translator->trans($key, $this->wrapParams($params), 'nickserv', $this->language);
-        $this->sendRaw($message);
+        $this->sendRaw($this->trans($key, $params));
     }
 
     /**
@@ -148,7 +148,7 @@ readonly class NickServContext implements IrcopAuthorizationSubject
      */
     public function trans(string $key, array $params = []): string
     {
-        return $this->translator->trans($key, $this->wrapParams($params), 'nickserv', $this->language);
+        return $this->translateWithCommonFallback($key, $this->wrapParams($params), $this->language);
     }
 
     /**
@@ -161,7 +161,15 @@ readonly class NickServContext implements IrcopAuthorizationSubject
     {
         $lang = '' !== $language ? $language : $this->language;
 
-        return $this->translator->trans($key, $this->wrapParams($params), 'nickserv', $lang);
+        return $this->translateWithCommonFallback($key, $this->wrapParams($params), $lang);
+    }
+
+    public function formatDuration(int $seconds): string
+    {
+        return DurationFormatter::format(
+            $seconds,
+            fn (string $key, array $params): string => $this->translateDurationKey($key, $params),
+        );
     }
 
     /**
@@ -181,6 +189,37 @@ readonly class NickServContext implements IrcopAuthorizationSubject
         }
 
         return $wrapped;
+    }
+
+    /** @param array<string, string> $params */
+    private function translateDurationKey(string $key, array $params): string
+    {
+        $wrappedParams = $this->wrapParams($params);
+        $translation = $this->translateWithCommonFallback($key, $wrappedParams, $this->language);
+
+        if ($key !== $translation) {
+            return $translation;
+        }
+
+        if ($this->translator instanceof TranslatorBagInterface
+            && !$this->translator->getCatalogue('es')->has($key, 'common')
+        ) {
+            return $key;
+        }
+
+        return $this->translator->trans($key, $wrappedParams, 'common', 'es');
+    }
+
+    /** @param array<string, mixed> $params */
+    private function translateWithCommonFallback(string $key, array $params, string $locale): string
+    {
+        if ($this->translator instanceof TranslatorBagInterface
+            && $this->translator->getCatalogue($locale)->has($key, 'common')
+        ) {
+            return $this->translator->trans($key, $params, 'common', $locale);
+        }
+
+        return $this->translator->trans($key, $params, 'nickserv', $locale);
     }
 
     private function sendRaw(string $message): void

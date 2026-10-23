@@ -70,6 +70,7 @@ final class RestoreCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('restore.syntax', $command->getSyntaxKey());
         self::assertSame('restore.help', $command->getHelpKey());
+        self::assertSame('restore.example', $command->getExampleKey());
         self::assertSame(76, $command->getOrder());
         self::assertSame('restore.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -170,7 +171,7 @@ final class RestoreCommandTest extends TestCase
 
         $this->createCommandWith($repo, $this->createStub(ChanDropService::class))->execute($this->createContext(['#test'], $messages));
 
-        self::assertContains('restore.not_registered', $messages);
+        self::assertContains('error.channel_not_registered', $messages);
     }
 
     private function createCommand(): RestoreCommand

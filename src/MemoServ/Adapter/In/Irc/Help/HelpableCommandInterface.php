@@ -19,8 +19,10 @@ interface HelpableCommandInterface
 
     public function getHelpKey(): string;
 
+    public function getExampleKey(): string;
+
     /**
-     * @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}>
+     * @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string, options_key?: string}>
      */
     public function getSubCommandHelp(): array;
 

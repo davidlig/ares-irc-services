@@ -41,6 +41,7 @@ final class ClearChannelCommandsTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('clearaccess.syntax', $command->getSyntaxKey());
         self::assertSame('clearaccess.help', $command->getHelpKey());
+        self::assertSame('clearaccess.example', $command->getExampleKey());
         self::assertSame(74, $command->getOrder());
         self::assertSame('clearaccess.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -61,6 +62,7 @@ final class ClearChannelCommandsTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('clearusers.syntax', $command->getSyntaxKey());
         self::assertSame('clearusers.help', $command->getHelpKey());
+        self::assertSame('clearusers.example', $command->getExampleKey());
         self::assertSame(73, $command->getOrder());
         self::assertSame('clearusers.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

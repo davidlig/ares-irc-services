@@ -17,7 +17,10 @@ use function ceil;
 /** IRC parsing and presentation adapter for REGISTER <password> [email]. */
 final readonly class RegisterCommand implements NickServCommandInterface
 {
-    public function __construct(private RegisterNickHandlerInterface $handler) {}
+    public function __construct(
+        private RegisterNickHandlerInterface $handler,
+        private int $verificationTokenTtlSeconds,
+    ) {}
 
     public function getName(): string
     {
@@ -42,6 +45,11 @@ final readonly class RegisterCommand implements NickServCommandInterface
     public function getHelpKey(): string
     {
         return 'register.help';
+    }
+
+    public function getExampleKey(): string
+    {
+        return 'register.example';
     }
 
     public function getOrder(): int
@@ -71,7 +79,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
 
     public function getHelpParams(): array
     {
-        return [];
+        return ['duration_seconds' => $this->verificationTokenTtlSeconds];
     }
 
     public function execute(NickServContext $context): null
@@ -102,7 +110,10 @@ final readonly class RegisterCommand implements NickServCommandInterface
                 $context->reply('register.token_unavailable');
                 break;
             case RegisterNickOutcome::VerificationRequired:
-                $context->reply('register.pending', ['email' => $result->email]);
+                $context->reply('register.pending', [
+                    'email' => $result->email,
+                    'duration' => $context->formatDuration($this->verificationTokenTtlSeconds),
+                ]);
                 break;
             case RegisterNickOutcome::Throttled:
                 $context->reply('register.throttled', [

@@ -60,6 +60,11 @@ final readonly class RegistryCommand implements OperServCommandInterface
         return '';
     }
 
+    public function getExampleKey(): string
+    {
+        return $this->name . '.example';
+    }
+
     public function getOrder(): int
     {
         return 0;

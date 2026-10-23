@@ -1,24 +1,33 @@
-# MemoServ translations — Français
-# Domaine : memoserv
+# Traductions de MemoServ — Français
+# Domaine: memoserv
+#
+# Codes de formatage IRC (guillemets doubles ou blocs littéraux !irc) :
+#   \x02        active/désactive le gras
+#   \x03NN      couleur (DÉCIMAL : 03=vert, 04=rouge, 07=orange, 14=gris foncé)
+#   \x03        réinitialise la couleur
+#   \x0F        réinitialise tout le formatage
+#
+# Les couleurs IRC utilisent des nombres DÉCIMAUX (0-15), pas hexadécimaux.
+#   \x0314 = gris foncé (14 décimal) : CORRECT
+#   \x030F = couleur 0 suivie de la lettre F : ERREUR
+#
+# Texte IRC multiligne : !irc |- avec des sauts de ligne et des espaces réels.
+# Les blocs sans balise ne décodent pas les échappements ; préserver CTCP.
+# Exemples HELP : example/examples et %command_prefix%.
+# Le présentateur ajoute /msg sans couleur et une marge de deux espaces.
 
-unknown_command: "\x0304✗\x03 Commande inconnue \x02%command%\x02. Utilisez \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax: "\x0304✗\x03 Syntaxe incorrecte. Usage : \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Cette commande est réservée aux opérateurs IRC."
-  not_identified: "\x0304✗\x03 Vous n'êtes pas identifié. Utilisez \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Permission refusée. Vous n'avez pas accès à cette commande."
-  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
-  insufficient_access: "\x0304✗\x03 Accès insuffisant pour \x02%operation%\x02 sur le canal \x02%channel%\x02."
-
+# --- SEND ------------------------------------------------------------------
 send:
   syntax: "SEND {surnom|#canal} <message>"
   short: "Envoyer un message à un surnom ou un canal."
-  help: "Envoie un message à un surnom ou un canal enregistré. Le destinataire doit avoir le service de messages activé (ENABLE)."
+  help: |-
+    Envoie un message à un pseudonyme ou à un salon enregistré. Le destinataire
+    doit avoir activé le service de messages (ENABLE).
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND Ana Hola, ¿puedes revisar el memo?\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND #aide Aviso para el canal\x03\x0F"
   sent_nick: "\x0303✔\x03 Message envoyé à \x02%nickname%\x02."
   sent_channel: "\x0303✔\x03 Message envoyé au canal \x02%channel%\x02."
-  nick_not_registered: "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
-  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
   throttled: "\x0304✗\x03 Vous devez attendre \x02%seconds%\x02 seconde(s) avant d'envoyer un autre message."
   limit_reached: "\x0304✗\x03 Limite de messages atteinte pour \x02%target%\x02."
   ignored: "\x0304✗\x03 Vous ne pouvez pas envoyer de messages à cette cible, vous êtes sur sa liste d'ignorés."
@@ -26,93 +35,150 @@ send:
   message_too_long: "\x0304✗\x03 Message trop long. Le maximum est de \x02%max%\x02 caractères."
   service_disabled_for_target: "\x0304✗\x03 Le service de messages est désactivé pour \x02%target%\x02."
 
+# --- READ ------------------------------------------------------------------
 read:
   syntax: "READ [#canal] <numéro>"
   short: "Lire un message par son numéro."
-  help: "Lit le message avec le numéro indiqué. Sans #canal, lit depuis votre boîte de surnom. Avec #canal, nécessite le niveau MEMOREAD."
+  help: |-
+    Lit le message portant le numéro indiqué. Sans #salon, lit votre boîte de
+    pseudonyme. Avec #salon, le niveau MEMOREAD est requis.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303READ 1\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303READ #aide 2\x03\x0F"
   header: "\x02\x0307Message n°%index%\x03 de \x02%from%\x02 :\x0F"
   footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
   not_found: "\x0304✗\x03 Message n°%index% introuvable."
 
+# --- LIST ------------------------------------------------------------------
 list:
   syntax: "LIST [#canal]"
   short: "Lister les messages (non lus marqués par une * rouge)."
-  help: "Liste vos messages ou les messages du canal. Les messages non lus sont affichés avec un astérisque rouge et un aperçu (max 50 caractères). Sans #canal = votre boîte de surnom ; avec #canal nécessite MEMOREAD."
+  help: |-
+    Affiche vos messages ou ceux du salon. Les messages non lus sont signalés par
+    un astérisque rouge et un aperçu (50 caractères max.). Sans #salon : votre boîte
+    ;
+    avec #salon, le niveau MEMOREAD est requis.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST #aide\x03\x0F"
   header: "\x02\x0307Messages pour %target%\x03 :\x0F"
-  footer: "\x0314─────────────────────────────\x03"
   empty: "\x0307ℹ\x03 Aucun message pour \x02%target%\x02."
-  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
 
+# --- DEL -------------------------------------------------------------------
 del:
   syntax: "DEL [#canal] <numéro>"
   short: "Supprimer un message par son numéro."
-  help: "Supprime le message avec le numéro indiqué. Pour les canaux, nécessite le niveau MEMOCHANGE."
+  help: |-
+    Supprime le message avec le numéro indiqué. Pour les canaux, nécessite le niveau
+    MEMOCHANGE.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL 1\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL #aide 2\x03\x0F"
   deleted: "\x0303✔\x03 Message n°%index% supprimé."
-  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
   not_found: "\x0304✗\x03 Message n°%index% introuvable."
 
+# --- IGNORE ----------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD|DEL|LIST} [#canal] [surnom]"
   short: "Gérer la liste d'ignorés pour les messages."
-  help: "ADD ajoute un surnom à votre liste d'ignorés (ou celle du canal) ; DEL le retire ; LIST affiche la liste. Pour les canaux, ADD/DEL nécessitent MEMOCHANGE."
+  help: |-
+    Gère les pseudonymes dont vous ne souhaitez pas recevoir de messages, pour votre
+    compte ou un salon enregistré. Pour modifier la liste d’un salon, le droit
+    MEMOCHANGE est nécessaire.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #aide Ana\x03\x0F"
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #aide\x03\x0F"
+
+  # --- IGNORE ADD ----------------------------------------------------------
   add:
     syntax: "IGNORE ADD [#canal] <surnom>"
-    short: "Ajouter un surnom à la liste d'ignorés."
-    help: "Les messages de ce surnom ne seront pas acceptés pour votre boîte (ou celle du canal)."
+    short: "Ajoute un pseudonyme à la liste des ignorés."
+    help: |-
+      Les messages de ce surnom ne seront pas acceptés pour votre boîte (ou celle du
+      canal).
+    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+    examples:
+      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD #aide Ana\x03\x0F"
+
+  # --- IGNORE DEL ----------------------------------------------------------
   del:
     syntax: "IGNORE DEL [#canal] <surnom>"
-    short: "Retirer un surnom de la liste d'ignorés."
+    short: "Supprime un pseudonyme de la liste."
     help: "Retire le surnom de la liste d'ignorés."
+    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL Ana\x03\x0F"
+    examples:
+      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #aide Ana\x03\x0F"
+
+  # --- IGNORE LIST ---------------------------------------------------------
   list:
     syntax: "IGNORE LIST [#canal]"
-    short: "Lister les surnoms ignorés."
+    short: "Affiche les pseudonymes ignorés."
     help: "Affiche la liste des surnoms que vous (ou le canal) ignorez pour les messages."
+    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST\x03\x0F"
+    examples:
+      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #aide\x03\x0F"
   added: "\x0303✔\x03 \x02%nickname%\x02 ajouté à la liste d'ignorés."
   removed: "\x0303✔\x03 \x02%nickname%\x02 retiré de la liste d'ignorés."
   already_ignored: "\x0304✗\x03 \x02%nickname%\x02 est déjà sur la liste d'ignorés."
   not_ignored: "\x0304✗\x03 \x02%nickname%\x02 n'est pas sur la liste d'ignorés."
-  nick_not_registered: "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
-  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
   limit_reached_nick: "\x0304✗\x03 Limite de la liste d'ignorés atteinte pour votre surnom (max \x02%limit%\x02)."
   limit_reached_channel: "\x0304✗\x03 Limite de la liste d'ignorés atteinte pour \x02%channel%\x02 (max \x02%limit%\x02)."
   list_empty: "\x0307ℹ\x03 La liste d'ignorés est vide."
   list_header: "\x02\x0307Liste d'ignorés :\x03\x0F"
-  list_footer: "\x0314─────────────────────────────\x03"
 
+# --- ENABLE ----------------------------------------------------------------
 enable:
   syntax: "ENABLE [#canal]"
   short: "Activer la réception de messages."
-  help: "Active la réception de messages pour votre surnom ou, pour les canaux, seul le fondateur peut activer."
+  help: |-
+    Active la réception de messages pour votre pseudonyme ; dans les salons, seul
+    le fondateur peut l’activer.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE #aide\x03\x0F"
   enabled_nick: "\x0303✔\x03 Service de messages activé pour votre surnom."
   enabled_channel: "\x0303✔\x03 Service de messages activé pour le canal \x02%channel%\x02."
   already_enabled_nick: "\x0307ℹ\x03 Le service de messages est déjà activé pour votre surnom."
   already_enabled_channel: "\x0307ℹ\x03 Le service de messages est déjà activé pour \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
   founder_only: "\x0304✗\x03 Seul le fondateur du canal peut activer les messages pour \x02%channel%\x02."
 
+# --- DISABLE ---------------------------------------------------------------
 disable:
   syntax: "DISABLE [#canal]"
   short: "Désactiver la réception de messages."
-  help: "Désactive la réception de messages pour votre surnom ou canal. Pour les canaux, seul le fondateur peut désactiver."
+  help: |-
+    Désactive la réception de messages pour votre pseudonyme ou le salon. Dans les
+    salons, seul le fondateur peut le désactiver.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE #aide\x03\x0F"
   disabled_nick: "\x0303✔\x03 Service de messages désactivé pour votre surnom."
   disabled_channel: "\x0303✔\x03 Service de messages désactivé pour le canal \x02%channel%\x02."
   already_disabled_nick: "\x0307ℹ\x03 Le service de messages est déjà désactivé pour votre surnom."
   already_disabled_channel: "\x0307ℹ\x03 Le service de messages est déjà désactivé pour \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
   founder_only: "\x0304✗\x03 Seul le fondateur du canal peut désactiver les messages pour \x02%channel%\x02."
 
+# --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [commande [sous-option]]"
   short: "Lister les commandes ou afficher l'aide d'une commande."
-  help: "Sans arguments, liste toutes les commandes. Utilisez \x02\x0303HELP <commande>\x03\x0F pour l'aide complète."
+  help: "Affiche la liste des commandes ou l’aide détaillée d’une commande ou option."
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP IGNORE ADD\x03\x0F"
   header_title: "%bot%"
   header: "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
-  intro: "Service de messagerie pour les surnoms et les canaux."
+  intro: |-
+    Permet d’envoyer et de recevoir des messages entre utilisateurs enregistrés et
+    d’envoyer des annonces aux salons. Les messages sont conservés pour être
+    consultés
+    plus tard, même lorsque le destinataire est déconnecté.
   general_header: "\x02 ■ Commandes disponibles :\x02"
   command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
   options_header: "\x02 ■ Options :\x02"
+  examples_header: "\x02 ■ Exemples :\x02"
   general_footer: "\x0310ℹ\x03\x0F Utilisez /msg %bot% \x02\x0303HELP <commande>\x03\x0F pour plus d’informations."
   set_sub_footer: "\x0310ℹ\x03\x0F Utilisez /msg %bot% \x02\x0303HELP %command% <option>\x03\x0F pour plus d’informations."
   syntax_label: "Syntaxe : \x02\x0303%syntax%\x03\x0F"
@@ -122,9 +188,9 @@ help:
   group:
     messages: "Messages"
     preferences: "Préférences"
-  unknown_command: "\x0307✗\x03\x0F Commande inconnue \x02\x0303%command%\x03\x0F. Utilisez \x02\x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Commandes disponibles pour les IRCops :\x02"
 
+# --- NOTIFY ----------------------------------------------------------------
 notify:
-  nick_pending: "Vous avez \x02%count%\x02 message(s) non lu(s). Pour les lister : \x0309/msg %bot% LIST\x03"
-  channel_pending: "Le canal \x02%channel%\x02 a \x02%count%\x02 message(s) non lu(s). Utilisez \x0309/msg %bot% LIST %channel%\x03 pour les lister."
+  nick_pending: "Vous avez \x02%count%\x02 message(s) en attente de lecture. Pour les afficher : /msg %bot% \x0303LIST\x03"
+  channel_pending: "Le salon \x02%channel%\x02 a \x02%count%\x02 message(s) en attente de lecture. Consultez-les avec /msg %bot% \x0303LIST %channel%\x03"

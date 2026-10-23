@@ -73,6 +73,7 @@ final class ManualRankCommandsTest extends TestCase
         self::assertSame(2, $command->getMinArgs());
         self::assertSame($syntaxBase . '.syntax', $command->getSyntaxKey());
         self::assertSame($helpBase . '.help', $command->getHelpKey());
+        self::assertSame($helpBase . '.example', $command->getExampleKey());
         self::assertSame($order, $command->getOrder());
         self::assertSame($helpBase . '.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

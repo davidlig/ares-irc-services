@@ -38,6 +38,11 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
         return 'dehalfop.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'dehalfop.example';
+    }
+
     public function getOrder(): int
     {
         return 23;

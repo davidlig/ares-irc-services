@@ -100,6 +100,7 @@ final class IgnoreCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('ignore.syntax', $command->getSyntaxKey());
         self::assertSame('ignore.help', $command->getHelpKey());
+        self::assertSame('ignore.example', $command->getExampleKey());
         self::assertSame(5, $command->getOrder());
         self::assertSame('ignore.short', $command->getShortDescKey());
         self::assertCount(3, $command->getSubCommandHelp());
@@ -189,7 +190,7 @@ final class IgnoreCommandTest extends TestCase
             'ignore.list_header',
             '  BadUser1',
             '  BadUser2',
-            'ignore.list_footer',
+            'reply.separator',
         ], $replies);
     }
 
@@ -260,8 +261,8 @@ final class IgnoreCommandTest extends TestCase
         $outcomes = [
             [IgnoreMemoResult::alreadyIgnored('UserA'), 'ignore.already_ignored'],
             [IgnoreMemoResult::notIgnored('UserA'), 'ignore.not_ignored'],
-            [IgnoreMemoResult::nickNotRegistered('UserA'), 'ignore.nick_not_registered'],
-            [IgnoreMemoResult::channelNotRegistered('#chan'), 'ignore.channel_not_registered'],
+            [IgnoreMemoResult::nickNotRegistered('UserA'), 'error.nick_not_registered'],
+            [IgnoreMemoResult::channelNotRegistered('#chan'), 'error.channel_not_registered'],
             [IgnoreMemoResult::limitReached(), 'ignore.limit_reached_nick'],
         ];
 

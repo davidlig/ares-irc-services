@@ -47,6 +47,11 @@ final readonly class GlobalCommand implements OperServCommandInterface
         return 'global.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'global.example';
+    }
+
     public function getOrder(): int
     {
         return 35;

@@ -15,6 +15,7 @@ use App\OperServ\Application\Port\In\IrcopAuthorizationSubject;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class ChanServContext implements IrcopAuthorizationSubject
@@ -74,8 +75,7 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
      */
     public function reply(string $key, array $params = []): void
     {
-        $message = $this->translator->trans($key, $this->wrapParams($params), 'chanserv', $this->language);
-        $this->sendRaw($message);
+        $this->sendRaw($this->trans($key, $params));
     }
 
     public function replyRaw(string $message): void
@@ -129,7 +129,7 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
      */
     public function trans(string $key, array $params = []): string
     {
-        return $this->translator->trans($key, $this->wrapParams($params), 'chanserv', $this->language);
+        return $this->translateWithCommonFallback($key, $this->wrapParams($params));
     }
 
     /** First argument as channel name (e.g. #channel). Returns null if missing or not channel-like. */
@@ -164,6 +164,18 @@ final readonly class ChanServContext implements IrcopAuthorizationSubject
         }
 
         return $wrapped;
+    }
+
+    /** @param array<string, mixed> $params */
+    private function translateWithCommonFallback(string $key, array $params): string
+    {
+        if ($this->translator instanceof TranslatorBagInterface
+            && $this->translator->getCatalogue($this->language)->has($key, 'common')
+        ) {
+            return $this->translator->trans($key, $params, 'common', $this->language);
+        }
+
+        return $this->translator->trans($key, $params, 'chanserv', $this->language);
     }
 
     private function sendRaw(string $message): void

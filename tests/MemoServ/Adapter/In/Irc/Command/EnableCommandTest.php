@@ -101,6 +101,7 @@ final class EnableCommandTest extends TestCase
         self::assertSame(0, $command->getMinArgs());
         self::assertSame('enable.syntax', $command->getSyntaxKey());
         self::assertSame('enable.help', $command->getHelpKey());
+        self::assertSame('enable.example', $command->getExampleKey());
         self::assertSame(6, $command->getOrder());
         self::assertSame('enable.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -163,7 +164,7 @@ final class EnableCommandTest extends TestCase
         $outcomes = [
             [EnableMemosResult::enabledChannel('#chan'), 'enable.enabled_channel [%channel%: #chan]'],
             [EnableMemosResult::alreadyEnabledChannel('#chan'), 'enable.already_enabled_channel [%channel%: #chan]'],
-            [EnableMemosResult::channelNotRegistered('#chan'), 'enable.channel_not_registered [%channel%: #chan]'],
+            [EnableMemosResult::channelNotRegistered('#chan'), 'error.channel_not_registered [%channel%: #chan]'],
             [EnableMemosResult::founderOnly('#chan'), 'enable.founder_only [%channel%: #chan]'],
         ];
 

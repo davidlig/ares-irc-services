@@ -14,8 +14,13 @@ use App\OperServ\Application\UseCase\ManageRole\RoleAction;
 use App\OperServ\Application\UseCase\ManageRole\RoleOutcome;
 use DateTimeImmutable;
 
+use function array_merge;
 use function array_slice;
+use function count;
+use function explode;
 use function implode;
+use function in_array;
+use function sort;
 use function sprintf;
 use function strtoupper;
 use function trim;
@@ -49,6 +54,11 @@ final readonly class RoleCommand implements OperServCommandInterface
         return $this->handler->supportsOperclass() ? 'role.help_operclass' : 'role.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'role.example';
+    }
+
     public function getOrder(): int
     {
         return 2;
@@ -61,9 +71,9 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     public function getSubCommandHelp(): array
     {
-        $commands = [['name' => 'LIST', 'desc_key' => 'role.list.short', 'help_key' => 'role.list.help', 'syntax_key' => 'role.list.syntax'], ['name' => 'ADD', 'desc_key' => 'role.add.short', 'help_key' => 'role.add.help', 'syntax_key' => 'role.add.syntax'], ['name' => 'DEL', 'desc_key' => 'role.del.short', 'help_key' => 'role.del.help', 'syntax_key' => 'role.del.syntax'], ['name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help', 'syntax_key' => 'role.perms.syntax'], ['name' => 'MODES', 'desc_key' => 'role.modes.short', 'help_key' => 'role.modes.help', 'syntax_key' => 'role.modes.syntax'], ['name' => 'VHOST', 'desc_key' => 'role.vhost.short', 'help_key' => 'role.vhost.help', 'syntax_key' => 'role.vhost.syntax']];
+        $commands = [['name' => 'LIST', 'desc_key' => 'role.list.short', 'help_key' => 'role.list.help', 'syntax_key' => 'role.list.syntax', 'example_key' => 'role.list.example'], ['name' => 'ADD', 'desc_key' => 'role.add.short', 'help_key' => 'role.add.help', 'syntax_key' => 'role.add.syntax', 'example_key' => 'role.add.example'], ['name' => 'DEL', 'desc_key' => 'role.del.short', 'help_key' => 'role.del.help', 'syntax_key' => 'role.del.syntax', 'example_key' => 'role.del.example'], ['name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help', 'syntax_key' => 'role.perms.syntax', 'example_key' => 'role.perms.example'], ['name' => 'MODES', 'desc_key' => 'role.modes.short', 'help_key' => 'role.modes.help', 'syntax_key' => 'role.modes.syntax', 'example_key' => 'role.modes.example'], ['name' => 'VHOST', 'desc_key' => 'role.vhost.short', 'help_key' => 'role.vhost.help', 'syntax_key' => 'role.vhost.syntax', 'example_key' => 'role.vhost.example']];
         if ($this->handler->supportsOperclass()) {
-            $commands[] = ['name' => 'OPERCLASS', 'desc_key' => 'role.operclass.short', 'help_key' => 'role.operclass.help', 'syntax_key' => 'role.operclass.syntax'];
+            $commands[] = ['name' => 'OPERCLASS', 'desc_key' => 'role.operclass.short', 'help_key' => 'role.operclass.help', 'syntax_key' => 'role.operclass.syntax', 'example_key' => 'role.operclass.example'];
         }
 
         return $commands;
@@ -90,28 +100,84 @@ final readonly class RoleCommand implements OperServCommandInterface
 
             return;
         }
+        $syntaxKey = $this->missingArgumentSyntax($c, $sub);
+        if (null !== $syntaxKey) {
+            $c->reply('error.syntax', ['%syntax%' => $c->trans($syntaxKey)]);
+
+            return;
+        }
         [$action,$role,$value,$description] = $this->parse($c, $sub);
         $r = $this->handler->handle(new ManageRole($action, $c->sender->nick, new DateTimeImmutable(), $role, $value, description: $description));
         $this->present($c, $sub, $r, $role, $value);
     }
 
+    private function missingArgumentSyntax(OperServContext $c, string $sub): ?string
+    {
+        $first = strtoupper(trim($c->args[1] ?? ''));
+        $second = strtoupper(trim($c->args[2] ?? ''));
+        $value = trim($c->args[3] ?? '');
+        $argumentCount = count($c->args);
+
+        return match ($sub) {
+            'ADD' => '' === $first ? 'role.add.syntax' : null,
+            'DEL' => '' === $first ? 'role.del.syntax' : null,
+            'PERMS' => match ($first) {
+                'ADD', 'DEL' => '' === $second || '' === $value || 4 !== $argumentCount ? 'role.perms.syntax' : null,
+                'LIST' => '' === $second || 3 !== $argumentCount ? 'role.perms.syntax' : null,
+                'CLEAR' => '' === $second || 3 !== $argumentCount ? 'role.perms.syntax' : null,
+                default => '' === $first || '' === $second || in_array($second, ['ADD', 'DEL', 'LIST', 'CLEAR'], true) || 3 !== $argumentCount ? 'role.perms.syntax' : null,
+            },
+            'MODES' => in_array($first, ['VIEW', 'SET'], true)
+                ? ('' === $second || (('VIEW' === $first && 3 !== $argumentCount) || ('SET' === $first && $argumentCount > 4)) ? 'role.modes.syntax' : null)
+                : ('' === $first || '' === $second || in_array($second, ['VIEW', 'SET'], true) ? 'role.modes.syntax' : null),
+            'VHOST' => in_array($first, ['VIEW', 'SET'], true)
+                ? ('' === $second || (('VIEW' === $first && 3 !== $argumentCount) || ('SET' === $first && $argumentCount > 4)) ? 'role.vhost.syntax' : null)
+                : ('' === $first || '' === $second || in_array($second, ['VIEW', 'SET'], true) ? 'role.vhost.syntax' : null),
+            'OPERCLASS' => match ($first) {
+                'LIST' => 2 === $argumentCount ? null : 'role.operclass.syntax',
+                'VIEW' => '' === $second || 3 !== $argumentCount ? 'role.operclass.syntax' : null,
+                'SET' => '' === $second || $argumentCount > 4 ? 'role.operclass.syntax' : null,
+                default => '' === $first || '' === $second || in_array($second, ['VIEW', 'SET', 'LIST'], true) ? 'role.operclass.syntax' : null,
+            },
+            default => null,
+        };
+    }
+
     /** @return array{RoleAction, string, string, string} */
     private function parse(OperServContext $c, string $sub): array
     {
-        $role = strtoupper($c->args[1] ?? '');
-        $verb = strtoupper($c->args[2] ?? '');
-        $value = trim($c->args[3] ?? '');
+        $first = strtoupper(trim($c->args[1] ?? ''));
+        $second = strtoupper(trim($c->args[2] ?? ''));
+        $third = trim($c->args[3] ?? '');
 
         return match ($sub) {
-            'ADD' => [RoleAction::Add, $role, '', trim(implode(' ', array_slice($c->args, 2)))],'DEL' => [RoleAction::Delete, $role, '', ''],'LIST' => [RoleAction::List, '', '', ''],'PERMS' => [match ($verb) {
-                'LIST' => RoleAction::PermissionList,'ADD' => 'ALL' === strtoupper($value) ? RoleAction::PermissionAddAll : RoleAction::PermissionAdd,'DEL' => RoleAction::PermissionDelete,'CLEAR' => RoleAction::PermissionClear,default => RoleAction::Unknown
-            }, $role, $value, ''],'MODES' => [match ($verb) {
-                'VIEW' => RoleAction::ModesView,'SET' => RoleAction::ModesSet,default => RoleAction::Unknown
-            }, $role, $value, ''],'VHOST' => [match ($verb) {
-                'VIEW' => RoleAction::VhostView,'SET' => RoleAction::VhostSet,default => RoleAction::Unknown
-            }, $role, $value, ''],'OPERCLASS' => ['LIST' === strtoupper($c->args[1] ?? '') ? RoleAction::OperclassList : match ($verb) {
-                'VIEW','LIST' => RoleAction::OperclassView,'SET' => RoleAction::OperclassSet,default => RoleAction::Unknown
-            }, $role, $value, ''],default => [RoleAction::Unknown, $role, $value, '']
+            'ADD' => [RoleAction::Add, $first, '', trim(implode(' ', array_slice($c->args, 2)))],
+            'DEL' => [RoleAction::Delete, $first, '', ''],
+            'LIST' => [RoleAction::List, '', '', ''],
+            'PERMS' => match ($first) {
+                'LIST' => [RoleAction::PermissionList, strtoupper($c->args[2] ?? ''), '', ''],
+                'ADD' => ['ALL' === strtoupper($third) ? RoleAction::PermissionAddAll : RoleAction::PermissionAdd, strtoupper($c->args[2] ?? ''), $third, ''],
+                'DEL' => [RoleAction::PermissionDelete, strtoupper($c->args[2] ?? ''), $third, ''],
+                'CLEAR' => [RoleAction::PermissionClear, strtoupper($c->args[2] ?? ''), '', ''],
+                default => [RoleAction::Unknown, $first, $third, ''],
+            },
+            'MODES' => [match ($first) {
+                'VIEW' => RoleAction::ModesView,
+                'SET' => RoleAction::ModesSet,
+                default => RoleAction::Unknown,
+            }, strtoupper($c->args[2] ?? ''), $third, ''],
+            'VHOST' => [match ($first) {
+                'VIEW' => RoleAction::VhostView,
+                'SET' => RoleAction::VhostSet,
+                default => RoleAction::Unknown,
+            }, strtoupper($c->args[2] ?? ''), $third, ''],
+            'OPERCLASS' => match ($first) {
+                'LIST' => [RoleAction::OperclassList, '', '', ''],
+                'VIEW' => [RoleAction::OperclassView, strtoupper($c->args[2] ?? ''), '', ''],
+                'SET' => [RoleAction::OperclassSet, strtoupper($c->args[2] ?? ''), $third, ''],
+                default => [RoleAction::Unknown, $first, $third, ''],
+            },
+            default => [RoleAction::Unknown, $first, $third, ''],
         };
     }
 
@@ -137,9 +203,32 @@ final readonly class RoleCommand implements OperServCommandInterface
     private function permissions(OperServContext $c, ManageRoleResult $r): void
     {
         $c->reply('role.perms.list.header', ['%role%' => $r->role?->name]);
-        foreach ($r->values as $p) {
-            $c->replyRaw('  ' . $p);
+        $c->reply('role.perms.list.columns');
+
+        $permissions = array_merge($r->values, $r->availableValues);
+        sort($permissions);
+
+        foreach ($permissions as $permission) {
+            $assignedKey = in_array($permission, $r->values, true)
+                ? 'role.perms.list.assigned'
+                : 'role.perms.list.unassigned';
+
+            $c->reply('role.perms.list.row', [
+                '%assigned%' => $c->trans($assignedKey),
+                '%permission%' => $permission,
+                '%description%' => $this->permissionDescription($c, $permission),
+            ]);
         }
+    }
+
+    private function permissionDescription(OperServContext $c, string $permission): string
+    {
+        $parts = explode('.', $permission, 2);
+        if (2 !== count($parts) || '' === $parts[0] || '' === $parts[1]) {
+            return $permission;
+        }
+
+        return $c->transInDomain($parts[1] . '.short', $parts[0]);
     }
 
     private function modes(OperServContext $c, ManageRoleResult $r): void

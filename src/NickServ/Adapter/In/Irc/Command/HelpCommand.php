@@ -62,6 +62,11 @@ final readonly class HelpCommand implements NickServCommandInterface
         return 'help.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'help.example';
+    }
+
     public function getOrder(): int
     {
         return 99;
@@ -116,7 +121,7 @@ final readonly class HelpCommand implements NickServCommandInterface
         $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler || ($handler->isOperOnly() && !$sender->isOper)) {
-            $context->reply('help.unknown_command', [
+            $context->reply('unknown_command', [
                 'command' => $targetCmd,
                 'marker' => $context->trans('help.error_marker'),
             ]);
@@ -126,7 +131,7 @@ final readonly class HelpCommand implements NickServCommandInterface
 
         $adapter = $this->createAdapter($context);
         if (!$adapter->canViewCommandInHelp($handler)) {
-            $context->reply('help.unknown_command', [
+            $context->reply('unknown_command', [
                 'command' => $targetCmd,
                 'marker' => $context->trans('help.error_marker'),
             ]);
@@ -154,6 +159,13 @@ final readonly class HelpCommand implements NickServCommandInterface
 
                 return;
             }
+
+            $context->reply('unknown_help_option', [
+                'command' => $handler->getName(),
+                'option' => $subName,
+            ]);
+
+            return;
         }
 
         $context->replyRaw(implode("\n", $this->formatter->renderCommandHelp($adapter, $handler)));
@@ -162,14 +174,18 @@ final readonly class HelpCommand implements NickServCommandInterface
     private function showGeneralHelp(NickServContext $context): void
     {
         $adapter = $this->createAdapter($context);
-        $lines = $this->formatter->renderGeneralHelp($adapter);
+        $inactivityNotice = null;
         if ($this->inactivityExpiryDays > 0) {
-            $lines[] = ' ';
-            $lines[] = $context->trans('help.intro_expiration', [
+            $inactivityNotice = $context->trans('help.intro_expiration', [
                 'marker' => $context->trans('help.warning_marker'),
                 'label' => $context->trans('help.intro_expiration_label'),
                 'days' => $this->inactivityExpiryDays,
             ]);
+        }
+        $lines = $this->formatter->renderGeneralHelp($adapter);
+        if (null !== $inactivityNotice) {
+            $lines[] = ' ';
+            $lines[] = $inactivityNotice;
         }
         $lines[] = $this->formatter->renderFooter($adapter);
         $context->replyRaw(implode("\n", $lines));
@@ -184,13 +200,18 @@ final readonly class HelpCommand implements NickServCommandInterface
     }
 
     /**
-     * @param array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string} $sub
+     * @param array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string, options_key?: string} $sub
      */
     private function showTimezoneIndexHelp(NickServContext $context, string $parentName, array $sub): void
     {
         $adapter = $this->createAdapter($context);
-        $lines = [$this->formatter->renderHeader($adapter, 'HELP ' . $parentName . ' ' . $sub['name'])];
+        $lines = [$this->formatter->renderHeader($adapter, 'HELP ' . $parentName . ' ' . $sub['name']), ' '];
         $lines[] = $context->trans($sub['help_key']);
+        $lines[] = ' ';
+        $lines[] = $context->trans('help.syntax_label', [
+            'syntax' => $context->trans($sub['syntax_key']),
+        ]);
+        $lines = [...$lines, ...$this->formatter->renderExamples($adapter, $sub['example_key'])];
         $lines[] = ' ';
         $lines[] = $context->trans('help.set_timezone.index_label', [
             'syntax' => $context->trans('help.set_timezone.index_syntax'),
@@ -199,10 +220,6 @@ final readonly class HelpCommand implements NickServCommandInterface
         foreach ($this->chunkLine($regionsStr, self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
             $lines[] = $line;
         }
-        $lines[] = ' ';
-        $lines[] = $context->trans('help.syntax_label', [
-            'syntax' => $context->trans($sub['syntax_key']),
-        ]);
         $lines[] = $this->formatter->renderFooter($adapter);
         $context->replyRaw(implode("\n", $lines));
     }
@@ -240,7 +257,7 @@ final readonly class HelpCommand implements NickServCommandInterface
         $adapter = $this->createAdapter($context);
 
         if (null === $region) {
-            $lines = [$this->formatter->renderHeader($adapter, 'HELP SET TIMEZONE ' . $regionArg)];
+            $lines = [$this->formatter->renderHeader($adapter, 'HELP SET TIMEZONE ' . $regionArg), ' '];
             $lines[] = $context->trans('help.set_timezone.region_unknown', [
                 'marker' => $context->trans('help.error_marker'),
                 'syntax' => $context->trans('help.set_timezone.region_syntax'),
@@ -252,8 +269,14 @@ final readonly class HelpCommand implements NickServCommandInterface
             return;
         }
 
-        $lines = [$this->formatter->renderHeader($adapter, 'HELP SET TIMEZONE ' . $region)];
+        $lines = [$this->formatter->renderHeader($adapter, 'HELP SET TIMEZONE ' . $region), ' '];
         $lines[] = $context->trans('help.set_timezone.region_header', ['region' => $region]);
+        $lines[] = ' ';
+        $lines[] = $context->trans('help.syntax_label', [
+            'syntax' => $context->trans('set.timezone.syntax'),
+        ]);
+        $lines = [...$lines, ...$this->formatter->renderExamples($adapter, 'set.timezone.example')];
+        $lines[] = ' ';
         $timezones = $this->timezoneHelpProvider->getTimezonesForRegion($region);
         foreach ($this->chunkLine(implode(', ', $timezones), self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
             $lines[] = $line;
@@ -263,7 +286,7 @@ final readonly class HelpCommand implements NickServCommandInterface
         $context->replyRaw(implode("\n", $lines));
     }
 
-    /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */
+    /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}|null */
     private function findSubCommand(NickServCommandInterface $handler, string $name): ?array
     {
         return array_find($handler->getSubCommandHelp(), static fn (array $sub): bool => $name === strtoupper($sub['name']));

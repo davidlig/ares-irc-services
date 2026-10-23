@@ -48,6 +48,11 @@ final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAu
         return 'regmode.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'regmode.example';
+    }
+
     public function getOrder(): int
     {
         return 67;

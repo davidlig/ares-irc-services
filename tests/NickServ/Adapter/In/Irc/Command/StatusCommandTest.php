@@ -46,6 +46,7 @@ final class StatusCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('status.syntax', $command->getSyntaxKey());
         self::assertSame('status.help', $command->getHelpKey());
+        self::assertSame('status.example', $command->getExampleKey());
         self::assertSame(6, $command->getOrder());
         self::assertSame('status.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -73,7 +74,7 @@ final class StatusCommandTest extends TestCase
         $messages = [];
         $command->execute($this->createContext($messages, ['target']));
 
-        self::assertSame(['status.header', 'status.identified', 'status.footer'], $messages);
+        self::assertSame(['status.header', 'status.identified', 'reply.separator'], $messages);
     }
 
     #[Test]
@@ -94,7 +95,7 @@ final class StatusCommandTest extends TestCase
         $messages = [];
         $command->execute($this->createContext($messages, ['ghost']));
 
-        self::assertSame(['status.header', 'status.not_registered_offline', 'status.footer'], $messages);
+        self::assertSame(['status.header', 'status.not_registered_offline', 'reply.separator'], $messages);
     }
 
     #[Test]
@@ -112,7 +113,7 @@ final class StatusCommandTest extends TestCase
             'status.pending',
             'status.pending_expires',
             'status.pending_expires_at',
-            'status.footer',
+            'reply.separator',
         ], $messages);
 
         // Without expiresAt
@@ -124,7 +125,7 @@ final class StatusCommandTest extends TestCase
         self::assertSame([
             'status.header',
             'status.pending',
-            'status.footer',
+            'reply.separator',
         ], $messages);
     }
 
@@ -132,9 +133,9 @@ final class StatusCommandTest extends TestCase
     public function presentsSimpleOutcomes(): void
     {
         $cases = [
-            [StatusNickResult::unregisteredOnline('nick'), ['status.header', 'status.unregistered', 'status.footer']],
-            [StatusNickResult::registeredNotConnected('nick'), ['status.header', 'status.not_connected', 'status.footer']],
-            [StatusNickResult::registeredNotIdentified('nick'), ['status.header', 'status.not_identified', 'status.footer']],
+            [StatusNickResult::unregisteredOnline('nick'), ['status.header', 'status.unregistered', 'reply.separator']],
+            [StatusNickResult::registeredNotConnected('nick'), ['status.header', 'status.not_connected', 'reply.separator']],
+            [StatusNickResult::registeredNotIdentified('nick'), ['status.header', 'status.not_identified', 'reply.separator']],
         ];
 
         foreach ($cases as [$result, $expectedMessages]) {
@@ -165,7 +166,7 @@ final class StatusCommandTest extends TestCase
             'status.suspended',
             'status.suspended_reason',
             'status.suspended_until',
-            'status.footer',
+            'reply.separator',
         ], $messages);
 
         // Permanent without reason
@@ -177,7 +178,7 @@ final class StatusCommandTest extends TestCase
             'status.header',
             'status.suspended',
             'status.suspended_permanent',
-            'status.footer',
+            'reply.separator',
         ], $messages);
     }
 
@@ -193,7 +194,7 @@ final class StatusCommandTest extends TestCase
             'status.header',
             'status.forbidden',
             'status.forbidden_reason',
-            'status.footer',
+            'reply.separator',
         ], $messages);
 
         // Without reason
@@ -204,7 +205,7 @@ final class StatusCommandTest extends TestCase
         self::assertSame([
             'status.header',
             'status.forbidden',
-            'status.footer',
+            'reply.separator',
         ], $messages);
     }
 
@@ -220,7 +221,7 @@ final class StatusCommandTest extends TestCase
             'status.header',
             'status.pending_deletion',
             'status.pending_deletion_at',
-            'status.footer',
+            'reply.separator',
         ], $messages);
 
         // Without date
@@ -231,7 +232,7 @@ final class StatusCommandTest extends TestCase
         self::assertSame([
             'status.header',
             'status.pending_deletion',
-            'status.footer',
+            'reply.separator',
         ], $messages);
     }
 

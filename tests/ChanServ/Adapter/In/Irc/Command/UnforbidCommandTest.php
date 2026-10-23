@@ -75,6 +75,7 @@ final class UnforbidCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertSame('unforbid.help', $cmd->getHelpKey());
+        self::assertSame('unforbid.example', $cmd->getExampleKey());
     }
 
     #[Test]

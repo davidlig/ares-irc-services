@@ -24,6 +24,8 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_slice;
+
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
 {
@@ -95,6 +97,11 @@ final class HelpCommandTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'help.example';
             }
 
             public function getOrder(): int
@@ -184,6 +191,11 @@ final class HelpCommandTest extends TestCase
                 return 'register.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'register.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -231,7 +243,7 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['REGISTER'], $notifier, $translator, $registry));
 
-        self::assertContains('help.unknown_command', $messages);
+        self::assertContains('unknown_command', $messages);
     }
 
     #[Test]
@@ -252,7 +264,7 @@ final class HelpCommandTest extends TestCase
             new ChanServCommandRegistry([]),
         ));
 
-        self::assertSame(['help.unknown_command'], $messages);
+        self::assertSame(['unknown_command'], $messages);
     }
 
     #[Test]
@@ -290,6 +302,11 @@ final class HelpCommandTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'register.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'register.example';
             }
 
             public function getOrder(): int
@@ -380,6 +397,11 @@ final class HelpCommandTest extends TestCase
                 return 'help.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'help.example';
+            }
+
             public function getOrder(): int
             {
                 return 99;
@@ -430,6 +452,11 @@ final class HelpCommandTest extends TestCase
         $all = implode(' ', $messages);
         self::assertStringContainsString('help.intro_expiration', $all);
         self::assertStringContainsString('help.footer', $all);
+        $tail = array_slice($messages, -4);
+        self::assertStringStartsWith('help.general_footer', $tail[0]);
+        self::assertSame(' ', $tail[1]);
+        self::assertStringStartsWith('help.intro_expiration', $tail[2]);
+        self::assertStringStartsWith('help.footer', $tail[3]);
     }
 
     #[Test]
@@ -469,6 +496,11 @@ final class HelpCommandTest extends TestCase
                 return 'set.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'set.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -485,7 +517,7 @@ final class HelpCommandTest extends TestCase
                     [
                         'name' => 'FOUNDER',
                         'desc_key' => 'set.founder.desc',
-                        'help_key' => 'set.founder.help',
+                        'help_key' => 'set.founder.help', 'example_key' => 'set.founder.example',
                         'syntax_key' => 'set.founder.syntax',
                     ],
                 ];
@@ -528,15 +560,20 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
-    public function twoArgsWithUnknownSubCommandShowsCommandHelp(): void
+    public function twoArgsWithUnknownSubCommandShowsExplicitUnknownOption(): void
     {
         $messages = [];
+        $translationCalls = [];
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages = explode("\n", $m);
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters) use (&$translationCalls): string {
+            $translationCalls[] = ['id' => $id, 'parameters' => $parameters];
+
+            return $id;
+        });
 
         $setHandler = new class implements ChanServCommandInterface {
             public function getName(): string
@@ -564,6 +601,11 @@ final class HelpCommandTest extends TestCase
                 return 'set.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'set.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -580,7 +622,7 @@ final class HelpCommandTest extends TestCase
                     [
                         'name' => 'FOUNDER',
                         'desc_key' => 'set.founder.desc',
-                        'help_key' => 'set.founder.help',
+                        'help_key' => 'set.founder.help', 'example_key' => 'set.founder.example',
                         'syntax_key' => 'set.founder.syntax',
                     ],
                 ];
@@ -616,10 +658,12 @@ final class HelpCommandTest extends TestCase
         $registry = new ChanServCommandRegistry([$setHandler]);
 
         $cmd = $this->createCommand();
-        $cmd->execute($this->createContext(['SET', 'NOSUCHSUB'], $notifier, $translator, $registry));
+        $cmd->execute($this->createContext(['SET', 'ascsas'], $notifier, $translator, $registry));
 
-        self::assertContains('set.help', $messages);
-        self::assertContains('help.footer', $messages);
+        self::assertSame(['unknown_help_option'], $messages);
+        self::assertSame('unknown_help_option', $translationCalls[0]['id']);
+        self::assertSame('SET', $translationCalls[0]['parameters']['%command%']);
+        self::assertSame('ASCSAS', $translationCalls[0]['parameters']['%option%']);
     }
 
     #[Test]
@@ -659,6 +703,11 @@ final class HelpCommandTest extends TestCase
                 return 'set.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'set.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -675,7 +724,7 @@ final class HelpCommandTest extends TestCase
                     [
                         'name' => 'FOUNDER',
                         'desc_key' => 'set.founder.desc',
-                        'help_key' => 'set.founder.help',
+                        'help_key' => 'set.founder.help', 'example_key' => 'set.founder.example',
                         'syntax_key' => 'set.founder.syntax',
                     ],
                 ];
@@ -751,6 +800,11 @@ final class HelpCommandTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'register.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'register.example';
             }
 
             public function getOrder(): int
@@ -840,6 +894,11 @@ final class HelpCommandTest extends TestCase
                 return 'access.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'access.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -856,19 +915,19 @@ final class HelpCommandTest extends TestCase
                     [
                         'name' => 'ADD',
                         'desc_key' => 'access.add.desc',
-                        'help_key' => 'access.add.help',
+                        'help_key' => 'access.add.help', 'example_key' => 'access.add.example',
                         'syntax_key' => 'access.add.syntax',
                     ],
                     [
                         'name' => 'DEL',
                         'desc_key' => 'access.del.desc',
-                        'help_key' => 'access.del.help',
+                        'help_key' => 'access.del.help', 'example_key' => 'access.del.example',
                         'syntax_key' => 'access.del.syntax',
                     ],
                     [
                         'name' => 'LIST',
                         'desc_key' => 'access.list.desc',
-                        'help_key' => 'access.list.help',
+                        'help_key' => 'access.list.help', 'example_key' => 'access.list.example',
                         'syntax_key' => 'access.list.syntax',
                     ],
                 ];
@@ -912,7 +971,7 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
-    public function helpWithUnknownSubcommandFallsBackToCommandHelp(): void
+    public function helpWithUnknownSubcommandShowsExplicitUnknownOption(): void
     {
         $messages = [];
         $notifier = $this->createMock(ChanServNotifierInterface::class);
@@ -948,6 +1007,11 @@ final class HelpCommandTest extends TestCase
                 return 'akick.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'akick.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -964,7 +1028,7 @@ final class HelpCommandTest extends TestCase
                     [
                         'name' => 'ADD',
                         'desc_key' => 'akick.add.desc',
-                        'help_key' => 'akick.add.help',
+                        'help_key' => 'akick.add.help', 'example_key' => 'akick.add.example',
                         'syntax_key' => 'akick.add.syntax',
                     ],
                 ];
@@ -1002,7 +1066,7 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['AKICK', 'INVALID'], $notifier, $translator, $registry));
 
-        self::assertContains('akick.help', $messages);
+        self::assertSame(['unknown_help_option'], $messages);
     }
 
     #[Test]
@@ -1038,6 +1102,13 @@ final class HelpCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
         self::assertSame('help.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getExampleKeyReturnsHelpExample(): void
+    {
+        $cmd = $this->createCommand();
+        self::assertSame('help.example', $cmd->getExampleKey());
     }
 
     #[Test]
@@ -1120,7 +1191,7 @@ final class HelpCommandTest extends TestCase
         $handler->method('getHelpKey')->willReturn('command.help');
         $handler->method('getSyntaxKey')->willReturn('command.syntax');
         $handler->method('getSubCommandHelp')->willReturn([
-            ['name' => 'FOUNDER', 'desc_key' => 'set.founder.short', 'help_key' => 'set.founder.help', 'syntax_key' => 'set.founder.syntax'],
+            ['name' => 'FOUNDER', 'desc_key' => 'set.founder.short', 'help_key' => 'set.founder.help', 'example_key' => 'set.founder.example', 'syntax_key' => 'set.founder.syntax'],
         ]);
         $registry = new ChanServCommandRegistry([$handler]);
 

@@ -51,6 +51,11 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
         return 'forbidvhost.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'forbidvhost.example';
+    }
+
     public function getOrder(): int
     {
         return 72;
@@ -64,9 +69,9 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'ADD', 'desc_key' => 'forbidvhost.add.short', 'help_key' => 'forbidvhost.add.help', 'syntax_key' => 'forbidvhost.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'forbidvhost.del.short', 'help_key' => 'forbidvhost.del.help', 'syntax_key' => 'forbidvhost.del.syntax'],
-            ['name' => 'LIST', 'desc_key' => 'forbidvhost.list.short', 'help_key' => 'forbidvhost.list.help', 'syntax_key' => 'forbidvhost.list.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'forbidvhost.add.short', 'help_key' => 'forbidvhost.add.help', 'syntax_key' => 'forbidvhost.add.syntax', 'example_key' => 'forbidvhost.add.example'],
+            ['name' => 'DEL', 'desc_key' => 'forbidvhost.del.short', 'help_key' => 'forbidvhost.del.help', 'syntax_key' => 'forbidvhost.del.syntax', 'example_key' => 'forbidvhost.del.example'],
+            ['name' => 'LIST', 'desc_key' => 'forbidvhost.list.short', 'help_key' => 'forbidvhost.list.help', 'syntax_key' => 'forbidvhost.list.syntax', 'example_key' => 'forbidvhost.list.example'],
         ];
     }
 
@@ -203,13 +208,13 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
     private function resolveCreatorName(?int $creatorNickId, NickServContext $context): string
     {
         if (null === $creatorNickId) {
-            return $context->trans('forbidvhost.list.unknown_creator');
+            return $context->trans('label.unknown_creator');
         }
 
         $creator = $context->senderAccount?->getId() === $creatorNickId
             ? $context->senderAccount
             : null;
 
-        return null !== $creator ? $creator->getNickname() : $context->trans('forbidvhost.list.unknown_creator');
+        return null !== $creator ? $creator->getNickname() : $context->trans('label.unknown_creator');
     }
 }
