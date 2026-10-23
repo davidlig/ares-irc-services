@@ -440,6 +440,17 @@ debug:
   founder_action: "Sortzaile mailako ekintza"
   prefix_reason:  "Arrazoia: %reason%"
 
+# --- SAREGISTER (IRCop) -----------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#kanala> <ezizena> <deskribapena>"
+  short: "Beste erabiltzaile baten izenean kanal bat erregistratzen du."
+  help: "<#kanala> erregistratzen du <ezizena> erabiltzailearen izenean; kontu hori jada aktiboa izan behar da. Kanala ez da sarean egon behar eta ez duzu bertara sartu behar. Izendatutako kontua berehala bihurtzen da sortzaile. chanserv.saregister baimena behar du."
+  registered: "\x0303✔\x03 \x02%channel%\x02 kanala erregistratu da, \x02%nickname%\x02 sortzaile dela."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanala dagoeneko erregistratuta dago."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ezabatzeko zain dago eta ezin da erregistratu."
+  founder_not_found: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez da erregistratutako kontua."
+  founder_inactive: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez da kontu aktiboa eta ezin da sortzaile izan."
+
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
   syntax:           "HISTORY <#kanala> {ADD|DEL|VIEW|CLEAR}"

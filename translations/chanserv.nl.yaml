@@ -386,6 +386,17 @@ unsuspend:
 nojoin:
   reason: "NOJOIN niveau-beperking"
 
+# --- SAREGISTER (IRCop) -----------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#kanaal> <nicknaam> <beschrijving>"
+  short: "Registreert een kanaal namens een andere gebruiker."
+  help: "Registreert <#kanaal> namens <nicknaam>, dat al een actief account moet zijn. Het kanaal hoeft niet op het netwerk te bestaan en je hoeft het niet te betreden. Het aangewezen account wordt onmiddellijk oprichter. Vereist de machtiging chanserv.saregister."
+  registered: "\x0303✔\x03 Het kanaal \x02%channel%\x02 is geregistreerd met \x02%nickname%\x02 als oprichter."
+  already_registered: "\x0304✗\x03 Het kanaal \x02%channel%\x02 is al geregistreerd."
+  pending_deletion: "\x0304✗\x03 Het kanaal \x02%channel%\x02 wacht op verwijdering en kan niet worden geregistreerd."
+  founder_not_found: "\x0304✗\x03 De nicknaam \x02%nickname%\x02 is geen geregistreerd account."
+  founder_inactive: "\x0304✗\x03 De nicknaam \x02%nickname%\x02 is geen actief account en kan geen oprichter zijn."
+
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "U bent niet geautoriseerd om dit kanaal te betreden."

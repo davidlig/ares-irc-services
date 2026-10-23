@@ -386,6 +386,17 @@ unsuspend:
 nojoin:
   reason: "Restrição de nível NOJOIN"
 
+# --- SAREGISTER (IRCop) -----------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#canal> <apelido> <descrição>"
+  short: "Registra um canal em nome de outro utilizador."
+  help: "Registra <#canal> em nome de <apelido>, que já deve ser uma conta ativa. O canal não precisa de existir na rede e não precisa de entrar nele. A conta indicada torna-se fundadora de imediato. Requer a permissão chanserv.saregister."
+  registered: "\x0303✔\x03 O canal \x02%channel%\x02 foi registado com \x02%nickname%\x02 como fundador."
+  already_registered: "\x0304✗\x03 O canal \x02%channel%\x02 já está registado."
+  pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 está pendente de eliminação e não pode ser registado."
+  founder_not_found: "\x0304✗\x03 O apelido \x02%nickname%\x02 não é uma conta registada."
+  founder_inactive: "\x0304✗\x03 O apelido \x02%nickname%\x02 não é uma conta ativa e não pode ser fundador."
+
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "Não está autorizado a entrar neste canal."

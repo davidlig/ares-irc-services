@@ -29,11 +29,11 @@ S8. Token delivery depends on the mode: in `REGMODE TOKEN` the token is delivere
 S9. `/msg ChanServ SAREGISTER <#channel> <nickname> <description>` registers a channel even if it does not yet exist on the network and without requiring the operator to join it. ChanServ must verify that the nickname belongs to an active registered account and that the channel is not already registered. That account becomes the founder immediately. The operation is recorded in the audit system with the responsible operator, the channel and the designated founder.
 
 ## Tasks
-- T1 | S1-S8 | inline | complete; commit pending | Risk: items 2,3.
-- T2 | S1-S8 | inline | complete; commit pending | Risk: items 2,3.
-- T3 | S1-S8 | inline | complete; commit pending | Risk: items 3.
-- T4 | S1-S8 | inline | complete; commit pending | Risk: items 3.
-- T5 | S1-S9 | inline | gates pending | Risk: items 2,3.
+- T1 | S1-S8 | inline | complete; commit b831720b | Risk: items 2,3.
+- T2 | S1-S8 | inline | complete; commit b831720b | Risk: items 2,3.
+- T3 | S1-S8 | inline | complete; commit 75fed232 | Risk: items 3.
+- T4 | S1-S8 | inline | complete; commit 75fed232 | Risk: items 3.
+- T5 | S1-S9 | inline | complete; gates: phpunit 6305 tests 87460 assertions, phpstan max clean, php-cs-fixer clean, container lint ok, coverage 100% (22275/22275 lines) | Risk: items 2,3.
 
 ## Log
 
@@ -48,3 +48,5 @@ L4. Email delivery failure in EMAIL mode returns `RegisteredWithoutMail`: the ac
 L5. T3/T4 done. `SAREGISTER` reuses `RegisteredChannel::register()`, the default level set, the akick reset and `ChannelRegisteredEvent`, so UDB/protocol sync and follow-up services behave exactly as with a regular registration. Only the two checks named in the approval are applied, plus channel-name validity enforced by `getChannelNameArg()`.
 
 L6. `saregister` HELP/translations added to 14 locales for both services; command count expectation moved 69 → 71.
+
+L7. 2026-10-23: T5 gates verified on this candidate. Runner `./scripts/check-coverage.sh 100 --issues`: coverage exactly 100% with zero PHPUnit issues. Two work-unit commits on `feat/staff-nickname-channel-registration`, branched from `c0bcb09f` (`feat/nickserv-regmode`); the branch still requires a rebase onto `main` after PR #57 merges before the #31 PR is opened.

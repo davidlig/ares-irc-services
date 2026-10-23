@@ -440,6 +440,17 @@ debug:
   founder_action: "Seviye-kurucu eylemi"
   prefix_reason:  "Sebep: %reason%"
 
+# --- SAREGISTER (IRCop) -----------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#kanal> <takma ad> <açıklama>"
+  short: "Başka bir kullanıcı adına bir kanal kaydeder."
+  help: "<#kanal> kanalını <takma ad> adına kaydeder; bu ad zaten etkin bir hesap olmalıdır. Kanalın ağda bulunması ve kanala katılmanız gerekmez. Belirtilen hesap hemen kurucu olur. chanserv.saregister iznini gerektirir."
+  registered: "\x0303✔\x03 \x02%channel%\x02 kanalı, kurucu olarak \x02%nickname%\x02 ile kaydedildi."
+  already_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten kayıtlı."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı silinmeyi bekliyor ve kaydedilemez."
+  founder_not_found: "\x0304✗\x03 \x02%nickname%\x02 takma adı kayıtlı bir hesap değil."
+  founder_inactive: "\x0304✗\x03 \x02%nickname%\x02 takma adı etkin bir hesap değil ve kurucu olamaz."
+
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
   syntax:           "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
