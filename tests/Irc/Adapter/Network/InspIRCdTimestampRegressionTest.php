@@ -19,6 +19,7 @@ use App\Irc\Domain\Network\Channel;
 use App\Irc\Domain\ValueObject\ChannelName;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -47,7 +48,8 @@ final class InspIRCdTimestampRegressionTest extends TestCase
         return [$channel, new InspIRCdNetworkStateAdapter($dispatcher)];
     }
 
-    public function testLowerFmodeIsAcceptedWithoutLoweringChannelTimestamp(): void
+    #[Test]
+    public function lowerFmodeIsAcceptedWithoutLoweringChannelTimestamp(): void
     {
         [$c,$a] = $this->network();
         $a->handleMessage(IRCMessage::fromRawLine(':001 FMODE #test 99 +t'));
@@ -55,7 +57,8 @@ final class InspIRCdTimestampRegressionTest extends TestCase
         self::assertSame(100, $c->getCreatedAt()->getTimestamp());
     }
 
-    public function testLowerLmodeIsAcceptedWithoutLoweringChannelTimestamp(): void
+    #[Test]
+    public function lowerLmodeIsAcceptedWithoutLoweringChannelTimestamp(): void
     {
         [$c,$a] = $this->network();
         $a->handleMessage(IRCMessage::fromRawLine(':001 LMODE #test 99 b bad!*@* 90 setter'));
@@ -63,14 +66,16 @@ final class InspIRCdTimestampRegressionTest extends TestCase
         self::assertSame(100, $c->getCreatedAt()->getTimestamp());
     }
 
-    public function testEqualFjoinKeyUsesInspLexicallySmallerValue(): void
+    #[Test]
+    public function equalFjoinKeyUsesInspLexicallySmallerValue(): void
     {
         [$c,$a] = $this->network();
         $a->handleMessage(IRCMessage::fromRawLine(':001 FJOIN #test 100 +nk zkey :'));
         self::assertSame('akey', $c->getModeParam('k'));
     }
 
-    public function testHigherModeAndListMessagesPreserveExactStateHash(): void
+    #[Test]
+    public function higherModeAndListMessagesPreserveExactStateHash(): void
     {
         [$c,$a] = $this->network();
         $before = hash('sha256', serialize($c));
