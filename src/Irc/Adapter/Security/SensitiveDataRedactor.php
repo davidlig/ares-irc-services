@@ -33,13 +33,16 @@ final readonly class SensitiveDataRedactor
         if ('PASS' === $command) {
             if (isset($params[0])) {
                 $params[0] = self::MASK;
-            } elseif (null !== $trailing) {
+            }
+            if (null !== $trailing) {
                 $trailing = self::MASK;
             }
-        } elseif ('SERVER' === $command && isset($params[2]) && 1 === preg_match('/^[A-Za-z0-9]{3}$/D', $params[2])) {
+        } elseif ('SERVER' === $command && isset($params[2])) {
             // InspIRCd SERVER is <name> <password> <sid>; Unreal SERVER has
             // no password and uses <name> <hop-count> instead.
             $params[1] = self::MASK;
+        } elseif ('ERROR' === $command && null !== $trailing) {
+            $trailing = self::redactIrcLine($trailing);
         }
 
         if ($params === $message->params && $trailing === $message->trailing) {

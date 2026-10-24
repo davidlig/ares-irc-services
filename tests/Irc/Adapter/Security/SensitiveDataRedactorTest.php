@@ -226,4 +226,14 @@ final class SensitiveDataRedactorTest extends TestCase
         self::assertSame(['services.test.local', '1'], $unrealServer->params);
         self::assertSame('Ares Services', $unrealServer->trailing);
     }
+
+    #[Test]
+    public function passwordEchoesInErrorsAndMalformedLinkFramesAreStillRedacted(): void
+    {
+        foreach (['ERROR :PASS :diagnostic-secret', 'PASS diagnostic-secret :echo-secret', 'SERVER peer.test diagnostic-secret invalid-sid :description'] as $line) {
+            $redacted = SensitiveDataRedactor::redactIrcMessage(IRCMessage::fromRawLine($line))->toRawLine();
+            self::assertStringNotContainsString('diagnostic-secret', $redacted);
+            self::assertStringNotContainsString('echo-secret', $redacted);
+        }
+    }
 }
