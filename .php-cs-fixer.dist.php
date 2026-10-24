@@ -13,11 +13,9 @@ return (new PhpCsFixer\Config())
     ->setRules([
         // Base Symfony rules
         '@Symfony' => true,
-        '@Symfony:risky' => true,
 
         // Specific rules for modern PHP (8.5+)
         '@PHP8x5Migration' => true,
-        '@PHP8x5Migration:risky' => true,
 
         // Mandatory strict typing
         'declare_strict_types' => true,
