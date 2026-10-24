@@ -279,6 +279,7 @@ help:
   command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   options_header: "\x02 ■ Επιλογές:\x02"
+  examples_header: "\x02 ■ Παραδείγματα:\x02"
   general_syntax: "HELP <εντολή>"
   general_footer: "%marker% Χρησιμοποιήστε /msg %bot% \x02\x0303%syntax%\x03\x0F για περισσότερες πληροφορίες."
   set_sub_syntax: "HELP %command% <επιλογή>"

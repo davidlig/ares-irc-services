@@ -279,6 +279,7 @@ help:
   command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   options_header: "\x02 ■ Aukerak:\x02"
+  examples_header: "\x02 ■ Adibideak:\x02"
   general_syntax: "HELP <komandoa>"
   general_footer: "%marker% Erabili /msg %bot% \x02\x0303%syntax%\x03\x0F informazio gehiago lortzeko."
   set_sub_syntax: "HELP %command% <aukera>"

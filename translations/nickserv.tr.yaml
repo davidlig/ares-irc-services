@@ -279,6 +279,7 @@ help:
   command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   options_header: "\x02 ■ Seçenekler:\x02"
+  examples_header: "\x02 ■ Örnekler:\x02"
   general_syntax: "HELP <komut>"
   general_footer: "%marker% Daha fazla bilgi için /msg %bot% \x02\x0303%syntax%\x03\x0F kullanın."
   set_sub_syntax: "HELP %command% <seçenek>"

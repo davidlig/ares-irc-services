@@ -17,6 +17,7 @@ use function dirname;
 use function end;
 use function in_array;
 use function is_array;
+use function str_contains;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
@@ -34,6 +35,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'warning_marker' => ['04'],
             'intro_expiration' => ['04'],
             'general_header' => [],
+            'examples_header' => [],
             'command_line' => ['03'],
             'subcommand_line' => ['03'],
             'options_header' => [],
@@ -72,7 +74,7 @@ final class UnifiedHelpFormatterTest extends TestCase
 
             self::assertIsString($help['header']);
             self::assertStringStartsWith("\x02\x0307🤖 %title%\x03\x0F ", $help['header'], $locale);
-            foreach (['general_header', 'options_header', 'ircop_header'] as $section) {
+            foreach (['general_header', 'options_header', 'examples_header', 'ircop_header'] as $section) {
                 self::assertIsString($help[$section]);
                 self::assertStringStartsWith("\x02 ■ ", $help[$section], $locale . ': ' . $section);
                 self::assertStringEndsWith("\x02", $help[$section], $locale . ': ' . $section);
@@ -339,6 +341,80 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function rendersRootExamplesWithTheConfiguredUncoloredMessagePrefix(): void
+    {
+        $context = new NickServHelpFormatterContext();
+        $context->botName = 'ConfiguredBot';
+        $context->exampleTranslations = [
+            'help.examples_header' => 'Examples:',
+            'register.example' => "%command_prefix%\x02\x0303REGISTER FirstPassword\x03\x0F",
+            'register.examples.0' => "%command_prefix%\x02\x0303REGISTER SecondPassword\x03\x0F",
+        ];
+        $command = new class implements HelpableCommandInterface {
+            public function getName(): string
+            {
+                return 'REGISTER';
+            }
+
+            public function getOrder(): int
+            {
+                return 1;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'register.short';
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'register.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'register.help';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'register.example';
+            }
+        };
+
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp($context, $command);
+
+        self::assertContains('Examples:', $lines);
+        self::assertContains("  /msg ConfiguredBot \x02\x0303REGISTER FirstPassword\x03\x0F", $lines);
+        self::assertContains("  /msg ConfiguredBot \x02\x0303REGISTER SecondPassword\x03\x0F", $lines);
+    }
+
+    #[Test]
+    public function doesNotLookUpExamplesForCommandsWithoutTheOptionalGetter(): void
+    {
+        $context = new NickServHelpFormatterContext();
+        $context->exampleTranslations = [
+            'help.examples_header' => 'Examples:',
+            'register.example' => '%command_prefix%REGISTER Password',
+        ];
+
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp($context, new NickServHelpableCommand('REGISTER', 1));
+
+        self::assertNotContains('Examples:', $lines);
+        self::assertNotContains('help.examples_header', array_column($context->translations, 'key'));
+    }
+
+    #[Test]
     public function rendersSubcommandHelpWithOptionalDetails(): void
     {
         $context = new NickServHelpFormatterContext();
@@ -384,6 +460,11 @@ final class NickServHelpFormatterContext implements HelpFormatterContextInterfac
     /** @var list<int> */
     public array $formattedDurations = [];
 
+    /** @var array<string, string> */
+    public array $exampleTranslations = [];
+
+    public string $botName = 'NickServ';
+
     /**
      * @param list<HelpableCommandInterface> $commands
      * @param list<HelpableCommandInterface> $ircopCommands
@@ -410,6 +491,14 @@ final class NickServHelpFormatterContext implements HelpFormatterContextInterfac
     {
         $this->translations[] = ['key' => $key, 'params' => $params];
 
+        if (isset($this->exampleTranslations[$key])) {
+            return $this->exampleTranslations[$key];
+        }
+
+        if ('help.examples_header' === $key || str_contains($key, '.example')) {
+            return $key;
+        }
+
         return 'translated:' . $key;
     }
 
@@ -418,6 +507,11 @@ final class NickServHelpFormatterContext implements HelpFormatterContextInterfac
         $this->formattedDurations[] = $seconds;
 
         return 300 === $seconds ? '5 minutes' : $seconds . ' seconds';
+    }
+
+    public function getBotName(): string
+    {
+        return $this->botName;
     }
 
     public function getCommandsForGeneralHelp(): iterable
