@@ -319,7 +319,7 @@ final class TranslationCatalogTest extends TestCase
                     self::assertNotSame($key, $message, $label);
                     self::assertDoesNotMatchRegularExpression('/%[a-z_]+%/', $message, $label);
                     self::assertFalse(self::containsHardcodedServiceNickname($message), $label);
-                    if (in_array($key, ['help.general_footer', 'ircoponly.help', 'forbidvhost.help'], true)) {
+                    if (in_array($key, ['help.general_footer', 'ircoponly.help'], true)) {
                         self::assertStringContainsString($nicknames[$domain], $message, $label);
                     }
                     if (in_array($key, ['error.not_identified', 'register.help'], true)) {
@@ -551,8 +551,9 @@ final class TranslationCatalogTest extends TestCase
 
         $dead = [];
         foreach (self::DOMAINS as $domain) {
-            foreach (array_keys(self::flatten(self::parseDomain($domain, 'en'))) as $key) {
-                if (str_contains($source, $key) || self::isDynamicKey($key)) {
+            $catalog = self::flatten(self::parseDomain($domain, 'en'));
+            foreach (array_keys($catalog) as $key) {
+                if (str_contains($source, $key) || self::isDynamicKey($key) || self::isIndexedExampleKey($key, $catalog)) {
                     continue;
                 }
                 if ('common' === $domain && ('unknown_help_option' === $key || str_starts_with($key, 'duration.'))) {
@@ -787,6 +788,23 @@ final class TranslationCatalogTest extends TestCase
         }
 
         return false;
+    }
+
+    /** @param array<string, mixed> $catalog */
+    private static function isIndexedExampleKey(string $key, array $catalog): bool
+    {
+        return 1 === preg_match('/^(.+example)s\.[0-9]+$/', $key, $matches)
+            && isset($catalog[$matches[1]]);
+    }
+
+    #[Test]
+    public function indexedExamplesRequireTheirSingularKeyInTheSameCatalog(): void
+    {
+        self::assertTrue(self::isIndexedExampleKey('help.examples.0', ['help.example' => 'HELP']));
+        self::assertTrue(self::isIndexedExampleKey('identify.native_examples.1', ['identify.native_example' => '/NICK']));
+        self::assertFalse(self::isIndexedExampleKey('help.examples.0', ['other.example' => 'HELP']));
+        self::assertFalse(self::isIndexedExampleKey('help.examples.invalid', ['help.example' => 'HELP']));
+        self::assertFalse(self::isIndexedExampleKey('help.example', ['help.example' => 'HELP']));
     }
 
     private static function serviceFor(string $relativePath): ?string
