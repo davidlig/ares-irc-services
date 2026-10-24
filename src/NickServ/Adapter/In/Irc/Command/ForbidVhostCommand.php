@@ -51,6 +51,11 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
         return 'forbidvhost.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'forbidvhost.example';
+    }
+
     public function getOrder(): int
     {
         return 72;

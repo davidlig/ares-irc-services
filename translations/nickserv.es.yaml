@@ -227,19 +227,12 @@ set:
 saset:
   syntax:           "SASET <apodo> <opción> <valor>"
   short:            "Modifica la configuración de otro apodo."
-  help:             |
-    Permite a un IRCop modificar la configuración de un apodo registrado.
-    El apodo objetivo no puede ser un usuario Root, IRCop ni un servicio.
-
-    Opciones disponibles: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
-
-    SASET PASSWORD: Cambia la contraseña directamente (sin confirmación por email).
-    SASET EMAIL: Cambia el correo directamente (sin validación de token).
-
-    Este comando requiere permiso IRCop: nickserv.saset
-
-    Sintaxis: SASET <apodo> <opción> <valor>
-    Ejemplo: SASET Usuario PASSWORD nuevopass
+  help: |-
+    Permite a un IRCop cambiar la configuración de otro apodo registrado. No
+    admite apodos de Root, IRCop ni servicios.
+  example: "%command_prefix%\x02\x0303SASET Usuario PRIVATE ON\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303SASET Usuario TIMEZONE OFF\x03\x0f"
   unknown_option:   "\x0304✗\x03 Opción desconocida \x02%option%\x02. Opciones disponibles: %options%."
   cannot_modify_oper: "\x0304✗\x03 No puedes modificar un apodo de Operador IRC."
 
@@ -332,15 +325,10 @@ protection:
 userip:
   syntax:           "USERIP <apodo>"
   short:            "Obtiene la dirección IP/Host real del apodo."
-  help:             |
-    Muestra la dirección IP real y el hostname del apodo especificado.
-    Solo disponible para IRCops con permiso 'nickserv.userip'.
-
-    Este comando muestra información sensible del apodo.
-    Úsalo con responsabilidad.
-
-    Sintaxis: USERIP <apodo>
-    Ejemplo: USERIP SomeUser
+  help: |-
+    Muestra la IP y el hostname reales de un apodo.
+    Úsalo con responsabilidad: es información sensible.
+  example:          "%command_prefix%\x02\x0303USERIP Usuario\x03\x0F"
   result:           "\x0307ℹ\x03 Apodo: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -357,20 +345,13 @@ whoip:
 suspend:
   syntax:           "SUSPEND <apodo> <duración> <razón>"
   short:            "Suspende un apodo."
-  help:             |
-    Suspende un apodo, impidiendo que el propietario se identifique.
-    La suspensión puede ser temporal o permanente.
-
-    Formatos de duración: \x0303%d\x03 (días), \x0303%h\x03 (horas), \x0303%m\x03 (minutos) o \x03030\x03 (permanente).
-
-    Los usuarios suspendidos no pueden identificarse con su apodo.
-    Los operadores IRC y usuarios root no pueden ser suspendidos.
-
-    Sintaxis: SUSPEND <apodo> <duración> <razón>
-    Ejemplos:
-      SUSPEND MalUsuario 7d Spam en #ayuda
-      SUSPEND Abusador 30d Flood repetido
-      SUSPEND Problematico 0 Evasión de prohibición
+  help: |-
+    Impide que el propietario se identifique. La duración puede expresarse en días
+    (d), horas (h), minutos (m) o 0 para una suspensión permanente. No se puede
+    suspender a operadores IRC ni a usuarios Root.
+  example: "%command_prefix%\x02\x0303SUSPEND MalUsuario 7d Spam en #ayuda\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND Problematico 0 Evasión de prohibición\x03\x0f"
   success:            "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido suspendido hasta \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 El apodo \x02%nickname%\x02 ya está suspendido."
   forbidden:          "\x0304✗\x03 El apodo \x02%nickname%\x02 está prohibido y no puede suspenderse."
@@ -383,11 +364,10 @@ suspend:
 unsuspend:
   syntax:           "UNSUSPEND <apodo>"
   short:            "Quita la suspensión de un apodo."
-  help:             |
-    Quita una suspensión activa de un apodo, permitiendo que el propietario se identifique de nuevo.
-
-    Sintaxis: UNSUSPEND <apodo>
-    Ejemplo: UNSUSPEND AlgunUsuario
+  help: |-
+    Quita una suspensión activa para que el propietario pueda volver a
+    identificarse.
+  example:          "%command_prefix%\x02\x0303UNSUSPEND Usuario\x03\x0F"
   success:          "\x0303✔\x03 Se ha levantado la suspensión de \x02%nickname%\x02."
   not_suspended:    "\x0304✗\x03 El apodo \x02%nickname%\x02 no está suspendido."
 
@@ -395,16 +375,10 @@ unsuspend:
 rename:
   syntax:           "RENAME <apodo>"
   short:            "Fuerza el cambio de apodo de un apodo conectado a uno aleatorio."
-  help:             |
-    Fuerza a un apodo conectado a cambiar su apodo a uno generado aleatoriamente.
-    Útil para hacer cumplir las políticas de la red sin desconectar al usuario.
-
-    El formato del nuevo apodo usa el prefijo configurado (%prefix%).
-
-    Este comando requiere permiso de IRCop: nickserv.rename
-
-    Sintaxis: RENAME <apodo>
-    Ejemplo: RENAME Problematico
+  help: |-
+    Fuerza a un apodo conectado a cambiar a un nombre aleatorio con un
+    prefijo definido por la red.
+  example:          "%command_prefix%\x02\x0303RENAME Problematico\x03\x0F"
   cannot_rename_root: "\x0304✗\x03 No se puede renombrar al usuario root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 No se puede renombrar al IRC operator \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 No se puede renombrar el apodo de servicio \x02%nickname%\x02."
@@ -414,18 +388,14 @@ rename:
 drop:
   syntax:           "DROP <apodo> [FORCE]"
   short:            "Elimina un apodo registrado."
-  help:             |
-    Elimina un apodo registrado de la base de datos.
-    Esta acción no se puede deshacer.
-
-    Si el usuario está conectado, será renombrado a un apodo Guest-.
-    Los usuarios root y operadores IRC no pueden ser eliminados.
-    No puedes eliminar tu propio apodo.
-
-    Este comando requiere permiso de IRCop: nickserv.drop
-
-    Sintaxis: DROP <apodo>
-    Ejemplo: DROP CuentaAntigua
+  help: |-
+    Marca un apodo registrado para eliminarlo durante el periodo de gracia; puede
+    restaurarse con RESTORE. Añade FORCE para eliminarlo permanentemente. Los
+    usuarios Root, IRCops y servicios, así como tu propio apodo, no se pueden
+    eliminar.
+  example: "%command_prefix%\x02\x0303DROP CuentaAntigua\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303DROP CuentaAntigua FORCE\x03\x0f"
   suspended:         "\x0304✗\x03 El apodo \x02%nickname%\x02 está suspendido. Desuspende primero."
   forbidden:         "\x0304✗\x03 El apodo \x02%nickname%\x02 está prohibido."
   cannot_drop_root:   "\x0304✗\x03 No se puede eliminar al usuario root \x02%nickname%\x02."
@@ -449,19 +419,11 @@ restore:
 forbid:
   syntax:           "FORBID <apodo> <razón>"
   short:            "Prohíbe permanentemente el uso de un apodo."
-  help:             |
-    Prohíbe el uso de un apodo en la red.
-    El apodo no podrá ser registrado ni usado por nadie.
-
-    Si el apodo está registrado, será eliminado primero.
-    Si alguien lo está usando, será forzado a cambiar a un apodo Guest-.
-
-    Los usuarios root, operadores IRC y apodos de servicio no pueden ser prohibidos.
-
-    Este comando requiere permiso de IRCop: nickserv.forbid
-
-    Sintaxis: FORBID <apodo> <razón>
-    Ejemplo: FORBID MalUsuario Violaciones repetidas de política
+  help: |-
+    Prohíbe permanentemente un apodo para que nadie pueda registrarlo ni usarlo.
+    Si está registrado se elimina; si está conectado, se le fuerza a cambiar a un
+    apodo aleatorio. No se puede prohibir a usuarios Root, IRCops ni servicios.
+  example:          "%command_prefix%\x02\x0303FORBID MalUsuario Violaciones repetidas de política\x03\x0F"
   success:            "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido prohibido."
   updated:            "\x0303✔\x03 Se ha actualizado la razón de prohibición para \x02%nickname%\x02."
   reason_required:    "\x0304✗\x03 Debes proporcionar una razón para la prohibición."
@@ -473,13 +435,8 @@ forbid:
 unforbid:
   syntax:           "UNFORBID <apodo>"
   short:            "Elimina la prohibición de un apodo."
-  help:             |
-    Elimina la prohibición de un apodo, permitiendo que pueda usarse nuevamente.
-
-    Este comando requiere permiso de IRCop: nickserv.forbid
-
-    Sintaxis: UNFORBID <apodo>
-    Ejemplo: UNFORBID AlgunNick
+  help:             "Elimina la prohibición para que el apodo pueda volver a usarse."
+  example:          "%command_prefix%\x02\x0303UNFORBID ApodoProhibido\x03\x0F"
   success:          "\x0303✔\x03 El apodo \x02%nickname%\x02 ya no está prohibido."
   not_forbidden:    "\x0304✗\x03 El apodo \x02%nickname%\x02 no está prohibido."
 
@@ -487,20 +444,14 @@ unforbid:
 forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [patrón]"
   short:            "Gestiona vhosts prohibidos."
-  help:             |
-    Gestiona patrones que impiden a los usuarios establecer vhosts
-    coincidentes vía %bot% SET VHOST.
+  help: |-
+    Gestiona los patrones que impiden establecer vhosts coincidentes con SET
+    VHOST. El comodín * coincide con cualquier secuencia y ? con un carácter.
+    Requiere privilegios de Operador de IRC.
 
-    Comodines: * coincide con cualquier secuencia, ? coincide con un caracter.
-    Ejemplo: *.pirata.com bloquea cualquier vhost que termine en .pirata.com
-
-    Este comando requiere permiso de IRCop: nickserv.forbidvhost
-
-    Subcomandos:
-      ADD <patrón>    Agregar un patrón prohibido
-      DEL <patrón>    Eliminar un patrón prohibido
-      LIST            Mostrar todos los patrones prohibidos
-
+  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0f"
   unknown_sub: "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
 
   add:
@@ -544,33 +495,16 @@ forbidvhost:
 history:
   syntax:           "HISTORY <apodo> {ADD|DEL|VIEW|CLEAR}"
   short:            "Ver o gestionar el historial de acciones de un apodo."
-  help:             |
-    Gestiona el historial de acciones de un apodo.
-    Solo IRCops con permiso 'nickserv.history' pueden usar este comando.
+  help: |-
+    Consulta y gestiona el historial de acciones de un apodo. Registra
+    automáticamente suspensiones, cambios de contraseña o correo y recuperaciones.
+    VIEW muestra tres entradas por página; ALL muestra el historial completo.
+  example: "%command_prefix%\x02\x0303HISTORY Usuario VIEW\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY Usuario VIEW ALL\x03\x0f"
+    - "%command_prefix%\x02\x0303HISTORY Usuario ADD Nota manual\x03\x0f"
 
-    Acciones registradas automáticamente:
-      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
-      SASET EMAIL, RECOVER
-
-    Sintaxis: HISTORY <apodo> ADD <mensaje>
-              HISTORY <apodo> DEL <id>
-              HISTORY <apodo> VIEW [PÁGINA|ALL]
-              HISTORY <apodo> CLEAR
-
-    Ejemplos:
-      HISTORY UnNick VIEW
-      HISTORY UnNick ADD Nota manual sobre este usuario
-      HISTORY UnNick VIEW 2
-      HISTORY UnNick VIEW ALL
-      HISTORY UnNick DEL 123
-      HISTORY UnNick CLEAR
-
-    Usa VIEW para ver el historial (muestra 3 entradas por defecto).
-    Usa VIEW 2 para ver la segunda página.
-    Usa VIEW ALL para ver el historial completo.
-    Usa ADD para añadir una entrada manual.
-    Usa DEL para eliminar una entrada específica por ID.
-    Usa CLEAR para eliminar todo el historial.
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax:     "HISTORY <apodo> ADD <mensaje>"
     short:      "Añadir una entrada manual al historial."
@@ -634,17 +568,12 @@ history.extra:
 noexpire:
   syntax:           "NOEXPIRE <apodo> {ON|OFF}"
   short:            "Activa o desactiva la protección de expiración para un apodo."
-  help:             |
-    Controla si un apodo expirará por inactividad.
-    Con ON, el apodo nunca expira independientemente de su última actividad.
-    Con OFF, se aplican las reglas normales de expiración.
-
-    Solo los IRCops con permiso 'nickserv.noexpire' pueden usar este comando.
-
-    Sintaxis: NOEXPIRE <apodo> {ON|OFF}
-    Ejemplos:
-      NOEXPIRE UsuarioImportante ON
-      NOEXPIRE UsuarioImportante OFF
+  help: |-
+    Controla si el apodo expira por inactividad.
+    ON evita la expiración y OFF aplica las reglas normales.
+  example: "%command_prefix%\x02\x0303NOEXPIRE Usuario ON\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE Usuario OFF\x03\x0f"
   success_on:       "\x0303✔\x03 El apodo \x02%nickname%\x02 está ahora protegido contra expiración."
   success_off:      "\x0303✔\x03 El apodo \x02%nickname%\x02 expirará normalmente."
   forbidden:         "\x0304✗\x03 El apodo \x02%nickname%\x02 está prohibido."

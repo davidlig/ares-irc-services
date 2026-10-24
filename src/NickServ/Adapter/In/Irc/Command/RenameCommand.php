@@ -51,6 +51,11 @@ final readonly class RenameCommand implements NickServCommandInterface, IrcopAud
         return 'rename.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'rename.example';
+    }
+
     public function getOrder(): int
     {
         return 65;

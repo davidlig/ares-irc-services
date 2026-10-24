@@ -84,6 +84,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertSame('suspend.help', $cmd->getHelpKey());
+        self::assertSame('suspend.example', $cmd->getExampleKey());
     }
 
     #[Test]

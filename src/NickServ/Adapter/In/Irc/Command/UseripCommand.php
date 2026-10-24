@@ -53,6 +53,11 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
         return 'userip.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'userip.example';
+    }
+
     public function getOrder(): int
     {
         return 60;

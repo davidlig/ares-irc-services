@@ -227,19 +227,12 @@ set:
 saset:
   syntax:           "SASET <surnom> <option> <valeur>"
   short:            "Modifier les paramètres d'un autre surnom."
-  help:             |
-    Permet à un opérateur IRC de modifier les paramètres d'un surnom enregistré.
-    Le surnom cible ne peut pas être un utilisateur root, un opérateur IRC ni un service.
-
-    Options disponibles : PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
-
-    SASET PASSWORD : Change le mot de passe directement (sans confirmation par e-mail).
-    SASET EMAIL : Change l'e-mail directement (sans validation de jeton).
-
-    Cette commande nécessite la permission IRCop : nickserv.saset
-
-    Syntaxe : SASET <surnom> <option> <valeur>
-    Exemple : SASET Utilisateur PASSWORD nouveau_mdp
+  help: |-
+    Permet à un IRCop de modifier les paramètres d’un autre pseudonyme enregistré.
+    Les pseudonymes Root, IRCop et des services ne sont pas concernés.
+  example: "%command_prefix%\x02\x0303SASET Utilisateur PRIVATE ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SASET Utilisateur TIMEZONE OFF\x03\x0F"
   unknown_option:   "\x0304✗\x03 Option inconnue \x02%option%\x02. Options disponibles : %options%."
   cannot_modify_oper: "\x0304✗\x03 Impossible de modifier le surnom d'un opérateur IRC."
 
@@ -332,15 +325,10 @@ protection:
 userip:
   syntax:           "USERIP <surnom>"
   short:            "Obtenir l'adresse IP réelle et le nom d'hôte du surnom."
-  help:             |
-    Affiche l'adresse IP réelle et le nom d'hôte du surnom spécifié.
-    Uniquement disponible pour les IRCops avec la permission 'nickserv.userip'.
-
-    Cette commande affiche des informations sensibles sur le surnom.
-    À utiliser de manière responsable.
-
-    Syntaxe : USERIP <surnom>
-    Exemple : USERIP Utilisateur123
+  help: |-
+    Affiche l’adresse IP et le nom d’hôte réels d’un pseudonyme.
+    À utiliser avec précaution : ces informations sont sensibles.
+  example: "%command_prefix%\x02\x0303USERIP Utilisateur\x03\x0F"
   result:           "\x0307ℹ\x03 Surnom : \x02%nickname%\x02 | IP : \x0307%ip%\x03 | Hôte : \x0307%host%\x03"
 
 whoip:
@@ -357,20 +345,14 @@ whoip:
 suspend:
   syntax:           "SUSPEND <surnom> <durée> <raison>"
   short:            "Suspendre un surnom."
-  help:             |
-    Suspend un surnom, empêchant le propriétaire de s'identifier.
-    La suspension peut être temporaire ou permanente.
-
-    Formats de durée : \x0303%j\x03 (jours), \x0303%h\x03 (heures), \x0303%m\x03 (minutes) ou \x03030\x03 (permanent).
-
-    Les utilisateurs suspendus ne peuvent pas s'identifier à leur surnom.
-    Les opérateurs IRC et les utilisateurs root ne peuvent pas être suspendus.
-
-    Syntaxe : SUSPEND <surnom> <durée> <raison>
-    Exemples :
-      SUSPEND MauvaisUtil 7j Spam dans #aide
-      SUSPEND Abuseur 30j Flood répété
-      SUSPEND ProblèmeUtil 0 Contournement de bannissement permanent
+  help: |-
+    Empêche le propriétaire de s’identifier. La durée peut être exprimée en jours
+    (d), heures (h), minutes (m), ou 0 pour une suspension permanente. Les
+    opérateurs
+    IRC et les utilisateurs Root ne peuvent pas être suspendus.
+  example: "%command_prefix%\x02\x0303SUSPEND MalUtilisateur 7d Spam sur #aide\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND Problematico 0 Evasión de prohibición\x03\x0F"
   success:            "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été suspendu jusqu'à \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Le surnom \x02%nickname%\x02 est déjà suspendu."
   forbidden:          "\x0304✗\x03 Le surnom \x02%nickname%\x02 est interdit et ne peut pas être suspendu."
@@ -383,11 +365,10 @@ suspend:
 unsuspend:
   syntax:           "UNSUSPEND <surnom>"
   short:            "Lever la suspension d'un surnom."
-  help:             |
-    Lève une suspension active d'un surnom, permettant au propriétaire de s'identifier à nouveau.
-
-    Syntaxe : UNSUSPEND <surnom>
-    Exemple : UNSUSPEND UnUtilisateur
+  help: |-
+    Lève une suspension active afin que le propriétaire puisse à nouveau
+    s’identifier.
+  example: "%command_prefix%\x02\x0303UNSUSPEND Utilisateur\x03\x0F"
   success:          "\x0303✔\x03 La suspension a été levée pour \x02%nickname%\x02."
   not_suspended:    "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas suspendu."
 
@@ -395,16 +376,10 @@ unsuspend:
 rename:
   syntax:           "RENAME <surnom>"
   short:            "Forcer le renommage d'un surnom connecté en un surnom aléatoire."
-  help:             |
-    Force un surnom connecté à changer son surnom pour un surnom généré aléatoirement.
-    Utile pour appliquer les règles du réseau sans déconnecter l'utilisateur.
-
-    Le nouveau format de surnom utilise le préfixe invité configuré (%prefix%).
-
-    Cette commande nécessite la permission IRCop : nickserv.rename
-
-    Syntaxe : RENAME <surnom>
-    Exemple : RENAME FauteurDeTrouble
+  help: |-
+    Force un pseudonyme connecté à prendre un nom aléatoire précédé d’un
+    préfixe défini par le réseau.
+  example: "%command_prefix%\x02\x0303RENAME Problematico\x03\x0F"
   cannot_rename_root: "\x0304✗\x03 Impossible de renommer l'utilisateur root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Impossible de renommer l'opérateur IRC \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 Impossible de renommer le surnom de service \x02%nickname%\x02."
@@ -414,18 +389,15 @@ rename:
 drop:
   syntax:           "DROP <surnom> [FORCE]"
   short:            "Abandonner un surnom enregistré."
-  help:             |
-    Supprime un surnom enregistré de la base de données.
-    Cette action est irréversible.
-
-    Si l'utilisateur est en ligne, il sera renommé en un surnom Invité-.
-    Les utilisateurs root et les opérateurs IRC ne peuvent pas être abandonnés.
-    Vous ne pouvez pas abandonner votre propre surnom.
-
-    Cette commande nécessite la permission IRCop : nickserv.drop
-
-    Syntaxe : DROP <surnom>
-    Exemple : DROP AncienCompte
+  help: |-
+    Marque un pseudonyme enregistré pour suppression à la fin de la période de
+    grâce ; il peut être restauré avec RESTORE. Ajoutez FORCE pour le supprimer
+    définitivement. Les utilisateurs Root, IRCops et services, ainsi que votre
+    propre
+    pseudonyme, ne peuvent pas être supprimés.
+  example: "%command_prefix%\x02\x0303DROP CuentaAntigua\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303DROP CuentaAntigua FORCE\x03\x0F"
   suspended:         "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu. Levez d'abord la suspension."
   forbidden:         "\x0304✗\x03 Le surnom \x02%nickname%\x02 est interdit."
   cannot_drop_root:   "\x0304✗\x03 Impossible d'abandonner l'utilisateur root \x02%nickname%\x02."
@@ -449,19 +421,13 @@ restore:
 forbid:
   syntax:           "FORBID <surnom> <raison>"
   short:            "Bloquer définitivement l'utilisation d'un surnom."
-  help:             |
-    Interdit l'utilisation d'un surnom sur le réseau.
-    Le surnom ne peut être enregistré ni utilisé par quiconque.
-
-    Si le surnom est actuellement enregistré, il sera d'abord abandonné.
-    Si quelqu'un l'utilise, il sera forcé de changer pour un surnom Invité-.
-
-    Les utilisateurs root, les opérateurs IRC et les surnoms de service ne peuvent pas être interdits.
-
-    Cette commande nécessite la permission IRCop : nickserv.forbid
-
-    Syntaxe : FORBID <surnom> <raison>
-    Exemple : FORBID MauvaisSurnom Violations répétées des règles
+  help: |-
+    Interdit définitivement un pseudonyme afin que personne ne puisse l’enregistrer
+    ou l’utiliser. S’il est enregistré, il est supprimé ; s’il est connecté, il est
+    forcé à prendre un pseudonyme aléatoire. Les utilisateurs Root, IRCops et
+    services
+    ne peuvent pas être interdits.
+  example: "%command_prefix%\x02\x0303FORBID MalUtilisateur Violations répétées des règles\x03\x0F"
   success:            "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été interdit."
   updated:            "\x0303✔\x03 La raison d'interdiction pour \x02%nickname%\x02 a été mise à jour."
   reason_required:    "\x0304✗\x03 Vous devez fournir une raison pour l'interdiction."
@@ -473,13 +439,8 @@ forbid:
 unforbid:
   syntax:           "UNFORBID <surnom>"
   short:            "Lever l'interdiction d'un surnom."
-  help:             |
-    Lève l'interdiction d'un surnom, permettant de le réutiliser.
-
-    Cette commande nécessite la permission IRCop : nickserv.forbid
-
-    Syntaxe : UNFORBID <surnom>
-    Exemple : UNFORBID UnSurnom
+  help: "Lève l’interdiction afin que le pseudonyme puisse à nouveau être utilisé."
+  example: "%command_prefix%\x02\x0303UNFORBID PseudoInterdit\x03\x0F"
   success:          "\x0303✔\x03 Le surnom \x02%nickname%\x02 n'est plus interdit."
   not_forbidden:    "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas interdit."
 
@@ -487,20 +448,14 @@ unforbid:
 forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [motif]"
   short:            "Gérer les motifs de vhost interdits."
-  help:             |
-    Gère les motifs qui empêchent les utilisateurs de définir des vhosts
-    correspondants via %bot% SET VHOST.
+  help: |-
+    Gère les motifs qui empêchent de définir un hôte virtuel correspondant avec SET
+    VHOST. Le caractère générique * correspond à toute suite de caractères et ? à un
+    caractère. Nécessite les privilèges d’opérateur IRC.
 
-    Jokers : * correspond à toute séquence, ? correspond à un seul caractère.
-    Exemple : *.pirate.com bloque tout vhost se terminant par .pirate.com
-
-    Cette commande nécessite la permission IRCop : nickserv.forbidvhost
-
-    Sous-commandes :
-      ADD <motif>    Ajouter un motif interdit
-      DEL <motif>    Supprimer un motif interdit
-      LIST           Afficher tous les motifs interdits
-
+  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
   unknown_sub: "\x0304✗\x03 Sous-commande inconnue \x02%sub%\x02. Utilisez ADD, DEL ou LIST."
 
   add:
@@ -544,33 +499,18 @@ forbidvhost:
 history:
   syntax:           "HISTORY <surnom> {ADD|DEL|VIEW|CLEAR}"
   short:            "Consulter ou gérer l'historique des actions du surnom."
-  help:             |
-    Gère l'historique des actions d'un surnom.
-    Seuls les IRCops avec la permission 'nickserv.history' peuvent utiliser cette commande.
+  help: |-
+    Consulte et gère l’historique des actions d’un pseudonyme. Les suspensions,
+    changements de mot de passe ou d’adresse e-mail et récupérations sont
+    enregistrés
+    automatiquement. VIEW affiche trois entrées par page ; ALL affiche tout
+    l’historique.
+  example: "%command_prefix%\x02\x0303HISTORY Utilisateur VIEW\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY Utilisateur VIEW ALL\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY Utilisateur ADD Note manuelle\x03\x0F"
 
-    Actions enregistrées automatiquement :
-      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
-      SASET EMAIL, RECOVER
-
-    Syntaxe : HISTORY <surnom> ADD <message>
-              HISTORY <surnom> DEL <id>
-              HISTORY <surnom> VIEW [PAGE|ALL]
-              HISTORY <surnom> CLEAR
-
-    Exemples :
-      HISTORY UnSurnom VIEW
-      HISTORY UnSurnom ADD Note manuelle sur cet utilisateur
-      HISTORY UnSurnom VIEW 2
-      HISTORY UnSurnom VIEW ALL
-      HISTORY UnSurnom DEL 123
-      HISTORY UnSurnom CLEAR
-
-    Utilisez VIEW pour voir l'historique (affiche 3 entrées par défaut).
-    Utilisez VIEW PAGE 2 pour voir la page suivante.
-    Utilisez VIEW ALL pour voir l'historique complet.
-    Utilisez ADD pour ajouter une entrée manuelle.
-    Utilisez DEL pour supprimer une entrée spécifique par ID.
-    Utilisez CLEAR pour supprimer toutes les entrées d'historique.
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax:     "HISTORY <surnom> ADD <message>"
     short:      "Ajouter une entrée manuelle à l'historique."
@@ -634,17 +574,12 @@ history.extra:
 noexpire:
   syntax:           "NOEXPIRE <surnom> {ON|OFF}"
   short:            "Définir ou retirer la protection contre l'expiration d'un surnom."
-  help:             |
-    Contrôle si un surnom expirera en raison de l'inactivité.
-    Lorsque ON, le surnom n'expire jamais, quelle que soit la dernière activité.
-    Lorsque OFF, les règles normales d'expiration s'appliquent.
-
-    Seuls les IRCops avec la permission 'nickserv.noexpire' peuvent utiliser cette commande.
-
-    Syntaxe : NOEXPIRE <surnom> {ON|OFF}
-    Exemples :
-      NOEXPIRE UtilisateurImportant ON
-      NOEXPIRE UtilisateurImportant OFF
+  help: |-
+    Détermine si le pseudonyme expire après une période d’inactivité.
+    ON empêche l’expiration et OFF applique les règles habituelles.
+  example: "%command_prefix%\x02\x0303NOEXPIRE Utilisateur ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE Utilisateur OFF\x03\x0F"
   success_on:       "\x0303✔\x03 Le surnom \x02%nickname%\x02 est maintenant protégé contre l'expiration."
   success_off:      "\x0303✔\x03 Le surnom \x02%nickname%\x02 expirera maintenant normalement."
   forbidden:         "\x0304✗\x03 Le surnom \x02%nickname%\x02 est interdit."

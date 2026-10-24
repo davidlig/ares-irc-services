@@ -227,19 +227,12 @@ set:
 saset:
   syntax:           "SASET <rumuz> <seçenek> <değer>"
   short:            "Başka bir rumuzun ayarlarını değiştir."
-  help:             |
-    Bir IRC Operatörünün kayıtlı bir rumuzun ayarlarını değiştirmesine izin verir.
-    Hedef rumuz bir root kullanıcı, IRC Operatörü veya hizmet rumuzu olamaz.
-
-    Kullanılabilir seçenekler: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
-
-    SASET PASSWORD: Şifreyi doğrudan değiştirir (e-posta onayı olmadan).
-    SASET EMAIL: E-postayı doğrudan değiştirir (token doğrulaması olmadan).
-
-    Bu komut IRCop izni gerektirir: nickserv.saset
-
-    Sözdizimi: SASET <rumuz> <seçenek> <değer>
-    Örnek: SASET Kullanıcı PASSWORD yenişifre
+  help: |-
+    IRCop kullanıcısının başka bir kayıtlı takma adın ayarlarını değiştirmesini
+    sağlar. Root, IRCop ve hizmet takma adları desteklenmez.
+  example: "%command_prefix%\x02\x0303SASET Kullanıcı PRIVATE ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SASET Kullanıcı TIMEZONE OFF\x03\x0F"
   unknown_option:   "\x0304✗\x03 Bilinmeyen seçenek \x02%option%\x02. Kullanılabilir seçenekler: %options%."
   cannot_modify_oper: "\x0304✗\x03 IRC Operatörü rumuzu değiştirilemez."
 
@@ -332,15 +325,10 @@ protection:
 userip:
   syntax:           "USERIP <nickname>"
   short:            "Rumuzun gerçek IP adresini ve host adını öğrenin."
-  help:             |
-    Belirtilen rumuzun gerçek IP adresini ve hostname'ini gösterir.
-    Yalnızca 'nickserv.userip' iznine sahip IRCop'lere açıktır.
-
-    Bu komut hassas rumuz bilgilerini gösterir.
-    Sorumlu bir şekilde kullanın.
-
-    Sözdizimi: USERIP <nickname>
-    Örnek: USERIP BaziKullanici
+  help: |-
+    Bir takma adın gerçek IP adresini ve ana bilgisayar adını gösterir.
+    Sorumlu kullanın: bu hassas bilgidir.
+  example: "%command_prefix%\x02\x0303USERIP Kullanıcı\x03\x0F"
   result:           "\x0307ℹ\x03 Rumuz: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -357,20 +345,13 @@ whoip:
 suspend:
   syntax:           "SUSPEND <nickname> <süre> <sebep>"
   short:            "Bir rumuzu askıya alın."
-  help:             |
-    Bir rumuzu askıya alarak sahibinin kimlik doğrulamasını engeller.
-    Askıya alma geçici veya kalıcı olabilir.
-
-    Süre formatları: \x0303%d\x03 (gün), \x0303%h\x03 (saat), \x0303%m\x03 (dakika), veya \x03030\x03 (kalıcı).
-
-    Askıya alınan kullanıcılar rumuzlarına kimlik doğrulayamaz.
-    IRC operatörleri ve root kullanıcılar askıya alınamaz.
-
-    Sözdizimi: SUSPEND <nickname> <süre> <sebep>
-    Örnekler:
-      SUSPEND KtUye 7g #help kanalında spam
-      SUSPEND Suistlm 30g Tekrarlanan flood
-      SUSPEND Sorunlu 0 Permaban kaçakçılığı
+  help: |-
+    Sahibinin kimliğini doğrulamasını engeller. Süre gün (d), saat (h), dakika (m)
+    veya süresiz askı için 0 olarak belirtilebilir. IRC operatörleri ve Root
+    kullanıcıları askıya alınamaz.
+  example: "%command_prefix%\x02\x0303SUSPEND MalKullanıcı 7d #yardım kanalında spam\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND Sorunlu 0 Yasağı aşma\x03\x0F"
   success:            "\x0303✔\x03 \x02%nickname%\x02 rumuzu \x02%duration%\x02 tarihine kadar askıya alındı."
   already_suspended:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu zaten askıya alınmış."
   forbidden:          "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış ve askıya alınamaz."
@@ -383,11 +364,8 @@ suspend:
 unsuspend:
   syntax:           "UNSUSPEND <nickname>"
   short:            "Bir rumuzun askısını kaldırın."
-  help:             |
-    Bir rumuzun aktif askısını kaldırarak sahibinin tekrar kimlik doğrulayabilmesini sağlar.
-
-    Sözdizimi: UNSUSPEND <nickname>
-    Örnek: UNSUSPEND BaziKullanici
+  help: "Sahibinin yeniden kimlik doğrulaması yapabilmesi için etkin askıyı kaldırır."
+  example: "%command_prefix%\x02\x0303UNSUSPEND Kullanıcı\x03\x0F"
   success:          "\x0303✔\x03 \x02%nickname%\x02 adlı kullanıcının askısı kaldırıldı."
   not_suspended:    "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmamış."
 
@@ -395,16 +373,10 @@ unsuspend:
 rename:
   syntax:           "RENAME <nickname>"
   short:            "Bağlı bir rumuzu rastgele bir rumuza zorla değiştirin."
-  help:             |
-    Bağlı bir rumuzu rastgele oluşturulmuş bir rumuza değiştirmeye zorlar.
-    Kullanıcıyı bağlantıdan atmadan ağ politikalarını uygulamak için kullanışlıdır.
-
-    Yeni rumuz formatı yapılandırılmış misafir önekinde (%prefix%) oluşturulur.
-
-    Bu komut IRCop izni gerektirir: nickserv.rename
-
-    Sözdizimi: RENAME <nickname>
-    Örnek: RENAME SorunluKisi
+  help: |-
+    Bağlı bir takma adın ağ tarafından tanımlanan önekle rastgele bir ada
+    değiştirilmesini zorlar.
+  example: "%command_prefix%\x02\x0303RENAME Sorunlu\x03\x0F"
   cannot_rename_root: "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 yeniden adlandırılamaz."
   cannot_rename_oper: "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 yeniden adlandırılamaz."
   cannot_rename_service: "\x0304✗\x03 Hizmet rumuzu \x02%nickname%\x02 yeniden adlandırılamaz."
@@ -414,18 +386,13 @@ rename:
 drop:
   syntax:           "DROP <nickname> [FORCE]"
   short:            "Kayıtlı bir rumuzu bırakın."
-  help:             |
-    Veritabanından kayıtlı bir rumuzu bırakır.
-    Bu eylem geri alınamaz.
-
-    Kullanıcı çevrimiçiyse, Guest- rumuzuna yeniden adlandırılacaktır.
-    Root kullanıcılar ve IRC operatörleri bırakılamaz.
-    Kendi rumuzunuzu bırakamazsınız.
-
-    Bu komut IRCop izni gerektirir: nickserv.drop
-
-    Sözdizimi: DROP <nickname>
-    Örnek: DROP EskiHesap
+  help: |-
+    Kayıtlı takma adı bekleme süresi sonunda silinmek üzere işaretler; RESTORE ile
+    geri alınabilir. Kalıcı silmek için FORCE ekleyin. Root, IRCop, hizmet takma
+    adları veya kendi takma adınız silinemez.
+  example: "%command_prefix%\x02\x0303DROP CuentaAntigua\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303DROP CuentaAntigua FORCE\x03\x0F"
   suspended:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Önce askıyı kaldırın."
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış."
   cannot_drop_root:   "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 bırakılamaz."
@@ -449,19 +416,12 @@ restore:
 forbid:
   syntax:           "FORBID <nickname> <sebep>"
   short:            "Bir rumuzu kalıcı olarak kullanımdan engelleyin."
-  help:             |
-    Bir rumuzun ağda kullanılmasını yasaklar.
-    Rumuz hiç kimse tarafından kaydedilemez veya kullanılamaz.
-
-    Rumuz şu anda kayıtlıysa, önce bırakılacaktır.
-    Birisi kullanıyorsa, Guest- rumuzuna değiştirilmeye zorlanacaktır.
-
-    Root kullanıcılar, IRC operatörleri ve hizmet rumuzları yasaklanamaz.
-
-    Bu komut IRCop izni gerektirir: nickserv.forbid
-
-    Sözdizimi: FORBID <nickname> <sebep>
-    Örnek: FORBID KtRumuz Tekrarlanan politika ihlalleri
+  help: |-
+    Bir takma adın kaydedilmesini veya kullanılmasını kalıcı olarak yasaklar.
+    Kayıtlıysa silinir; bağlıysa rastgele bir takma ada geçmesi zorlanır. Root,
+    IRCop
+    ve hizmet takma adları yasaklanamaz.
+  example: "%command_prefix%\x02\x0303FORBID MalKullanıcı Tekrarlanan politika ihlalleri\x03\x0F"
   success:            "\x0303✔\x03 \x02%nickname%\x02 rumuzu yasaklandı."
   updated:            "\x0303✔\x03 \x02%nickname%\x02 için yasaklama sebebi güncellendi."
   reason_required:    "\x0304✗\x03 Yasaklama için bir sebep belirtmelisiniz."
@@ -473,13 +433,8 @@ forbid:
 unforbid:
   syntax:           "UNFORBID <nickname>"
   short:            "Bir rumuz yasağını kaldırın."
-  help:             |
-    Bir rumuz yasağını kaldırarak rumuzun tekrar kullanılabilmesini sağlar.
-
-    Bu komut IRCop izni gerektirir: nickserv.forbid
-
-    Sözdizimi: UNFORBID <nickname>
-    Örnek: UNFORBID BaziRumuz
+  help: "Takma adın yeniden kullanılabilmesi için yasağı kaldırır."
+  example: "%command_prefix%\x02\x0303UNFORBID YasaklıTakmaAd\x03\x0F"
   success:          "\x0303✔\x03 \x02%nickname%\x02 rumuzu artık yasaklı değil."
   not_forbidden:    "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklı değil."
 
@@ -487,20 +442,13 @@ unforbid:
 forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [kalıp]"
   short:            "Yasaklı vhost kalıplarını yönetin."
-  help:             |
-    Kullanıcıların %bot% SET VHOST ile eşleşen vhost'ları
-    ayarlamalarını engelleyen kalıpları yönetir.
+  help: |-
+    SET VHOST ile eşleşen vhost ayarlarını engelleyen kalıpları yönetir. * herhangi
+    bir diziyle, ? tek karakterle eşleşir. IRC operatörü ayrıcalığı gerekir.
 
-    Jokerler: * herhangi bir diziyi eşler, ? tek karakteri eşler.
-    Örnek: *.korsan.com, .korsan.com ile biten tüm vhost'ları engeller.
-
-    Bu komut IRCop izni gerektirir: nickserv.forbidvhost
-
-    Alt komutlar:
-      ADD <kalıp>    Yasaklı bir kalıp ekleyin
-      DEL <kalıp>    Yasaklı bir kalıbı kaldırın
-      LIST             Tüm yasaklı kalıpları gösterin
-
+  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
   unknown_sub: "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
 
   add:
@@ -544,33 +492,17 @@ forbidvhost:
 history:
   syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
   short:            "Rumuz eylem geçmişini görüntüleyin veya yönetin."
-  help:             |
-    Bir rumuzun eylem geçmişini yönetin.
-    Bu komutu yalnızca 'nickserv.history' iznine sahip IRCop'ler kullanabilir.
+  help: |-
+    Takma adın işlem geçmişini görüntüler ve yönetir. Askıya alma, parola veya
+    e-posta değişiklikleri ve kurtarma işlemleri otomatik kaydedilir. VIEW sayfa
+    başına
+    üç kayıt gösterir; ALL tüm geçmişi gösterir.
+  example: "%command_prefix%\x02\x0303HISTORY Kullanıcı VIEW\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY Kullanıcı VIEW ALL\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY Kullanıcı ADD Elle eklenen not\x03\x0F"
 
-    Otomatik olarak kaydedilen eylemler:
-      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
-      SASET EMAIL, RECOVER
-
-    Sözdizimi: HISTORY <nickname> ADD <mesaj>
-            HISTORY <nickname> DEL <id>
-            HISTORY <nickname> VIEW [SAYFA|ALL]
-            HISTORY <nickname> CLEAR
-
-    Örnekler:
-      HISTORY BaziRumuz VIEW
-      HISTORY BaziRumuz ADD Bu kullanıcı hakkında manuel not
-      HISTORY BaziRumuz VIEW 2
-      HISTORY BaziRumuz VIEW ALL
-      HISTORY BaziRumuz DEL 123
-      HISTORY BaziRumuz CLEAR
-
-    Geçmişi görmek için VIEW kullanın (varsayılan 3 giriş).
-    Sonraki sayfayı görmek için VIEW SAYFA 2 kullanın.
-    Tam geçmişi görmek için VIEW ALL kullanın.
-    Manuel giriş eklemek için ADD kullanın.
-    Belirli bir girişi ID ile silmek için DEL kullanın.
-    Tüm geçmiş girişlerini silmek için CLEAR kullanın.
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax:     "HISTORY <nickname> ADD <mesaj>"
     short:      "Manuel bir geçmiş girişi ekleyin."
@@ -634,17 +566,12 @@ history.extra:
 noexpire:
   syntax:           "NOEXPIRE <nickname> {ON|OFF}"
   short:            "Bir rumuz için süre sonu korumasını ayarlayın veya kaldırın."
-  help:             |
-    Bir rumuzun hareketsizlik nedeniyle süresinin dolup dolmayacağını kontrol eder.
-    AÇIK olduğunda, rumuz son etkinlikten bağımsız olarak asla sona ermez.
-    KAPALI olduğunda, normal süre sonu kuralları uygulanır.
-
-    Bu komutu yalnızca 'nickserv.noexpire' iznine sahip IRCop'ler kullanabilir.
-
-    Sözdizimi: NOEXPIRE <nickname> {ON|OFF}
-    Örnekler:
-      NOEXPIRE OnemliKullanici ON
-      NOEXPIRE OnemliKullanici OFF
+  help: |-
+    Takma adın etkin olmama nedeniyle süresinin dolup dolmayacağını denetler.
+    ON süre dolmasını önler, OFF normal kuralları uygular.
+  example: "%command_prefix%\x02\x0303NOEXPIRE Kullanıcı ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE Kullanıcı OFF\x03\x0F"
   success_on:       "\x0303✔\x03 \x02%nickname%\x02 rumuzu artık süre sonuna karşı korunuyor."
   success_off:      "\x0303✔\x03 \x02%nickname%\x02 rumuzu artık normal şekilde sona erecek."
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış."

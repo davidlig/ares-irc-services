@@ -62,6 +62,17 @@ final class UnifiedHelpFormatterTest extends TestCase
             'list' => ['example', 'examples'],
             'restore' => ['example'],
             'whoip' => ['example'],
+            'saset' => ['example', 'examples'],
+            'userip' => ['example'],
+            'suspend' => ['example', 'examples'],
+            'unsuspend' => ['example'],
+            'rename' => ['example'],
+            'drop' => ['example', 'examples'],
+            'forbid' => ['example'],
+            'unforbid' => ['example'],
+            'forbidvhost' => ['example', 'examples'],
+            'history' => ['example', 'examples'],
+            'noexpire' => ['example', 'examples'],
         ];
 
         foreach ($locales as $locale) {

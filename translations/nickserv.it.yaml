@@ -227,19 +227,13 @@ set:
 saset:
   syntax:           "SASET <nickname> <opzione> <valore>"
   short:            "Modificare le impostazioni di un altro nickname."
-  help:             |
-    Consente a un IRC Operator di modificare le impostazioni di un nickname registrato.
-    Il nickname di destinazione non può essere un utente root, un IRC Operator o un servizio.
-
-    Opzioni disponibili: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
-
-    SASET PASSWORD: Cambia la password direttamente (senza conferma email).
-    SASET EMAIL: Cambia l'email direttamente (senza convalida del token).
-
-    Questo comando richiede il permesso IRCop: nickserv.saset
-
-    Sintassi: SASET <nickname> <opzione> <valore>
-    Esempio: SASET Utente PASSWORD nuovapass
+  help: |-
+    Consente a un IRCop di modificare le impostazioni di un altro nickname
+    registrato.
+    Non sono ammessi nickname Root, IRCop o di servizio.
+  example: "%command_prefix%\x02\x0303SASET Utente PRIVATE ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SASET Utente TIMEZONE OFF\x03\x0F"
   unknown_option:   "\x0304✗\x03 Opzione sconosciuta \x02%option%\x02. Opzioni disponibili: %options%."
   cannot_modify_oper: "\x0304✗\x03 Impossibile modificare un nickname di IRC Operator."
 
@@ -332,15 +326,10 @@ protection:
 userip:
   syntax:           "USERIP <nickname>"
   short:            "Ottiene l'indirizzo IP reale e l'hostname del nickname."
-  help:             |
-    Mostra l'indirizzo IP reale e l'hostname del nickname specificato.
-    Disponibile solo per IRCops con il permesso 'nickserv.userip'.
-
-    Questo comando mostra informazioni sensibili sul nickname.
-    Lo usi responsabilmente.
-
-    Sintassi: USERIP <nickname>
-    Esempio: USERIP UnUtente
+  help: |-
+    Mostra l'indirizzo IP e il nome host reali di un nickname.
+    Usalo con responsabilità: è un'informazione sensibile.
+  example: "%command_prefix%\x02\x0303USERIP Utente\x03\x0F"
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -357,20 +346,13 @@ whoip:
 suspend:
   syntax:           "SUSPEND <nickname> <durata> <motivo>"
   short:            "Sospende un nickname."
-  help:             |
-    Sospende un nickname, impedendo al proprietario di identificarsi.
-    La sospensione può essere temporanea o permanente.
-
-    Formati durata: \x0303%d\x03 (giorni), \x0303%h\x03 (ore), \x0303%m\x03 (minuti), o \x03030\x03 (permanente).
-
-    Gli utenti sospesi non possono identificarsi al proprio nickname.
-    Gli IRC operator e gli utenti root non possono essere sospesi.
-
-    Sintassi: SUSPEND <nickname> <durata> <motivo>
-    Esempi:
-      SUSPEND CattivoUtente 7d Spam in #aiuto
-      SUSPEND Abusatore 30d Flood ripetuto
-      SUSPEND UtenteProblematico 0 Elusione permaban
+  help: |-
+    Impedisce al proprietario di identificarsi. La durata può essere espressa in
+    giorni (d), ore (h), minuti (m) o 0 per una sospensione permanente. Non è
+    possibile sospendere Operatori IRC o utenti Root.
+  example: "%command_prefix%\x02\x0303SUSPEND UtenteScorretto 7d Spam en #aiuto\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND Molesto 0 Elusione del ban\x03\x0F"
   success:            "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato sospeso fino al \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Il nickname \x02%nickname%\x02 è già sospeso."
   forbidden:          "\x0304✗\x03 Il nickname \x02%nickname%\x02 è vietato e non può essere sospeso."
@@ -383,11 +365,10 @@ suspend:
 unsuspend:
   syntax:           "UNSUSPEND <nickname>"
   short:            "Rimuove la sospensione da un nickname."
-  help:             |
-    Rimuove una sospensione attiva da un nickname, consentendo al proprietario di identificarsi di nuovo.
-
-    Sintassi: UNSUSPEND <nickname>
-    Esempio: UNSUSPEND UnUtente
+  help: |-
+    Rimuove una sospensione attiva affinché il proprietario possa identificarsi di
+    nuovo.
+  example: "%command_prefix%\x02\x0303UNSUSPEND Utente\x03\x0F"
   success:          "\x0303✔\x03 La sospensione è stata revocata da \x02%nickname%\x02."
   not_suspended:    "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è sospeso."
 
@@ -395,16 +376,10 @@ unsuspend:
 rename:
   syntax:           "RENAME <nickname>"
   short:            "Forza il rename di un nickname connesso a un nickname casuale."
-  help:             |
-    Forza un nickname connesso a cambiare il proprio nick in uno generato casualmente.
-    Utile per far rispettare le policy di rete senza disconnettere l'utente.
-
-    Il formato del nuovo nickname usa il prefisso ospite configurato (%prefix%).
-
-    Questo comando richiede il permesso IRCop: nickserv.rename
-
-    Sintassi: RENAME <nickname>
-    Esempio: RENAME Piantagrane
+  help: |-
+    Costringe un nickname connesso a cambiare in un nome casuale con un prefisso
+    definito dalla rete.
+  example: "%command_prefix%\x02\x0303RENAME Molesto\x03\x0F"
   cannot_rename_root: "\x0304✗\x03 Impossibile rinominare l'utente root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Impossibile rinominare l'IRC operator \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 Impossibile rinominare il nickname di servizio \x02%nickname%\x02."
@@ -414,18 +389,14 @@ rename:
 drop:
   syntax:           "DROP <nickname> [FORCE]"
   short:            "Elimina un nickname registrato."
-  help:             |
-    Elimina un nickname registrato dal database.
-    Quest'azione non può essere annullata.
-
-    Se l'utente è online, sarà rinominato in un nickname Guest-.
-    Gli utenti root e gli IRC operator non possono essere eliminati.
-    Non può eliminare il proprio nickname.
-
-    Questo comando richiede il permesso IRCop: nickserv.drop
-
-    Sintassi: DROP <nickname>
-    Esempio: DROP VecchioAccount
+  help: |-
+    Contrassegna un nickname registrato per l'eliminazione durante il periodo di
+    grazia; può essere ripristinato con RESTORE. Aggiungi FORCE per eliminarlo
+    definitivamente. Non si possono eliminare utenti Root, IRCop o servizi, né il
+    tuo nickname.
+  example: "%command_prefix%\x02\x0303DROP AccountVecchio\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303DROP AccountVecchio FORCE\x03\x0F"
   suspended:         "\x0304✗\x03 Il nickname \x02%nickname%\x02 è sospeso. Lo riattivi prima."
   forbidden:         "\x0304✗\x03 Il nickname \x02%nickname%\x02 è vietato."
   cannot_drop_root:   "\x0304✗\x03 Impossibile eliminare l'utente root \x02%nickname%\x02."
@@ -449,19 +420,11 @@ restore:
 forbid:
   syntax:           "FORBID <nickname> <motivo>"
   short:            "Blocca permanentemente l'uso di un nickname."
-  help:             |
-    Proibisce l'uso di un nickname sulla rete.
-    Il nickname non può essere registrato o usato da nessuno.
-
-    Se il nickname è attualmente registrato, verrà prima eliminato.
-    Se qualcuno lo sta usando, sarà costretto a cambiare in un nickname Guest-.
-
-    Gli utenti root, gli IRC operator e i nickname di servizio non possono essere vietati.
-
-    Questo comando richiede il permesso IRCop: nickserv.forbid
-
-    Sintassi: FORBID <nickname> <motivo>
-    Esempio: FORBID BruttoNick Violazioni ripetute delle policy
+  help: |-
+    Vieta definitivamente un nickname, impedendo a chiunque di registrarlo o usarlo.
+    Se è registrato viene eliminato; se è connesso, viene costretto a cambiare in un
+    nickname casuale. Non si possono vietare utenti Root, IRCop o servizi.
+  example: "%command_prefix%\x02\x0303FORBID UtenteScorretto Violaciones repetidas de política\x03\x0F"
   success:            "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato vietato."
   updated:            "\x0303✔\x03 Il motivo del divieto per \x02%nickname%\x02 è stato aggiornato."
   reason_required:    "\x0304✗\x03 Deve fornire un motivo per il divieto."
@@ -473,13 +436,8 @@ forbid:
 unforbid:
   syntax:           "UNFORBID <nickname>"
   short:            "Rimuove il divieto da un nickname."
-  help:             |
-    Rimuove il divieto da un nickname, consentendone di nuovo l'uso.
-
-    Questo comando richiede il permesso IRCop: nickserv.forbid
-
-    Sintassi: UNFORBID <nickname>
-    Esempio: UNFORBID UnNick
+  help: "Rimuove il divieto affinché il nickname possa essere usato di nuovo."
+  example: "%command_prefix%\x02\x0303UNFORBID NicknameVietato\x03\x0F"
   success:          "\x0303✔\x03 Il nickname \x02%nickname%\x02 non è più vietato."
   not_forbidden:    "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è vietato."
 
@@ -487,20 +445,14 @@ unforbid:
 forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [pattern]"
   short:            "Gestisce i pattern vhost vietati."
-  help:             |
-    Gestisce i pattern che impediscono agli utenti di impostare vhost corrispondenti
-    tramite %bot% SET VHOST.
+  help: |-
+    Gestisce i modelli che impediscono di impostare vhost corrispondenti con SET
+    VHOST. Il carattere jolly * corrisponde a qualsiasi sequenza e ? a un carattere.
+    Richiede privilegi di Operatore IRC.
 
-    Caratteri jolly: * corrisponde a qualsiasi sequenza, ? corrisponde a un singolo carattere.
-    Esempio: *.pirata.com blocca qualsiasi vhost che termina con .pirata.com
-
-    Questo comando richiede il permesso IRCop: nickserv.forbidvhost
-
-    Sotto-comandi:
-      ADD <pattern>    Aggiunge un pattern vietato
-      DEL <pattern>    Rimuove un pattern vietato
-      LIST             Mostra tutti i pattern vietati
-
+  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
   unknown_sub: "\x0304✗\x03 Sotto-comando sconosciuto \x02%sub%\x02. Usi ADD, DEL o LIST."
 
   add:
@@ -544,33 +496,16 @@ forbidvhost:
 history:
   syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
   short:            "Visualizza o gestisce la cronologia azioni del nickname."
-  help:             |
-    Gestisce la cronologia delle azioni per un nickname.
-    Solo gli IRCops con il permesso 'nickserv.history' possono usare questo comando.
+  help: |-
+    Consulta e gestisce la cronologia delle azioni di un nickname. Registra
+    automaticamente sospensioni, modifiche di password o email e recuperi.
+    VIEW mostra tre voci per pagina; ALL mostra l'intera cronologia.
+  example: "%command_prefix%\x02\x0303HISTORY Utente VIEW\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY Utente VIEW ALL\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY Utente ADD Nota manual\x03\x0F"
 
-    Azioni registrate automaticamente:
-      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
-      SASET EMAIL, RECOVER
-
-    Sintassi: HISTORY <nickname> ADD <messaggio>
-            HISTORY <nickname> DEL <id>
-            HISTORY <nickname> VIEW [PAGINA|ALL]
-            HISTORY <nickname> CLEAR
-
-    Esempi:
-      HISTORY UnNick VIEW
-      HISTORY UnNick ADD Nota manuale su questo utente
-      HISTORY UnNick VIEW 2
-      HISTORY UnNick VIEW ALL
-      HISTORY UnNick DEL 123
-      HISTORY UnNick CLEAR
-
-    Usi VIEW per vedere la cronologia (mostra 3 voci per impostazione predefinita).
-    Usi VIEW PAGE 2 per vedere la pagina successiva.
-    Usi VIEW ALL per vedere la cronologia completa.
-    Usi ADD per aggiungere una voce manuale.
-    Usi DEL per eliminare una voce specifica per ID.
-    Usi CLEAR per eliminare tutte le voci di cronologia.
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax:     "HISTORY <nickname> ADD <messaggio>"
     short:      "Aggiunge una voce manuale alla cronologia."
@@ -634,17 +569,12 @@ history.extra:
 noexpire:
   syntax:           "NOEXPIRE <nickname> {ON|OFF}"
   short:            "Imposta o rimuove la protezione dalla scadenza per un nickname."
-  help:             |
-    Controlla se un nickname scadrà per inattività.
-    Quando ON, il nickname non scade mai indipendentemente dall'ultima attività.
-    Quando OFF, si applicano le normali regole di scadenza.
-
-    Solo gli IRCops con il permesso 'nickserv.noexpire' possono usare questo comando.
-
-    Sintassi: NOEXPIRE <nickname> {ON|OFF}
-    Esempi:
-      NOEXPIRE UtenteImportante ON
-      NOEXPIRE UtenteImportante OFF
+  help: |-
+    Controlla se il nickname scade per inattività.
+    ON impedisce la scadenza e OFF applica le regole normali.
+  example: "%command_prefix%\x02\x0303NOEXPIRE Utente ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE Utente OFF\x03\x0F"
   success_on:       "\x0303✔\x03 Il nickname \x02%nickname%\x02 è ora protetto dalla scadenza."
   success_off:      "\x0303✔\x03 Il nickname \x02%nickname%\x02 ora scadrà normalmente."
   forbidden:         "\x0304✗\x03 Il nickname \x02%nickname%\x02 è vietato."

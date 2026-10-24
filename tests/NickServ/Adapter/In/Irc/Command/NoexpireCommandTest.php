@@ -38,6 +38,7 @@ final class NoexpireCommandTest extends TestCase
         self::assertSame(2, $command->getMinArgs());
         self::assertSame('noexpire.syntax', $command->getSyntaxKey());
         self::assertSame('noexpire.help', $command->getHelpKey());
+        self::assertSame('noexpire.example', $command->getExampleKey());
         self::assertSame(66, $command->getOrder());
         self::assertSame('noexpire.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

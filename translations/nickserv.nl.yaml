@@ -227,19 +227,12 @@ set:
 saset:
   syntax:           "SASET <bijnaam> <optie> <waarde>"
   short:            "Instellingen van een andere bijnaam wijzigen."
-  help:             |
-    Stelt een IRC-operator in staat de instellingen van een geregistreerde bijnaam te wijzigen.
-    De doelbijnaam mag geen rootgebruiker, IRC-operator of service-bijnaam zijn.
-
-    Beschikbare opties: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
-
-    SASET PASSWORD: Wijzigt het wachtwoord direct (zonder e-mailbevestiging).
-    SASET EMAIL: Wijzigt de e-mail direct (zonder tokenvalidatie).
-
-    Dit commando vereist IRCop-toestemming: nickserv.saset
-
-    Syntax: SASET <bijnaam> <optie> <waarde>
-    Voorbeeld: SASET Gebruiker PASSWORD nieuwwachtwoord
+  help: |-
+    Hiermee kan een IRC-operator instellingen van een andere geregistreerde bijnaam
+    wijzigen. Root-, IRC-operator- en servicebijnamen zijn uitgesloten.
+  example: "%command_prefix%\x02\x0303SASET Gebruiker PRIVATE ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SASET Gebruiker TIMEZONE OFF\x03\x0F"
   unknown_option:   "\x0304✗\x03 Onbekende optie \x02%option%\x02. Beschikbare opties: %options%."
   cannot_modify_oper: "\x0304✗\x03 Kan de bijnaam van een IRC-operator niet wijzigen."
 
@@ -332,15 +325,10 @@ protection:
 userip:
   syntax:           "USERIP <bijnaam>"
   short:            "Verkrijg het echte IP-adres en de hostnaam van de bijnaam."
-  help:             |
-    Toont het echte IP-adres en de hostnaam van de opgegeven bijnaam.
-    Alleen beschikbaar voor IRCops met 'nickserv.userip'-toestemming.
-
-    Dit commando toont gevoelige bijnaaminformatie.
-    Gebruik op verantwoorde wijze.
-
-    Syntax: USERIP <bijnaam>
-    Voorbeeld: USERIP EenGebruiker
+  help: |-
+    Toont het echte IP-adres en de hostnaam van een bijnaam.
+    Gebruik deze gevoelige informatie verantwoord.
+  example: "%command_prefix%\x02\x0303USERIP Gebruiker\x03\x0F"
   result:           "\x0307ℹ\x03 Bijnaam: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -357,20 +345,14 @@ whoip:
 suspend:
   syntax:           "SUSPEND <bijnaam> <duur> <reden>"
   short:            "Schors een bijnaam."
-  help:             |
-    Schorst een bijnaam, waardoor de eigenaar zich niet kan identificeren.
-    De schorsing kan tijdelijk of permanent zijn.
-
-    Duurformaten: \x0303%d\x03 (dagen), \x0303%h\x03 (uren), \x0303%m\x03 (minuten), of \x03030\x03 (permanent).
-
-    Geschorste gebruikers kunnen zich niet identificeren met hun bijnaam.
-    IRC-operators en rootgebruikers kunnen niet worden geschorst.
-
-    Syntax: SUSPEND <bijnaam> <duur> <reden>
-    Voorbeelden:
-      SUSPEND SlechteGebr 7d Spammen in #hulp
-      SUSPEND Misbruiker 30d Herhaalde flood
-      SUSPEND ProbleemGebr 0 Permaban ontduiking
+  help: |-
+    Voorkomt dat de eigenaar zich identificeert. De duur kan worden opgegeven in
+    dagen (d), uren (h), minuten (m) of 0 voor een permanente opschorting.
+    IRC-operators
+    en Root-gebruikers kunnen niet worden opgeschort.
+  example: "%command_prefix%\x02\x0303SUSPEND SlechteGebruiker 7d Spam en #hulp\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND Problematisch 0 Omzeilen van een ban\x03\x0F"
   success:            "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is geschorst tot \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is al geschorst."
   forbidden:          "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden en kan niet worden geschorst."
@@ -383,11 +365,8 @@ suspend:
 unsuspend:
   syntax:           "UNSUSPEND <bijnaam>"
   short:            "Hef schorsing van een bijnaam op."
-  help:             |
-    Heft een actieve schorsing van een bijnaam op, zodat de eigenaar zich weer kan identificeren.
-
-    Syntax: UNSUSPEND <bijnaam>
-    Voorbeeld: UNSUSPEND EenGebruiker
+  help: "Heft een actieve opschorting op, zodat de eigenaar zich weer kan identificeren."
+  example: "%command_prefix%\x02\x0303UNSUSPEND Gebruiker\x03\x0F"
   success:          "\x0303✔\x03 De schorsing van \x02%nickname%\x02 is opgeheven."
   not_suspended:    "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geschorst."
 
@@ -395,16 +374,10 @@ unsuspend:
 rename:
   syntax:           "RENAME <bijnaam>"
   short:            "Forceer hernoeming van een verbonden bijnaam naar een willekeurige bijnaam."
-  help:             |
-    Dwingt een verbonden bijnaam om zijn/haar nick te wijzigen naar een willekeurig gegenereerde.
-    Handig voor het afdwingen van netwerkbeleid zonder de gebruiker te verbreken.
-
-    Het nieuwe bijnaamformaat gebruikt het geconfigureerde gastprefix (%prefix%).
-
-    Dit commando vereist IRCop-toestemming: nickserv.rename
-
-    Syntax: RENAME <bijnaam>
-    Voorbeeld: RENAME Lastpost
+  help: |-
+    Dwingt een verbonden bijnaam om te veranderen naar een willekeurige naam met
+    een door het netwerk ingesteld voorvoegsel.
+  example: "%command_prefix%\x02\x0303RENAME Problematisch\x03\x0F"
   cannot_rename_root: "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet hernoemen."
   cannot_rename_oper: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet hernoemen."
   cannot_rename_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet hernoemen."
@@ -414,18 +387,14 @@ rename:
 drop:
   syntax:           "DROP <bijnaam> [FORCE]"
   short:            "Laat een geregistreerde bijnaam vallen."
-  help:             |
-    Verwijdert een geregistreerde bijnaam uit de database.
-    Deze actie kan niet ongedaan worden gemaakt.
-
-    Als de gebruiker online is, wordt hij/zij hernoemd naar een Gast-bijnaam.
-    Rootgebruikers en IRC-operators kunnen niet worden verwijderd.
-    U kunt uw eigen bijnaam niet verwijderen.
-
-    Dit commando vereist IRCop-toestemming: nickserv.drop
-
-    Syntax: DROP <bijnaam>
-    Voorbeeld: DROP OudAccount
+  help: |-
+    Markeert een geregistreerde bijnaam voor verwijdering tijdens de respijtperiode;
+    RESTORE kan deze herstellen. Voeg FORCE toe voor permanente verwijdering. Root-,
+    IRC-operator- en servicebijnamen en je eigen bijnaam kunnen niet worden
+    verwijderd.
+  example: "%command_prefix%\x02\x0303DROP OudAccount\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303DROP OudAccount FORCE\x03\x0F"
   suspended:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Hef eerst de schorsing op."
   forbidden:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."
   cannot_drop_root:   "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet verwijderen."
@@ -449,19 +418,12 @@ restore:
 forbid:
   syntax:           "FORBID <bijnaam> <reden>"
   short:            "Blokkeer permanent het gebruik van een bijnaam."
-  help:             |
-    Verbiedt het gebruik van een bijnaam op het netwerk.
-    De bijnaam kan door niemand worden geregistreerd of gebruikt.
-
-    Als de bijnaam momenteel geregistreerd is, wordt deze eerst verwijderd.
-    Als iemand hem gebruikt, wordt hij/zij gedwongen te wijzigen naar een Gast-bijnaam.
-
-    Rootgebruikers, IRC-operators en service-bijnamen kunnen niet worden verboden.
-
-    Dit commando vereist IRCop-toestemming: nickserv.forbid
-
-    Syntax: FORBID <bijnaam> <reden>
-    Voorbeeld: FORBID SlechteNick Herhaalde beleidsovertredingen
+  help: |-
+    Verbiedt een bijnaam permanent zodat niemand deze kan registreren of gebruiken.
+    Een geregistreerde bijnaam wordt verwijderd; een verbonden gebruiker wordt naar
+    een willekeurige bijnaam verplaatst. Root, IRC-operators en services kunnen niet
+    worden verboden.
+  example: "%command_prefix%\x02\x0303FORBID SlechteGebruiker Herhaalde beleidsschendingen\x03\x0F"
   success:            "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is verboden."
   updated:            "\x0303✔\x03 Verbodsreden voor \x02%nickname%\x02 is bijgewerkt."
   reason_required:    "\x0304✗\x03 U moet een reden opgeven voor het verbod."
@@ -473,13 +435,8 @@ forbid:
 unforbid:
   syntax:           "UNFORBID <bijnaam>"
   short:            "Hef een bijnaamverbod op."
-  help:             |
-    Heft een bijnaamverbod op, zodat de bijnaam weer kan worden gebruikt.
-
-    Dit commando vereist IRCop-toestemming: nickserv.forbid
-
-    Syntax: UNFORBID <bijnaam>
-    Voorbeeld: UNFORBID EenNick
+  help: "Heft het verbod op zodat de bijnaam weer gebruikt kan worden."
+  example: "%command_prefix%\x02\x0303UNFORBID VerbodenBijnaam\x03\x0F"
   success:          "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is niet langer verboden."
   not_forbidden:    "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verboden."
 
@@ -487,20 +444,13 @@ unforbid:
 forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [patroon]"
   short:            "Beheer verboden vhost-patronen."
-  help:             |
-    Beheert patronen die voorkomen dat gebruikers overeenkomende vhosts
-    instellen via %bot% SET VHOST.
+  help: |-
+    Beheert patronen die overeenkomende VHosts via SET VHOST blokkeren. * staat voor
+    eender welke reeks en ? voor één teken. IRC-operatorrechten zijn vereist.
 
-    Wildcards: * komt overeen met elke reeks, ? komt overeen met één teken.
-    Voorbeeld: *.pirated.com blokkeert elke vhost die eindigt op .pirated.com
-
-    Dit commando vereist IRCop-toestemming: nickserv.forbidvhost
-
-    Subcommando's:
-      ADD <patroon>    Voeg een verboden patroon toe
-      DEL <patroon>    Verwijder een verboden patroon
-      LIST             Toon alle verboden patronen
-
+  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
   unknown_sub: "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
 
   add:
@@ -544,33 +494,16 @@ forbidvhost:
 history:
   syntax:           "HISTORY <bijnaam> {ADD|DEL|VIEW|CLEAR}"
   short:            "Bekijk of beheer bijnaamactiegeschiedenis."
-  help:             |
-    Beheer de actiegeschiedenis voor een bijnaam.
-    Alleen IRCops met 'nickserv.history'-toestemming kunnen dit commando gebruiken.
+  help: |-
+    Raadpleegt en beheert de actgeschiedenis van een bijnaam. Opschortingen en
+    wijzigingen van wachtwoord, e-mail of herstel worden automatisch vastgelegd.
+    VIEW toont drie vermeldingen per pagina; ALL toont de volledige geschiedenis.
+  example: "%command_prefix%\x02\x0303HISTORY Gebruiker VIEW\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY Gebruiker VIEW ALL\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY Gebruiker ADD Handmatige notitie\x03\x0F"
 
-    Acties die automatisch worden vastgelegd:
-      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
-      SASET EMAIL, RECOVER
-
-    Syntax: HISTORY <bijnaam> ADD <bericht>
-            HISTORY <bijnaam> DEL <id>
-            HISTORY <bijnaam> VIEW [PAGINA|ALL]
-            HISTORY <bijnaam> CLEAR
-
-    Voorbeelden:
-      HISTORY EenNick VIEW
-      HISTORY EenNick ADD Handmatige opmerking over deze gebruiker
-      HISTORY EenNick VIEW 2
-      HISTORY EenNick VIEW ALL
-      HISTORY EenNick DEL 123
-      HISTORY EenNick CLEAR
-
-    Gebruik VIEW om de geschiedenis te bekijken (toont standaard 3 vermeldingen).
-    Gebruik VIEW PAGINA 2 om de volgende pagina te zien.
-    Gebruik VIEW ALL om de volledige geschiedenis te zien.
-    Gebruik ADD om een handmatige vermelding toe te voegen.
-    Gebruik DEL om een specifieke vermelding op ID te verwijderen.
-    Gebruik CLEAR om alle geschiedenisvermeldingen te verwijderen.
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax:     "HISTORY <bijnaam> ADD <bericht>"
     short:      "Voeg een handmatige geschiedenisvermelding toe."
@@ -634,17 +567,12 @@ history.extra:
 noexpire:
   syntax:           "NOEXPIRE <bijnaam> {ON|OFF}"
   short:            "Stel verloopbescherming in of verwijder deze voor een bijnaam."
-  help:             |
-    Bepaalt of een bijnaam verloopt door inactiviteit.
-    Wanneer ON, verloopt de bijnaam nooit, ongeacht de laatste activiteit.
-    Wanneer OFF, zijn de normale verloopregels van toepassing.
-
-    Alleen IRCops met 'nickserv.noexpire'-toestemming kunnen dit commando gebruiken.
-
-    Syntax: NOEXPIRE <bijnaam> {ON|OFF}
-    Voorbeelden:
-      NOEXPIRE BelangrijkeGebr ON
-      NOEXPIRE BelangrijkeGebr OFF
+  help: |-
+    Bepaalt of een bijnaam door inactiviteit verloopt.
+    ON voorkomt verval; OFF past de normale regels toe.
+  example: "%command_prefix%\x02\x0303NOEXPIRE Gebruiker ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE Gebruiker OFF\x03\x0F"
   success_on:       "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is nu beschermd tegen verloop."
   success_off:      "\x0303✔\x03 Bijnaam \x02%nickname%\x02 verloopt nu normaal."
   forbidden:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."

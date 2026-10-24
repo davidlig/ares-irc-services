@@ -46,6 +46,11 @@ final readonly class UnsuspendCommand implements NickServCommandInterface, Ircop
         return 'unsuspend.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'unsuspend.example';
+    }
+
     public function getOrder(): int
     {
         return 68;

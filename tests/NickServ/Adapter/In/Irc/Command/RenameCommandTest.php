@@ -43,6 +43,7 @@ final class RenameCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('rename.syntax', $command->getSyntaxKey());
         self::assertSame('rename.help', $command->getHelpKey());
+        self::assertSame('rename.example', $command->getExampleKey());
         self::assertSame(65, $command->getOrder());
         self::assertSame('rename.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

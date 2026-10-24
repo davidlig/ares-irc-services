@@ -37,6 +37,7 @@ final class SasetCommandTest extends TestCase
         self::assertSame(2, $command->getMinArgs());
         self::assertSame('saset.syntax', $command->getSyntaxKey());
         self::assertSame('saset.help', $command->getHelpKey());
+        self::assertSame('saset.example', $command->getExampleKey());
         self::assertSame(5, $command->getOrder());
         self::assertSame('saset.short', $command->getShortDescKey());
         self::assertTrue($command->isOperOnly());

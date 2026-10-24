@@ -227,9 +227,11 @@ set:
 saset:
   syntax:           "SASET <ezizen> <aukera> <balio>"
   short:            "Beste ezizen baten ezarpenak aldatu."
-  help:             |
-    IRC Operadore bati erregistratutako ezizen baten ezarpenak aldatzea ahalbidetzen dio.
-    Helburuko ezizena ezin da root erabiltzaile, IRC Operadore edo zerbitzu ezizen bat izan.
+  help: |-
+    IRC Operadore bati erregistratutako ezizen baten ezarpenak aldatzea ahalbidetzen
+    dio.
+    Helburuko ezizena ezin da root erabiltzaile, IRC Operadore edo zerbitzu ezizen
+    bat izan.
 
     Aukera erabilgarriak: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
 
@@ -240,6 +242,9 @@ saset:
 
     Sintaxia: SASET <ezizen> <aukera> <balio>
     Adibidea: SASET Erabiltzaile PASSWORD pasahitzberria
+  example: "%command_prefix%\x02\x0303SASET Erabiltzailea PRIVATE ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SASET Erabiltzailea TIMEZONE OFF\x03\x0F"
   unknown_option:   "\x0304✗\x03 Aukera ezezaguna \x02%option%\x02. Aukera erabilgarriak: %options%."
   cannot_modify_oper: "\x0304✗\x03 Ezin da IRC Operadore baten ezizena aldatu."
 
@@ -332,15 +337,10 @@ protection:
 userip:
   syntax:           "USERIP <ezizena>"
   short:            "Lortu ezizenaren benetako IP helbidea eta ostalari izena."
-  help:             |
-    Zehaztutako ezizenaren benetako IP helbidea eta ostalari izena erakusten ditu.
-    'nickserv.userip' baimena duten IRCopentzat soilik erabilgarri.
-
-    Komando honek ezizen informazio sentikorra erakusten du.
-    Erabili arduraz.
-
-    Sintaxia: USERIP <ezizena>
-    Adibidea: USERIP ErabiltzaileBat
+  help: |-
+    Ezizen baten benetako IP helbidea eta ostalari-izena erakusten ditu.
+    Erabili arduraz: informazio sentikorra da.
+  example: "%command_prefix%\x02\x0303USERIP Erabiltzailea\x03\x0F"
   result:           "\x0307ℹ\x03 Ezizena: \x02%nickname%\x02 | IPa: \x0307%ip%\x03 | Ostalaria: \x0307%host%\x03"
 
 whoip:
@@ -357,20 +357,13 @@ whoip:
 suspend:
   syntax:           "SUSPEND <ezizena> <iraupena> <arrazoia>"
   short:            "Etten du ezizen bat."
-  help:             |
-    Ezizen bat eteten du, jabea identifikatzea eragotziz.
-    Etenaldia aldi baterakoa edo iraunkorra izan daiteke.
-
-    Iraupen formatuak: \x0303%d\x03 (egun), \x0303%h\x03 (ordu), \x0303%m\x03 (minutu), edo \x03030\x03 (iraunkorra).
-
-    Etenda dauden erabiltzaileak ezin dira bere ezizenean identifikatu.
-    IRC operadoreak eta root erabiltzaileak ezin dira eten.
-
-    Sintaxia: SUSPEND <ezizena> <iraupena> <arrazoia>
-    Adibideak:
-      SUSPEND ErabiltzaileGaiztoa 7d Spam egiten #laguntza kanalean
-      SUSPEND TratuTxarrekoa 30d Behin eta berrizko jarioa
-      SUSPEND Arazoa 0 Betiko debeku saihesketa
+  help: |-
+    Jabeari identifikatzea eragozten dio. Iraupena egunetan (d), orduetan (h),
+    minututan (m) edo 0 gisa adieraz daiteke, etenaldi iraunkorra izateko.
+    Ezin dira IRC operadoreak edo Root erabiltzaileak eten.
+  example: "%command_prefix%\x02\x0303SUSPEND ErabiltzaileGaiztoa 7d Spam en #laguntza\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND ArazoSortzailea 0 Debekua saihestea\x03\x0F"
   success:            "\x0303✔\x03 \x02%nickname%\x02 ezizena \x02%duration%\x02 arte eten da."
   already_suspended:  "\x0304✗\x03 \x02%nickname%\x02 ezizena jada etenda dago."
   forbidden:          "\x0304✗\x03 \x02%nickname%\x02 ezizena debekatua dago eta ezin da eten."
@@ -383,11 +376,13 @@ suspend:
 unsuspend:
   syntax:           "UNSUSPEND <ezizena>"
   short:            "Kendu ezizen baten etenaldia."
-  help:             |
-    Ezizen baten etenaldi aktiboa kentzen du, jabea berriro identifikatzea ahalbidetuz.
+  help: |-
+    Ezizen baten etenaldi aktiboa kentzen du, jabea berriro identifikatzea
+    ahalbidetuz.
 
     Sintaxia: UNSUSPEND <ezizena>
     Adibidea: UNSUSPEND ErabiltzaileBat
+  example: "%command_prefix%\x02\x0303UNSUSPEND Erabiltzailea\x03\x0F"
   success:          "\x0303✔\x03 \x02%nickname%\x02 ezizenaren etenaldia kendu da."
   not_suspended:    "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago etenda."
 
@@ -395,16 +390,10 @@ unsuspend:
 rename:
   syntax:           "RENAME <ezizena>"
   short:            "Behartu konektatutako ezizen bat ausazko ezizen batera izenaz aldatzea."
-  help:             |
-    Konektatutako ezizen bat ausaz sortutako batera izena aldatzea behartzen du.
-    Erabiltzailea deskonektatu gabe sare politikak betearazteko baliagarria.
-
-    Ezizen berriaren formatuak konfiguratutako gonbidatu aurrizkia (%prefix%) erabiltzen du.
-
-    Komando honek IRCop baimena behar du: nickserv.rename
-
-    Sintaxia: RENAME <ezizena>
-    Adibidea: RENAME ArazoSortzailea
+  help: |-
+    Konektatutako ezizen bat sareak zehaztutako aurrizkia duen ausazko izen
+    batera aldatzera behartzen du.
+  example: "%command_prefix%\x02\x0303RENAME ArazoSortzailea\x03\x0F"
   cannot_rename_root: "\x0304✗\x03 Ezin da root erabiltzaile \x02%nickname%\x02 izenaz aldatu."
   cannot_rename_oper: "\x0304✗\x03 Ezin da IRC operadore \x02%nickname%\x02 izenaz aldatu."
   cannot_rename_service: "\x0304✗\x03 Ezin da zerbitzu ezizen \x02%nickname%\x02 izenaz aldatu."
@@ -414,7 +403,7 @@ rename:
 drop:
   syntax:           "DROP <ezizena> [FORCE]"
   short:            "Ezabatu erregistratutako ezizen bat."
-  help:             |
+  help: |-
     Erregistratutako ezizen bat datu-basetik ezabatzen du.
     Ekintza hau ezin da desegin.
 
@@ -426,6 +415,9 @@ drop:
 
     Sintaxia: DROP <ezizena>
     Adibidea: DROP KontuZaharra
+  example: "%command_prefix%\x02\x0303DROP KontuZaharra\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303DROP KontuZaharra FORCE\x03\x0F"
   suspended:         "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago. Kendu etenaldia lehenik."
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 ezizena debekatua dago."
   cannot_drop_root:   "\x0304✗\x03 Ezin da root erabiltzaile \x02%nickname%\x02 ezabatu."
@@ -449,7 +441,7 @@ restore:
 forbid:
   syntax:           "FORBID <ezizena> <arrazoia>"
   short:            "Betirako blokeatu ezizen bat erabilia izatea."
-  help:             |
+  help: |-
     Ezizen bat sarean erabilia izatea debekatzen du.
     Ezizena ezin da erregistratu edo inork erabili.
 
@@ -462,6 +454,7 @@ forbid:
 
     Sintaxia: FORBID <ezizena> <arrazoia>
     Adibidea: FORBID EzizenGaiztoa Behin eta berrizko politika urraketak
+  example: "%command_prefix%\x02\x0303FORBID ErabiltzaileGaiztoa Politika behin eta berriz urratzea\x03\x0F"
   success:            "\x0303✔\x03 \x02%nickname%\x02 ezizena debekatu da."
   updated:            "\x0303✔\x03 \x02%nickname%\x02 ezizenaren debeku arrazoia eguneratu da."
   reason_required:    "\x0304✗\x03 Debekurako arrazoi bat eman behar duzu."
@@ -473,13 +466,14 @@ forbid:
 unforbid:
   syntax:           "UNFORBID <ezizena>"
   short:            "Kendu ezizen debekua."
-  help:             |
+  help: |-
     Ezizen debekua kentzen du, ezizena berriro erabilia izatea ahalbidetuz.
 
     Komando honek IRCop baimena behar du: nickserv.forbid
 
     Sintaxia: UNFORBID <ezizena>
     Adibidea: UNFORBID EzizenBat
+  example: "%command_prefix%\x02\x0303UNFORBID DebekatutakoEzizena\x03\x0F"
   success:          "\x0303✔\x03 \x02%nickname%\x02 ezizena jada ez dago debekatuta."
   not_forbidden:    "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago debekatuta."
 
@@ -487,20 +481,14 @@ unforbid:
 forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [eredua]"
   short:            "Kudeatu debekatutako vhost ereduak."
-  help:             |
-    %bot% SET VHOST bidez bat datozen vhost-ak ezartzea
-    eragozten duten ereduak kudeatzen ditu.
+  help: |-
+    SET VHOST bidez bat datozen vhost-ak ezartzea eragozten duten ereduak
+    kudeatzen ditu. * komodinak edozein segida adierazten du; ? komodinak karaktere
+    bakar bat. IRC Operadorearen pribilegioak behar dira.
 
-    Komodinek: * edozein segida bat dator, ? karaktere bakarra bat dator.
-    Adibidea: *.pirated.com .pirated.com-ez amaitzen den edozein vhost blokeatzen du
-
-    Komando honek IRCop baimena behar du: nickserv.forbidvhost
-
-    Azpikomandoak:
-      ADD <eredua>    Gehitu debekatutako eredu bat
-      DEL <eredua>    Kendu debekatutako eredu bat
-      LIST            Erakutsi debekatutako eredu guztiak
-
+  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
   unknown_sub: "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
 
   add:
@@ -544,7 +532,7 @@ forbidvhost:
 history:
   syntax:           "HISTORY <ezizena> {ADD|DEL|VIEW|CLEAR}"
   short:            "Ikusi edo kudeatu ezizenaren ekintza historia."
-  help:             |
+  help: |-
     Ezizen baten ekintza historia kudeatzen du.
     'nickserv.history' baimena duten IRCopek soilik erabil dezakete komando hau.
 
@@ -571,6 +559,12 @@ history:
     Erabili ADD eskuzko sarrera bat gehitzeko.
     Erabili DEL ID zehatz baten sarrera ezabatzeko.
     Erabili CLEAR historia sarrera guztiak ezabatzeko.
+  example: "%command_prefix%\x02\x0303HISTORY Erabiltzailea VIEW\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY Erabiltzailea VIEW ALL\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY Erabiltzailea ADD Nota manual\x03\x0F"
+
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax:     "HISTORY <ezizena> ADD <mezua>"
     short:      "Gehitu eskuzko historia sarrera bat."
@@ -634,17 +628,12 @@ history.extra:
 noexpire:
   syntax:           "NOEXPIRE <ezizena> {ON|OFF}"
   short:            "Ezarri edo kendu iraungitze babesa ezizen batentzat."
-  help:             |
-    Ezizen bat jarduerarik ezagatik iraungiko den kontrolatzen du.
-    ON dagoenean, ezizena ez da inoiz iraungitzen azken jarduera edozein dela ere.
-    OFF dagoenean, iraungitze arau normalak aplikatzen dira.
-
-    'nickserv.noexpire' baimena duten IRCopek soilik erabil dezakete komando hau.
-
-    Sintaxia: NOEXPIRE <ezizena> {ON|OFF}
-    Adibideak:
-      NOEXPIRE ErabiltzaileGarrantzitsua ON
-      NOEXPIRE ErabiltzaileGarrantzitsua OFF
+  help: |-
+    Ezizena jarduerarik ezagatik iraungitzen den kontrolatzen du.
+    ONek iraungitzea saihesten du; OFFek ohiko arauak aplikatzen ditu.
+  example: "%command_prefix%\x02\x0303NOEXPIRE Erabiltzailea ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE Erabiltzailea OFF\x03\x0F"
   success_on:       "\x0303✔\x03 \x02%nickname%\x02 ezizena iraungitzetik babestuta dago orain."
   success_off:      "\x0303✔\x03 \x02%nickname%\x02 ezizena normal iraungiko da orain."
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 ezizena debekatua dago."
