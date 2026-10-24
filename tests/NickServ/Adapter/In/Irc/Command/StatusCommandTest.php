@@ -46,6 +46,7 @@ final class StatusCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('status.syntax', $command->getSyntaxKey());
         self::assertSame('status.help', $command->getHelpKey());
+        self::assertSame('status.example', $command->getExampleKey());
         self::assertSame(6, $command->getOrder());
         self::assertSame('status.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

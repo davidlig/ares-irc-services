@@ -48,6 +48,7 @@ final class InfoCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('info.syntax', $command->getSyntaxKey());
         self::assertSame('info.help', $command->getHelpKey());
+        self::assertSame('info.example', $command->getExampleKey());
         self::assertSame(5, $command->getOrder());
         self::assertSame('info.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

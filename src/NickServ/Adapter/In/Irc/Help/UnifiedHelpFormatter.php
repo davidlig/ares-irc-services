@@ -6,6 +6,10 @@ namespace App\NickServ\Adapter\In\Irc\Help;
 
 use function is_array;
 use function is_int;
+use function is_string;
+use function ltrim;
+use function str_contains;
+use function str_replace;
 use function strtoupper;
 
 /**
@@ -169,6 +173,13 @@ final readonly class UnifiedHelpFormatter
             ]);
         }
 
+        if (method_exists($handler, 'getExampleKey')) {
+            $exampleKey = $handler->getExampleKey();
+            if (is_string($exampleKey)) {
+                $lines = [...$lines, ...$this->renderExamples($context, $exampleKey)];
+            }
+        }
+
         $lines[] = ' ';
         $lines[] = $context->trans('help.syntax_label', [
             'syntax' => $context->trans($handler->getSyntaxKey()),
@@ -176,6 +187,42 @@ final readonly class UnifiedHelpFormatter
         $lines[] = $this->renderFooter($context);
 
         return $lines;
+    }
+
+    /** @return list<string> */
+    private function renderExamples(HelpFormatterContextInterface $context, string $exampleKey): array
+    {
+        $headerKey = 'help.examples_header';
+        $header = $context->trans($headerKey);
+        $example = $context->trans($exampleKey);
+        if ($headerKey === $header || $exampleKey === $example) {
+            return [];
+        }
+
+        $lines = [' ', $header, $this->addBotMessagePrefix($context, $example)];
+        for ($index = 0;; ++$index) {
+            $additionalExampleKey = $exampleKey . 's.' . $index;
+            $additionalExample = $context->trans($additionalExampleKey);
+            if ($additionalExampleKey === $additionalExample) {
+                break;
+            }
+
+            $lines[] = $this->addBotMessagePrefix($context, $additionalExample);
+        }
+
+        return $lines;
+    }
+
+    private function addBotMessagePrefix(HelpFormatterContextInterface $context, string $example): string
+    {
+        $prefixPlaceholder = '%command_prefix%';
+        if (!str_contains($example, $prefixPlaceholder)) {
+            return $example;
+        }
+
+        $example = str_replace($prefixPlaceholder, '/msg ' . $context->getBotName() . ' ', $example);
+
+        return '  ' . ltrim($example, " \t");
     }
 
     /**

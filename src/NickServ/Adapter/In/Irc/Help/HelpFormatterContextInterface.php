@@ -24,6 +24,8 @@ interface HelpFormatterContextInterface
 
     public function formatDuration(int $seconds): string;
 
+    public function getBotName(): string;
+
     /**
      * Commands to list in general HELP.
      *

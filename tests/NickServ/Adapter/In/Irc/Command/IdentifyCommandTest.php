@@ -46,6 +46,7 @@ final class IdentifyCommandTest extends TestCase
         self::assertSame(2, $command->getMinArgs());
         self::assertSame('identify.syntax', $command->getSyntaxKey());
         self::assertSame('identify.help', $command->getHelpKey());
+        self::assertSame('identify.example', $command->getExampleKey());
         self::assertSame(2, $command->getOrder());
         self::assertSame('identify.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -68,6 +69,7 @@ final class IdentifyCommandTest extends TestCase
         self::assertSame(0, $command->getMinArgs());
         self::assertSame('identify.native_syntax', $command->getSyntaxKey());
         self::assertSame('identify.native_help', $command->getHelpKey());
+        self::assertSame('identify.native_example', $command->getExampleKey());
         self::assertSame('identify.native_short', $command->getShortDescKey());
     }
 

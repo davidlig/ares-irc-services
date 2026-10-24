@@ -44,6 +44,7 @@ final class UseripCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('userip.syntax', $command->getSyntaxKey());
         self::assertSame('userip.help', $command->getHelpKey());
+        self::assertSame('userip.example', $command->getExampleKey());
         self::assertSame(60, $command->getOrder());
         self::assertSame('userip.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

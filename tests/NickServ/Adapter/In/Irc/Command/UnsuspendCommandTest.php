@@ -81,6 +81,7 @@ final class UnsuspendCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertSame('unsuspend.help', $cmd->getHelpKey());
+        self::assertSame('unsuspend.example', $cmd->getExampleKey());
     }
 
     #[Test]

@@ -44,6 +44,11 @@ final readonly class RestoreCommand implements NickServCommandInterface, IrcopAu
         return 'restore.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'restore.example';
+    }
+
     public function getOrder(): int
     {
         return 72;

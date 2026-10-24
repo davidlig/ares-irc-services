@@ -49,6 +49,11 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
         return 'suspend.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'suspend.example';
+    }
+
     public function getOrder(): int
     {
         return 67;

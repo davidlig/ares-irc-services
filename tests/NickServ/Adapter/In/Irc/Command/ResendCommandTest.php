@@ -35,6 +35,7 @@ final class ResendCommandTest extends TestCase
         self::assertSame(0, $command->getMinArgs());
         self::assertSame('resend.syntax', $command->getSyntaxKey());
         self::assertSame('resend.help', $command->getHelpKey());
+        self::assertSame('resend.example', $command->getExampleKey());
         self::assertSame(4, $command->getOrder());
         self::assertSame('resend.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

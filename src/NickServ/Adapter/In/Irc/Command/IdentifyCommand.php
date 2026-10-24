@@ -56,6 +56,11 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         return $this->usesNativeAuthentication() ? 'identify.native_help' : 'identify.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return $this->usesNativeAuthentication() ? 'identify.native_example' : 'identify.example';
+    }
+
     public function getOrder(): int
     {
         return 2;

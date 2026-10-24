@@ -47,6 +47,11 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
         return 'noexpire.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'noexpire.example';
+    }
+
     public function getOrder(): int
     {
         return 66;

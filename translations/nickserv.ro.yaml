@@ -22,6 +22,9 @@ register:
   syntax: "REGISTER <password> [email]"
   short:            "Înregistrați-vă porecla la servicii."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nDupă validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Durata de expirare %duration% se aplică doar înainte de verificare."
+  example: "%command_prefix%\x02\x0303REGISTER Parolă$Sigură_123\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303REGISTER Parolă$Sigură_123 utilizator@exemplu.ro\x03\x0F"
   pending:          "\x0307→\x03 Un token de verificare a fost trimis la \x02%email%\x02.\n  Executați \x0303/msg %bot% VERIFY <token>\x03 pentru a finaliza înregistrarea.\n  Nu l-ați primit? Verificați spamul sau folosiți \x0303/msg %bot% RESEND\x03\n  Tokenul va expira în \x02%duration%\x02."
   already_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja înregistrată."
   already_pending: "\x0307→\x03 Înregistrarea pentru \x02%nickname%\x02 este în așteptare. Folosește \x0303VERIFY <token>\x03. \x0303RESEND\x03 este disponibil doar cu REGMODE EMAIL și o adresă validă asociată."
@@ -37,6 +40,7 @@ verify:
   syntax:           "VERIFY <token>"
   short: "Confirmă o înregistrare sau un token de salvare."
   help: "După validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Durata de expirare %duration% se aplică doar înainte de verificare."
+  example: "%command_prefix%\x02\x0303VERIFY <token_primit>\x03\x0F"
   success:          "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes și acum sunteți identificat."
   success_native:   "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes. Folosiți autentificarea nativă afișată mai jos."
   invalid_token: "\x0304✗\x03 Tokenul de salvare este invalid."
@@ -48,6 +52,7 @@ resend:
   syntax:           "RESEND"
   short:            "Retrimiteți tokenul de verificare la e-mailul dumneavoastră."
   help: "RESEND este dezactivat când REGMODE este TOKEN.\nDupă validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Durata de expirare %duration% se aplică doar înainte de verificare.\nÎn modul EMAIL, RESEND reînnoiește tokenul și termenul înregistrării în așteptare pentru %duration%."
+  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
   success:          "\x0307→\x03 Tokenul de verificare a fost retrimis la \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Nu aveți nicio înregistrare în așteptare pentru care să retrimiteți un token."
   throttled:        "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a solicita alt e-mail de verificare."
@@ -61,6 +66,9 @@ recover:
   syntax:           "RECOVER <poreclă> [token]"
   short:            "Recuperați-vă porecla dacă v-ați pierdut parola."
   help: "EMAIL: RECOVER <nickname> solicită un token provizoriu prin email. TOKEN: furnizează tokenul confirmat. RECOVER <nickname> <token> acceptă tokenul valid din email sau tokenul confirmat. Cel din email îl înlocuiește pe cel stocat doar după validare. Folosirea celui stocat oferă înlocuire opțională prin VERIFY; ignoră mesajul pentru a-l păstra."
+  example: "%command_prefix%\x02\x0303RECOVER Utilizator\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303RECOVER Utilizator <token_primit>\x03\x0F"
   pending: "\x0307→\x03 Înregistrarea pentru \x02%nickname%\x02 este în așteptare. Folosește \x0303VERIFY <token>\x03. \x0303RESEND\x03 este disponibil doar cu REGMODE EMAIL și o adresă validă asociată."
   suspended:        "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Motiv: %reason%"
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi folosită în această rețea."
@@ -74,9 +82,13 @@ identify:
   syntax:           "IDENTIFY <poreclă> <parolă>"
   short:            "Identificați-vă ca proprietar al unei porecle."
   help:             "Autentifică sesiunea dumneavoastră cu %nickserv% folosind porecla și parola.\nDupă o identificare reușită veți primi modul înregistrat \x02+r\x02\nși, dacă foloseați o poreclă de oaspete, porecla dumneavoastră înregistrată va fi restaurată."
+  example: "%command_prefix%\x02\x0303IDENTIFY Utilizator <parolă>\x03\x0F"
   native_syntax:    "/NICK <poreclă>:<parolă> | /NICK <poreclă>!<parolă>"
   native_short:     "Afișează sintaxa nativă de autentificare a pseudonimului."
   native_help:      "Acest protocol autentifică conturile prin schimbarea pseudonimului.\nFolosește /NICK <poreclă>:<parolă> sau, dacă pseudonimul este ocupat, /NICK <poreclă>!<parolă>."
+  native_example: "\x02\x0303/NICK Utilizator:<parolă>\x03\x0F"
+  native_examples:
+    - "%command_prefix%\x02\x0303/NICK Utilizator!<parolă>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Acest protocol gestionează autentificarea prin schimbarea pseudonimului. Folosește \x0303/NICK <poreclă>:<parolă>\x03 sau, dacă pseudonimul este ocupat, \x0303/NICK <poreclă>!<parolă>\x03."
   success:          "\x0303✔\x03 Sunteți acum identificat ca \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Sunteți deja identificat ca \x02%nickname%\x02."
@@ -94,6 +106,7 @@ status:
   syntax:           "STATUS <poreclă>"
   short:            "Afișați starea de înregistrare a unei porecle."
   help:             "Afișează starea actuală a unei porecle: înregistrată, în așteptarea verificării,\nsuspendată sau interzisă."
+  example: "%command_prefix%\x02\x0303STATUS Utilizator\x03\x0F"
   header:           "\x02Starea poreclei \x0307%nickname%\x03\x02"
   unregistered:     "  Stare            : Neînregistrată"
   not_registered_offline: "  Stare            : \x0315Neînregistrată\x03"
@@ -117,6 +130,7 @@ info:
   syntax:           "INFO <poreclă>"
   short:            "Afișați informații despre o poreclă înregistrată."
   help:             "Afișează detaliile de înregistrare pentru o poreclă: data înregistrării, starea\nconexiunii, ultimul mesaj de ieșire și adresa de e-mail. E-mailul este vizibil doar\npentru proprietar când este identificat. Cu PRIVATE ON, doar proprietarul și\noperatorii IRC pot vizualiza informațiile."
+  example: "%command_prefix%\x02\x0303INFO Utilizator\x03\x0F"
   private:          "\x0304✗\x03 Informațiile poreclei \x02%nickname%\x02 sunt private."
   header:           "\x02Informații pentru porecla \x0307%nickname%\x03\x02"
   status:           "  \x0314Stare\x03                   : %status%"
@@ -150,6 +164,9 @@ set:
   syntax:           "SET <opțiune> <valoare>"
   short:            "Schimbați opțiunile poreclei dumneavoastră."
   help:             "Modifică setările poreclei dumneavoastră %nickserv%.\nTrebuie să fiți identificat pentru a folosi această comandă."
+  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
   unknown_option:   "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Opțiuni disponibile: %options%."
 
   password:
@@ -210,19 +227,12 @@ set:
 saset:
   syntax:           "SASET <poreclă> <opțiune> <valoare>"
   short:            "Modifică setările altei porecle."
-  help:             |
-    Permite unui operator IRC să modifice setările unei porecle înregistrate.
-    Porecla țintă nu poate fi un utilizator root, un operator IRC sau un serviciu.
-
-    Opțiuni disponibile: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
-
-    SASET PASSWORD: Schimbă parola direct (fără confirmare prin e-mail).
-    SASET EMAIL: Schimbă e-mailul direct (fără validare token).
-
-    Această comandă necesită permisiune IRCop: nickserv.saset
-
-    Sintaxă: SASET <poreclă> <opțiune> <valoare>
-    Exemplu: SASET Utilizator PASSWORD parolanouă
+  help: |-
+    Permite unui IRCop să schimbe setările altei porecle înregistrate. Poreclele
+    Root, IRCop și ale serviciilor nu sunt acceptate.
+  example: "%command_prefix%\x02\x0303SASET Utilizator PRIVATE ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SASET Utilizator TIMEZONE OFF\x03\x0F"
   unknown_option:   "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Opțiuni disponibile: %options%."
   cannot_modify_oper: "\x0304✗\x03 Nu se poate modifica o poreclă de operator IRC."
 
@@ -279,6 +289,7 @@ help:
   command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   options_header: "\x02 ■ Opțiuni:\x02"
+  examples_header: "\x02 ■ Exemple:\x02"
   general_syntax: "HELP <comandă>"
   general_footer: "%marker% Folosește /msg %bot% \x02\x0303%syntax%\x03\x0F pentru mai multe informații."
   set_sub_syntax: "HELP %command% <opțiune>"
@@ -314,15 +325,10 @@ protection:
 userip:
   syntax:           "USERIP <poreclă>"
   short:            "Obțineți adresa IP reală și hostname-ul poreclei."
-  help:             |
-    Afișează adresa IP reală și hostname-ul poreclei specificate.
-    Disponibil doar pentru IRCop cu permisiunea 'nickserv.userip'.
-
-    Această comandă afișează informații sensibile ale poreclei.
-    Folosiți-o responsabil.
-
-    Sintaxă: USERIP <poreclă>
-    Exemplu: USERIP UnUtilizator
+  help: |-
+    Afișează adresa IP și numele gazdei reale ale unei porecle.
+    Folosește responsabil aceste informații sensibile.
+  example: "%command_prefix%\x02\x0303USERIP Utilizator\x03\x0F"
   result:           "\x0307ℹ\x03 Poreclă: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -331,6 +337,7 @@ whoip:
   help:             |
     Afișează nickname-urile înregistrate a căror ultimă conexiune identificată a folosit această adresă IP.
     Adresa salvată poate fi învechită.
+  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "Nu există nickname-uri înregistrate care să corespundă acestei adrese IP."
   header:           "Nickname-uri corespunzătoare:"
 
@@ -338,20 +345,13 @@ whoip:
 suspend:
   syntax:           "SUSPEND <poreclă> <durată> <motiv>"
   short:            "Suspendă o poreclă."
-  help:             |
-    Suspendă o poreclă, împiedicând proprietarul să se identifice.
-    Suspendarea poate fi temporară sau permanentă.
-
-    Formate de durată: \x0303%d\x03 (zile), \x0303%h\x03 (ore), \x0303%m\x03 (minute) sau \x03030\x03 (permanentă).
-
-    Utilizatorii suspendați nu se pot identifica la porecla lor.
-    Operatorii IRC și utilizatorii root nu pot fi suspendați.
-
-    Sintaxă: SUSPEND <poreclă> <durată> <motiv>
-    Exemple:
-      SUSPEND UtilizatorRău 7d Spam în #help
-      SUSPEND Abuziv 30d Flood repetat
-      SUSPEND UtilizatorProblematic 0 Evitare interzicere permanentă
+  help: |-
+    Împiedică proprietarul să se identifice. Durata poate fi indicată în zile (d),
+    ore (h), minute (m) sau 0 pentru suspendare permanentă. Operatorii IRC și
+    utilizatorii Root nu pot fi suspendați.
+  example: "%command_prefix%\x02\x0303SUSPEND UtilizatorRău 7d Spam en #ayuda\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SUSPEND Problematic 0 Evitarea interdicției\x03\x0F"
   success:            "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost suspendată până la \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja suspendată."
   forbidden:          "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă și nu poate fi suspendată."
@@ -364,11 +364,10 @@ suspend:
 unsuspend:
   syntax:           "UNSUSPEND <poreclă>"
   short:            "Eliminați suspendarea unei porecle."
-  help:             |
-    Elimină o suspendare activă a unei porecle, permițând proprietarului să se identifice din nou.
-
-    Sintaxă: UNSUSPEND <poreclă>
-    Exemplu: UNSUSPEND UnUtilizator
+  help: |-
+    Elimină o suspendare activă, astfel încât proprietarul să se poată identifica
+    din nou.
+  example: "%command_prefix%\x02\x0303UNSUSPEND Utilizator\x03\x0F"
   success:          "\x0303✔\x03 Suspendarea a fost ridicată pentru \x02%nickname%\x02."
   not_suspended:    "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este suspendată."
 
@@ -376,16 +375,11 @@ unsuspend:
 rename:
   syntax:           "RENAME <poreclă>"
   short:            "Forțați redenumirea unei porecle conectate la o poreclă aleatorie."
-  help:             |
-    Forțează o poreclă conectată să își schimbe porecla într-una generată aleatoriu.
-    Utilă pentru aplicarea politicilor rețelei fără a deconecta utilizatorul.
-
-    Formatul noii porecle folosește prefixul de oaspete configurat (%prefix%).
-
-    Această comandă necesită permisiunea IRCop: nickserv.rename
-
-    Sintaxă: RENAME <poreclă>
-    Exemplu: RENAME Problematic
+  help: |-
+    Forțează o poreclă conectată să treacă la un nume aleatoriu cu un prefix
+    stabilit
+    de rețea.
+  example: "%command_prefix%\x02\x0303RENAME Problematic\x03\x0F"
   cannot_rename_root: "\x0304✗\x03 Nu se poate redenumi utilizatorul root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Nu se poate redenumi operatorul IRC \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 Nu se poate redenumi porecla de serviciu \x02%nickname%\x02."
@@ -395,18 +389,13 @@ rename:
 drop:
   syntax:           "DROP <poreclă> [FORCE]"
   short:            "Eliminați o poreclă înregistrată."
-  help:             |
-    Elimină o poreclă înregistrată din baza de date.
-    Această acțiune nu poate fi anulată.
-
-    Dacă utilizatorul este online, va fi redenumit la o poreclă Guest-.
-    Utilizatorii root și operatorii IRC nu pot fi eliminați.
-    Nu vă puteți elimina propria poreclă.
-
-    Această comandă necesită permisiunea IRCop: nickserv.drop
-
-    Sintaxă: DROP <poreclă>
-    Exemplu: DROP ContVechi
+  help: |-
+    Marchează o poreclă înregistrată pentru ștergere în perioada de grație; poate fi
+    restaurată cu RESTORE. Adaugă FORCE pentru ștergere permanentă. Nu pot fi șterse
+    poreclele Root, IRCop, ale serviciilor sau propria ta poreclă.
+  example: "%command_prefix%\x02\x0303DROP ContVechi\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303DROP ContVechi FORCE\x03\x0F"
   suspended:         "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Anulați mai întâi suspendarea."
   forbidden:         "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă."
   cannot_drop_root:   "\x0304✗\x03 Nu se poate elimina utilizatorul root \x02%nickname%\x02."
@@ -422,6 +411,7 @@ restore:
   syntax:           "RESTORE <poreclă>"
   short:            "Restaurați o poreclă în așteptare de ștergere."
   help:             "Restaurează o poreclă care a fost ștearsă manual și se află încă în perioada de grație. Necesită permisiune IRCop: nickserv.restore."
+  example: "%command_prefix%\x02\x0303RESTORE ContVechi\x03\x0F"
   success:          "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost restaurată."
   not_pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este în așteptare de ștergere."
 
@@ -429,19 +419,13 @@ restore:
 forbid:
   syntax:           "FORBID <poreclă> <motiv>"
   short:            "Blocați permanent o poreclă de la a fi folosită."
-  help:             |
-    Interzice utilizarea unei porecle în rețea.
-    Porecla nu poate fi înregistrată sau folosită de nimeni.
-
-    Dacă porecla este înregistrată în prezent, va fi mai întâi eliminată.
-    Dacă cineva o folosește, va fi forțat să se schimbe la o poreclă Guest-.
-
-    Utilizatorii root, operatorii IRC și poreclele de serviciu nu pot fi interzise.
-
-    Această comandă necesită permisiunea IRCop: nickserv.forbid
-
-    Sintaxă: FORBID <poreclă> <motiv>
-    Exemplu: FORBID PoreclaRea Încălcări repetate ale politicilor
+  help: |-
+    Interzice permanent o poreclă, astfel încât nimeni să nu o poată înregistra sau
+    folosi. O înregistrare existentă este eliminată; utilizatorul conectat este
+    mutat
+    la o poreclă aleatorie. Poreclele Root, IRCop și ale serviciilor nu pot fi
+    interzise.
+  example: "%command_prefix%\x02\x0303FORBID UtilizatorRău Încălcări repetate ale politicii\x03\x0F"
   success:            "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost interzisă."
   updated:            "\x0303✔\x03 Motivul interzicerii pentru \x02%nickname%\x02 a fost actualizat."
   reason_required:    "\x0304✗\x03 Trebuie să furnizați un motiv pentru interdicție."
@@ -453,13 +437,8 @@ forbid:
 unforbid:
   syntax:           "UNFORBID <poreclă>"
   short:            "Eliminați interdicția unei porecle."
-  help:             |
-    Elimină interdicția unei porecle, permițând ca porecla să fie folosită din nou.
-
-    Această comandă necesită permisiunea IRCop: nickserv.forbid
-
-    Sintaxă: UNFORBID <poreclă>
-    Exemplu: UNFORBID OPoreclă
+  help: "Elimină interdicția, permițând folosirea din nou a poreclei."
+  example: "%command_prefix%\x02\x0303UNFORBID PoreclăInterzisă\x03\x0F"
   success:          "\x0303✔\x03 Porecla \x02%nickname%\x02 nu mai este interzisă."
   not_forbidden:    "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este interzisă."
 
@@ -467,20 +446,15 @@ unforbid:
 forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [model]"
   short:            "Gestionați modelele de vhost interzise."
-  help:             |
-    Gestionează modelele care împiedică utilizatorii să seteze vhosturi
-    corespunzătoare prin %bot% SET VHOST.
+  help: |-
+    Gestionează tiparele care împiedică setarea VHost-urilor corespunzătoare prin
+    SET
+    VHOST. * reprezintă orice secvență, iar ? un singur caracter. Necesită drepturi
+    IRCop.
 
-    Metacaractere: * potrivește orice secvență, ? potrivește un singur caracter.
-    Exemplu: *.pirated.com blochează orice vhost care se termină cu .pirated.com
-
-    Această comandă necesită permisiunea IRCop: nickserv.forbidvhost
-
-    Subcomenzi:
-      ADD <model>    Adaugă un model interzis
-      DEL <model>    Elimină un model interzis
-      LIST           Afișează toate modelele interzise
-
+  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
   unknown_sub: "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL sau LIST."
 
   add:
@@ -524,33 +498,16 @@ forbidvhost:
 history:
   syntax:           "HISTORY <poreclă> {ADD|DEL|VIEW|CLEAR}"
   short:            "Vizualizați sau gestionați istoricul de acțiuni al poreclei."
-  help:             |
-    Gestionează istoricul de acțiuni pentru o poreclă.
-    Doar IRCopii cu permisiunea 'nickserv.history' pot folosi această comandă.
+  help: |-
+    Consultă și gestionează istoricul acțiunilor unei porecle. Suspendările și
+    schimbările parolei, e-mailului ori recuperării sunt înregistrate automat.
+    VIEW afișează trei intrări pe pagină; ALL afișează istoricul complet.
+  example: "%command_prefix%\x02\x0303HISTORY Utilizator VIEW\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303HISTORY Utilizator VIEW ALL\x03\x0F"
+    - "%command_prefix%\x02\x0303HISTORY Utilizator ADD Notă manuală\x03\x0F"
 
-    Acțiuni înregistrate automat:
-      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
-      SASET EMAIL, RECOVER
-
-    Sintaxă: HISTORY <poreclă> ADD <mesaj>
-             HISTORY <poreclă> DEL <id>
-             HISTORY <poreclă> VIEW [PAGINĂ|ALL]
-             HISTORY <poreclă> CLEAR
-
-    Exemple:
-      HISTORY OPoreclă VIEW
-      HISTORY OPoreclă ADD Notă manuală despre acest utilizator
-      HISTORY OPoreclă VIEW 2
-      HISTORY OPoreclă VIEW ALL
-      HISTORY OPoreclă DEL 123
-      HISTORY OPoreclă CLEAR
-
-    Folosiți VIEW pentru a vedea istoricul (afișează 3 intrări în mod implicit).
-    Folosiți VIEW PAGE 2 pentru a vedea pagina următoare.
-    Folosiți VIEW ALL pentru a vedea istoricul complet.
-    Folosiți ADD pentru a adăuga o intrare manuală.
-    Folosiți DEL pentru a șterge o intrare specifică după ID.
-    Folosiți CLEAR pentru a șterge toate intrările din istoric.
+  # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax:     "HISTORY <poreclă> ADD <mesaj>"
     short:      "Adăugați o intrare manuală în istoric."
@@ -614,17 +571,12 @@ history.extra:
 noexpire:
   syntax:           "NOEXPIRE <poreclă> {ON|OFF}"
   short:            "Setați sau eliminați protecția împotriva expirării pentru o poreclă."
-  help:             |
-    Controlează dacă o poreclă va expira din cauza inactivității.
-    Când este ON, porecla nu expiră niciodată, indiferent de ultima activitate.
-    Când este OFF, se aplică regulile normale de expirare.
-
-    Doar IRCopii cu permisiunea 'nickserv.noexpire' pot folosi această comandă.
-
-    Sintaxă: NOEXPIRE <poreclă> {ON|OFF}
-    Exemple:
-      NOEXPIRE UtilizatorImportant ON
-      NOEXPIRE UtilizatorImportant OFF
+  help: |-
+    Controlează expirarea poreclei din cauza inactivității.
+    ON previne expirarea, iar OFF aplică regulile normale.
+  example: "%command_prefix%\x02\x0303NOEXPIRE Utilizator ON\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303NOEXPIRE Utilizator OFF\x03\x0F"
   success_on:       "\x0303✔\x03 Porecla \x02%nickname%\x02 este acum protejată împotriva expirării."
   success_off:      "\x0303✔\x03 Porecla \x02%nickname%\x02 va expira acum normal."
   forbidden:         "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă."
@@ -635,6 +587,9 @@ list:
   syntax: "LIST <model> [pagina]"
   short: "Listează poreclele înregistrate care se potrivesc unui model."
   help: "Listează poreclele înregistrate care se potrivesc modelului indicat. Caracterul * corespunde oricărei secvențe de caractere. Pagina este opțională și începe de la 1."
+  example: "%command_prefix%\x02\x0303LIST Utilizator*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST Utilizator* 2\x03\x0F"
   header: "Poreclă | Înregistrare | Ultima conexiune | IP | Stare"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Nicio poreclă nu corespunde modelului %pattern%."

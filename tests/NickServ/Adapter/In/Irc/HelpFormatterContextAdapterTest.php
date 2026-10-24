@@ -113,6 +113,21 @@ final class HelpFormatterContextAdapterTest extends TestCase
     }
 
     #[Test]
+    public function getBotNameDelegatesToTheNickServNotifier(): void
+    {
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ConfiguredNickServ');
+        $context = $this->createContext(
+            null,
+            $notifier,
+            $this->createStub(TranslatorInterface::class),
+            new NickServCommandRegistry([]),
+        );
+
+        self::assertSame('ConfiguredNickServ', $this->createAdapter($context)->getBotName());
+    }
+
+    #[Test]
     public function replyDelegatesToContext(): void
     {
         $messages = [];
