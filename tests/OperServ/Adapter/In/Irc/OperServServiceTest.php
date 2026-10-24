@@ -25,6 +25,8 @@ use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(OperServService::class)]
@@ -48,6 +50,31 @@ final class OperServServiceTest extends TestCase
         $this->service([], $notifier, prefersPrivate: true)->dispatch('missing', $this->sender());
 
         self::assertSame([['001AAA', 'unknown_command', 'PRIVMSG']], $notifier->messages);
+    }
+
+    #[Test]
+    public function usesCommonCatalogForUnknownAndContextMessages(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', [
+            'error.syntax' => 'shared syntax %syntax%',
+            'unknown_command' => 'shared unknown %command% for %bot%',
+        ], 'en', 'common');
+        $notifier = new RecordingOperServNotifier();
+
+        $this->service(
+            [new RecordingOperServCommand('ARGS', null, false, 2)],
+            $notifier,
+            translator: $translator,
+        )->dispatch('args one', $this->sender());
+        $this->service([], $notifier, prefersPrivate: true, translator: $translator)
+            ->dispatch('missing', $this->sender());
+
+        self::assertSame([
+            ['001AAA', 'shared syntax command.syntax', 'NOTICE'],
+            ['001AAA', 'shared unknown MISSING for OperServ', 'PRIVMSG'],
+        ], $notifier->messages);
     }
 
     #[Test]
@@ -171,6 +198,7 @@ final class OperServServiceTest extends TestCase
         ?OperatorAuthorizationQuery $authorization = null,
         ?NickAccountData $account = new NickAccountData(42, 'Test', 'en'),
         bool $prefersPrivate = false,
+        ?TranslatorInterface $translator = null,
     ): OperServService {
         $accounts = $this->createStub(NickAccountQuery::class);
         $accounts->method('findAccountByNick')->willReturn($account);
@@ -185,7 +213,7 @@ final class OperServServiceTest extends TestCase
             $languages,
             $preferences,
             $notifier,
-            new KeyTranslation(),
+            $translator ?? new KeyTranslation(),
             new ServiceNicknameRegistry([]),
             $authorization ?? $this->createStub(OperatorAuthorizationQuery::class),
         );
