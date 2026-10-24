@@ -219,6 +219,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         $channelStr = $message->params[0];
         $timestamp = (int) $message->params[1];
         $modeStr = $message->params[2] ?? '';
+        $modeParams = array_slice($message->params, 3);
         $buffer = trim($message->trailing ?? '');
 
         try {
@@ -240,7 +241,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             }
         }
 
-        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members));
+        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members, modeParams: $modeParams));
     }
 
     /**
@@ -416,7 +417,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $this->eventDispatcher->dispatch(new ChannelModeReceivedEvent($channelName, $modeStr, $modeParams));
+        $this->eventDispatcher->dispatch(new ChannelModeReceivedEvent($channelName, $modeStr, $modeParams, (int) $message->params[1]));
     }
 
     private function handleLmode(IRCMessage $message): void
@@ -439,7 +440,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             $params[] = $message->trailing;
         }
 
-        $this->eventDispatcher->dispatch(new ChannelListModeReceivedEvent($channelName, $modeChar, $params));
+        $this->eventDispatcher->dispatch(new ChannelListModeReceivedEvent($channelName, $modeChar, $params, (int) $message->params[1]));
     }
 
     private function handleFtopic(IRCMessage $message): void

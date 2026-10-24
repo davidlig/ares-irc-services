@@ -185,20 +185,65 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                 createdAt: new DateTimeImmutable('@' . ($event->timestamp > 0 ? $event->timestamp : time())),
             );
         } else {
-            if ($event->timestamp > 0) {
-                $channel->updateCreatedAt(new DateTimeImmutable('@' . $event->timestamp));
+            $existingTimestamp = $channel->getCreatedAt()->getTimestamp();
+            if ($event->timestamp > 0 && $existingTimestamp > 0 && $event->timestamp > $existingTimestamp) {
+                $channelSetupApplicable = 0 === $channel->getMemberCount();
+                foreach ($event->members as $member) {
+                    $uid = $member['uid'];
+                    if (!$channel->isMember($uid)) {
+                        $channel->syncMember($uid, ChannelMemberRole::None, []);
+                    }
+                }
+                $this->channelRepository->save($channel);
+                $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
+                foreach ($event->members as $member) {
+                    $joinedMember = $channel->getMember($member['uid']);
+                    $role = null !== $joinedMember ? $joinedMember->role : ChannelMemberRole::None;
+                    $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($member['uid'], $event->channelName, $role));
+                }
+
+                return;
             }
-            if ('' !== $event->modeStr) {
+
+            if ($event->timestamp > 0 && $existingTimestamp > 0 && $event->timestamp < $existingTimestamp) {
+                $channel->updateCreatedAt(new DateTimeImmutable('@' . $event->timestamp));
+                $channel->resetModeSnapshot();
                 $channel->updateModes($event->modeStr);
+            } elseif ($event->timestamp > 0 && $existingTimestamp > 0) {
+                if ('' !== $event->modeStr) {
+                    $channel->updateModes($this->channelModeStateSynchronizer->mergeEqualTimestampModes(
+                        $channel->getModes(),
+                        $event->modeStr,
+                    ));
+                }
+            } else {
+                // Timestamp-less joins retain the historical incremental update behavior.
+                if ($event->timestamp > 0) {
+                    $channel->updateCreatedAt(new DateTimeImmutable('@' . $event->timestamp));
+                }
+                if ('' !== $event->modeStr) {
+                    $channel->updateModes($event->modeStr);
+                }
             }
         }
 
-        $this->channelModeStateSynchronizer->applyInitialParams(
-            $channel,
-            $event->modeStr,
-            $event->modeParams,
-            $this->modeSupportProvider->getSupport(),
-        );
+        if (!$isNewChannel && $event->timestamp > 0
+            && $channel->getCreatedAt()->getTimestamp() === $event->timestamp
+            && $existingTimestamp === $event->timestamp) {
+            $this->channelModeStateSynchronizer->mergeEqualTimestampParams(
+                $channel,
+                $event->modeStr,
+                $event->modeParams,
+                $this->modeSupportProvider->getSupport(),
+            );
+        } else {
+            $this->channelModeStateSynchronizer->applyInitialParams(
+                $channel,
+                $event->modeStr,
+                $event->modeParams,
+                $this->modeSupportProvider->getSupport(),
+            );
+        }
 
         foreach ($event->listModes['b'] ?? [] as $mask) {
             $channel->addBan($mask);
@@ -214,7 +259,17 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         $joinedUids = [];
         foreach ($event->members as $member) {
             $prefixLetters = $member['prefixLetters'] ?? null;
-            $channel->syncMember($member['uid'], $member['role'], $prefixLetters);
+            $uid = $member['uid'];
+            $existingMember = $channel->getMember($uid);
+            if (!$isNewChannel && $event->timestamp > 0 && $existingTimestamp > 0
+                && $channel->getCreatedAt()->getTimestamp() === $event->timestamp
+                && $existingTimestamp === $event->timestamp && null !== $existingMember) {
+                $incomingLetters = $prefixLetters ?? ('' !== $member['role']->toModeLetter() ? [$member['role']->toModeLetter()] : []);
+                $mergedLetters = array_values(array_unique(array_merge($existingMember->prefixLetters, $incomingLetters)));
+                $channel->syncMember($uid, ChannelMemberRole::highestRoleFromLetters($mergedLetters), $mergedLetters);
+            } else {
+                $channel->syncMember($uid, $member['role'], $prefixLetters);
+            }
             $joinedUids[] = $member['uid'];
         }
 
@@ -240,6 +295,9 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         if (null === $channel) {
             return;
         }
+        if (null !== $event->creationTimestamp && $event->creationTimestamp !== $channel->getCreatedAt()->getTimestamp()) {
+            return;
+        }
 
         $this->channelModeStateSynchronizer->applyReceived(
             $channel,
@@ -257,6 +315,9 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
     {
         $channel = $this->channelRepository->findByName($event->channelName);
         if (null === $channel) {
+            return;
+        }
+        if (null !== $event->creationTimestamp && $event->creationTimestamp !== $channel->getCreatedAt()->getTimestamp()) {
             return;
         }
 
