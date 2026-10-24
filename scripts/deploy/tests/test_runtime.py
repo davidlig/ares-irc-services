@@ -147,8 +147,7 @@ class RuntimeTests(unittest.TestCase):
         override = str(release / "docker/compose.production.yaml")
         targets = (
             "build", "build-no-cache", "up", "down", "logs", "logs-tail",
-            "ps", "shell", "clean", "restart", "db-shell", "db-migrate",
-            "db-restore", "config-show", "health",
+            "ps", "shell", "clean", "restart", "db-migrate", "health",
         )
         for production in (False, True):
             for target in targets:

@@ -1,13 +1,12 @@
-.PHONY: help build build-no-cache up down logs logs-tail ps shell clean restart test db-shell db-migrate db-backup db-restore config-show health config
+.PHONY: help build build-no-cache up down logs logs-tail ps shell clean restart test coverage db-migrate health config build-multiarch
 
 # Detect docker compose command (v2 uses 'docker compose', v1 uses 'docker-compose')
-DOCKER_COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+DOCKER_COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 UID := $(shell id -u)
 # Production adds host networking without changing local Compose defaults.
 COMPOSE_FILES := -f docker/compose.yaml $(if $(ARES_COMPOSE_OVERRIDE),-f $(ARES_COMPOSE_OVERRIDE))
 
-BACKUP_DIR ?= backups
-BACKUP_FILE = ares-$(shell date +%Y%m%d-%H%M%S).db
+TEST_ARGS ?=
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -47,47 +46,30 @@ ps: ## Show container status
 shell: ## Open shell inside container
 	$(DOCKER_COMPOSE) $(COMPOSE_FILES) exec ares /bin/sh
 
-clean: ## Remove containers, volumes, and images
+clean: ## DANGER: remove containers, volumes, images, caches and logs
 	$(DOCKER_COMPOSE) $(COMPOSE_FILES) down -v --rmi local
 	rm -rf var/cache/* var/log/*
 
 restart: down up ## Restart services
 
 # Database operations
-db-shell: ## Open SQLite shell
-	$(DOCKER_COMPOSE) $(COMPOSE_FILES) exec ares php bin/console dbal:run-sql
-
 db-migrate: ## Run migrations manually
 	$(DOCKER_COMPOSE) $(COMPOSE_FILES) exec ares php bin/console doctrine:migrations:migrate -n
 
-db-backup: ## Backup database to backups/ directory
-	@mkdir -p $(BACKUP_DIR)
-	@cp var/data/ares.db $(BACKUP_DIR)/$(BACKUP_FILE)
-	@echo "✅ Backup created: $(BACKUP_DIR)/$(BACKUP_FILE)"
+test: ## Run PHPUnit without coverage (TEST_ARGS='tests/path --filter name')
+	@./vendor/bin/phpunit --no-coverage --display-all-issues $(TEST_ARGS)
 
-db-restore: ## Restore database from backups/ (usage: make db-restore FILE=backups/ares-20240101-120000.db)
-	@if [ -z "$(FILE)" ]; then \
-		echo "❌ Usage: make db-restore FILE=backups/ares-YYYYMMDD-HHMMSS.db"; \
-		exit 1; \
-	fi
-	@if [ ! -f "$(FILE)" ]; then \
-		echo "❌ File not found: $(FILE)"; \
-		exit 1; \
-	fi
-	@$(DOCKER_COMPOSE) $(COMPOSE_FILES) down
-	@cp $(FILE) var/data/ares.db
-	@$(DOCKER_COMPOSE) $(COMPOSE_FILES) up -d
-	@echo "✅ Database restored from: $(FILE)"
+coverage: ## Run the complete exact-100% coverage gate
+	@./scripts/check-coverage.sh 100 --issues
 
-config-show: ## Show current configuration
-	$(DOCKER_COMPOSE) $(COMPOSE_FILES) exec ares php bin/console debug:dotenv
-
-health: ## Check container health
-	@container_id="$$($(DOCKER_COMPOSE) $(COMPOSE_FILES) ps -q ares)"; \
-		if [ -n "$$container_id" ] && [ "$$(docker inspect --format '{{.State.Health.Status}}' "$$container_id" 2>/dev/null)" = "healthy" ]; then \
+health: ## Fail unless the container is present and healthy
+	@container_id="$$($(DOCKER_COMPOSE) $(COMPOSE_FILES) ps -q ares)" || exit 1; \
+		[ -n "$$container_id" ] || { echo "❌ Container absent"; exit 1; }; \
+		status="$$(docker inspect --format '{{.State.Health.Status}}' "$$container_id" 2>/dev/null)" || exit 1; \
+		if [ "$$status" = "healthy" ]; then \
 			echo "✅ Healthy"; \
 		else \
-			echo "❌ Unhealthy"; \
+			echo "❌ Unhealthy"; exit 1; \
 		fi
 
 # Multi-arch build
