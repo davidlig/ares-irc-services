@@ -7,18 +7,14 @@
 #   \x03        reset color
 #   \x0F        reset all formatting
 #
-# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
-#   \x0314 = dark grey (14 decimal)  ← CORRECT
-#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
-
-unknown_command: "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax:            "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
-  oper_only:         "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
-  not_identified:    "\x0304✗\x03 U bent niet geïdentificeerd. Gebruik \x0303/msg %bot% IDENTIFY <bijnaam> <wachtwoord>\x03"
-  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft geen toegang tot dit commando."
-  mail_failed:       "\x0304✗\x03 De e-mail kon niet worden verzonden. Controleer uw adres of probeer het later opnieuw."
+# IRC-kleuren gebruiken DECIMALE getallen (0-15), geen hexadecimale.
+#   \x0314 = donkergrijs (14 decimaal): GOED
+#   \x030F = kleur 0 gevolgd door de letter F: FOUT
+#
+# IRC-tekst over meerdere regels: !irc |- met echte regeleinden en spaties.
+# Blokken zonder tag decoderen geen escapes; behoud letterlijke CTCP-waarden.
+# HELP-voorbeelden: example/examples en %command_prefix%.
+# De presentatielaag voegt /msg zonder kleur en een marge van twee spaties toe.
 
 # --- REGISTER ---------------------------------------------------------------
 register:
@@ -65,7 +61,6 @@ recover:
   syntax:           "RECOVER <bijnaam> [token]"
   short:            "Herstel uw bijnaam als u uw wachtwoord bent kwijtgeraakt."
   help: "EMAIL: RECOVER <nickname> vraagt een voorlopig token per e-mail aan. TOKEN: geef je bevestigde token op. RECOVER <nickname> <token> accepteert een geldig e-mailtoken of bevestigd token. Het e-mailtoken vervangt het opgeslagen token pas na validatie. Het opgeslagen token biedt een optionele vervanging via VERIFY; negeer het bericht om het te behouden."
-  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
   pending: "\x0307→\x03 De registratie van \x02%nickname%\x02 is in behandeling. Gebruik \x0303VERIFY <token>\x03. \x0303RESEND\x03 is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
   suspended:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Reden: %reason%"
   forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden gebruikt op dit netwerk."
@@ -85,7 +80,6 @@ identify:
   native_authentication: "\x0307ℹ\x03 Dit protocol beheert authenticatie via nicknamewijzigingen. Gebruik \x0303/NICK <bijnaam>:<wachtwoord>\x03 of, als de nickname bezet is, \x0303/NICK <bijnaam>!<wachtwoord>\x03."
   success:          "\x0303✔\x03 U bent nu geïdentificeerd als \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 U bent al geïdentificeerd als \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
   invalid_credentials: "\x0304✗\x03 Onjuist wachtwoord. Probeer het opnieuw."
   locked_out:         "\x0304✗\x03 Te veel mislukte pogingen. Probeer het over \x02%minutes%\x02 minu(u)t(en) opnieuw."
   ghost_released:   "\x0307⚡\x03 De spooksessie die \x02%nickname%\x02 vasthield is verbroken."
@@ -117,14 +111,12 @@ status:
   forbidden_reason: "  Reden           : %reason%"
   pending_deletion:   "  \x0314Status\x03          : \x0307Verwijdering in afwachting\x03"
   pending_deletion_at: "  \x0314Verwijderd\x03      : %date%"
-  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <bijnaam>"
   short:            "Toon informatie over een geregistreerde bijnaam."
   help:             "Toont registratiedetails voor een bijnaam: registratiedatum, verbindingsstatus,\nlaatste quitbericht en e-mailadres. De e-mail is alleen zichtbaar voor\nde eigenaar wanneer geïdentificeerd. Met PRIVATE ON kunnen alleen de eigenaar en IRC Operators\nde informatie bekijken."
-  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
   private:          "\x0304✗\x03 Informatie van bijnaam \x02%nickname%\x02 is privé."
   header:           "\x02Informatie voor bijnaam \x0307%nickname%\x03\x02"
   status:           "  \x0314Status\x03               : %status%"
@@ -148,7 +140,6 @@ info:
   pending_deletion_at: "  \x0314Verwijderd\x03             : %date%"
   pending_deletion_until: "  \x0314Definitief op\x03          : %date%"
   pending_deletion_notice: "  \x0307Deze nickname staat op het punt verwijderd te worden en kan niet worden geregistreerd.\x03"
-  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AKanalen met toegang:\x03"
   channels_entry_founder:   "  %channel% (\x0303Oprichter\x03)"
   channels_entry_successor: "  %channel% (\x0303Opvolger\x03)"
@@ -304,7 +295,6 @@ help:
     account_management: "Accountbeheer"
     suspensions_bans: "Schorsingen en verboden"
     deletion: "Verwijderen en herstellen"
-  unknown_command: "%marker% Geen hulp beschikbaar voor \x02%command%\x0F."
   ircop_header: "\x02 ■ Beschikbare opdrachten voor IRC-operators:\x02"
 
   set_timezone:
@@ -333,7 +323,6 @@ userip:
 
     Syntax: USERIP <bijnaam>
     Voorbeeld: USERIP EenGebruiker
-  not_online:       "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verbonden."
   result:           "\x0307ℹ\x03 Bijnaam: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -365,13 +354,11 @@ suspend:
       SUSPEND ProbleemGebr 0 Permaban ontduiking
   success:            "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is geschorst tot \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is al geschorst."
-  not_registered:     "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
   forbidden:          "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden en kan niet worden geschorst."
   cannot_suspend_oper: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet schorsen."
   cannot_suspend_root: "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet schorsen."
   cannot_suspend_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet schorsen."
   invalid_duration:   "\x0304✗\x03 Ongeldige duur. Gebruik: \x0303<d><h><m>\x03 (bijv. 7d, 12h, 30m) of \x03030\x03 voor permanent."
-  permanent:          "permanent"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
@@ -383,7 +370,6 @@ unsuspend:
     Syntax: UNSUSPEND <bijnaam>
     Voorbeeld: UNSUSPEND EenGebruiker
   success:          "\x0303✔\x03 De schorsing van \x02%nickname%\x02 is opgeheven."
-  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
   not_suspended:    "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geschorst."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
@@ -400,7 +386,6 @@ rename:
 
     Syntax: RENAME <bijnaam>
     Voorbeeld: RENAME Lastpost
-  not_online:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verbonden."
   cannot_rename_root: "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet hernoemen."
   cannot_rename_oper: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet hernoemen."
   cannot_rename_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet hernoemen."
@@ -422,7 +407,6 @@ drop:
 
     Syntax: DROP <bijnaam>
     Voorbeeld: DROP OudAccount
-  not_registered:     "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
   suspended:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Hef eerst de schorsing op."
   forbidden:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."
   cannot_drop_root:   "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet verwijderen."
@@ -439,7 +423,6 @@ restore:
   short:            "Een bijnaam die op verwijdering wacht herstellen."
   help:             "Herstelt een bijnaam die handmatig is verwijderd en zich nog in de respijtperiode bevindt. Vereist IRCop-toestemming: nickserv.restore."
   success:          "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is hersteld."
-  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
   not_pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat niet op het punt verwijderd te worden."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
@@ -536,7 +519,6 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Verboden vhost-patronen (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — door %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Geen verboden vhost-patronen."
-    unknown_creator: "onbekend"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -569,9 +551,6 @@ history:
     Gebruik ADD om een handmatige vermelding toe te voegen.
     Gebruik DEL om een specifieke vermelding op ID te verwijderen.
     Gebruik CLEAR om alle geschiedenisvermeldingen te verwijderen.
-  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
-  unknown_operator: "(onbekend)"
-
   add:
     syntax:     "HISTORY <bijnaam> ADD <bericht>"
     short:      "Voeg een handmatige geschiedenisvermelding toe."
@@ -590,10 +569,6 @@ history:
 
       Syntax: HISTORY <bijnaam> DEL <id>
       Voorbeeld: HISTORY EenNick DEL 42
-    success:    "\x0303✔\x03 Geschiedenisvermelding \x02%id%\x02 verwijderd."
-    not_found:  "\x0304✗\x03 Geschiedenisvermelding \x02%id%\x02 niet gevonden."
-    invalid_id: "\x0304✗\x03 Ongeldige vermeldings-ID: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <bijnaam> VIEW [PAGINA|ALL]"
     short:      "Bekijk bijnaamactiegeschiedenis."
@@ -609,7 +584,6 @@ history:
       Gebruik VIEW ALL om de volledige geschiedenis te zien.
     header:     "\x02Geschiedenis voor \x0307%nickname%\x03\x02 (toont %start%-%end% van %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 door %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Geen geschiedenisvermeldingen gevonden voor \x02%nickname%\x02."
     page_hint:   "Gebruik \x0303HISTORY %nickname% VIEW %next_page%\x03 voor meer vermeldingen."
 
@@ -626,7 +600,6 @@ history:
 
 # --- History message translations (used when viewing history) ---
 history.message:
-  unsuspend:                  "Schorsing opgeheven"
   password_changed_owner:     "Wachtwoord gewijzigd door eigenaar"
   password_changed_operator:  "Wachtwoord gewijzigd door operator"
   email_changed_owner:        "E-mail gewijzigd van %old_email% naar %new_email%"
@@ -635,15 +608,9 @@ history.message:
 
 # --- History extra field translations ---
 history.extra:
-  duration:      "Duur: %value%"
-  expires_at:    "Verloopt: %value%"
   old_email:     "Oude e-mail: %value%"
   new_email:     "Nieuwe e-mail: %value%"
   method:        "Methode: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <bijnaam> {ON|OFF}"
   short:            "Stel verloopbescherming in of verwijder deze voor een bijnaam."
@@ -660,7 +627,6 @@ noexpire:
       NOEXPIRE BelangrijkeGebr OFF
   success_on:       "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is nu beschermd tegen verloop."
   success_off:      "\x0303✔\x03 Bijnaam \x02%nickname%\x02 verloopt nu normaal."
-  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
   forbidden:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."
   suspended:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst."
 
@@ -671,20 +637,9 @@ list:
   help: "Toont geregistreerde bijnamen die overeenkomen met het opgegeven patroon. De joker * komt overeen met elke tekenreeks. De pagina is optioneel en begint bij 1."
   header: "Bijnaam | Registratie | Laatste verbinding | IP | Status"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  page: "Pagina %page%/%pages% — %total% overeenkomsten"
   empty: "Geen bijnamen komen overeen met patroon %pattern%."
   status_pending: "In afwachting"
   status_registered: "Geregistreerd"
-  status_suspended: "Geschorst"
-  status_pending_deletion: "Verwijdering in afwachting"
-  status_forbidden: "Verboden"
-# --- DEBUG -------------------------------------------------------------------
-debug:
-  action_message: "%operator% voert commando %command% uit op %target%. %reason%"
-  action_with_option: "%operator% voert commando %command% uit op %target%. Optie: %option%. %reason%"
-  action_with_value: "%operator% voert commando %command% uit op %target%. Optie: %option%=%value%. %reason%"
-  action_duration: "%operator% voert commando %command% uit op %target%. Duur: %duration%. %reason%"
-  prefix_reason: "Reden: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

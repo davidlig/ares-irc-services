@@ -1,20 +1,25 @@
-# ChanServ translations — Turkish
-# Domain: chanserv
+# ChanServ çevirileri — Türkçe
+# Alan: chanserv
+#
+# IRC biçimlendirme kodları (çift tırnaklar veya !irc düz metin blokları):
+#   \x02        kalın yazıyı aç/kapat
+#   \x03NN      renk (ONDALIK: 03=yeşil, 04=kırmızı, 07=turuncu, 14=koyu gri)
+#   \x03        rengi sıfırla
+#   \x0F        tüm biçimlendirmeyi sıfırla
+#
+# IRC renkleri onaltılık değil, ONDALIK sayılar (0-15) kullanır.
+#   \x0314 = koyu gri (ondalık 14): DOĞRU
+#   \x030F = 0 rengi ve ardından F harfi: HATA
+#
+# Çok satırlı IRC metni: !irc |- ile gerçek satır sonları ve boşluklar.
+# Etiketsiz bloklar kaçışları çözmez; CTCP sabit metinlerini koruyun.
+# HELP örnekleri: example/examples ve %command_prefix%.
+# Sunum katmanı renksiz /msg ve iki boşlukluk kenar payı ekler.
 
-unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
-
+# --- ERROR -----------------------------------------------------------------
 error:
-  syntax:         "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
-  oper_only:      "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
-  not_identified: "\x0304✗\x03 Kimliğiniz doğrulanmamış. \x0303/msg %nickserv% IDENTIFY\x03 kullanın."
-  permission_denied: "\x0304✗\x03 Erişim reddedildi. Bu komuta erişim yetkiniz yok."
   invalid_channel: "\x0304✗\x03 Geçersiz kanal adı. \x02#channel\x02 kullanın."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   generic:        "\x0304✗\x03 Bir hata oluştu. Lütfen tekrar deneyin."
-  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
-  insufficient_access: "\x0304✗\x03 \x02%channel%\x02 kanalında \x02%operation%\x02 işlemi için yetersiz yetki."
-  mail_failed: "\x0304✗\x03 E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin."
-
 register:
   syntax:           "REGISTER <#channel> <açıklama>"
   short:            "Bir kanalı kaydedin."
@@ -32,7 +37,6 @@ info:
   short:            "Kanal bilgilerini gösterin."
   help:             "Kurucu, kayıt tarihi, halef, URL, e-posta, açıklama, son kullanım, başlık ve seçenekleri (TOPICLOCK, MLOCK, SECURE) gösterir."
   header:          "\x02\x0307%channel%\x03 kanalı için bilgi\x02"
-  footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Kurucu\x03             : \x02%nickname%\x02"
   registered:      "  \x0314Kayıt\x03              : %date%"
   successor:       "  \x0314Halef\x03              : \x02%nickname%\x02"
@@ -85,7 +89,6 @@ help:
     deletion: "Silme ve geri yükleme"
     restrictions: "Kısıtlamalar"
     lookup: Arama ve inceleme
-  unknown_command:  "\x0307✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
   ircop_header: "\x02 ■ IRC operatörleri için kullanılabilir komutlar:\x02"
 
 op:
@@ -335,16 +338,12 @@ akick:
     header:         "\x0303\x02%channel%\x02 için AKICK listesi\x03"
     empty:          "\x0307ℹ\x03 \x02%channel%\x02 kanalının AKICK girişi yok."
     entry:          "  #%index% %mask% %reason% (ekleyen: %nickname%, bitiş: %expiration%)"
-    no_reason:      "Sebep yok"
-    never_expires:  "hiçbir zaman"
-    unknown_creator: "bilinmiyor"
 
 restore:
   syntax:           "RESTORE <#channel>"
   short:            "Silinmeyi bekleyen bir kanalı geri yükle."
   help:             "Manuel olarak bırakılmış ve hala ödemesiz dönem içinde olan bir kanalı geri yükler. IRCop izni gerektirir: chanserv.restore."
   success:          "\x0303✔\x03 \x02%channel%\x02 kanalı geri yüklendi."
-  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   not_pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı silinmeyi beklemiyor."
 
 drop:
@@ -355,7 +354,6 @@ drop:
   force_success:    "\x0303✔\x03 \x02%channel%\x02 kanalı kalıcı olarak silindi."
   pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten silinmeyi bekliyor. Kalıcı olarak silmek için DROP <#channel> FORCE kullanın."
   invalid_channel:  "\x0304✗\x03 Geçersiz kanal adı. \x02#channel\x02 kullanın."
-  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   pending_deletion_reason: "%channel% kanalı silinme sürecinde. Daha fazla bilgi /msg %bot% INFO %channel%"
 
 suspend:
@@ -363,10 +361,8 @@ suspend:
   short:            "Bir kanalı askıya alın."
   help:             "Kayıtlı bir kanalı geçici olarak devre dışı bırakır. Süre formatları: 0 = kalıcı, 1g, 12s, 60d.\nAskıdayken, kanal modları, erişim ve uygulama devre dışı bırakılır.\nBu komut IRCop izni gerektirir: chanserv.suspend"
   success:          "\x0303✔\x03 \x02%channel%\x02 kanalı \x02%duration%\x02 tarihine kadar askıya alındı."
-  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   already_suspended: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten askıya alınmış."
   invalid_duration:  "\x0304✗\x03 Geçersiz süre. Kullanın: 0 (kalıcı), 1g, 12s veya 60d."
-  permanent:         "Kalıcı"
   channel_suspended: "\x0304✗\x03 \x02%channel%\x02 kanalı askıya alınmış ve kullanılamaz."
   notice_channel:    "\x0304⚠\x03 Kanal askıya alındı. Sebep: %reason%"
 
@@ -375,7 +371,6 @@ unsuspend:
   short:            "Kanal askısını kaldırın."
   help:             "Askıya alınan bir kanalı yeniden etkinleştirir, modlarını ve uygulamasını geri yükler.\nBu komut IRCop izni gerektirir: chanserv.suspend"
   success:          "\x0303✔\x03 \x02%channel%\x02 kanalının askısı kaldırıldı."
-  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   not_suspended:    "\x0304✗\x03 \x02%channel%\x02 kanalı askıya alınmamış."
   reason_expired:   "askı süresi doldu"
 
@@ -413,7 +408,6 @@ noexpire:
       NOEXPIRE #Onemli OFF
   success_on:       "\x0303✔\x03 \x02%channel%\x02 kanalı artık süre sonuna karşı korunuyor."
   success_off:      "\x0303✔\x03 \x02%channel%\x02 kanalı artık normal şekilde sona erecek."
-  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   forbidden:         "\x0304✗\x03 \x02%channel%\x02 kanalı yasaklanmış."
   suspended:         "\x0304✗\x03 \x02%channel%\x02 kanalı askıya alınmış."
 
@@ -434,11 +428,7 @@ unforbid:
   not_forbidden:    "\x0304✗\x03 \x02%channel%\x02 kanalı yasaklı değil."
 
 debug:
-  action_message: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. %reason%"
-  action_with_option: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%. %reason%"
-  action_with_value: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%=%value%. %reason%"
   founder_action: "Seviye-kurucu eylemi"
-  prefix_reason:  "Sebep: %reason%"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -462,9 +452,6 @@ history:
       HISTORY #channel ADD Şüpheli devralma girişimi
       HISTORY #channel DEL 42
       HISTORY #channel CLEAR
-  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
-  unknown_operator: "(bilinmiyor)"
-
   add:
     syntax:     "HISTORY <#channel> ADD <mesaj>"
     short:      "Manuel bir geçmiş girişi ekleyin."
@@ -476,17 +463,12 @@ history:
     syntax:     "HISTORY <#channel> DEL <id>"
     short:      "ID ile bir geçmiş girişini silin."
     help:       "Bir geçmiş kaydını kimliğine göre siler."
-    success:    "\x0303✔\x03 Geçmiş girişi \x02%id%\x02 silindi."
-    not_found:  "\x0304✗\x03 Geçmiş girişi \x02%id%\x02 bulunamadı."
-    invalid_id: "\x0304✗\x03 Geçersiz giriş ID'si: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <#channel> VIEW [SAYFA|ALL]"
     short:      "Kanal eylem geçmişini görüntüleyin."
     help:       "Kanalın geçmiş kayıtlarını görüntüler."
     header:     "\x02\x0307%channel%\x03\x02 için geçmiş (%start%-%end% / %total% gösteriliyor):"
     entry:       "#%id% [%date%] \x0303%action%\x03 - %operator% tarafından — %message%"
-    extra:       "  Ekstra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 \x02%channel%\x02 için geçmiş girişi bulunamadı."
     page_hint:   "Daha fazla giriş için \x0303HISTORY %channel% VIEW %next_page%\x03 kullanın."
 
@@ -498,7 +480,6 @@ history:
 
 # --- Geçmiş mesaj çevirileri ---
 history.message:
-  unsuspend:                  "Askı kaldırıldı"
   founder_changed:            "Kurucu %old_founder% yerine %new_founder% olarak değiştirildi"
   successor_changed:          "Halef %old_successor% yerine %new_successor% olarak değiştirildi"
   successor_cleared:          "Halef temizlendi"
@@ -509,8 +490,6 @@ history.message:
 
 # --- Geçmiş ekstra alan çevirileri ---
 history.extra:
-  duration:      "Süre: %value%"
-  expires_at:    "Bitiş: %value%"
   old_founder:     "Eski kurucu: %value%"
   new_founder:     "Yeni kurucu: %value%"
   old_successor:   "Eski halef: %value%"
@@ -518,10 +497,6 @@ history.extra:
   target_nickname: "Hedef: %value%"
   level:           "Seviye: %value%"
   mask:            "Maske: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- CLEARACCESS (IRCop) ---------------------------------------------------------
 clearaccess:
   syntax:           "CLEARACCESS <#channel>"
   short:            "Bir kanalın tüm erişim listesini temizleyin."
@@ -562,9 +537,5 @@ list:
   help: "Belirtilen desenle eşleşen kayıtlı kanalları listeler. * joker karakteri herhangi bir karakter dizisiyle eşleşir. Sayfa isteğe bağlıdır ve 1'den başlar."
   header: "Kanal | Kurucu | Kayıt | Son kullanım | Durum"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
-  page: "Sayfa %page%/%pages% — %total% eşleşme"
   empty: "%pattern% deseniyle eşleşen kanal yok."
   status_active: "Etkin"
-  status_suspended: "Askıya alındı"
-  status_pending_deletion: "Silinmeyi bekliyor"
-  status_forbidden: "Yasaklandı"

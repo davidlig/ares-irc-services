@@ -1,27 +1,129 @@
-# Common translations — Italiano
-# Domain: common
+# Traduzioni di messaggi comuni — Italiano
+# Dominio: common
 #
-# Traduzioni condivise usate in tutti i servizi IRC.
+# Codici di formattazione IRC (virgolette doppie o blocchi letterali !irc):
+#   \x02        attiva/disattiva il grassetto
+#   \x03NN      colore (DECIMALE: 03=verde, 04=rosso, 07=arancione, 14=grigio scuro)
+#   \x03        ripristina il colore
+#   \x0F        ripristina tutta la formattazione
+#
+# I colori IRC usano numeri DECIMALI (0-15), non esadecimali.
+#   \x0314 = grigio scuro (14 decimale): CORRETTO
+#   \x030F = colore 0 seguito dalla lettera F: ERRORE
+#
+# Testo IRC multilinea: !irc |- con interruzioni di riga e spazi reali.
+# I blocchi senza tag non decodificano gli escape; preservare i letterali CTCP.
+# Esempi HELP: example/examples e %command_prefix%.
+# Il presentatore aggiunge /msg senza colore e un margine di due spazi.
 
+# --- UNKNOWN COMMAND -------------------------------------------------------
+unknown_command: "\x0304✗\x03\x0F Comando sconosciuto \x0303%command%\x03\x0F. Usa /msg %bot% \x0303HELP\x03\x0F"
+
+# --- UNKNOWN HELP OPTION ---------------------------------------------------
+unknown_help_option: "\x0304✗\x03\x0F Opzione di aiuto \x0303%option%\x03\x0F sconosciuta per \x0303%command%\x03\x0F. Usa /msg %bot% \x0303HELP %command%\x03\x0F"
+
+# --- ERROR -----------------------------------------------------------------
+error:
+  syntax: "\x0304✗\x03 Sintassi errata. Uso: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Questo comando è riservato agli IRC Operator."
+  not_identified: "\x0304✗\x03 Non hai effettuato l'identificazione. Usa /msg %nickserv% \x0303IDENTIFY <nickname> <password>\x03"
+  permission_denied: "\x0304✗\x03 Permesso negato. Non ha accesso a questo comando."
+  mail_failed: "\x0304✗\x03 Impossibile inviare l'email. Verifichi l'indirizzo o riprovi più tardi."
+  channel_not_registered: "\x0304✗\x03 Il canale \x02%channel%\x02 non è registrato."
+  nick_not_registered: "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è registrato."
+  insufficient_access: "\x0304✗\x03 Accesso insufficiente per \x02%operation%\x02 sul canale \x02%channel%\x02."
+  nick_not_online: "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è connesso."
+
+# --- DURATION --------------------------------------------------------------
+duration:
+  unit:
+    year:
+      singular: "anno"
+      plural: "anni"
+    month:
+      singular: "mese"
+      plural: "mesi"
+    day:
+      singular: "giorno"
+      plural: "giorni"
+    hour:
+      singular: "ora"
+      plural: "ore"
+    minute:
+      singular: "minuto"
+      plural: "minuti"
+    second:
+      singular: "secondo"
+      plural: "secondi"
+  list_separator: ", "
+  list_join: "%prefix% e %last%"
+
+# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Ha superato il limite di comandi. Riprovi tra %seconds% secondi."
   debug_channel: "%nick% limite %command% raggiunto per %host% (%seconds%s rimanenti)"
 
+# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
-      \x02Per il mio leale ed eterno amico,\x02
-      
-      Anche se il 2023 è stato l'anno in cui abbiamo dovuto dirci addio, il tempo non ha
-      cancellato un solo dettaglio di te. Ricordo ancora la tua energia inesauribile,
-      il tuo sguardo nobile e quella gioia immensa e contagiosa che solo tu sapevi donare.
-      
+      \x02Al mio leale e eterno amico,\x02
+
+      Anche se il 2023 è stato l'anno in cui abbiamo dovuto dirci addio, il tempo non
+      ha cancellato nemmeno un tuo dettaglio. Ricordo ancora la tua energia
+      inesauribile, il tuo sguardo nobile e quella gioia immensa e contagiosa che solo
+      tu sapevi donare.
+
       Hai riempito la mia casa di vita e la mia vita di un amore incondizionato che non
-      dimenticherò mai. Anche se non sento più i tuoi passi correre a salutarmi né sento
+      dimenticherò mai. Anche se non sento più i tuoi passi correre ad accogliermi né
       la tua testa appoggiarsi a me in cerca di affetto, so che il tuo spirito giocoso
-      mi accompagna ancora.
-      
-      Grazie per ogni momento, ogni marachella e per essere stato il miglior compagno che
-      avrei potuto desiderare. Lo spazio che hai lasciato al mio fianco è ora colmo dei
-      ricordi più felici. Sarai sempre il mio caro amico e avrai sempre un posto immenso
-      nel mio cuore.
+      continua ad accompagnarmi.
+
+      Grazie per ogni momento, per ogni marachella e per essere stato il miglior
+      compagno che potessi desiderare. Lo spazio che hai lasciato accanto a me è ora
+      pieno dei ricordi più felici. Sarai sempre il mio grande amico e avrai sempre un
+      posto immenso nel mio cuore.
+
+# --- DEBUG -----------------------------------------------------------------
+debug:
+  action_message: "%operator% esegue il comando %command% su %target%. %reason%"
+  action_with_option: "%operator% esegue il comando %command% su %target%. Opzione: %option%. %reason%"
+  action_with_value: "%operator% esegue il comando %command% su %target%. Opzione: %option%=%value%. %reason%"
+  prefix_reason: "Motivo: %reason%"
+  action_duration: "%operator% esegue il comando %command% su %target%. Durata: %duration%. %reason%"
+
+# --- HISTORY ---------------------------------------------------------------
+history:
+  unknown_operator: "(sconosciuto)"
+  del:
+    success: "\x0303✔\x03 Voce di cronologia \x02%id%\x02 eliminata."
+    not_found: "\x0304✗\x03 Voce di cronologia \x02%id%\x02 non trovata."
+    invalid_id: "\x0304✗\x03 ID voce non valido: \x02%id%\x02."
+  view:
+    extra: "  Extra \x0307→\x03 %extra%"
+  message:
+    unsuspend: "Sospensione revocata"
+  extra:
+    duration: "Durata: %value%"
+    expires_at: "Scade: %value%"
+    ip: "IP: %value%"
+    host: "Host: %value%"
+
+# --- LIST ------------------------------------------------------------------
+list:
+  page: "Pagina %page%/%pages% — %total% corrispondenze"
+  status_suspended: "Sospeso"
+  status_pending_deletion: "Eliminazione in attesa"
+  status_forbidden: "Vietato"
+
+# --- REPLY -----------------------------------------------------------------
+reply:
+  separator: "\x0314─────────────────────────────\x03"
+
+# --- LABEL -----------------------------------------------------------------
+label:
+  no_reason: "Nessun motivo"
+  never: "mai"
+  unknown_creator: "sconosciuto"
+  permanent: "Permanente"
+  permanent_inline: "permanente"

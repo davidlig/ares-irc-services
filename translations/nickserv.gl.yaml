@@ -12,23 +12,16 @@
 #   \x03        restablecer cor
 #   \x0F        restablecer todo o formato
 #
-# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
-#   \x0314 = dark grey (14 decimal)  ← CORRECT
-#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
-# NOTA: As cores de IRC usan números DECIMAIS (0-15), non hexadecimais.
-#   \x0314 = gris escuro (14 decimal)  ← CORRECTO
-#   \x030F = cor 0 + letra "F"         ← INCORRECTO (0F é hex, non decimal)
+# As cores IRC usan números DECIMAIS (0-15), non hexadecimais.
+#   \x0314 = gris escuro (14 decimal): CORRECTO
+#   \x030F = cor 0 seguida da letra F: ERRO
+#
+# Texto IRC multiliña: !irc |- con saltos físicos e espazos reais.
+# Os bloques sen etiqueta non descodifican escapes; conserva os literais CTCP.
+# Exemplos HELP: example/examples e %command_prefix%.
+# O presentador engade /msg sen cor e unha marxe de dous espazos.
 
-unknown_command: "\x0304✗\x03 Comando descoñecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax:            "\x0304✗\x03 Sintaxe incorrecta. Uso: \x02%syntax%\x02"
-  oper_only:         "\x0304✗\x03 Este comando está restrinxido a operadores de IRC."
-  not_identified:    "\x0304✗\x03 Non está identificado. Use \x0303/msg %bot% IDENTIFY <alcume> <contrasinal>\x03"
-  permission_denied: "\x0304✗\x03 Permiso denegado. Non ten acceso a este comando."
-  mail_failed:       "\x0304✗\x03 Non se puido enviar o correo electrónico. Comprobe o seu enderezo ou tenteo de novo máis tarde."
-
-# --- REGISTER ---------------------------------------------------------------
+# --- REGISTER --------------------------------------------------------------
 register:
   token_unavailable: "\x0304✗\x03 O rexistro está pendente, pero non se puido entregar o token.\nAgarda a que caduque antes de rexistrarte de novo."
   syntax: "REGISTER <password> [email]"
@@ -73,7 +66,6 @@ recover:
   syntax:           "RECOVER <alcume> [token]"
   short:            "Recuperar o seu alcume se perdeu o contrasinal."
   help: "EMAIL: RECOVER <nickname> solicita un token provisional por correo. TOKEN: proporciona o token confirmado. RECOVER <nickname> <token> acepta o token válido do correo ou o confirmado. O do correo substitúe o gardado só tras validalo. Usar o gardado ofrece un reemplazo opcional con VERIFY; ignora a mensaxe para conservalo."
-  not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   pending: "\x0307→\x03 O rexistro de \x02%nickname%\x02 está pendente. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 só está dispoñible con REGMODE EMAIL e un correo válido asignado."
   suspended:        "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non se pode usar nesta rede."
@@ -93,7 +85,6 @@ identify:
   native_authentication: "\x0307ℹ\x03 Este protocolo xestiona a autenticación mediante cambios de alcume. Usa \x0303/NICK <alcume>:<contrasinal>\x03 ou, se o alcume está ocupado, \x0303/NICK <alcume>!<contrasinal>\x03."
   success:          "\x0303✔\x03 Agora está identificado como \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Xa está identificado como \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   invalid_credentials: "\x0304✗\x03 Contrasinal incorrecto. Tenteo de novo."
   locked_out:         "\x0304✗\x03 Demasiados intentos errados. Tenteo de novo en \x02%minutes%\x02 minuto(s)."
   ghost_released:   "\x0307⚡\x03 A sesión fantasma que mantiña \x02%nickname%\x02 foi desconectada."
@@ -125,14 +116,12 @@ status:
   forbidden_reason: "  Motivo          : %reason%"
   pending_deletion:   "  \x0314Estado\x03          : \x0307Pendente de eliminación\x03"
   pending_deletion_at: "  \x0314Eliminado\x03       : %date%"
-  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <alcume>"
   short:            "Mostrar información sobre un alcume rexistrado."
   help:             "Mostra detalles de rexistro dun alcume: data de rexistro, estado\nde conexión, última mensaxe de desconexión e enderezo de correo electrónico. O correo\nelectrónico só é visible para o propietario cando está identificado. Con PRIVATE ON só\no propietario e os operadores de IRC poden ver a información."
-  not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   private:          "\x0304✗\x03 A información do alcume \x02%nickname%\x02 é privada."
   header:           "\x02Información do alcume \x0307%nickname%\x03\x02"
   status:           "  \x0314Estado\x03            : %status%"
@@ -156,7 +145,6 @@ info:
   pending_deletion_at: "  \x0314Eliminado\x03              : %date%"
   pending_deletion_until: "  \x0314Elim. definitiva\x03       : %date%"
   pending_deletion_notice: "  \x0307Este alcume está pendente de eliminación e non se pode rexistrar.\x03"
-  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ACanles con acceso:\x03"
   channels_entry_founder:   "  %channel% (\x0303Fundador\x03)"
   channels_entry_successor: "  %channel% (\x0303Sucesor\x03)"
@@ -312,7 +300,6 @@ help:
     account_management: "Xestión de contas"
     suspensions_bans: "Suspensións e prohibicións"
     deletion: "Eliminación e restauración"
-  unknown_command: "%marker% Non hai axuda para \x02%command%\x0F."
   ircop_header: "\x02 ■ Comandos dispoñibles para IRCops:\x02"
 
   set_timezone:
@@ -341,7 +328,6 @@ userip:
 
     Sintaxe: USERIP <alcume>
     Exemplo: USERIP AlgúnUsuario
-  not_online:       "\x0304✗\x03 O alcume \x02%nickname%\x02 non está conectado."
   result:           "\x0307ℹ\x03 Alcume: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -373,13 +359,11 @@ suspend:
       SUSPEND UsuarioProblemático 0 Permaban por evasión
   success:            "\x0303✔\x03 O alcume \x02%nickname%\x02 foi suspendido ata \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 O alcume \x02%nickname%\x02 xa está suspendido."
-  not_registered:     "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   forbidden:          "\x0304✗\x03 O alcume \x02%nickname%\x02 está prohibido e non se pode suspender."
   cannot_suspend_oper: "\x0304✗\x03 Non se pode suspender o operador de IRC \x02%nickname%\x02."
   cannot_suspend_root: "\x0304✗\x03 Non se pode suspender o usuario root \x02%nickname%\x02."
   cannot_suspend_service: "\x0304✗\x03 Non se pode suspender o alcume de servizo \x02%nickname%\x02."
   invalid_duration:   "\x0304✗\x03 Duración non válida. Use: \x0303<d><h><m>\x03 (p.ex., 7d, 12h, 30m) ou \x03030\x03 para permanente."
-  permanent:          "permanente"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
@@ -391,7 +375,6 @@ unsuspend:
     Sintaxe: UNSUSPEND <alcume>
     Exemplo: UNSUSPEND AlgúnUsuario
   success:          "\x0303✔\x03 A suspensión foi levantada de \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   not_suspended:    "\x0304✗\x03 O alcume \x02%nickname%\x02 non está suspendido."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
@@ -408,7 +391,6 @@ rename:
 
     Sintaxe: RENAME <alcume>
     Exemplo: RENAME Problemático
-  not_online:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non está conectado."
   cannot_rename_root: "\x0304✗\x03 Non se pode renomear o usuario root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Non se pode renomear o operador de IRC \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 Non se pode renomear o alcume de servizo \x02%nickname%\x02."
@@ -430,7 +412,6 @@ drop:
 
     Sintaxe: DROP <alcume>
     Exemplo: DROP ContaAntiga
-  not_registered:     "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   suspended:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido. Reactíveo primeiro."
   forbidden:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está prohibido."
   cannot_drop_root:   "\x0304✗\x03 Non se pode eliminar o usuario root \x02%nickname%\x02."
@@ -447,7 +428,6 @@ restore:
   short:            "Restaurar un alcume pendente de eliminación."
   help:             "Restaura un alcume que foi eliminado manualmente e aínda está dentro do período de graza. Require permiso IRCop: nickserv.restore."
   success:          "\x0303✓\x03 O alcume \x02%nickname%\x02 foi restaurado."
-  not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   not_pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está pendente de eliminación."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
@@ -544,7 +524,6 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Patróns de vhost prohibidos (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — por %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Non hai patróns de vhost prohibidos."
-    unknown_creator: "descoñecido"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -577,9 +556,6 @@ history:
     Use ADD para engadir unha entrada manual.
     Use DEL para eliminar unha entrada específica polo ID.
     Use CLEAR para eliminar todas as entradas do historial.
-  not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
-  unknown_operator: "(descoñecido)"
-
   add:
     syntax:     "HISTORY <alcume> ADD <mensaxe>"
     short:      "Engadir unha entrada manual ao historial."
@@ -598,10 +574,6 @@ history:
 
       Sintaxe: HISTORY <alcume> DEL <id>
       Exemplo: HISTORY AlgúnAlcume DEL 42
-    success:    "\x0303✔\x03 Entrada do historial \x02%id%\x02 eliminada."
-    not_found:  "\x0304✗\x03 Entrada do historial \x02%id%\x02 non atopada."
-    invalid_id: "\x0304✗\x03 ID de entrada non válido: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <alcume> VIEW [PÁXINA|ALL]"
     short:      "Ver o historial de accións do alcume."
@@ -617,7 +589,6 @@ history:
       Use VIEW ALL para ver o historial completo.
     header:     "\x02Historial de \x0307%nickname%\x03\x02 (mostrando %start%-%end% de %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 por %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Non se atoparon entradas do historial para \x02%nickname%\x02."
     page_hint:   "Use \x0303HISTORY %nickname% VIEW %next_page%\x03 para máis entradas."
 
@@ -635,7 +606,6 @@ history:
 # --- History message translations (used when viewing history) ---
 # --- Traducións das mensaxes do historial (usadas ao ver o historial) ---
 history.message:
-  unsuspend:                  "Suspensión levantada"
   password_changed_owner:     "Contrasinal cambiado polo propietario"
   password_changed_operator:  "Contrasinal cambiado por un operador"
   email_changed_owner:        "Correo electrónico cambiado de %old_email% a %new_email%"
@@ -645,15 +615,9 @@ history.message:
 # --- History extra field translations ---
 # --- Traducións dos campos extra do historial ---
 history.extra:
-  duration:      "Duración: %value%"
-  expires_at:    "Caduca: %value%"
   old_email:     "Correo-e anterior: %value%"
   new_email:     "Novo correo-e: %value%"
   method:        "Método: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <alcume> {ON|OFF}"
   short:            "Establecer ou eliminar a protección contra caducidade dun alcume."
@@ -670,7 +634,6 @@ noexpire:
       NOEXPIRE UsuarioImportante OFF
   success_on:       "\x0303✔\x03 O alcume \x02%nickname%\x02 está agora protexido contra a caducidade."
   success_off:      "\x0303✔\x03 O alcume \x02%nickname%\x02 caducará normalmente agora."
-  not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
   forbidden:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está prohibido."
   suspended:         "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido."
 
@@ -681,20 +644,9 @@ list:
   help: "Lista os alcumes rexistrados que coinciden co patrón indicado. O comodín * coincide con calquera secuencia de caracteres. A páxina é opcional e comeza en 1."
   header: "Alcume | Rexistro | Última conexión | IP | Estado"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  page: "Páxina %page%/%pages% — %total% coincidencias"
   empty: "Ningún alcume coincide co patrón %pattern%."
   status_pending: "Pendente"
   status_registered: "Rexistrado"
-  status_suspended: "Suspendido"
-  status_pending_deletion: "Pendente de eliminación"
-  status_forbidden: "Prohibido"
-# --- DEBUG -------------------------------------------------------------------
-debug:
-  action_message: "%operator% executa o comando %command% sobre %target%. %reason%"
-  action_with_option: "%operator% executa o comando %command% sobre %target%. Opción: %option%. %reason%"
-  action_with_value: "%operator% executa o comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
-  action_duration: "%operator% executa o comando %command% sobre %target%. Duración: %duration%. %reason%"
-  prefix_reason: "Motivo: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

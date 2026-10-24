@@ -1,7 +1,10 @@
-# E-mailinhoud — domein: mail (platte tekst, geen IRC-codes)
-# Placeholders: %nickname%, %token%, %new_email%
+# E-mail-vertalingen — Nederlands
+# Domein: mail
+#
+# E-mailonderwerpen en -teksten zijn platte tekst zonder IRC-opmaak.
+# Behoud echte regeleinden en bedoelde afsluitende regeleinden.
 
-# REGISTER / VERIFY — verificatietoken
+# --- REGISTER / VERIFY -----------------------------------------------------
 register_verification_subject: "%bot%: verifieer uw bijnaamregistratie"
 register_verification_body: |
   Hallo,
@@ -18,7 +21,7 @@ register_verification_body: |
   Na bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging.
     /msg %bot% RECOVER %nickname% %token%
 
-# RESEND — hetzelfde als registratie, opnieuw verzenden van token
+# --- RESEND ----------------------------------------------------------------
 resend_verification_subject: "%bot%: uw verificatietoken (opnieuw verzonden)"
 resend_verification_body: |
   Hallo,
@@ -35,7 +38,7 @@ resend_verification_body: |
   Na bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging.
     /msg %bot% RECOVER %nickname% %token%
 
-# SET EMAIL — bevestigingstoken verzonden naar huidig e-mailadres
+# --- SET EMAIL -------------------------------------------------------------
 email_change_token_subject: "%bot%: bevestig uw nieuwe e-mailadres"
 email_change_token_body: |
   Hallo,
@@ -49,7 +52,7 @@ email_change_token_body: |
 
   De token verloopt binnen 1 uur. Als u deze wijziging niet heeft aangevraagd, negeer deze e-mail dan.
 
-# RECOVER — wachtwoordhersteltoken
+# --- RECOVER ---------------------------------------------------------------
 recovery_token_subject: "%bot%: wachtwoordherstel"
 recovery_token_body: |
   Hallo,
@@ -65,7 +68,7 @@ recovery_token_body: |
 
   Na bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De vervaltijd van één uur geldt alleen vóór bevestiging.
 
-# ChanServ SET FOUNDER — oprichter-wijzigingstoken
+# --- CHANSERV SET FOUNDER --------------------------------------------------
 founder_change_token_subject: "%bot%: oprichter-wijzigingstoken voor %channel%"
 founder_change_token_body: |
   Hallo,

@@ -107,7 +107,7 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
             $formattedReason = $this->translator->trans(
                 'debug.prefix_reason',
                 ['%reason%' => $reason],
-                'nickserv',
+                'common',
                 $this->defaultLanguage,
             );
         }
@@ -143,7 +143,7 @@ final readonly class NickServDebugNotifier implements NickAuditSink, ServiceDebu
         $message = $this->translator->trans(
             $translationKey,
             $messageParams,
-            'nickserv',
+            'common',
             $this->defaultLanguage,
         );
 

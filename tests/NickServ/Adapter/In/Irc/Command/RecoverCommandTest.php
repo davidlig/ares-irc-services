@@ -156,7 +156,7 @@ final class RecoverCommandTest extends TestCase
         return [
             'not_registered' => [
                 RecoverNickResult::notRegistered('TargetNick'),
-                ['recover.not_registered [%nickname%: TargetNick]'],
+                ['error.nick_not_registered [%nickname%: TargetNick]'],
             ],
             'pending' => [
                 RecoverNickResult::pending('TargetNick'),

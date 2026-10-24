@@ -1,20 +1,25 @@
-# ChanServ translations — Dutch
-# Domain: chanserv
+# ChanServ-vertalingen — Nederlands
+# Domein: chanserv
+#
+# IRC-opmaakcodes (dubbele aanhalingstekens of letterlijke !irc-blokken):
+#   \x02        vet aan/uit
+#   \x03NN      kleur (DECIMAAL: 03=groen, 04=rood, 07=oranje, 14=donkergrijs)
+#   \x03        kleur herstellen
+#   \x0F        alle opmaak herstellen
+#
+# IRC-kleuren gebruiken DECIMALE getallen (0-15), geen hexadecimale.
+#   \x0314 = donkergrijs (14 decimaal): GOED
+#   \x030F = kleur 0 gevolgd door de letter F: FOUT
+#
+# IRC-tekst over meerdere regels: !irc |- met echte regeleinden en spaties.
+# Blokken zonder tag decoderen geen escapes; behoud letterlijke CTCP-waarden.
+# HELP-voorbeelden: example/examples en %command_prefix%.
+# De presentatielaag voegt /msg zonder kleur en een marge van twee spaties toe.
 
-unknown_command: "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
-
+# --- ERROR -----------------------------------------------------------------
 error:
-  syntax:         "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
-  oper_only:      "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
-  not_identified: "\x0304✗\x03 U bent niet geïdentificeerd. Gebruik \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft geen toegang tot dit commando."
   invalid_channel: "\x0304✗\x03 Ongeldige kanaalnaam. Gebruik \x02#kanaal\x02."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   generic:        "\x0304✗\x03 Er is een fout opgetreden. Probeer het opnieuw."
-  nick_not_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
-  insufficient_access: "\x0304✗\x03 Onvoldoende toegang voor \x02%operation%\x02 op kanaal \x02%channel%\x02."
-  mail_failed: "\x0304✗\x03 Kon geen e-mail verzenden. Probeer het later opnieuw."
-
 register:
   syntax:           "REGISTER <#kanaal> <beschrijving>"
   short:            "Registreer een kanaal."
@@ -32,7 +37,6 @@ info:
   short:            "Toon kanaalinformatie."
   help:             "Toont oprichter, registratiedatum, opvolger, URL, e-mail, beschrijving, laatst gebruikt, onderwerp en opties (TOPICLOCK, MLOCK, SECURE)."
   header:          "\x02Informatie voor kanaal \x0307%channel%\x03\x02"
-  footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Oprichter\x03           : \x02%nickname%\x02"
   registered:      "  \x0314Geregistreerd\x03       : %date%"
   successor:       "  \x0314Opvolger\x03            : \x02%nickname%\x02"
@@ -85,7 +89,6 @@ help:
     deletion: "Verwijderen en herstellen"
     restrictions: "Beperkingen"
     lookup: Opzoeken en onderzoek
-  unknown_command:  "\x0307✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02 ■ Beschikbare opdrachten voor IRC-operators:\x02"
 
 op:
@@ -335,16 +338,12 @@ akick:
     header:         "\x0303AKICK-lijst voor \x02%channel%\x02\x03"
     empty:          "\x0307ℹ\x03 Kanaal \x02%channel%\x02 heeft geen AKICK-vermeldingen."
     entry:          "  #%index% %mask% %reason% (door %nickname%, verloopt: %expiration%)"
-    no_reason:      "Geen reden"
-    never_expires:  "nooit"
-    unknown_creator: "onbekend"
 
 restore:
   syntax:           "RESTORE <#kanaal>"
   short:            "Een kanaal dat op verwijdering wacht herstellen."
   help:             "Herstelt een kanaal dat handmatig is verwijderd en zich nog in de respijtperiode bevindt. Vereist IRCop-toestemming: chanserv.restore."
   success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is hersteld."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   not_pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat niet op het punt verwijderd te worden."
 
 drop:
@@ -355,7 +354,6 @@ drop:
   force_success:    "\x0303✔\x03 Kanaal \x02%channel%\x02 is definitief verwijderd."
   pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat al op het punt verwijderd te worden. Gebruik DROP <#kanaal> FORCE om het definitief te verwijderen."
   invalid_channel:  "\x0304✗\x03 Ongeldige kanaalnaam. Gebruik \x02#kanaal\x02."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   pending_deletion_reason: "Kanaal %channel% staat op het punt verwijderd te worden. Meer informatie /msg %bot% INFO %channel%"
 
 suspend:
@@ -363,10 +361,8 @@ suspend:
   short:            "Schors een kanaal."
   help:             "Schakelt tijdelijk een geregistreerd kanaal uit. Duurformaten: 0 = permanent, 1d, 12h, 60m.\nTijdens schorsing zijn kanaalmodi, toegang en handhaving uitgeschakeld.\nDit commando vereist IRCop-toestemming: chanserv.suspend"
   success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is geschorst tot \x02%duration%\x02."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   already_suspended: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geschorst."
   invalid_duration:  "\x0304✗\x03 Ongeldige duur. Gebruik: 0 (permanent), 1d, 12h of 60m."
-  permanent:         "Permanent"
   channel_suspended: "\x0304✗\x03 Kanaal \x02%channel%\x02 is geschorst en kan niet worden gebruikt."
   notice_channel:    "\x0304⚠\x03 Kanaal is geschorst. Reden: %reason%"
 
@@ -375,7 +371,6 @@ unsuspend:
   short:            "Heef een kanaalschorsing op."
   help:             "Reactieert een geschorst kanaal, herstelt de modi en handhaving.\nDit commando vereist IRCop-toestemming: chanserv.suspend"
   success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is niet langer geschorst."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   not_suspended:    "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geschorst."
   reason_expired:   "verlopen schorsing"
 
@@ -413,7 +408,6 @@ noexpire:
       NOEXPIRE #Belangrijk OFF
   success_on:       "\x0303✔\x03 Kanaal \x02%channel%\x02 is nu beschermd tegen verloop."
   success_off:      "\x0303✔\x03 Kanaal \x02%channel%\x02 verloopt nu normaal."
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   forbidden:         "\x0304✗\x03 Kanaal \x02%channel%\x02 is verboden."
   suspended:         "\x0304✗\x03 Kanaal \x02%channel%\x02 is geschorst."
 
@@ -434,11 +428,7 @@ unforbid:
   not_forbidden:    "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet verboden."
 
 debug:
-  action_message: "%operator% voert commando %command% uit op %target%. %reason%"
-  action_with_option: "%operator% voert commando %command% uit op %target%. Optie: %option%. %reason%"
-  action_with_value: "%operator% voert commando %command% uit op %target%. Optie: %option%=%value%. %reason%"
   founder_action: "Niveau-oprichter actie"
-  prefix_reason:  "Reden: %reason%"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -462,9 +452,6 @@ history:
       HISTORY #kanaal ADD Vermoedelijke overnamepoging
       HISTORY #kanaal DEL 42
       HISTORY #kanaal CLEAR
-  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
-  unknown_operator: "(onbekend)"
-
   add:
     syntax:     "HISTORY <#kanaal> ADD <bericht>"
     short:      "Voeg een handmatige geschiedenisvermelding toe."
@@ -476,17 +463,12 @@ history:
     syntax:     "HISTORY <#kanaal> DEL <id>"
     short:      "Verwijder een geschiedenisvermelding op ID."
     help:       "Verwijdert een geschiedenisitem op basis van het ID."
-    success:    "\x0303✔\x03 Geschiedenisvermelding \x02%id%\x02 verwijderd."
-    not_found:  "\x0304✗\x03 Geschiedenisvermelding \x02%id%\x02 niet gevonden."
-    invalid_id: "\x0304✗\x03 Ongeldige vermeldings-ID: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <#kanaal> VIEW [PAGINA|ALL]"
     short:      "Bekijk kanaalactiegeschiedenis."
     help:       "Toont de geschiedenisitems van het kanaal."
     header:     "\x02Geschiedenis voor \x0307%channel%\x03\x02 (toont %start%-%end% van %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 door %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Geen geschiedenisvermeldingen gevonden voor \x02%channel%\x02."
     page_hint:   "Gebruik \x0303HISTORY %channel% VIEW %next_page%\x03 voor meer vermeldingen."
 
@@ -498,7 +480,6 @@ history:
 
 # --- History message translations ---
 history.message:
-  unsuspend:                  "Schorsing opgeheven"
   founder_changed:            "Oprichter gewijzigd van %old_founder% naar %new_founder%"
   successor_changed:          "Opvolger gewijzigd van %old_successor% naar %new_successor%"
   successor_cleared:          "Opvolger gewist"
@@ -509,8 +490,6 @@ history.message:
 
 # --- History extra field translations ---
 history.extra:
-  duration:      "Duur: %value%"
-  expires_at:    "Verloopt: %value%"
   old_founder:     "Oude oprichter: %value%"
   new_founder:     "Nieuwe oprichter: %value%"
   old_successor:   "Oude opvolger: %value%"
@@ -518,10 +497,6 @@ history.extra:
   target_nickname: "Doel: %value%"
   level:           "Niveau: %value%"
   mask:            "Masker: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- CLEARACCESS (IRCop) ---------------------------------------------------------
 clearaccess:
   syntax:           "CLEARACCESS <#kanaal>"
   short:            "Wis de volledige toegangslijst van een kanaal."
@@ -562,9 +537,5 @@ list:
   help: "Toont geregistreerde kanalen die overeenkomen met het opgegeven patroon. De joker * staat voor een willekeurige reeks tekens. De pagina is optioneel en begint bij 1."
   header: "Kanaal | Oprichter | Registratie | Laatst gebruikt | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
-  page: "Pagina %page%/%pages% — %total% overeenkomsten"
   empty: "Geen kanalen komen overeen met patroon %pattern%."
   status_active: "Actief"
-  status_suspended: "Geschorst"
-  status_pending_deletion: "Verwijdering in behandeling"
-  status_forbidden: "Verboden"

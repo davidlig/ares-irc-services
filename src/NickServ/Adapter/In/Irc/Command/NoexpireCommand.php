@@ -102,7 +102,7 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
     {
         switch ($result->outcome) {
             case SetNoexpireNickOutcome::NotRegistered:
-                $context->reply('noexpire.not_registered', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('error.nick_not_registered', ['%nickname%' => $result->nickname ?? '']);
 
                 return CommandOutcome::rejected();
             case SetNoexpireNickOutcome::Forbidden:

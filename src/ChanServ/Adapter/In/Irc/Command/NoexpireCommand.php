@@ -128,7 +128,7 @@ final class NoexpireCommand implements ChanServCommandInterface, IrcopAuditableC
             $enabled ? ChannelLifecycleAction::EnableNoExpire : ChannelLifecycleAction::DisableNoExpire,
         ));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
-            $context->reply('noexpire.not_registered', ['%channel%' => $channelName]);
+            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }

@@ -163,7 +163,7 @@ final readonly class MotdCommand implements OperServCommandInterface
             ? $context->trans('motd.list.expired')
             : ($entry->enabled ? $context->trans('motd.list.status_enabled') : $context->trans('motd.list.status_disabled'));
         $botNickname = '' !== $entry->botNickname ? $entry->botNickname : $context->trans('motd.list.no_bot');
-        $expiresAt = null === $entry->expiresAt ? $context->trans('motd.list.never') : $context->formatDate($entry->expiresAt);
+        $expiresAt = null === $entry->expiresAt ? $context->trans('label.never') : $context->formatDate($entry->expiresAt);
 
         $context->replyRaw(sprintf(
             '#%d [%s] %s → %s | %s | %s | %s',

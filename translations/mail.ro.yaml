@@ -1,7 +1,10 @@
-# Conținut e-mail — domeniu: mail (text simplu, fără coduri IRC)
-# Substituiri: %nickname%, %token%, %new_email%
+# Traduceri e-mail — Română
+# Domeniu: mail
+#
+# Subiecte și corpuri de e-mail în text simplu, fără formatare IRC.
+# Păstrează rândurile noi reale și cele finale introduse intenționat.
 
-# REGISTER / VERIFY — token de verificare
+# --- REGISTER / VERIFY -----------------------------------------------------
 register_verification_subject: "%bot%: verificați înregistrarea poreclei dumneavoastră"
 register_verification_body: |
   Bună ziua,
@@ -18,7 +21,7 @@ register_verification_body: |
   După validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Expirarea de o oră se aplică doar înainte de validare.
     /msg %bot% RECOVER %nickname% %token%
 
-# RESEND — la fel ca register, retrimiterea tokenului
+# --- RESEND ----------------------------------------------------------------
 resend_verification_subject: "%bot%: tokenul dumneavoastră de verificare (retrimitere)"
 resend_verification_body: |
   Bună ziua,
@@ -35,7 +38,7 @@ resend_verification_body: |
   După validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Expirarea de o oră se aplică doar înainte de validare.
     /msg %bot% RECOVER %nickname% %token%
 
-# SET EMAIL — token de confirmare trimis la e-mailul actual
+# --- SET EMAIL -------------------------------------------------------------
 email_change_token_subject: "%bot%: confirmați noua dumneavoastră adresă de e-mail"
 email_change_token_body: |
   Bună ziua,
@@ -49,7 +52,7 @@ email_change_token_body: |
 
   Tokenul expiră într-o oră. Dacă nu ați solicitat această schimbare, vă rugăm să ignorați acest e-mail.
 
-# RECOVER — token de recuperare a parolei
+# --- RECOVER ---------------------------------------------------------------
 recovery_token_subject: "%bot%: recuperare parolă"
 recovery_token_body: |
   Bună ziua,
@@ -65,7 +68,7 @@ recovery_token_body: |
 
   După validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Expirarea de o oră se aplică doar înainte de validare.
 
-# ChanServ SET FOUNDER — token de schimbare a fondatorului
+# --- CHANSERV SET FOUNDER --------------------------------------------------
 founder_change_token_subject: "%bot%: token de schimbare a fondatorului pentru %channel%"
 founder_change_token_body: |
   Bună ziua,

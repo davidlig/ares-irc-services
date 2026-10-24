@@ -108,7 +108,7 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
     {
         switch ($result->outcome) {
             case GetUseripOutcome::NotOnline:
-                $context->reply('userip.not_online', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('error.nick_not_online', ['%nickname%' => $result->nickname ?? '']);
 
                 return CommandOutcome::rejected();
 

@@ -150,7 +150,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('unsuspend.not_registered', $messages);
+        self::assertContains('error.nick_not_registered', $messages);
     }
 
     #[Test]

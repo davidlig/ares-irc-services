@@ -7,18 +7,14 @@
 #   \x03        berrezarri kolorea
 #   \x0F        berrezarri formatu guztia
 #
-# OHARRA: IRC koloreek zenbaki DEZIMALak (0-15) erabiltzen dituzte, ez hamaseitarra.
-#   \x0314 = gris iluna (14 dezimalean)  ← ZUZENA
-#   \x030F = 0 kolorea + "F" letra       ← OKERRA (0F hex da, ez dezimala)
-
-unknown_command: "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax:            "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
-  oper_only:         "\x0304✗\x03 Komando hau IRC Operadoreentzat mugatuta dago."
-  not_identified:    "\x0304✗\x03 Ez zaude identifikatuta. Erabili \x0303/msg %bot% IDENTIFY <ezizena> <pasahitza>\x03"
-  permission_denied: "\x0304✗\x03 Baimena ukatuta. Ez duzu komando honetarako sarbiderik."
-  mail_failed:       "\x0304✗\x03 Ezin izan da posta elektronikoa bidali. Egiaztatu zure helbidea edo saiatu berriro geroago."
+# IRC koloreek zenbaki HAMARTARRAK (0-15) erabiltzen dituzte, ez hamaseitarrak.
+#   \x0314 = gris iluna (14 hamartarra): ZUZENA
+#   \x030F = 0 kolorea eta ondoren F letra: OKERRA
+#
+# Lerro anitzeko IRC testua: !irc |- benetako lerro-jauzi eta zuriuneekin.
+# Etiketarik gabeko blokeek ez dituzte ihesak deskodetzen; gorde CTCP literalak.
+# HELP adibideak: example/examples eta %command_prefix%.
+# Aurkezleak kolorerik gabeko /msg eta bi zuriuneko marjina gehitzen ditu.
 
 # --- REGISTER ---------------------------------------------------------------
 register:
@@ -65,7 +61,6 @@ recover:
   syntax:           "RECOVER <ezizena> [tokena]"
   short:            "Berreskuratu zure ezizena pasahitza galdu baduzu."
   help: "EMAIL: RECOVER <nickname> komandoak behin-behineko tokena eskatzen du postaz. TOKEN: eman berretsitako tokena. RECOVER <nickname> <token> komandoak posta-token balioduna edo berretsitakoa onartzen du. Postakoak gordetakoa balioztatu ondoren bakarrik ordezten du. Gordetakoak aukerako ordezkapena eskaintzen du VERIFY bidez; ez ikusi egin mezua mantentzeko."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   pending: "\x0307→\x03 \x02%nickname%\x02 ezizenaren erregistroa zain dago. Erabili \x0303VERIFY <token>\x03. \x0303RESEND\x03 erabilgarri dago REGMODE EMAIL denean eta baliozko posta-helbidea esleituta dagoenean bakarrik."
   suspended:        "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago. Arrazoia: %reason%"
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erabili."
@@ -85,7 +80,6 @@ identify:
   native_authentication: "\x0307ℹ\x03 Protokolo honek autentifikazioa ezizen-aldaketen bidez kudeatzen du. Erabili \x0303/NICK <ezizena>:<pasahitza>\x03 edo, ezizena hartuta badago, \x0303/NICK <ezizena>!<pasahitza>\x03."
   success:          "\x0303✔\x03 Orain \x02%nickname%\x02 gisa identifikatuta zaude."
   already_identified: "\x0307ℹ\x03 Jada \x02%nickname%\x02 gisa identifikatuta zaude."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   invalid_credentials: "\x0304✗\x03 Pasahitz okerra. Saiatu berriro."
   locked_out:         "\x0304✗\x03 Porrot saiakera gehiegi. Saiatu berriro \x02%minutes%\x02 minututan."
   ghost_released:   "\x0307⚡\x03 \x02%nickname%\x02 ezizena eusten zuen mamua saioa deskonektatu da."
@@ -117,14 +111,12 @@ status:
   forbidden_reason: "  Arrazoia          : %reason%"
   pending_deletion:   "  \x0314Egoera\x03          : \x0307Ezabatzearen zain\x03"
   pending_deletion_at: "  \x0314Ezabatuta\x03       : %date%"
-  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <ezizena>"
   short:            "Erakutsi erregistratutako ezizen bati buruzko informazioa."
   help:             "Ezizen baten erregistro xehetasunak erakusten ditu: erregistro data,\nkonexio egoera, azken irteera mezua, eta posta elektronikoko helbidea.\nPosta jabeak identifikatuta daudenean soilik ikus dezake.\nPRIVATE ON dagoenean jabeak eta IRC Operadoreek soilik\nikus dezakete informazioa."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   private:          "\x0304✗\x03 \x02%nickname%\x02 ezizenaren informazioa pribatua da."
   header:           "\x02\x0307%nickname%\x03 ezizenaren informazioa\x02"
   status:           "  \x0314Egoera\x03             : %status%"
@@ -148,7 +140,6 @@ info:
   pending_deletion_at: "  \x0314Ezabatuta\x03              : %date%"
   pending_deletion_until: "  \x0314Behin betiko\x03           : %date%"
   pending_deletion_notice: "  \x0307Izen hau ezabatzearen zain dago eta ezin da erregistratu.\x03"
-  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ASarbidea duten kanalak:\x03"
   channels_entry_founder:   "  %channel% (\x0303Sortzailea\x03)"
   channels_entry_successor: "  %channel% (\x0303Ondorengoa\x03)"
@@ -304,7 +295,6 @@ help:
     account_management: "Kontuen kudeaketa"
     suspensions_bans: "Etenak eta debekuak"
     deletion: "Ezabaketa eta leheneratzea"
-  unknown_command: "%marker% Ez dago laguntzarik \x02%command%\x0F komandoarentzat."
   ircop_header: "\x02 ■ IRC operadoreentzako komando erabilgarriak:\x02"
 
   set_timezone:
@@ -333,7 +323,6 @@ userip:
 
     Sintaxia: USERIP <ezizena>
     Adibidea: USERIP ErabiltzaileBat
-  not_online:       "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
   result:           "\x0307ℹ\x03 Ezizena: \x02%nickname%\x02 | IPa: \x0307%ip%\x03 | Ostalaria: \x0307%host%\x03"
 
 whoip:
@@ -365,13 +354,11 @@ suspend:
       SUSPEND Arazoa 0 Betiko debeku saihesketa
   success:            "\x0303✔\x03 \x02%nickname%\x02 ezizena \x02%duration%\x02 arte eten da."
   already_suspended:  "\x0304✗\x03 \x02%nickname%\x02 ezizena jada etenda dago."
-  not_registered:     "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   forbidden:          "\x0304✗\x03 \x02%nickname%\x02 ezizena debekatua dago eta ezin da eten."
   cannot_suspend_oper: "\x0304✗\x03 Ezin da IRC operadore \x02%nickname%\x02 eten."
   cannot_suspend_root: "\x0304✗\x03 Ezin da root erabiltzaile \x02%nickname%\x02 eten."
   cannot_suspend_service: "\x0304✗\x03 Ezin da zerbitzu ezizen \x02%nickname%\x02 eten."
   invalid_duration:   "\x0304✗\x03 Iraupen baliogabea. Erabili: \x0303<d><o><m>\x03 (adib., 7d, 12o, 30m) edo \x03030\x03 iraunkorrerako."
-  permanent:          "iraunkorra"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
@@ -383,7 +370,6 @@ unsuspend:
     Sintaxia: UNSUSPEND <ezizena>
     Adibidea: UNSUSPEND ErabiltzaileBat
   success:          "\x0303✔\x03 \x02%nickname%\x02 ezizenaren etenaldia kendu da."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   not_suspended:    "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago etenda."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
@@ -400,7 +386,6 @@ rename:
 
     Sintaxia: RENAME <ezizena>
     Adibidea: RENAME ArazoSortzailea
-  not_online:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
   cannot_rename_root: "\x0304✗\x03 Ezin da root erabiltzaile \x02%nickname%\x02 izenaz aldatu."
   cannot_rename_oper: "\x0304✗\x03 Ezin da IRC operadore \x02%nickname%\x02 izenaz aldatu."
   cannot_rename_service: "\x0304✗\x03 Ezin da zerbitzu ezizen \x02%nickname%\x02 izenaz aldatu."
@@ -422,7 +407,6 @@ drop:
 
     Sintaxia: DROP <ezizena>
     Adibidea: DROP KontuZaharra
-  not_registered:     "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   suspended:         "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago. Kendu etenaldia lehenik."
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 ezizena debekatua dago."
   cannot_drop_root:   "\x0304✗\x03 Ezin da root erabiltzaile \x02%nickname%\x02 ezabatu."
@@ -439,7 +423,6 @@ restore:
   short:            "Ezabatzearen zain dagoen ezizena berreskuratu."
   help:             "Eskuz ezabatutako eta oraindik grazia epearen barruan dagoen ezizena berreskuratzen du. IRCop baimena behar du: nickserv.restore."
   success:          "\x0303✓\x03 \x02%nickname%\x02 ezizena berreskuratu da."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   not_pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago ezabatzearen zain."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
@@ -536,7 +519,6 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Debekatutako vhost ereduak (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — %nickname%-(e)k (%date%)"
     empty:       "\x0307ℹ\x03 Ez dago debekatutako vhost eredurik."
-    unknown_creator: "ezezaguna"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -569,9 +551,6 @@ history:
     Erabili ADD eskuzko sarrera bat gehitzeko.
     Erabili DEL ID zehatz baten sarrera ezabatzeko.
     Erabili CLEAR historia sarrera guztiak ezabatzeko.
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
-  unknown_operator: "(ezezaguna)"
-
   add:
     syntax:     "HISTORY <ezizena> ADD <mezua>"
     short:      "Gehitu eskuzko historia sarrera bat."
@@ -590,10 +569,6 @@ history:
 
       Sintaxia: HISTORY <ezizena> DEL <ida>
       Adibidea: HISTORY EzizenBat DEL 42
-    success:    "\x0303✔\x03 \x02%id%\x02 historia sarrera ezabatu da."
-    not_found:  "\x0304✗\x03 \x02%id%\x02 historia sarrera ez da aurkitu."
-    invalid_id: "\x0304✗\x03 Sarrera ID baliogabea: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <ezizena> VIEW [ORRIA|ALL]"
     short:      "Ikusi ezizenaren ekintza historia."
@@ -609,7 +584,6 @@ history:
       Erabili VIEW ALL historia osoa ikusteko.
     header:     "\x02\x0307%nickname%\x03 ezizenaren historia\x02 (%total%etik %start%-%end% erakusten):"
     entry:       "#%id% [%date%] \x0303%action%\x03 - \x02%operator%\x02 — %message%"
-    extra:       "  Gehigarria \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Ez da historia sarrerarik aurkitu \x02%nickname%\x02 ezizenarentzat."
     page_hint:   "Erabili \x0303HISTORY %nickname% VIEW %next_page%\x03 sarrera gehiagotarako."
 
@@ -626,7 +600,6 @@ history:
 
 # --- Historia mezuen itzulpenak (historia ikustean erabiliak) ---
 history.message:
-  unsuspend:                  "Etenaldia kendua"
   password_changed_owner:     "Pasahitza jabeak aldatua"
   password_changed_operator:  "Pasahitza operadoreak aldatua"
   email_changed_owner:        "Posta %old_email%-(e)tik %new_email%-(e)ra aldatua"
@@ -635,15 +608,9 @@ history.message:
 
 # --- Historia eremu gehigarrien itzulpenak ---
 history.extra:
-  duration:      "Iraupena: %value%"
-  expires_at:    "Iraungitzea: %value%"
   old_email:     "Posta zaharra: %value%"
   new_email:     "Posta berria: %value%"
   method:        "Metodoa: %value%"
-  ip:            "IPa: %value%"
-  host:          "Ostalaria: %value%"
-
-# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <ezizena> {ON|OFF}"
   short:            "Ezarri edo kendu iraungitze babesa ezizen batentzat."
@@ -660,7 +627,6 @@ noexpire:
       NOEXPIRE ErabiltzaileGarrantzitsua OFF
   success_on:       "\x0303✔\x03 \x02%nickname%\x02 ezizena iraungitzetik babestuta dago orain."
   success_off:      "\x0303✔\x03 \x02%nickname%\x02 ezizena normal iraungiko da orain."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 ezizena debekatua dago."
   suspended:         "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago."
 
@@ -671,20 +637,9 @@ list:
   help: "Emandako ereduarekin bat datozen goitizen erregistratuak zerrendatzen ditu. * komodinak edozein karaktere-sekuentzia adierazten du. Orria aukerakoa da eta 1etik hasten da."
   header: "Goitizena | Erregistroa | Azken konexioa | IPa | Egoera"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  page: "%page%/%pages% orria — %total% emaitza"
   empty: "Ez dago %pattern% ereduarekin bat datorren goitizenik."
   status_pending: "Zain"
   status_registered: "Erregistratuta"
-  status_suspended: "Etena"
-  status_pending_deletion: "Ezabatzeko zain"
-  status_forbidden: "Debekatuta"
-# --- DEBUG -------------------------------------------------------------------
-debug:
-  action_message: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. %reason%"
-  action_with_option: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Aukera: %option%. %reason%"
-  action_with_value: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Aukera: %option%=%value%. %reason%"
-  action_duration: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Iraupena: %duration%. %reason%"
-  prefix_reason: "Arrazoia: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

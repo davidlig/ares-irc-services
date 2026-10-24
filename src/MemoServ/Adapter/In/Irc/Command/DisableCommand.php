@@ -108,7 +108,7 @@ final readonly class DisableCommand implements MemoServCommandInterface
                 break;
 
             case DisableMemosOutcome::ChannelNotRegistered:
-                $context->reply('disable.channel_not_registered', ['channel' => $result->channelName ?? '']);
+                $context->reply('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
             case DisableMemosOutcome::FounderOnly:

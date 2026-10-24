@@ -11,6 +11,7 @@ use App\OperServ\Application\Port\In\IrcopAuthorizationSubject;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function trim;
@@ -70,8 +71,7 @@ final readonly class MemoServContext implements IrcopAuthorizationSubject
      */
     public function reply(string $key, array $params = []): void
     {
-        $message = $this->translator->trans($key, $this->wrapParams($params), 'memoserv', $this->language);
-        $this->sendRaw($message);
+        $this->sendRaw($this->trans($key, $params));
     }
 
     public function replyRaw(string $message): void
@@ -115,7 +115,7 @@ final readonly class MemoServContext implements IrcopAuthorizationSubject
      */
     public function trans(string $key, array $params = []): string
     {
-        return $this->translator->trans($key, $this->wrapParams($params), 'memoserv', $this->language);
+        return $this->translateWithCommonFallback($key, $this->wrapParams($params));
     }
 
     /**
@@ -131,6 +131,18 @@ final readonly class MemoServContext implements IrcopAuthorizationSubject
         }
 
         return $wrapped;
+    }
+
+    /** @param array<string, mixed> $params */
+    private function translateWithCommonFallback(string $key, array $params): string
+    {
+        if ($this->translator instanceof TranslatorBagInterface
+            && $this->translator->getCatalogue($this->language)->has($key, 'common')
+        ) {
+            return $this->translator->trans($key, $params, 'common', $this->language);
+        }
+
+        return $this->translator->trans($key, $params, 'memoserv', $this->language);
     }
 
     private function sendRaw(string $message): void

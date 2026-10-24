@@ -1,17 +1,24 @@
-# OperServ translations — Polski
-# Domain: operserv
+# Tłumaczenia OperServ — Polski
+# Domena: operserv
+#
+# Kody formatowania IRC (podwójne cudzysłowy lub bloki literalne !irc):
+#   \x02        włącza/wyłącza pogrubienie
+#   \x03NN      kolor (DZIESIĘTNIE: 03=zielony, 04=czerwony, 07=pomarańczowy, 14=ciemnoszary)
+#   \x03        resetuje kolor
+#   \x0F        resetuje całe formatowanie
+#
+# Kolory IRC używają liczb DZIESIĘTNYCH (0-15), nie szesnastkowych.
+#   \x0314 = ciemnoszary (14 dziesiętnie): POPRAWNIE
+#   \x030F = kolor 0, a po nim litera F: BŁĄD
+#
+# Wielowierszowy tekst IRC: !irc |- z rzeczywistymi podziałami wierszy i spacjami.
+# Bloki bez tagu nie dekodują sekwencji ucieczki; zachowaj literały CTCP.
+# Przykłady HELP: example/examples i %command_prefix%.
+# Prezenter dodaje /msg bez koloru i margines dwóch spacji.
 
-unknown_command: "\x0304✗\x03 Nieznana komenda \x02%command%\x02. Użyj \x0303/msg %bot% HELP\x03."
-
+# --- ERROR -----------------------------------------------------------------
 error:
-  syntax:           "\x0304✗\x03 Nieprawidłowa składnia. Użycie: \x02%syntax%\x02"
-  oper_only:        "\x0304✗\x03 Ta komenda jest dostępna tylko dla Operatorów IRC."
-  not_identified:   "\x0304✗\x03 Nie jesteś zidentyfikowany. Użyj \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Nie masz wystarczających uprawnień do wykonania tej komendy."
   root_only:        "\x0304✗\x03 Ta komenda jest dostępna tylko dla administratorów root sieci."
-  nick_not_registered: "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
-
-# --- HELP --------------------------------------------------------------------
 help:
   syntax:           "HELP [komenda [pod-opcja]]"
   short:            "Lista komend lub pomoc dla komendy."
@@ -35,7 +42,6 @@ help:
     network_security: "Bezpieczeństwo sieci"
     communication: "Komunikacja"
     low_level: "Niski poziom"
-  unknown_command:  "\x0307✗ Nieznana komenda\x03\x0F \x02\x0303%command%\x03\x0F. Użyj \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Dostępne komendy dla operatorów IRC:\x02"
 
 # --- IRCOP --------------------------------------------------------------------
@@ -179,7 +185,6 @@ kill:
   syntax:           "KILL <nick> <powód>"
   short:            "Wymuś rozłączenie użytkownika z sieci."
   help:             "Rozłącza użytkownika z sieci IRC.\nIRCops i użytkownicy Root nie mogą być zabici.\nTa komenda wymaga uprawnienia operserv.kill.\n\nSkładnia: KILL <nick> <powód>\nPrzykład: KILL ZlyUzytkownik Zalewanie kanałów"
-  user_not_online:  "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest połączony."
   protected_root:   "\x0304✗\x03 Nie można zabić użytkownika Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Nie można zabić operatora IRC \x02%nickname%\x02."
   done:             "\x0303✓\x03 Użytkownik \x02%nickname%\x02 został zabity (%reason%)."
@@ -198,8 +203,6 @@ gline:
   already_exists:   "\x0304✗\x03 G-line dla \x02%mask%\x02 już istnieje."
   max_entries:      "\x0304✗\x03 Osiągnięto maksymalną liczbę G-line'ów (%max%)."
   not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 nie znaleziony."
-  user_not_found:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest online."
-  permanent:        "stały"
 
   add:
     syntax:         "GLINE ADD <maska> <wygaśnięcie> <powód>"
@@ -219,9 +222,6 @@ gline:
     help:           "Wyświetla wszystkie G-line'y. Opcjonalnie filtruj według wzorca maski.\nTa komenda wymaga uprawnienia operserv.gline."
     header:         "\x0307---\x03 \x02G-line'y (%count%) \x0307---\x03"
     empty:          "Brak G-line'ów."
-    no_reason:      "Brak powodu"
-    never_expires:  "Stały"
-    unknown_creator: "nieznany"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, wygasa: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
@@ -256,10 +256,7 @@ raw:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
-  action_message:   "%operator% wykonuje komendę %command% na %target%. %reason%"
-  actionWithDuration: "%operator% wykonuje komendę %command% na %target%. Czas trwania: %duration%. %reason%"
   action_global:    "%operator% wykonuje komendę GLOBAL z nickiem %target% przez %type% do %count% użytkowników. Wiadomość: %message%"
-  prefix_reason:    "Powód: %reason%"
   prefix_message:   "Wiadomość: %reason%"
 
 # --- MOTD ----------------------------------------------------------------------
@@ -293,7 +290,6 @@ motd:
     status_disabled: "\x0304wyłączone\x03"
     expired:        "\x0304wygasłe\x03"
     no_bot:         "(brak bota)"
-    never:          "nigdy"
     shown_count:    "pokazano %count% razy"
   clean:
     syntax:         "MOTD CLEAN"

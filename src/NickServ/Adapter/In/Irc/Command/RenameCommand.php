@@ -107,7 +107,7 @@ final readonly class RenameCommand implements NickServCommandInterface, IrcopAud
     {
         switch ($result->outcome) {
             case RenameNickOutcome::NotOnline:
-                $context->reply('rename.not_online', ['nickname' => $result->targetNick]);
+                $context->reply('error.nick_not_online', ['nickname' => $result->targetNick]);
 
                 return CommandOutcome::rejected();
             case RenameNickOutcome::CannotRenameRoot:

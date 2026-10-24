@@ -106,7 +106,7 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
     private function present(NickServContext $context, SuspendNickResult $result): CommandOutcome
     {
         $errorKey = match ($result->outcome) {
-            SuspendNickOutcome::NotRegistered => 'suspend.not_registered',
+            SuspendNickOutcome::NotRegistered => 'error.nick_not_registered',
             SuspendNickOutcome::Forbidden => 'suspend.forbidden',
             SuspendNickOutcome::AlreadySuspended => 'suspend.already_suspended',
             SuspendNickOutcome::TargetIsRoot => 'suspend.cannot_suspend_root',
@@ -123,7 +123,7 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
         }
 
         $duration = null === $result->expiresAt
-            ? $context->trans('suspend.permanent')
+            ? $context->trans('label.permanent_inline')
             : $context->formatDate($result->expiresAt);
         $context->reply('suspend.success', [
             '%nickname%' => $result->targetNickname,

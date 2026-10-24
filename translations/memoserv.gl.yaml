@@ -1,15 +1,20 @@
-# MemoServ translations — Galician
-# Domain: memoserv
-
-unknown_command: "\x0304✗\x03 Comando descoñecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax: "\x0304✗\x03 Sintaxe incorrecta. Uso: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Este comando está restrinxido a operadores de IRC."
-  not_identified: "\x0304✗\x03 Non está identificado. Use \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Permiso denegado. Non ten acceso a este comando."
-  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
-  insufficient_access: "\x0304✗\x03 Acceso insuficiente para \x02%operation%\x02 na canle \x02%channel%\x02."
+# Traducións de MemoServ — Galego
+# Dominio: memoserv
+#
+# Códigos de formato IRC (comiñas dobres ou bloques literais !irc):
+#   \x02        activa/desactiva a negra
+#   \x03NN      cor (DECIMAL: 03=verde, 04=vermello, 07=laranxa, 14=gris escuro)
+#   \x03        restablece a cor
+#   \x0F        restablece todo o formato
+#
+# As cores IRC usan números DECIMAIS (0-15), non hexadecimais.
+#   \x0314 = gris escuro (14 decimal): CORRECTO
+#   \x030F = cor 0 seguida da letra F: ERRO
+#
+# Texto IRC multiliña: !irc |- con saltos físicos e espazos reais.
+# Os bloques sen etiqueta non descodifican escapes; conserva os literais CTCP.
+# Exemplos HELP: example/examples e %command_prefix%.
+# O presentador engade /msg sen cor e unha marxe de dous espazos.
 
 send:
   syntax: "SEND {alcume|#canle} <mensaxe>"
@@ -17,8 +22,6 @@ send:
   help: "Envía unha mensaxe a un alcume ou canle rexistrados. O destinatario debe ter o servizo de mensaxes activado (ENABLE)."
   sent_nick: "\x0303✔\x03 Mensaxe enviada a \x02%nickname%\x02."
   sent_channel: "\x0303✔\x03 Mensaxe enviada á canle \x02%channel%\x02."
-  nick_not_registered: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
-  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
   throttled: "\x0304✗\x03 Debe agardar \x02%seconds%\x02 segundo(s) antes de enviar outra mensaxe."
   limit_reached: "\x0304✗\x03 Límite de mensaxes alcanzado para \x02%target%\x02."
   ignored: "\x0304✗\x03 Non pode enviar mensaxes a este destinatario, está na súa lista de ignorados."
@@ -32,7 +35,6 @@ read:
   help: "Le a mensaxe co número indicado. Sen #canle, le da súa caixa de entrada persoal. Con #canle, require nivel MEMOREAD."
   header: "\x02\x0307Mensaxe nº%index%\x03 de \x02%from%\x02:\x0F"
   footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
   not_found: "\x0304✗\x03 Mensaxe nº%index% non atopada."
 
 list:
@@ -40,16 +42,13 @@ list:
   short: "Listar mensaxes (non lidas marcadas con * vermello)."
   help: "Lista as súas mensaxes ou as mensaxes da canle. As mensaxes non lidas móstranse cun asterisco vermello e unha vista previa (máx. 50 caracteres). Sen #canle = a súa caixa de entrada persoal; con #canle require MEMOREAD."
   header: "\x02\x0307Mensaxes para %target%\x03:\x0F"
-  footer: "\x0314─────────────────────────────\x03"
   empty: "\x0307ℹ\x03 Non hai mensaxes para \x02%target%\x02."
-  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
 
 del:
   syntax: "DEL [#canle] <número>"
   short: "Eliminar unha mensaxe polo número."
   help: "Elimina a mensaxe co número indicado. Para canles require nivel MEMOCHANGE."
   deleted: "\x0303✔\x03 Mensaxe nº%index% eliminada."
-  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
   not_found: "\x0304✗\x03 Mensaxe nº%index% non atopada."
 
 ignore:
@@ -72,13 +71,10 @@ ignore:
   removed: "\x0303✔\x03 \x02%nickname%\x02 eliminado da lista de ignorados."
   already_ignored: "\x0304✗\x03 \x02%nickname%\x02 xa está na lista de ignorados."
   not_ignored: "\x0304✗\x03 \x02%nickname%\x02 non está na lista de ignorados."
-  nick_not_registered: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
-  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
   limit_reached_nick: "\x0304✗\x03 Límite da lista de ignorados alcanzado para o seu alcume (máx. \x02%limit%\x02)."
   limit_reached_channel: "\x0304✗\x03 Límite da lista de ignorados alcanzado para \x02%channel%\x02 (máx. \x02%limit%\x02)."
   list_empty: "\x0307ℹ\x03 A lista de ignorados está baleira."
   list_header: "\x02\x0307Lista de ignorados:\x03\x0F"
-  list_footer: "\x0314─────────────────────────────\x03"
 
 enable:
   syntax: "ENABLE [#canle]"
@@ -88,7 +84,6 @@ enable:
   enabled_channel: "\x0303✔\x03 Servizo de mensaxes activado para a canle \x02%channel%\x02."
   already_enabled_nick: "\x0307ℹ\x03 O servizo de mensaxes xa está activado para o seu alcume."
   already_enabled_channel: "\x0307ℹ\x03 O servizo de mensaxes xa está activado para \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
   founder_only: "\x0304✗\x03 Só o fundador da canle pode activar as mensaxes para \x02%channel%\x02."
 
 disable:
@@ -99,7 +94,6 @@ disable:
   disabled_channel: "\x0303✔\x03 Servizo de mensaxes desactivado para a canle \x02%channel%\x02."
   already_disabled_nick: "\x0307ℹ\x03 O servizo de mensaxes xa está desactivado para o seu alcume."
   already_disabled_channel: "\x0307ℹ\x03 O servizo de mensaxes xa está desactivado para \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
   founder_only: "\x0304✗\x03 Só o fundador da canle pode desactivar as mensaxes para \x02%channel%\x02."
 
 help:
@@ -122,7 +116,6 @@ help:
   group:
     messages: "Mensaxes"
     preferences: "Preferencias"
-  unknown_command: "\x0307✗\x03\x0F Comando descoñecido \x02\x0303%command%\x03\x0F. Use \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Comandos dispoñibles para IRCops:\x02"
 
 notify:

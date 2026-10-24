@@ -1,7 +1,10 @@
-# Email content — domain: mail (plain text, no IRC codes)
-# Placeholders: %nickname%, %token%, %new_email%
+# Mail translations — English
+# Domain: mail
+#
+# Plain-text email subjects and bodies; IRC formatting is not decoded.
+# Preserve physical newlines and intentional trailing newlines in bodies.
 
-# REGISTER / VERIFY — verification token
+# --- REGISTER / VERIFY -----------------------------------------------------
 register_verification_subject: "%bot%: verify your nickname registration"
 register_verification_body: |
   Hello,
@@ -18,7 +21,7 @@ register_verification_body: |
   After you validate this token, it becomes your permanent recovery token. Store it safely: you can use it to recover your nickname. The one-hour expiry applies only before validation.
     /msg %bot% RECOVER %nickname% %token%
 
-# RESEND — same as register, resend of token
+# --- RESEND ----------------------------------------------------------------
 resend_verification_subject: "%bot%: your verification token (resend)"
 resend_verification_body: |
   Hello,
@@ -35,7 +38,7 @@ resend_verification_body: |
   After you validate this token, it becomes your permanent recovery token. Store it safely: you can use it to recover your nickname. The one-hour expiry applies only before validation.
     /msg %bot% RECOVER %nickname% %token%
 
-# SET EMAIL — confirmation token sent to current email
+# --- SET EMAIL -------------------------------------------------------------
 email_change_token_subject: "%bot%: confirm your new email address"
 email_change_token_body: |
   Hello,
@@ -49,7 +52,7 @@ email_change_token_body: |
 
   The token expires in 1 hour. If you did not request this change, please ignore this email.
 
-# RECOVER — password recovery token
+# --- RECOVER ---------------------------------------------------------------
 recovery_token_subject: "%bot%: password recovery"
 recovery_token_body: |
   Hello,
@@ -65,7 +68,7 @@ recovery_token_body: |
 
   After you validate this token, it becomes your permanent recovery token. Store it safely: you can use it to recover your nickname. The one-hour expiry applies only before validation.
 
-# ChanServ SET FOUNDER — founder change token
+# --- CHANSERV SET FOUNDER --------------------------------------------------
 founder_change_token_subject: "%bot%: founder change token for %channel%"
 founder_change_token_body: |
   Hello,

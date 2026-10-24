@@ -1,17 +1,24 @@
-# OperServ translations — Catalan
-# Domain: operserv
+# Traduccions de OperServ — Català
+# Domini: operserv
+#
+# Codis de format IRC (cometes dobles o blocs literals !irc):
+#   \x02        activa/desactiva la negreta
+#   \x03NN      color (DECIMAL: 03=verd, 04=vermell, 07=taronja, 14=gris fosc)
+#   \x03        restableix el color
+#   \x0F        restableix tot el format
+#
+# Els colors IRC usen números DECIMALS (0-15), no hexadecimals.
+#   \x0314 = gris fosc (14 decimal): CORRECTE
+#   \x030F = color 0 seguit de la lletra F: ERROR
+#
+# Text IRC multilínia: !irc |- amb salts físics i espais reals.
+# Els blocs sense etiqueta no descodifiquen escapes; conserva els literals CTCP.
+# Exemples HELP: example/examples i %command_prefix%.
+# El presentador afegeix /msg sense color i un marge de dos espais.
 
-unknown_command: "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
-
+# --- ERROR -----------------------------------------------------------------
 error:
-  syntax:           "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
-  oper_only:        "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
-  not_identified:   "\x0304✗\x03 No esteu identificat. Utilitzeu \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 No teniu permisos suficients per executar aquesta ordre."
   root_only:        "\x0304✗\x03 Aquesta ordre està restringida als administradors root de la xarxa."
-  nick_not_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-
-# --- HELP --------------------------------------------------------------------
 help:
   syntax:           "HELP [command [sub-option]]"
   short:            "Llistar les ordres o mostrar l'ajuda d'una ordre."
@@ -35,7 +42,6 @@ help:
     network_security: "Seguretat de xarxa"
     communication: "Comunicació"
     low_level: "Baix nivell"
-  unknown_command:  "\x0307✗ Ordre desconeguda\x03\x0F \x02\x0303%command%\x03\x0F. Utilitzeu \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Comandes disponibles per als IRCops:\x02"
 
 # --- IRCOP --------------------------------------------------------------------
@@ -179,7 +185,6 @@ kill:
   syntax:           "KILL <nickname> <reason>"
   short:            "Desconnectar forçosament un usuari de la xarxa."
   help:             "Desconnecta un usuari de la xarxa IRC.\nEls IRCops i usuaris Root no es poden matar.\nAquesta ordre requereix el permís operserv.kill.\n\nSintaxi: KILL <nickname> <reason>\nExemple: KILL BadUser Flooding channels"
-  user_not_online:  "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
   protected_root:   "\x0304✗\x03 No es pot matar l'usuari Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 No es pot matar l'operador d'IRC \x02%nickname%\x02."
   done:             "\x0303✓\x03 L'usuari \x02%nickname%\x02 ha estat mort (%reason%)."
@@ -198,8 +203,6 @@ gline:
   already_exists:   "\x0304✗\x03 La G-line per a \x02%mask%\x02 ja existeix."
   max_entries:      "\x0304✗\x03 Nombre màxim de G-lines (%max%) assolit."
   not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 no trobada."
-  user_not_found:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està en línia."
-  permanent:        "permanent"
 
   add:
     syntax:         "GLINE ADD <mask> <expiry> <reason>"
@@ -219,9 +222,6 @@ gline:
     help:           "Llista totes les G-lines. Opcionalment filtreu per patró de màscara.\nAquesta ordre requereix el permís operserv.gline."
     header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
     empty:          "No hi ha G-lines."
-    no_reason:      "Sense motiu"
-    never_expires:  "Permanent"
-    unknown_creator: "desconegut"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, expira: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
@@ -256,10 +256,7 @@ raw:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
-  action_message:   "%operator% executa l'ordre %command% sobre %target%. %reason%"
-  actionWithDuration: "%operator% executa l'ordre %command% sobre %target%. Durada: %duration%. %reason%"
   action_global:    "%operator% executa l'ordre GLOBAL amb el sobrenom %target% via %type% a %count% usuaris. Missatge: %message%"
-  prefix_reason:    "Motiu: %reason%"
   prefix_message:   "Missatge: %reason%"
 
 # --- MOTD ----------------------------------------------------------------------
@@ -293,7 +290,6 @@ motd:
     status_disabled: "\x0304desactivat\x03"
     expired:        "\x0304expirat\x03"
     no_bot:         "(sense bot)"
-    never:          "mai"
     shown_count:    "mostrat %count% vegades"
   clean:
     syntax:         "MOTD CLEAN"

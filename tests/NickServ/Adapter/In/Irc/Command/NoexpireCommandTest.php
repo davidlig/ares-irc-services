@@ -127,7 +127,7 @@ final class NoexpireCommandTest extends TestCase
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick', 'ON']));
 
         self::assertFalse($outcome->success);
-        self::assertSame(['noexpire.not_registered [%nickname%: TargetNick]'], $messages);
+        self::assertSame(['error.nick_not_registered [%nickname%: TargetNick]'], $messages);
     }
 
     #[Test]

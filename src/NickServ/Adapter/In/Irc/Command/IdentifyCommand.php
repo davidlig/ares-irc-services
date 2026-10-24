@@ -137,7 +137,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
                 ]);
                 break;
             case IdentifyNickOutcome::NotRegistered:
-                $context->reply('identify.not_registered', ['nickname' => $result->nickname]);
+                $context->reply('error.nick_not_registered', ['nickname' => $result->nickname]);
                 break;
             case IdentifyNickOutcome::Pending:
                 $context->reply('identify.pending', ['nickname' => $result->nickname]);

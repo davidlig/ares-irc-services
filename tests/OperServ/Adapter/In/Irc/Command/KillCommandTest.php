@@ -125,7 +125,7 @@ final class KillCommandTest extends TestCase
         new KillCommand($this->handler(new KillCommandUsers(), new KillCommandRoots(), new KillCommandNetwork(new KillCommandTrace())))
             ->execute($this->context(['Missing', 'reason'], $translation, new KillCommandNotifier(new KillCommandTrace())));
 
-        self::assertSame('kill.user_not_online', $translation->lastKey);
+        self::assertSame('error.nick_not_online', $translation->lastKey);
         self::assertSame('Missing', $translation->lastParameters['%nickname%']);
     }
 

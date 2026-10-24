@@ -7,18 +7,14 @@
 #   \x03        reset color
 #   \x0F        reset all formatting
 #
-# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
-#   \x0314 = dark grey (14 decimal)  ← CORRECT
-#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
-
-unknown_command: "\x0304✗\x03 Άγνωστη εντολή \x02%command%\x02. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax:            "\x0304✗\x03 Λανθασμένη σύνταξη. Χρήση: \x02%syntax%\x02"
-  oper_only:         "\x0304✗\x03 Αυτή η εντολή περιορίζεται σε IRC Operators."
-  not_identified:    "\x0304✗\x03 Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε \x0303/msg %bot% IDENTIFY <nickname> <password>\x03"
-  permission_denied: "\x0304✗\x03 Άρνηση πρόσβασης. Δεν έχετε πρόσβαση σε αυτήν την εντολή."
-  mail_failed:       "\x0304✗\x03 Το email δεν μπόρεσε να σταλεί. Ελέγξτε τη διεύθυνσή σας ή δοκιμάστε αργότερα."
+# Τα χρώματα IRC χρησιμοποιούν ΔΕΚΑΔΙΚΟΥΣ αριθμούς (0-15), όχι δεκαεξαδικούς.
+#   \x0314 = σκούρο γκρι (14 δεκαδικό): ΣΩΣΤΟ
+#   \x030F = χρώμα 0 και μετά το γράμμα F: ΛΑΘΟΣ
+#
+# Πολυγραμμικό κείμενο IRC: !irc |- με πραγματικές αλλαγές γραμμής και κενά.
+# Τα μπλοκ χωρίς ετικέτα δεν αποκωδικοποιούν διαφυγές· διατηρήστε τα CTCP.
+# Παραδείγματα HELP: example/examples και %command_prefix%.
+# Ο παρουσιαστής προσθέτει άχρωμο /msg και περιθώριο δύο κενών.
 
 # --- REGISTER ---------------------------------------------------------------
 register:
@@ -65,7 +61,6 @@ recover:
   syntax:           "RECOVER <nickname> [token]"
   short:            "Ανακτήστε το ψευδώνυμό σας αν χάσατε τον κωδικό σας."
   help: "EMAIL: το RECOVER <nickname> ζητά προσωρινό διακριτικό με email. TOKEN: δώσε το επιβεβαιωμένο διακριτικό. Το RECOVER <nickname> <token> δέχεται έγκυρο διακριτικό email ή επιβεβαιωμένο. Το email αντικαθιστά το αποθηκευμένο μόνο μετά από επικύρωση. Το αποθηκευμένο προσφέρει προαιρετική αντικατάσταση με VERIFY· αγνόησε το μήνυμα για να το κρατήσεις."
-  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   pending: "\x0307→\x03 Η εγγραφή του \x02%nickname%\x02 εκκρεμεί. Χρησιμοποίησε \x0303VERIFY <token>\x03. Το \x0303RESEND\x03 διατίθεται μόνο με REGMODE EMAIL και έγκυρη διεύθυνση email."
   suspended:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Αιτία: %reason%"
   forbidden:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν μπορεί να χρησιμοποιηθεί σε αυτό το δίκτυο."
@@ -85,7 +80,6 @@ identify:
   native_authentication: "\x0307ℹ\x03 Αυτό το πρωτόκολλο διαχειρίζεται την ταυτοποίηση μέσω αλλαγών ψευδωνύμου. Χρησιμοποιήστε \x0303/NICK <nickname>:<password>\x03 ή, αν το ψευδώνυμο χρησιμοποιείται, \x0303/NICK <nickname>!<password>\x03."
   success:          "\x0303✔\x03 Είστε πλέον ταυτοποιημένοι ως \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Είστε ήδη ταυτοποιημένοι ως \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   invalid_credentials: "\x0304✗\x03 Λανθασμένος κωδικός. Παρακαλώ δοκιμάστε ξανά."
   locked_out:         "\x0304✗\x03 Πάρα πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά σε \x02%minutes%\x02 λεπτό(ά)."
   ghost_released:   "\x0307⚡\x03 Η συνεδρία-φάντασμα που κατείχε το \x02%nickname%\x02 έχει αποσυνδεθεί."
@@ -117,14 +111,12 @@ status:
   forbidden_reason: "  Αιτία          : %reason%"
   pending_deletion:   "  \x0314Κατάσταση\x03          : \x0307Σε αναμονή διαγραφής\x03"
   pending_deletion_at: "  \x0314Διαγράφηκε\x03      : %date%"
-  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <nickname>"
   short:            "Εμφάνιση πληροφοριών για καταχωρημένο ψευδώνυμο."
   help:             "Εμφανίζει λεπτομέρειες καταχώρησης για ένα ψευδώνυμο: ημερομηνία καταχώρησης,\nκατάσταση σύνδεσης, τελευταίο μήνυμα εξόδου και διεύθυνση email. Το email\nείναι ορατό μόνο στον κάτοχο όταν είναι ταυτοποιημένος. Με PRIVATE ON μόνο\nο κάτοχος και οι IRC Operators μπορούν να δουν τις πληροφορίες."
-  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   private:          "\x0304✗\x03 Οι πληροφορίες του ψευδωνύμου \x02%nickname%\x02 είναι ιδιωτικές."
   header:           "\x02Πληροφορίες για το ψευδώνυμο \x0307%nickname%\x03\x02"
   status:           "  \x0314Κατάσταση\x03       : %status%"
@@ -148,7 +140,6 @@ info:
   pending_deletion_at: "  \x0314Διαγράφηκε\x03             : %date%"
   pending_deletion_until: "  \x0314Οριστική διαγραφή\x03      : %date%"
   pending_deletion_notice: "  \x0307Αυτό το ψευδώνυμο είναι σε αναμονή διαγραφής και δεν μπορεί να καταχωρηθεί.\x03"
-  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AΚανάλια με πρόσβαση:\x03"
   channels_entry_founder:   "  %channel% (\x0303Ιδρυτής\x03)"
   channels_entry_successor: "  %channel% (\x0303Διάδοχος\x03)"
@@ -304,7 +295,6 @@ help:
     account_management: "Διαχείριση λογαριασμών"
     suspensions_bans: "Αναστολές και απαγορεύσεις"
     deletion: "Διαγραφή και επαναφορά"
-  unknown_command: "%marker% Δεν υπάρχει βοήθεια για \x02%command%\x0F."
   ircop_header: "\x02 ■ Διαθέσιμες εντολές για IRC operators:\x02"
 
   set_timezone:
@@ -333,7 +323,6 @@ userip:
 
     Σύνταξη: USERIP <nickname>
     Παράδειγμα: USERIP SomeUser
-  not_online:       "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
   result:           "\x0307ℹ\x03 Ψευδώνυμο: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -365,13 +354,11 @@ suspend:
       SUSPEND ProblemUser 0 Αποφυγή permaban
   success:            "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει τεθεί σε αναστολή μέχρι \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι ήδη σε αναστολή."
-  not_registered:     "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   forbidden:          "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο και δεν μπορεί να τεθεί σε αναστολή."
   cannot_suspend_oper: "\x0304✗\x03 Δεν μπορεί να τεθεί σε αναστολή ο IRC operator \x02%nickname%\x02."
   cannot_suspend_root: "\x0304✗\x03 Δεν μπορεί να τεθεί σε αναστολή ο root χρήστης \x02%nickname%\x02."
   cannot_suspend_service: "\x0304✗\x03 Δεν μπορεί να τεθεί σε αναστολή το ψευδώνυμο υπηρεσίας \x02%nickname%\x02."
   invalid_duration:   "\x0304✗\x03 Μη έγκυρη διάρκεια. Χρησιμοποιήστε: \x0303<d><h><m>\x03 (π.χ., 7d, 12h, 30m) ή \x03030\x03 για μόνιμη."
-  permanent:          "μόνιμη"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
@@ -383,7 +370,6 @@ unsuspend:
     Σύνταξη: UNSUSPEND <nickname>
     Παράδειγμα: UNSUSPEND SomeUser
   success:          "\x0303✔\x03 Η αναστολή έχει αρθεί από \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   not_suspended:    "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι σε αναστολή."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
@@ -400,7 +386,6 @@ rename:
 
     Σύνταξη: RENAME <nickname>
     Παράδειγμα: RENAME Troublemaker
-  not_online:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
   cannot_rename_root: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί ο root χρήστης \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί ο IRC operator \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί το ψευδώνυμο υπηρεσίας \x02%nickname%\x02."
@@ -422,7 +407,6 @@ drop:
 
     Σύνταξη: DROP <nickname>
     Παράδειγμα: DROP OldAccount
-  not_registered:     "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   suspended:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Άρετε πρώτα την αναστολή."
   forbidden:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο."
   cannot_drop_root:   "\x0304✗\x03 Δεν μπορεί να διαγραφεί ο root χρήστης \x02%nickname%\x02."
@@ -439,7 +423,6 @@ restore:
   short:            "Επαναφορά ψευδωνύμου σε αναμονή διαγραφής."
   help:             "Επαναφέρει ένα ψευδώνυμο που διαγράφηκε χειροκίνητα και βρίσκεται ακόμα εντός της περιόδου χάριτος. Απαιτεί άδεια IRCop: nickserv.restore."
   success:          "\x0303✓\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει επαναφερθεί."
-  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   not_pending_deletion: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι σε αναμονή διαγραφής."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
@@ -536,7 +519,6 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Απαγορευμένα μοτίβα vhost (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — από %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Δεν υπάρχουν απαγορευμένα μοτίβα vhost."
-    unknown_creator: "άγνωστος"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -569,9 +551,6 @@ history:
     Χρησιμοποιήστε ADD για χειροκίνητη καταχώρηση.
     Χρησιμοποιήστε DEL για διαγραφή συγκεκριμένης καταχώρησης μέσω ID.
     Χρησιμοποιήστε CLEAR για διαγραφή όλων των καταχωρήσεων ιστορικού.
-  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
-  unknown_operator: "(άγνωστος)"
-
   add:
     syntax:     "HISTORY <nickname> ADD <message>"
     short:      "Προσθήκη χειροκίνητης καταχώρησης ιστορικού."
@@ -590,10 +569,6 @@ history:
 
       Σύνταξη: HISTORY <nickname> DEL <id>
       Παράδειγμα: HISTORY SomeNick DEL 42
-    success:    "\x0303✔\x03 Η καταχώρηση ιστορικού \x02%id%\x02 διαγράφηκε."
-    not_found:  "\x0304✗\x03 Η καταχώρηση ιστορικού \x02%id%\x02 δεν βρέθηκε."
-    invalid_id: "\x0304✗\x03 Μη έγκυρο ID καταχώρησης: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <nickname> VIEW [PAGE|ALL]"
     short:      "Προβολή ιστορικού ενεργειών ψευδωνύμου."
@@ -609,7 +584,6 @@ history:
       Χρησιμοποιήστε VIEW ALL για πλήρες ιστορικό.
     header:     "\x02Ιστορικό για \x0307%nickname%\x03\x02 (εμφάνιση %start%-%end% από %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 από %operator% — %message%"
-    extra:       "  Επιπλέον \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Δεν βρέθηκαν καταχωρήσεις ιστορικού για \x02%nickname%\x02."
     page_hint:   "Χρησιμοποιήστε \x0303HISTORY %nickname% VIEW %next_page%\x03 για περισσότερες καταχωρήσεις."
 
@@ -626,7 +600,6 @@ history:
 
 # --- History message translations (used when viewing history) ---
 history.message:
-  unsuspend:                  "Άρση αναστολής"
   password_changed_owner:     "Ο κωδικός άλλαξε από τον κάτοχο"
   password_changed_operator:  "Ο κωδικός άλλαξε από operator"
   email_changed_owner:        "Το email άλλαξε από %old_email% σε %new_email%"
@@ -635,15 +608,9 @@ history.message:
 
 # --- History extra field translations ---
 history.extra:
-  duration:      "Διάρκεια: %value%"
-  expires_at:    "Λήγει: %value%"
   old_email:     "Προηγούμενο email: %value%"
   new_email:     "Νέο email: %value%"
   method:        "Μέθοδος: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <nickname> {ON|OFF}"
   short:            "Ορισμός ή αφαίρεση προστασίας λήξης για ένα ψευδώνυμο."
@@ -660,7 +627,6 @@ noexpire:
       NOEXPIRE ImportantUser OFF
   success_on:       "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι τώρα προστατευμένο από λήξη."
   success_off:      "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 θα λήγει τώρα κανονικά."
-  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   forbidden:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο."
   suspended:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή."
 
@@ -671,20 +637,9 @@ list:
   help: "Εμφανίζει τα καταχωρισμένα ψευδώνυμα που ταιριάζουν με το μοτίβο. Το * αντιστοιχεί σε οποιαδήποτε ακολουθία χαρακτήρων. Η σελίδα είναι προαιρετική και ξεκινά από το 1."
   header: "Ψευδώνυμο | Εγγραφή | Τελευταία σύνδεση | IP | Κατάσταση"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  page: "Σελίδα %page%/%pages% — %total% αποτελέσματα"
   empty: "Δεν βρέθηκαν ψευδώνυμα για το μοτίβο %pattern%."
   status_pending: "Σε αναμονή"
   status_registered: "Καταχωρισμένο"
-  status_suspended: "Σε αναστολή"
-  status_pending_deletion: "Σε αναμονή διαγραφής"
-  status_forbidden: "Απαγορευμένο"
-# --- DEBUG -------------------------------------------------------------------
-debug:
-  action_message: "%operator% εκτελεί την εντολή %command% σε %target%. %reason%"
-  action_with_option: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%. %reason%"
-  action_with_value: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%=%value%. %reason%"
-  action_duration: "%operator% εκτελεί την εντολή %command% σε %target%. Διάρκεια: %duration%. %reason%"
-  prefix_reason: "Αιτία: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

@@ -121,7 +121,7 @@ final class TranslationCatalogTest extends TestCase
     public function registrationModeHelpAndSyntaxErrorsUseRequiredChoiceBracesInEveryLocale(): void
     {
         foreach (self::LOCALES as $locale) {
-            $catalog = self::flatten(self::parseDomain('nickserv', $locale));
+            $catalog = self::effectiveServiceCatalog('nickserv', $locale);
             $translator = new Translator($locale);
             $translator->addLoader('array', new ArrayLoader());
             $translator->addResource('array', $catalog, $locale, 'nickserv');
@@ -307,7 +307,7 @@ final class TranslationCatalogTest extends TestCase
             $translator = new Translator($locale);
             $translator->addLoader('array', new ArrayLoader());
             foreach ($keys as $domain => $domainKeys) {
-                $catalog = self::flatten(self::parseDomain($domain, $locale));
+                $catalog = self::effectiveServiceCatalog($domain, $locale);
                 $translator->addResource('array', $catalog, $locale, $domain);
                 $params = $registry->getAllPlaceholders($nicknames[$domain]);
                 $params['%marker%'] = 'ℹ';
@@ -441,11 +441,18 @@ final class TranslationCatalogTest extends TestCase
     public function allLocalesDefineTheSameKeysPerDomain(): void
     {
         foreach (self::DOMAINS as $domain) {
-            $expected = array_keys(self::flatten(self::parseDomain($domain, 'en')));
+            $isService = in_array($domain, array_values(self::SERVICE_DIRS), true);
+            $expectedCatalog = $isService
+                ? self::effectiveServiceCatalog($domain, 'en')
+                : self::flatten(self::parseDomain($domain, 'en'));
+            $expected = array_keys($expectedCatalog);
             sort($expected);
 
             foreach (self::LOCALES as $locale) {
-                $actual = array_keys(self::flatten(self::parseDomain($domain, $locale)));
+                $actualCatalog = $isService
+                    ? self::effectiveServiceCatalog($domain, $locale)
+                    : self::flatten(self::parseDomain($domain, $locale));
+                $actual = array_keys($actualCatalog);
                 sort($actual);
 
                 self::assertSame(
@@ -463,7 +470,10 @@ final class TranslationCatalogTest extends TestCase
         $catalog = [];
         $union = [];
         foreach (self::DOMAINS as $domain) {
-            $catalog[$domain] = array_flip(array_keys(self::flatten(self::parseDomain($domain, 'en'))));
+            $values = in_array($domain, array_values(self::SERVICE_DIRS), true)
+                ? self::effectiveServiceCatalog($domain, 'en')
+                : self::flatten(self::parseDomain($domain, 'en'));
+            $catalog[$domain] = array_flip(array_keys($values));
             foreach ($catalog[$domain] as $key => $unused) {
                 $union[$key] = true;
             }
@@ -545,6 +555,10 @@ final class TranslationCatalogTest extends TestCase
                 if (str_contains($source, $key) || self::isDynamicKey($key)) {
                     continue;
                 }
+                if ('common' === $domain && ('unknown_help_option' === $key || str_starts_with($key, 'duration.'))) {
+                    // Common duration vocabulary is consumed by the dependent NickServ formatter slice.
+                    continue;
+                }
                 $dead[] = $domain . '.' . $key;
             }
         }
@@ -562,10 +576,15 @@ final class TranslationCatalogTest extends TestCase
         $mismatches = [];
 
         foreach (self::DOMAINS as $domain) {
-            $english = self::flatten(self::parseDomain($domain, 'en'));
+            $isService = in_array($domain, array_values(self::SERVICE_DIRS), true);
+            $english = $isService
+                ? self::effectiveServiceCatalog($domain, 'en')
+                : self::flatten(self::parseDomain($domain, 'en'));
             $values = [];
             foreach (self::LOCALES as $locale) {
-                $values[$locale] = self::flatten(self::parseDomain($domain, $locale));
+                $values[$locale] = $isService
+                    ? self::effectiveServiceCatalog($domain, $locale)
+                    : self::flatten(self::parseDomain($domain, $locale));
             }
 
             foreach ($english as $key => $value) {
@@ -784,10 +803,7 @@ final class TranslationCatalogTest extends TestCase
     /** @return array<string, mixed> */
     private static function parseDomain(string $domain, string $locale): array
     {
-        $parsed = Yaml::parseFile(sprintf('%s/translations/%s.%s.yaml', self::ROOT, $domain, $locale));
-        if (!is_array($parsed)) {
-            throw new RuntimeException(sprintf('Domain "%s" for locale "%s" is not a map.', $domain, $locale));
-        }
+        $parsed = TranslationCatalog::parseFile(sprintf('%s/translations/%s.%s.yaml', self::ROOT, $domain, $locale));
 
         $normalized = [];
         foreach ($parsed as $key => $value) {
@@ -795,6 +811,13 @@ final class TranslationCatalogTest extends TestCase
         }
 
         return $normalized;
+    }
+
+    /** @return array<string, mixed> Common keys take precedence over service-local keys. */
+    private static function effectiveServiceCatalog(string $serviceDomain, string $locale): array
+    {
+        return self::flatten(self::parseDomain('common', $locale))
+            + self::flatten(self::parseDomain($serviceDomain, $locale));
     }
 
     /**

@@ -170,7 +170,7 @@ final class RestoreCommandTest extends TestCase
 
         $this->createCommandWith($repo, $this->createStub(ChanDropService::class))->execute($this->createContext(['#test'], $messages));
 
-        self::assertContains('restore.not_registered', $messages);
+        self::assertContains('error.channel_not_registered', $messages);
     }
 
     private function createCommand(): RestoreCommand

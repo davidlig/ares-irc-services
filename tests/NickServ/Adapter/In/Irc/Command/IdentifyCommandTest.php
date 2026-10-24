@@ -192,7 +192,7 @@ final class IdentifyCommandTest extends TestCase
     {
         yield 'already identified' => [IdentifyNickResult::alreadyIdentified('Alice'), 'identify.already_identified', ['%nickname%' => 'Alice']];
         yield 'locked out' => [IdentifyNickResult::lockedOut(65), 'identify.locked_out', ['%minutes%' => '2']];
-        yield 'not registered' => [IdentifyNickResult::notRegistered('Alice'), 'identify.not_registered', ['%nickname%' => 'Alice']];
+        yield 'not registered' => [IdentifyNickResult::notRegistered('Alice'), 'error.nick_not_registered', ['%nickname%' => 'Alice']];
         yield 'pending' => [IdentifyNickResult::pending('Alice'), 'identify.pending', ['%nickname%' => 'Alice']];
         yield 'suspended with reason' => [IdentifyNickResult::suspended('Alice', 'Abuse'), 'identify.suspended', ['%nickname%' => 'Alice', '%reason%' => 'Abuse']];
         yield 'forbidden' => [IdentifyNickResult::forbidden('Alice'), 'identify.forbidden', ['%nickname%' => 'Alice']];

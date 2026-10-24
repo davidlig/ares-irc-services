@@ -7,18 +7,14 @@
 #   \x03        reset color
 #   \x0F        reset all formatting
 #
-# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
-#   \x0314 = dark grey (14 decimal)  ← CORRECT
-#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
-
-unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
-
-error:
-  syntax:            "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
-  oper_only:         "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
-  not_identified:    "\x0304✗\x03 Kimliğiniz doğrulanmamış. \x0303/msg %bot% IDENTIFY <nickname> <password>\x03 kullanın"
-  permission_denied: "\x0304✗\x03 Erişim reddedildi. Bu komuta erişim yetkiniz yok."
-  mail_failed:       "\x0304✗\x03 E-posta gönderilemedi. Adresinizi kontrol edin veya daha sonra tekrar deneyin."
+# IRC renkleri onaltılık değil, ONDALIK sayılar (0-15) kullanır.
+#   \x0314 = koyu gri (ondalık 14): DOĞRU
+#   \x030F = 0 rengi ve ardından F harfi: HATA
+#
+# Çok satırlı IRC metni: !irc |- ile gerçek satır sonları ve boşluklar.
+# Etiketsiz bloklar kaçışları çözmez; CTCP sabit metinlerini koruyun.
+# HELP örnekleri: example/examples ve %command_prefix%.
+# Sunum katmanı renksiz /msg ve iki boşlukluk kenar payı ekler.
 
 # --- REGISTER ---------------------------------------------------------------
 register:
@@ -65,7 +61,6 @@ recover:
   syntax:           "RECOVER <nickname> [token]"
   short:            "Şifrenizi kaybettiyseniz rumuzunuzu kurtarın."
   help: "EMAIL: RECOVER <nickname> e-postayla geçici belirteç ister. TOKEN: onaylanmış belirtecinizi girin. RECOVER <nickname> <token> geçerli e-posta belirtecini veya onaylanmış belirteci kabul eder. E-posta belirteci ancak doğrulandıktan sonra saklananı değiştirir. Saklanan belirteç VERIFY ile isteğe bağlı değişiklik sunar; korumak için mesajı yok sayın."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
   pending: "\x0307→\x03 \x02%nickname%\x02 kaydı beklemede. \x0303VERIFY <token>\x03 kullanın. \x0303RESEND\x03 yalnızca REGMODE EMAIL olduğunda ve geçerli e-posta adresi atandığında kullanılabilir."
   suspended:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Sebep: %reason%"
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kullanılamaz."
@@ -85,7 +80,6 @@ identify:
   native_authentication: "\x0307ℹ\x03 Bu protokol kimlik doğrulamayı rumuz değişiklikleriyle yönetir. \x0303/NICK <nickname>:<şifre>\x03 kullanın veya rumuz kullanımdaysa \x0303/NICK <nickname>!<şifre>\x03 kullanın."
   success:          "\x0303✔\x03 Artık \x02%nickname%\x02 olarak tanımlandınız."
   already_identified: "\x0307ℹ\x03 Zaten \x02%nickname%\x02 olarak tanımlısınız."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
   invalid_credentials: "\x0304✗\x03 Hatalı şifre. Lütfen tekrar deneyin."
   locked_out:         "\x0304✗\x03 Çok fazla başarısız deneme. \x02%minutes%\x02 dakika sonra tekrar deneyin."
   ghost_released:   "\x0307⚡\x03 \x02%nickname%\x02 adlı rumuzu tutan hayalet oturum bağlantısı kesildi."
@@ -117,14 +111,12 @@ status:
   forbidden_reason: "  Sebep           : %reason%"
   pending_deletion:   "  \x0314Durum\x03          : \x0307Silinmeyi bekliyor\x03"
   pending_deletion_at: "  \x0314Silindi\x03         : %date%"
-  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <nickname>"
   short:            "Kayıtlı bir rumuz hakkında bilgi gösterin."
   help:             "Bir rumuz için kayıt bilgilerini gösterir: kayıt tarihi, bağlantı\ndurumu, son çıkış mesajı ve e-posta adresi. E-posta yalnızca\nkimlik doğrulandığında sahibine görünür. PRIVATE AÇIK olduğunda\nbilgileri yalnızca sahibi ve IRC Operatörleri görebilir."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
   private:          "\x0304✗\x03 \x02%nickname%\x02 rumuzunun bilgileri gizlidir."
   header:           "\x02\x0307%nickname%\x03 rumuzu için bilgi\x02"
   status:           "  \x0314Durum\x03              : %status%"
@@ -148,7 +140,6 @@ info:
   pending_deletion_at: "  \x0314Silindi\x03                : %date%"
   pending_deletion_until: "  \x0314Kalıcı silinme\x03         : %date%"
   pending_deletion_notice: "  \x0307Bu rumuz silinmeyi bekliyor ve kaydedilemez.\x03"
-  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AErişim sahibi olunan kanallar:\x03"
   channels_entry_founder:   "  %channel% (\x0303Kurucu\x03)"
   channels_entry_successor: "  %channel% (\x0303Halef\x03)"
@@ -304,7 +295,6 @@ help:
     account_management: "Hesap yönetimi"
     suspensions_bans: "Askıya alma ve yasaklar"
     deletion: "Silme ve geri yükleme"
-  unknown_command: "%marker% \x02%command%\x0F için yardım bulunamadı."
   ircop_header: "\x02 ■ IRC operatörleri için kullanılabilir komutlar:\x02"
 
   set_timezone:
@@ -333,7 +323,6 @@ userip:
 
     Sözdizimi: USERIP <nickname>
     Örnek: USERIP BaziKullanici
-  not_online:       "\x0304✗\x03 \x02%nickname%\x02 rumuzu bağlı değil."
   result:           "\x0307ℹ\x03 Rumuz: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -365,13 +354,11 @@ suspend:
       SUSPEND Sorunlu 0 Permaban kaçakçılığı
   success:            "\x0303✔\x03 \x02%nickname%\x02 rumuzu \x02%duration%\x02 tarihine kadar askıya alındı."
   already_suspended:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu zaten askıya alınmış."
-  not_registered:     "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
   forbidden:          "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış ve askıya alınamaz."
   cannot_suspend_oper: "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 askıya alınamaz."
   cannot_suspend_root: "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 askıya alınamaz."
   cannot_suspend_service: "\x0304✗\x03 Hizmet rumuzu \x02%nickname%\x02 askıya alınamaz."
   invalid_duration:   "\x0304✗\x03 Geçersiz süre. Kullanın: \x0303<g><s><d>\x03 (örn. 7g, 12s, 30d) veya kalıcı için \x03030\x03."
-  permanent:          "kalıcı"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
@@ -383,7 +370,6 @@ unsuspend:
     Sözdizimi: UNSUSPEND <nickname>
     Örnek: UNSUSPEND BaziKullanici
   success:          "\x0303✔\x03 \x02%nickname%\x02 adlı kullanıcının askısı kaldırıldı."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
   not_suspended:    "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmamış."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
@@ -400,7 +386,6 @@ rename:
 
     Sözdizimi: RENAME <nickname>
     Örnek: RENAME SorunluKisi
-  not_online:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bağlı değil."
   cannot_rename_root: "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 yeniden adlandırılamaz."
   cannot_rename_oper: "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 yeniden adlandırılamaz."
   cannot_rename_service: "\x0304✗\x03 Hizmet rumuzu \x02%nickname%\x02 yeniden adlandırılamaz."
@@ -422,7 +407,6 @@ drop:
 
     Sözdizimi: DROP <nickname>
     Örnek: DROP EskiHesap
-  not_registered:     "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
   suspended:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Önce askıyı kaldırın."
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış."
   cannot_drop_root:   "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 bırakılamaz."
@@ -439,7 +423,6 @@ restore:
   short:            "Silinmeyi bekleyen bir rumuzu geri yükle."
   help:             "Manuel olarak bırakılmış ve hala ödemesiz dönem içinde olan bir rumuzu geri yükler. IRCop izni gerektirir: nickserv.restore."
   success:          "\x0303✓\x03 \x02%nickname%\x02 rumuzu geri yüklendi."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
   not_pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi beklemiyor."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
@@ -536,7 +519,6 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Yasaklı vhost kalıpları (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — ekleyen: %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Yasaklı vhost kalıbı yok."
-    unknown_creator: "bilinmiyor"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -569,9 +551,6 @@ history:
     Manuel giriş eklemek için ADD kullanın.
     Belirli bir girişi ID ile silmek için DEL kullanın.
     Tüm geçmiş girişlerini silmek için CLEAR kullanın.
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
-  unknown_operator: "(bilinmiyor)"
-
   add:
     syntax:     "HISTORY <nickname> ADD <mesaj>"
     short:      "Manuel bir geçmiş girişi ekleyin."
@@ -590,10 +569,6 @@ history:
 
       Sözdizimi: HISTORY <nickname> DEL <id>
       Örnek: HISTORY BaziRumuz DEL 42
-    success:    "\x0303✔\x03 Geçmiş girişi \x02%id%\x02 silindi."
-    not_found:  "\x0304✗\x03 Geçmiş girişi \x02%id%\x02 bulunamadı."
-    invalid_id: "\x0304✗\x03 Geçersiz giriş ID'si: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <nickname> VIEW [SAYFA|ALL]"
     short:      "Rumuz eylem geçmişini görüntüleyin."
@@ -609,7 +584,6 @@ history:
       Tam geçmişi görmek için VIEW ALL kullanın.
     header:     "\x02\x0307%nickname%\x03\x02 için geçmiş (%start%-%end% / %total% gösteriliyor):"
     entry:       "#%id% [%date%] \x0303%action%\x03 - %operator% tarafından — %message%"
-    extra:       "  Ekstra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 \x02%nickname%\x02 için geçmiş girişi bulunamadı."
     page_hint:   "Daha fazla giriş için \x0303HISTORY %nickname% VIEW %next_page%\x03 kullanın."
 
@@ -626,7 +600,6 @@ history:
 
 # --- Geçmiş mesaj çevirileri (geçmiş görüntülenirken kullanılır) ---
 history.message:
-  unsuspend:                  "Askı kaldırıldı"
   password_changed_owner:     "Şifre sahibi tarafından değiştirildi"
   password_changed_operator:  "Şifre operatör tarafından değiştirildi"
   email_changed_owner:        "E-posta %old_email% yerine %new_email% olarak değiştirildi"
@@ -635,15 +608,9 @@ history.message:
 
 # --- Geçmiş ekstra alan çevirileri ---
 history.extra:
-  duration:      "Süre: %value%"
-  expires_at:    "Bitiş: %value%"
   old_email:     "Eski e-posta: %value%"
   new_email:     "Yeni e-posta: %value%"
   method:        "Yöntem: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <nickname> {ON|OFF}"
   short:            "Bir rumuz için süre sonu korumasını ayarlayın veya kaldırın."
@@ -660,7 +627,6 @@ noexpire:
       NOEXPIRE OnemliKullanici OFF
   success_on:       "\x0303✔\x03 \x02%nickname%\x02 rumuzu artık süre sonuna karşı korunuyor."
   success_off:      "\x0303✔\x03 \x02%nickname%\x02 rumuzu artık normal şekilde sona erecek."
-  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
   forbidden:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış."
   suspended:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış."
 
@@ -671,20 +637,9 @@ list:
   help: "Belirtilen desenle eşleşen kayıtlı takma adları listeler. * joker karakteri herhangi bir karakter dizisiyle eşleşir. Sayfa isteğe bağlıdır ve 1'den başlar."
   header: "Takma ad | Kayıt | Son bağlantı | IP | Durum"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  page: "Sayfa %page%/%pages% — %total% eşleşme"
   empty: "%pattern% deseniyle eşleşen takma ad yok."
   status_pending: "Beklemede"
   status_registered: "Kayıtlı"
-  status_suspended: "Askıya alınmış"
-  status_pending_deletion: "Silinmeyi bekliyor"
-  status_forbidden: "Yasaklı"
-# --- DEBUG -------------------------------------------------------------------
-debug:
-  action_message: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. %reason%"
-  action_with_option: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%. %reason%"
-  action_with_value: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%=%value%. %reason%"
-  action_duration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
-  prefix_reason: "Sebep: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

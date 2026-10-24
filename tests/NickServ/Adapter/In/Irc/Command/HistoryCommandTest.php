@@ -332,7 +332,7 @@ final class HistoryCommandTest extends TestCase
 
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Target', 'view']));
-        self::assertSame(['history.not_registered [%nickname%: Target]'], $messages);
+        self::assertSame(['error.nick_not_registered [%nickname%: Target]'], $messages);
 
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Target', 'clear']));

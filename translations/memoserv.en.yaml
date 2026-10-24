@@ -1,24 +1,13 @@
 # MemoServ translations — English
 # Domain: memoserv
 
-unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax: "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 This command is restricted to IRC Operators."
-  not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Permission denied. You do not have access to this command."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
-  insufficient_access: "\x0304✗\x03 Insufficient access to \x02%operation%\x02 on channel \x02%channel%\x02."
-
+# --- SEND ------------------------------------------------------------------
 send:
   syntax: "SEND {nickname|#channel} <message>"
   short: "Send a message to a nickname or channel."
   help: "Sends a message to a registered nickname or channel. The recipient must have message service enabled (ENABLE)."
   sent_nick: "\x0303✔\x03 Message sent to \x02%nickname%\x02."
   sent_channel: "\x0303✔\x03 Message sent to channel \x02%channel%\x02."
-  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
   throttled: "\x0304✗\x03 You must wait \x02%seconds%\x02 second(s) before sending another message."
   limit_reached: "\x0304✗\x03 Message limit reached for \x02%target%\x02."
   ignored: "\x0304✗\x03 You cannot send messages to this target, you are on their ignore list."
@@ -32,7 +21,6 @@ read:
   help: "Reads the message with the given number. Without #channel, reads from your nickname inbox. With #channel, requires MEMOREAD level."
   header: "\x02\x0307Message #%index%\x03 from \x02%from%\x02:\x0F"
   footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
   not_found: "\x0304✗\x03 Message #%index% not found."
 
 list:
@@ -40,16 +28,13 @@ list:
   short: "List messages (unread marked with red *)."
   help: "Lists your messages or channel messages. Unread messages are shown with a red asterisk and a preview (max 50 characters). Without #channel = your nickname inbox; with #channel requires MEMOREAD."
   header: "\x02\x0307Messages for %target%\x03:\x0F"
-  footer: "\x0314─────────────────────────────\x03"
   empty: "\x0307ℹ\x03 No messages for \x02%target%\x02."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
 
 del:
   syntax: "DEL [#channel] <number>"
   short: "Delete a message by number."
   help: "Deletes the message with the given number. For channels requires MEMOCHANGE level."
   deleted: "\x0303✔\x03 Message #%index% deleted."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
   not_found: "\x0304✗\x03 Message #%index% not found."
 
 ignore:
@@ -72,13 +57,10 @@ ignore:
   removed: "\x0303✔\x03 \x02%nickname%\x02 removed from ignore list."
   already_ignored: "\x0304✗\x03 \x02%nickname%\x02 is already on the ignore list."
   not_ignored: "\x0304✗\x03 \x02%nickname%\x02 is not on the ignore list."
-  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
   limit_reached_nick: "\x0304✗\x03 Ignore list limit reached for your nickname (max \x02%limit%\x02)."
   limit_reached_channel: "\x0304✗\x03 Ignore list limit reached for \x02%channel%\x02 (max \x02%limit%\x02)."
   list_empty: "\x0307ℹ\x03 Ignore list is empty."
   list_header: "\x02\x0307Ignore list:\x03\x0F"
-  list_footer: "\x0314─────────────────────────────\x03"
 
 enable:
   syntax: "ENABLE [#channel]"
@@ -88,7 +70,6 @@ enable:
   enabled_channel: "\x0303✔\x03 Message service enabled for channel \x02%channel%\x02."
   already_enabled_nick: "\x0307ℹ\x03 Message service is already enabled for your nickname."
   already_enabled_channel: "\x0307ℹ\x03 Message service is already enabled for \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
   founder_only: "\x0304✗\x03 Only the channel founder can enable messages for \x02%channel%\x02."
 
 disable:
@@ -99,7 +80,6 @@ disable:
   disabled_channel: "\x0303✔\x03 Message service disabled for channel \x02%channel%\x02."
   already_disabled_nick: "\x0307ℹ\x03 Message service is already disabled for your nickname."
   already_disabled_channel: "\x0307ℹ\x03 Message service is already disabled for \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
   founder_only: "\x0304✗\x03 Only the channel founder can disable messages for \x02%channel%\x02."
 
 help:
@@ -122,7 +102,6 @@ help:
   group:
     messages: "Messages"
     preferences: "Preferences"
-  unknown_command: "\x0307✗\x03\x0F Unknown command \x02\x0303%command%\x03\x0F. Use \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Available commands for IRC Operators:\x02"
 
 notify:

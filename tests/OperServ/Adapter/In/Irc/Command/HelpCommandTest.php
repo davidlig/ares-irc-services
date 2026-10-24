@@ -96,7 +96,7 @@ final class HelpCommandTest extends TestCase
         $command->execute($this->context(['MISSING'], [$restricted], $notifier, $authorization));
         $command->execute($this->context(['RESTRICTED'], [$restricted], $notifier, $authorization));
 
-        self::assertSame(['help.unknown_command', 'help.unknown_command'], $notifier->messages);
+        self::assertSame(['unknown_command', 'unknown_command'], $notifier->messages);
     }
 
     #[Test]
@@ -144,7 +144,7 @@ final class HelpCommandTest extends TestCase
             $authorization,
         ));
 
-        self::assertSame(['help.unknown_command'], $notifier->messages);
+        self::assertSame(['unknown_command'], $notifier->messages);
     }
 
     /** @return iterable<string, array{list<string>}> */
@@ -239,8 +239,8 @@ final class HelpCommandTest extends TestCase
         $notifier = new HelpNotifier();
         $command->execute($this->context(['MISSING'], [], $notifier, $this->authorization(true), $translation));
         $error = implode("\n", $notifier->messages);
-        self::assertStringContainsString("\x0307✗ Unknown command\x03\x0F \x02\x0303MISSING\x03\x0F", $error);
-        self::assertStringContainsString("\x0303/msg OperServ HELP\x03\x0F", $error);
+        self::assertStringContainsString("\x0304✗\x03\x0F Unknown command \x0303MISSING\x03\x0F", $error);
+        self::assertStringContainsString("/msg OperServ \x0303HELP\x03\x0F", $error);
 
         $commandSource = file_get_contents(dirname(__DIR__, 6) . '/src/OperServ/Adapter/In/Irc/Command/HelpCommand.php');
         self::assertIsString($commandSource);
@@ -280,6 +280,9 @@ final class HelpCommandTest extends TestCase
     {
         $catalog = Yaml::parseFile(dirname(__DIR__, 6) . '/translations/operserv.en.yaml');
         self::assertIsArray($catalog);
+        $commonCatalog = Yaml::parseFile(dirname(__DIR__, 6) . '/translations/common.en.yaml');
+        self::assertIsArray($commonCatalog);
+        self::assertIsString($commonCatalog['unknown_command'] ?? null);
 
         $entries = [];
         $flatten = static function (array $values, string $prefix = '') use (&$flatten, &$entries): void {
@@ -293,6 +296,7 @@ final class HelpCommandTest extends TestCase
             }
         };
         $flatten($catalog);
+        $entries['unknown_command'] = $commonCatalog['unknown_command'];
 
         return $entries;
     }

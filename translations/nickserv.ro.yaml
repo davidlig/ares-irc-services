@@ -7,18 +7,14 @@
 #   \x03        reset color
 #   \x0F        reset all formatting
 #
-# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
-#   \x0314 = dark grey (14 decimal)  ← CORRECT
-#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
-
-unknown_command: "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax:            "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
-  oper_only:         "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
-  not_identified:    "\x0304✗\x03 Nu sunteți identificat. Folosiți \x0303/msg %bot% IDENTIFY <poreclă> <parolă>\x03"
-  permission_denied: "\x0304✗\x03 Permisiune refuzată. Nu aveți acces la această comandă."
-  mail_failed:       "\x0304✗\x03 E-mailul nu a putut fi trimis. Verificați adresa sau încercați mai târziu."
+# Culorile IRC folosesc numere ZECIMALE (0-15), nu hexazecimale.
+#   \x0314 = gri închis (14 zecimal): CORECT
+#   \x030F = culoarea 0 urmată de litera F: EROARE
+#
+# Text IRC pe mai multe rânduri: !irc |- cu rânduri și spații reale.
+# Blocurile fără etichetă nu decodează secvențe escape; păstrează literalii CTCP.
+# Exemple HELP: example/examples și %command_prefix%.
+# Prezentatorul adaugă /msg fără culoare și o margine de două spații.
 
 # --- REGISTER ---------------------------------------------------------------
 register:
@@ -65,7 +61,6 @@ recover:
   syntax:           "RECOVER <poreclă> [token]"
   short:            "Recuperați-vă porecla dacă v-ați pierdut parola."
   help: "EMAIL: RECOVER <nickname> solicită un token provizoriu prin email. TOKEN: furnizează tokenul confirmat. RECOVER <nickname> <token> acceptă tokenul valid din email sau tokenul confirmat. Cel din email îl înlocuiește pe cel stocat doar după validare. Folosirea celui stocat oferă înlocuire opțională prin VERIFY; ignoră mesajul pentru a-l păstra."
-  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
   pending: "\x0307→\x03 Înregistrarea pentru \x02%nickname%\x02 este în așteptare. Folosește \x0303VERIFY <token>\x03. \x0303RESEND\x03 este disponibil doar cu REGMODE EMAIL și o adresă validă asociată."
   suspended:        "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Motiv: %reason%"
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi folosită în această rețea."
@@ -85,7 +80,6 @@ identify:
   native_authentication: "\x0307ℹ\x03 Acest protocol gestionează autentificarea prin schimbarea pseudonimului. Folosește \x0303/NICK <poreclă>:<parolă>\x03 sau, dacă pseudonimul este ocupat, \x0303/NICK <poreclă>!<parolă>\x03."
   success:          "\x0303✔\x03 Sunteți acum identificat ca \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Sunteți deja identificat ca \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
   invalid_credentials: "\x0304✗\x03 Parolă incorectă. Vă rugăm să încercați din nou."
   locked_out:         "\x0304✗\x03 Prea multe încercări eșuate. Încercați din nou peste \x02%minutes%\x02 minut(e)."
   ghost_released:   "\x0307⚡\x03 Sesiunea fantomă care deținea \x02%nickname%\x02 a fost deconectată."
@@ -117,14 +111,12 @@ status:
   forbidden_reason: "  Motiv            : %reason%"
   pending_deletion:   "  \x0314Stare\x03          : \x0307În așteptare ștergere\x03"
   pending_deletion_at: "  \x0314Șters\x03           : %date%"
-  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <poreclă>"
   short:            "Afișați informații despre o poreclă înregistrată."
   help:             "Afișează detaliile de înregistrare pentru o poreclă: data înregistrării, starea\nconexiunii, ultimul mesaj de ieșire și adresa de e-mail. E-mailul este vizibil doar\npentru proprietar când este identificat. Cu PRIVATE ON, doar proprietarul și\noperatorii IRC pot vizualiza informațiile."
-  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
   private:          "\x0304✗\x03 Informațiile poreclei \x02%nickname%\x02 sunt private."
   header:           "\x02Informații pentru porecla \x0307%nickname%\x03\x02"
   status:           "  \x0314Stare\x03                   : %status%"
@@ -148,7 +140,6 @@ info:
   pending_deletion_at: "  \x0314Șters\x03                  : %date%"
   pending_deletion_until: "  \x0314Ștergere definitivă\x03    : %date%"
   pending_deletion_notice: "  \x0307Această poreclă este în așteptare de ștergere și nu poate fi înregistrată.\x03"
-  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ACanale cu acces:\x03"
   channels_entry_founder:   "  %channel% (\x0303Fondator\x03)"
   channels_entry_successor: "  %channel% (\x0303Succesor\x03)"
@@ -304,7 +295,6 @@ help:
     account_management: "Gestionarea conturilor"
     suspensions_bans: "Suspendări și interdicții"
     deletion: "Ștergere și restaurare"
-  unknown_command: "%marker% Nu există ajutor disponibil pentru \x02%command%\x0F."
   ircop_header: "\x02 ■ Comenzi disponibile pentru IRCops:\x02"
 
   set_timezone:
@@ -333,7 +323,6 @@ userip:
 
     Sintaxă: USERIP <poreclă>
     Exemplu: USERIP UnUtilizator
-  not_online:       "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este conectată."
   result:           "\x0307ℹ\x03 Poreclă: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -365,13 +354,11 @@ suspend:
       SUSPEND UtilizatorProblematic 0 Evitare interzicere permanentă
   success:            "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost suspendată până la \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja suspendată."
-  not_registered:     "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
   forbidden:          "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă și nu poate fi suspendată."
   cannot_suspend_oper: "\x0304✗\x03 Nu se poate suspenda operatorul IRC \x02%nickname%\x02."
   cannot_suspend_root: "\x0304✗\x03 Nu se poate suspenda utilizatorul root \x02%nickname%\x02."
   cannot_suspend_service: "\x0304✗\x03 Nu se poate suspenda porecla de serviciu \x02%nickname%\x02."
   invalid_duration:   "\x0304✗\x03 Durată invalidă. Folosiți: \x0303<z><h><m>\x03 (de ex. 7d, 12h, 30m) sau \x03030\x03 pentru permanentă."
-  permanent:          "permanentă"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
@@ -383,7 +370,6 @@ unsuspend:
     Sintaxă: UNSUSPEND <poreclă>
     Exemplu: UNSUSPEND UnUtilizator
   success:          "\x0303✔\x03 Suspendarea a fost ridicată pentru \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
   not_suspended:    "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este suspendată."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
@@ -400,7 +386,6 @@ rename:
 
     Sintaxă: RENAME <poreclă>
     Exemplu: RENAME Problematic
-  not_online:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este conectată."
   cannot_rename_root: "\x0304✗\x03 Nu se poate redenumi utilizatorul root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Nu se poate redenumi operatorul IRC \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 Nu se poate redenumi porecla de serviciu \x02%nickname%\x02."
@@ -422,7 +407,6 @@ drop:
 
     Sintaxă: DROP <poreclă>
     Exemplu: DROP ContVechi
-  not_registered:     "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
   suspended:         "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Anulați mai întâi suspendarea."
   forbidden:         "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă."
   cannot_drop_root:   "\x0304✗\x03 Nu se poate elimina utilizatorul root \x02%nickname%\x02."
@@ -439,7 +423,6 @@ restore:
   short:            "Restaurați o poreclă în așteptare de ștergere."
   help:             "Restaurează o poreclă care a fost ștearsă manual și se află încă în perioada de grație. Necesită permisiune IRCop: nickserv.restore."
   success:          "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost restaurată."
-  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
   not_pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este în așteptare de ștergere."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
@@ -536,7 +519,6 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Modele de vhost interzise (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — de %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Nu există modele de vhost interzise."
-    unknown_creator: "necunoscut"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -569,9 +551,6 @@ history:
     Folosiți ADD pentru a adăuga o intrare manuală.
     Folosiți DEL pentru a șterge o intrare specifică după ID.
     Folosiți CLEAR pentru a șterge toate intrările din istoric.
-  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
-  unknown_operator: "(necunoscut)"
-
   add:
     syntax:     "HISTORY <poreclă> ADD <mesaj>"
     short:      "Adăugați o intrare manuală în istoric."
@@ -590,10 +569,6 @@ history:
 
       Sintaxă: HISTORY <poreclă> DEL <id>
       Exemplu: HISTORY OPoreclă DEL 42
-    success:    "\x0303✔\x03 Intrarea din istoric \x02%id%\x02 a fost ștearsă."
-    not_found:  "\x0304✗\x03 Intrarea din istoric \x02%id%\x02 nu a fost găsită."
-    invalid_id: "\x0304✗\x03 ID de intrare invalid: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <poreclă> VIEW [PAGINĂ|ALL]"
     short:      "Vizualizați istoricul de acțiuni al poreclei."
@@ -609,7 +584,6 @@ history:
       Folosiți VIEW ALL pentru a vedea istoricul complet.
     header:     "\x02Istoric pentru \x0307%nickname%\x03\x02 (se afișează %start%-%end% din %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 de %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Nu s-au găsit intrări în istoric pentru \x02%nickname%\x02."
     page_hint:   "Folosiți \x0303HISTORY %nickname% VIEW %next_page%\x03 pentru mai multe intrări."
 
@@ -626,7 +600,6 @@ history:
 
 # --- History message translations (used when viewing history) ---
 history.message:
-  unsuspend:                  "Suspendare ridicată"
   password_changed_owner:     "Parolă schimbată de proprietar"
   password_changed_operator:  "Parolă schimbată de operator"
   email_changed_owner:        "E-mail schimbat din %old_email% în %new_email%"
@@ -635,15 +608,9 @@ history.message:
 
 # --- History extra field translations ---
 history.extra:
-  duration:      "Durată: %value%"
-  expires_at:    "Expiră: %value%"
   old_email:     "Vechi e-mail: %value%"
   new_email:     "Nou e-mail: %value%"
   method:        "Metodă: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <poreclă> {ON|OFF}"
   short:            "Setați sau eliminați protecția împotriva expirării pentru o poreclă."
@@ -660,7 +627,6 @@ noexpire:
       NOEXPIRE UtilizatorImportant OFF
   success_on:       "\x0303✔\x03 Porecla \x02%nickname%\x02 este acum protejată împotriva expirării."
   success_off:      "\x0303✔\x03 Porecla \x02%nickname%\x02 va expira acum normal."
-  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
   forbidden:         "\x0304✗\x03 Porecla \x02%nickname%\x02 este interzisă."
   suspended:         "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată."
 
@@ -671,20 +637,9 @@ list:
   help: "Listează poreclele înregistrate care se potrivesc modelului indicat. Caracterul * corespunde oricărei secvențe de caractere. Pagina este opțională și începe de la 1."
   header: "Poreclă | Înregistrare | Ultima conexiune | IP | Stare"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  page: "Pagina %page%/%pages% — %total% rezultate"
   empty: "Nicio poreclă nu corespunde modelului %pattern%."
   status_pending: "În așteptare"
   status_registered: "Înregistrat"
-  status_suspended: "Suspendat"
-  status_pending_deletion: "În așteptare ștergere"
-  status_forbidden: "Interzis"
-# --- DEBUG -------------------------------------------------------------------
-debug:
-  action_message: "%operator% execută comanda %command% asupra %target%. %reason%"
-  action_with_option: "%operator% execută comanda %command% asupra %target%. Opțiune: %option%. %reason%"
-  action_with_value: "%operator% execută comanda %command% asupra %target%. Opțiune: %option%=%value%. %reason%"
-  action_duration: "%operator% execută comanda %command% asupra %target%. Durată: %duration%. %reason%"
-  prefix_reason: "Motiv: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

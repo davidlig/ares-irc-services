@@ -121,7 +121,7 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
 
         $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Drop, force: $force));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
-            $context->reply('drop.not_registered', ['%channel%' => $channelName]);
+            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }
