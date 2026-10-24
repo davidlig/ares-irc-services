@@ -45,6 +45,11 @@ final readonly class VerifyCommand implements NickServCommandInterface
         return 'verify.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'verify.example';
+    }
+
     public function getOrder(): int
     {
         return 3;

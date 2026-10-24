@@ -53,6 +53,11 @@ final readonly class RecoverCommand implements NickServCommandInterface
         return 'recover.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'recover.example';
+    }
+
     public function getOrder(): int
     {
         return 7;

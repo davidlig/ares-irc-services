@@ -22,6 +22,9 @@ register:
   syntax: "REGISTER <password> [email]"
   short:            "Enregistrer votre surnom auprès des services."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nAprès validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. La durée de validité de %duration% ne s’applique qu’avant sa validation."
+  example: "%command_prefix%\x02\x0303REGISTER MotDePasse$ur_123\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303REGISTER MotDePasse$ur_123 utilisateur@exemple.com\x03\x0F"
   pending:          "\x0307→\x03 Un jeton de vérification a été envoyé à \x02%email%\x02.\n  Exécutez \x0303/msg %bot% VERIFY <jeton>\x03 pour terminer l'enregistrement.\n  Vous ne l'avez pas reçu ? Vérifiez vos spams ou utilisez \x0303/msg %bot% RESEND\x03\n  Le jeton expirera dans \x02%duration%\x02."
   already_registered: "\x0304✗\x03 Le surnom \x02%nickname%\x02 est déjà enregistré."
   already_pending: "\x0307→\x03 L’inscription de \x02%nickname%\x02 est en attente. Utilisez \x0303VERIFY <token>\x03. \x0303RESEND\x03 est disponible uniquement avec REGMODE EMAIL et une adresse valide associée."
@@ -37,6 +40,7 @@ verify:
   syntax:           "VERIFY <jeton>"
   short: "Confirme une inscription ou un jeton de secours."
   help: "Après validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. La durée de validité de %duration% ne s’applique qu’avant sa validation."
+  example: "%command_prefix%\x02\x0303VERIFY <jeton_reçu>\x03\x0F"
   success:          "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été enregistré avec succès et vous êtes maintenant identifié."
   success_native:   "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été enregistré avec succès. Utilisez l’authentification native indiquée ci-dessous."
   invalid_token: "\x0304✗\x03 Le jeton de secours est incorrect."
@@ -48,6 +52,7 @@ resend:
   syntax:           "RESEND"
   short:            "Renvoyer le jeton de vérification à votre e-mail."
   help: "RESEND est désactivé lorsque REGMODE est TOKEN.\nAprès validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. La durée de validité de %duration% ne s’applique qu’avant sa validation.\nEn mode EMAIL, RESEND renouvelle le jeton et le délai de l’inscription en attente pour %duration%."
+  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
   success:          "\x0307→\x03 Jeton de vérification renvoyé à \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Vous n'avez aucun enregistrement en attente pour renvoyer un jeton."
   throttled:        "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de demander un autre e-mail de vérification."
@@ -61,6 +66,9 @@ recover:
   syntax:           "RECOVER <surnom> [jeton]"
   short:            "Récupérer votre surnom si vous avez perdu votre mot de passe."
   help: "EMAIL : RECOVER <nickname> demande un jeton provisoire par courriel. TOKEN : fournissez votre jeton confirmé. RECOVER <nickname> <token> accepte le jeton valide du courriel ou le jeton confirmé. Celui du courriel remplace le jeton enregistré après validation. L’utilisation du jeton enregistré propose un remplacement facultatif avec VERIFY ; ignorez le message pour le conserver."
+  example: "%command_prefix%\x02\x0303RECOVER Utilisateur\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303RECOVER Utilisateur <jeton_reçu>\x03\x0F"
   pending: "\x0307→\x03 L’inscription de \x02%nickname%\x02 est en attente. Utilisez \x0303VERIFY <token>\x03. \x0303RESEND\x03 est disponible uniquement avec REGMODE EMAIL et une adresse valide associée."
   suspended:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu. Raison : %reason%"
   forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être utilisé sur ce réseau."
@@ -74,9 +82,13 @@ identify:
   syntax:           "IDENTIFY <surnom> <motdepasse>"
   short:            "S'identifier comme le propriétaire d'un surnom."
   help:             "Authentifie votre session auprès de %nickserv% avec votre surnom et mot de passe.\nAprès une identification réussie, vous recevrez le mode enregistré \x02+r\x02\net, si vous utilisiez un surnom invité, votre surnom enregistré sera restauré."
+  example: "%command_prefix%\x02\x0303IDENTIFY Utilisateur <mot_de_passe>\x03\x0F"
   native_syntax:    "/NICK <surnom>:<motdepasse> | /NICK <surnom>!<motdepasse>"
   native_short:     "Affiche la syntaxe native d’authentification du pseudonyme."
   native_help:      "Ce protocole authentifie les comptes par changement de pseudonyme.\nUtilisez /NICK <surnom>:<motdepasse> ou, si le pseudonyme est occupé, /NICK <surnom>!<motdepasse>."
+  native_example: "\x02\x0303/NICK Utilisateur:<mot_de_passe>\x03\x0F"
+  native_examples:
+    - "%command_prefix%\x02\x0303/NICK Utilisateur!<mot_de_passe>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Ce protocole gère l’authentification par changement de pseudonyme. Utilisez \x0303/NICK <surnom>:<motdepasse>\x03 ou, si le pseudonyme est occupé, \x0303/NICK <surnom>!<motdepasse>\x03."
   success:          "\x0303✔\x03 Vous êtes maintenant identifié en tant que \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Vous êtes déjà identifié en tant que \x02%nickname%\x02."
@@ -94,6 +106,7 @@ status:
   syntax:           "STATUS <surnom>"
   short:            "Afficher le statut d'enregistrement d'un surnom."
   help:             "Affiche le statut actuel d'un surnom : enregistré, en attente de vérification,\nsuspendu ou interdit."
+  example: "%command_prefix%\x02\x0303STATUS Utilisateur\x03\x0F"
   header:           "\x02Statut du surnom \x0307%nickname%\x03\x02"
   unregistered:     "  Statut          : Non enregistré"
   not_registered_offline: "  Statut          : \x0315Non enregistré\x03"
@@ -117,6 +130,7 @@ info:
   syntax:           "INFO <surnom>"
   short:            "Afficher les informations d'un surnom enregistré."
   help:             "Affiche les détails d'enregistrement d'un surnom : date d'enregistrement,\nstatut de connexion, dernier message de départ et adresse e-mail.\nL'e-mail n'est visible que par le propriétaire lorsqu'il est identifié.\nAvec PRIVATE ON, seuls le propriétaire et les opérateurs IRC\npeuvent voir les informations."
+  example: "%command_prefix%\x02\x0303INFO Utilisateur\x03\x0F"
   private:          "\x0304✗\x03 Les informations du surnom \x02%nickname%\x02 sont privées."
   header:           "\x02Informations pour le surnom \x0307%nickname%\x03\x02"
   status:           "  \x0314Statut\x03           : %status%"
@@ -150,6 +164,9 @@ set:
   syntax:           "SET <option> <valeur>"
   short:            "Modifier les options de votre pseudo."
   help:             "Modifie vos paramètres de surnom %nickserv%.\nVous devez être identifié pour utiliser cette commande."
+  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
   unknown_option:   "\x0304✗\x03 Option inconnue \x02%option%\x02. Options disponibles : %options%."
 
   password:
@@ -332,6 +349,7 @@ whoip:
   help:             |
     Affiche les surnoms enregistrés dont la dernière connexion identifiée a utilisé cette adresse IP.
     L'adresse enregistrée peut être obsolète.
+  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "Aucun surnom enregistré ne correspond à cette adresse IP."
   header:           "Surnoms correspondants :"
 
@@ -423,6 +441,7 @@ restore:
   syntax:           "RESTORE <surnom>"
   short:            "Restaurer un surnom en attente de suppression."
   help:             "Restaure un surnom qui a été abandonné manuellement et se trouve toujours dans la période de grâce. Nécessite la permission IRCop : nickserv.restore."
+  example: "%command_prefix%\x02\x0303RESTORE CuentaAntigua\x03\x0F"
   success:          "\x0303✓\x03 Le surnom \x02%nickname%\x02 a été restauré."
   not_pending_deletion: "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas en attente de suppression."
 
@@ -636,6 +655,9 @@ list:
   syntax: "LIST <motif> [page]"
   short: "Liste les pseudos enregistrés correspondant à un motif."
   help: "Liste les pseudos enregistrés correspondant au motif indiqué. Le caractère générique * correspond à toute séquence de caractères. La page est facultative et commence à 1."
+  example: "%command_prefix%\x02\x0303LIST Utilisateur*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST Utilisateur* 2\x03\x0F"
   header: "Pseudo | Enregistrement | Dernière connexion | IP | État"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Aucun pseudo ne correspond au motif %pattern%."

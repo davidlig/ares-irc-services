@@ -22,6 +22,9 @@ register:
   syntax: "REGISTER <password> [email]"
   short:            "Registra tu apodo en los servicios."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nUna vez validado, este token será tu token de recuperación permanente. Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo. La caducidad de %duration% solo se aplica antes de validarlo."
+  example: "%command_prefix%\x02\x0303REGISTER Clave$egura_123\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303REGISTER Clave$egura_123 usuario@ejemplo.com\x03\x0f"
   pending:          "\x0307→\x03 Se ha enviado un token de verificación a \x02%email%\x02.\n  Ejecuta \x0303/msg %bot% VERIFY <token>\x03 para completar el registro.\n  ¿No te llega? Revisa spam o usa \x0303/msg %bot% RESEND\x03\n  El token expirará en \x02%duration%\x02."
   already_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 ya está registrado."
   already_pending: "\x0307→\x03 El registro de \x02%nickname%\x02 está pendiente. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 solo está disponible con REGMODE EMAIL y un correo válido asignado."
@@ -37,6 +40,7 @@ verify:
   syntax:           "VERIFY <token>"
   short: "Confirma un registro o token de rescate."
   help: "Una vez validado, este token será tu token de recuperación permanente. Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo. La caducidad de %duration% solo se aplica antes de validarlo."
+  example: "%command_prefix%\x02\x0303VERIFY <token_recibido>\x03\x0F"
   success:          "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido registrado y ya estás identificado."
   success_native:   "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido registrado correctamente. Usa la autenticación nativa que se muestra a continuación."
   invalid_token: "\x0304✗\x03 El token de rescate no es válido."
@@ -48,6 +52,7 @@ resend:
   syntax:           "RESEND"
   short:            "Reenvía el token de verificación a tu correo."
   help: "RESEND está deshabilitado mientras REGMODE sea TOKEN.\nUna vez validado, este token será tu token de recuperación permanente. Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo. La caducidad de %duration% solo se aplica antes de validarlo.\nEn modo EMAIL, RESEND renueva durante %duration% el token y el plazo del registro pendiente."
+  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
   success:          "\x0307→\x03 Token de verificación reenviado a \x02%email%\x02."
   no_pending:       "\x0304✗\x03 No tienes ningún registro pendiente de verificación."
   throttled:        "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar otro correo de verificación."
@@ -61,6 +66,9 @@ recover:
   syntax:           "RECOVER <apodo> [token]"
   short:            "Recupera tu apodo si has perdido la contraseña."
   help: "EMAIL: RECOVER <nickname> solicita un token provisional por correo. TOKEN: proporciona tu token de recuperación confirmado. RECOVER <nickname> <token> acepta el token válido del correo o el confirmado. El del correo sustituye al guardado solo tras validarlo. Al usar el guardado se ofrece un reemplazo opcional con VERIFY; ignora ese mensaje si quieres conservar el actual."
+  example: "%command_prefix%\x02\x0303RECOVER Usuario\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303RECOVER Usuario <token_recibido>\x03\x0f"
   pending: "\x0307→\x03 El registro de \x02%nickname%\x02 está pendiente. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 solo está disponible con REGMODE EMAIL y un correo válido asignado."
   suspended:        "\x0304✗\x03 El apodo \x02%nickname%\x02 está suspendido. Razón: %reason%"
   forbidden:        "\x0304✗\x03 El apodo \x02%nickname%\x02 no puede usarse en esta red."
@@ -74,9 +82,13 @@ identify:
   syntax:           "IDENTIFY <apodo> <contraseña>"
   short:            "Acredita tu identidad como dueño de un apodo."
   help:             "Autentica tu sesión con %nickserv% indicando tu apodo y contraseña.\nTras identificarte recibirás el modo registrado \x02+r\x02 y, si estabas usando\nun apodo de invitado, recuperarás tu apodo registrado automáticamente."
+  example: "%command_prefix%\x02\x0303IDENTIFY Usuario <contraseña>\x03\x0F"
   native_syntax:    "/NICK <apodo>:<contraseña> | /NICK <apodo>!<contraseña>"
   native_short:     "Muestra la sintaxis de autenticación nativa por cambio de apodo."
   native_help:      "Este protocolo autentica las cuentas mediante cambios de apodo.\nUsa /NICK <apodo>:<contraseña> o, si el apodo está ocupado, /NICK <apodo>!<contraseña>."
+  native_example: "\x02\x0303/NICK Usuario:<contraseña>\x03\x0f"
+  native_examples:
+    - "%command_prefix%\x02\x0303/NICK Usuario!<contraseña>\x03\x0f"
   native_authentication: "\x0307ℹ\x03 Este protocolo gestiona la autenticación mediante cambios de apodo. Usa \x0303/NICK <apodo>:<contraseña>\x03 o, si el apodo está ocupado, \x0303/NICK <apodo>!<contraseña>\x03."
   success:          "\x0303✔\x03 Ahora estás identificado como \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Ya estás identificado como \x02%nickname%\x02."
@@ -94,6 +106,7 @@ status:
   syntax:           "STATUS <apodo>"
   short:            "Muestra el estado de registro de un apodo."
   help:             "Muestra el estado actual de un apodo: si está registrado,\npendiente de verificación, suspendido o prohibido."
+  example: "%command_prefix%\x02\x0303STATUS Usuario\x03\x0F"
   header:           "\x02Estado del apodo \x0307%nickname%\x03\x02"
   unregistered:     "  Estado          : Sin registrar"
   not_registered_offline: "  Estado          : \x0315No registrado\x03"
@@ -117,6 +130,7 @@ info:
   syntax:           "INFO <apodo>"
   short:            "Muestra la información de un apodo registrado."
   help:             "Muestra los datos de registro de un apodo: fecha de alta, estado de\nconexión, último mensaje de salida y correo electrónico. El correo solo es\nvisible para el propietario identificado. Con PRIVATE ON solo el dueño y\nlos Operadores IRC pueden ver la información."
+  example: "%command_prefix%\x02\x0303INFO Usuario\x03\x0F"
   private:          "\x0304✗\x03 La información del apodo \x02%nickname%\x02 es privada."
   header:           "\x02Información del apodo \x0307%nickname%\x03\x02"
   status:           "  \x0314Estado\x03                 : %status%"
@@ -150,6 +164,9 @@ set:
   syntax:           "SET <opción> <valor>"
   short:            "Cambiar opciones de tu apodo."
   help:             "Modifica la configuración de tu apodo de %nickserv%.\nDebes estar identificado para usar este comando."
+  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0f"
   unknown_option:   "\x0304✗\x03 Opción desconocida \x02%option%\x02. Opciones disponibles: %options%."
 
   password:
@@ -332,6 +349,7 @@ whoip:
   help:             |
     Muestra los apodos registrados cuya última conexión identificada utilizó esta dirección IP.
     La dirección guardada puede estar desactualizada.
+  example:          "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "No hay apodos registrados que coincidan con esta dirección IP."
   header:           "Apodos coincidentes:"
 
@@ -423,6 +441,7 @@ restore:
   syntax:           "RESTORE <apodo>"
   short:            "Restaurar un apodo pendiente de eliminación."
   help:             "Restaura un apodo que fue eliminado manualmente y aún está dentro del periodo de gracia. Requiere permiso IRCop: nickserv.restore."
+  example:          "%command_prefix%\x02\x0303RESTORE CuentaAntigua\x03\x0F"
   success:          "\x0303✓\x03 El apodo \x02%nickname%\x02 ha sido restaurado."
   not_pending_deletion: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está pendiente de eliminación."
 
@@ -636,6 +655,9 @@ list:
   syntax: "LIST <patrón> [página]"
   short: "Lista apodos registrados que coinciden con un patrón."
   help: "Lista los apodos registrados que coinciden con el patrón indicado. El comodín * coincide con cualquier secuencia de caracteres. La página es opcional y empieza en 1."
+  example: "%command_prefix%\x02\x0303LIST Usuario*\x03\x0f"
+  examples:
+    - "%command_prefix%\x02\x0303LIST Usuario* 2\x03\x0f"
   header: "Apodo | Registro | Última conexión | IP | Estado"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Ningún apodo coincide con el patrón %pattern%."

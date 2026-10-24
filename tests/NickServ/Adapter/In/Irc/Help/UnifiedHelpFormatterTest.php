@@ -50,6 +50,19 @@ final class UnifiedHelpFormatterTest extends TestCase
             'set_timezone.region_header' => [],
             'set_timezone.region_unknown' => ['03'],
         ];
+        $expectedExamples = [
+            'register' => ['example', 'examples'],
+            'verify' => ['example'],
+            'resend' => ['example'],
+            'recover' => ['example', 'examples'],
+            'identify' => ['example', 'native_example', 'native_examples'],
+            'status' => ['example'],
+            'info' => ['example'],
+            'set' => ['example', 'examples'],
+            'list' => ['example', 'examples'],
+            'restore' => ['example'],
+            'whoip' => ['example'],
+        ];
 
         foreach ($locales as $locale) {
             $catalog = Yaml::parseFile($root . '/translations/nickserv.' . $locale . '.yaml');
@@ -70,6 +83,22 @@ final class UnifiedHelpFormatterTest extends TestCase
                     substr_count($value, "\x03\x0F") + substr_count($value, "\x03\x1F"),
                     $locale . ': each colored fragment must reset color and formatting',
                 );
+            }
+
+            foreach ($expectedExamples as $command => $keys) {
+                $commandTranslations = $catalog[$command] ?? null;
+                self::assertIsArray($commandTranslations, $locale . ': ' . $command);
+                foreach ($keys as $key) {
+                    $examples = $commandTranslations[$key] ?? null;
+                    $examples = is_array($examples) ? $examples : [$examples];
+                    self::assertNotEmpty($examples, $locale . ': ' . $command . '.' . $key);
+                    foreach ($examples as $example) {
+                        self::assertIsString($example, $locale . ': ' . $command . '.' . $key);
+                        if (!('identify' === $command && in_array($key, ['native_example', 'native_examples'], true))) {
+                            self::assertStringContainsString('%command_prefix%', $example, $locale . ': ' . $command . '.' . $key);
+                        }
+                    }
+                }
             }
 
             self::assertIsString($help['header']);

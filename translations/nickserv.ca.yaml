@@ -22,6 +22,9 @@ register:
   syntax: "REGISTER <password> [email]"
   short:            "Registrar el vostre sobrenom amb els serveis."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nUn cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat de %duration% només s'aplica abans de validar-lo."
+  example: "%command_prefix%\x02\x0303REGISTER Clau$egura_123\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303REGISTER Clau$egura_123 usuari@exemple.com\x03\x0F"
   pending:          "\x0307→\x03 S'ha enviat un token de verificació a \x02%email%\x02.\n  Executeu \x0303/msg %bot% VERIFY <token>\x03 per completar el registre.\n  No l'heu rebut? Comproveu el correu brossa o utilitzeu \x0303/msg %bot% RESEND\x03\n  El token expirarà en \x02%duration%\x02."
   already_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està registrat."
   already_pending: "\x0307→\x03 El registre de \x02%nickname%\x02 està pendent. Utilitza \x0303VERIFY <token>\x03. \x0303RESEND\x03 només està disponible amb REGMODE EMAIL i un correu vàlid assignat."
@@ -37,6 +40,7 @@ verify:
   syntax:           "VERIFY <token>"
   short: "Confirma un registre o testimoni de rescat."
   help: "Un cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat de %duration% només s'aplica abans de validar-lo."
+  example: "%command_prefix%\x02\x0303VERIFY <token-rebut>\x03\x0F"
   success:          "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat amb èxit i ara esteu identificat."
   success_native:   "\x0303✔\x03 El sobrenom \x02%nickname%\x02 s'ha registrat correctament. Utilitzeu l'autenticació nativa que es mostra a continuació."
   invalid_token: "\x0304✗\x03 El testimoni de rescat no és vàlid."
@@ -48,6 +52,7 @@ resend:
   syntax:           "RESEND"
   short:            "Reenviar el token de verificació al vostre correu."
   help: "RESEND està desactivat mentre REGMODE sigui TOKEN.\nUn cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat de %duration% només s'aplica abans de validar-lo.\nEn mode EMAIL, RESEND renova durant %duration% el token i el termini del registre pendent."
+  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
   success:          "\x0307→\x03 Token de verificació reenviat a \x02%email%\x02."
   no_pending:       "\x0304✗\x03 No teniu cap registre pendent per reenviar un token."
   throttled:        "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de sol·licitar un altre correu de verificació."
@@ -61,6 +66,9 @@ recover:
   syntax:           "RECOVER <nickname> [token]"
   short:            "Recuperar el vostre sobrenom si heu perdut la contrasenya."
   help: "EMAIL: RECOVER <nickname> sol·licita un testimoni provisional per correu. TOKEN: proporciona el testimoni confirmat. RECOVER <nickname> <token> accepta el del correu o el confirmat. El del correu substitueix el desat només en validar-lo. Utilitzar el desat ofereix un reemplaçament opcional amb VERIFY; ignora el missatge per conservar l’actual."
+  example: "%command_prefix%\x02\x0303RECOVER Usuari\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303RECOVER Usuari <token-rebut>\x03\x0F"
   pending: "\x0307→\x03 El registre de \x02%nickname%\x02 està pendent. Utilitza \x0303VERIFY <token>\x03. \x0303RESEND\x03 només està disponible amb REGMODE EMAIL i un correu vàlid assignat."
   suspended:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Motiu: %reason%"
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot utilitzar en aquesta xarxa."
@@ -74,9 +82,13 @@ identify:
   syntax:           "IDENTIFY <nickname> <password>"
   short:            "Identificar-vos com a propietari d'un sobrenom."
   help:             "Autentica la vostra sessió amb %nickserv% utilitzant el vostre sobrenom i contrasenya.\nDesprés d'una identificació amb èxit rebreu el mode registrat \x02+r\x02\ni, si estàveu utilitzant un sobrenom de convidat, es restaurarà el vostre sobrenom registrat."
+  example: "%command_prefix%\x02\x0303IDENTIFY Usuari <contrasenya>\x03\x0F"
   native_syntax:    "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short:     "Mostra la sintaxi d’autenticació nativa per canvi de sobrenom."
   native_help:      "Aquest protocol autentica els comptes mitjançant canvis de sobrenom.\nUtilitzeu /NICK <nickname>:<password> o, si el sobrenom està ocupat, /NICK <nickname>!<password>."
+  native_example: "\x02\x0303/NICK Usuari:<contrasenya>\x03\x0F"
+  native_examples:
+    - "%command_prefix%\x02\x0303/NICK Usuari!<contrasenya>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Aquest protocol gestiona l’autenticació mitjançant canvis de sobrenom. Utilitzeu \x0303/NICK <nickname>:<password>\x03 o, si el sobrenom està ocupat, \x0303/NICK <nickname>!<password>\x03."
   success:          "\x0303✔\x03 Ara esteu identificat com a \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Ja esteu identificat com a \x02%nickname%\x02."
@@ -94,6 +106,7 @@ status:
   syntax:           "STATUS <nickname>"
   short:            "Mostrar l'estat de registre d'un sobrenom."
   help:             "Mostra l'estat actual d'un sobrenom: registrat, verificació pendent,\nsuspès o prohibit."
+  example: "%command_prefix%\x02\x0303STATUS Usuari\x03\x0F"
   header:           "\x02Estat del sobrenom \x0307%nickname%\x03\x02"
   unregistered:     "  Estat           : No registrat"
   not_registered_offline: "  Estat           : \x0315No registrat\x03"
@@ -117,6 +130,7 @@ info:
   syntax:           "INFO <nickname>"
   short:            "Mostrar informació sobre un sobrenom registrat."
   help:             "Mostra els detalls de registre d'un sobrenom: data de registre, estat de\nconnexió, darrer missatge de sortida i adreça de correu. El correu només és\nvisible per al propietari quan està identificat. Amb PRIVATE ON només el\npropietari i els operadors d'IRC poden veure la informació."
+  example: "%command_prefix%\x02\x0303INFO Usuari\x03\x0F"
   private:          "\x0304✗\x03 La informació del sobrenom \x02%nickname%\x02 és privada."
   header:           "\x02Informació del sobrenom \x0307%nickname%\x03\x02"
   status:           "  \x0314Estat\x03                 : %status%"
@@ -150,6 +164,9 @@ set:
   syntax:           "SET <option> <value>"
   short:            "Canviar les opcions del teu sobrenom."
   help:             "Modifica la configuració del vostre sobrenom de %nickserv%.\nHeu d'estar identificat per utilitzar aquesta ordre."
+  example: "%command_prefix%\x02\x0303SET LANGUAGE ca\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
   unknown_option:   "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Opcions disponibles: %options%."
 
   password:
@@ -332,6 +349,7 @@ whoip:
   help:             |
     Mostra els nicks registrats la darrera connexió identificada dels quals va utilitzar aquesta IP.
     L'adreça desada pot estar desactualitzada.
+  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "No hi ha cap nick registrat que coincideixi amb aquesta IP."
   header:           "Sobrenoms coincidents:"
 
@@ -423,6 +441,7 @@ restore:
   syntax:           "RESTORE <nickname>"
   short:            "Restaurar un sobrenom pendent d'eliminació."
   help:             "Restaura un sobrenom que va ser eliminat manualment i encara està dins del període de gràcia. Requereix permís IRCop: nickserv.restore."
+  example: "%command_prefix%\x02\x0303RESTORE CompteAntic\x03\x0F"
   success:          "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat restaurat."
   not_pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està pendent d'eliminació."
 
@@ -636,6 +655,9 @@ list:
   syntax: "LIST <patró> [pàgina]"
   short: "Llista els sobrenoms registrats que coincideixen amb un patró."
   help: "Llista els sobrenoms registrats que coincideixen amb el patró indicat. El comodí * coincideix amb qualsevol seqüència. La pàgina és opcional i comença per 1."
+  example: "%command_prefix%\x02\x0303LIST Usuari*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST Usuari* 2\x03\x0F"
   header: "Sobrenom | Registre | Última connexió | IP | Estat"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Cap sobrenom coincideix amb el patró %pattern%."

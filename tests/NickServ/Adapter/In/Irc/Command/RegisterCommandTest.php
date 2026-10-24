@@ -39,6 +39,7 @@ final class RegisterCommandTest extends TestCase
         self::assertSame('register.syntax', $command->getSyntaxKey());
         self::assertSame('register.help', $command->getHelpKey());
         self::assertSame(1, $command->getOrder());
+        self::assertSame('register.example', $command->getExampleKey());
         self::assertSame('register.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
         self::assertFalse($command->isOperOnly());

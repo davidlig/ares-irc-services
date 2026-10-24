@@ -22,6 +22,9 @@ register:
   syntax: "REGISTER <password> [email]"
   short:            "Registra il suo nickname con i servizi."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nDopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di %duration% si applica solo prima della convalida."
+  example: "%command_prefix%\x02\x0303REGISTER Password$Sicura_123\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303REGISTER Password$Sicura_123 utente@esempio.com\x03\x0F"
   pending:          "\x0307→\x03 Un token di verifica è stato inviato a \x02%email%\x02.\n  Esegua \x0303/msg %bot% VERIFY <token>\x03 per completare la registrazione.\n  Non l'ha ricevuto? Controlli lo spam o usi \x0303/msg %bot% RESEND\x03\n  Il token scadrà in \x02%duration%\x02."
   already_registered: "\x0304✗\x03 Il nickname \x02%nickname%\x02 è già registrato."
   already_pending: "\x0307→\x03 La registrazione di \x02%nickname%\x02 è in attesa. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 è disponibile solo con REGMODE EMAIL e un indirizzo email valido associato."
@@ -37,6 +40,7 @@ verify:
   syntax:           "VERIFY <token>"
   short: "Conferma una registrazione o un token di recupero."
   help: "Dopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di %duration% si applica solo prima della convalida."
+  example: "%command_prefix%\x02\x0303VERIFY <token_ricevuto>\x03\x0F"
   success:          "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato registrato con successo e ora è identificato."
   success_native:   "\x0303✔\x03 Il nickname \x02%nickname%\x02 è stato registrato correttamente. Utilizzi l’autenticazione nativa mostrata di seguito."
   invalid_token: "\x0304✗\x03 Il token di recupero non è valido."
@@ -48,6 +52,7 @@ resend:
   syntax:           "RESEND"
   short:            "Reinvia il token di verifica alla sua email."
   help: "RESEND è disabilitato quando REGMODE è TOKEN.\nDopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di %duration% si applica solo prima della convalida.\nIn modalità EMAIL, RESEND rinnova per %duration% il token e il termine della registrazione in attesa."
+  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
   success:          "\x0307→\x03 Token di verifica reinviato a \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Non ha nessuna registrazione in sospeso per cui reinviare un token."
   throttled:        "\x0304✗\x03 Deve attendere \x02%minutes%\x02 minuto/i prima di richiedere un'altra email di verifica."
@@ -61,6 +66,9 @@ recover:
   syntax:           "RECOVER <nickname> [token]"
   short:            "Recuperi il suo nickname se ha perso la password."
   help: "EMAIL: RECOVER <nickname> richiede un token provvisorio per email. TOKEN: fornisci quello confermato. RECOVER <nickname> <token> accetta il token valido dell’email o quello confermato. Quello dell’email sostituisce il token salvato solo dopo verifica. Usare quello salvato offre una sostituzione facoltativa tramite VERIFY; ignora il messaggio per conservarlo."
+  example: "%command_prefix%\x02\x0303RECOVER Utente\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303RECOVER Utente <token_ricevuto>\x03\x0F"
   pending: "\x0307→\x03 La registrazione di \x02%nickname%\x02 è in attesa. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 è disponibile solo con REGMODE EMAIL e un indirizzo email valido associato."
   suspended:        "\x0304✗\x03 Il nickname \x02%nickname%\x02 è sospeso. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 Il nickname \x02%nickname%\x02 non può essere usato su questa rete."
@@ -74,9 +82,13 @@ identify:
   syntax:           "IDENTIFY <nickname> <password>"
   short:            "Si identifichi come proprietario di un nickname."
   help:             "Autentica la sua sessione con %nickserv% usando nickname e password.\nDopo un'identificazione riuscita riceverà la modalità registrata \x02+r\x02\ne, se stava usando un nick ospite, il suo nick registrato sarà ripristinato."
+  example: "%command_prefix%\x02\x0303IDENTIFY Utente <password>\x03\x0F"
   native_syntax:    "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short:     "Mostra la sintassi nativa per l’autenticazione del nickname."
   native_help:      "Questo protocollo autentica gli account tramite cambi di nickname.\nUsa /NICK <nickname>:<password> oppure, se il nickname è occupato, /NICK <nickname>!<password>."
+  native_example: "\x02\x0303/NICK Utente:<password>\x03\x0F"
+  native_examples:
+    - "%command_prefix%\x02\x0303/NICK Utente!<password>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Questo protocollo gestisce l’autenticazione tramite cambi di nickname. Usa \x0303/NICK <nickname>:<password>\x03 oppure, se il nickname è occupato, \x0303/NICK <nickname>!<password>\x03."
   success:          "\x0303✔\x03 Ora è identificato come \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 È già identificato come \x02%nickname%\x02."
@@ -94,6 +106,7 @@ status:
   syntax:           "STATUS <nickname>"
   short:            "Mostra lo stato di registrazione di un nickname."
   help:             "Mostra lo stato attuale di un nickname: registrato, in attesa di verifica,\nsospeso o vietato."
+  example: "%command_prefix%\x02\x0303STATUS Utente\x03\x0F"
   header:           "\x02Stato del nick \x0307%nickname%\x03\x02"
   unregistered:     "  Stato           : Non registrato"
   not_registered_offline: "  Stato           : \x0315Non registrato\x03"
@@ -117,6 +130,7 @@ info:
   syntax:           "INFO <nickname>"
   short:            "Mostra le informazioni su un nickname registrato."
   help:             "Mostra i dettagli di registrazione di un nickname: data di registrazione,\nstato della connessione, ultimo messaggio di quit e indirizzo email.\nL'email è visibile solo al proprietario quando è identificato.\nCon PRIVATE ON solo il proprietario e gli IRC Operator possono vedere le informazioni."
+  example: "%command_prefix%\x02\x0303INFO Utente\x03\x0F"
   private:          "\x0304✗\x03 Le informazioni del nickname \x02%nickname%\x02 sono private."
   header:           "\x02Informazioni per il nickname \x0307%nickname%\x03\x02"
   status:           "  \x0314Stato\x03               : %status%"
@@ -150,6 +164,9 @@ set:
   syntax:           "SET <opzione> <valore>"
   short:            "Cambiare le opzioni del tuo nickname."
   help:             "Modifica le impostazioni del suo nickname %nickserv%.\nDeve essere identificato per usare questo comando."
+  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
   unknown_option:   "\x0304✗\x03 Opzione sconosciuta \x02%option%\x02. Opzioni disponibili: %options%."
 
   password:
@@ -332,6 +349,7 @@ whoip:
   help:             |
     Elenca i nickname registrati la cui ultima connessione identificata ha usato questo indirizzo IP.
     L'indirizzo salvato potrebbe non essere aggiornato.
+  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "Nessun nickname registrato corrisponde a questo indirizzo IP."
   header:           "Nickname corrispondenti:"
 
@@ -423,6 +441,7 @@ restore:
   syntax:           "RESTORE <nickname>"
   short:            "Ripristinare un nickname in attesa di cancellazione."
   help:             "Ripristina un nickname che è stato eliminato manualmente ed è ancora nel periodo di grazia. Richiede il permesso IRCop: nickserv.restore."
+  example: "%command_prefix%\x02\x0303RESTORE AccountVecchio\x03\x0F"
   success:          "\x0303✓\x03 Il nickname \x02%nickname%\x02 è stato ripristinato."
   not_pending_deletion: "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è in attesa di cancellazione."
 
@@ -636,6 +655,9 @@ list:
   syntax: "LIST <schema> [pagina]"
   short: "Elenca i nickname registrati che corrispondono a uno schema."
   help: "Elenca i nickname registrati che corrispondono allo schema indicato. Il carattere jolly * corrisponde a qualsiasi sequenza di caratteri. La pagina è facoltativa e parte da 1."
+  example: "%command_prefix%\x02\x0303LIST Utente*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST Utente* 2\x03\x0F"
   header: "Nickname | Registrazione | Ultima connessione | IP | Stato"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Nessun nickname corrisponde allo schema %pattern%."

@@ -22,6 +22,9 @@ register:
   syntax: "REGISTER <password> [email]"
   short:            "Registreer uw bijnaam bij de services."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nNa bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De geldigheidsduur van %duration% geldt alleen vóór verificatie."
+  example: "%command_prefix%\x02\x0303REGISTER Veilig$Wachtwoord_123\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303REGISTER Veilig$Wachtwoord_123 gebruiker@voorbeeld.nl\x03\x0F"
   pending:          "\x0307→\x03 Er is een verificatietoken verzonden naar \x02%email%\x02.\n  Voer \x0303/msg %bot% VERIFY <token>\x03 uit om de registratie te voltooien.\n  Niet ontvangen? Controleer spam of gebruik \x0303/msg %bot% RESEND\x03\n  De token verloopt over \x02%duration%\x02."
   already_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is al geregistreerd."
   already_pending: "\x0307→\x03 De registratie van \x02%nickname%\x02 is in behandeling. Gebruik \x0303VERIFY <token>\x03. \x0303RESEND\x03 is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
@@ -37,6 +40,7 @@ verify:
   syntax:           "VERIFY <token>"
   short: "Bevestigt een registratie of hersteltoken."
   help: "Na bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De geldigheidsduur van %duration% geldt alleen vóór verificatie."
+  example: "%command_prefix%\x02\x0303VERIFY <ontvangen_token>\x03\x0F"
   success:          "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is succesvol geregistreerd en u bent nu geïdentificeerd."
   success_native:   "\x0303✔\x03 De bijnaam \x02%nickname%\x02 is succesvol geregistreerd. Gebruik de hieronder weergegeven native authenticatie."
   invalid_token: "\x0304✗\x03 Het hersteltoken is ongeldig."
@@ -48,6 +52,7 @@ resend:
   syntax:           "RESEND"
   short:            "Verstuur de verificatietoken opnieuw naar uw e-mail."
   help: "RESEND is uitgeschakeld zolang REGMODE TOKEN is.\nNa bevestiging wordt dit je permanente hersteltoken. Bewaar het veilig: hiermee kun je je bijnaam herstellen. De geldigheidsduur van %duration% geldt alleen vóór verificatie.\nIn EMAIL-modus vernieuwt RESEND de geldigheid van het token en de wachtende registratie voor %duration%."
+  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
   success:          "\x0307→\x03 Verificatietoken opnieuw verzonden naar \x02%email%\x02."
   no_pending:       "\x0304✗\x03 U heeft geen lopende registratie om een token voor opnieuw te verzenden."
   throttled:        "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een nieuwe verificatie-e-mail aanvraagt."
@@ -61,6 +66,9 @@ recover:
   syntax:           "RECOVER <bijnaam> [token]"
   short:            "Herstel uw bijnaam als u uw wachtwoord bent kwijtgeraakt."
   help: "EMAIL: RECOVER <nickname> vraagt een voorlopig token per e-mail aan. TOKEN: geef je bevestigde token op. RECOVER <nickname> <token> accepteert een geldig e-mailtoken of bevestigd token. Het e-mailtoken vervangt het opgeslagen token pas na validatie. Het opgeslagen token biedt een optionele vervanging via VERIFY; negeer het bericht om het te behouden."
+  example: "%command_prefix%\x02\x0303RECOVER Gebruiker\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303RECOVER Gebruiker <ontvangen_token>\x03\x0F"
   pending: "\x0307→\x03 De registratie van \x02%nickname%\x02 is in behandeling. Gebruik \x0303VERIFY <token>\x03. \x0303RESEND\x03 is alleen beschikbaar bij REGMODE EMAIL en een geldig gekoppeld e-mailadres."
   suspended:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Reden: %reason%"
   forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden gebruikt op dit netwerk."
@@ -74,9 +82,13 @@ identify:
   syntax:           "IDENTIFY <bijnaam> <wachtwoord>"
   short:            "Identificeer uzelf als de eigenaar van een bijnaam."
   help:             "Authenticeert uw sessie bij %nickserv% met uw bijnaam en wachtwoord.\nNa succesvolle identificatie ontvangt u de geregistreerde modus \x02+r\x02\nen, als u een gastbijnaam gebruikte, wordt uw geregistreerde bijnaam hersteld."
+  example: "%command_prefix%\x02\x0303IDENTIFY Gebruiker <wachtwoord>\x03\x0F"
   native_syntax:    "/NICK <bijnaam>:<wachtwoord> | /NICK <bijnaam>!<wachtwoord>"
   native_short:     "Toont de native syntaxis voor nickname-authenticatie."
   native_help:      "Dit protocol authenticeert accounts via nicknamewijzigingen.\nGebruik /NICK <bijnaam>:<wachtwoord> of, als de nickname bezet is, /NICK <bijnaam>!<wachtwoord>."
+  native_example: "\x02\x0303/NICK Gebruiker:<wachtwoord>\x03\x0F"
+  native_examples:
+    - "%command_prefix%\x02\x0303/NICK Gebruiker!<wachtwoord>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Dit protocol beheert authenticatie via nicknamewijzigingen. Gebruik \x0303/NICK <bijnaam>:<wachtwoord>\x03 of, als de nickname bezet is, \x0303/NICK <bijnaam>!<wachtwoord>\x03."
   success:          "\x0303✔\x03 U bent nu geïdentificeerd als \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 U bent al geïdentificeerd als \x02%nickname%\x02."
@@ -94,6 +106,7 @@ status:
   syntax:           "STATUS <bijnaam>"
   short:            "Toon de registratiestatus van een bijnaam."
   help:             "Toont de huidige status van een bijnaam: geregistreerd, verificatie in afwachting,\ngeschorst of verboden."
+  example: "%command_prefix%\x02\x0303STATUS Gebruiker\x03\x0F"
   header:           "\x02Status van bijnaam \x0307%nickname%\x03\x02"
   unregistered:     "  Status          : Niet geregistreerd"
   not_registered_offline: "  Status          : \x0315Niet geregistreerd\x03"
@@ -117,6 +130,7 @@ info:
   syntax:           "INFO <bijnaam>"
   short:            "Toon informatie over een geregistreerde bijnaam."
   help:             "Toont registratiedetails voor een bijnaam: registratiedatum, verbindingsstatus,\nlaatste quitbericht en e-mailadres. De e-mail is alleen zichtbaar voor\nde eigenaar wanneer geïdentificeerd. Met PRIVATE ON kunnen alleen de eigenaar en IRC Operators\nde informatie bekijken."
+  example: "%command_prefix%\x02\x0303INFO Gebruiker\x03\x0F"
   private:          "\x0304✗\x03 Informatie van bijnaam \x02%nickname%\x02 is privé."
   header:           "\x02Informatie voor bijnaam \x0307%nickname%\x03\x02"
   status:           "  \x0314Status\x03               : %status%"
@@ -150,6 +164,9 @@ set:
   syntax:           "SET <optie> <waarde>"
   short:            "Wijzig de opties van je bijnaam."
   help:             "Wijzigt uw %nickserv% bijnaaminstellingen.\nU moet geïdentificeerd zijn om dit commando te gebruiken."
+  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
   unknown_option:   "\x0304✗\x03 Onbekende optie \x02%option%\x02. Beschikbare opties: %options%."
 
   password:
@@ -332,6 +349,7 @@ whoip:
   help:             |
     Toont geregistreerde nicknames waarvan de laatste geïdentificeerde verbinding dit IP-adres gebruikte.
     Het opgeslagen adres kan verouderd zijn.
+  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "Geen geregistreerde nicknames komen overeen met dit IP-adres."
   header:           "Overeenkomende nicknames:"
 
@@ -423,6 +441,7 @@ restore:
   syntax:           "RESTORE <bijnaam>"
   short:            "Een bijnaam die op verwijdering wacht herstellen."
   help:             "Herstelt een bijnaam die handmatig is verwijderd en zich nog in de respijtperiode bevindt. Vereist IRCop-toestemming: nickserv.restore."
+  example: "%command_prefix%\x02\x0303RESTORE OudAccount\x03\x0F"
   success:          "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is hersteld."
   not_pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat niet op het punt verwijderd te worden."
 
@@ -636,6 +655,9 @@ list:
   syntax: "LIST <patroon> [pagina]"
   short: "Toont geregistreerde bijnamen die overeenkomen met een patroon."
   help: "Toont geregistreerde bijnamen die overeenkomen met het opgegeven patroon. De joker * komt overeen met elke tekenreeks. De pagina is optioneel en begint bij 1."
+  example: "%command_prefix%\x02\x0303LIST Gebruiker*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST Gebruiker* 2\x03\x0F"
   header: "Bijnaam | Registratie | Laatste verbinding | IP | Status"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Geen bijnamen komen overeen met patroon %pattern%."

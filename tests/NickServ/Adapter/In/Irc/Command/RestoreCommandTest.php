@@ -38,6 +38,7 @@ final class RestoreCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('restore.syntax', $command->getSyntaxKey());
         self::assertSame('restore.help', $command->getHelpKey());
+        self::assertSame('restore.example', $command->getExampleKey());
         self::assertSame(72, $command->getOrder());
         self::assertSame('restore.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());

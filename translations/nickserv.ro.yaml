@@ -22,6 +22,9 @@ register:
   syntax: "REGISTER <password> [email]"
   short:            "Înregistrați-vă porecla la servicii."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nDupă validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Durata de expirare %duration% se aplică doar înainte de verificare."
+  example: "%command_prefix%\x02\x0303REGISTER Parolă$Sigură_123\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303REGISTER Parolă$Sigură_123 utilizator@exemplu.ro\x03\x0F"
   pending:          "\x0307→\x03 Un token de verificare a fost trimis la \x02%email%\x02.\n  Executați \x0303/msg %bot% VERIFY <token>\x03 pentru a finaliza înregistrarea.\n  Nu l-ați primit? Verificați spamul sau folosiți \x0303/msg %bot% RESEND\x03\n  Tokenul va expira în \x02%duration%\x02."
   already_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja înregistrată."
   already_pending: "\x0307→\x03 Înregistrarea pentru \x02%nickname%\x02 este în așteptare. Folosește \x0303VERIFY <token>\x03. \x0303RESEND\x03 este disponibil doar cu REGMODE EMAIL și o adresă validă asociată."
@@ -37,6 +40,7 @@ verify:
   syntax:           "VERIFY <token>"
   short: "Confirmă o înregistrare sau un token de salvare."
   help: "După validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Durata de expirare %duration% se aplică doar înainte de verificare."
+  example: "%command_prefix%\x02\x0303VERIFY <token_primit>\x03\x0F"
   success:          "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes și acum sunteți identificat."
   success_native:   "\x0303✔\x03 Porecla \x02%nickname%\x02 a fost înregistrată cu succes. Folosiți autentificarea nativă afișată mai jos."
   invalid_token: "\x0304✗\x03 Tokenul de salvare este invalid."
@@ -48,6 +52,7 @@ resend:
   syntax:           "RESEND"
   short:            "Retrimiteți tokenul de verificare la e-mailul dumneavoastră."
   help: "RESEND este dezactivat când REGMODE este TOKEN.\nDupă validare, acesta devine tokenul permanent de recuperare. Păstrează-l în siguranță: îl poți folosi pentru recuperarea poreclei. Durata de expirare %duration% se aplică doar înainte de verificare.\nÎn modul EMAIL, RESEND reînnoiește tokenul și termenul înregistrării în așteptare pentru %duration%."
+  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
   success:          "\x0307→\x03 Tokenul de verificare a fost retrimis la \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Nu aveți nicio înregistrare în așteptare pentru care să retrimiteți un token."
   throttled:        "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a solicita alt e-mail de verificare."
@@ -61,6 +66,9 @@ recover:
   syntax:           "RECOVER <poreclă> [token]"
   short:            "Recuperați-vă porecla dacă v-ați pierdut parola."
   help: "EMAIL: RECOVER <nickname> solicită un token provizoriu prin email. TOKEN: furnizează tokenul confirmat. RECOVER <nickname> <token> acceptă tokenul valid din email sau tokenul confirmat. Cel din email îl înlocuiește pe cel stocat doar după validare. Folosirea celui stocat oferă înlocuire opțională prin VERIFY; ignoră mesajul pentru a-l păstra."
+  example: "%command_prefix%\x02\x0303RECOVER Utilizator\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303RECOVER Utilizator <token_primit>\x03\x0F"
   pending: "\x0307→\x03 Înregistrarea pentru \x02%nickname%\x02 este în așteptare. Folosește \x0303VERIFY <token>\x03. \x0303RESEND\x03 este disponibil doar cu REGMODE EMAIL și o adresă validă asociată."
   suspended:        "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Motiv: %reason%"
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi folosită în această rețea."
@@ -74,9 +82,13 @@ identify:
   syntax:           "IDENTIFY <poreclă> <parolă>"
   short:            "Identificați-vă ca proprietar al unei porecle."
   help:             "Autentifică sesiunea dumneavoastră cu %nickserv% folosind porecla și parola.\nDupă o identificare reușită veți primi modul înregistrat \x02+r\x02\nși, dacă foloseați o poreclă de oaspete, porecla dumneavoastră înregistrată va fi restaurată."
+  example: "%command_prefix%\x02\x0303IDENTIFY Utilizator <parolă>\x03\x0F"
   native_syntax:    "/NICK <poreclă>:<parolă> | /NICK <poreclă>!<parolă>"
   native_short:     "Afișează sintaxa nativă de autentificare a pseudonimului."
   native_help:      "Acest protocol autentifică conturile prin schimbarea pseudonimului.\nFolosește /NICK <poreclă>:<parolă> sau, dacă pseudonimul este ocupat, /NICK <poreclă>!<parolă>."
+  native_example: "\x02\x0303/NICK Utilizator:<parolă>\x03\x0F"
+  native_examples:
+    - "%command_prefix%\x02\x0303/NICK Utilizator!<parolă>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Acest protocol gestionează autentificarea prin schimbarea pseudonimului. Folosește \x0303/NICK <poreclă>:<parolă>\x03 sau, dacă pseudonimul este ocupat, \x0303/NICK <poreclă>!<parolă>\x03."
   success:          "\x0303✔\x03 Sunteți acum identificat ca \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Sunteți deja identificat ca \x02%nickname%\x02."
@@ -94,6 +106,7 @@ status:
   syntax:           "STATUS <poreclă>"
   short:            "Afișați starea de înregistrare a unei porecle."
   help:             "Afișează starea actuală a unei porecle: înregistrată, în așteptarea verificării,\nsuspendată sau interzisă."
+  example: "%command_prefix%\x02\x0303STATUS Utilizator\x03\x0F"
   header:           "\x02Starea poreclei \x0307%nickname%\x03\x02"
   unregistered:     "  Stare            : Neînregistrată"
   not_registered_offline: "  Stare            : \x0315Neînregistrată\x03"
@@ -117,6 +130,7 @@ info:
   syntax:           "INFO <poreclă>"
   short:            "Afișați informații despre o poreclă înregistrată."
   help:             "Afișează detaliile de înregistrare pentru o poreclă: data înregistrării, starea\nconexiunii, ultimul mesaj de ieșire și adresa de e-mail. E-mailul este vizibil doar\npentru proprietar când este identificat. Cu PRIVATE ON, doar proprietarul și\noperatorii IRC pot vizualiza informațiile."
+  example: "%command_prefix%\x02\x0303INFO Utilizator\x03\x0F"
   private:          "\x0304✗\x03 Informațiile poreclei \x02%nickname%\x02 sunt private."
   header:           "\x02Informații pentru porecla \x0307%nickname%\x03\x02"
   status:           "  \x0314Stare\x03                   : %status%"
@@ -150,6 +164,9 @@ set:
   syntax:           "SET <opțiune> <valoare>"
   short:            "Schimbați opțiunile poreclei dumneavoastră."
   help:             "Modifică setările poreclei dumneavoastră %nickserv%.\nTrebuie să fiți identificat pentru a folosi această comandă."
+  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
   unknown_option:   "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Opțiuni disponibile: %options%."
 
   password:
@@ -332,6 +349,7 @@ whoip:
   help:             |
     Afișează nickname-urile înregistrate a căror ultimă conexiune identificată a folosit această adresă IP.
     Adresa salvată poate fi învechită.
+  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "Nu există nickname-uri înregistrate care să corespundă acestei adrese IP."
   header:           "Nickname-uri corespunzătoare:"
 
@@ -423,6 +441,7 @@ restore:
   syntax:           "RESTORE <poreclă>"
   short:            "Restaurați o poreclă în așteptare de ștergere."
   help:             "Restaurează o poreclă care a fost ștearsă manual și se află încă în perioada de grație. Necesită permisiune IRCop: nickserv.restore."
+  example: "%command_prefix%\x02\x0303RESTORE ContVechi\x03\x0F"
   success:          "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost restaurată."
   not_pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este în așteptare de ștergere."
 
@@ -636,6 +655,9 @@ list:
   syntax: "LIST <model> [pagina]"
   short: "Listează poreclele înregistrate care se potrivesc unui model."
   help: "Listează poreclele înregistrate care se potrivesc modelului indicat. Caracterul * corespunde oricărei secvențe de caractere. Pagina este opțională și începe de la 1."
+  example: "%command_prefix%\x02\x0303LIST Utilizator*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST Utilizator* 2\x03\x0F"
   header: "Poreclă | Înregistrare | Ultima conexiune | IP | Stare"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Nicio poreclă nu corespunde modelului %pattern%."

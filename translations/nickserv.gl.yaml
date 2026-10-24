@@ -27,6 +27,9 @@ register:
   syntax: "REGISTER <password> [email]"
   short:            "Rexistrar o seu alcume cos servizos."
   help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nUnha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade de %duration% só se aplica antes de validalo."
+  example: "%command_prefix%\x02\x0303REGISTER Chave$egura_123\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303REGISTER Chave$egura_123 usuario@exemplo.com\x03\x0F"
   pending:          "\x0307→\x03 Enviouse un token de verificación a \x02%email%\x02.\n  Execute \x0303/msg %bot% VERIFY <token>\x03 para completar o rexistro.\n  Non o recibiu? Comprobe spam ou use \x0303/msg %bot% RESEND\x03\n  O token caducará en \x02%duration%\x02."
   already_registered: "\x0304✗\x03 O alcume \x02%nickname%\x02 xa está rexistrado."
   already_pending: "\x0307→\x03 O rexistro de \x02%nickname%\x02 está pendente. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 só está dispoñible con REGMODE EMAIL e un correo válido asignado."
@@ -42,6 +45,7 @@ verify:
   syntax:           "VERIFY <token>"
   short: "Confirma un rexistro ou token de rescate."
   help: "Unha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade de %duration% só se aplica antes de validalo."
+  example: "%command_prefix%\x02\x0303VERIFY <token_recibido>\x03\x0F"
   success:          "\x0303✔\x03 O alcume \x02%nickname%\x02 foi rexistrado con éxito e agora está identificado."
   success_native:   "\x0303✔\x03 O alcume \x02%nickname%\x02 rexistrouse correctamente. Usa a autenticación nativa que se mostra a continuación."
   invalid_token: "\x0304✗\x03 O token de rescate non é válido."
@@ -53,6 +57,7 @@ resend:
   syntax:           "RESEND"
   short:            "Reenviar o token de verificación ao seu correo electrónico."
   help: "RESEND está desactivado mentres REGMODE sexa TOKEN.\nUnha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade de %duration% só se aplica antes de validalo.\nNo modo EMAIL, RESEND renova durante %duration% o token e o prazo do rexistro pendente."
+  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
   success:          "\x0307→\x03 Token de verificación reenviado a \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Non ten ningún rexistro pendente para o que reenviar un token."
   throttled:        "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de solicitar outro correo de verificación."
@@ -66,6 +71,9 @@ recover:
   syntax:           "RECOVER <alcume> [token]"
   short:            "Recuperar o seu alcume se perdeu o contrasinal."
   help: "EMAIL: RECOVER <nickname> solicita un token provisional por correo. TOKEN: proporciona o token confirmado. RECOVER <nickname> <token> acepta o token válido do correo ou o confirmado. O do correo substitúe o gardado só tras validalo. Usar o gardado ofrece un reemplazo opcional con VERIFY; ignora a mensaxe para conservalo."
+  example: "%command_prefix%\x02\x0303RECOVER Usuario\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303RECOVER Usuario <token_recibido>\x03\x0F"
   pending: "\x0307→\x03 O rexistro de \x02%nickname%\x02 está pendente. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 só está dispoñible con REGMODE EMAIL e un correo válido asignado."
   suspended:        "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non se pode usar nesta rede."
@@ -79,9 +87,13 @@ identify:
   syntax:           "IDENTIFY <alcume> <contrasinal>"
   short:            "Identificarse como o propietario dun alcume."
   help:             "Autentica a súa sesión con %nickserv% usando o seu alcume e contrasinal.\nDespois dunha identificación exitosa recibirá o modo rexistrado \x02+r\x02\ne, se estaba usando un alcume de convidado, restauraráselle o seu alcume rexistrado."
+  example: "%command_prefix%\x02\x0303IDENTIFY Usuario <contrasinal>\x03\x0F"
   native_syntax:    "/NICK <alcume>:<contrasinal> | /NICK <alcume>!<contrasinal>"
   native_short:     "Mostra a sintaxe de autenticación nativa por cambio de alcume."
   native_help:      "Este protocolo autentica as contas mediante cambios de alcume.\nUsa /NICK <alcume>:<contrasinal> ou, se o alcume está ocupado, /NICK <alcume>!<contrasinal>."
+  native_example: "\x02\x0303/NICK Usuario:<contrasinal>\x03\x0F"
+  native_examples:
+    - "%command_prefix%\x02\x0303/NICK Usuario!<contrasinal>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Este protocolo xestiona a autenticación mediante cambios de alcume. Usa \x0303/NICK <alcume>:<contrasinal>\x03 ou, se o alcume está ocupado, \x0303/NICK <alcume>!<contrasinal>\x03."
   success:          "\x0303✔\x03 Agora está identificado como \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Xa está identificado como \x02%nickname%\x02."
@@ -99,6 +111,7 @@ status:
   syntax:           "STATUS <alcume>"
   short:            "Mostrar o estado de rexistro dun alcume."
   help:             "Mostra o estado actual dun alcume: rexistrado, verificación pendente,\nsuspendido ou prohibido."
+  example: "%command_prefix%\x02\x0303STATUS Usuario\x03\x0F"
   header:           "\x02Estado do alcume \x0307%nickname%\x03\x02"
   unregistered:     "  Estado          : Non rexistrado"
   not_registered_offline: "  Estado          : \x0315Non rexistrado\x03"
@@ -122,6 +135,7 @@ info:
   syntax:           "INFO <alcume>"
   short:            "Mostrar información sobre un alcume rexistrado."
   help:             "Mostra detalles de rexistro dun alcume: data de rexistro, estado\nde conexión, última mensaxe de desconexión e enderezo de correo electrónico. O correo\nelectrónico só é visible para o propietario cando está identificado. Con PRIVATE ON só\no propietario e os operadores de IRC poden ver a información."
+  example: "%command_prefix%\x02\x0303INFO Usuario\x03\x0F"
   private:          "\x0304✗\x03 A información do alcume \x02%nickname%\x02 é privada."
   header:           "\x02Información do alcume \x0307%nickname%\x03\x02"
   status:           "  \x0314Estado\x03            : %status%"
@@ -155,6 +169,9 @@ set:
   syntax:           "SET <opción> <valor>"
   short:            "Cambiar as opcións do teu alcume."
   help:             "Modifica a configuración do seu alcume en %nickserv%.\nDebe estar identificado para usar este comando."
+  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
   unknown_option:   "\x0304✗\x03 Opción descoñecida \x02%option%\x02. Opcións dispoñibles: %options%."
 
   password:
@@ -337,6 +354,7 @@ whoip:
   help:             |
     Mostra os alcumes rexistrados cuxa última conexión identificada empregou este enderezo IP.
     O enderezo gardado pode estar desactualizado.
+  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "Non hai alcumes rexistrados que coincidan con este enderezo IP."
   header:           "Alcumes coincidentes:"
 
@@ -428,6 +446,7 @@ restore:
   syntax:           "RESTORE <alcume>"
   short:            "Restaurar un alcume pendente de eliminación."
   help:             "Restaura un alcume que foi eliminado manualmente e aínda está dentro do período de graza. Require permiso IRCop: nickserv.restore."
+  example: "%command_prefix%\x02\x0303RESTORE CuentaAntigua\x03\x0F"
   success:          "\x0303✓\x03 O alcume \x02%nickname%\x02 foi restaurado."
   not_pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está pendente de eliminación."
 
@@ -643,6 +662,9 @@ list:
   syntax: "LIST <patrón> [páxina]"
   short: "Lista alcumes rexistrados que coinciden cun patrón."
   help: "Lista os alcumes rexistrados que coinciden co patrón indicado. O comodín * coincide con calquera secuencia de caracteres. A páxina é opcional e comeza en 1."
+  example: "%command_prefix%\x02\x0303LIST Usuario*\x03\x0F"
+  examples:
+    - "%command_prefix%\x02\x0303LIST Usuario* 2\x03\x0F"
   header: "Alcume | Rexistro | Última conexión | IP | Estado"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
   empty: "Ningún alcume coincide co patrón %pattern%."

@@ -35,6 +35,7 @@ final class VerifyCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('verify.syntax', $command->getSyntaxKey());
         self::assertSame('verify.help', $command->getHelpKey());
+        self::assertSame('verify.example', $command->getExampleKey());
         self::assertSame(3, $command->getOrder());
         self::assertSame('verify.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
