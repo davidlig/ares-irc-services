@@ -316,6 +316,48 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     }
 
     #[Test]
+    public function rejectedLinkIgnoresFurtherCapabilityNegotiation(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('disconnect');
+        $connection->expects(self::never())->method('writeLine');
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::never())->method('dispatch');
+        $holder = new ActiveConnectionHolder();
+        $log = new TestHandler();
+        $handler = $this->createHandler(connectionHolder: $holder, eventDispatcher: $dispatcher, logger: new Logger('test', [$log]));
+
+        $this->sendRequiredCapab($handler, $connection, version: '1205');
+        $this->sendRequiredCapab($handler, $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST'), $connection);
+
+        self::assertNull($holder->getRemoteServerSid());
+        self::assertCount(1, $log->getRecords());
+        self::assertTrue($log->hasCriticalRecords());
+    }
+
+    #[Test]
+    public function repeatedServerOnRejectedLinkDoesNotDisconnectOrStartBurstAgain(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('disconnect');
+        $connection->expects(self::never())->method('writeLine');
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::never())->method('dispatch');
+        $holder = new ActiveConnectionHolder();
+        $log = new TestHandler();
+        $handler = $this->createHandler(connectionHolder: $holder, eventDispatcher: $dispatcher, logger: new Logger('test', [$log]));
+
+        $server = new IRCMessage(command: 'SERVER', params: ['hub.example.net', 'pass', '0A1']);
+        $handler->handleIncoming($server, $connection);
+        $handler->handleIncoming($server, $connection);
+
+        self::assertNull($holder->getRemoteServerSid());
+        self::assertCount(1, $log->getRecords());
+        self::assertTrue($log->hasCriticalRecords());
+    }
+
+    #[Test]
     public function capabEndRejectsMissingOrWrongProtocol1206(): void
     {
         foreach ([null, '1205', '1207'] as $version) {
