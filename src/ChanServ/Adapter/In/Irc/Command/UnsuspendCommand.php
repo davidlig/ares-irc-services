@@ -104,7 +104,7 @@ final class UnsuspendCommand implements ChanServCommandInterface, IrcopAuditable
 
         $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Unsuspend));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
-            $context->reply('unsuspend.not_registered', ['%channel%' => $channelName]);
+            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }

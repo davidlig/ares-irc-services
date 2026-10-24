@@ -1,7 +1,10 @@
-# Posta edukia — eremua: mail (testu laua, IRC koderik gabe)
-# Markagailuak: %nickname%, %token%, %new_email%
+# Postaren itzulpenak — Euskara
+# Domeinua: mail
+#
+# Mezuen gaiak eta gorputzak testu arruntean, IRC formaturik gabe.
+# Gorde benetako lerro-jauziak eta gorputz amaierako nahita jarritakoak.
 
-# REGISTER / VERIFY — egiaztapen tokena
+# --- REGISTER / VERIFY -----------------------------------------------------
 register_verification_subject: "%bot%: egiaztatu zure ezizenaren erregistroa"
 register_verification_body: |
   Kaixo,
@@ -18,7 +21,7 @@ register_verification_body: |
   Balioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da.
     /msg %bot% RECOVER %nickname% %token%
 
-# RESEND — erregistroaren berdina, tokenaren berbidalketa
+# --- RESEND ----------------------------------------------------------------
 resend_verification_subject: "%bot%: zure egiaztapen tokena (berbidalita)"
 resend_verification_body: |
   Kaixo,
@@ -35,7 +38,7 @@ resend_verification_body: |
   Balioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da.
     /msg %bot% RECOVER %nickname% %token%
 
-# SET EMAIL — baieztapen tokena uneko posta elektronikora bidalia
+# --- SET EMAIL -------------------------------------------------------------
 email_change_token_subject: "%bot%: baieztatu zure posta elektronikoko helbide berria"
 email_change_token_body: |
   Kaixo,
@@ -49,7 +52,7 @@ email_change_token_body: |
 
   Tokena ordubetean iraungitzen da. Zuk aldaketa hau eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.
 
-# RECOVER — pasahitza berreskuratzeko tokena
+# --- RECOVER ---------------------------------------------------------------
 recovery_token_subject: "%bot%: pasahitza berreskuratzea"
 recovery_token_body: |
   Kaixo,
@@ -65,7 +68,7 @@ recovery_token_body: |
 
   Balioztatu ondoren, hau berreskuratze-token iraunkorra izango da. Gorde leku seguruan: ezizena berreskuratzeko erabil dezakezu. Ordubeteko iraungipena balioztatu aurretik bakarrik aplikatzen da.
 
-# ChanServ SET FOUNDER — sortzaile aldaketa tokena
+# --- CHANSERV SET FOUNDER --------------------------------------------------
 founder_change_token_subject: "%bot%: sortzaile aldaketa tokena %channel% kanalerako"
 founder_change_token_body: |
   Kaixo,

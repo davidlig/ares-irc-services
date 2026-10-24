@@ -1,17 +1,24 @@
-# OperServ translations — Turkish
-# Domain: operserv
+# OperServ çevirileri — Türkçe
+# Alan: operserv
+#
+# IRC biçimlendirme kodları (çift tırnaklar veya !irc düz metin blokları):
+#   \x02        kalın yazıyı aç/kapat
+#   \x03NN      renk (ONDALIK: 03=yeşil, 04=kırmızı, 07=turuncu, 14=koyu gri)
+#   \x03        rengi sıfırla
+#   \x0F        tüm biçimlendirmeyi sıfırla
+#
+# IRC renkleri onaltılık değil, ONDALIK sayılar (0-15) kullanır.
+#   \x0314 = koyu gri (ondalık 14): DOĞRU
+#   \x030F = 0 rengi ve ardından F harfi: HATA
+#
+# Çok satırlı IRC metni: !irc |- ile gerçek satır sonları ve boşluklar.
+# Etiketsiz bloklar kaçışları çözmez; CTCP sabit metinlerini koruyun.
+# HELP örnekleri: example/examples ve %command_prefix%.
+# Sunum katmanı renksiz /msg ve iki boşlukluk kenar payı ekler.
 
-unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
-
+# --- ERROR -----------------------------------------------------------------
 error:
-  syntax:           "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
-  oper_only:        "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
-  not_identified:   "\x0304✗\x03 Kimliğiniz doğrulanmamış. \x0303/msg %nickserv% IDENTIFY\x03 kullanın."
-  permission_denied: "\x0304✗\x03 Bu komutu çalıştırmak için yeterli izinlere sahip değilsiniz."
   root_only:        "\x0304✗\x03 Bu komut yalnızca ağ root yöneticileri içindir."
-  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
-
-# --- HELP --------------------------------------------------------------------
 help:
   syntax:           "HELP [komut [alt-seçenek]]"
   short:            "Komutları listeleyin veya bir komut için yardım gösterin."
@@ -35,7 +42,6 @@ help:
     network_security: "Ağ güvenliği"
     communication: "İletişim"
     low_level: "Düşük seviye"
-  unknown_command:  "\x0307✗ Bilinmeyen komut\x03\x0F \x02\x0303%command%\x03\x0F. \x0303/msg %bot% HELP\x03\x0F kullanın."
   ircop_header: "\x02 ■ IRC operatörleri için kullanılabilir komutlar:\x02"
 
 # --- IRCOP --------------------------------------------------------------------
@@ -179,7 +185,6 @@ kill:
   syntax:           "KILL <nickname> <sebep>"
   short:            "Bir kullanıcıyı ağdan zorla ayırın."
   help:             "Bir kullanıcıyı IRC ağından ayırır.\nIRCop'ler ve Root kullanıcıları kill'lenemez.\nBu komut operserv.kill iznini gerektirir.\n\nSözdizimi: KILL <nickname> <sebep>\nÖrnek: KILL KtUye Kanalları floodlama"
-  user_not_online:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu bağlı değil."
   protected_root:   "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 kill'lenemez."
   protected_ircop:  "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 kill'lenemez."
   done:             "\x0303✓\x03 \x02%nickname%\x02 kullanıcısı kill'lendi (%reason%)."
@@ -198,8 +203,6 @@ gline:
   already_exists:   "\x0304✗\x03 \x02%mask%\x02 için G-line zaten mevcut."
   max_entries:      "\x0304✗\x03 Maksimum G-line sayısına (%max%) ulaşıldı."
   not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 bulunamadı."
-  user_not_found:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu çevrimiçi değil."
-  permanent:        "kalıcı"
 
   add:
     syntax:         "GLINE ADD <maske> <süre> <sebep>"
@@ -219,9 +222,6 @@ gline:
     help:           "Tüm G-line'ları listeler. İsteğe bağlı olarak maske kalıbı ile filtreleyin.\nBu komut operserv.gline iznini gerektirir."
     header:         "\x0307---\x03 \x02G-line'lar (%count%) \x0307---\x03"
     empty:          "G-line bulunmamaktadır."
-    no_reason:      "Sebep yok"
-    never_expires:  "Kalıcı"
-    unknown_creator: "bilinmiyor"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, bitiş: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
@@ -256,10 +256,7 @@ raw:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
-  action_message:   "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. %reason%"
-  actionWithDuration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
   action_global:    "%operator%, %type% aracılığıyla %target% rumuzu ile %count% kullanıcıya GLOBAL komutunu çalıştırıyor. Mesaj: %message%"
-  prefix_reason:    "Sebep: %reason%"
   prefix_message:   "Mesaj: %reason%"
 
 # --- MOTD ----------------------------------------------------------------------
@@ -293,7 +290,6 @@ motd:
     status_disabled: "\x0304devre dışı\x03"
     expired:        "\x0304süresi dolmuş\x03"
     no_bot:         "(bot yok)"
-    never:          "hiçbir zaman"
     shown_count:    "%count% kez gösterildi"
   clean:
     syntax:         "MOTD CLEAN"

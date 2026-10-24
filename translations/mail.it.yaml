@@ -1,7 +1,10 @@
-# Contenuto email — domain: mail (testo semplice, no codici IRC)
-# Segnaposti: %nickname%, %token%, %new_email%
+# Traduzioni di posta — Italiano
+# Dominio: mail
+#
+# Oggetti e corpi delle email in testo semplice, senza formattazione IRC.
+# Preservare le interruzioni di riga reali e quelle finali intenzionali.
 
-# REGISTER / VERIFY — token di verifica
+# --- REGISTER / VERIFY -----------------------------------------------------
 register_verification_subject: "%bot%: verifichi la registrazione del suo nickname"
 register_verification_body: |
   Buongiorno,
@@ -18,7 +21,7 @@ register_verification_body: |
   Dopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di un’ora vale solo prima della verifica.
     /msg %bot% RECOVER %nickname% %token%
 
-# RESEND — uguale a register, rinvio del token
+# --- RESEND ----------------------------------------------------------------
 resend_verification_subject: "%bot%: il suo token di verifica (rinvio)"
 resend_verification_body: |
   Buongiorno,
@@ -35,7 +38,7 @@ resend_verification_body: |
   Dopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di un’ora vale solo prima della verifica.
     /msg %bot% RECOVER %nickname% %token%
 
-# SET EMAIL — token di conferma inviato all'email attuale
+# --- SET EMAIL -------------------------------------------------------------
 email_change_token_subject: "%bot%: confermi il suo nuovo indirizzo email"
 email_change_token_body: |
   Buongiorno,
@@ -49,7 +52,7 @@ email_change_token_body: |
 
   Il token scade in 1 ora. Se non ha richiesto questa modifica, ignori questa email.
 
-# RECOVER — token di recupero password
+# --- RECOVER ---------------------------------------------------------------
 recovery_token_subject: "%bot%: recupero password"
 recovery_token_body: |
   Buongiorno,
@@ -65,7 +68,7 @@ recovery_token_body: |
 
   Dopo la verifica, questo diventa il token di recupero permanente. Conservalo al sicuro: potrai usarlo per recuperare il nickname. La scadenza di un’ora vale solo prima della verifica.
 
-# ChanServ SET FOUNDER — token cambio fondatore
+# --- CHANSERV SET FOUNDER --------------------------------------------------
 founder_change_token_subject: "%bot%: token cambio fondatore per %channel%"
 founder_change_token_body: |
   Buongiorno,

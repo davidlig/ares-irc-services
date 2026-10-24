@@ -91,7 +91,7 @@ final class RestoreCommandTest extends TestCase
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
         self::assertFalse($outcome->success);
-        self::assertSame(['restore.not_registered [%nickname%: TargetNick]'], $messages);
+        self::assertSame(['error.nick_not_registered [%nickname%: TargetNick]'], $messages);
     }
 
     #[Test]

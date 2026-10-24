@@ -1,15 +1,20 @@
-# MemoServ translations — Spanish
-# Domain: memoserv
-
-unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax: "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Este comando está restringido a operadores IRC."
-  not_identified: "\x0304✗\x03 No estás identificado. Usa \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Permiso denegado. No tienes acceso a este comando."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
-  insufficient_access: "\x0304✗\x03 Acceso insuficiente para \x02%operation%\x02 en el canal \x02%channel%\x02."
+# Traducciones de MemoServ — Español
+# Dominio: memoserv
+#
+# Códigos de formato IRC (comillas dobles o bloques literales !irc):
+#   \x02        activa/desactiva la negrita
+#   \x03NN      color (DECIMAL: 03=verde, 04=rojo, 07=naranja, 14=gris oscuro)
+#   \x03        restablece el color
+#   \x0F        restablece todo el formato
+#
+# Los colores IRC usan números DECIMALES (0-15), no hexadecimales.
+#   \x0314 = gris oscuro (14 decimal): CORRECTO
+#   \x030F = color 0 seguido de la letra F: ERROR
+#
+# Texto IRC multilínea: !irc |- con saltos físicos y espacios reales.
+# Los bloques sin etiqueta no decodifican escapes; conserva los literales CTCP.
+# Ejemplos HELP: example/examples y %command_prefix%.
+# El presentador añade /msg sin color y un margen de dos espacios.
 
 send:
   syntax: "SEND {apodo|#canal} <mensaje>"
@@ -17,8 +22,6 @@ send:
   help: "Envía un mensaje a un apodo o canal registrado. El destinatario debe tener el servicio de mensajes activado (ENABLE)."
   sent_nick: "\x0303✔\x03 Mensaje enviado a \x02%nickname%\x02."
   sent_channel: "\x0303✔\x03 Mensaje enviado al canal \x02%channel%\x02."
-  nick_not_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   throttled: "\x0304✗\x03 Debes esperar \x02%seconds%\x02 segundo(s) antes de enviar otro mensaje."
   limit_reached: "\x0304✗\x03 Límite de mensajes alcanzado para \x02%target%\x02."
   ignored: "\x0304✗\x03 No puedes enviar mensajes a este destino, estás en su lista de ignorados."
@@ -32,7 +35,6 @@ read:
   help: "Lee el mensaje con el número indicado. Sin #canal, lee de tu bandeja de apodo. Con #canal, requiere nivel MEMOREAD."
   header: "\x02\x0307Mensaje #%index%\x03 de \x02%from%\x02:\x0F"
   footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   not_found: "\x0304✗\x03 Mensaje #%index% no encontrado."
 
 list:
@@ -40,16 +42,13 @@ list:
   short: "Lista mensajes (no leídos con * rojo)."
   help: "Lista tus mensajes o los del canal. Los no leídos se muestran con asterisco rojo y vista previa (máx. 50 caracteres). Sin #canal = tu bandeja; con #canal requiere MEMOREAD."
   header: "\x02\x0307Mensajes para %target%\x03:\x0F"
-  footer: "\x0314─────────────────────────────\x03"
   empty: "\x0307ℹ\x03 No hay mensajes para \x02%target%\x02."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
 
 del:
   syntax: "DEL [#canal] <número>"
   short: "Elimina un mensaje por número."
   help: "Elimina el mensaje con el número indicado. En canales requiere nivel MEMOCHANGE."
   deleted: "\x0303✔\x03 Mensaje #%index% eliminado."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   not_found: "\x0304✗\x03 Mensaje #%index% no encontrado."
 
 ignore:
@@ -72,13 +71,10 @@ ignore:
   removed: "\x0303✔\x03 \x02%nickname%\x02 quitado de la lista de ignorados."
   already_ignored: "\x0304✗\x03 \x02%nickname%\x02 ya está en la lista de ignorados."
   not_ignored: "\x0304✗\x03 \x02%nickname%\x02 no está en la lista de ignorados."
-  nick_not_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   limit_reached_nick: "\x0304✗\x03 Límite de lista de ignorados alcanzado para tu apodo (máx. \x02%limit%\x02)."
   limit_reached_channel: "\x0304✗\x03 Límite de lista de ignorados alcanzado para \x02%channel%\x02 (máx. \x02%limit%\x02)."
   list_empty: "\x0307ℹ\x03 La lista de ignorados está vacía."
   list_header: "\x02\x0307Lista de ignorados:\x03\x0F"
-  list_footer: "\x0314─────────────────────────────\x03"
 
 enable:
   syntax: "ENABLE [#canal]"
@@ -88,7 +84,6 @@ enable:
   enabled_channel: "\x0303✔\x03 Servicio de mensajes activado para el canal \x02%channel%\x02."
   already_enabled_nick: "\x0307ℹ\x03 El servicio de mensajes ya está activado para tu apodo."
   already_enabled_channel: "\x0307ℹ\x03 El servicio de mensajes ya está activado para \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   founder_only: "\x0304✗\x03 Solo el fundador del canal puede activar mensajes para \x02%channel%\x02."
 
 disable:
@@ -99,7 +94,6 @@ disable:
   disabled_channel: "\x0303✔\x03 Servicio de mensajes desactivado para el canal \x02%channel%\x02."
   already_disabled_nick: "\x0307ℹ\x03 El servicio de mensajes ya está desactivado para tu apodo."
   already_disabled_channel: "\x0307ℹ\x03 El servicio de mensajes ya está desactivado para \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   founder_only: "\x0304✗\x03 Solo el fundador del canal puede desactivar mensajes para \x02%channel%\x02."
 
 help:
@@ -122,7 +116,6 @@ help:
   group:
     messages: "Mensajes"
     preferences: "Preferencias"
-  unknown_command: "\x0307✗\x03\x0F Comando desconocido \x02\x0303%command%\x03\x0F. Usa \x02\x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Comandos disponibles para IRCops:\x02"
 
 notify:

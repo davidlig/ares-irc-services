@@ -115,7 +115,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
     {
         switch ($result->outcome) {
             case RecoverNickOutcome::NotRegistered:
-                $context->reply('recover.not_registered', ['nickname' => $result->nickname ?? '']);
+                $context->reply('error.nick_not_registered', ['nickname' => $result->nickname ?? '']);
                 break;
             case RecoverNickOutcome::Pending:
                 $context->reply('recover.pending', ['nickname' => $result->nickname ?? '']);

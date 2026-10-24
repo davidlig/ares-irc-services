@@ -191,7 +191,7 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
     {
         switch ($result->outcome) {
             case HistoryNickOutcome::NotRegistered:
-                $context->reply('history.not_registered', ['%nickname%' => $result->targetNick ?? '']);
+                $context->reply('error.nick_not_registered', ['%nickname%' => $result->targetNick ?? '']);
 
                 return CommandOutcome::rejected();
 

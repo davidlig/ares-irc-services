@@ -16,8 +16,11 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NickServContext::class)]
@@ -35,6 +38,7 @@ final class NickServContextTest extends TestCase
         ?PendingVerificationRegistry $pendingVerification = null,
         ?RecoveryTokenRegistry $recoveryToken = null,
         ?RegisteredNick $senderAccount = null,
+        string $language = 'en',
     ): NickServContext {
         $serviceNicks = $this->createServiceNicks('NickServ');
 
@@ -45,7 +49,7 @@ final class NickServContextTest extends TestCase
             $args,
             $notifier,
             $translator,
-            'en',
+            $language,
             'Europe/Madrid',
             'NOTICE',
             $registry ?? new NickServCommandRegistry([]),
@@ -234,34 +238,46 @@ final class NickServContextTest extends TestCase
         self::assertSame('—', $context->formatDate(null));
     }
 
+    /** @return iterable<string, array{string}> */
+    public static function translationLocales(): iterable
+    {
+        yield 'direct locale' => ['en'];
+        yield 'parent locale fallback' => ['en_US'];
+        yield 'configured fallback' => ['zz'];
+    }
+
     #[Test]
-    public function transDelegatesToTranslatorWithCatalogAndLocale(): void
+    #[DataProvider('translationLocales')]
+    public function transDelegatesToTranslatorWithCatalogAndLocale(string $language): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::once())
-            ->method('trans')
-            ->with('info.key', self::anything(), 'nickserv', 'en')
-            ->willReturn('Translated');
+        $translator = new Translator($language);
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->setFallbackLocales(['en']);
+        $translator->addResource('array', ['info.key' => 'Service translation'], 'en', 'nickserv');
+        $translator->addResource('array', ['info.key' => 'Common translation'], 'en', 'common');
+        $translator->addResource('array', ['service.only' => 'Service-only message'], 'en', 'nickserv');
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
             $translator,
             [],
+            language: $language,
         );
 
-        self::assertSame('Translated', $context->trans('info.key'));
+        self::assertSame('Common translation', $context->trans('info.key'));
+        self::assertSame('Service-only message', $context->trans('service.only'));
+        self::assertSame('missing.key', $context->trans('missing.key'));
+        self::assertSame('Common translation', $context->transIn('info.key', [], $language));
     }
 
     #[Test]
     public function transInUsesExplicitLanguageWhenProvided(): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::once())
-            ->method('trans')
-            ->with('key', self::anything(), 'nickserv', 'es')
-            ->willReturn('Traducido');
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['key' => 'Traducido'], 'es', 'nickserv');
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -333,10 +349,14 @@ final class NickServContextTest extends TestCase
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('NickServ');
         $translator = $this->createMock(TranslatorInterface::class);
+        $calls = [];
         $translator->expects(self::once())
             ->method('trans')
-            ->with('key', self::callback(static fn (array $p) => isset($p['%nick%']) && 'User' === $p['%nick%'] && isset($p['%bot%']) && 'NickServ' === $p['%bot%']), 'nickserv', 'en')
-            ->willReturn('Hello User');
+            ->willReturnCallback(static function (string $key, array $params, string $domain, ?string $locale) use (&$calls): string {
+                $calls[] = [$key, $params, $domain, $locale];
+
+                return 'common' === $domain ? $key : 'Hello User';
+            });
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -345,6 +365,10 @@ final class NickServContextTest extends TestCase
         );
 
         $context->reply('key', ['%nick%' => 'User']);
+
+        self::assertSame(['nickserv'], array_column($calls, 2));
+        self::assertSame('User', $calls[0][1]['%nick%']);
+        self::assertSame('NickServ', $calls[0][1]['%bot%']);
     }
 
     #[Test]

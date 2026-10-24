@@ -87,7 +87,7 @@ final readonly class HelpCommand implements OperServCommandInterface
         $commandName = strtoupper($context->args[0]);
         $command = $context->commandRegistry()->find($commandName);
         if (null === $command || !$this->canView($context, $command)) {
-            $context->reply('help.unknown_command', ['command' => $commandName]);
+            $context->reply('unknown_command', ['command' => $commandName]);
 
             return;
         }

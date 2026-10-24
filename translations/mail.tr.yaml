@@ -1,7 +1,10 @@
-# Email content — domain: mail (plain text, no IRC codes)
-# Placeholders: %nickname%, %token%, %new_email%
+# E-posta çevirileri — Türkçe
+# Alan: mail
+#
+# E-posta konuları ve gövdeleri IRC biçimlendirmesi olmayan düz metindir.
+# Gerçek satır sonlarını ve gövdedeki kasıtlı son satır sonlarını koruyun.
 
-# REGISTER / VERIFY — doğrulama tokenı
+# --- REGISTER / VERIFY -----------------------------------------------------
 register_verification_subject: "%bot%: rumuz kaydınızı doğrulayın"
 register_verification_body: |
   Merhaba,
@@ -18,7 +21,7 @@ register_verification_body: |
   Doğrulandıktan sonra bu, kalıcı kurtarma belirteciniz olur. Güvenli yerde saklayın: takma adınızı kurtarmak için kullanabilirsiniz. Bir saatlik süre yalnızca doğrulamadan önce geçerlidir.
     /msg %bot% RECOVER %nickname% %token%
 
-# RESEND — aynı register, tokenın yeniden gönderimi
+# --- RESEND ----------------------------------------------------------------
 resend_verification_subject: "%bot%: doğrulama tokenınız (yeniden gönderme)"
 resend_verification_body: |
   Merhaba,
@@ -35,7 +38,7 @@ resend_verification_body: |
   Doğrulandıktan sonra bu, kalıcı kurtarma belirteciniz olur. Güvenli yerde saklayın: takma adınızı kurtarmak için kullanabilirsiniz. Bir saatlik süre yalnızca doğrulamadan önce geçerlidir.
     /msg %bot% RECOVER %nickname% %token%
 
-# SET EMAIL — mevcut e-postaya gönderilen onay tokenı
+# --- SET EMAIL -------------------------------------------------------------
 email_change_token_subject: "%bot%: yeni e-posta adresinizi onaylayın"
 email_change_token_body: |
   Merhaba,
@@ -49,7 +52,7 @@ email_change_token_body: |
 
   Token 1 saat içinde sona erer. Bu değişikliği siz talep etmediyseniz, lütfen bu e-postayı dikkate almayın.
 
-# RECOVER — şifre kurtarma tokenı
+# --- RECOVER ---------------------------------------------------------------
 recovery_token_subject: "%bot%: şifre kurtarma"
 recovery_token_body: |
   Merhaba,
@@ -65,7 +68,7 @@ recovery_token_body: |
 
   Doğrulandıktan sonra bu, kalıcı kurtarma belirteciniz olur. Güvenli yerde saklayın: takma adınızı kurtarmak için kullanabilirsiniz. Bir saatlik süre yalnızca doğrulamadan önce geçerlidir.
 
-# ChanServ SET FOUNDER — kurucu değişikliği tokenı
+# --- CHANSERV SET FOUNDER --------------------------------------------------
 founder_change_token_subject: "%bot%: %channel% için kurucu değişikliği tokenı"
 founder_change_token_body: |
   Merhaba,

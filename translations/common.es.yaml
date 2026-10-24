@@ -1,12 +1,70 @@
-# Common translations — Spanish
-# Domain: common
+# Traducciones de mensajes comunes — Español
+# Dominio: common
 #
-# Shared translations used across all IRC services.
+# Códigos de formato IRC (comillas dobles o bloques literales !irc):
+#   \x02        activa/desactiva la negrita
+#   \x03NN      color (DECIMAL: 03=verde, 04=rojo, 07=naranja, 14=gris oscuro)
+#   \x03        restablece el color
+#   \x0F        restablece todo el formato
+#
+# Los colores IRC usan números DECIMALES (0-15), no hexadecimales.
+#   \x0314 = gris oscuro (14 decimal): CORRECTO
+#   \x030F = color 0 seguido de la letra F: ERROR
+#
+# Texto IRC multilínea: !irc |- con saltos físicos y espacios reales.
+# Los bloques sin etiqueta no decodifican escapes; conserva los literales CTCP.
+# Ejemplos HELP: example/examples y %command_prefix%.
+# El presentador añade /msg sin color y un margen de dos espacios.
 
+# --- UNKNOWN COMMAND -------------------------------------------------------
+unknown_command:  "\x0304✗\x03\x0F Comando desconocido \x0303%command%\x03\x0F. Usa /msg %bot% \x0303HELP\x03\x0F"
+
+# --- UNKNOWN HELP OPTION ---------------------------------------------------
+unknown_help_option: "\x0304✗\x03\x0F Opción de ayuda \x0303%option%\x03\x0F desconocida para \x0303%command%\x03\x0F. Usa /msg %bot% \x0303HELP %command%\x03\x0F"
+
+# --- ERROR -----------------------------------------------------------------
+error:
+  syntax: "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Este comando está restringido a Operadores IRC."
+  not_identified: "\x0304✗\x03 No estás identificado. Usa /msg %nickserv% \x0303IDENTIFY <apodo> <contraseña>\x03"
+  permission_denied: "\x0304✗\x03 Permiso denegado. No tienes acceso a este comando."
+  mail_failed: "\x0304✗\x03 No se pudo enviar el correo. Comprueba tu dirección o inténtalo más tarde."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
+  nick_not_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
+  insufficient_access: "\x0304✗\x03 Acceso insuficiente para \x02%operation%\x02 en el canal \x02%channel%\x02."
+
+  nick_not_online: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está conectado."
+
+# --- DURATION --------------------------------------------------------------
+duration:
+  unit:
+    year:
+      singular: año
+      plural: años
+    month:
+      singular: mes
+      plural: meses
+    day:
+      singular: día
+      plural: días
+    hour:
+      singular: hora
+      plural: horas
+    minute:
+      singular: minuto
+      plural: minutos
+    second:
+      singular: segundo
+      plural: segundos
+  list_separator: ", "
+  list_join: "%prefix% y %last%"
+
+# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Has excedido el límite de comandos. Por favor, inténtalo de nuevo en %seconds% segundos."
   debug_channel: "%nick% %command% límite alcanzado para %host% (%seconds%s restantes)"
 
+# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
@@ -25,3 +83,47 @@ ctcp:
       compañero que podría haber pedido. El espacio que dejaste a mi lado ahora está
       lleno de los recuerdos más felices. Siempre serás mi gran amigo y siempre tendrás
       un lugar inmenso en mi corazón.
+
+# --- DEBUG -----------------------------------------------------------------
+debug:
+  action_message: "%operator% ejecuta el comando %command% sobre %target%. %reason%"
+  action_with_option: "%operator% ejecuta el comando %command% sobre %target%. Opción: %option%. %reason%"
+  action_with_value: "%operator% ejecuta el comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
+  prefix_reason: "Razón: %reason%"
+  action_duration: "%operator% ejecuta el comando %command% sobre %target%. Duración: %duration%. %reason%"
+
+# --- HISTORY ---------------------------------------------------------------
+history:
+  unknown_operator: "(desconocido)"
+  del:
+    success: "\x0303✔\x03 Entrada de historial \x02%id%\x02 eliminada."
+    not_found: "\x0304✗\x03 Entrada de historial \x02%id%\x02 no encontrada."
+    invalid_id: "\x0304✗\x03 ID de entrada inválido: \x02%id%\x02."
+  view:
+    extra: "  Extra \x0307→\x03 %extra%"
+  message:
+    unsuspend: "Levantada la suspensión"
+  extra:
+    duration: "Duración: %value%"
+    expires_at: "Expira: %value%"
+    ip: "IP: %value%"
+    host: "Host: %value%"
+
+# --- LIST ------------------------------------------------------------------
+list:
+  page: "Página %page%/%pages% — %total% coincidencias"
+  status_suspended: "Suspendido"
+  status_pending_deletion: "Pendiente de eliminación"
+  status_forbidden: "Prohibido"
+
+# --- REPLY -----------------------------------------------------------------
+reply:
+  separator: "\x0314─────────────────────────────\x03"
+
+# --- LABEL -----------------------------------------------------------------
+label:
+  no_reason: "Sin razón"
+  never: "nunca"
+  unknown_creator: "desconocido"
+  permanent: "Permanente"
+  permanent_inline: "permanente"

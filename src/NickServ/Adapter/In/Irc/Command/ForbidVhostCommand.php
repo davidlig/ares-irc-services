@@ -203,13 +203,13 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
     private function resolveCreatorName(?int $creatorNickId, NickServContext $context): string
     {
         if (null === $creatorNickId) {
-            return $context->trans('forbidvhost.list.unknown_creator');
+            return $context->trans('label.unknown_creator');
         }
 
         $creator = $context->senderAccount?->getId() === $creatorNickId
             ? $context->senderAccount
             : null;
 
-        return null !== $creator ? $creator->getNickname() : $context->trans('forbidvhost.list.unknown_creator');
+        return null !== $creator ? $creator->getNickname() : $context->trans('label.unknown_creator');
     }
 }

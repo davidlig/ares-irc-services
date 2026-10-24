@@ -7,18 +7,14 @@
 #   \x03        reset color
 #   \x0F        reset all formatting
 #
-# NOTA: Los colores IRC usan números DECIMALES (0-15), no hexadecimales.
-#   \x0314 = gris oscuro (14 decimal)  ← CORRECTO
-#   \x030F = color 0 + letra "F"       ← ERROR (0F es hex, no decimal)
-
-unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax:            "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
-  oper_only:         "\x0304✗\x03 Este comando está restringido a Operadores IRC."
-  not_identified:    "\x0304✗\x03 No estás identificado. Usa \x0303/msg %bot% IDENTIFY <apodo> <contraseña>\x03"
-  permission_denied: "\x0304✗\x03 Permiso denegado. No tienes acceso a este comando."
-  mail_failed:       "\x0304✗\x03 No se pudo enviar el correo. Comprueba tu dirección o inténtalo más tarde."
+# Los colores IRC usan números DECIMALES (0-15), no hexadecimales.
+#   \x0314 = gris oscuro (14 decimal): CORRECTO
+#   \x030F = color 0 seguido de la letra F: ERROR
+#
+# Texto IRC multilínea: !irc |- con saltos físicos y espacios reales.
+# Los bloques sin etiqueta no decodifican escapes; conserva los literales CTCP.
+# Ejemplos HELP: example/examples y %command_prefix%.
+# El presentador añade /msg sin color y un margen de dos espacios.
 
 # --- REGISTER ---------------------------------------------------------------
 register:
@@ -65,7 +61,6 @@ recover:
   syntax:           "RECOVER <apodo> [token]"
   short:            "Recupera tu apodo si has perdido la contraseña."
   help: "EMAIL: RECOVER <nickname> solicita un token provisional por correo. TOKEN: proporciona tu token de recuperación confirmado. RECOVER <nickname> <token> acepta el token válido del correo o el confirmado. El del correo sustituye al guardado solo tras validarlo. Al usar el guardado se ofrece un reemplazo opcional con VERIFY; ignora ese mensaje si quieres conservar el actual."
-  not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
   pending: "\x0307→\x03 El registro de \x02%nickname%\x02 está pendiente. Usa \x0303VERIFY <token>\x03. \x0303RESEND\x03 solo está disponible con REGMODE EMAIL y un correo válido asignado."
   suspended:        "\x0304✗\x03 El apodo \x02%nickname%\x02 está suspendido. Razón: %reason%"
   forbidden:        "\x0304✗\x03 El apodo \x02%nickname%\x02 no puede usarse en esta red."
@@ -85,7 +80,6 @@ identify:
   native_authentication: "\x0307ℹ\x03 Este protocolo gestiona la autenticación mediante cambios de apodo. Usa \x0303/NICK <apodo>:<contraseña>\x03 o, si el apodo está ocupado, \x0303/NICK <apodo>!<contraseña>\x03."
   success:          "\x0303✔\x03 Ahora estás identificado como \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Ya estás identificado como \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
   invalid_credentials: "\x0304✗\x03 Contraseña incorrecta. Inténtalo de nuevo."
   locked_out:         "\x0304✗\x03 Demasiados intentos fallidos. Intenta de nuevo en \x02%minutes%\x02 minuto(s)."
   ghost_released:   "\x0307⚡\x03 La sesión fantasma que ocupaba \x02%nickname%\x02 ha sido desconectada."
@@ -117,14 +111,12 @@ status:
   forbidden_reason: "  Razón           : %reason%"
   pending_deletion:   "  \x0314Estado\x03          : \x0307Pendiente de eliminación\x03"
   pending_deletion_at: "  \x0314Eliminado\x03       : %date%"
-  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <apodo>"
   short:            "Muestra la información de un apodo registrado."
   help:             "Muestra los datos de registro de un apodo: fecha de alta, estado de\nconexión, último mensaje de salida y correo electrónico. El correo solo es\nvisible para el propietario identificado. Con PRIVATE ON solo el dueño y\nlos Operadores IRC pueden ver la información."
-  not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
   private:          "\x0304✗\x03 La información del apodo \x02%nickname%\x02 es privada."
   header:           "\x02Información del apodo \x0307%nickname%\x03\x02"
   status:           "  \x0314Estado\x03                 : %status%"
@@ -148,7 +140,6 @@ info:
   pending_deletion_at: "  \x0314Eliminado\x03              : %date%"
   pending_deletion_until: "  \x0314Elim. definitiva\x03       : %date%"
   pending_deletion_notice: "  \x0307Este apodo está pendiente de eliminación y no puede ser registrado.\x03"
-  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ACanales con acceso:\x03"
   channels_entry_founder:   "  %channel% (\x0303Fundador\x03)"
   channels_entry_successor: "  %channel% (\x0303Sucesor\x03)"
@@ -304,7 +295,6 @@ help:
     account_management: "Gestión de cuentas"
     suspensions_bans: "Suspensiones y prohibiciones"
     deletion: "Eliminación y restauración"
-  unknown_command: "%marker% No hay ayuda disponible para \x02%command%\x0F."
   ircop_header: "\x02 ■ Comandos disponibles para IRCops:\x02"
 
   set_timezone:
@@ -333,7 +323,6 @@ userip:
 
     Sintaxis: USERIP <apodo>
     Ejemplo: USERIP SomeUser
-  not_online:       "\x0304✗\x03 El apodo \x02%nickname%\x02 no está conectado."
   result:           "\x0307ℹ\x03 Apodo: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -365,13 +354,11 @@ suspend:
       SUSPEND Problematico 0 Evasión de prohibición
   success:            "\x0303✔\x03 El apodo \x02%nickname%\x02 ha sido suspendido hasta \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 El apodo \x02%nickname%\x02 ya está suspendido."
-  not_registered:     "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
   forbidden:          "\x0304✗\x03 El apodo \x02%nickname%\x02 está prohibido y no puede suspenderse."
   cannot_suspend_oper: "\x0304✗\x03 No se puede suspender al operador IRC \x02%nickname%\x02."
   cannot_suspend_root: "\x0304✗\x03 No se puede suspender al usuario root \x02%nickname%\x02."
   cannot_suspend_service: "\x0304✗\x03 No se puede suspender el apodo de servicio \x02%nickname%\x02."
   invalid_duration:   "\x0304✗\x03 Duración inválida. Usa: \x0303<d><h><m>\x03 (ej: 7d, 12h, 30m) o \x03030\x03 para permanente."
-  permanent:          "permanente"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
@@ -383,7 +370,6 @@ unsuspend:
     Sintaxis: UNSUSPEND <apodo>
     Ejemplo: UNSUSPEND AlgunUsuario
   success:          "\x0303✔\x03 Se ha levantado la suspensión de \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
   not_suspended:    "\x0304✗\x03 El apodo \x02%nickname%\x02 no está suspendido."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
@@ -400,7 +386,6 @@ rename:
 
     Sintaxis: RENAME <apodo>
     Ejemplo: RENAME Problematico
-  not_online:        "\x0304✗\x03 El apodo \x02%nickname%\x02 no está conectado."
   cannot_rename_root: "\x0304✗\x03 No se puede renombrar al usuario root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 No se puede renombrar al IRC operator \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 No se puede renombrar el apodo de servicio \x02%nickname%\x02."
@@ -422,7 +407,6 @@ drop:
 
     Sintaxis: DROP <apodo>
     Ejemplo: DROP CuentaAntigua
-  not_registered:     "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
   suspended:         "\x0304✗\x03 El apodo \x02%nickname%\x02 está suspendido. Desuspende primero."
   forbidden:         "\x0304✗\x03 El apodo \x02%nickname%\x02 está prohibido."
   cannot_drop_root:   "\x0304✗\x03 No se puede eliminar al usuario root \x02%nickname%\x02."
@@ -439,7 +423,6 @@ restore:
   short:            "Restaurar un apodo pendiente de eliminación."
   help:             "Restaura un apodo que fue eliminado manualmente y aún está dentro del periodo de gracia. Requiere permiso IRCop: nickserv.restore."
   success:          "\x0303✓\x03 El apodo \x02%nickname%\x02 ha sido restaurado."
-  not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
   not_pending_deletion: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está pendiente de eliminación."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
@@ -536,7 +519,6 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Patrones de vhost prohibidos (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — por %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 No hay patrones de vhost prohibidos."
-    unknown_creator: "desconocido"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -569,9 +551,6 @@ history:
     Usa ADD para añadir una entrada manual.
     Usa DEL para eliminar una entrada específica por ID.
     Usa CLEAR para eliminar todo el historial.
-  not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
-  unknown_operator: "(desconocido)"
-
   add:
     syntax:     "HISTORY <apodo> ADD <mensaje>"
     short:      "Añadir una entrada manual al historial."
@@ -590,10 +569,6 @@ history:
 
       Sintaxis: HISTORY <apodo> DEL <id>
       Ejemplo: HISTORY UnNick DEL 42
-    success:    "\x0303✔\x03 Entrada de historial \x02%id%\x02 eliminada."
-    not_found:  "\x0304✗\x03 Entrada de historial \x02%id%\x02 no encontrada."
-    invalid_id: "\x0304✗\x03 ID de entrada inválido: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <apodo> VIEW [PÁGINA|ALL]"
     short:      "Ver historial de acciones del apodo."
@@ -609,7 +584,6 @@ history:
       Usa VIEW ALL para ver el historial completo.
     header:     "\x02Historial de \x0307%nickname%\x03\x02 (mostrando %start%-%end% de %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 por %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 No hay entradas de historial para \x02%nickname%\x02."
     page_hint:   "Usa \x0303HISTORY %nickname% VIEW %next_page%\x03 para más entradas."
 
@@ -626,7 +600,6 @@ history:
 
 # --- Mensajes de historial (usados al ver el historial) ---
 history.message:
-  unsuspend:                  "Levantada la suspensión"
   password_changed_owner:     "Contraseña cambiada por el propietario"
   password_changed_operator:   "Contraseña cambiada por un operador"
   email_changed_owner:        "Email cambiado de %old_email% a %new_email%"
@@ -635,15 +608,9 @@ history.message:
 
 # --- Traducciones de campos extra del historial ---
 history.extra:
-  duration:      "Duración: %value%"
-  expires_at:    "Expira: %value%"
   old_email:     "Email anterior: %value%"
   new_email:     "Email nuevo: %value%"
   method:        "Método: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <apodo> {ON|OFF}"
   short:            "Activa o desactiva la protección de expiración para un apodo."
@@ -660,7 +627,6 @@ noexpire:
       NOEXPIRE UsuarioImportante OFF
   success_on:       "\x0303✔\x03 El apodo \x02%nickname%\x02 está ahora protegido contra expiración."
   success_off:      "\x0303✔\x03 El apodo \x02%nickname%\x02 expirará normalmente."
-  not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
   forbidden:         "\x0304✗\x03 El apodo \x02%nickname%\x02 está prohibido."
   suspended:         "\x0304✗\x03 El apodo \x02%nickname%\x02 está suspendido."
 
@@ -671,20 +637,10 @@ list:
   help: "Lista los apodos registrados que coinciden con el patrón indicado. El comodín * coincide con cualquier secuencia de caracteres. La página es opcional y empieza en 1."
   header: "Apodo | Registro | Última conexión | IP | Estado"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  page: "Página %page%/%pages% — %total% coincidencias"
   empty: "Ningún apodo coincide con el patrón %pattern%."
   status_pending: "Pendiente"
   status_registered: "Registrado"
-  status_suspended: "Suspendido"
-  status_pending_deletion: "Pendiente de eliminación"
-  status_forbidden: "Prohibido"
 # --- DEBUG -------------------------------------------------------------------
-debug:
-  action_message: "%operator% ejecuta el comando %command% sobre %target%. %reason%"
-  action_with_option: "%operator% ejecuta el comando %command% sobre %target%. Opción: %option%. %reason%"
-  action_with_value: "%operator% ejecuta el comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
-  action_duration: "%operator% ejecuta el comando %command% sobre %target%. Duración: %duration%. %reason%"
-  prefix_reason: "Razón: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

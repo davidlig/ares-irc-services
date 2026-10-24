@@ -1,27 +1,128 @@
 # Common translations — English
 # Domain: common
 #
-# Shared translations used across all IRC services.
+# IRC formatting codes (double-quoted strings or !irc literal blocks):
+#   \x02        bold on/off
+#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark gray)
+#   \x03        reset color
+#   \x0F        reset all formatting
+#
+# IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark gray (14 decimal): CORRECT
+#   \x030F = color 0 followed by the letter F: ERROR
+#
+# Multiline IRC text: !irc |- with physical newlines and real spaces.
+# Untagged blocks do not decode escapes; preserve CTCP literals.
+# HELP examples: example/examples and %command_prefix%.
+# The presenter adds the uncolored /msg prefix and a two-space margin.
 
+# --- UNKNOWN COMMAND -------------------------------------------------------
+unknown_command: "\x0304✗\x03\x0F Unknown command \x0303%command%\x03\x0F. Use /msg %bot% \x0303HELP\x03\x0F"
+
+# --- UNKNOWN HELP OPTION ---------------------------------------------------
+unknown_help_option: "\x0304✗\x03\x0F Unknown help option \x0303%option%\x03\x0F for \x0303%command%\x03\x0F. Use /msg %bot% \x0303HELP %command%\x03\x0F"
+
+# --- ERROR -----------------------------------------------------------------
+error:
+  syntax: "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 This command is restricted to IRC Operators."
+  not_identified: "\x0304✗\x03 You are not identified. Use /msg %nickserv% \x0303IDENTIFY <nickname> <password>\x03"
+  permission_denied: "\x0304✗\x03 Permission denied. You do not have access to this command."
+  mail_failed: "\x0304✗\x03 The email could not be sent. Check your address or try again later."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  insufficient_access: "\x0304✗\x03 Insufficient access to \x02%operation%\x02 on channel \x02%channel%\x02."
+  nick_not_online: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not connected."
+
+# --- DURATION --------------------------------------------------------------
+duration:
+  unit:
+    year:
+      singular: "year"
+      plural: "years"
+    month:
+      singular: "month"
+      plural: "months"
+    day:
+      singular: "day"
+      plural: "days"
+    hour:
+      singular: "hour"
+      plural: "hours"
+    minute:
+      singular: "minute"
+      plural: "minutes"
+    second:
+      singular: "second"
+      plural: "seconds"
+  list_separator: ", "
+  list_join: "%prefix% and %last%"
+
+# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "You have exceeded the command rate limit. Please try again in %seconds% seconds."
   debug_channel: "%nick% %command% limit reached for %host% (%seconds%s remaining)"
 
+# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
       \x02For my loyal and eternal friend,\x02
-      
+
       Although 2023 was the year we had to say goodbye, time has not erased a single
       detail of you. I still remember your boundless energy, your noble gaze, and that
       immense and contagious joy that only you knew how to give.
-      
+
       You filled my home with life and my life with unconditional love that I will never
       forget. Although I no longer hear your footsteps running to greet me or feel your
       head leaning on me seeking affection, I know your playful spirit still
       accompanies me.
-      
+
       Thank you for every moment, every mischief, and for being the best companion I could
       have asked for. The space you left by my side is now filled with the happiest
       memories. You will always be my dear friend and you will always have an immense
       place in my heart.
+
+# --- DEBUG -----------------------------------------------------------------
+debug:
+  action_message: "%operator% executes command %command% on %target%. %reason%"
+  action_with_option: "%operator% executes command %command% on %target%. Option: %option%. %reason%"
+  action_with_value: "%operator% executes command %command% on %target%. Option: %option%=%value%. %reason%"
+  prefix_reason: "Reason: %reason%"
+  action_duration: "%operator% executes command %command% on %target%. Duration: %duration%. %reason%"
+
+# --- HISTORY ---------------------------------------------------------------
+history:
+  unknown_operator: "(unknown)"
+  del:
+    success: "\x0303✔\x03 History entry \x02%id%\x02 deleted."
+    not_found: "\x0304✗\x03 History entry \x02%id%\x02 not found."
+    invalid_id: "\x0304✗\x03 Invalid entry ID: \x02%id%\x02."
+  view:
+    extra: "  Extra \x0307→\x03 %extra%"
+  message:
+    unsuspend: "Suspension lifted"
+  extra:
+    duration: "Duration: %value%"
+    expires_at: "Expires: %value%"
+    ip: "IP: %value%"
+    host: "Host: %value%"
+
+# --- LIST ------------------------------------------------------------------
+list:
+  page: "Page %page%/%pages% — %total% matches"
+  status_suspended: "Suspended"
+  status_pending_deletion: "Pending deletion"
+  status_forbidden: "Forbidden"
+
+# --- REPLY -----------------------------------------------------------------
+reply:
+  separator: "\x0314─────────────────────────────\x03"
+
+# --- LABEL -----------------------------------------------------------------
+label:
+  no_reason: "No reason"
+  never: "never"
+  unknown_creator: "unknown"
+  permanent: "Permanent"
+  permanent_inline: "permanent"

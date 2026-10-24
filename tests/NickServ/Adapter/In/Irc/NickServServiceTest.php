@@ -247,7 +247,7 @@ final class NickServServiceTest extends TestCase
             ->with(
                 'unknown_command',
                 ['%command%' => 'UNKNOWN', '%bot%' => 'NickServ'],
-                'nickserv',
+                'common',
                 'en',
             )
             ->willReturn('Unknown command');

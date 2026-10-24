@@ -71,7 +71,7 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
         } catch (ChannelNotRegisteredException $e) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $language = $this->accountPort->findAccountByNick($sender->nick)->language ?? $this->defaultLanguage;
-            $message = $this->translator->trans('error.channel_not_registered', ['%channel%' => $e->getChannelName(), '%bot%' => $this->chanServBot->getNick()], 'chanserv', $language);
+            $message = $this->translator->trans('error.channel_not_registered', ['%channel%' => $e->getChannelName(), '%bot%' => $this->chanServBot->getNick()], 'common', $language);
             $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (InsufficientAccessException $e) {
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
@@ -80,7 +80,7 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
                 '%operation%' => $e->getOperation(),
                 '%channel%' => $e->getChannelName(),
                 '%bot%' => $this->chanServBot->getNick(),
-            ], 'chanserv', $language);
+            ], 'common', $language);
             $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (Throwable $e) {
             $this->logger->error('ChanServ dispatch error: ' . $e->getMessage(), [

@@ -85,7 +85,7 @@ final class UseripCommandTest extends TestCase
         $outcome = $command->execute($this->createContext($sender, $messages, ['OfflineNick']));
 
         self::assertFalse($outcome->success);
-        self::assertSame(['userip.not_online [%nickname%: OfflineNick]'], $messages);
+        self::assertSame(['error.nick_not_online [%nickname%: OfflineNick]'], $messages);
     }
 
     #[Test]

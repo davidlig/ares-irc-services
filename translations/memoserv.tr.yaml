@@ -1,15 +1,20 @@
-# MemoServ translations — Turkish
-# Domain: memoserv
-
-unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
-
-error:
-  syntax: "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
-  not_identified: "\x0304✗\x03 Kimliğiniz doğrulanmamış. \x0303/msg %nickserv% IDENTIFY\x03 kullanın."
-  permission_denied: "\x0304✗\x03 Erişim reddedildi. Bu komuta erişim yetkiniz yok."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
-  insufficient_access: "\x0304✗\x03 \x02%channel%\x02 kanalında \x02%operation%\x02 işlemi için yetersiz yetki."
+# MemoServ çevirileri — Türkçe
+# Alan: memoserv
+#
+# IRC biçimlendirme kodları (çift tırnaklar veya !irc düz metin blokları):
+#   \x02        kalın yazıyı aç/kapat
+#   \x03NN      renk (ONDALIK: 03=yeşil, 04=kırmızı, 07=turuncu, 14=koyu gri)
+#   \x03        rengi sıfırla
+#   \x0F        tüm biçimlendirmeyi sıfırla
+#
+# IRC renkleri onaltılık değil, ONDALIK sayılar (0-15) kullanır.
+#   \x0314 = koyu gri (ondalık 14): DOĞRU
+#   \x030F = 0 rengi ve ardından F harfi: HATA
+#
+# Çok satırlı IRC metni: !irc |- ile gerçek satır sonları ve boşluklar.
+# Etiketsiz bloklar kaçışları çözmez; CTCP sabit metinlerini koruyun.
+# HELP örnekleri: example/examples ve %command_prefix%.
+# Sunum katmanı renksiz /msg ve iki boşlukluk kenar payı ekler.
 
 send:
   syntax: "SEND {nickname|#channel} <mesaj>"
@@ -17,8 +22,6 @@ send:
   help: "Kayıtlı bir rumuza veya kanala mesaj gönderir. Alıcının mesaj hizmeti etkin olmalıdır (ENABLE)."
   sent_nick: "\x0303✔\x03 Mesaj \x02%nickname%\x02 adlı kullanıcıya gönderildi."
   sent_channel: "\x0303✔\x03 Mesaj \x02%channel%\x02 kanalına gönderildi."
-  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   throttled: "\x0304✗\x03 Başka bir mesaj göndermeden önce \x02%seconds%\x02 saniye beklemelisiniz."
   limit_reached: "\x0304✗\x03 \x02%target%\x02 için mesaj sınırına ulaşıldı."
   ignored: "\x0304✗\x03 Bu hedefe mesaj gönderemezsiniz, yoksayma listesindesiniz."
@@ -32,7 +35,6 @@ read:
   help: "Verilen numaradaki mesajı okur. #channel olmadan, rumuz gelen kutunuzdan okur. #channel ile, MEMOREAD seviyesi gerektirir."
   header: "\x02\x0307Mesaj #%index%\x03, gönderen: \x02%from%\x02:\x0F"
   footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   not_found: "\x0304✗\x03 #%index% numaralı mesaj bulunamadı."
 
 list:
@@ -40,16 +42,13 @@ list:
   short: "Mesajları listeleyin (okunmamış olanlar kırmızı * ile işaretlenir)."
   help: "Mesajlarınızı veya kanal mesajlarını listeler. Okunmamış mesajlar kırmızı yıldız ve bir önizleme (maks 50 karakter) ile gösterilir. #channel olmadan = rumuz gelen kutunuz; #channel ile MEMOREAD gerektirir."
   header: "\x02\x0307%target% için mesajlar\x03:\x0F"
-  footer: "\x0314─────────────────────────────\x03"
   empty: "\x0307ℹ\x03 \x02%target%\x02 için mesaj yok."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
 
 del:
   syntax: "DEL [#channel] <numara>"
   short: "Numarasına göre bir mesajı silin."
   help: "Verilen numaradaki mesajı siler. Kanallar için MEMOCHANGE seviyesi gerektirir."
   deleted: "\x0303✔\x03 #%index% numaralı mesaj silindi."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   not_found: "\x0304✗\x03 #%index% numaralı mesaj bulunamadı."
 
 ignore:
@@ -72,13 +71,10 @@ ignore:
   removed: "\x0303✔\x03 \x02%nickname%\x02 yoksayma listesinden kaldırıldı."
   already_ignored: "\x0304✗\x03 \x02%nickname%\x02 zaten yoksayma listesinde."
   not_ignored: "\x0304✗\x03 \x02%nickname%\x02 yoksayma listesinde değil."
-  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   limit_reached_nick: "\x0304✗\x03 Rumuzunuz için yoksayma listesi sınırına ulaşıldı (maks \x02%limit%\x02)."
   limit_reached_channel: "\x0304✗\x03 \x02%channel%\x02 için yoksayma listesi sınırına ulaşıldı (maks \x02%limit%\x02)."
   list_empty: "\x0307ℹ\x03 Yoksayma listesi boş."
   list_header: "\x02\x0307Yoksayma listesi:\x03\x0F"
-  list_footer: "\x0314─────────────────────────────\x03"
 
 enable:
   syntax: "ENABLE [#channel]"
@@ -88,7 +84,6 @@ enable:
   enabled_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı için mesaj hizmeti etkinleştirildi."
   already_enabled_nick: "\x0307ℹ\x03 Rumuzunuz için mesaj hizmeti zaten etkin."
   already_enabled_channel: "\x0307ℹ\x03 \x02%channel%\x02 için mesaj hizmeti zaten etkin."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   founder_only: "\x0304✗\x03 \x02%channel%\x02 için mesajları yalnızca kanal kurucusu etkinleştirebilir."
 
 disable:
@@ -99,7 +94,6 @@ disable:
   disabled_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı için mesaj hizmeti devre dışı bırakıldı."
   already_disabled_nick: "\x0307ℹ\x03 Rumuzunuz için mesaj hizmeti zaten devre dışı."
   already_disabled_channel: "\x0307ℹ\x03 \x02%channel%\x02 için mesaj hizmeti zaten devre dışı."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
   founder_only: "\x0304✗\x03 \x02%channel%\x02 için mesajları yalnızca kanal kurucusu devre dışı bırakabilir."
 
 help:
@@ -122,7 +116,6 @@ help:
   group:
     messages: "Mesajlar"
     preferences: "Tercihler"
-  unknown_command: "\x0307✗\x03\x0F Bilinmeyen komut \x02\x0303%command%\x03\x0F. \x02\x0303/msg %bot% HELP\x03\x0F kullanın."
   ircop_header: "\x02 ■ IRC operatörleri için kullanılabilir komutlar:\x02"
 
 notify:

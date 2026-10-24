@@ -150,6 +150,15 @@ services:
     App\:
         resource: '../src/'
 
+    # One YAML loader for both Symfony aliases; only !irc values decode IRC escapes.
+    translation.loader.yml:
+        class: App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader
+        tags:
+            - { name: translation.loader, alias: yaml, legacy-alias: yml }
+
+    App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader:
+        alias: translation.loader.yml
+
     # --- Interface bindings ---------------------------------------------------
 
     App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface:

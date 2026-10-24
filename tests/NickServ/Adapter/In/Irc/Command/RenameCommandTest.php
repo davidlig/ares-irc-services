@@ -100,7 +100,7 @@ final class RenameCommandTest extends TestCase
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick']));
 
         self::assertFalse($outcome->success);
-        self::assertSame(['rename.not_online'], $messages);
+        self::assertSame(['error.nick_not_online'], $messages);
     }
 
     /** @param array<string, mixed> $expectedParams */
@@ -137,7 +137,7 @@ final class RenameCommandTest extends TestCase
     /** @return iterable<string, array{RenameNickResult, string, array<string, mixed>}> */
     public static function rejectionPresentations(): iterable
     {
-        yield 'not online' => [RenameNickResult::notOnline('Target'), 'rename.not_online', ['%nickname%' => 'Target']];
+        yield 'not online' => [RenameNickResult::notOnline('Target'), 'error.nick_not_online', ['%nickname%' => 'Target']];
         yield 'cannot rename root' => [RenameNickResult::cannotRenameRoot('RootUser'), 'rename.cannot_rename_root', ['%nickname%' => 'RootUser']];
         yield 'cannot rename oper' => [RenameNickResult::cannotRenameOper('OperUser'), 'rename.cannot_rename_oper', ['%nickname%' => 'OperUser']];
         yield 'cannot rename service' => [RenameNickResult::cannotRenameService('NickServ'), 'rename.cannot_rename_service', ['%nickname%' => 'NickServ']];

@@ -181,7 +181,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
 
     private function presentFooter(ChanServContext $context): void
     {
-        $context->replyRaw($context->trans('info.footer'));
+        $context->replyRaw($context->trans('reply.separator'));
     }
 
     private function presentSuspendedStatus(ChanServContext $context, ChannelInfoView $info): void

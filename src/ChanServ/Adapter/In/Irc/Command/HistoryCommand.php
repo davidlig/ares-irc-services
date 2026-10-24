@@ -187,7 +187,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
     private function present(ChanServContext $context, string $channelName, ?string $message, bool $showAll, ManageChannelHistoryResult $result): CommandOutcome
     {
         if (ManageChannelHistoryOutcome::ChannelNotRegistered === $result->outcome) {
-            $context->reply('history.not_registered', ['%channel%' => $channelName]);
+            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }

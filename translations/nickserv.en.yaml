@@ -7,18 +7,14 @@
 #   \x03        reset color
 #   \x0F        reset all formatting
 #
-# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
-#   \x0314 = dark grey (14 decimal)  ← CORRECT
-#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
-
-unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax:            "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
-  oper_only:         "\x0304✗\x03 This command is restricted to IRC Operators."
-  not_identified:    "\x0304✗\x03 You are not identified. Use \x0303/msg %bot% IDENTIFY <nickname> <password>\x03"
-  permission_denied: "\x0304✗\x03 Permission denied. You do not have access to this command."
-  mail_failed:       "\x0304✗\x03 The email could not be sent. Check your address or try again later."
+# IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark gray (14 decimal): CORRECT
+#   \x030F = color 0 followed by the letter F: ERROR
+#
+# Multiline IRC text: !irc |- with physical newlines and real spaces.
+# Untagged blocks do not decode escapes; preserve CTCP literals.
+# HELP examples: example/examples and %command_prefix%.
+# The presenter adds the uncolored /msg prefix and a two-space margin.
 
 # --- REGISTER ---------------------------------------------------------------
 register:
@@ -65,7 +61,6 @@ recover:
   syntax:           "RECOVER <nickname> [token]"
   short:            "Recover your nickname if you lost your password."
   help: "EMAIL: RECOVER <nickname> requests a provisional token by email. TOKEN: provide your confirmed recovery token. RECOVER <nickname> <token> accepts a valid emailed token or confirmed recovery token. An emailed token replaces the stored credential only after validation. Using the stored credential offers an optional replacement through VERIFY; ignore that message to keep your current token."
-  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   pending: "\x0307→\x03 Registration for \x02%nickname%\x02 is pending. Use \x0303VERIFY <token>\x03. \x0303RESEND\x03 is available only while REGMODE is EMAIL and a valid email is assigned."
   suspended:        "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended. Reason: %reason%"
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be used on this network."
@@ -85,7 +80,6 @@ identify:
   native_authentication: "\x0307ℹ\x03 This protocol handles authentication through nickname changes. Use \x0303/NICK <nickname>:<password>\x03 or, if the nickname is in use, \x0303/NICK <nickname>!<password>\x03."
   success:          "\x0303✔\x03 You are now identified as \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 You are already identified as \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   invalid_credentials: "\x0304✗\x03 Incorrect password. Please try again."
   locked_out:         "\x0304✗\x03 Too many failed attempts. Try again in \x02%minutes%\x02 minute(s)."
   ghost_released:   "\x0307⚡\x03 The ghost session holding \x02%nickname%\x02 has been disconnected."
@@ -117,14 +111,12 @@ status:
   forbidden_reason: "  Reason          : %reason%"
   pending_deletion:   "  \x0314Status\x03          : \x0307Pending deletion\x03"
   pending_deletion_at: "  \x0314Dropped\x03         : %date%"
-  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <nickname>"
   short:            "Display information about a registered nickname."
   help:             "Shows registration details for a nickname: registration date, connection\nstatus, last quit message, and email address. The email is only visible to\nthe owner when identified. With PRIVATE ON only the owner and IRC Operators\ncan view the information."
-  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   private:          "\x0304✗\x03 Nickname \x02%nickname%\x02 information is private."
   header:           "\x02Information for nickname \x0307%nickname%\x03\x02"
   status:           "  \x0314Status\x03          : %status%"
@@ -148,7 +140,6 @@ info:
   pending_deletion_at: "  \x0314Dropped\x03                : %date%"
   pending_deletion_until: "  \x0314Hard delete on\x03         : %date%"
   pending_deletion_notice: "  \x0307This nickname is pending deletion and cannot be registered.\x03"
-  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AChannels with access:\x03"
   channels_entry_founder:   "  %channel% (\x0303Founder\x03)"
   channels_entry_successor: "  %channel% (\x0303Successor\x03)"
@@ -304,7 +295,6 @@ help:
     account_management: "Account management"
     suspensions_bans: "Suspensions and bans"
     deletion: "Deletion and restoration"
-  unknown_command: "%marker% No help available for \x02%command%\x0F."
   ircop_header: "\x02 ■ Available commands for IRC Operators:\x02"
 
   set_timezone:
@@ -333,7 +323,6 @@ userip:
 
     Syntax: USERIP <nickname>
     Example: USERIP SomeUser
-  not_online:       "\x0304✗\x03 Nickname \x02%nickname%\x02 is not connected."
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -365,13 +354,11 @@ suspend:
       SUSPEND ProblemUser 0 Permaban evasion
   success:            "\x0303✔\x03 Nickname \x02%nickname%\x02 has been suspended until \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Nickname \x02%nickname%\x02 is already suspended."
-  not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   forbidden:          "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden and cannot be suspended."
   cannot_suspend_oper: "\x0304✗\x03 Cannot suspend IRC operator \x02%nickname%\x02."
   cannot_suspend_root: "\x0304✗\x03 Cannot suspend root user \x02%nickname%\x02."
   cannot_suspend_service: "\x0304✗\x03 Cannot suspend service nickname \x02%nickname%\x02."
   invalid_duration:   "\x0304✗\x03 Invalid duration. Use: \x0303<d><h><m>\x03 (e.g., 7d, 12h, 30m) or \x03030\x03 for permanent."
-  permanent:          "permanent"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
@@ -383,7 +370,6 @@ unsuspend:
     Syntax: UNSUSPEND <nickname>
     Example: UNSUSPEND SomeUser
   success:          "\x0303✔\x03 Suspension has been lifted from \x02%nickname%\x02."
-  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   not_suspended:    "\x0304✗\x03 Nickname \x02%nickname%\x02 is not suspended."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
@@ -400,7 +386,6 @@ rename:
 
     Syntax: RENAME <nickname>
     Example: RENAME Troublemaker
-  not_online:        "\x0304✗\x03 Nickname \x02%nickname%\x02 is not connected."
   cannot_rename_root: "\x0304✗\x03 Cannot rename root user \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Cannot rename IRC operator \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 Cannot rename service nickname \x02%nickname%\x02."
@@ -422,7 +407,6 @@ drop:
 
     Syntax: DROP <nickname>
     Example: DROP OldAccount
-  not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended. Unsuspend first."
   forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden."
   cannot_drop_root:   "\x0304✗\x03 Cannot drop root user \x02%nickname%\x02."
@@ -439,7 +423,6 @@ restore:
   short:            "Restore a nickname pending deletion."
   help:             "Restores a nickname that was manually dropped and is still within the deletion grace period. Requires IRCop permission: nickserv.restore."
   success:          "\x0303✓\x03 Nickname \x02%nickname%\x02 has been restored."
-  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   not_pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not pending deletion."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
@@ -536,7 +519,6 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Forbidden vhost patterns (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — by %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 No forbidden vhost patterns."
-    unknown_creator: "unknown"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -569,9 +551,6 @@ history:
     Use ADD to add a manual entry.
     Use DEL to delete a specific entry by ID.
     Use CLEAR to delete all history entries.
-  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
-  unknown_operator: "(unknown)"
-
   add:
     syntax:     "HISTORY <nickname> ADD <message>"
     short:      "Add a manual history entry."
@@ -590,10 +569,6 @@ history:
 
       Syntax: HISTORY <nickname> DEL <id>
       Example: HISTORY SomeNick DEL 42
-    success:    "\x0303✔\x03 History entry \x02%id%\x02 deleted."
-    not_found:  "\x0304✗\x03 History entry \x02%id%\x02 not found."
-    invalid_id: "\x0304✗\x03 Invalid entry ID: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <nickname> VIEW [PAGE|ALL]"
     short:      "View nickname action history."
@@ -609,7 +584,6 @@ history:
       Use VIEW ALL to see the complete history.
     header:     "\x02History for \x0307%nickname%\x03\x02 (showing %start%-%end% of %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 by %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 No history entries found for \x02%nickname%\x02."
     page_hint:   "Use \x0303HISTORY %nickname% VIEW %next_page%\x03 for more entries."
 
@@ -626,7 +600,6 @@ history:
 
 # --- History message translations (used when viewing history) ---
 history.message:
-  unsuspend:                  "Suspension lifted"
   password_changed_owner:     "Password changed by owner"
   password_changed_operator:  "Password changed by operator"
   email_changed_owner:        "Email changed from %old_email% to %new_email%"
@@ -635,15 +608,9 @@ history.message:
 
 # --- History extra field translations ---
 history.extra:
-  duration:      "Duration: %value%"
-  expires_at:    "Expires: %value%"
   old_email:     "Old email: %value%"
   new_email:     "New email: %value%"
   method:        "Method: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <nickname> {ON|OFF}"
   short:            "Set or remove expiration protection for a nickname."
@@ -660,7 +627,6 @@ noexpire:
       NOEXPIRE ImportantUser OFF
   success_on:       "\x0303✔\x03 Nickname \x02%nickname%\x02 is now protected from expiration."
   success_off:      "\x0303✔\x03 Nickname \x02%nickname%\x02 will now expire normally."
-  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden."
   suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended."
 
@@ -671,20 +637,9 @@ list:
   help: "Lists registered nicknames matching the supplied pattern. The * wildcard matches any sequence of characters. The page is optional and starts at 1."
   header: "Nickname | Registration | Last connection | IP | Status"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
-  page: "Page %page%/%pages% — %total% matches"
   empty: "No nicknames match the pattern %pattern%."
   status_pending: "Pending"
   status_registered: "Registered"
-  status_suspended: "Suspended"
-  status_pending_deletion: "Pending deletion"
-  status_forbidden: "Forbidden"
-# --- DEBUG -------------------------------------------------------------------
-debug:
-  action_message: "%operator% executes command %command% on %target%. %reason%"
-  action_with_option: "%operator% executes command %command% on %target%. Option: %option%. %reason%"
-  action_with_value: "%operator% executes command %command% on %target%. Option: %option%=%value%. %reason%"
-  action_duration: "%operator% executes command %command% on %target%. Duration: %duration%. %reason%"
-  prefix_reason: "Reason: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

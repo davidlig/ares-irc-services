@@ -1,20 +1,25 @@
-# ChanServ translations — Portuguese
-# Domain: chanserv
+# Traduções de ChanServ — Português
+# Domínio: chanserv
+#
+# Códigos de formatação IRC (aspas duplas ou blocos literais !irc):
+#   \x02        ativa/desativa o negrito
+#   \x03NN      cor (DECIMAL: 03=verde, 04=vermelho, 07=laranja, 14=cinzento escuro)
+#   \x03        repõe a cor
+#   \x0F        repõe toda a formatação
+#
+# As cores IRC usam números DECIMAIS (0-15), não hexadecimais.
+#   \x0314 = cinzento escuro (14 decimal): CORRETO
+#   \x030F = cor 0 seguida da letra F: ERRO
+#
+# Texto IRC multilinha: !irc |- com quebras de linha e espaços reais.
+# Os blocos sem etiqueta não descodificam escapes; preserva os literais CTCP.
+# Exemplos HELP: example/examples e %command_prefix%.
+# O apresentador acrescenta /msg sem cor e uma margem de dois espaços.
 
-unknown_command: "\x0304✗\x03 Comando desconhecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
-
+# --- ERROR -----------------------------------------------------------------
 error:
-  syntax:         "\x0304✗\x03 Sintaxe incorreta. Uso: \x02%syntax%\x02"
-  oper_only:      "\x0304✗\x03 Este comando é restrito a Operadores de IRC."
-  not_identified: "\x0304✗\x03 Não está identificado. Use \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Permissão negada. Não tem acesso a este comando."
   invalid_channel: "\x0304✗\x03 Nome de canal inválido. Use \x02#canal\x02."
-  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
   generic:        "\x0304✗\x03 Ocorreu um erro. Tente novamente."
-  nick_not_registered: "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
-  insufficient_access: "\x0304✗\x03 Acesso insuficiente para \x02%operation%\x02 no canal \x02%channel%\x02."
-  mail_failed: "\x0304✗\x03 Não foi possível enviar o email. Tente novamente mais tarde."
-
 register:
   syntax:           "REGISTER <#canal> <descrição>"
   short:            "Registar um canal."
@@ -32,7 +37,6 @@ info:
   short:            "Mostrar informações do canal."
   help:             "Mostra o fundador, data de registo, sucessor, URL, email, descrição, último uso, tópico e opções (TOPICLOCK, MLOCK, SECURE)."
   header:          "\x02Informações do canal \x0307%channel%\x03\x02"
-  footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Fundador\x03             : \x02%nickname%\x02"
   registered:      "  \x0314Registado\x03            : %date%"
   successor:       "  \x0314Sucessor\x03             : \x02%nickname%\x02"
@@ -85,7 +89,6 @@ help:
     deletion: "Eliminação e restauração"
     restrictions: "Restrições"
     lookup: Pesquisa e investigação
-  unknown_command:  "\x0307✗\x03 Comando desconhecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02 ■ Comandos disponíveis para IRCops:\x02"
 
 op:
@@ -335,16 +338,12 @@ akick:
     header:         "\x0303Lista AKICK de \x02%channel%\x02\x03"
     empty:          "\x0307ℹ\x03 O canal \x02%channel%\x02 não tem entradas AKICK."
     entry:          "  #%index% %mask% %reason% (por %nickname%, expira: %expiration%)"
-    no_reason:      "Sem motivo"
-    never_expires:  "nunca"
-    unknown_creator: "desconhecido"
 
 restore:
   syntax:           "RESTORE <#canal>"
   short:            "Restaurar um canal pendente de eliminação."
   help:             "Restaura um canal que foi removido manualmente e ainda está dentro do período de carência. Requer permissão IRCop: chanserv.restore."
   success:          "\x0303✔\x03 O canal \x02%channel%\x02 foi restaurado."
-  not_registered:   "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
   not_pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 não está pendente de eliminação."
 
 drop:
@@ -355,7 +354,6 @@ drop:
   force_success:    "\x0303✔\x03 O canal \x02%channel%\x02 foi eliminado permanentemente."
   pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 já está pendente de eliminação. Use DROP <#canal> FORCE para eliminá-lo permanentemente."
   invalid_channel:  "\x0304✗\x03 Nome de canal inválido. Use \x02#canal\x02."
-  not_registered:   "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
   pending_deletion_reason: "O canal %channel% está em processo de eliminação. Mais informações /msg %bot% INFO %channel%"
 
 suspend:
@@ -363,10 +361,8 @@ suspend:
   short:            "Suspender um canal."
   help:             "Desativa temporariamente um canal registado. Formatos de duração: 0 = permanente, 1d, 12h, 60m.\nEnquanto suspenso, os modos, acesso e aplicação são desativados.\nEste comando requer permissão IRCop: chanserv.suspend"
   success:          "\x0303✔\x03 O canal \x02%channel%\x02 foi suspenso até \x02%duration%\x02."
-  not_registered:   "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
   already_suspended: "\x0304✗\x03 O canal \x02%channel%\x02 já está suspenso."
   invalid_duration:  "\x0304✗\x03 Duração inválida. Use: 0 (permanente), 1d, 12h ou 60m."
-  permanent:         "Permanente"
   channel_suspended: "\x0304✗\x03 O canal \x02%channel%\x02 está suspenso e não pode ser usado."
   notice_channel:    "\x0304⚠\x03 O canal foi suspenso. Motivo: %reason%"
 
@@ -375,7 +371,6 @@ unsuspend:
   short:            "Levantar a suspensão de um canal."
   help:             "Reativa um canal suspenso, restaurando os seus modos e aplicação.\nEste comando requer permissão IRCop: chanserv.suspend"
   success:          "\x0303✔\x03 O canal \x02%channel%\x02 já não está suspenso."
-  not_registered:   "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
   not_suspended:    "\x0304✗\x03 O canal \x02%channel%\x02 não está suspenso."
   reason_expired:   "suspensão expirada"
 
@@ -413,7 +408,6 @@ noexpire:
       NOEXPIRE #Importante OFF
   success_on:       "\x0303✔\x03 O canal \x02%channel%\x02 está agora protegido contra expiração."
   success_off:      "\x0303✔\x03 O canal \x02%channel%\x02 irá agora expirar normalmente."
-  not_registered:   "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
   forbidden:         "\x0304✗\x03 O canal \x02%channel%\x02 está proibido."
   suspended:         "\x0304✗\x03 O canal \x02%channel%\x02 está suspenso."
 
@@ -434,11 +428,7 @@ unforbid:
   not_forbidden:    "\x0304✗\x03 O canal \x02%channel%\x02 não está proibido."
 
 debug:
-  action_message: "%operator% executa o comando %command% em %target%. %reason%"
-  action_with_option: "%operator% executa o comando %command% em %target%. Opção: %option%. %reason%"
-  action_with_value: "%operator% executa o comando %command% em %target%. Opção: %option%=%value%. %reason%"
   founder_action: "Ação de fundador de nível"
-  prefix_reason:  "Motivo: %reason%"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -462,9 +452,6 @@ history:
       HISTORY #canal ADD Tentativa suspeita de tomada de controlo
       HISTORY #canal DEL 42
       HISTORY #canal CLEAR
-  not_registered:   "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
-  unknown_operator: "(desconhecido)"
-
   add:
     syntax:     "HISTORY <#canal> ADD <mensagem>"
     short:      "Adicionar uma entrada manual ao histórico."
@@ -476,17 +463,12 @@ history:
     syntax:     "HISTORY <#canal> DEL <id>"
     short:      "Eliminar uma entrada de histórico por ID."
     help:       "Elimina uma entrada do histórico pelo seu ID."
-    success:    "\x0303✔\x03 Entrada de histórico \x02%id%\x02 eliminada."
-    not_found:  "\x0304✗\x03 Entrada de histórico \x02%id%\x02 não encontrada."
-    invalid_id: "\x0304✗\x03 ID de entrada inválido: \x02%id%\x02."
-
   view:
     syntax:     "HISTORY <#canal> VIEW [PÁGINA|ALL]"
     short:      "Ver histórico de ações do canal."
     help:       "Mostra as entradas do histórico do canal."
     header:     "\x02Histórico de \x0307%channel%\x03\x02 (a mostrar %start%-%end% de %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 por %operator% — %message%"
-    extra:       "  Extra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Nenhuma entrada de histórico encontrada para \x02%channel%\x02."
     page_hint:   "Use \x0303HISTORY %channel% VIEW %next_page%\x03 para mais entradas."
 
@@ -498,7 +480,6 @@ history:
 
 # --- History message translations ---
 history.message:
-  unsuspend:                  "Suspensão levantada"
   founder_changed:            "Fundador alterado de %old_founder% para %new_founder%"
   successor_changed:          "Sucessor alterado de %old_successor% para %new_successor%"
   successor_cleared:          "Sucessor removido"
@@ -509,8 +490,6 @@ history.message:
 
 # --- History extra field translations ---
 history.extra:
-  duration:      "Duração: %value%"
-  expires_at:    "Expira: %value%"
   old_founder:     "Fundador anterior: %value%"
   new_founder:     "Novo fundador: %value%"
   old_successor:   "Sucessor anterior: %value%"
@@ -518,10 +497,6 @@ history.extra:
   target_nickname: "Alvo: %value%"
   level:           "Nível: %value%"
   mask:            "Máscara: %value%"
-  ip:            "IP: %value%"
-  host:          "Host: %value%"
-
-# --- CLEARACCESS (IRCop) ---------------------------------------------------------
 clearaccess:
   syntax:           "CLEARACCESS <#canal>"
   short:            "Limpar toda a lista de acesso de um canal."
@@ -562,9 +537,5 @@ list:
   help: "Lista os canais registados que correspondem ao padrão indicado. O carácter * corresponde a qualquer sequência de caracteres. A página é opcional e começa em 1."
   header: "Canal | Fundador | Registo | Última utilização | Estado"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
-  page: "Página %page%/%pages% — %total% correspondências"
   empty: "Nenhum canal corresponde ao padrão %pattern%."
   status_active: "Ativo"
-  status_suspended: "Suspenso"
-  status_pending_deletion: "Pendente de eliminação"
-  status_forbidden: "Proibido"

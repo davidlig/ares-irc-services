@@ -1,17 +1,24 @@
-# OperServ translations — Dutch
-# Domain: operserv
+# OperServ-vertalingen — Nederlands
+# Domein: operserv
+#
+# IRC-opmaakcodes (dubbele aanhalingstekens of letterlijke !irc-blokken):
+#   \x02        vet aan/uit
+#   \x03NN      kleur (DECIMAAL: 03=groen, 04=rood, 07=oranje, 14=donkergrijs)
+#   \x03        kleur herstellen
+#   \x0F        alle opmaak herstellen
+#
+# IRC-kleuren gebruiken DECIMALE getallen (0-15), geen hexadecimale.
+#   \x0314 = donkergrijs (14 decimaal): GOED
+#   \x030F = kleur 0 gevolgd door de letter F: FOUT
+#
+# IRC-tekst over meerdere regels: !irc |- met echte regeleinden en spaties.
+# Blokken zonder tag decoderen geen escapes; behoud letterlijke CTCP-waarden.
+# HELP-voorbeelden: example/examples en %command_prefix%.
+# De presentatielaag voegt /msg zonder kleur en een marge van twee spaties toe.
 
-unknown_command: "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
-
+# --- ERROR -----------------------------------------------------------------
 error:
-  syntax:           "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
-  oper_only:        "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
-  not_identified:   "\x0304✗\x03 U bent niet geïdentificeerd. Gebruik \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 U heeft onvoldoende rechten om dit commando uit te voeren."
   root_only:        "\x0304✗\x03 Dit commando is voorbehouden aan netwerk-rootbeheerders."
-  nick_not_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
-
-# --- HELP --------------------------------------------------------------------
 help:
   syntax:           "HELP [commando [sub-optie]]"
   short:            "Toon commando's of hulp voor een commando."
@@ -35,7 +42,6 @@ help:
     network_security: "Netwerkbeveiliging"
     communication: "Communicatie"
     low_level: "Laag niveau"
-  unknown_command:  "\x0307✗ Onbekend commando\x03\x0F \x02\x0303%command%\x03\x0F. Gebruik \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Beschikbare opdrachten voor IRC-operators:\x02"
 
 # --- IRCOP --------------------------------------------------------------------
@@ -179,7 +185,6 @@ kill:
   syntax:           "KILL <bijnaam> <reden>"
   short:            "Verbreek geforceerd de verbinding van een gebruiker met het netwerk."
   help:             "Verbreekt de verbinding van een gebruiker met het IRC-netwerk.\nIRCops en Root-gebruikers kunnen niet worden gekilld.\nDit commando vereist de operserv.kill-permissie.\n\nSyntax: KILL <bijnaam> <reden>\nVoorbeeld: KILL SlechteGebr Kanalen flooden"
-  user_not_online:  "\x0304✗\x03 Nick \x02%nickname%\x02 is niet verbonden."
   protected_root:   "\x0304✗\x03 Kan Root-gebruiker \x02%nickname%\x02 niet killen."
   protected_ircop:  "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet killen."
   done:             "\x0303✓\x03 Gebruiker \x02%nickname%\x02 is gekilld (%reason%)."
@@ -198,8 +203,6 @@ gline:
   already_exists:   "\x0304✗\x03 G-line voor \x02%mask%\x02 bestaat al."
   max_entries:      "\x0304✗\x03 Maximaal aantal G-lines (%max%) bereikt."
   not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 niet gevonden."
-  user_not_found:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet online."
-  permanent:        "permanent"
 
   add:
     syntax:         "GLINE ADD <masker> <verloop> <reden>"
@@ -219,9 +222,6 @@ gline:
     help:           "Toont alle G-lines. Optioneel filteren op maskerpatroon.\nDit commando vereist de operserv.gline-permissie."
     header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
     empty:          "Er zijn geen G-lines."
-    no_reason:      "Geen reden"
-    never_expires:  "Permanent"
-    unknown_creator: "onbekend"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, verloopt: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
@@ -256,10 +256,7 @@ raw:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
-  action_message:   "%operator% voert commando %command% uit op %target%. %reason%"
-  actionWithDuration: "%operator% voert commando %command% uit op %target%. Duur: %duration%. %reason%"
   action_global:    "%operator% voert commando GLOBAL uit met bijnaam %target% via %type% naar %count% gebruikers. Bericht: %message%"
-  prefix_reason:    "Reden: %reason%"
   prefix_message:   "Bericht: %reason%"
 
 # --- MOTD ----------------------------------------------------------------------
@@ -293,7 +290,6 @@ motd:
     status_disabled: "\x0304uitgeschakeld\x03"
     expired:        "\x0304verlopen\x03"
     no_bot:         "(geen bot)"
-    never:          "nooit"
     shown_count:    "%count% keer getoond"
   clean:
     syntax:         "MOTD CLEAN"

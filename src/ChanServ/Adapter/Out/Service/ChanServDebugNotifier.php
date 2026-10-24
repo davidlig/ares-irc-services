@@ -112,14 +112,14 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
             $messageParams['%reason%'] = $this->translator->trans(
                 'debug.prefix_reason',
                 ['%reason%' => $this->translator->trans('debug.founder_action', [], 'chanserv', $this->defaultLanguage)],
-                'chanserv',
+                'common',
                 $this->defaultLanguage,
             );
         } elseif (null !== $reason && '' !== $reason) {
             $messageParams['%reason%'] = $this->translator->trans(
                 'debug.prefix_reason',
                 ['%reason%' => $reason],
-                'chanserv',
+                'common',
                 $this->defaultLanguage,
             );
         }
@@ -127,7 +127,7 @@ final readonly class ChanServDebugNotifier implements ChanAuditSink, ServiceDebu
         $message = $this->translator->trans(
             $translationKey,
             $messageParams,
-            'chanserv',
+            'common',
             $this->defaultLanguage,
         );
 

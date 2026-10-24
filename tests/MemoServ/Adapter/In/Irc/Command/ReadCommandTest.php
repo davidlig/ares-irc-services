@@ -233,7 +233,7 @@ final class ReadCommandTest extends TestCase
         $replies = [];
         $context = $this->createContext($sender, $account, ['#unregistered', '1'], $replies);
         $command->execute($context);
-        self::assertSame(['read.channel_not_registered [%channel%: #unregistered]'], $replies);
+        self::assertSame(['error.channel_not_registered [%channel%: #unregistered]'], $replies);
     }
 
     #[Test]

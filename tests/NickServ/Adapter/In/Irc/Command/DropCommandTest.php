@@ -157,7 +157,7 @@ final class DropCommandTest extends TestCase
             ],
             'not_registered' => [
                 DropNickResult::notRegistered('TargetNick'),
-                ['drop.not_registered [%nickname%: TargetNick]'],
+                ['error.nick_not_registered [%nickname%: TargetNick]'],
             ],
             'pending_deletion' => [
                 DropNickResult::pendingDeletion('TargetNick'),
