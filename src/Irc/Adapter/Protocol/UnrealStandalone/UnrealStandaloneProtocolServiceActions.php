@@ -127,7 +127,7 @@ final readonly class UnrealStandaloneProtocolServiceActions implements ProtocolS
     public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = '', ?int $channelCreationTs = null): void
     {
         $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
-        $trailing = null === $topic ? '' : ' :' . $topic;
+        $trailing = ' :' . ($topic ?? '');
         $this->write(sprintf(':%s TOPIC %s%s', $prefix, $channelName, $trailing));
     }
 

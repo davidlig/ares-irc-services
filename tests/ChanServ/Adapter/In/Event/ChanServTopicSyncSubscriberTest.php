@@ -12,6 +12,9 @@ use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\SynchronizeTopic\SynchronizeReceivedChannelTopic;
 use App\ChanServ\Application\UseCase\SynchronizeTopic\SynchronizeReceivedChannelTopicHandler;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceActions;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\ChannelSyncCompletedRegistryInterface;
@@ -22,11 +25,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(ChanServTopicSyncSubscriber::class)]
 #[CoversClass(IrcChannelTopicActions::class)]
 #[CoversClass(IrcChannelTopicNetworkQuery::class)]
 #[CoversClass(SystemChannelTopicClock::class)]
+#[CoversClass(UnrealStandaloneProtocolServiceActions::class)]
 #[CoversClass(SynchronizeReceivedChannelTopic::class)]
 #[CoversClass(SynchronizeReceivedChannelTopicHandler::class)]
 final class ChanServTopicSyncSubscriberTest extends TestCase
@@ -135,6 +140,13 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     #[Test]
     public function clearsTopicWhenTopicLockEnabledButNoStoredTopic(): void
     {
+        $written = [];
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
+        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void { $written[] = $line; });
+        $holder = new ActiveConnectionHolder();
+        new ReflectionClass($holder)->getProperty('connection')->setValue($holder, $connection);
+        $actions = new UnrealStandaloneProtocolServiceActions($holder);
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(true);
         $registered->expects(self::atLeastOnce())->method('getTopic')->willReturn(null);
@@ -148,7 +160,8 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::once())
             ->method('setChannelTopic')
-            ->with('#test', null);
+            ->with('#test', null)
+            ->willReturnCallback(static function (string $channel, ?string $topic) use ($actions): void { $actions->setChannelTopic('001', $channel, $topic, '001CSRV'); });
         $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
 
         $event = new ChannelTopicReceivedEvent(
@@ -157,6 +170,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         );
 
         $this->subscriber->onTopicReceived($event);
+        self::assertSame([':001CSRV TOPIC #test :'], $written);
     }
 
     #[Test]
