@@ -192,7 +192,7 @@ final class LayerDependencyTest extends TestCase
     }
 
     #[Test]
-    public function testsUseOnlyFinalBoundedContextOwnership(): void
+    public function usesOnlyFinalBoundedContextOwnership(): void
     {
         $allowedRoots = [...self::BOUNDED_CONTEXTS, 'Architecture', 'Bootstrap', 'Shared', 'bootstrap.php'];
         $entries = scandir(self::ROOT . '/tests');
@@ -266,7 +266,7 @@ final class LayerDependencyTest extends TestCase
     }
 
     #[Test]
-    public function testNamespacesFollowTheirBoundedContextPaths(): void
+    public function namespacesFollowTheirBoundedContextPaths(): void
     {
         foreach (self::phpFiles('tests') as $file) {
             if ('tests/bootstrap.php' === $file) {

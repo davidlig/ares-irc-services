@@ -6,13 +6,15 @@ namespace App\Tests\Bootstrap;
 
 use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 
 #[CoversNothing]
 final class TranslationLoaderWiringTest extends KernelTestCase
 {
-    public function testBothRuntimeYamlAliasesResolveTaggedMessages(): void
+    #[Test]
+    public function bothRuntimeYamlAliasesResolveTaggedMessages(): void
     {
         self::bootKernel();
         $loader = self::getContainer()->get('translation.loader.yml');

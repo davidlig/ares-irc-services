@@ -32,7 +32,7 @@ final class MakefileTest extends TestCase
     }
 
     #[Test]
-    public function testRunsPhpunitWithoutCoverageAndPropagatesFailures(): void
+    public function runsPhpunitWithoutCoverageAndPropagatesFailures(): void
     {
         [$code, $output] = $this->runMake('test', ['TEST_ARGS=tests/SomeTest.php --filter selected']);
         self::assertSame(0, $code, $output);

@@ -12,12 +12,14 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\AbstractException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 
 #[CoversClass(DoctrineRegistrationPolicyRepository::class)]
 final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegrationTestCase
 {
-    public function testMissingPolicyDefaultsToTokenAndSurvivesRepositoryRestart(): void
+    #[Test]
+    public function missingPolicyDefaultsToTokenAndSurvivesRepositoryRestart(): void
     {
         $repository = new DoctrineRegistrationPolicyRepository($this->entityManager->getConnection());
         self::assertSame(RegistrationMode::Token, $repository->current());
@@ -33,7 +35,8 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
         self::assertSame(1, $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM nickserv_registration_policy'));
     }
 
-    public function testMappingRoundTripAndLiveReadsIgnoreIdentityMap(): void
+    #[Test]
+    public function mappingRoundTripAndLiveReadsIgnoreIdentityMap(): void
     {
         $policy = new RegistrationPolicy(RegistrationMode::Email);
         $this->entityManager->persist($policy);
@@ -48,7 +51,8 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
         self::assertSame(RegistrationMode::Token, $found->getMode());
     }
 
-    public function testConcurrentSingletonCreationRetriesUsingLiveState(): void
+    #[Test]
+    public function concurrentSingletonCreationRetriesUsingLiveState(): void
     {
         $connection = $this->createMock(Connection::class);
         $connection->expects(self::exactly(2))->method('fetchOne')->willReturnOnConsecutiveCalls(false, 'EMAIL');
@@ -58,7 +62,8 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
         self::assertSame(RegistrationMode::Email, new DoctrineRegistrationPolicyRepository($connection)->change(RegistrationMode::Email));
     }
 
-    public function testConcurrentChangeRetriesWithoutReportingUnappliedChange(): void
+    #[Test]
+    public function concurrentChangeRetriesWithoutReportingUnappliedChange(): void
     {
         $connection = $this->createMock(Connection::class);
         $connection->expects(self::exactly(2))->method('fetchOne')->willReturnOnConsecutiveCalls('TOKEN', 'EMAIL');
@@ -66,7 +71,8 @@ final class DoctrineRegistrationPolicyRepositoryTest extends DoctrineIntegration
         self::assertSame(RegistrationMode::Email, new DoctrineRegistrationPolicyRepository($connection)->change(RegistrationMode::Email));
     }
 
-    public function testBoundedContentionFailsRatherThanInventingSuccess(): void
+    #[Test]
+    public function boundedContentionFailsRatherThanInventingSuccess(): void
     {
         $connection = $this->createMock(Connection::class);
         $connection->expects(self::exactly(3))->method('fetchOne')->willReturn('TOKEN');

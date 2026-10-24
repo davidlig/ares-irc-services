@@ -13,6 +13,7 @@ use App\NickServ\Application\Port\In\RescueTokenValidationResult;
 use App\NickServ\Application\Port\In\RescueTokenValidator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(FounderRescueTokenValidatorAdapter::class)]
@@ -29,7 +30,8 @@ final class FounderRescueTokenValidatorAdapterTest extends TestCase
     }
 
     #[DataProvider('outcomes')]
-    public function testMapsOnlySemanticOutcomeWithoutExposingCredential(RescueTokenValidationOutcome $upstream, FounderRescueTokenOutcome $expected): void
+    #[Test]
+    public function mapsOnlySemanticOutcomeWithoutExposingCredential(RescueTokenValidationOutcome $upstream, FounderRescueTokenOutcome $expected): void
     {
         $validator = $this->createMock(RescueTokenValidator::class);
         $validator->expects(self::once())->method('validate')->with(self::callback(static fn (RescueTokenValidation $input): bool => 10 === $input->accountId && 'secret-token' === $input->token && 'ip:raw' === $input->clientKey))->willReturn(new RescueTokenValidationResult($upstream, 123));

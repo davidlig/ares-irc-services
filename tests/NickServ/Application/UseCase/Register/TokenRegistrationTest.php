@@ -8,6 +8,7 @@ use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
@@ -15,7 +16,8 @@ use ReflectionClass;
 #[CoversClass(RegisterNick::class)]
 final class TokenRegistrationTest extends TestCase
 {
-    public function testTokenPendingCanOmitEmailAndDoesNotHavePersistentCredential(): void
+    #[Test]
+    public function tokenPendingCanOmitEmailAndDoesNotHavePersistentCredential(): void
     {
         $nick = RegisteredNick::createPending('Token', 'hash', null, 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         self::assertFalse(new ReflectionClass($nick)->hasProperty('registrationMode'));

@@ -27,13 +27,15 @@ use App\OperServ\Application\Security\OperatorAuthorizationService;
 use App\OperServ\Application\Security\OperatorPermissionPolicy;
 use App\OperServ\Application\Security\RootAuthorizationPolicy;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversNothing]
 final class NickServRegmodeWiringTest extends KernelTestCase
 {
-    public function testRuntimeRegistryAndPublishedPermission(): void
+    #[Test]
+    public function runtimeRegistryAndPublishedPermission(): void
     {
         self::bootKernel();
         $commands = self::getContainer()->get(NickServCommandRegistry::class);
@@ -44,7 +46,8 @@ final class NickServRegmodeWiringTest extends KernelTestCase
         self::assertContains(NickServPermission::REGMODE, $permissions->getAllPermissions());
     }
 
-    public function testRoleDenialGrantAndRootUseSameCommandAndHelpPolicy(): void
+    #[Test]
+    public function roleDenialGrantAndRootUseSameCommandAndHelpPolicy(): void
     {
         foreach ([[false, false], [true, false], [false, true]] as [$roleGrant, $root]) {
             $roles = $this->createStub(OperatorRoleAccess::class);

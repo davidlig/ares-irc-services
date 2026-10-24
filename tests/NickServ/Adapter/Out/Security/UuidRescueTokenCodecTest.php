@@ -6,12 +6,14 @@ namespace App\Tests\NickServ\Adapter\Out\Security;
 
 use App\NickServ\Adapter\Out\Security\UuidRescueTokenCodec;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(UuidRescueTokenCodec::class)]
 final class UuidRescueTokenCodecTest extends TestCase
 {
-    public function testCanonicalGenerationAndVerification(): void
+    #[Test]
+    public function canonicalGenerationAndVerification(): void
     {
         $codec = new UuidRescueTokenCodec();
         $token = $codec->generate();

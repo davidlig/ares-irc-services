@@ -45,11 +45,13 @@ use App\NickServ\Domain\ValueObject\RegistrationMode;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Test;
 
 #[CoversNothing]
 final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
 {
-    public function testRealSqlOnboardingMigrationAndRecovery(): void
+    #[Test]
+    public function realSqlOnboardingMigrationAndRecovery(): void
     {
         $now = new DateTimeImmutable('2026-10-21T12:00:00Z');
         $db = $this->entityManager->getConnection();

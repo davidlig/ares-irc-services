@@ -20,6 +20,7 @@ use App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeInput;
 use App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeResult;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -29,7 +30,8 @@ use function is_scalar;
 #[CoversClass(RegmodeCommand::class)]
 final class RegmodeCommandTest extends TestCase
 {
-    public function testMetadata(): void
+    #[Test]
+    public function metadata(): void
     {
         $command = new RegmodeCommand($this->createStub(RegistrationModeHandlerInterface::class), $this->createStub(NickServOperatorAccess::class));
         self::assertSame('REGMODE', $command->getName());
@@ -46,7 +48,8 @@ final class RegmodeCommandTest extends TestCase
         self::assertSame(NickServPermission::REGMODE, $command->getRequiredPermission());
     }
 
-    public function testInvalidArgumentsAndMissingSenderNeverInvokeHandler(): void
+    #[Test]
+    public function invalidArgumentsAndMissingSenderNeverInvokeHandler(): void
     {
         $handler = $this->createMock(RegistrationModeHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
@@ -62,7 +65,8 @@ final class RegmodeCommandTest extends TestCase
         self::assertSame([], $messages);
     }
 
-    public function testAuthorizationDenialIsPresented(): void
+    #[Test]
+    public function authorizationDenialIsPresented(): void
     {
         $access = $this->createMock(NickServOperatorAccess::class);
         $access->expects(self::once())->method('hasPermission')->with('oper', null, false, false, NickServPermission::REGMODE)->willReturn(false);
@@ -74,7 +78,8 @@ final class RegmodeCommandTest extends TestCase
         self::assertSame(['error.permission_denied'], $messages);
     }
 
-    public function testStatusAndNoopHaveNoAuditButChangeDoes(): void
+    #[Test]
+    public function statusAndNoopHaveNoAuditButChangeDoes(): void
     {
         $access = $this->createStub(NickServOperatorAccess::class);
         $access->method('hasPermission')->willReturn(true);

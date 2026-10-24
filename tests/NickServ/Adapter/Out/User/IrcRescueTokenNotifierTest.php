@@ -9,6 +9,7 @@ use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\User\IrcRescueTokenNotifier;
 use App\NickServ\Application\Model\UserMessagePreference;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -16,7 +17,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(IrcRescueTokenNotifier::class)]
 final class IrcRescueTokenNotifierTest extends TestCase
 {
-    public function testRealCatalogDeliversTheAgreedNoticeWithConfiguredNicknameAndMessagePreference(): void
+    #[Test]
+    public function realCatalogDeliversTheAgreedNoticeWithConfiguredNicknameAndMessagePreference(): void
     {
         $translator = new Translator('es');
         $translator->addLoader('yaml', new IrcYamlTranslationLoader());
@@ -35,7 +37,8 @@ final class IrcRescueTokenNotifierTest extends TestCase
         }
     }
 
-    public function testPrivateDeliveryUsesAccountLanguageAndMessagePreference(): void
+    #[Test]
+    public function privateDeliveryUsesAccountLanguageAndMessagePreference(): void
     {
         foreach ([[UserMessagePreference::Notice, 'NOTICE'], [UserMessagePreference::PrivateMessage, 'PRIVMSG']] as [$preference, $type]) {
             $notifier = $this->createMock(NickServNotifierInterface::class);

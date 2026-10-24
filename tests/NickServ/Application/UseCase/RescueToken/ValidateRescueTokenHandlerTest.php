@@ -15,6 +15,7 @@ use App\NickServ\Application\UseCase\RescueToken\ValidateRescueTokenHandler;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ValidateRescueTokenHandler::class)]
@@ -22,7 +23,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(RescueTokenValidationResult::class)]
 final class ValidateRescueTokenHandlerTest extends TestCase
 {
-    public function testOnlyActiveConfirmedCredentialCanAuthorize(): void
+    #[Test]
+    public function onlyActiveConfirmedCredentialCanAuthorize(): void
     {
         $now = new DateTimeImmutable('2026-10-21T12:00:00Z');
         $codec = new UuidRescueTokenCodec();
@@ -40,7 +42,8 @@ final class ValidateRescueTokenHandlerTest extends TestCase
         self::assertSame(RescueTokenValidationOutcome::Invalid, $handler->validate(new RescueTokenValidation(1, 'bad', 'client'))->outcome);
     }
 
-    public function testSharedClientAndAccountBudgetsBlockFurtherAttempts(): void
+    #[Test]
+    public function sharedClientAndAccountBudgetsBlockFurtherAttempts(): void
     {
         $now = new DateTimeImmutable('2026-10-21T12:00:00Z');
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -59,7 +62,8 @@ final class ValidateRescueTokenHandlerTest extends TestCase
         self::assertGreaterThan(0, $blocked->retryAfterSeconds);
     }
 
-    public function testMissingAccountAndLegacyAccountAreUnavailable(): void
+    #[Test]
+    public function missingAccountAndLegacyAccountAreUnavailable(): void
     {
         $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $account = $this->createStub(RegisteredNick::class);

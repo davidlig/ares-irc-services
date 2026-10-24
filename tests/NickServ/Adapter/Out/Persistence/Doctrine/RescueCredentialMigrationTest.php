@@ -8,13 +8,15 @@ use App\Migrations\Version20261021000001;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Schema\Schema;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
 #[CoversNothing]
 final class RescueCredentialMigrationTest extends TestCase
 {
-    public function testUpgradeLeavesExistingAccountsWithoutCredentialsAndPreservesSearchIndex(): void
+    #[Test]
+    public function upgradeLeavesExistingAccountsWithoutCredentialsAndPreservesSearchIndex(): void
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         $connection->executeStatement('CREATE TABLE registered_nicks (id INTEGER PRIMARY KEY, nickname_lower VARCHAR(32) NOT NULL)');
