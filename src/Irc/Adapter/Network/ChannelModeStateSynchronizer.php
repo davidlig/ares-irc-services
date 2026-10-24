@@ -17,7 +17,8 @@ use function str_split;
 final readonly class ChannelModeStateSynchronizer
 {
     /**
-     * @param array<int, string> $modeParams
+     * @param array<int, string>                            $modeParams
+     * @param array<string, ChannelModeParameterMerge>|null $parameterMergeRules null replaces parameters; supplied rules merge equal-TS snapshots
      */
     public function applyInitialParams(
         Channel $channel,

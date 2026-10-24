@@ -76,6 +76,6 @@ final class InspIRCdTimestampRegressionTest extends TestCase
         $before = hash('sha256', serialize($c));
         $a->handleMessage(IRCMessage::fromRawLine(':001 FMODE #test 101 +t'));
         $a->handleMessage(IRCMessage::fromRawLine(':001 LMODE #test 101 b bad!*@* 90 setter'));
-        self::assertSame($before, hash('sha256',serialize($c)));
+        self::assertSame($before, hash('sha256', serialize($c)));
     }
 }
