@@ -1632,11 +1632,15 @@ services:
             $guestPrefix: '%services.guest_prefix%'
 
     App\NickServ\Adapter\In\Irc\Command\RegisterCommand:
+        arguments:
+            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Verify\VerifyNickHandler: ~
 
     App\NickServ\Adapter\In\Irc\Command\VerifyCommand:
+        arguments:
+            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Resend\ResendVerificationHandler:
@@ -1645,6 +1649,8 @@ services:
             $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
 
     App\NickServ\Adapter\In\Irc\Command\ResendCommand:
+        arguments:
+            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Recover\RecoverNickHandler:

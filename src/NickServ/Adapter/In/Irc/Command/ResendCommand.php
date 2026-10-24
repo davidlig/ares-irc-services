@@ -15,7 +15,10 @@ use function ceil;
 
 final readonly class ResendCommand implements NickServCommandInterface
 {
-    public function __construct(private ResendVerificationHandlerInterface $handler) {}
+    public function __construct(
+        private ResendVerificationHandlerInterface $handler,
+        private int $verificationTokenTtlSeconds,
+    ) {}
 
     public function getName(): string
     {
@@ -69,7 +72,7 @@ final readonly class ResendCommand implements NickServCommandInterface
 
     public function getHelpParams(): array
     {
-        return [];
+        return ['duration_seconds' => $this->verificationTokenTtlSeconds];
     }
 
     public function execute(NickServContext $context): null

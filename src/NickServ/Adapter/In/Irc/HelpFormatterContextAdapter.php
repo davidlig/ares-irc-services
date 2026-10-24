@@ -52,6 +52,11 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         return $this->context->trans($key, $params);
     }
 
+    public function formatDuration(int $seconds): string
+    {
+        return $this->context->formatDuration($seconds);
+    }
+
     /**
      * @return iterable<HelpableCommandInterface>
      */
