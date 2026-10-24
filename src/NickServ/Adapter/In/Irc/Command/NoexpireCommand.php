@@ -47,11 +47,6 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
         return 'noexpire.help';
     }
 
-    public function getExampleKey(): string
-    {
-        return 'noexpire.example';
-    }
-
     public function getOrder(): int
     {
         return 66;
@@ -107,7 +102,7 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
     {
         switch ($result->outcome) {
             case SetNoexpireNickOutcome::NotRegistered:
-                $context->reply('error.nick_not_registered', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('noexpire.not_registered', ['%nickname%' => $result->nickname ?? '']);
 
                 return CommandOutcome::rejected();
             case SetNoexpireNickOutcome::Forbidden:

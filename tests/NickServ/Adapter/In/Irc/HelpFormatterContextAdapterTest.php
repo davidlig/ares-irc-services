@@ -113,21 +113,6 @@ final class HelpFormatterContextAdapterTest extends TestCase
     }
 
     #[Test]
-    public function getBotNameDelegatesToTheNickServNotifier(): void
-    {
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('getNick')->willReturn('ConfiguredNickServ');
-        $context = $this->createContext(
-            null,
-            $notifier,
-            $this->createStub(TranslatorInterface::class),
-            new NickServCommandRegistry([]),
-        );
-
-        self::assertSame('ConfiguredNickServ', $this->createAdapter($context)->getBotName());
-    }
-
-    #[Test]
     public function replyDelegatesToContext(): void
     {
         $messages = [];
@@ -186,22 +171,6 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $adapter = $this->createAdapter($context);
 
         self::assertSame('help.key', $adapter->trans('help.key'));
-    }
-
-    #[Test]
-    public function formatDurationDelegatesToContext(): void
-    {
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $context = $this->createContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            $this->createStub(NickServNotifierInterface::class),
-            $translator,
-            new NickServCommandRegistry([]),
-        );
-        $adapter = $this->createAdapter($context);
-
-        self::assertSame('2 duration.unit.minute.plural', $adapter->formatDuration(120));
     }
 
     #[Test]

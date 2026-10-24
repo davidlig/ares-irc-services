@@ -46,7 +46,6 @@ final class IdentifyCommandTest extends TestCase
         self::assertSame(2, $command->getMinArgs());
         self::assertSame('identify.syntax', $command->getSyntaxKey());
         self::assertSame('identify.help', $command->getHelpKey());
-        self::assertSame('identify.example', $command->getExampleKey());
         self::assertSame(2, $command->getOrder());
         self::assertSame('identify.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -69,7 +68,6 @@ final class IdentifyCommandTest extends TestCase
         self::assertSame(0, $command->getMinArgs());
         self::assertSame('identify.native_syntax', $command->getSyntaxKey());
         self::assertSame('identify.native_help', $command->getHelpKey());
-        self::assertSame('identify.native_example', $command->getExampleKey());
         self::assertSame('identify.native_short', $command->getShortDescKey());
     }
 
@@ -194,7 +192,7 @@ final class IdentifyCommandTest extends TestCase
     {
         yield 'already identified' => [IdentifyNickResult::alreadyIdentified('Alice'), 'identify.already_identified', ['%nickname%' => 'Alice']];
         yield 'locked out' => [IdentifyNickResult::lockedOut(65), 'identify.locked_out', ['%minutes%' => '2']];
-        yield 'not registered' => [IdentifyNickResult::notRegistered('Alice'), 'error.nick_not_registered', ['%nickname%' => 'Alice']];
+        yield 'not registered' => [IdentifyNickResult::notRegistered('Alice'), 'identify.not_registered', ['%nickname%' => 'Alice']];
         yield 'pending' => [IdentifyNickResult::pending('Alice'), 'identify.pending', ['%nickname%' => 'Alice']];
         yield 'suspended with reason' => [IdentifyNickResult::suspended('Alice', 'Abuse'), 'identify.suspended', ['%nickname%' => 'Alice', '%reason%' => 'Abuse']];
         yield 'forbidden' => [IdentifyNickResult::forbidden('Alice'), 'identify.forbidden', ['%nickname%' => 'Alice']];

@@ -7,7 +7,6 @@ namespace App\Tests\OperServ\Adapter\In\Irc\Help;
 use App\OperServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\OperServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\OperServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
-use App\Tests\Shared\Translations\TranslationCatalog;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -238,6 +237,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'help.syntax_label' => ['03'],
             'help.group_header' => ['10'],
             'help.subgroup_header' => ['10'],
+            'help.unknown_command' => ['07', '03'],
             'help.ircop_header' => [],
             'help.intro_expiration' => ['07'],
             'help.footer' => ['14'],
@@ -251,6 +251,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'help.syntax_label' => ['%syntax%'],
             'help.group_header' => ['%group%'],
             'help.subgroup_header' => ['%group%'],
+            'help.unknown_command' => ['%command%', '%bot%'],
         ];
 
         foreach (self::LOCALES as $locale) {
@@ -325,14 +326,11 @@ final class UnifiedHelpFormatterTest extends TestCase
                 $entries['help.command_line'],
                 $locale . ': command descriptions return to the default foreground',
             );
-            $commonCatalog = TranslationCatalog::parseFile($root . '/translations/common.' . $locale . '.yaml');
-            $unknownCommand = $commonCatalog['unknown_command'] ?? null;
-            self::assertIsString($unknownCommand, $locale . ': common catalog defines unknown_command');
-            self::assertStringStartsWith("\x0304✗\x03\x0F ", $unknownCommand, $locale);
-            self::assertStringContainsString("\x0303%command%\x03\x0F", $unknownCommand, $locale);
-            self::assertStringContainsString("/msg %bot% \x0303HELP", $unknownCommand, $locale);
-            self::assertStringEndsWith("\x0303HELP\x03\x0F", $unknownCommand, $locale);
-            self::assertDoesNotMatchRegularExpression('/\x03\d{1,2}\/msg/', $unknownCommand, $locale);
+            self::assertMatchesRegularExpression(
+                '/\x0307✗ [^\x03]+\x03\x0F \x02\x0303%command%\x03\x0F/',
+                $entries['help.unknown_command'],
+                $locale . ': HELP error label and command use their semantic colors and reset',
+            );
         }
     }
 }

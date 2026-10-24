@@ -1,129 +1,27 @@
-# Traduccions de missatges comuns — Català
-# Domini: common
+# Common translations — Catalan
+# Domain: common
 #
-# Codis de format IRC (cometes dobles o blocs literals !irc):
-#   \x02        activa/desactiva la negreta
-#   \x03NN      color (DECIMAL: 03=verd, 04=vermell, 07=taronja, 14=gris fosc)
-#   \x03        restableix el color
-#   \x0F        restableix tot el format
-#
-# Els colors IRC usen números DECIMALS (0-15), no hexadecimals.
-#   \x0314 = gris fosc (14 decimal): CORRECTE
-#   \x030F = color 0 seguit de la lletra F: ERROR
-#
-# Text IRC multilínia: !irc |- amb salts físics i espais reals.
-# Els blocs sense etiqueta no descodifiquen escapes; conserva els literals CTCP.
-# Exemples HELP: example/examples i %command_prefix%.
-# El presentador afegeix /msg sense color i un marge de dos espais.
+# Shared translations used across all IRC services.
 
-# --- UNKNOWN COMMAND -------------------------------------------------------
-unknown_command: "\x0304✗\x03\x0F Ordre desconeguda \x0303%command%\x03\x0F. Fes servir /msg %bot% \x0303HELP\x03\x0F"
-
-# --- UNKNOWN HELP OPTION ---------------------------------------------------
-unknown_help_option: "\x0304✗\x03\x0F Opció \x0303%option%\x03\x0F no reconeguda per \x0303%command%\x03\x0F. Usa /msg %bot% \x0303HELP %command%\x03\x0F"
-
-# --- ERROR -----------------------------------------------------------------
-error:
-  syntax: "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
-  not_identified: "\x0304✗\x03 No t'has identificat. Fes servir /msg %nickserv% \x0303IDENTIFY <sobrenom> <contrasenya>\x03"
-  permission_denied: "\x0304✗\x03 Permís denegat. No teniu accés a aquesta ordre."
-  mail_failed: "\x0304✗\x03 No s'ha pogut enviar el correu electrònic. Comproveu la vostra adreça o torneu-ho a provar més tard."
-  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
-  nick_not_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
-  insufficient_access: "\x0304✗\x03 Accés insuficient per a \x02%operation%\x02 al canal \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
-
-# --- DURATION --------------------------------------------------------------
-duration:
-  unit:
-    year:
-      singular: "any"
-      plural: "anys"
-    month:
-      singular: "mes"
-      plural: "mesos"
-    day:
-      singular: "dia"
-      plural: "dies"
-    hour:
-      singular: "hora"
-      plural: "hores"
-    minute:
-      singular: "minut"
-      plural: "minuts"
-    second:
-      singular: "segon"
-      plural: "segons"
-  list_separator: ", "
-  list_join: "%prefix% i %last%"
-
-# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Heu superat el límit de velocitat d'ordres. Torneu-ho a provar en %seconds% segons."
   debug_channel: "%nick% límit de %command% assolit per a %host% (%seconds%s restants)"
 
-# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
-      \x02Al meu lleial i etern amic,\x02
-
-      Tot i que el 2023 va ser l’any en què ens vam haver de dir adeu, el temps no ha
-      esborrat ni un sol detall de tu. Encara recordo la teva energia inesgotable, la
-      teva mirada noble i aquella alegria immensa i contagiosa que només tu sabies
-      transmetre.
-
-      Vas omplir casa meva de vida i la meva vida d’un amor incondicional que mai no
-      oblidaré. Tot i que ja no sento els teus passos corrent a rebre’m ni noto el teu
-      cap recolzant-se en mi per demanar afecte, sé que el teu esperit juganer encara
-      m’acompanya.
-
-      Gràcies per cada moment, per cada entremaliadura i per haver estat el millor
-      company que hauria pogut demanar. L’espai que vas deixar al meu costat ara és
-      ple dels records més feliços. Sempre seràs el meu gran amic i sempre tindràs un
-      lloc immens al meu cor.
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_message: "%operator% executa l'ordre %command% sobre %target%. %reason%"
-  action_with_option: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%. %reason%"
-  action_with_value: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%=%value%. %reason%"
-  prefix_reason: "Motiu: %reason%"
-  action_duration: "%operator% executa l'ordre %command% sobre %target%. Durada: %duration%. %reason%"
-
-# --- HISTORY ---------------------------------------------------------------
-history:
-  unknown_operator: "(desconegut)"
-  del:
-    success: "\x0303✔\x03 Entrada d'historial \x02%id%\x02 esborrada."
-    not_found: "\x0304✗\x03 Entrada d'historial \x02%id%\x02 no trobada."
-    invalid_id: "\x0304✗\x03 ID d'entrada no vàlid: \x02%id%\x02."
-  view:
-    extra: "  Extra \x0307→\x03 %extra%"
-  message:
-    unsuspend: "Suspensió aixecada"
-  extra:
-    duration: "Durada: %value%"
-    expires_at: "Expira: %value%"
-    ip: "IP: %value%"
-    host: "Amfitrió: %value%"
-
-# --- LIST ------------------------------------------------------------------
-list:
-  page: "Pàgina %page%/%pages% — %total% coincidències"
-  status_suspended: "Suspès"
-  status_pending_deletion: "Pendent d'eliminació"
-  status_forbidden: "Prohibit"
-
-# --- REPLY -----------------------------------------------------------------
-reply:
-  separator: "\x0314─────────────────────────────\x03"
-
-# --- LABEL -----------------------------------------------------------------
-label:
-  no_reason: "Sense motiu"
-  never: "mai"
-  unknown_creator: "desconegut"
-  permanent: "Permanent"
-  permanent_inline: "permanent"
+      \x02Per al meu lleial i etern amic,\x02
+      
+      Tot i que el 2023 va ser l'any en què vam haver de dir adeu, el temps no ha esborrat
+      ni un sol detall de tu. Encara recordo la teva energia sense límits, la teva mirada
+      noble i aquella alegria immensa i contagiosa que només tu sabies donar.
+      
+      Vas omplir la meva llar de vida i la meva vida d'un amor incondicional que mai
+      oblidaré. Tot i que ja no sento les teves passes corrent a saludar-me ni noto el
+      teu cap recolzant-se en mi buscant afecte, sé que el teu esperit juganer encara
+      m'acompanya.
+      
+      Gràcies per cada moment, per cada entremaliadura i per ser el millor company que
+      podia haver demanat. L'espai que vas deixar al meu costat s'omple ara amb els
+      records més feliços. Seràs sempre el meu estimat amic i sempre tindràs un lloc
+      immens al meu cor.

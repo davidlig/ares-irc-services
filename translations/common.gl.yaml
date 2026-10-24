@@ -1,127 +1,28 @@
-# Traducións de mensaxes comúns — Galego
-# Dominio: common
+# Common translations — Galician
+# Domain: common
 #
-# Códigos de formato IRC (comiñas dobres ou bloques literais !irc):
-#   \x02        activa/desactiva a negra
-#   \x03NN      cor (DECIMAL: 03=verde, 04=vermello, 07=laranxa, 14=gris escuro)
-#   \x03        restablece a cor
-#   \x0F        restablece todo o formato
-#
-# As cores IRC usan números DECIMAIS (0-15), non hexadecimais.
-#   \x0314 = gris escuro (14 decimal): CORRECTO
-#   \x030F = cor 0 seguida da letra F: ERRO
-#
-# Texto IRC multiliña: !irc |- con saltos físicos e espazos reais.
-# Os bloques sen etiqueta non descodifican escapes; conserva os literais CTCP.
-# Exemplos HELP: example/examples e %command_prefix%.
-# O presentador engade /msg sen cor e unha marxe de dous espazos.
+# Shared translations used across all IRC services.
+# Traducións compartidas usadas en todos os servizos de IRC.
 
-# --- UNKNOWN COMMAND -------------------------------------------------------
-unknown_command: "\x0304✗\x03\x0F Comando descoñecido \x0303%command%\x03\x0F. Usa /msg %bot% \x0303HELP\x03\x0F"
-
-# --- UNKNOWN HELP OPTION ---------------------------------------------------
-unknown_help_option: "\x0304✗\x03\x0F Opción de axuda \x0303%option%\x03\x0F descoñecida para \x0303%command%\x03\x0F. Usa /msg %bot% \x0303HELP %command%\x03\x0F"
-
-# --- ERROR -----------------------------------------------------------------
-error:
-  syntax: "\x0304✗\x03 Sintaxe incorrecta. Uso: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Este comando está restrinxido a operadores de IRC."
-  not_identified: "\x0304✗\x03 Non te identificaches. Usa /msg %nickserv% \x0303IDENTIFY <alcume> <contrasinal>\x03"
-  permission_denied: "\x0304✗\x03 Permiso denegado. Non ten acceso a este comando."
-  mail_failed: "\x0304✗\x03 Non se puido enviar o correo electrónico. Comprobe o seu enderezo ou tenteo de novo máis tarde."
-  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
-  nick_not_registered: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
-  insufficient_access: "\x0304✗\x03 Acceso insuficiente para \x02%operation%\x02 na canle \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está conectado."
-
-# --- DURATION --------------------------------------------------------------
-duration:
-  unit:
-    year:
-      singular: "ano"
-      plural: "anos"
-    month:
-      singular: "mes"
-      plural: "meses"
-    day:
-      singular: "día"
-      plural: "días"
-    hour:
-      singular: "hora"
-      plural: "horas"
-    minute:
-      singular: "minuto"
-      plural: "minutos"
-    second:
-      singular: "segundo"
-      plural: "segundos"
-  list_separator: ", "
-  list_join: "%prefix% e %last%"
-
-# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Excedeu o límite de velocidade de comandos. Ténteo de novo en %seconds% segundos."
   debug_channel: "%nick% límite de %command% alcanzado para %host% (quedan %seconds%s)"
 
-# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
       \x02Para o meu leal e eterno amigo,\x02
-
-      Aínda que 2023 foi o ano no que tivemos que dicirnos adeus, o tempo non
-      borrou nin un só detalle de ti. Aínda lembro a túa enerxía inesgotable, a túa
-      mirada nobre e esa alegría inmensa e contaxiosa que só ti sabías transmitir.
-
-      Enchiches a miña casa de vida e a miña vida dun amor incondicional que nunca
-      esquecerei. Aínda que xa non escoite os teus pasos correndo a recibirme nin
-      sinta a túa cabeza apoiándose en min buscando agarimo, sei que o teu espíritoxoguetón segue acompañándome.
-
-      Grazas por cada momento, por cada trasnada e por ser o mellor compañeiro que
-      podería desexar. O espazo que deixaches ao meu lado está agora cheo dos
-      recordos máis felices. Sempre serás o meu gran amigo e sempre terás un lugar
-      inmenso no meu corazón.
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_message: "%operator% executa o comando %command% sobre %target%. %reason%"
-  action_with_option: "%operator% executa o comando %command% sobre %target%. Opción: %option%. %reason%"
-  action_with_value: "%operator% executa o comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
-  prefix_reason: "Motivo: %reason%"
-  action_duration: "%operator% executa o comando %command% sobre %target%. Duración: %duration%. %reason%"
-
-# --- HISTORY ---------------------------------------------------------------
-history:
-  unknown_operator: "(descoñecido)"
-  del:
-    success: "\x0303✔\x03 Entrada do historial \x02%id%\x02 eliminada."
-    not_found: "\x0304✗\x03 Entrada do historial \x02%id%\x02 non atopada."
-    invalid_id: "\x0304✗\x03 ID de entrada non válido: \x02%id%\x02."
-  view:
-    extra: "  Extra \x0307→\x03 %extra%"
-  message:
-    unsuspend: "Suspensión levantada"
-  extra:
-    duration: "Duración: %value%"
-    expires_at: "Caduca: %value%"
-    ip: "IP: %value%"
-    host: "Host: %value%"
-
-# --- LIST ------------------------------------------------------------------
-list:
-  page: "Páxina %page%/%pages% — %total% coincidencias"
-  status_suspended: "Suspendida"
-  status_pending_deletion: "Pendente de eliminación"
-  status_forbidden: "Prohibida"
-
-# --- REPLY -----------------------------------------------------------------
-reply:
-  separator: "\x0314─────────────────────────────\x03"
-
-# --- LABEL -----------------------------------------------------------------
-label:
-  no_reason: "Sen motivo"
-  never: "nunca"
-  unknown_creator: "descoñecido"
-  permanent: "Permanente"
-  permanent_inline: "permanente"
+      
+      Aínda que 2023 foi o ano no que tivemos que dicir adeus, o tempo non borrou nin un só
+      detalle de ti. Aínda lembro a túa enerxía inesgotable, a túa mirada nobre e esa
+      alegría inmensa e contaxiosa que só ti sabías dar.
+      
+      Enchiches o meu fogar de vida e a miña vida dun amor incondicional que nunca
+      esquecerei. Aínda que xa non oio os teus pasos correndo a saudarme nin sinto a túa
+      cabeza apoiándose en min buscando cariño, sei que o teu espírito xoguetón aínda
+      me acompaña.
+      
+      Grazas por cada momento, cada travesura e por seres o mellor compañeiro que puiden
+      ter. O espazo que deixaches ao meu lado énchese agora coas lembranzas máis felices.
+      Sempre serás o meu querido amigo e sempre terás un lugar inmenso
+      no meu corazón.

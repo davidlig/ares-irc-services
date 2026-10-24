@@ -1,25 +1,20 @@
-# Μεταφράσεις ChanServ — Ελληνικά
-# Τομέας: chanserv
-#
-# Κωδικοί μορφοποίησης IRC (διπλά εισαγωγικά ή κυριολεκτικά μπλοκ !irc):
-#   \x02        ενεργοποίηση/απενεργοποίηση έντονης γραφής
-#   \x03NN      χρώμα (ΔΕΚΑΔΙΚΟ: 03=πράσινο, 04=κόκκινο, 07=πορτοκαλί, 14=σκούρο γκρι)
-#   \x03        επαναφορά χρώματος
-#   \x0F        επαναφορά όλης της μορφοποίησης
-#
-# Τα χρώματα IRC χρησιμοποιούν ΔΕΚΑΔΙΚΟΥΣ αριθμούς (0-15), όχι δεκαεξαδικούς.
-#   \x0314 = σκούρο γκρι (14 δεκαδικό): ΣΩΣΤΟ
-#   \x030F = χρώμα 0 και μετά το γράμμα F: ΛΑΘΟΣ
-#
-# Πολυγραμμικό κείμενο IRC: !irc |- με πραγματικές αλλαγές γραμμής και κενά.
-# Τα μπλοκ χωρίς ετικέτα δεν αποκωδικοποιούν διαφυγές· διατηρήστε τα CTCP.
-# Παραδείγματα HELP: example/examples και %command_prefix%.
-# Ο παρουσιαστής προσθέτει άχρωμο /msg και περιθώριο δύο κενών.
+# ChanServ translations — Greek
+# Domain: chanserv
 
-# --- ERROR -----------------------------------------------------------------
+unknown_command: "\x0304✗\x03 Άγνωστη εντολή \x02%command%\x02. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03."
+
 error:
+  syntax:         "\x0304✗\x03 Λανθασμένη σύνταξη. Χρήση: \x02%syntax%\x02"
+  oper_only:      "\x0304✗\x03 Αυτή η εντολή περιορίζεται σε IRC Operators."
+  not_identified: "\x0304✗\x03 Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Άρνηση πρόσβασης. Δεν έχετε πρόσβαση σε αυτήν την εντολή."
   invalid_channel: "\x0304✗\x03 Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε \x02#channel\x02."
+  channel_not_registered: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
   generic:        "\x0304✗\x03 Παρουσιάστηκε σφάλμα. Παρακαλώ δοκιμάστε ξανά."
+  nick_not_registered: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  insufficient_access: "\x0304✗\x03 Ανεπαρκής πρόσβαση για \x02%operation%\x02 στο κανάλι \x02%channel%\x02."
+  mail_failed: "\x0304✗\x03 Αδυναμία αποστολής email. Παρακαλώ δοκιμάστε αργότερα."
+
 register:
   syntax:           "REGISTER <#channel> <description>"
   short:            "Καταχώρηση καναλιού."
@@ -37,6 +32,7 @@ info:
   short:            "Εμφάνιση πληροφοριών καναλιού."
   help:             "Εμφανίζει ιδρυτή, ημερομηνία καταχώρησης, διάδοχο, URL, email, περιγραφή, τελευταία χρήση, θέμα και επιλογές (TOPICLOCK, MLOCK, SECURE)."
   header:          "\x02Πληροφορίες για το κανάλι \x0307%channel%\x03\x02"
+  footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Ιδρυτής\x03         : \x02%nickname%\x02"
   registered:      "  \x0314Καταχωρήθηκε\x03    : %date%"
   successor:       "  \x0314Διάδοχος\x03        : \x02%nickname%\x02"
@@ -89,6 +85,7 @@ help:
     deletion: "Διαγραφή και επαναφορά"
     restrictions: "Περιορισμοί"
     lookup: Αναζήτηση και διερεύνηση
+  unknown_command:  "\x0307✗\x03 Άγνωστη εντολή \x02%command%\x02. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02 ■ Διαθέσιμες εντολές για IRC operators:\x02"
 
 op:
@@ -338,12 +335,16 @@ akick:
     header:         "\x0303Λίστα AKICK για \x02%channel%\x02\x03"
     empty:          "\x0307ℹ\x03 Το κανάλι \x02%channel%\x02 δεν έχει καταχωρήσεις AKICK."
     entry:          "  #%index% %mask% %reason% (από %nickname%, λήγει: %expiration%)"
+    no_reason:      "Χωρίς αιτία"
+    never_expires:  "ποτέ"
+    unknown_creator: "άγνωστος"
 
 restore:
   syntax:           "RESTORE <#channel>"
   short:            "Επαναφορά καναλιού σε αναμονή διαγραφής."
   help:             "Επαναφέρει ένα κανάλι που διαγράφηκε χειροκίνητα και βρίσκεται ακόμα εντός της περιόδου χάριτος. Απαιτεί άδεια IRCop: chanserv.restore."
   success:          "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει επαναφερθεί."
+  not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
   not_pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι σε αναμονή διαγραφής."
 
 drop:
@@ -354,6 +355,7 @@ drop:
   force_success:    "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει διαγραφεί οριστικά."
   pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη σε αναμονή διαγραφής. Χρησιμοποιήστε DROP <#channel> FORCE για οριστική διαγραφή."
   invalid_channel:  "\x0304✗\x03 Μη έγκυρο όνομα καναλιού. Χρησιμοποιήστε \x02#channel\x02."
+  not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
   pending_deletion_reason: "Το κανάλι %channel% βρίσκεται σε διαδικασία διαγραφής. Περισσότερες πληροφορίες /msg %bot% INFO %channel%"
 
 suspend:
@@ -361,8 +363,10 @@ suspend:
   short:            "Αναστολή καναλιού."
   help:             "Απενεργοποιεί προσωρινά ένα καταχωρημένο κανάλι. Μορφές διάρκειας: 0 = μόνιμη, 1d, 12h, 60m.\nΌσο είναι σε αναστολή, οι λειτουργίες καναλιού, η πρόσβαση και η επιβολή είναι απενεργοποιημένες.\nΑυτή η εντολή απαιτεί άδεια IRCop: chanserv.suspend"
   success:          "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει τεθεί σε αναστολή μέχρι \x02%duration%\x02."
+  not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
   already_suspended: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη σε αναστολή."
   invalid_duration:  "\x0304✗\x03 Μη έγκυρη διάρκεια. Χρησιμοποιήστε: 0 (μόνιμη), 1d, 12h, ή 60m."
+  permanent:         "Μόνιμη"
   channel_suspended: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναστολή και δεν μπορεί να χρησιμοποιηθεί."
   notice_channel:    "\x0304⚠\x03 Το κανάλι έχει τεθεί σε αναστολή. Αιτία: %reason%"
 
@@ -371,6 +375,7 @@ unsuspend:
   short:            "Άρση αναστολής καναλιού."
   help:             "Επανενεργοποιεί ένα κανάλι σε αναστολή, αποκαθιστώντας τις λειτουργίες και την επιβολή του.\nΑυτή η εντολή απαιτεί άδεια IRCop: chanserv.suspend"
   success:          "\x0303✔\x03 Το κανάλι \x02%channel%\x02 δεν είναι πλέον σε αναστολή."
+  not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
   not_suspended:    "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι σε αναστολή."
   reason_expired:   "έληξε η αναστολή"
 
@@ -408,6 +413,7 @@ noexpire:
       NOEXPIRE #Important OFF
   success_on:       "\x0303✔\x03 Το κανάλι \x02%channel%\x02 είναι τώρα προστατευμένο από λήξη."
   success_off:      "\x0303✔\x03 Το κανάλι \x02%channel%\x02 θα λήγει τώρα κανονικά."
+  not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
   forbidden:         "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι απαγορευμένο."
   suspended:         "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναστολή."
 
@@ -428,7 +434,11 @@ unforbid:
   not_forbidden:    "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι απαγορευμένο."
 
 debug:
+  action_message: "%operator% εκτελεί την εντολή %command% σε %target%. %reason%"
+  action_with_option: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%. %reason%"
+  action_with_value: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%=%value%. %reason%"
   founder_action: "Ενέργεια ιδρυτή-επιπέδου"
+  prefix_reason:  "Αιτία: %reason%"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -452,6 +462,9 @@ history:
       HISTORY #channel ADD Ύποπτη απόπειρα takeover
       HISTORY #channel DEL 42
       HISTORY #channel CLEAR
+  not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
+  unknown_operator: "(άγνωστος)"
+
   add:
     syntax:     "HISTORY <#channel> ADD <message>"
     short:      "Προσθήκη χειροκίνητης καταχώρησης ιστορικού."
@@ -463,12 +476,17 @@ history:
     syntax:     "HISTORY <#channel> DEL <id>"
     short:      "Διαγραφή καταχώρησης ιστορικού μέσω ID."
     help:       "Διαγράφει μια καταχώρηση ιστορικού με το ID της."
+    success:    "\x0303✔\x03 Η καταχώρηση ιστορικού \x02%id%\x02 διαγράφηκε."
+    not_found:  "\x0304✗\x03 Η καταχώρηση ιστορικού \x02%id%\x02 δεν βρέθηκε."
+    invalid_id: "\x0304✗\x03 Μη έγκυρο ID καταχώρησης: \x02%id%\x02."
+
   view:
     syntax:     "HISTORY <#channel> VIEW [PAGE|ALL]"
     short:      "Προβολή ιστορικού ενεργειών καναλιού."
     help:       "Εμφανίζει τις καταχωρήσεις ιστορικού του καναλιού."
     header:     "\x02Ιστορικό για \x0307%channel%\x03\x02 (εμφάνιση %start%-%end% από %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 από %operator% — %message%"
+    extra:       "  Επιπλέον \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Δεν βρέθηκαν καταχωρήσεις ιστορικού για \x02%channel%\x02."
     page_hint:   "Χρησιμοποιήστε \x0303HISTORY %channel% VIEW %next_page%\x03 για περισσότερες καταχωρήσεις."
 
@@ -480,6 +498,7 @@ history:
 
 # --- History message translations ---
 history.message:
+  unsuspend:                  "Άρση αναστολής"
   founder_changed:            "Ο ιδρυτής άλλαξε από %old_founder% σε %new_founder%"
   successor_changed:          "Ο διάδοχος άλλαξε από %old_successor% σε %new_successor%"
   successor_cleared:          "Ο διάδοχος εκκαθαρίστηκε"
@@ -490,6 +509,8 @@ history.message:
 
 # --- History extra field translations ---
 history.extra:
+  duration:      "Διάρκεια: %value%"
+  expires_at:    "Λήγει: %value%"
   old_founder:     "Προηγούμενος ιδρυτής: %value%"
   new_founder:     "Νέος ιδρυτής: %value%"
   old_successor:   "Προηγούμενος διάδοχος: %value%"
@@ -497,6 +518,10 @@ history.extra:
   target_nickname: "Στόχος: %value%"
   level:           "Επίπεδο: %value%"
   mask:            "Μάσκα: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
+
+# --- CLEARACCESS (IRCop) ---------------------------------------------------------
 clearaccess:
   syntax:           "CLEARACCESS <#channel>"
   short:            "Εκκαθάριση ολόκληρης της λίστας πρόσβασης ενός καναλιού."
@@ -537,5 +562,9 @@ list:
   help: "Εμφανίζει τα καταχωρισμένα κανάλια που ταιριάζουν με το μοτίβο. Ο χαρακτήρας * αντιστοιχεί σε οποιαδήποτε ακολουθία χαρακτήρων. Η σελίδα είναι προαιρετική και ξεκινά από το 1."
   header: "Κανάλι | Ιδρυτής | Καταχώριση | Τελευταία χρήση | Κατάσταση"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Σελίδα %page%/%pages% — %total% αποτελέσματα"
   empty: "Κανένα κανάλι δεν ταιριάζει με το μοτίβο %pattern%."
   status_active: "Ενεργό"
+  status_suspended: "Σε αναστολή"
+  status_pending_deletion: "Σε αναμονή διαγραφής"
+  status_forbidden: "Απαγορευμένο"

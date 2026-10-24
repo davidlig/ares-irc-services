@@ -150,15 +150,6 @@ services:
     App\:
         resource: '../src/'
 
-    # One YAML loader for both Symfony aliases; only !irc values decode IRC escapes.
-    translation.loader.yml:
-        class: App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader
-        tags:
-            - { name: translation.loader, alias: yaml, legacy-alias: yml }
-
-    App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader:
-        alias: translation.loader.yml
-
     # --- Interface bindings ---------------------------------------------------
 
     App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface:
@@ -1632,15 +1623,11 @@ services:
             $guestPrefix: '%services.guest_prefix%'
 
     App\NickServ\Adapter\In\Irc\Command\RegisterCommand:
-        arguments:
-            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Verify\VerifyNickHandler: ~
 
     App\NickServ\Adapter\In\Irc\Command\VerifyCommand:
-        arguments:
-            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Resend\ResendVerificationHandler:
@@ -1649,8 +1636,6 @@ services:
             $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
 
     App\NickServ\Adapter\In\Irc\Command\ResendCommand:
-        arguments:
-            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
         tags: ['nickserv.command']
 
     App\NickServ\Application\UseCase\Recover\RecoverNickHandler:

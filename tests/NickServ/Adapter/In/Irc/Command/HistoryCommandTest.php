@@ -46,7 +46,6 @@ final class HistoryCommandTest extends TestCase
         self::assertSame(2, $command->getMinArgs());
         self::assertSame('history.syntax', $command->getSyntaxKey());
         self::assertSame('history.help', $command->getHelpKey());
-        self::assertSame('history.example', $command->getExampleKey());
         self::assertSame(200, $command->getOrder());
         self::assertSame('history.short', $command->getShortDescKey());
         self::assertCount(4, $command->getSubCommandHelp());
@@ -333,7 +332,7 @@ final class HistoryCommandTest extends TestCase
 
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Target', 'view']));
-        self::assertSame(['error.nick_not_registered [%nickname%: Target]'], $messages);
+        self::assertSame(['history.not_registered [%nickname%: Target]'], $messages);
 
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['Target', 'clear']));

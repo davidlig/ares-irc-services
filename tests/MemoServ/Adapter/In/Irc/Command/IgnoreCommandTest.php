@@ -189,7 +189,7 @@ final class IgnoreCommandTest extends TestCase
             'ignore.list_header',
             '  BadUser1',
             '  BadUser2',
-            'reply.separator',
+            'ignore.list_footer',
         ], $replies);
     }
 
@@ -260,8 +260,8 @@ final class IgnoreCommandTest extends TestCase
         $outcomes = [
             [IgnoreMemoResult::alreadyIgnored('UserA'), 'ignore.already_ignored'],
             [IgnoreMemoResult::notIgnored('UserA'), 'ignore.not_ignored'],
-            [IgnoreMemoResult::nickNotRegistered('UserA'), 'error.nick_not_registered'],
-            [IgnoreMemoResult::channelNotRegistered('#chan'), 'error.channel_not_registered'],
+            [IgnoreMemoResult::nickNotRegistered('UserA'), 'ignore.nick_not_registered'],
+            [IgnoreMemoResult::channelNotRegistered('#chan'), 'ignore.channel_not_registered'],
             [IgnoreMemoResult::limitReached(), 'ignore.limit_reached_nick'],
         ];
 

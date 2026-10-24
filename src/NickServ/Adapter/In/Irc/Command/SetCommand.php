@@ -50,11 +50,6 @@ final readonly class SetCommand implements NickServCommandInterface
         return 'set.help';
     }
 
-    public function getExampleKey(): string
-    {
-        return 'set.example';
-    }
-
     public function getOrder(): int
     {
         return 4;

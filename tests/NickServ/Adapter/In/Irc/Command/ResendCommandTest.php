@@ -28,20 +28,19 @@ final class ResendCommandTest extends TestCase
     #[Test]
     public function exposesResendMetadata(): void
     {
-        $command = new ResendCommand($this->createStub(ResendVerificationHandlerInterface::class), 300);
+        $command = new ResendCommand($this->createStub(ResendVerificationHandlerInterface::class));
 
         self::assertSame('RESEND', $command->getName());
         self::assertSame([], $command->getAliases());
         self::assertSame(0, $command->getMinArgs());
         self::assertSame('resend.syntax', $command->getSyntaxKey());
         self::assertSame('resend.help', $command->getHelpKey());
-        self::assertSame('resend.example', $command->getExampleKey());
         self::assertSame(4, $command->getOrder());
         self::assertSame('resend.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
         self::assertFalse($command->isOperOnly());
         self::assertNull($command->getRequiredPermission());
-        self::assertSame(['duration_seconds' => 300], $command->getHelpParams());
+        self::assertSame([], $command->getHelpParams());
     }
 
     #[Test]
@@ -50,7 +49,7 @@ final class ResendCommandTest extends TestCase
         $handler = $this->createMock(ResendVerificationHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new ResendCommand($handler, 3600);
+        $command = new ResendCommand($handler);
         $messages = [];
         $command->execute($this->createContext(null, $messages));
 
@@ -69,7 +68,7 @@ final class ResendCommandTest extends TestCase
                 && 'es' === $input->language))
             ->willReturn(ResendVerificationResult::noPending());
 
-        $command = new ResendCommand($handler, 3600);
+        $command = new ResendCommand($handler);
         $messages = [];
         $command->execute($this->createContext($sender, $messages));
 
@@ -85,7 +84,7 @@ final class ResendCommandTest extends TestCase
         $handler = $this->createStub(ResendVerificationHandlerInterface::class);
         $handler->method('handle')->willReturn($result);
 
-        $command = new ResendCommand($handler, 3600);
+        $command = new ResendCommand($handler);
         /** @var list<array{0: string, 1: array<string, mixed>}> $calls */
         $calls = [];
         $command->execute($this->createContext($sender, $calls, captureParams: true));

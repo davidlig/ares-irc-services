@@ -7,25 +7,26 @@
 #   \x03        reset color
 #   \x0F        reset all formatting
 #
-# Τα χρώματα IRC χρησιμοποιούν ΔΕΚΑΔΙΚΟΥΣ αριθμούς (0-15), όχι δεκαεξαδικούς.
-#   \x0314 = σκούρο γκρι (14 δεκαδικό): ΣΩΣΤΟ
-#   \x030F = χρώμα 0 και μετά το γράμμα F: ΛΑΘΟΣ
-#
-# Πολυγραμμικό κείμενο IRC: !irc |- με πραγματικές αλλαγές γραμμής και κενά.
-# Τα μπλοκ χωρίς ετικέτα δεν αποκωδικοποιούν διαφυγές· διατηρήστε τα CTCP.
-# Παραδείγματα HELP: example/examples και %command_prefix%.
-# Ο παρουσιαστής προσθέτει άχρωμο /msg και περιθώριο δύο κενών.
+# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark grey (14 decimal)  ← CORRECT
+#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
+
+unknown_command: "\x0304✗\x03 Άγνωστη εντολή \x02%command%\x02. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:            "\x0304✗\x03 Λανθασμένη σύνταξη. Χρήση: \x02%syntax%\x02"
+  oper_only:         "\x0304✗\x03 Αυτή η εντολή περιορίζεται σε IRC Operators."
+  not_identified:    "\x0304✗\x03 Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε \x0303/msg %bot% IDENTIFY <nickname> <password>\x03"
+  permission_denied: "\x0304✗\x03 Άρνηση πρόσβασης. Δεν έχετε πρόσβαση σε αυτήν την εντολή."
+  mail_failed:       "\x0304✗\x03 Το email δεν μπόρεσε να σταλεί. Ελέγξτε τη διεύθυνσή σας ή δοκιμάστε αργότερα."
 
 # --- REGISTER ---------------------------------------------------------------
 register:
   token_unavailable: "\x0304✗\x03 Η εγγραφή εκκρεμεί, αλλά το διακριτικό δεν παραδόθηκε.\nΠερίμενε να λήξει η εγγραφή πριν εγγραφείς ξανά."
   syntax: "REGISTER <password> [email]"
   short:            "Καταχωρήστε το ψευδώνυμό σας στις υπηρεσίες."
-  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nΜετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η διάρκεια ισχύος %duration% εφαρμόζεται μόνο πριν από την επαλήθευση."
-  example: "%command_prefix%\x02\x0303REGISTER Ασφαλές$Pass123_123\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303REGISTER Ασφαλές$Pass123_123 user@example.gr\x03\x0F"
-  pending:          "\x0307→\x03 Ένα token επαλήθευσης έχει σταλεί στο \x02%email%\x02.\n  Εκτελέστε \x0303/msg %bot% VERIFY <token>\x03 για να ολοκληρώσετε την καταχώρηση.\n  Δεν το λάβατε; Ελέγξτε το spam ή χρησιμοποιήστε \x0303/msg %bot% RESEND\x03\n  Το token θα λήξει σε \x02%duration%\x02."
+  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nΜετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η λήξη μίας ώρας ισχύει μόνο πριν την επικύρωση."
+  pending:          "\x0307→\x03 Ένα token επαλήθευσης έχει σταλεί στο \x02%email%\x02.\n  Εκτελέστε \x0303/msg %bot% VERIFY <token>\x03 για να ολοκληρώσετε την καταχώρηση.\n  Δεν το λάβατε; Ελέγξτε το spam ή χρησιμοποιήστε \x0303/msg %bot% RESEND\x03\n  Το token θα λήξει σε \x021 ώρα\x02."
   already_registered: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι ήδη καταχωρημένο."
   already_pending: "\x0307→\x03 Η εγγραφή του \x02%nickname%\x02 εκκρεμεί. Χρησιμοποίησε \x0303VERIFY <token>\x03. Το \x0303RESEND\x03 διατίθεται μόνο με REGMODE EMAIL και έγκυρη διεύθυνση email."
   forbidden:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν μπορεί να καταχωρηθεί σε αυτό το δίκτυο."
@@ -39,8 +40,7 @@ register:
 verify:
   syntax:           "VERIFY <token>"
   short: "Επιβεβαιώνει εγγραφή ή διακριτικό διάσωσης."
-  help: "Μετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η διάρκεια ισχύος %duration% εφαρμόζεται μόνο πριν από την επαλήθευση."
-  example: "%command_prefix%\x02\x0303VERIFY <ληφθέν_διακριτικό>\x03\x0F"
+  help: "Μετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η λήξη μίας ώρας ισχύει μόνο πριν την επικύρωση."
   success:          "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει καταχωρηθεί επιτυχώς και είστε πλέον ταυτοποιημένοι."
   success_native:   "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 καταχωρήθηκε επιτυχώς. Χρησιμοποιήστε την εγγενή ταυτοποίηση που εμφανίζεται παρακάτω."
   invalid_token: "\x0304✗\x03 Το διακριτικό διάσωσης είναι άκυρο."
@@ -51,8 +51,7 @@ resend:
   disabled: "\x0307ℹ\x03 Το \x0303RESEND\x03 είναι απενεργοποιημένο όταν το REGMODE είναι TOKEN."
   syntax:           "RESEND"
   short:            "Επαναποστολή του token επαλήθευσης στο email σας."
-  help: "Το RESEND είναι απενεργοποιημένο όταν το REGMODE είναι TOKEN.\nΜετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η διάρκεια ισχύος %duration% εφαρμόζεται μόνο πριν από την επαλήθευση.\nΣτη λειτουργία EMAIL, το RESEND ανανεώνει το token και την προθεσμία της εκκρεμούς εγγραφής για %duration%."
-  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
+  help: "Το RESEND είναι απενεργοποιημένο όταν το REGMODE είναι TOKEN.\nΜετά την επικύρωση, αυτό γίνεται το μόνιμο διακριτικό ανάκτησης. Φύλαξέ το με ασφάλεια: μπορείς να το χρησιμοποιήσεις για ανάκτηση του ψευδωνύμου. Η λήξη μίας ώρας ισχύει μόνο πριν την επικύρωση.\nΣτη λειτουργία EMAIL, το RESEND ανανεώνει το token και την προθεσμία της εκκρεμούς εγγραφής για μία ώρα."
   success:          "\x0307→\x03 Το token επαλήθευσης επαναστάλθηκε στο \x02%email%\x02."
   no_pending:       "\x0304✗\x03 Δεν έχετε εκκρεμή καταχώρηση για επαναποστολή token."
   throttled:        "\x0304✗\x03 Πρέπει να περιμένετε \x02%minutes%\x02 λεπτό(ά) πριν ζητήσετε άλλο email επαλήθευσης."
@@ -66,9 +65,7 @@ recover:
   syntax:           "RECOVER <nickname> [token]"
   short:            "Ανακτήστε το ψευδώνυμό σας αν χάσατε τον κωδικό σας."
   help: "EMAIL: το RECOVER <nickname> ζητά προσωρινό διακριτικό με email. TOKEN: δώσε το επιβεβαιωμένο διακριτικό. Το RECOVER <nickname> <token> δέχεται έγκυρο διακριτικό email ή επιβεβαιωμένο. Το email αντικαθιστά το αποθηκευμένο μόνο μετά από επικύρωση. Το αποθηκευμένο προσφέρει προαιρετική αντικατάσταση με VERIFY· αγνόησε το μήνυμα για να το κρατήσεις."
-  example: "%command_prefix%\x02\x0303RECOVER Χρήστης\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303RECOVER Χρήστης <ληφθέν_διακριτικό>\x03\x0F"
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   pending: "\x0307→\x03 Η εγγραφή του \x02%nickname%\x02 εκκρεμεί. Χρησιμοποίησε \x0303VERIFY <token>\x03. Το \x0303RESEND\x03 διατίθεται μόνο με REGMODE EMAIL και έγκυρη διεύθυνση email."
   suspended:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Αιτία: %reason%"
   forbidden:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν μπορεί να χρησιμοποιηθεί σε αυτό το δίκτυο."
@@ -82,16 +79,13 @@ identify:
   syntax:           "IDENTIFY <nickname> <password>"
   short:            "Ταυτοποιηθείτε ως ο κάτοχος ενός ψευδωνύμου."
   help:             "Πιστοποιεί τη συνεδρία σας με το %nickserv% χρησιμοποιώντας το ψευδώνυμο και τον κωδικό σας.\nΜετά από επιτυχή ταυτοποίηση θα λάβετε τη λειτουργία \x02+r\x02\nκαι, αν χρησιμοποιούσατε ψευδώνυμο επισκέπτη, το καταχωρημένο σας ψευδώνυμο θα αποκατασταθεί."
-  example: "%command_prefix%\x02\x0303IDENTIFY Χρήστης <κωδικός>\x03\x0F"
   native_syntax:    "/NICK <nickname>:<password> | /NICK <nickname>!<password>"
   native_short:     "Εμφανίζει τη σύνταξη εγγενούς ταυτοποίησης ψευδωνύμου."
   native_help:      "Αυτό το πρωτόκολλο ταυτοποιεί λογαριασμούς μέσω αλλαγών ψευδωνύμου.\nΧρησιμοποιήστε /NICK <nickname>:<password> ή, αν το ψευδώνυμο χρησιμοποιείται, /NICK <nickname>!<password>."
-  native_example: "\x02\x0303/NICK Χρήστης:<κωδικός>\x03\x0F"
-  native_examples:
-    - "%command_prefix%\x02\x0303/NICK Χρήστης!<κωδικός>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Αυτό το πρωτόκολλο διαχειρίζεται την ταυτοποίηση μέσω αλλαγών ψευδωνύμου. Χρησιμοποιήστε \x0303/NICK <nickname>:<password>\x03 ή, αν το ψευδώνυμο χρησιμοποιείται, \x0303/NICK <nickname>!<password>\x03."
   success:          "\x0303✔\x03 Είστε πλέον ταυτοποιημένοι ως \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Είστε ήδη ταυτοποιημένοι ως \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   invalid_credentials: "\x0304✗\x03 Λανθασμένος κωδικός. Παρακαλώ δοκιμάστε ξανά."
   locked_out:         "\x0304✗\x03 Πάρα πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά σε \x02%minutes%\x02 λεπτό(ά)."
   ghost_released:   "\x0307⚡\x03 Η συνεδρία-φάντασμα που κατείχε το \x02%nickname%\x02 έχει αποσυνδεθεί."
@@ -106,7 +100,6 @@ status:
   syntax:           "STATUS <nickname>"
   short:            "Εμφάνιση κατάστασης καταχώρησης ενός ψευδωνύμου."
   help:             "Εμφανίζει την τρέχουσα κατάσταση ενός ψευδωνύμου: καταχωρημένο, εκκρεμή επαλήθευση,\nσε αναστολή ή απαγορευμένο."
-  example: "%command_prefix%\x02\x0303STATUS Χρήστης\x03\x0F"
   header:           "\x02Κατάσταση του ψευδωνύμου \x0307%nickname%\x03\x02"
   unregistered:     "  Κατάσταση      : Μη καταχωρημένο"
   not_registered_offline: "  Κατάσταση      : \x0315Μη καταχωρημένο\x03"
@@ -124,13 +117,14 @@ status:
   forbidden_reason: "  Αιτία          : %reason%"
   pending_deletion:   "  \x0314Κατάσταση\x03          : \x0307Σε αναμονή διαγραφής\x03"
   pending_deletion_at: "  \x0314Διαγράφηκε\x03      : %date%"
+  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <nickname>"
   short:            "Εμφάνιση πληροφοριών για καταχωρημένο ψευδώνυμο."
   help:             "Εμφανίζει λεπτομέρειες καταχώρησης για ένα ψευδώνυμο: ημερομηνία καταχώρησης,\nκατάσταση σύνδεσης, τελευταίο μήνυμα εξόδου και διεύθυνση email. Το email\nείναι ορατό μόνο στον κάτοχο όταν είναι ταυτοποιημένος. Με PRIVATE ON μόνο\nο κάτοχος και οι IRC Operators μπορούν να δουν τις πληροφορίες."
-  example: "%command_prefix%\x02\x0303INFO Χρήστης\x03\x0F"
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   private:          "\x0304✗\x03 Οι πληροφορίες του ψευδωνύμου \x02%nickname%\x02 είναι ιδιωτικές."
   header:           "\x02Πληροφορίες για το ψευδώνυμο \x0307%nickname%\x03\x02"
   status:           "  \x0314Κατάσταση\x03       : %status%"
@@ -154,6 +148,7 @@ info:
   pending_deletion_at: "  \x0314Διαγράφηκε\x03             : %date%"
   pending_deletion_until: "  \x0314Οριστική διαγραφή\x03      : %date%"
   pending_deletion_notice: "  \x0307Αυτό το ψευδώνυμο είναι σε αναμονή διαγραφής και δεν μπορεί να καταχωρηθεί.\x03"
+  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AΚανάλια με πρόσβαση:\x03"
   channels_entry_founder:   "  %channel% (\x0303Ιδρυτής\x03)"
   channels_entry_successor: "  %channel% (\x0303Διάδοχος\x03)"
@@ -164,9 +159,6 @@ set:
   syntax:           "SET <option> <value>"
   short:            "Αλλάξτε τις επιλογές του ψευδωνύμου σας."
   help:             "Τροποποιεί τις ρυθμίσεις του ψευδωνύμου σας στο %nickserv%.\nΠρέπει να είστε ταυτοποιημένοι για να χρησιμοποιήσετε αυτήν την εντολή."
-  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
   unknown_option:   "\x0304✗\x03 Άγνωστη επιλογή \x02%option%\x02. Διαθέσιμες επιλογές: %options%."
 
   password:
@@ -227,9 +219,8 @@ set:
 saset:
   syntax:           "SASET <ψευδώνυμο> <επιλογή> <τιμή>"
   short:            "Τροποποίηση ρυθμίσεων άλλου ψευδωνύμου."
-  help: |-
-    Επιτρέπει σε IRC Operator να τροποποιεί τις ρυθμίσεις ενός καταχωρημένου
-    ψευδωνύμου.
+  help:             |
+    Επιτρέπει σε IRC Operator να τροποποιεί τις ρυθμίσεις ενός καταχωρημένου ψευδωνύμου.
     Το ψευδώνυμο-στόχος δεν μπορεί να είναι root χρήστης, IRC Operator ή υπηρεσία.
 
     Διαθέσιμες επιλογές: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
@@ -241,9 +232,6 @@ saset:
 
     Σύνταξη: SASET <ψευδώνυμο> <επιλογή> <τιμή>
     Παράδειγμα: SASET Χρήστης PASSWORD νέοςκωδικός
-  example: "%command_prefix%\x02\x0303SASET Χρήστης PRIVATE ON\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303SASET Χρήστης TIMEZONE OFF\x03\x0F"
   unknown_option:   "\x0304✗\x03 Άγνωστη επιλογή \x02%option%\x02. Διαθέσιμες επιλογές: %options%."
   cannot_modify_oper: "\x0304✗\x03 Δεν μπορεί να τροποποιηθεί ψευδώνυμο IRC Operator."
 
@@ -300,7 +288,6 @@ help:
   command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   options_header: "\x02 ■ Επιλογές:\x02"
-  examples_header: "\x02 ■ Παραδείγματα:\x02"
   general_syntax: "HELP <εντολή>"
   general_footer: "%marker% Χρησιμοποιήστε /msg %bot% \x02\x0303%syntax%\x03\x0F για περισσότερες πληροφορίες."
   set_sub_syntax: "HELP %command% <επιλογή>"
@@ -317,6 +304,7 @@ help:
     account_management: "Διαχείριση λογαριασμών"
     suspensions_bans: "Αναστολές και απαγορεύσεις"
     deletion: "Διαγραφή και επαναφορά"
+  unknown_command: "%marker% Δεν υπάρχει βοήθεια για \x02%command%\x0F."
   ircop_header: "\x02 ■ Διαθέσιμες εντολές για IRC operators:\x02"
 
   set_timezone:
@@ -336,17 +324,16 @@ protection:
 userip:
   syntax:           "USERIP <nickname>"
   short:            "Λάβετε την πραγματική διεύθυνση IP και το hostname του ψευδωνύμου."
-  help: |-
-    Εμφανίζει την πραγματική διεύθυνση IP και το hostname του καθορισμένου
-    ψευδωνύμου.
+  help:             |
+    Εμφανίζει την πραγματική διεύθυνση IP και το hostname του καθορισμένου ψευδωνύμου.
     Διαθέσιμο μόνο σε IRCops με άδεια 'nickserv.userip'.
 
     Αυτή η εντολή εμφανίζει ευαίσθητες πληροφορίες ψευδωνύμου.
     Χρησιμοποιήστε υπεύθυνα.
 
-    Σύνταξη: USERIP <ψευδώνυμο>
+    Σύνταξη: USERIP <nickname>
     Παράδειγμα: USERIP SomeUser
-  example: "%command_prefix%\x02\x0303USERIP Χρήστης\x03\x0F"
+  not_online:       "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
   result:           "\x0307ℹ\x03 Ψευδώνυμο: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -355,7 +342,6 @@ whoip:
   help:             |
     Εμφανίζει τα καταχωρημένα ψευδώνυμα των οποίων η τελευταία ταυτοποιημένη σύνδεση χρησιμοποίησε αυτή την IP.
     Η αποθηκευμένη διεύθυνση μπορεί να είναι παλιά.
-  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "Δεν βρέθηκαν καταχωρημένα ψευδώνυμα για αυτή την IP."
   header:           "Ψευδώνυμα που ταιριάζουν:"
 
@@ -363,54 +349,58 @@ whoip:
 suspend:
   syntax:           "SUSPEND <nickname> <duration> <reason>"
   short:            "Αναστολή ψευδωνύμου."
-  help: !irc |-
+  help:             |
     Θέτει σε αναστολή ένα ψευδώνυμο, εμποδίζοντας τον κάτοχο από το να ταυτοποιηθεί.
     Η αναστολή μπορεί να είναι προσωρινή ή μόνιμη.
 
-    Μορφές διάρκειας: \x0303%d\x03 (ημέρες), \x0303%h\x03 (ώρες), \x0303%m\x03
-    (λεπτά), ή \x03030\x03 (μόνιμη).
+    Μορφές διάρκειας: \x0303%d\x03 (ημέρες), \x0303%h\x03 (ώρες), \x0303%m\x03 (λεπτά), ή \x03030\x03 (μόνιμη).
 
     Οι χρήστες σε αναστολή δεν μπορούν να ταυτοποιηθούν στο ψευδώνυμό τους.
     Οι IRC operators και οι root χρήστες δεν μπορούν να τεθούν σε αναστολή.
 
-    Σύνταξη: SUSPEND <ψευδώνυμο> <διάρκεια> <αιτία>
+    Σύνταξη: SUSPEND <nickname> <duration> <reason>
     Παραδείγματα:
       SUSPEND BadUser 7d Spamming στο #help
       SUSPEND Abuser 30d Επαναλαμβανόμενο flood
       SUSPEND ProblemUser 0 Αποφυγή permaban
-  example: "%command_prefix%\x02\x0303SUSPEND ΚακόςΧρήστης 7d Spam en #βοήθεια\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303SUSPEND Προβληματικός 0 Παράκαμψη αποκλεισμού\x03\x0F"
   success:            "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει τεθεί σε αναστολή μέχρι \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι ήδη σε αναστολή."
+  not_registered:     "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   forbidden:          "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο και δεν μπορεί να τεθεί σε αναστολή."
   cannot_suspend_oper: "\x0304✗\x03 Δεν μπορεί να τεθεί σε αναστολή ο IRC operator \x02%nickname%\x02."
   cannot_suspend_root: "\x0304✗\x03 Δεν μπορεί να τεθεί σε αναστολή ο root χρήστης \x02%nickname%\x02."
   cannot_suspend_service: "\x0304✗\x03 Δεν μπορεί να τεθεί σε αναστολή το ψευδώνυμο υπηρεσίας \x02%nickname%\x02."
   invalid_duration:   "\x0304✗\x03 Μη έγκυρη διάρκεια. Χρησιμοποιήστε: \x0303<d><h><m>\x03 (π.χ., 7d, 12h, 30m) ή \x03030\x03 για μόνιμη."
+  permanent:          "μόνιμη"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
   syntax:           "UNSUSPEND <nickname>"
   short:            "Αφαίρεση αναστολής από ψευδώνυμο."
-  help: |-
-    Αφαιρεί μια ενεργή αναστολή από ένα ψευδώνυμο, επιτρέποντας στον κάτοχο να
-    ταυτοποιηθεί ξανά.
+  help:             |
+    Αφαιρεί μια ενεργή αναστολή από ένα ψευδώνυμο, επιτρέποντας στον κάτοχο να ταυτοποιηθεί ξανά.
 
-    Σύνταξη: UNSUSPEND <ψευδώνυμο>
+    Σύνταξη: UNSUSPEND <nickname>
     Παράδειγμα: UNSUSPEND SomeUser
-  example: "%command_prefix%\x02\x0303UNSUSPEND Χρήστης\x03\x0F"
   success:          "\x0303✔\x03 Η αναστολή έχει αρθεί από \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   not_suspended:    "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι σε αναστολή."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
   syntax:           "RENAME <nickname>"
   short:            "Αναγκαστική μετονομασία συνδεδεμένου ψευδωνύμου σε τυχαίο."
-  help: |-
-    Αναγκάζει ένα συνδεδεμένο ψευδώνυμο να αλλάξει σε τυχαίο όνομα με πρόθεμα που
-    έχει ορίσει το δίκτυο.
-  example: "%command_prefix%\x02\x0303RENAME Προβληματικός\x03\x0F"
+  help:             |
+    Αναγκάζει ένα συνδεδεμένο ψευδώνυμο να αλλάξει το nick του σε ένα τυχαία παραγόμενο.
+    Χρήσιμο για επιβολή πολιτικών δικτύου χωρίς αποσύνδεση του χρήστη.
+
+    Η μορφή του νέου ψευδωνύμου χρησιμοποιεί το διαμορφωμένο πρόθεμα επισκέπτη (%prefix%).
+
+    Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.rename
+
+    Σύνταξη: RENAME <nickname>
+    Παράδειγμα: RENAME Troublemaker
+  not_online:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
   cannot_rename_root: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί ο root χρήστης \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί ο IRC operator \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί το ψευδώνυμο υπηρεσίας \x02%nickname%\x02."
@@ -420,7 +410,7 @@ rename:
 drop:
   syntax:           "DROP <nickname> [FORCE]"
   short:            "Διαγραφή καταχωρημένου ψευδωνύμου."
-  help: |-
+  help:             |
     Διαγράφει ένα καταχωρημένο ψευδώνυμο από τη βάση δεδομένων.
     Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.
 
@@ -430,11 +420,9 @@ drop:
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.drop
 
-    Σύνταξη: DROP <ψευδώνυμο>
+    Σύνταξη: DROP <nickname>
     Παράδειγμα: DROP OldAccount
-  example: "%command_prefix%\x02\x0303DROP ΠαλιόςΛογαριασμός\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303DROP ΠαλιόςΛογαριασμός FORCE\x03\x0F"
+  not_registered:     "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   suspended:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Άρετε πρώτα την αναστολή."
   forbidden:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο."
   cannot_drop_root:   "\x0304✗\x03 Δεν μπορεί να διαγραφεί ο root χρήστης \x02%nickname%\x02."
@@ -450,29 +438,27 @@ restore:
   syntax:           "RESTORE <nickname>"
   short:            "Επαναφορά ψευδωνύμου σε αναμονή διαγραφής."
   help:             "Επαναφέρει ένα ψευδώνυμο που διαγράφηκε χειροκίνητα και βρίσκεται ακόμα εντός της περιόδου χάριτος. Απαιτεί άδεια IRCop: nickserv.restore."
-  example: "%command_prefix%\x02\x0303RESTORE ΠαλιόςΛογαριασμός\x03\x0F"
   success:          "\x0303✓\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει επαναφερθεί."
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   not_pending_deletion: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι σε αναμονή διαγραφής."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:
   syntax:           "FORBID <nickname> <reason>"
   short:            "Μόνιμος αποκλεισμός ψευδωνύμου από χρήση."
-  help: |-
+  help:             |
     Απαγορεύει τη χρήση ενός ψευδωνύμου στο δίκτυο.
     Το ψευδώνυμο δεν μπορεί να καταχωρηθεί ή να χρησιμοποιηθεί από κανέναν.
 
     Αν το ψευδώνυμο είναι τρέχοντα καταχωρημένο, θα διαγραφεί πρώτα.
     Αν κάποιος το χρησιμοποιεί, θα αναγκαστεί να αλλάξει σε ψευδώνυμο Guest-.
 
-    Οι root χρήστες, οι IRC operators και τα ψευδώνυμα υπηρεσιών δεν μπορούν να
-    απαγορευτούν.
+    Οι root χρήστες, οι IRC operators και τα ψευδώνυμα υπηρεσιών δεν μπορούν να απαγορευτούν.
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbid
 
-    Σύνταξη: FORBID <ψευδώνυμο> <αιτία>
+    Σύνταξη: FORBID <nickname> <reason>
     Παράδειγμα: FORBID BadNick Επαναλαμβανόμενες παραβιάσεις πολιτικής
-  example: "%command_prefix%\x02\x0303FORBID ΚακόςΧρήστης Επαναλαμβανόμενες παραβιάσεις κανόνων\x03\x0F"
   success:            "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει απαγορευτεί."
   updated:            "\x0303✔\x03 Η αιτία απαγόρευσης για το \x02%nickname%\x02 έχει ενημερωθεί."
   reason_required:    "\x0304✗\x03 Πρέπει να δώσετε αιτία για την απαγόρευση."
@@ -484,14 +470,13 @@ forbid:
 unforbid:
   syntax:           "UNFORBID <nickname>"
   short:            "Άρση απαγόρευσης ψευδωνύμου."
-  help: |-
+  help:             |
     Αφαιρεί την απαγόρευση ενός ψευδωνύμου, επιτρέποντας τη χρήση του ξανά.
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbid
 
-    Σύνταξη: UNFORBID <ψευδώνυμο>
+    Σύνταξη: UNFORBID <nickname>
     Παράδειγμα: UNFORBID SomeNick
-  example: "%command_prefix%\x02\x0303UNFORBID ΑπαγορευμένοΨευδώνυμο\x03\x0F"
   success:          "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι πλέον απαγορευμένο."
   not_forbidden:    "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι απαγορευμένο."
 
@@ -499,14 +484,20 @@ unforbid:
 forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [pattern]"
   short:            "Διαχείριση απαγορευμένων μοτίβων vhost."
-  help: |-
-    Διαχειρίζεται μοτίβα που εμποδίζουν τον ορισμό vhost που ταιριάζουν με SET
-    VHOST. Το * αντιστοιχεί σε οποιαδήποτε ακολουθία χαρακτήρων και το ? σε έναν
-    χαρακτήρα. Απαιτούνται δικαιώματα IRC Operator.
+  help:             |
+    Διαχειρίζεται μοτίβα που εμποδίζουν τους χρήστες να ορίσουν vhosts που ταιριάζουν
+    μέσω του %bot% SET VHOST.
 
-  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
+    Wildcards: * ταιριάζει με οποιαδήποτε ακολουθία, ? ταιριάζει με έναν χαρακτήρα.
+    Παράδειγμα: *.pirated.com μπλοκάρει οποιοδήποτε vhost τελειώνει σε .pirated.com
+
+    Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbidvhost
+
+    Υπο-εντολές:
+      ADD <pattern>    Προσθήκη απαγορευμένου μοτίβου
+      DEL <pattern>    Αφαίρεση απαγορευμένου μοτίβου
+      LIST             Εμφάνιση όλων των απαγορευμένων μοτίβων
+
   unknown_sub: "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL, ή LIST."
 
   add:
@@ -545,24 +536,24 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Απαγορευμένα μοτίβα vhost (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — από %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Δεν υπάρχουν απαγορευμένα μοτίβα vhost."
+    unknown_creator: "άγνωστος"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
   syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
   short:            "Προβολή ή διαχείριση ιστορικού ενεργειών ψευδωνύμου."
-  help: |-
+  help:             |
     Διαχείριση του ιστορικού ενεργειών για ένα ψευδώνυμο.
-    Μόνο IRCops με άδεια 'nickserv.history' μπορούν να χρησιμοποιήσουν αυτήν την
-    εντολή.
+    Μόνο IRCops με άδεια 'nickserv.history' μπορούν να χρησιμοποιήσουν αυτήν την εντολή.
 
     Ενέργειες που καταγράφονται αυτόματα:
       SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
       SASET EMAIL, RECOVER
 
-    Σύνταξη: HISTORY <ψευδώνυμο> ADD <message>
-            HISTORY <ψευδώνυμο> DEL <id>
-            HISTORY <ψευδώνυμο> VIEW [PAGE|ALL]
-            HISTORY <ψευδώνυμο> CLEAR
+    Σύνταξη: HISTORY <nickname> ADD <message>
+            HISTORY <nickname> DEL <id>
+            HISTORY <nickname> VIEW [PAGE|ALL]
+            HISTORY <nickname> CLEAR
 
     Παραδείγματα:
       HISTORY SomeNick VIEW
@@ -572,19 +563,15 @@ history:
       HISTORY SomeNick DEL 123
       HISTORY SomeNick CLEAR
 
-    Χρησιμοποιήστε VIEW για να δείτε το ιστορικό (εμφανίζει 3 καταχωρήσεις
-    προεπιλεγμένα).
+    Χρησιμοποιήστε VIEW για να δείτε το ιστορικό (εμφανίζει 3 καταχωρήσεις προεπιλεγμένα).
     Χρησιμοποιήστε VIEW PAGE 2 για την επόμενη σελίδα.
     Χρησιμοποιήστε VIEW ALL για πλήρες ιστορικό.
     Χρησιμοποιήστε ADD για χειροκίνητη καταχώρηση.
     Χρησιμοποιήστε DEL για διαγραφή συγκεκριμένης καταχώρησης μέσω ID.
     Χρησιμοποιήστε CLEAR για διαγραφή όλων των καταχωρήσεων ιστορικού.
-  example: "%command_prefix%\x02\x0303HISTORY Χρήστης VIEW\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303HISTORY Χρήστης VIEW ALL\x03\x0F"
-    - "%command_prefix%\x02\x0303HISTORY Χρήστης ADD Χειροκίνητη σημείωση\x03\x0F"
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  unknown_operator: "(άγνωστος)"
 
-  # --- HISTORY ADD ---------------------------------------------------------
   add:
     syntax:     "HISTORY <nickname> ADD <message>"
     short:      "Προσθήκη χειροκίνητης καταχώρησης ιστορικού."
@@ -603,6 +590,10 @@ history:
 
       Σύνταξη: HISTORY <nickname> DEL <id>
       Παράδειγμα: HISTORY SomeNick DEL 42
+    success:    "\x0303✔\x03 Η καταχώρηση ιστορικού \x02%id%\x02 διαγράφηκε."
+    not_found:  "\x0304✗\x03 Η καταχώρηση ιστορικού \x02%id%\x02 δεν βρέθηκε."
+    invalid_id: "\x0304✗\x03 Μη έγκυρο ID καταχώρησης: \x02%id%\x02."
+
   view:
     syntax:     "HISTORY <nickname> VIEW [PAGE|ALL]"
     short:      "Προβολή ιστορικού ενεργειών ψευδωνύμου."
@@ -618,6 +609,7 @@ history:
       Χρησιμοποιήστε VIEW ALL για πλήρες ιστορικό.
     header:     "\x02Ιστορικό για \x0307%nickname%\x03\x02 (εμφάνιση %start%-%end% από %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 από %operator% — %message%"
+    extra:       "  Επιπλέον \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Δεν βρέθηκαν καταχωρήσεις ιστορικού για \x02%nickname%\x02."
     page_hint:   "Χρησιμοποιήστε \x0303HISTORY %nickname% VIEW %next_page%\x03 για περισσότερες καταχωρήσεις."
 
@@ -634,6 +626,7 @@ history:
 
 # --- History message translations (used when viewing history) ---
 history.message:
+  unsuspend:                  "Άρση αναστολής"
   password_changed_owner:     "Ο κωδικός άλλαξε από τον κάτοχο"
   password_changed_operator:  "Ο κωδικός άλλαξε από operator"
   email_changed_owner:        "Το email άλλαξε από %old_email% σε %new_email%"
@@ -642,30 +635,32 @@ history.message:
 
 # --- History extra field translations ---
 history.extra:
+  duration:      "Διάρκεια: %value%"
+  expires_at:    "Λήγει: %value%"
   old_email:     "Προηγούμενο email: %value%"
   new_email:     "Νέο email: %value%"
   method:        "Μέθοδος: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <nickname> {ON|OFF}"
   short:            "Ορισμός ή αφαίρεση προστασίας λήξης για ένα ψευδώνυμο."
-  help: |-
+  help:             |
     Ελέγχει αν ένα ψευδώνυμο θα λήξει λόγω αδράνειας.
-    Όταν είναι ON, το ψευδώνυμο δεν λήγει ποτέ ανεξάρτητα από την τελευταία
-    δραστηριότητα.
+    Όταν είναι ON, το ψευδώνυμο δεν λήγει ποτέ ανεξάρτητα από την τελευταία δραστηριότητα.
     Όταν είναι OFF, ισχύουν οι κανονικοί κανόνες λήξης.
 
-    Μόνο IRCops με άδεια 'nickserv.noexpire' μπορούν να χρησιμοποιήσουν αυτήν την
-    εντολή.
+    Μόνο IRCops με άδεια 'nickserv.noexpire' μπορούν να χρησιμοποιήσουν αυτήν την εντολή.
 
-    Σύνταξη: NOEXPIRE <ψευδώνυμο> {ON|OFF}
+    Σύνταξη: NOEXPIRE <nickname> {ON|OFF}
     Παραδείγματα:
       NOEXPIRE ImportantUser ON
       NOEXPIRE ImportantUser OFF
-  example: "%command_prefix%\x02\x0303NOEXPIRE Χρήστης ON\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303NOEXPIRE Χρήστης OFF\x03\x0F"
   success_on:       "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι τώρα προστατευμένο από λήξη."
   success_off:      "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 θα λήγει τώρα κανονικά."
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
   forbidden:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο."
   suspended:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή."
 
@@ -674,14 +669,22 @@ list:
   syntax: "LIST <μοτίβο> [σελίδα]"
   short: "Εμφανίζει καταχωρισμένα ψευδώνυμα βάσει μοτίβου."
   help: "Εμφανίζει τα καταχωρισμένα ψευδώνυμα που ταιριάζουν με το μοτίβο. Το * αντιστοιχεί σε οποιαδήποτε ακολουθία χαρακτήρων. Η σελίδα είναι προαιρετική και ξεκινά από το 1."
-  example: "%command_prefix%\x02\x0303LIST Χρήστης*\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303LIST Χρήστης* 2\x03\x0F"
   header: "Ψευδώνυμο | Εγγραφή | Τελευταία σύνδεση | IP | Κατάσταση"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Σελίδα %page%/%pages% — %total% αποτελέσματα"
   empty: "Δεν βρέθηκαν ψευδώνυμα για το μοτίβο %pattern%."
   status_pending: "Σε αναμονή"
   status_registered: "Καταχωρισμένο"
+  status_suspended: "Σε αναστολή"
+  status_pending_deletion: "Σε αναμονή διαγραφής"
+  status_forbidden: "Απαγορευμένο"
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message: "%operator% εκτελεί την εντολή %command% σε %target%. %reason%"
+  action_with_option: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%. %reason%"
+  action_with_value: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%=%value%. %reason%"
+  action_duration: "%operator% εκτελεί την εντολή %command% σε %target%. Διάρκεια: %duration%. %reason%"
+  prefix_reason: "Αιτία: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

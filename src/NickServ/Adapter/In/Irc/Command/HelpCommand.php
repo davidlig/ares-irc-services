@@ -116,7 +116,7 @@ final readonly class HelpCommand implements NickServCommandInterface
         $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler || ($handler->isOperOnly() && !$sender->isOper)) {
-            $context->reply('unknown_command', [
+            $context->reply('help.unknown_command', [
                 'command' => $targetCmd,
                 'marker' => $context->trans('help.error_marker'),
             ]);
@@ -126,7 +126,7 @@ final readonly class HelpCommand implements NickServCommandInterface
 
         $adapter = $this->createAdapter($context);
         if (!$adapter->canViewCommandInHelp($handler)) {
-            $context->reply('unknown_command', [
+            $context->reply('help.unknown_command', [
                 'command' => $targetCmd,
                 'marker' => $context->trans('help.error_marker'),
             ]);

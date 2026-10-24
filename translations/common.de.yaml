@@ -1,128 +1,27 @@
-# Übersetzungen für gemeinsame Nachrichten — Deutsch
-# Domäne: common
+# Allgemeine Übersetzungen — Deutsch
+# Domain: common
 #
-# IRC-Formatcodes (doppelte Anführungszeichen oder !irc-Literalblöcke):
-#   \x02        Fettdruck ein/aus
-#   \x03NN      Farbe (DEZIMAL: 03=grün, 04=rot, 07=orange, 14=dunkelgrau)
-#   \x03        Farbe zurücksetzen
-#   \x0F        gesamte Formatierung zurücksetzen
-#
-# IRC-Farben verwenden DEZIMALZAHLEN (0-15), keine Hexadezimalzahlen.
-#   \x0314 = dunkelgrau (14 dezimal): RICHTIG
-#   \x030F = Farbe 0 gefolgt vom Buchstaben F: FALSCH
-#
-# Mehrzeiliger IRC-Text: !irc |- mit echten Zeilenumbrüchen und Leerzeichen.
-# Blöcke ohne Tag dekodieren keine Escape-Sequenzen; CTCP-Literale erhalten.
-# HELP-Beispiele: example/examples und %command_prefix%.
-# Die Darstellung ergänzt /msg ohne Farbe und einen Rand von zwei Leerzeichen.
+# Gemeinsam genutzte Übersetzungen für alle IRC-Dienste.
 
-# --- UNKNOWN COMMAND -------------------------------------------------------
-unknown_command: "\x0304✗\x03\x0F Unbekannter Befehl \x0303%command%\x03\x0F. Verwende /msg %bot% \x0303HELP\x03\x0F"
-
-# --- UNKNOWN HELP OPTION ---------------------------------------------------
-unknown_help_option: "\x0304✗\x03\x0F Unbekannte Hilfeoption \x0303%option%\x03\x0F für \x0303%command%\x03\x0F. Verwende /msg %bot% \x0303HELP %command%\x03\x0F"
-
-# --- ERROR -----------------------------------------------------------------
-error:
-  syntax: "\x0304✗\x03 Falsche Syntax. Verwendung: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Dieser Befehl ist IRC-Operatoren vorbehalten."
-  not_identified: "\x0304✗\x03 Du bist nicht identifiziert. Verwende /msg %nickserv% \x0303IDENTIFY <Nickname> <Passwort>\x03"
-  permission_denied: "\x0304✗\x03 Zugriff verweigert. Sie haben keinen Zugriff auf diesen Befehl."
-  mail_failed: "\x0304✗\x03 Die E-Mail konnte nicht gesendet werden. Überprüfen Sie Ihre Adresse oder versuchen Sie es später erneut."
-  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
-  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
-  insufficient_access: "\x0304✗\x03 Unzureichender Zugriff für \x02%operation%\x02 auf Channel \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht verbunden."
-
-# --- DURATION --------------------------------------------------------------
-duration:
-  unit:
-    year:
-      singular: "Jahr"
-      plural: "Jahre"
-    month:
-      singular: "Monat"
-      plural: "Monate"
-    day:
-      singular: "Tag"
-      plural: "Tage"
-    hour:
-      singular: "Stunde"
-      plural: "Stunden"
-    minute:
-      singular: "Minute"
-      plural: "Minuten"
-    second:
-      singular: "Sekunde"
-      plural: "Sekunden"
-  list_separator: ", "
-  list_join: "%prefix% und %last%"
-
-# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Sie haben das Befehlsratenlimit überschritten. Bitte versuchen Sie es in %seconds% Sekunden erneut."
   debug_channel: "%nick% %command%-Limit erreicht für %host% (noch %seconds%s)"
 
-# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
       \x02Für meinen treuen und ewigen Freund,\x02
-
+      
       Obwohl 2023 das Jahr war, in dem wir uns verabschieden mussten, hat die Zeit kein einziges
       Detail von dir ausgelöscht. Ich erinnere mich noch an deine grenzenlose Energie, deinen edlen
       Blick und diese immense und ansteckende Freude, die nur du zu geben wusstest.
-
+      
       Du hast mein Zuhause mit Leben und mein Leben mit bedingungsloser Liebe erfüllt, die ich
       niemals vergessen werde. Auch wenn ich deine Schritte nicht mehr höre, wie sie mir entgegenlaufen,
       oder deinen Kopf nicht mehr spüre, wie er sich an mich lehnt und Zuneigung sucht, weiß ich,
       dass dein verspielter Geist mich noch immer begleitet.
-
+      
       Danke für jeden Moment, jeden Unfug und dafür, dass du der beste Gefährte warst, den ich mir
       hätte wünschen können. Der Raum, den du an meiner Seite hinterlassen hast, ist jetzt mit den
       glücklichsten Erinnerungen gefüllt. Du wirst immer mein lieber Freund sein und du wirst immer
       einen unermesslichen Platz in meinem Herzen haben.
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_message: "%operator% führt Befehl %command% auf %target% aus. %reason%"
-  action_with_option: "%operator% führt Befehl %command% auf %target% aus. Option: %option%. %reason%"
-  action_with_value: "%operator% führt Befehl %command% auf %target% aus. Option: %option%=%value%. %reason%"
-  prefix_reason: "Grund: %reason%"
-  action_duration: "%operator% führt Befehl %command% auf %target% aus. Dauer: %duration%. %reason%"
-
-# --- HISTORY ---------------------------------------------------------------
-history:
-  unknown_operator: "(unbekannt)"
-  del:
-    success: "\x0303✔\x03 Verlaufseintrag \x02%id%\x02 gelöscht."
-    not_found: "\x0304✗\x03 Verlaufseintrag \x02%id%\x02 nicht gefunden."
-    invalid_id: "\x0304✗\x03 Ungültige Eintrags-ID: \x02%id%\x02."
-  view:
-    extra: "  Extra \x0307→\x03 %extra%"
-  message:
-    unsuspend: "Suspendierung aufgehoben"
-  extra:
-    duration: "Dauer: %value%"
-    expires_at: "Läuft ab: %value%"
-    ip: "IP: %value%"
-    host: "Host: %value%"
-
-# --- LIST ------------------------------------------------------------------
-list:
-  page: "Seite %page%/%pages% — %total% Treffer"
-  status_suspended: "Gesperrt"
-  status_pending_deletion: "Löschung ausstehend"
-  status_forbidden: "Verboten"
-
-# --- REPLY -----------------------------------------------------------------
-reply:
-  separator: "\x0314─────────────────────────────\x03"
-
-# --- LABEL -----------------------------------------------------------------
-label:
-  no_reason: "Kein Grund"
-  never: "nie"
-  unknown_creator: "unbekannt"
-  permanent: "Dauerhaft"
-  permanent_inline: "dauerhaft"

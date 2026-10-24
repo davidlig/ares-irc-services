@@ -142,11 +142,11 @@ final readonly class SendCommand implements MemoServCommandInterface
                 break;
 
             case SendMemoOutcome::NickNotRegistered:
-                $context->reply('error.nick_not_registered', ['nick' => $result->targetName ?? $targetArg]);
+                $context->reply('send.nick_not_registered', ['nick' => $result->targetName ?? $targetArg]);
                 break;
 
             case SendMemoOutcome::ChannelNotRegistered:
-                $context->reply('error.channel_not_registered', ['channel' => $result->targetName ?? $targetArg]);
+                $context->reply('send.channel_not_registered', ['channel' => $result->targetName ?? $targetArg]);
                 break;
 
             case SendMemoOutcome::Ignored:

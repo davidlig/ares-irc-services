@@ -1,10 +1,7 @@
-# Traductions de courriels — Français
-# Domaine: mail
-#
-# Objets et corps des courriels en texte brut, sans formatage IRC.
-# Préserver les sauts de ligne réels et ceux voulus en fin de corps.
+# Contenu des e-mails — domaine : mail (texte brut, sans codes IRC)
+# Variables : %nickname%, %token%, %new_email%
 
-# --- REGISTER / VERIFY -----------------------------------------------------
+# REGISTER / VERIFY — jeton de vérification
 register_verification_subject: "%bot% : vérifiez votre enregistrement de surnom"
 register_verification_body: |
   Bonjour,
@@ -21,7 +18,7 @@ register_verification_body: |
   Après validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. L’expiration d’une heure ne concerne que la période avant validation.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- RESEND ----------------------------------------------------------------
+# RESEND — identique à register, renvoi du jeton
 resend_verification_subject: "%bot% : votre jeton de vérification (renvoi)"
 resend_verification_body: |
   Bonjour,
@@ -38,7 +35,7 @@ resend_verification_body: |
   Après validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. L’expiration d’une heure ne concerne que la période avant validation.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- SET EMAIL -------------------------------------------------------------
+# SET EMAIL — jeton de confirmation envoyé à l'e-mail actuel
 email_change_token_subject: "%bot% : confirmez votre nouvelle adresse e-mail"
 email_change_token_body: |
   Bonjour,
@@ -52,7 +49,7 @@ email_change_token_body: |
 
   Le jeton expire dans 1 heure. Si vous n'avez pas demandé ce changement, veuillez ignorer cet e-mail.
 
-# --- RECOVER ---------------------------------------------------------------
+# RECOVER — jeton de récupération de mot de passe
 recovery_token_subject: "%bot% : récupération de mot de passe"
 recovery_token_body: |
   Bonjour,
@@ -68,7 +65,7 @@ recovery_token_body: |
 
   Après validation, ce jeton devient votre jeton de récupération permanent. Conservez-le en lieu sûr : il permet de récupérer votre pseudonyme. L’expiration d’une heure ne concerne que la période avant validation.
 
-# --- CHANSERV SET FOUNDER --------------------------------------------------
+# ChanServ SET FOUNDER — jeton de changement de fondateur
 founder_change_token_subject: "%bot% : jeton de changement de fondateur pour %channel%"
 founder_change_token_body: |
   Bonjour,

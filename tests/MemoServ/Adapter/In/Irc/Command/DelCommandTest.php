@@ -214,7 +214,7 @@ final class DelCommandTest extends TestCase
         $replies = [];
         $context = $this->createContext($sender, $account, ['#unregistered', '1'], $replies);
         $command->execute($context);
-        self::assertSame(['error.channel_not_registered [%channel%: #unregistered]'], $replies);
+        self::assertSame(['del.channel_not_registered [%channel%: #unregistered]'], $replies);
     }
 
     #[Test]

@@ -295,21 +295,6 @@ Read `.agents/protocol.md` and `.agents/unreal-udb.md`.
 
 ## 8. Persistence
 
-### Shared bot-service translations
-
-When adding a bot service or user-visible messages used by multiple services, put generic runtime
-messages (such as `unknown_command`, `unknown_help_option`, shared `error.*` messages, and
-`duration.*` units/formatting) in
-the `common` translation domain (`translations/common.<locale>.yaml`) instead of copying them into
-each service catalog. Service contexts must resolve `common` first and then fall back to their own
-service domain, so service-specific messages continue to work. Keep workflow-specific and all
-`help.*` presentation content in the owning service domain, except generic errors used by every
-service such as `unknown_help_option`, which belong in `common`. Preserve placeholder names expected by
-all service contexts, and add shared keys for every supported locale unless a user explicitly
-authorizes a staged locale rollout. In user-facing command references, leave `/msg <bot>` in the
-default foreground and color only the actionable command and its arguments; omit terminal
-punctuation when the invocation ends the message.
-
 Doctrine is an outer adapter.
 
 Rules:

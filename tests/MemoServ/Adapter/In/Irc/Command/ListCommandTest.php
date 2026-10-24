@@ -149,7 +149,7 @@ final class ListCommandTest extends TestCase
         $replies = [];
         $context = $this->createContext($sender, $account, ['#unregistered'], $replies);
         $command->execute($context);
-        self::assertSame(['error.channel_not_registered [%channel%: #unregistered]'], $replies);
+        self::assertSame(['list.channel_not_registered [%channel%: #unregistered]'], $replies);
 
         $replies = [];
         $context = $this->createContext($sender, $account, [], $replies);
@@ -191,7 +191,7 @@ final class ListCommandTest extends TestCase
         self::assertStringContainsString('SenderTwo', $replies[2]);
         self::assertStringContainsString(str_repeat('x', 50) . '…', $replies[2]);
         self::assertStringNotContainsString(str_repeat('x', 51), $replies[2]);
-        self::assertSame('reply.separator', $replies[3]);
+        self::assertSame('list.footer', $replies[3]);
     }
 
     #[Test]

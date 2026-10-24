@@ -131,7 +131,7 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
             duration: $durationStr,
         ));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+            $context->reply('suspend.not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }
@@ -147,7 +147,7 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
         }
 
         $durationDisplay = null === $result->expiresAt
-            ? $context->trans('label.permanent')
+            ? $context->trans('suspend.permanent')
             : $context->formatDate($result->expiresAt);
 
         $auditData = new IrcopAuditData(

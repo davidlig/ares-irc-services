@@ -11,7 +11,6 @@ use App\NickServ\Application\Port\In\UserLanguageQuery;
 use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
 use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
-use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_shift;
@@ -56,9 +55,11 @@ final readonly class OperServService
         if (null === $handler) {
             $this->notifier->sendMessage(
                 $sender->uid,
-                $this->translateWithCommonFallback(
+                $this->translator->trans(
                     'unknown_command',
                     ['%command%' => $commandName, '%bot%' => $this->notifier->getNick()],
+                    'operserv',
+                    $this->defaultLanguage,
                 ),
                 $messageType,
             );
@@ -111,17 +112,5 @@ final readonly class OperServService
         }
 
         $handler->execute($context);
-    }
-
-    /** @param array<string, mixed> $parameters */
-    private function translateWithCommonFallback(string $key, array $parameters): string
-    {
-        if ($this->translator instanceof TranslatorBagInterface
-            && $this->translator->getCatalogue($this->defaultLanguage)->has($key, 'common')
-        ) {
-            return $this->translator->trans($key, $parameters, 'common', $this->defaultLanguage);
-        }
-
-        return $this->translator->trans($key, $parameters, 'operserv', $this->defaultLanguage);
     }
 }

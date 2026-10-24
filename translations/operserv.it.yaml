@@ -1,24 +1,17 @@
-# Traduzioni di OperServ — Italiano
-# Dominio: operserv
-#
-# Codici di formattazione IRC (virgolette doppie o blocchi letterali !irc):
-#   \x02        attiva/disattiva il grassetto
-#   \x03NN      colore (DECIMALE: 03=verde, 04=rosso, 07=arancione, 14=grigio scuro)
-#   \x03        ripristina il colore
-#   \x0F        ripristina tutta la formattazione
-#
-# I colori IRC usano numeri DECIMALI (0-15), non esadecimali.
-#   \x0314 = grigio scuro (14 decimale): CORRETTO
-#   \x030F = colore 0 seguito dalla lettera F: ERRORE
-#
-# Testo IRC multilinea: !irc |- con interruzioni di riga e spazi reali.
-# I blocchi senza tag non decodificano gli escape; preservare i letterali CTCP.
-# Esempi HELP: example/examples e %command_prefix%.
-# Il presentatore aggiunge /msg senza colore e un margine di due spazi.
+# OperServ translations — Italiano
+# Domain: operserv
 
-# --- ERROR -----------------------------------------------------------------
+unknown_command: "\x0304✗\x03 Comando sconosciuto \x02%command%\x02. Usi \x0303/msg %bot% HELP\x03."
+
 error:
+  syntax:           "\x0304✗\x03 Sintassi errata. Uso: \x02%syntax%\x02"
+  oper_only:        "\x0304✗\x03 Questo comando è riservato agli IRC Operator."
+  not_identified:   "\x0304✗\x03 Non è identificato. Usi \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Non ha permessi sufficienti per eseguire questo comando."
   root_only:        "\x0304✗\x03 Questo comando è riservato agli amministratori root di rete."
+  nick_not_registered: "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è registrato."
+
+# --- HELP --------------------------------------------------------------------
 help:
   syntax:           "HELP [comando [sotto-opzione]]"
   short:            "Elenca i comandi o mostra l'aiuto per un comando."
@@ -42,6 +35,7 @@ help:
     network_security: "Sicurezza di rete"
     communication: "Comunicazione"
     low_level: "Basso livello"
+  unknown_command:  "\x0307✗ Comando sconosciuto\x03\x0F \x02\x0303%command%\x03\x0F. Usi \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Comandi disponibili per gli IRCop:\x02"
 
 # --- IRCOP --------------------------------------------------------------------
@@ -185,6 +179,7 @@ kill:
   syntax:           "KILL <nickname> <motivo>"
   short:            "Disconnette forzatamente un utente dalla rete."
   help:             "Disconnette un utente dalla rete IRC.\nGli IRCops e gli utenti Root non possono essere killati.\nQuesto comando richiede il permesso operserv.kill.\n\nSintassi: KILL <nickname> <motivo>\nEsempio: KILL CattivoUtente Flood nei canali"
+  user_not_online:  "\x0304✗\x03 Il nick \x02%nickname%\x02 non è connesso."
   protected_root:   "\x0304✗\x03 Impossibile killare l'utente Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Impossibile killare l'IRC operator \x02%nickname%\x02."
   done:             "\x0303✓\x03 Utente \x02%nickname%\x02 è stato killato (%reason%)."
@@ -203,6 +198,8 @@ gline:
   already_exists:   "\x0304✗\x03 G-line per \x02%mask%\x02 esiste già."
   max_entries:      "\x0304✗\x03 Numero massimo di G-line (%max%) raggiunto."
   not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 non trovato."
+  user_not_found:   "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è online."
+  permanent:        "permanente"
 
   add:
     syntax:         "GLINE ADD <maschera> <scadenza> <motivo>"
@@ -222,6 +219,9 @@ gline:
     help:           "Elenca tutti i G-line. Opzionalmente filtra per pattern maschera.\nQuesto comando richiede il permesso operserv.gline."
     header:         "\x0307---\x03 \x02G-line (%count%) \x0307---\x03"
     empty:          "Non ci sono G-line."
+    no_reason:      "Nessun motivo"
+    never_expires:  "Permanente"
+    unknown_creator: "sconosciuto"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, scade: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
@@ -256,7 +256,10 @@ raw:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
+  action_message:   "%operator% esegue il comando %command% su %target%. %reason%"
+  actionWithDuration: "%operator% esegue il comando %command% su %target%. Durata: %duration%. %reason%"
   action_global:    "%operator% esegue il comando GLOBAL con nickname %target% via %type% a %count% utenti. Messaggio: %message%"
+  prefix_reason:    "Motivo: %reason%"
   prefix_message:   "Messaggio: %reason%"
 
 # --- PERMESSI --------------------------------------------------------------
@@ -291,6 +294,7 @@ motd:
     status_disabled: "\x0304disabilitato\x03"
     expired:        "\x0304scaduto\x03"
     no_bot:         "(nessun bot)"
+    never:          "mai"
     shown_count:    "mostrato %count% volte"
   clean:
     syntax:         "MOTD CLEAN"

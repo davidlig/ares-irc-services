@@ -1,11 +1,7 @@
-# Traducciones de correo — Español
-# Dominio: mail
-#
-# Asuntos y cuerpos de correo en texto plano, sin formato IRC.
-# Conserva los saltos físicos y los saltos finales intencionados del cuerpo.
+# Contenido de correos — dominio: mail (texto plano, sin códigos IRC)
+# Placeholders: %nickname%, %token%, %new_email%
 
 # REGISTER / VERIFY — token de verificación
-# --- REGISTER / VERIFY -----------------------------------------------------
 register_verification_subject: "%bot%: verifica el registro de tu apodo"
 register_verification_body: |
   Hola,
@@ -23,7 +19,6 @@ register_verification_body: |
     /msg %bot% RECOVER %nickname% %token%
 
 # RESEND — reenvío del token
-# --- RESEND ----------------------------------------------------------------
 resend_verification_subject: "%bot%: tu token de verificación (reenvío)"
 resend_verification_body: |
   Hola,
@@ -41,7 +36,6 @@ resend_verification_body: |
     /msg %bot% RECOVER %nickname% %token%
 
 # SET EMAIL — token de confirmación al email actual
-# --- SET EMAIL -------------------------------------------------------------
 email_change_token_subject: "%bot%: confirma tu nueva dirección de correo"
 email_change_token_body: |
   Hola,
@@ -56,7 +50,6 @@ email_change_token_body: |
   El token expira en 1 hora. Si no solicitaste este cambio, ignora este correo.
 
 # RECOVER — token de recuperación de contraseña
-# --- RECOVER ---------------------------------------------------------------
 recovery_token_subject: "%bot%: recuperación de contraseña"
 recovery_token_body: |
   Hola,
@@ -73,7 +66,6 @@ recovery_token_body: |
   Una vez validado, este token será tu token de recuperación permanente. Guárdalo en un lugar seguro: podrás utilizarlo para recuperar tu apodo. La caducidad de una hora solo se aplica antes de validarlo.
 
 # ChanServ SET FOUNDER — token de cambio de fundador
-# --- CHANSERV SET FOUNDER --------------------------------------------------
 founder_change_token_subject: "%bot%: token de cambio de fundador para %channel%"
 founder_change_token_body: |
   Hola,

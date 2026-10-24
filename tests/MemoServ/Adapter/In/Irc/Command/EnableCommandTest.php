@@ -163,7 +163,7 @@ final class EnableCommandTest extends TestCase
         $outcomes = [
             [EnableMemosResult::enabledChannel('#chan'), 'enable.enabled_channel [%channel%: #chan]'],
             [EnableMemosResult::alreadyEnabledChannel('#chan'), 'enable.already_enabled_channel [%channel%: #chan]'],
-            [EnableMemosResult::channelNotRegistered('#chan'), 'error.channel_not_registered [%channel%: #chan]'],
+            [EnableMemosResult::channelNotRegistered('#chan'), 'enable.channel_not_registered [%channel%: #chan]'],
             [EnableMemosResult::founderOnly('#chan'), 'enable.founder_only [%channel%: #chan]'],
         ];
 

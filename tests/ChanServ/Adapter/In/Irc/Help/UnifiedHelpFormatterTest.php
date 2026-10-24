@@ -7,7 +7,6 @@ namespace App\Tests\ChanServ\Adapter\In\Irc\Help;
 use App\ChanServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\ChanServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\ChanServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
-use App\Tests\Shared\Translations\TranslationCatalog;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -344,10 +343,9 @@ final class UnifiedHelpFormatterTest extends TestCase
         self::assertIsString($introExpiration);
         self::assertSame("\x0304⚠\x03\x0F NOTE: Channels unused for more than \x1F\x030430 days\x03\x1F are automatically removed.", $this->renderTemplate($introExpiration, ['days' => '30']));
 
-        $common = TranslationCatalog::parseFile(dirname(__DIR__, 6) . '/translations/common.en.yaml');
-        $unknownCommand = $common['unknown_command'] ?? null;
+        $unknownCommand = $help['unknown_command'] ?? null;
         self::assertIsString($unknownCommand);
-        self::assertSame("\x0304✗\x03\x0F Unknown command \x0303FUTURE\x03\x0F. Use /msg ChanServ \x0303HELP\x03\x0F", $this->renderTemplate($unknownCommand, ['command' => 'FUTURE', 'bot' => 'ChanServ']));
+        self::assertSame("\x0307✗\x03 Unknown command \x02FUTURE\x02. Use \x0303/msg ChanServ HELP\x03.", $this->renderTemplate($unknownCommand, ['command' => 'FUTURE', 'bot' => 'ChanServ']));
         self::assertSame("\x0314─────────────────────────────\x03\x0F", $help['footer']);
     }
 

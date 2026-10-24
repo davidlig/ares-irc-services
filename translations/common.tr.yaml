@@ -1,126 +1,27 @@
-# Ortak ileti çevirileri — Türkçe
-# Alan: common
+# Common translations — Turkish
+# Domain: common
 #
-# IRC biçimlendirme kodları (çift tırnaklar veya !irc düz metin blokları):
-#   \x02        kalın yazıyı aç/kapat
-#   \x03NN      renk (ONDALIK: 03=yeşil, 04=kırmızı, 07=turuncu, 14=koyu gri)
-#   \x03        rengi sıfırla
-#   \x0F        tüm biçimlendirmeyi sıfırla
-#
-# IRC renkleri onaltılık değil, ONDALIK sayılar (0-15) kullanır.
-#   \x0314 = koyu gri (ondalık 14): DOĞRU
-#   \x030F = 0 rengi ve ardından F harfi: HATA
-#
-# Çok satırlı IRC metni: !irc |- ile gerçek satır sonları ve boşluklar.
-# Etiketsiz bloklar kaçışları çözmez; CTCP sabit metinlerini koruyun.
-# HELP örnekleri: example/examples ve %command_prefix%.
-# Sunum katmanı renksiz /msg ve iki boşlukluk kenar payı ekler.
+# Shared translations used across all IRC services.
 
-# --- UNKNOWN COMMAND -------------------------------------------------------
-unknown_command: "\x0304✗\x03\x0F Bilinmeyen komut \x0303%command%\x03\x0F. Şunu kullanın: /msg %bot% \x0303HELP\x03\x0F"
-
-# --- UNKNOWN HELP OPTION ---------------------------------------------------
-unknown_help_option: "\x0304✗\x03\x0F \x0303%command%\x03\x0F için bilinmeyen yardım seçeneği \x0303%option%\x03\x0F. Şunu kullanın: /msg %bot% \x0303HELP %command%\x03\x0F"
-
-# --- ERROR -----------------------------------------------------------------
-error:
-  syntax: "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
-  not_identified: "\x0304✗\x03 Kimliğiniz doğrulanmadı. /msg %nickserv% \x0303IDENTIFY <takma_ad> <parola>\x03 kullanın"
-  permission_denied: "\x0304✗\x03 Erişim reddedildi. Bu komuta erişim yetkiniz yok."
-  mail_failed: "\x0304✗\x03 E-posta gönderilemedi. Adresinizi kontrol edin veya daha sonra tekrar deneyin."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
-  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
-  insufficient_access: "\x0304✗\x03 \x02%channel%\x02 kanalında \x02%operation%\x02 işlemi için yetersiz yetki."
-  nick_not_online: "\x0304✗\x03 \x02%nickname%\x02 rumuzu bağlı değil."
-
-# --- DURATION --------------------------------------------------------------
-duration:
-  unit:
-    year:
-      singular: "yıl"
-      plural: "yıl"
-    month:
-      singular: "ay"
-      plural: "ay"
-    day:
-      singular: "gün"
-      plural: "gün"
-    hour:
-      singular: "saat"
-      plural: "saat"
-    minute:
-      singular: "dakika"
-      plural: "dakika"
-    second:
-      singular: "saniye"
-      plural: "saniye"
-  list_separator: ", "
-  list_join: "%prefix% ve %last%"
-
-# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Komut hız sınırını aştınız. Lütfen %seconds% saniye sonra tekrar deneyin."
   debug_channel: "%nick% %command% sınırı %host% için aşıldı (%seconds%s kaldı)"
 
-# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
-      \x02Sadık ve sonsuz dostuma,\x02
+      \x02Sadık ve sonsuza dek dostum,\x02
 
-      2023 vedalaşmak zorunda kaldığımız yıl olsa da zaman senden tek bir ayrıntıyı bile
-      silemedi. Tükenmeyen enerjini, asil bakışını ve yalnızca senin verebildiğin
-      muazzam, bulaşıcı neşeyi hâlâ hatırlıyorum.
+      2023 seninle vedalaşmak zorunda kaldığımız yıl olsa da, zaman senden
+      tek bir ayrıntıyı bile silmedi. Sınırsız enerjini, asil bakışını ve
+      yalnızca senin verebileceğin o engin ve bulaşıcı neşeyi hâlâ hatırlıyorum.
 
-      Evimi hayatla, hayatımı da asla unutmayacağım koşulsuz bir sevgiyle doldurdun.
-      Beni karşılamak için koşan adımlarını artık duymasam ve sevgi ararken başını
-      bana yasladığını hissetmesem de oyuncu ruhunun bana eşlik ettiğini biliyorum.
+      Evimi hayatla ve hayatımı asla unutmayacağım koşulsuz bir sevgiyle doldurdun.
+      Artık beni karşılamak için koşan ayak seslerini duymasam ya da sevgi arayan
+      başının bana yaslandığını hissetmesem de, oyuncu ruhunun hâlâ bana eşlik
+      ettiğini biliyorum.
 
-      Her an için, her yaramazlığın için ve isteyebileceğim en iyi dost olduğun için
-      teşekkür ederim. Yanımda bıraktığın boşluk şimdi en mutlu anılarla dolu. Her zaman
-      can dostum olacaksın ve kalbimde her zaman kocaman bir yerin olacak.
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_message: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. %reason%"
-  action_with_option: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%. %reason%"
-  action_with_value: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%=%value%. %reason%"
-  prefix_reason: "Sebep: %reason%"
-  action_duration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
-
-# --- HISTORY ---------------------------------------------------------------
-history:
-  unknown_operator: "(bilinmiyor)"
-  del:
-    success: "\x0303✔\x03 Geçmiş girişi \x02%id%\x02 silindi."
-    not_found: "\x0304✗\x03 Geçmiş girişi \x02%id%\x02 bulunamadı."
-    invalid_id: "\x0304✗\x03 Geçersiz giriş ID'si: \x02%id%\x02."
-  view:
-    extra: "  Ekstra \x0307→\x03 %extra%"
-  message:
-    unsuspend: "Askı kaldırıldı"
-  extra:
-    duration: "Süre: %value%"
-    expires_at: "Bitiş: %value%"
-    ip: "IP: %value%"
-    host: "Host: %value%"
-
-# --- LIST ------------------------------------------------------------------
-list:
-  page: "Sayfa %page%/%pages% — %total% eşleşme"
-  status_suspended: "Askıya alındı"
-  status_pending_deletion: "Silinmeyi bekliyor"
-  status_forbidden: "Yasaklandı"
-
-# --- REPLY -----------------------------------------------------------------
-reply:
-  separator: "\x0314─────────────────────────────\x03"
-
-# --- LABEL -----------------------------------------------------------------
-label:
-  no_reason: "Sebep yok"
-  never: "hiçbir zaman"
-  unknown_creator: "bilinmiyor"
-  permanent: "Kalıcı"
-  permanent_inline: "kalıcı"
+      Her anın, her yaramazlığın ve isteyebileceğim en iyi dost olduğun için
+      teşekkür ederim. Yanımda bıraktığın boşluk artık en mutlu anılarla dolu.
+      Her zaman sevgili dostum olacaksın ve kalbimde her zaman kocaman bir
+      yerin olacak.

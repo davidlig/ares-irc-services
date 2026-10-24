@@ -88,7 +88,7 @@ final class GlineCommandTest extends TestCase
         yield 'invalid add' => [new ManageGlineResult(ManageGlineOutcome::InvalidRequest), ['ADD'], 'error.syntax'];
         yield 'invalid delete' => [new ManageGlineResult(ManageGlineOutcome::InvalidRequest), ['DEL'], 'error.syntax'];
         yield 'invalid mask' => [new ManageGlineResult(ManageGlineOutcome::InvalidMask), ['ADD'], 'gline.invalid_mask'];
-        yield 'missing user' => [new ManageGlineResult(ManageGlineOutcome::UserNotFound, mask: 'Missing'), ['ADD'], 'error.nick_not_online'];
+        yield 'missing user' => [new ManageGlineResult(ManageGlineOutcome::UserNotFound, mask: 'Missing'), ['ADD'], 'gline.user_not_found'];
         yield 'global mask' => [new ManageGlineResult(ManageGlineOutcome::GlobalMask, mask: '*@*'), ['ADD'], 'gline.global_mask'];
         yield 'dangerous mask' => [new ManageGlineResult(ManageGlineOutcome::DangerousMask, mask: '*@a'), ['ADD'], 'gline.dangerous_mask'];
         yield 'protected user' => [new ManageGlineResult(ManageGlineOutcome::ProtectedUser, protectedNickname: 'Root'), ['ADD'], 'gline.protected_user'];
@@ -110,7 +110,7 @@ final class GlineCommandTest extends TestCase
         new GlineCommand(new RecordingGlineCommandHandler(new ManageGlineResult(ManageGlineOutcome::Added, 'ident@host', expiry: '1h', reason: 'reason')))
             ->execute($this->context(['ADD'], $temporary));
 
-        self::assertSame('label.permanent_inline', $permanent->translations->parameters['gline.add.done']['%duration%']);
+        self::assertSame('gline.permanent', $permanent->translations->parameters['gline.add.done']['%duration%']);
         self::assertSame('1h', $temporary->translations->parameters['gline.add.done']['%duration%']);
     }
 
@@ -126,9 +126,9 @@ final class GlineCommandTest extends TestCase
         new GlineCommand(new RecordingGlineCommandHandler($result))->execute($this->context(['LIST'], $notifier));
 
         self::assertSame(['gline.list.header', 'gline.list.entry', 'gline.list.entry'], $notifier->messages);
-        self::assertSame('label.no_reason', $notifier->translations->entryParameters[0]['%reason%']);
-        self::assertSame('label.unknown_creator', $notifier->translations->entryParameters[0]['%nickname%']);
-        self::assertSame('label.permanent', $notifier->translations->entryParameters[0]['%expiration%']);
+        self::assertSame('gline.list.no_reason', $notifier->translations->entryParameters[0]['%reason%']);
+        self::assertSame('gline.list.unknown_creator', $notifier->translations->entryParameters[0]['%nickname%']);
+        self::assertSame('gline.list.never_expires', $notifier->translations->entryParameters[0]['%expiration%']);
         self::assertSame('08/09/2026 10:00 UTC', $notifier->translations->entryParameters[1]['%expiration%']);
     }
 

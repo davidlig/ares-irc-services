@@ -231,7 +231,7 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['REGISTER'], $notifier, $translator, $registry));
 
-        self::assertContains('unknown_command', $messages);
+        self::assertContains('help.unknown_command', $messages);
     }
 
     #[Test]
@@ -252,7 +252,7 @@ final class HelpCommandTest extends TestCase
             new ChanServCommandRegistry([]),
         ));
 
-        self::assertSame(['unknown_command'], $messages);
+        self::assertSame(['help.unknown_command'], $messages);
     }
 
     #[Test]

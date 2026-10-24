@@ -102,7 +102,7 @@ final class RestoreCommand implements ChanServCommandInterface, IrcopAuditableCo
 
         $result = $this->handler->handle($this->lifecycleRequest($context, $channelName, ChannelLifecycleAction::Restore));
         if (ChannelLifecycleOutcome::NotRegistered === $result->outcome) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+            $context->reply('restore.not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }

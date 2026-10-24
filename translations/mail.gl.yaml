@@ -1,10 +1,9 @@
-# Traducións de correo — Galego
-# Dominio: mail
-#
-# Asuntos e corpos de correo en texto plano, sen formato IRC.
-# Conserva os saltos físicos e os saltos finais intencionados do corpo.
+# Email content — domain: mail (plain text, no IRC codes)
+# Contido de correo electrónico — dominio: mail (texto simple, sen códigos IRC)
+# Placeholders: %nickname%, %token%, %new_email%
 
-# --- REGISTER / VERIFY -----------------------------------------------------
+# REGISTER / VERIFY — verification token
+# REGISTER / VERIFY — token de verificación
 register_verification_subject: "%bot%: verifique o seu rexistro de alcume"
 register_verification_body: |
   Ola,
@@ -21,7 +20,8 @@ register_verification_body: |
   Unha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade dunha hora só se aplica antes de validalo.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- RESEND ----------------------------------------------------------------
+# RESEND — same as register, resend of token
+# RESEND — igual que register, reenvío do token
 resend_verification_subject: "%bot%: o seu token de verificación (reenvío)"
 resend_verification_body: |
   Ola,
@@ -38,7 +38,8 @@ resend_verification_body: |
   Unha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade dunha hora só se aplica antes de validalo.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- SET EMAIL -------------------------------------------------------------
+# SET EMAIL — confirmation token sent to current email
+# SET EMAIL — token de confirmación enviado ao correo electrónico actual
 email_change_token_subject: "%bot%: confirme o seu novo enderezo de correo electrónico"
 email_change_token_body: |
   Ola,
@@ -52,7 +53,8 @@ email_change_token_body: |
 
   O token caduca en 1 hora. Se non solicitou este cambio, ignore este correo.
 
-# --- RECOVER ---------------------------------------------------------------
+# RECOVER — password recovery token
+# RECOVER — token de recuperación de contrasinal
 recovery_token_subject: "%bot%: recuperación de contrasinal"
 recovery_token_body: |
   Ola,
@@ -68,7 +70,8 @@ recovery_token_body: |
 
   Unha vez validado, este será o token de recuperación permanente. Gárdao nun lugar seguro: poderás usalo para recuperar o alcume. A caducidade dunha hora só se aplica antes de validalo.
 
-# --- CHANSERV SET FOUNDER --------------------------------------------------
+# ChanServ SET FOUNDER — founder change token
+# ChanServ SET FOUNDER — token de cambio de fundador
 founder_change_token_subject: "%bot%: token de cambio de fundador para %channel%"
 founder_change_token_body: |
   Ola,

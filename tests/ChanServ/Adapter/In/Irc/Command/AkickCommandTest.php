@@ -1063,7 +1063,7 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
         self::assertCount(2, $messages);
-        self::assertStringContainsString('label.unknown_creator', $messages[1]);
+        self::assertStringContainsString('akick.list.unknown_creator', $messages[1]);
     }
 
     #[Test]
@@ -1100,7 +1100,7 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
         self::assertCount(2, $messages);
-        self::assertStringContainsString('label.unknown_creator', $messages[1]);
+        self::assertStringContainsString('akick.list.unknown_creator', $messages[1]);
     }
 
     #[Test]

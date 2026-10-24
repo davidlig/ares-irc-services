@@ -28,20 +28,19 @@ final class VerifyCommandTest extends TestCase
     #[Test]
     public function exposesVerifyMetadata(): void
     {
-        $command = new VerifyCommand($this->createStub(VerifyNickHandlerInterface::class), 300);
+        $command = new VerifyCommand($this->createStub(VerifyNickHandlerInterface::class));
 
         self::assertSame('VERIFY', $command->getName());
         self::assertSame([], $command->getAliases());
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('verify.syntax', $command->getSyntaxKey());
         self::assertSame('verify.help', $command->getHelpKey());
-        self::assertSame('verify.example', $command->getExampleKey());
         self::assertSame(3, $command->getOrder());
         self::assertSame('verify.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
         self::assertFalse($command->isOperOnly());
         self::assertNull($command->getRequiredPermission());
-        self::assertSame(['duration_seconds' => 300], $command->getHelpParams());
+        self::assertSame([], $command->getHelpParams());
     }
 
     #[Test]
@@ -50,7 +49,7 @@ final class VerifyCommandTest extends TestCase
         $handler = $this->createMock(VerifyNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new VerifyCommand($handler, 3600);
+        $command = new VerifyCommand($handler);
         $messages = [];
         $command->execute($this->createContext(null, $messages, ['token123']));
 
@@ -70,7 +69,7 @@ final class VerifyCommandTest extends TestCase
                 && 'UID1' === $input->senderUid))
             ->willReturn(VerifyNickResult::invalidToken());
 
-        $command = new VerifyCommand($handler, 3600);
+        $command = new VerifyCommand($handler);
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['tok123']));
 
@@ -93,7 +92,7 @@ final class VerifyCommandTest extends TestCase
             $notifier->expects(self::never())->method('setUserAccount');
         }
 
-        $command = new VerifyCommand($handler, 3600);
+        $command = new VerifyCommand($handler);
         /** @var list<array{0: string, 1: array<string, mixed>}> $calls */
         $calls = [];
         $command->execute($this->createContext($sender, $calls, ['tok123'], captureParams: true, notifier: $notifier));
@@ -128,7 +127,7 @@ final class VerifyCommandTest extends TestCase
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('setUserAccount');
 
-        $command = new VerifyCommand($handler, 3600);
+        $command = new VerifyCommand($handler);
         $calls = [];
         $command->execute($this->createContext($sender, $calls, ['tok123'], notifier: $notifier));
 

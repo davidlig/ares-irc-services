@@ -1,128 +1,27 @@
-# Traductions de messages communs — Français
-# Domaine: common
+# Common translations — Français
+# Domaine : common
 #
-# Codes de formatage IRC (guillemets doubles ou blocs littéraux !irc) :
-#   \x02        active/désactive le gras
-#   \x03NN      couleur (DÉCIMAL : 03=vert, 04=rouge, 07=orange, 14=gris foncé)
-#   \x03        réinitialise la couleur
-#   \x0F        réinitialise tout le formatage
-#
-# Les couleurs IRC utilisent des nombres DÉCIMAUX (0-15), pas hexadécimaux.
-#   \x0314 = gris foncé (14 décimal) : CORRECT
-#   \x030F = couleur 0 suivie de la lettre F : ERREUR
-#
-# Texte IRC multiligne : !irc |- avec des sauts de ligne et des espaces réels.
-# Les blocs sans balise ne décodent pas les échappements ; préserver CTCP.
-# Exemples HELP : example/examples et %command_prefix%.
-# Le présentateur ajoute /msg sans couleur et une marge de deux espaces.
+# Traductions partagées utilisées par tous les services IRC.
 
-# --- UNKNOWN COMMAND -------------------------------------------------------
-unknown_command: "\x0304✗\x03\x0F Commande inconnue \x0303%command%\x03\x0F. Utilisez /msg %bot% \x0303HELP\x03\x0F"
-
-# --- UNKNOWN HELP OPTION ---------------------------------------------------
-unknown_help_option: "\x0304✗\x03\x0F Option d’aide \x0303%option%\x03\x0F inconnue pour \x0303%command%\x03\x0F. Utilisez /msg %bot% \x0303HELP %command%\x03\x0F"
-
-# --- ERROR -----------------------------------------------------------------
-error:
-  syntax: "\x0304✗\x03 Syntaxe incorrecte. Usage : \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Cette commande est réservée aux opérateurs IRC."
-  not_identified: "\x0304✗\x03 Vous n’êtes pas identifié. Utilisez /msg %nickserv% \x0303IDENTIFY <pseudonyme> <mot de passe>\x03"
-  permission_denied: "\x0304✗\x03 Permission refusée. Vous n'avez pas accès à cette commande."
-  mail_failed: "\x0304✗\x03 L'e-mail n'a pas pu être envoyé. Vérifiez votre adresse ou réessayez plus tard."
-  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
-  nick_not_registered: "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
-  insufficient_access: "\x0304✗\x03 Accès insuffisant pour \x02%operation%\x02 sur le canal \x02%channel%\x02."
-  nick_not_online: "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas connecté."
-
-# --- DURATION --------------------------------------------------------------
-duration:
-  unit:
-    year:
-      singular: "an"
-      plural: "ans"
-    month:
-      singular: "mois"
-      plural: "mois"
-    day:
-      singular: "jour"
-      plural: "jours"
-    hour:
-      singular: "heure"
-      plural: "heures"
-    minute:
-      singular: "minute"
-      plural: "minutes"
-    second:
-      singular: "seconde"
-      plural: "secondes"
-  list_separator: ", "
-  list_join: "%prefix% et %last%"
-
-# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Vous avez dépassé la limite de commandes. Veuillez réessayer dans %seconds% secondes."
   debug_channel: "%nick% limite de %command% atteinte pour %host% (%seconds%s restantes)"
 
-# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
-      \x02À mon fidèle et éternel ami,\x02
-
-      Bien que 2023 ait été l’année où nous avons dû nous dire au revoir, le temps n’a
+      \x02Pour mon fidèle et éternel ami,\x02
+      
+      Bien que 2023 ait été l'année où nous avons dû nous dire au revoir, le temps n'a
       effacé aucun détail de toi. Je me souviens encore de ton énergie débordante, de ton
-      regard noble et de cette joie immense et contagieuse que toi seul savais offrir.
-
-      Tu as rempli ma maison de vie et ma vie d’un amour inconditionnel que je n’oublierai
-      jamais. Même si je n’entends plus tes pas courir pour m’accueillir ni ne sens ta
-      tête se poser sur moi en quête d’affection, je sais que ton esprit joueur
-      m’accompagne encore.
-
+      regard noble et de cette joie immense et contagieuse que toi seul savais donner.
+      
+      Tu as rempli ma maison de vie et ma vie d'un amour inconditionnel que je n'oublierai
+      jamais. Bien que je n'entende plus tes pas courir pour m'accueillir ni ne sente ta
+      tête s'appuyer sur moi en quête d'affection, je sais que ton esprit joueur
+      m'accompagne encore.
+      
       Merci pour chaque instant, chaque bêtise, et pour avoir été le meilleur compagnon
-      que j’aurais pu espérer. L’espace que tu as laissé à mes côtés est désormais rempli
-      de mes plus beaux souvenirs. Tu seras toujours mon cher ami et tu auras toujours
-      une place immense dans mon cœur.
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_message: "%operator% exécute la commande %command% sur %target%. %reason%"
-  action_with_option: "%operator% exécute la commande %command% sur %target%. Option : %option%. %reason%"
-  action_with_value: "%operator% exécute la commande %command% sur %target%. Option : %option%=%value%. %reason%"
-  prefix_reason: "Raison : %reason%"
-  action_duration: "%operator% exécute la commande %command% sur %target%. Durée : %duration%. %reason%"
-
-# --- HISTORY ---------------------------------------------------------------
-history:
-  unknown_operator: "(inconnu)"
-  del:
-    success: "\x0303✔\x03 Entrée d'historique \x02%id%\x02 supprimée."
-    not_found: "\x0304✗\x03 Entrée d'historique \x02%id%\x02 introuvable."
-    invalid_id: "\x0304✗\x03 ID d'entrée invalide : \x02%id%\x02."
-  view:
-    extra: "  Extra \x0307→\x03 %extra%"
-  message:
-    unsuspend: "Suspension levée"
-  extra:
-    duration: "Durée : %value%"
-    expires_at: "Expire : %value%"
-    ip: "IP : %value%"
-    host: "Hôte : %value%"
-
-# --- LIST ------------------------------------------------------------------
-list:
-  page: "Page %page%/%pages% — %total% résultats"
-  status_suspended: "Suspendu"
-  status_pending_deletion: "Suppression en attente"
-  status_forbidden: "Interdit"
-
-# --- REPLY -----------------------------------------------------------------
-reply:
-  separator: "\x0314─────────────────────────────\x03"
-
-# --- LABEL -----------------------------------------------------------------
-label:
-  no_reason: "Aucune raison"
-  never: "jamais"
-  unknown_creator: "inconnu"
-  permanent: "Permanent"
-  permanent_inline: "permanent"
+      que j'aurais pu demander. L'espace que tu as laissé à mes côtés est maintenant rempli
+      des plus beaux souvenirs. Tu seras toujours mon cher ami et tu auras toujours une
+      place immense dans mon cœur.

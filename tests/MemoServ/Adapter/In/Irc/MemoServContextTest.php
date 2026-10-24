@@ -14,11 +14,8 @@ use App\MemoServ\Application\Model\MemoAccountView;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Translation\Loader\ArrayLoader;
-use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
@@ -293,9 +290,12 @@ final class MemoServContextTest extends TestCase
     #[Test]
     public function transReturnsTranslationWithWrappedParams(): void
     {
-        $translator = new Translator('en');
-        $translator->addLoader('array', new ArrayLoader());
-        $translator->addResource('array', ['memo.from' => 'memo.from:%nick%'], 'en', 'memoserv');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params): string {
+            $nick = $params['%nick%'] ?? null;
+
+            return $id . ':' . (is_string($nick) ? $nick : '');
+        });
         $context = new MemoServContext(
             null,
             null,
@@ -313,43 +313,6 @@ final class MemoServContextTest extends TestCase
         $result = $context->trans('memo.from', ['nick' => 'Alice']);
 
         self::assertSame('memo.from:Alice', $result);
-    }
-
-    /** @return iterable<string, array{string}> */
-    public static function translationLocales(): iterable
-    {
-        yield 'direct locale' => ['en'];
-        yield 'parent locale fallback' => ['en_US'];
-        yield 'configured fallback' => ['zz'];
-    }
-
-    #[Test]
-    #[DataProvider('translationLocales')]
-    public function transPrefersCommonTranslationWhenAvailable(string $language): void
-    {
-        $translator = new Translator($language);
-        $translator->addLoader('array', new ArrayLoader());
-        $translator->setFallbackLocales(['en']);
-        $translator->addResource('array', ['error.syntax' => 'Service translation'], 'en', 'memoserv');
-        $translator->addResource('array', ['error.syntax' => 'Shared translation'], 'en', 'common');
-        $translator->addResource('array', ['service.only' => 'Service-only message'], 'en', 'memoserv');
-        $context = new MemoServContext(
-            null,
-            null,
-            'SEND',
-            [],
-            $this->createStub(MemoServNotifierInterface::class),
-            $translator,
-            $language,
-            'UTC',
-            'NOTICE',
-            new MemoServCommandRegistry([]),
-            $this->createServiceNicks(),
-        );
-
-        self::assertSame('Shared translation', $context->trans('error.syntax'));
-        self::assertSame('Service-only message', $context->trans('service.only'));
-        self::assertSame('missing.key', $context->trans('missing.key'));
     }
 
     private function createMinimalContext(string $timezone = 'UTC'): MemoServContext

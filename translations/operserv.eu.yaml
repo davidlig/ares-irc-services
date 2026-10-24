@@ -1,24 +1,17 @@
 # OperServ itzulpenak — Euskara
-# Domeinua: operserv
-#
-# IRC formatu-kodeak (komatxo bikoitzak edo !irc bloke literalak):
-#   \x02        letra lodia aktibatu/desaktibatu
-#   \x03NN      kolorea (HAMARTARRA: 03=berdea, 04=gorria, 07=laranja, 14=gris iluna)
-#   \x03        kolorea berrezarri
-#   \x0F        formatu osoa berrezarri
-#
-# IRC koloreek zenbaki HAMARTARRAK (0-15) erabiltzen dituzte, ez hamaseitarrak.
-#   \x0314 = gris iluna (14 hamartarra): ZUZENA
-#   \x030F = 0 kolorea eta ondoren F letra: OKERRA
-#
-# Lerro anitzeko IRC testua: !irc |- benetako lerro-jauzi eta zuriuneekin.
-# Etiketarik gabeko blokeek ez dituzte ihesak deskodetzen; gorde CTCP literalak.
-# HELP adibideak: example/examples eta %command_prefix%.
-# Aurkezleak kolorerik gabeko /msg eta bi zuriuneko marjina gehitzen ditu.
+# Eremua: operserv
 
-# --- ERROR -----------------------------------------------------------------
+unknown_command: "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
+
 error:
+  syntax:           "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
+  oper_only:        "\x0304✗\x03 Komando hau IRC Operadoreentzat mugatuta dago."
+  not_identified:   "\x0304✗\x03 Ez zaude identifikatuta. Erabili \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Ez duzu nahikoa baimen komando hau exekutatzeko."
   root_only:        "\x0304✗\x03 Komando hau sareko root administratzaileentzat mugatuta dago."
+  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
+
+# --- HELP --------------------------------------------------------------------
 help:
   syntax:           "HELP [komandoa [azpi-aukera]]"
   short:            "Zerrendatu komandoak edo erakutsi komando baten laguntza."
@@ -42,6 +35,7 @@ help:
     network_security: "Sareko segurtasuna"
     communication: "Komunikazioa"
     low_level: "Behe-maila"
+  unknown_command:  "\x0307✗ Komando ezezaguna\x03\x0F \x02\x0303%command%\x03\x0F. Erabili \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ IRC operadoreentzako komando erabilgarriak:\x02"
 
 # --- IRCOP --------------------------------------------------------------------
@@ -185,6 +179,7 @@ kill:
   syntax:           "KILL <ezizena> <arrazoia>"
   short:            "Behartu erabiltzaile bat saretik deskonektatzera."
   help:             "Erabiltzaile bat IRC saretik deskonektatzen du.\nIRCop-ak eta Root erabiltzaileak ezin dira kill bidez deskonektatu.\nKomando honek operserv.kill baimena behar du.\n\nSintaxia: KILL <ezizena> <arrazoia>\nAdibidea: KILL ErabiltzaileGaiztoa Flood egiten kanaletan"
+  user_not_online:  "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
   protected_root:   "\x0304✗\x03 Ezin da Root erabiltzaile \x02%nickname%\x02 kill bidez deskonektatu."
   protected_ircop:  "\x0304✗\x03 Ezin da IRC operadore \x02%nickname%\x02 kill bidez deskonektatu."
   done:             "\x0303✓\x03 \x02%nickname%\x02 erabiltzailea kill bidez deskonektatu da (%reason%)."
@@ -203,6 +198,8 @@ gline:
   already_exists:   "\x0304✗\x03 \x02%mask%\x02 maskararen G-linea jada existitzen da."
   max_entries:      "\x0304✗\x03 G-lineen gehieneko kopurua (%max%) iritsi da."
   not_found:        "\x0304✗\x03 \x02%mask%\x02 G-linea ez da aurkitu."
+  user_not_found:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago online."
+  permanent:        "iraunkorra"
 
   add:
     syntax:         "GLINE ADD <maskara> <iraungitzea> <arrazoia>"
@@ -222,6 +219,9 @@ gline:
     help:           "G-line guztiak zerrendatzen ditu. Aukeran maskara ereduarekin iragazi.\nKomando honek operserv.gline baimena behar du."
     header:         "\x0307---\x03 \x02G-lineak (%count%) \x0307---\x03"
     empty:          "Ez dago G-linearik."
+    no_reason:      "Arrazoirik ez"
+    never_expires:  "Iraunkorra"
+    unknown_creator: "ezezaguna"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, iraungitzea: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
@@ -256,7 +256,10 @@ raw:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
+  action_message:   "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. %reason%"
+  actionWithDuration: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Iraupena: %duration%. %reason%"
   action_global:    "%operator%(e)k GLOBAL komandoa exekutatzen du %target% ezizenarekin %type% bidez %count% erabiltzaileri. Mezua: %message%"
+  prefix_reason:    "Arrazoia: %reason%"
   prefix_message:   "Mezua: %reason%"
 
 # --- MOTD ----------------------------------------------------------------------
@@ -290,6 +293,7 @@ motd:
     status_disabled: "\x0304desgaituta\x03"
     expired:        "\x0304iraungia\x03"
     no_bot:         "(botik ez)"
+    never:          "inoiz ez"
     shown_count:    "%count% aldiz erakutsia"
   clean:
     syntax:         "MOTD CLEAN"

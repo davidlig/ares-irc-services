@@ -115,7 +115,7 @@ final readonly class ReadCommand implements MemoServCommandInterface
                 break;
 
             case ReadMemoOutcome::ChannelNotRegistered:
-                $context->reply('error.channel_not_registered', ['channel' => $targetChannel ?? '']);
+                $context->reply('read.channel_not_registered', ['channel' => $targetChannel ?? '']);
                 break;
 
             case ReadMemoOutcome::AccessDenied:

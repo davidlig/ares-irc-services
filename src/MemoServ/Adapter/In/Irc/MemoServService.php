@@ -67,7 +67,7 @@ final readonly class MemoServService
             $messageType = $this->messageTypeResolver->prefersPrivateMessages($sender->nick) ? 'PRIVMSG' : 'NOTICE';
             $this->notifier->sendMessage(
                 $sender->uid,
-                $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'common', $this->defaultLanguage),
+                $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'memoserv', $this->defaultLanguage),
                 $messageType
             );
 

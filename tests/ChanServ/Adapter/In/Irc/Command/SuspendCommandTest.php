@@ -194,7 +194,7 @@ final class SuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('error.channel_not_registered', $messages);
+        self::assertContains('suspend.not_registered', $messages);
     }
 
     #[Test]

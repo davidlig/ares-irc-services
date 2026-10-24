@@ -19,11 +19,8 @@ use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use DateTime;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Translation\Loader\ArrayLoader;
-use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
@@ -105,7 +102,6 @@ final class ChanServContextTest extends TestCase
         ?ChannelLookupPort $channelLookup = null,
         ?ChannelModeSupportInterface $modeSupport = null,
         ?ChanAccountView $senderAccount = null,
-        string $language = 'en',
     ): ChanServContext {
         return new ChanServContext(
             $sender,
@@ -114,7 +110,7 @@ final class ChanServContextTest extends TestCase
             $args,
             $notifier,
             $translator,
-            $language,
+            'en',
             'Europe/Madrid',
             'NOTICE',
             new ChanServCommandRegistry([]),
@@ -421,9 +417,16 @@ final class ChanServContextTest extends TestCase
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
 
-        $translator = new Translator('en');
-        $translator->addLoader('array', new ArrayLoader());
-        $translator->addResource('array', ['test.key' => 'Translated %param%'], 'en', 'chanserv');
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects($this->once())
+            ->method('trans')
+            ->with(
+                'test.key',
+                $this->arrayHasKey('%param%'),
+                'chanserv',
+                'en'
+            )
+            ->willReturn('Translated');
 
         $context = $this->createContext(
             new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
@@ -433,37 +436,7 @@ final class ChanServContextTest extends TestCase
 
         $result = $context->trans('test.key', ['param' => 'value']);
 
-        self::assertSame('Translated value', $result);
-    }
-
-    /** @return iterable<string, array{string}> */
-    public static function translationLocales(): iterable
-    {
-        yield 'direct locale' => ['en'];
-        yield 'parent locale fallback' => ['en_US'];
-        yield 'configured fallback' => ['zz'];
-    }
-
-    #[Test]
-    #[DataProvider('translationLocales')]
-    public function transPrefersCommonTranslationWhenAvailable(string $language): void
-    {
-        $translator = new Translator($language);
-        $translator->addLoader('array', new ArrayLoader());
-        $translator->setFallbackLocales(['en']);
-        $translator->addResource('array', ['error.syntax' => 'Service translation'], 'en', 'chanserv');
-        $translator->addResource('array', ['error.syntax' => 'Shared translation'], 'en', 'common');
-        $translator->addResource('array', ['service.only' => 'Service-only message'], 'en', 'chanserv');
-        $context = $this->createContext(
-            new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip'),
-            $this->createStub(ChanServNotifierInterface::class),
-            $translator,
-            language: $language,
-        );
-
-        self::assertSame('Shared translation', $context->trans('error.syntax'));
-        self::assertSame('Service-only message', $context->trans('service.only'));
-        self::assertSame('missing.key', $context->trans('missing.key'));
+        self::assertSame('Translated', $result);
     }
 
     #[Test]

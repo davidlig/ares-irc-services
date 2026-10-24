@@ -304,7 +304,7 @@ final class OperServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')
             ->willReturnCallback(static function (string $key, array $params = []): string {
-                if ('debug.action_duration' === $key) {
+                if ('debug.actionWithDuration' === $key) {
                     self::assertArrayHasKey('%duration%', $params);
                     self::assertIsString($params['%duration%']);
 

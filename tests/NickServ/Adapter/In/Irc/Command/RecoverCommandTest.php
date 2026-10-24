@@ -45,7 +45,6 @@ final class RecoverCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('recover.syntax', $command->getSyntaxKey());
         self::assertSame('recover.help', $command->getHelpKey());
-        self::assertSame('recover.example', $command->getExampleKey());
         self::assertSame(7, $command->getOrder());
         self::assertSame('recover.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -157,7 +156,7 @@ final class RecoverCommandTest extends TestCase
         return [
             'not_registered' => [
                 RecoverNickResult::notRegistered('TargetNick'),
-                ['error.nick_not_registered [%nickname%: TargetNick]'],
+                ['recover.not_registered [%nickname%: TargetNick]'],
             ],
             'pending' => [
                 RecoverNickResult::pending('TargetNick'),

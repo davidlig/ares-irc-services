@@ -165,7 +165,7 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['UNKNOWNCMD'], $notifier, $translator, $registry));
 
-        self::assertContains('unknown_command', $messages);
+        self::assertContains('help.unknown_command', $messages);
     }
 
     #[Test]
@@ -438,7 +438,7 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['OPERCMD'], $notifier, $translator, $registry));
 
-        self::assertContains('unknown_command', $messages);
+        self::assertContains('help.unknown_command', $messages);
     }
 
     #[Test]

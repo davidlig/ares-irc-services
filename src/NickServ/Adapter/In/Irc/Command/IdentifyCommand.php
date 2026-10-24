@@ -56,11 +56,6 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         return $this->usesNativeAuthentication() ? 'identify.native_help' : 'identify.help';
     }
 
-    public function getExampleKey(): string
-    {
-        return $this->usesNativeAuthentication() ? 'identify.native_example' : 'identify.example';
-    }
-
     public function getOrder(): int
     {
         return 2;
@@ -142,7 +137,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
                 ]);
                 break;
             case IdentifyNickOutcome::NotRegistered:
-                $context->reply('error.nick_not_registered', ['nickname' => $result->nickname]);
+                $context->reply('identify.not_registered', ['nickname' => $result->nickname]);
                 break;
             case IdentifyNickOutcome::Pending:
                 $context->reply('identify.pending', ['nickname' => $result->nickname]);

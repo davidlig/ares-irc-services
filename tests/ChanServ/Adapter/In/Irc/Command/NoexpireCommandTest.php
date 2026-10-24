@@ -213,7 +213,7 @@ final class NoexpireCommandTest extends TestCase
         $cmd = $this->createCommandWith($channelRepository);
         $outcome = $cmd->execute($context);
 
-        self::assertContains('error.channel_not_registered', $messages);
+        self::assertContains('noexpire.not_registered', $messages);
         self::assertFalse($outcome->success);
     }
 

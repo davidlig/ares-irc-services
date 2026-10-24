@@ -82,7 +82,6 @@ final class ForbidVhostCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertSame('forbidvhost.help', $cmd->getHelpKey());
-        self::assertSame('forbidvhost.example', $cmd->getExampleKey());
     }
 
     #[Test]

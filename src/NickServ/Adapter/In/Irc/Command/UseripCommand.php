@@ -53,11 +53,6 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
         return 'userip.help';
     }
 
-    public function getExampleKey(): string
-    {
-        return 'userip.example';
-    }
-
     public function getOrder(): int
     {
         return 60;
@@ -113,7 +108,7 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
     {
         switch ($result->outcome) {
             case GetUseripOutcome::NotOnline:
-                $context->reply('error.nick_not_online', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('userip.not_online', ['%nickname%' => $result->nickname ?? '']);
 
                 return CommandOutcome::rejected();
 

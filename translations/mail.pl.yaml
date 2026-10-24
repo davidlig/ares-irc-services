@@ -1,10 +1,7 @@
-# Tłumaczenia wiadomości e-mail — Polski
-# Domena: mail
-#
-# Tematy i treści wiadomości e-mail to zwykły tekst bez formatowania IRC.
-# Zachowaj rzeczywiste podziały wierszy i zamierzone końcowe podziały.
+# Email content — domain: mail (plain text, no IRC codes)
+# Placeholders: %nickname%, %token%, %new_email%
 
-# --- REGISTER / VERIFY -----------------------------------------------------
+# REGISTER / VERIFY — verification token
 register_verification_subject: "%bot%: zweryfikuj rejestrację swojego nicka"
 register_verification_body: |
   Witaj,
@@ -21,7 +18,7 @@ register_verification_body: |
   Po weryfikacji ten token stanie się stałym tokenem odzyskiwania. Zachowaj go bezpiecznie: pozwoli odzyskać pseudonim. Ważność jednej godziny dotyczy tylko czasu przed weryfikacją.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- RESEND ----------------------------------------------------------------
+# RESEND — same as register, resend of token
 resend_verification_subject: "%bot%: Twój token weryfikacyjny (ponowne wysłanie)"
 resend_verification_body: |
   Witaj,
@@ -38,7 +35,7 @@ resend_verification_body: |
   Po weryfikacji ten token stanie się stałym tokenem odzyskiwania. Zachowaj go bezpiecznie: pozwoli odzyskać pseudonim. Ważność jednej godziny dotyczy tylko czasu przed weryfikacją.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- SET EMAIL -------------------------------------------------------------
+# SET EMAIL — confirmation token sent to current email
 email_change_token_subject: "%bot%: potwierdź swój nowy adres e-mail"
 email_change_token_body: |
   Witaj,
@@ -52,7 +49,7 @@ email_change_token_body: |
 
   Token wygasa za 1 godzinę. Jeśli to nie Ty wysłałeś to żądanie, zignoruj tę wiadomość.
 
-# --- RECOVER ---------------------------------------------------------------
+# RECOVER — password recovery token
 recovery_token_subject: "%bot%: odzyskiwanie hasła"
 recovery_token_body: |
   Witaj,
@@ -68,7 +65,7 @@ recovery_token_body: |
 
   Po weryfikacji ten token stanie się stałym tokenem odzyskiwania. Zachowaj go bezpiecznie: pozwoli odzyskać pseudonim. Ważność jednej godziny dotyczy tylko czasu przed weryfikacją.
 
-# --- CHANSERV SET FOUNDER --------------------------------------------------
+# ChanServ SET FOUNDER — founder change token
 founder_change_token_subject: "%bot%: token zmiany założyciela dla %channel%"
 founder_change_token_body: |
   Witaj,

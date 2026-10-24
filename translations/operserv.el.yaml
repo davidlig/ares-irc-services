@@ -1,24 +1,17 @@
-# Μεταφράσεις OperServ — Ελληνικά
-# Τομέας: operserv
-#
-# Κωδικοί μορφοποίησης IRC (διπλά εισαγωγικά ή κυριολεκτικά μπλοκ !irc):
-#   \x02        ενεργοποίηση/απενεργοποίηση έντονης γραφής
-#   \x03NN      χρώμα (ΔΕΚΑΔΙΚΟ: 03=πράσινο, 04=κόκκινο, 07=πορτοκαλί, 14=σκούρο γκρι)
-#   \x03        επαναφορά χρώματος
-#   \x0F        επαναφορά όλης της μορφοποίησης
-#
-# Τα χρώματα IRC χρησιμοποιούν ΔΕΚΑΔΙΚΟΥΣ αριθμούς (0-15), όχι δεκαεξαδικούς.
-#   \x0314 = σκούρο γκρι (14 δεκαδικό): ΣΩΣΤΟ
-#   \x030F = χρώμα 0 και μετά το γράμμα F: ΛΑΘΟΣ
-#
-# Πολυγραμμικό κείμενο IRC: !irc |- με πραγματικές αλλαγές γραμμής και κενά.
-# Τα μπλοκ χωρίς ετικέτα δεν αποκωδικοποιούν διαφυγές· διατηρήστε τα CTCP.
-# Παραδείγματα HELP: example/examples και %command_prefix%.
-# Ο παρουσιαστής προσθέτει άχρωμο /msg και περιθώριο δύο κενών.
+# OperServ translations — Greek
+# Domain: operserv
 
-# --- ERROR -----------------------------------------------------------------
+unknown_command: "\x0304✗\x03 Άγνωστη εντολή \x02%command%\x02. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03."
+
 error:
+  syntax:           "\x0304✗\x03 Λανθασμένη σύνταξη. Χρήση: \x02%syntax%\x02"
+  oper_only:        "\x0304✗\x03 Αυτή η εντολή περιορίζεται σε IRC Operators."
+  not_identified:   "\x0304✗\x03 Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Δεν έχετε επαρκείς άδειες για να εκτελέσετε αυτήν την εντολή."
   root_only:        "\x0304✗\x03 Αυτή η εντολή περιορίζεται σε root διαχειριστές του δικτύου."
+  nick_not_registered: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+
+# --- HELP --------------------------------------------------------------------
 help:
   syntax:           "HELP [command [sub-option]]"
   short:            "Λίστα εντολών ή βοήθεια για μια εντολή."
@@ -42,6 +35,7 @@ help:
     network_security: "Ασφάλεια δικτύου"
     communication: "Επικοινωνία"
     low_level: "Χαμηλό επίπεδο"
+  unknown_command:  "\x0307✗ Άγνωστη εντολή\x03\x0F \x02\x0303%command%\x03\x0F. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Διαθέσιμες εντολές για IRC operators:\x02"
 
 # --- IRCOP --------------------------------------------------------------------
@@ -185,6 +179,7 @@ kill:
   syntax:           "KILL <nickname> <reason>"
   short:            "Αναγκαστική αποσύνδεση χρήστη από το δίκτυο."
   help:             "Αποσυνδέει έναν χρήστη από το δίκτυο IRC.\nΟι IRCops και οι Root χρήστες δεν μπορούν να γίνουν kill.\nΑυτή η εντολή απαιτεί την άδεια operserv.kill.\n\nΣύνταξη: KILL <nickname> <reason>\nΠαράδειγμα: KILL BadUser Flooding σε κανάλια"
+  user_not_online:  "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
   protected_root:   "\x0304✗\x03 Δεν μπορεί να γίνει kill ο Root χρήστης \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Δεν μπορεί να γίνει kill ο IRC operator \x02%nickname%\x02."
   done:             "\x0303✓\x03 Ο χρήστης \x02%nickname%\x02 έχει γίνει kill (%reason%)."
@@ -203,6 +198,8 @@ gline:
   already_exists:   "\x0304✗\x03 Το G-line για \x02%mask%\x02 υπάρχει ήδη."
   max_entries:      "\x0304✗\x03 Επιτεύχθηκε ο μέγιστος αριθμός G-lines (%max%)."
   not_found:        "\x0304✗\x03 Το G-line \x02%mask%\x02 δεν βρέθηκε."
+  user_not_found:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι online."
+  permanent:        "μόνιμο"
 
   add:
     syntax:         "GLINE ADD <mask> <expiry> <reason>"
@@ -222,6 +219,9 @@ gline:
     help:           "Εμφανίζει όλα τα G-lines. Προαιρετικά φιλτράρισμα κατά μοτίβο μάσκας.\nΑυτή η εντολή απαιτεί την άδεια operserv.gline."
     header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
     empty:          "Δεν υπάρχουν G-lines."
+    no_reason:      "Χωρίς αιτία"
+    never_expires:  "Μόνιμο"
+    unknown_creator: "άγνωστος"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, λήγει: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
@@ -256,7 +256,10 @@ raw:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
+  action_message:   "%operator% εκτελεί την εντολή %command% σε %target%. %reason%"
+  actionWithDuration: "%operator% εκτελεί την εντολή %command% σε %target%. Διάρκεια: %duration%. %reason%"
   action_global:    "%operator% εκτελεί την εντολή GLOBAL με ψευδώνυμο %target% μέσω %type% σε %count% χρήστες. Μήνυμα: %message%"
+  prefix_reason:    "Αιτία: %reason%"
   prefix_message:   "Μήνυμα: %reason%"
 
 # --- MOTD ----------------------------------------------------------------------
@@ -290,6 +293,7 @@ motd:
     status_disabled: "\x0304ανενεργή\x03"
     expired:        "\x0304έληξε\x03"
     no_bot:         "(χωρίς bot)"
+    never:          "ποτέ"
     shown_count:    "εμφανίστηκε %count% φορές"
   clean:
     syntax:         "MOTD CLEAN"

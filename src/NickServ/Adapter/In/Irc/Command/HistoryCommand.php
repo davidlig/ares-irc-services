@@ -61,11 +61,6 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
         return 'history.help';
     }
 
-    public function getExampleKey(): string
-    {
-        return 'history.example';
-    }
-
     public function getOrder(): int
     {
         return 200;
@@ -196,7 +191,7 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
     {
         switch ($result->outcome) {
             case HistoryNickOutcome::NotRegistered:
-                $context->reply('error.nick_not_registered', ['%nickname%' => $result->targetNick ?? '']);
+                $context->reply('history.not_registered', ['%nickname%' => $result->targetNick ?? '']);
 
                 return CommandOutcome::rejected();
 

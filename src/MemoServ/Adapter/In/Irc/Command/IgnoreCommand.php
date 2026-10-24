@@ -140,7 +140,7 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
                 foreach ($result->ignoredNicks as $name) {
                     $context->replyRaw('  ' . $name);
                 }
-                $context->reply('reply.separator');
+                $context->reply('ignore.list_footer');
                 break;
 
             case IgnoreMemoOutcome::AddedNick:
@@ -162,11 +162,11 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
                 break;
 
             case IgnoreMemoOutcome::NickNotRegistered:
-                $context->reply('error.nick_not_registered', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
+                $context->reply('ignore.nick_not_registered', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
                 break;
 
             case IgnoreMemoOutcome::ChannelNotRegistered:
-                $context->reply('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
+                $context->reply('ignore.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
             case IgnoreMemoOutcome::AccessDenied:

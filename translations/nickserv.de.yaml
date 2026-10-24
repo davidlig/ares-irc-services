@@ -7,25 +7,26 @@
 #   \x03        Farbe zurücksetzen
 #   \x0F        Alle Formatierung zurücksetzen
 #
-# IRC-Farben verwenden DEZIMALZAHLEN (0-15), keine Hexadezimalzahlen.
-#   \x0314 = dunkelgrau (14 dezimal): RICHTIG
-#   \x030F = Farbe 0 gefolgt vom Buchstaben F: FALSCH
-#
-# Mehrzeiliger IRC-Text: !irc |- mit echten Zeilenumbrüchen und Leerzeichen.
-# Blöcke ohne Tag dekodieren keine Escape-Sequenzen; CTCP-Literale erhalten.
-# HELP-Beispiele: example/examples und %command_prefix%.
-# Die Darstellung ergänzt /msg ohne Farbe und einen Rand von zwei Leerzeichen.
+# HINWEIS: IRC-Farben verwenden DEZIMALE Zahlen (0-15), nicht hexadezimal.
+#   \x0314 = Dunkelgrau (14 dezimal)  ← KORREKT
+#   \x030F = Farbe 0 + Buchstabe "F"  ← FALSCH (0F ist hexadezimal, nicht dezimal)
+
+unknown_command: "\x0304✗\x03 Unbekannter Befehl \x02%command%\x02. Verwenden Sie \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:            "\x0304✗\x03 Falsche Syntax. Verwendung: \x02%syntax%\x02"
+  oper_only:         "\x0304✗\x03 Dieser Befehl ist IRC-Operatoren vorbehalten."
+  not_identified:    "\x0304✗\x03 Sie sind nicht identifiziert. Verwenden Sie \x0303/msg %bot% IDENTIFY <nickname> <Passwort>\x03"
+  permission_denied: "\x0304✗\x03 Zugriff verweigert. Sie haben keinen Zugriff auf diesen Befehl."
+  mail_failed:       "\x0304✗\x03 Die E-Mail konnte nicht gesendet werden. Überprüfen Sie Ihre Adresse oder versuchen Sie es später erneut."
 
 # --- REGISTER ---------------------------------------------------------------
 register:
   token_unavailable: "\x0304✗\x03 Die Registrierung ist ausstehend, aber das Token konnte nicht ausgegeben werden.\nWarte auf den Ablauf dieser Registrierung, bevor du dich erneut registrierst."
   syntax: "REGISTER <password> [email]"
   short:            "Ihren Nickname bei den Services registrieren."
-  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nNach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Gültigkeitsdauer von %duration% gilt nur vor der Bestätigung."
-  example: "%command_prefix%\x02\x0303REGISTER Sicheres$Passwort_123\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303REGISTER Sicheres$Passwort_123 benutzer@beispiel.de\x03\x0F"
-  pending:          "\x0307→\x03 Ein Verifizierungs-Token wurde an \x02%email%\x02 gesendet.\n  Führen Sie \x0303/msg %bot% VERIFY <Token>\x03 aus, um die Registrierung abzuschließen.\n  Nicht erhalten? Prüfen Sie Spam oder verwenden Sie \x0303/msg %bot% RESEND\x03\n  Das Token läuft in \x02%duration%\x02 ab."
+  help: "TOKEN: REGISTER <password> [email]. EMAIL: REGISTER <password> <email>.\nNach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung."
+  pending:          "\x0307→\x03 Ein Verifizierungs-Token wurde an \x02%email%\x02 gesendet.\n  Führen Sie \x0303/msg %bot% VERIFY <Token>\x03 aus, um die Registrierung abzuschließen.\n  Nicht erhalten? Prüfen Sie Spam oder verwenden Sie \x0303/msg %bot% RESEND\x03\n  Das Token läuft in \x021 Stunde\x02 ab."
   already_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist bereits registriert."
   already_pending: "\x0307→\x03 Die Registrierung von \x02%nickname%\x02 steht aus. Verwende \x0303VERIFY <token>\x03. \x0303RESEND\x03 ist nur bei REGMODE EMAIL und einer gültigen zugewiesenen E-Mail-Adresse verfügbar."
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 kann in diesem Netzwerk nicht registriert werden."
@@ -39,8 +40,7 @@ register:
 verify:
   syntax:           "VERIFY <Token>"
   short: "Bestätigt eine Registrierung oder ein Rettungstoken."
-  help: "Nach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Gültigkeitsdauer von %duration% gilt nur vor der Bestätigung."
-  example: "%command_prefix%\x02\x0303VERIFY <erhaltenes_Token>\x03\x0F"
+  help: "Nach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung."
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 wurde erfolgreich registriert und Sie sind jetzt identifiziert."
   success_native:   "\x0303✔\x03 Nickname \x02%nickname%\x02 wurde erfolgreich registriert. Verwenden Sie die unten gezeigte native Authentifizierung."
   invalid_token: "\x0304✗\x03 Das Rettungstoken ist ungültig."
@@ -51,8 +51,7 @@ resend:
   disabled: "\x0307ℹ\x03 \x0303RESEND\x03 ist deaktiviert, solange REGMODE auf TOKEN steht."
   syntax:           "RESEND"
   short:            "Das Verifizierungs-Token erneut an Ihre E-Mail senden."
-  help: "RESEND ist deaktiviert, solange REGMODE auf TOKEN steht.\nNach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Gültigkeitsdauer von %duration% gilt nur vor der Bestätigung.\nIm EMAIL-Modus verlängert RESEND die Gültigkeit des Tokens und der ausstehenden Registrierung um %duration% ab dem Versand."
-  example: "%command_prefix%\x02\x0303RESEND\x03\x0F"
+  help: "RESEND ist deaktiviert, solange REGMODE auf TOKEN steht.\nNach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung.\nIm EMAIL-Modus verlängert RESEND die Gültigkeit des Tokens und der ausstehenden Registrierung um eine Stunde ab dem Versand."
   success:          "\x0307→\x03 Verifizierungs-Token erneut an \x02%email%\x02 gesendet."
   no_pending:       "\x0304✗\x03 Sie haben keine ausstehende Registrierung, für die ein Token erneut gesendet werden kann."
   throttled:        "\x0304✗\x03 Sie müssen \x02%minutes%\x02 Minute(n) warten, bevor Sie eine weitere Verifizierungs-E-Mail anfordern."
@@ -66,9 +65,7 @@ recover:
   syntax:           "RECOVER <nickname> [Token]"
   short:            "Ihren Nickname wiederherstellen, wenn Sie Ihr Passwort verloren haben."
   help: "EMAIL: RECOVER <nickname> fordert ein vorläufiges Token per E-Mail an. TOKEN: gib dein bestätigtes Token an. RECOVER <nickname> <token> akzeptiert das gültige E-Mail-Token oder das bestätigte Token. Das E-Mail-Token ersetzt das gespeicherte erst nach Prüfung. Mit dem gespeicherten Token wird ein optionaler Ersatz über VERIFY angeboten; ignoriere die Nachricht, um es zu behalten."
-  example: "%command_prefix%\x02\x0303RECOVER Benutzer\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303RECOVER Benutzer <erhaltenes_Token>\x03\x0F"
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   pending: "\x0307→\x03 Die Registrierung von \x02%nickname%\x02 steht aus. Verwende \x0303VERIFY <token>\x03. \x0303RESEND\x03 ist nur bei REGMODE EMAIL und einer gültigen zugewiesenen E-Mail-Adresse verfügbar."
   suspended:        "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert. Grund: %reason%"
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 kann in diesem Netzwerk nicht verwendet werden."
@@ -82,16 +79,13 @@ identify:
   syntax:           "IDENTIFY <nickname> <Passwort>"
   short:            "Sich als Besitzer eines Nicknames identifizieren."
   help:             "Authentifiziert Ihre Sitzung bei %nickserv% mit Ihrem Nickname und Passwort.\nNach erfolgreicher Identifizierung erhalten Sie den registrierten Modus \x02+r\x02\nund, falls Sie einen Gast-Nick verwendet haben, wird Ihr registrierter Nick wiederhergestellt."
-  example: "%command_prefix%\x02\x0303IDENTIFY Benutzer <Passwort>\x03\x0F"
   native_syntax:    "/NICK <nickname>:<Passwort> | /NICK <nickname>!<Passwort>"
   native_short:     "Zeigt die native Syntax zur Nickname-Authentifizierung."
   native_help:      "Dieses Protokoll authentifiziert Konten durch Nickname-Wechsel.\nVerwende /NICK <nickname>:<Passwort> oder, wenn der Nickname belegt ist, /NICK <nickname>!<Passwort>."
-  native_example: "\x02\x0303/NICK Benutzer:<Passwort>\x03\x0F"
-  native_examples:
-    - "%command_prefix%\x02\x0303/NICK Benutzer!<Passwort>\x03\x0F"
   native_authentication: "\x0307ℹ\x03 Dieses Protokoll verwaltet die Authentifizierung durch Nickname-Wechsel. Verwende \x0303/NICK <nickname>:<Passwort>\x03 oder, wenn der Nickname belegt ist, \x0303/NICK <nickname>!<Passwort>\x03."
   success:          "\x0303✔\x03 Sie sind jetzt identifiziert als \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Sie sind bereits identifiziert als \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   invalid_credentials: "\x0304✗\x03 Falsches Passwort. Bitte versuchen Sie es erneut."
   locked_out:         "\x0304✗\x03 Zu viele Fehlversuche. Versuchen Sie es in \x02%minutes%\x02 Minute(n) erneut."
   ghost_released:   "\x0307⚡\x03 Die Geister-Sitzung, die \x02%nickname%\x02 hielt, wurde getrennt."
@@ -106,7 +100,6 @@ status:
   syntax:           "STATUS <nickname>"
   short:            "Den Registrierungsstatus eines Nicknames anzeigen."
   help:             "Zeigt den aktuellen Status eines Nicknames: registriert, ausstehende Verifizierung,\nsuspendiert oder gesperrt."
-  example: "%command_prefix%\x02\x0303STATUS Benutzer\x03\x0F"
   header:           "\x02Status von Nick \x0307%nickname%\x03\x02"
   unregistered:     "  Status          : Nicht registriert"
   not_registered_offline: "  Status          : \x0315Nicht registriert\x03"
@@ -124,13 +117,14 @@ status:
   forbidden_reason: "  Grund           : %reason%"
   pending_deletion:   "  \x0314Status\x03          : \x0307Löschung ausstehend\x03"
   pending_deletion_at: "  \x0314Gelöscht\x03        : %date%"
+  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <nickname>"
   short:            "Informationen über einen registrierten Nickname anzeigen."
   help:             "Zeigt Registrierungsdetails für einen Nickname: Registrierungsdatum,\nVerbindungsstatus, letzte Quit-Nachricht und E-Mail-Adresse. Die E-Mail\nist nur für den Besitzer sichtbar, wenn identifiziert. Mit PRIVATE ON\nkönnen nur der Besitzer und IRC-Operatoren die Informationen einsehen."
-  example: "%command_prefix%\x02\x0303INFO Benutzer\x03\x0F"
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   private:          "\x0304✗\x03 Informationen zu Nickname \x02%nickname%\x02 sind privat."
   header:           "\x02Informationen für Nickname \x0307%nickname%\x03\x02"
   status:           "  \x0314Status\x03                 : %status%"
@@ -154,6 +148,7 @@ info:
   pending_deletion_at: "  \x0314Gelöscht\x03               : %date%"
   pending_deletion_until: "  \x0314Endgültig am\x03           : %date%"
   pending_deletion_notice: "  \x0307Dieser Nickname steht zur Löschung an und kann nicht registriert werden.\x03"
+  footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AChannels mit Zugriff:\x03"
   channels_entry_founder:   "  %channel% (\x0303Founder\x03)"
   channels_entry_successor: "  %channel% (\x0303Successor\x03)"
@@ -164,9 +159,6 @@ set:
   syntax:           "SET <Option> <Wert>"
   short:            "Optionen deines Nicknames ändern."
   help:             "Ändert Ihre %nickserv%-Nickname-Einstellungen.\nSie müssen identifiziert sein, um diesen Befehl zu verwenden."
-  example: "%command_prefix%\x02\x0303SET LANGUAGE es\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303SET TIMEZONE Europe/Madrid\x03\x0F"
   unknown_option:   "\x0304✗\x03 Unbekannte Option \x02%option%\x02. Verfügbare Optionen: %options%."
 
   password:
@@ -227,13 +219,19 @@ set:
 saset:
   syntax:           "SASET <Nickname> <Option> <Wert>"
   short:            "Einstellungen eines anderen Nicknames ändern."
-  help: |-
-    Ermöglicht IRC-Operatoren, die Einstellungen eines anderen registrierten
-    Nicknames zu ändern. Nicknames von Root, IRC-Operatoren und Diensten sind
-    ausgeschlossen.
-  example: "%command_prefix%\x02\x0303SASET Benutzer PRIVATE ON\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303SASET Benutzer TIMEZONE OFF\x03\x0F"
+  help:             |
+    Ermöglicht einem IRC-Operator die Einstellungen eines registrierten Nicknames zu ändern.
+    Der Ziel-Nickname darf kein Root-Benutzer, IRC-Operator oder Service-Nickname sein.
+
+    Verfügbare Optionen: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD: Ändert das Passwort direkt (ohne E-Mail-Bestätigung).
+    SASET EMAIL: Ändert die E-Mail direkt (ohne Token-Validierung).
+
+    Dieser Befehl erfordert IRCop-Berechtigung: nickserv.saset
+
+    Syntax: SASET <Nickname> <Option> <Wert>
+    Beispiel: SASET Benutzer PASSWORD neuespass
   unknown_option:   "\x0304✗\x03 Unbekannte Option \x02%option%\x02. Verfügbare Optionen: %options%."
   cannot_modify_oper: "\x0304✗\x03 Kann Nickname eines IRC-Operators nicht ändern."
 
@@ -290,7 +288,6 @@ help:
   command_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    %marker% \x02\x0303%command%\x03\x0F%description%"
   options_header: "\x02 ■ Optionen:\x02"
-  examples_header: "\x02 ■ Beispiele:\x02"
   general_syntax: "HELP <Befehl>"
   general_footer: "%marker% Verwende /msg %bot% \x02\x0303%syntax%\x03\x0F für weitere Informationen."
   set_sub_syntax: "HELP %command% <Option>"
@@ -307,6 +304,7 @@ help:
     account_management: "Kontoverwaltung"
     suspensions_bans: "Sperren und Verbote"
     deletion: "Löschung und Wiederherstellung"
+  unknown_command: "%marker% Keine Hilfe verfügbar für \x02%command%\x0F."
   ircop_header: "\x02 ■ Verfügbare Befehle für IRC-Operatoren:\x02"
 
   set_timezone:
@@ -326,10 +324,16 @@ protection:
 userip:
   syntax:           "USERIP <nickname>"
   short:            "Die echte IP-Adresse und den Hostnamen eines Nicknames abrufen."
-  help: |-
-    Zeigt die echte IP-Adresse und den Hostnamen eines Nicknames.
-    Verwende diese sensible Information verantwortungsbewusst.
-  example: "%command_prefix%\x02\x0303USERIP Benutzer\x03\x0F"
+  help:             |
+    Zeigt die echte IP-Adresse und den Hostnamen des angegebenen Nicknames.
+    Nur verfügbar für IRCops mit der Berechtigung 'nickserv.userip'.
+
+    Dieser Befehl zeigt sensible Nickname-Informationen an.
+    Verwenden Sie ihn verantwortungsvoll.
+
+    Syntax: USERIP <nickname>
+    Beispiel: USERIP EinBenutzer
+  not_online:       "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht verbunden."
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 whoip:
@@ -338,7 +342,6 @@ whoip:
   help:             |
     Listet registrierte Nicknames auf, deren letzte identifizierte Verbindung diese IP verwendet hat.
     Die gespeicherte IP-Adresse kann veraltet sein.
-  example: "%command_prefix%\x02\x0303WHOIP 192.0.2.10\x03\x0F"
   empty:            "Keine registrierten Nicknames passen zu dieser IP."
   header:           "Übereinstimmende Nicknamen:"
 
@@ -346,41 +349,58 @@ whoip:
 suspend:
   syntax:           "SUSPEND <nickname> <Dauer> <Grund>"
   short:            "Einen Nickname suspendieren."
-  help: |-
-    Verhindert, dass sich der Eigentümer identifiziert. Die Dauer kann in Tagen
-    (d), Stunden (h), Minuten (m) oder 0 für eine dauerhafte Sperre angegeben
-    werden.
-    IRC-Operatoren und Root-Benutzer können nicht gesperrt werden.
-  example: "%command_prefix%\x02\x0303SUSPEND SchlechterBenutzer 7d Spam en #hilfe\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303SUSPEND Problematisch 0 Umgehung einer Sperre\x03\x0F"
+  help:             |
+    Suspendiert einen Nickname und verhindert, dass der Besitzer sich identifiziert.
+    Die Suspendierung kann vorübergehend oder dauerhaft sein.
+
+    Dauer-Formate: \x0303%d\x03 (Tage), \x0303%h\x03 (Stunden), \x0303%m\x03 (Minuten) oder \x03030\x03 (dauerhaft).
+
+    Suspendierte Benutzer können sich nicht mit ihrem Nickname identifizieren.
+    IRC-Operatoren und Root-Benutzer können nicht suspendiert werden.
+
+    Syntax: SUSPEND <nickname> <Dauer> <Grund>
+    Beispiele:
+      SUSPEND SchlechterBenutzer 7d Spamming in #hilfe
+      SUSPEND Missbraucher 30d Wiederholter Flood
+      SUSPEND ProblemBenutzer 0 Sperrumgehung
   success:            "\x0303✔\x03 Nickname \x02%nickname%\x02 wurde suspendiert bis \x02%duration%\x02."
   already_suspended:  "\x0304✗\x03 Nickname \x02%nickname%\x02 ist bereits suspendiert."
+  not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   forbidden:          "\x0304✗\x03 Nickname \x02%nickname%\x02 ist gesperrt und kann nicht suspendiert werden."
   cannot_suspend_oper: "\x0304✗\x03 IRC-Operator \x02%nickname%\x02 kann nicht suspendiert werden."
   cannot_suspend_root: "\x0304✗\x03 Root-Benutzer \x02%nickname%\x02 kann nicht suspendiert werden."
   cannot_suspend_service: "\x0304✗\x03 Service-Nickname \x02%nickname%\x02 kann nicht suspendiert werden."
   invalid_duration:   "\x0304✗\x03 Ungültige Dauer. Verwenden Sie: \x0303<d><h><m>\x03 (z. B. 7d, 12h, 30m) oder \x03030\x03 für dauerhaft."
+  permanent:          "dauerhaft"
 
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
   syntax:           "UNSUSPEND <nickname>"
   short:            "Suspendierung eines Nicknames aufheben."
-  help: |-
-    Hebt eine aktive Sperre auf, damit sich der Eigentümer wieder identifizieren
-    kann.
-  example: "%command_prefix%\x02\x0303UNSUSPEND Benutzer\x03\x0F"
+  help:             |
+    Hebt eine aktive Suspendierung eines Nicknames auf, sodass der Besitzer sich wieder identifizieren kann.
+
+    Syntax: UNSUSPEND <nickname>
+    Beispiel: UNSUSPEND EinBenutzer
   success:          "\x0303✔\x03 Suspendierung wurde von \x02%nickname%\x02 aufgehoben."
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   not_suspended:    "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht suspendiert."
 
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
   syntax:           "RENAME <nickname>"
   short:            "Einen verbundenen Nickname zwangsweise in einen zufälligen Nickname umbenennen."
-  help: |-
-    Zwingt einen verbundenen Nickname, zu einem zufälligen, vom Netzwerk
-    mit Präfix versehenen Namen zu wechseln.
-  example: "%command_prefix%\x02\x0303RENAME Problematisch\x03\x0F"
+  help:             |
+    Zwingt einen verbundenen Nickname, seinen Nick in einen zufällig generierten zu ändern.
+    Nützlich zur Durchsetzung von Netzwerkrichtlinien, ohne den Benutzer zu trennen.
+
+    Das neue Nickname-Format verwendet das konfigurierte Gast-Präfix (%prefix%).
+
+    Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.rename
+
+    Syntax: RENAME <nickname>
+    Beispiel: RENAME Störenfried
+  not_online:        "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht verbunden."
   cannot_rename_root: "\x0304✗\x03 Root-Benutzer \x02%nickname%\x02 kann nicht umbenannt werden."
   cannot_rename_oper: "\x0304✗\x03 IRC-Operator \x02%nickname%\x02 kann nicht umbenannt werden."
   cannot_rename_service: "\x0304✗\x03 Service-Nickname \x02%nickname%\x02 kann nicht umbenannt werden."
@@ -390,14 +410,19 @@ rename:
 drop:
   syntax:           "DROP <nickname> [FORCE]"
   short:            "Einen registrierten Nickname löschen."
-  help: |-
-    Markiert einen registrierten Nickname während der Schonfrist zur Löschung;
-    mit RESTORE kann er wiederhergestellt werden. Mit FORCE wird er endgültig
-    gelöscht. Root-, IRC-Operator- und Dienst-Nicknames sowie dein eigener können
-    nicht gelöscht werden.
-  example: "%command_prefix%\x02\x0303DROP AltesKonto\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303DROP AltesKonto FORCE\x03\x0F"
+  help:             |
+    Löscht einen registrierten Nickname aus der Datenbank.
+    Diese Aktion kann nicht rückgängig gemacht werden.
+
+    Wenn der Benutzer online ist, wird er in einen Gast-Nickname umbenannt.
+    Root-Benutzer und IRC-Operatoren können nicht gelöscht werden.
+    Sie können Ihren eigenen Nickname nicht löschen.
+
+    Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.drop
+
+    Syntax: DROP <nickname>
+    Beispiel: DROP AlterAccount
+  not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert. Zuerst entsuspendieren."
   forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist gesperrt."
   cannot_drop_root:   "\x0304✗\x03 Root-Benutzer \x02%nickname%\x02 kann nicht gelöscht werden."
@@ -413,20 +438,27 @@ restore:
   syntax:           "RESTORE <nickname>"
   short:            "Einen zur Löschung anstehenden Nickname wiederherstellen."
   help:             "Stellt einen Nickname wieder her, der manuell gelöscht wurde und sich noch in der Gnadenfrist befindet. Erfordert IRCop-Berechtigung: nickserv.restore."
-  example: "%command_prefix%\x02\x0303RESTORE AltesKonto\x03\x0F"
   success:          "\x0303✓\x03 Nickname \x02%nickname%\x02 wurde wiederhergestellt."
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   not_pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 steht nicht zur Löschung an."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:
   syntax:           "FORBID <nickname> <Grund>"
   short:            "Einen Nickname dauerhaft für die Nutzung sperren."
-  help: |-
-    Verbietet einen Nickname dauerhaft, sodass ihn niemand registrieren oder
-    verwenden kann. Ein registrierter Eintrag wird entfernt; bei Verbindung wird
-    der Benutzer zu einem zufälligen Nickname gezwungen. Root, IRC-Operatoren und
-    Dienste können nicht gesperrt werden.
-  example: "%command_prefix%\x02\x0303FORBID SchlechterBenutzer Wiederholte Regelverstöße\x03\x0F"
+  help:             |
+    Verbietet die Nutzung eines Nicknames im Netzwerk.
+    Der Nickname kann von niemandem registriert oder verwendet werden.
+
+    Wenn der Nickname derzeit registriert ist, wird er zuerst gelöscht.
+    Wenn jemand ihn verwendet, wird er gezwungen, zu einem Gast-Nickname zu wechseln.
+
+    Root-Benutzer, IRC-Operatoren und Service-Nicknames können nicht gesperrt werden.
+
+    Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.forbid
+
+    Syntax: FORBID <nickname> <Grund>
+    Beispiel: FORBID SchlechterNick Wiederholte Richtlinienverstöße
   success:            "\x0303✔\x03 Nickname \x02%nickname%\x02 wurde gesperrt."
   updated:            "\x0303✔\x03 Sperrgrund für \x02%nickname%\x02 wurde aktualisiert."
   reason_required:    "\x0304✗\x03 Sie müssen einen Grund für die Sperrung angeben."
@@ -438,8 +470,13 @@ forbid:
 unforbid:
   syntax:           "UNFORBID <nickname>"
   short:            "Eine Nickname-Sperrung aufheben."
-  help: "Hebt das Verbot auf, sodass der Nickname wieder verwendet werden kann."
-  example: "%command_prefix%\x02\x0303UNFORBID VerbotenerNickname\x03\x0F"
+  help:             |
+    Hebt eine Nickname-Sperrung auf, sodass der Nickname wieder verwendet werden kann.
+
+    Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.forbid
+
+    Syntax: UNFORBID <nickname>
+    Beispiel: UNFORBID EinNick
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 ist nicht mehr gesperrt."
   not_forbidden:    "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht gesperrt."
 
@@ -447,14 +484,20 @@ unforbid:
 forbidvhost:
   syntax:           "FORBIDVHOST {ADD|DEL|LIST} [Muster]"
   short:            "Gesperrte VHost-Muster verwalten."
-  help: |-
-    Verwaltet Muster, die passende VHosts mit SET VHOST verhindern. * steht für
-    beliebig viele Zeichen, ? für genau ein Zeichen. IRC-Operatorrechte
-    erforderlich.
+  help:             |
+    Verwaltet Muster, die Benutzer daran hindern, übereinstimmende VHosts
+    via %bot% SET VHOST festzulegen.
 
-  example: "%command_prefix%\x02\x0303FORBIDVHOST ADD *.pirata.com\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303FORBIDVHOST LIST\x03\x0F"
+    Platzhalter: * entspricht einer beliebigen Sequenz, ? einem einzelnen Zeichen.
+    Beispiel: *.raubkopien.de sperrt jeden VHost, der auf .raubkopien.de endet.
+
+    Dieser Befehl erfordert die IRCop-Berechtigung: nickserv.forbidvhost
+
+    Unterbefehle:
+      ADD <Muster>    Ein gesperrtes Muster hinzufügen
+      DEL <Muster>    Ein gesperrtes Muster entfernen
+      LIST            Alle gesperrten Muster anzeigen
+
   unknown_sub: "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL oder LIST."
 
   add:
@@ -493,21 +536,42 @@ forbidvhost:
     header:      "\x0307ℹ\x03 Gesperrte VHost-Muster (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — von %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 Keine gesperrten VHost-Muster."
+    unknown_creator: "unbekannt"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
   syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
   short:            "Nickname-Aktionsverlauf anzeigen oder verwalten."
-  help: |-
-    Zeigt und verwaltet den Aktionsverlauf eines Nicknames. Sperren sowie Passwort-,
-    E-Mail- und Wiederherstellungsänderungen werden automatisch erfasst. VIEW zeigt
-    drei Einträge pro Seite; ALL zeigt den vollständigen Verlauf.
-  example: "%command_prefix%\x02\x0303HISTORY Benutzer VIEW\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303HISTORY Benutzer VIEW ALL\x03\x0F"
-    - "%command_prefix%\x02\x0303HISTORY Benutzer ADD Manuelle Notiz\x03\x0F"
+  help:             |
+    Verwaltet den Aktionsverlauf für einen Nickname.
+    Nur IRCops mit der Berechtigung 'nickserv.history' können diesen Befehl verwenden.
 
-  # --- HISTORY ADD ---------------------------------------------------------
+    Automatisch aufgezeichnete Aktionen:
+      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
+      SASET EMAIL, RECOVER
+
+    Syntax: HISTORY <nickname> ADD <Nachricht>
+            HISTORY <nickname> DEL <id>
+            HISTORY <nickname> VIEW [PAGE|ALL]
+            HISTORY <nickname> CLEAR
+
+    Beispiele:
+      HISTORY EinNick VIEW
+      HISTORY EinNick ADD Manuelle Notiz über diesen Benutzer
+      HISTORY EinNick VIEW 2
+      HISTORY EinNick VIEW ALL
+      HISTORY EinNick DEL 123
+      HISTORY EinNick CLEAR
+
+    Verwenden Sie VIEW, um den Verlauf zu sehen (zeigt standardmäßig 3 Einträge).
+    Verwenden Sie VIEW PAGE 2, um die nächste Seite zu sehen.
+    Verwenden Sie VIEW ALL, um den vollständigen Verlauf zu sehen.
+    Verwenden Sie ADD, um einen manuellen Eintrag hinzuzufügen.
+    Verwenden Sie DEL, um einen bestimmten Eintrag anhand der ID zu löschen.
+    Verwenden Sie CLEAR, um alle Verlaufseinträge zu löschen.
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
+  unknown_operator: "(unbekannt)"
+
   add:
     syntax:     "HISTORY <nickname> ADD <Nachricht>"
     short:      "Einen manuellen Verlaufseintrag hinzufügen."
@@ -526,6 +590,10 @@ history:
 
       Syntax: HISTORY <nickname> DEL <id>
       Beispiel: HISTORY EinNick DEL 42
+    success:    "\x0303✔\x03 Verlaufseintrag \x02%id%\x02 gelöscht."
+    not_found:  "\x0304✗\x03 Verlaufseintrag \x02%id%\x02 nicht gefunden."
+    invalid_id: "\x0304✗\x03 Ungültige Eintrags-ID: \x02%id%\x02."
+
   view:
     syntax:     "HISTORY <nickname> VIEW [PAGE|ALL]"
     short:      "Nickname-Aktionsverlauf anzeigen."
@@ -541,6 +609,7 @@ history:
       Verwenden Sie VIEW ALL, um den vollständigen Verlauf zu sehen.
     header:     "\x02Verlauf für \x0307%nickname%\x03\x02 (zeigt %start%-%end% von %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 von %operator% — %message%"
+    extra:       "  Extra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 Keine Verlaufseinträge für \x02%nickname%\x02 gefunden."
     page_hint:   "Verwenden Sie \x0303HISTORY %nickname% VIEW %next_page%\x03 für weitere Einträge."
 
@@ -557,6 +626,7 @@ history:
 
 # --- Übersetzungen für Verlaufsmeldungen (verwendet beim Anzeigen des Verlaufs) ---
 history.message:
+  unsuspend:                  "Suspendierung aufgehoben"
   password_changed_owner:     "Passwort vom Besitzer geändert"
   password_changed_operator:  "Passwort vom Operator geändert"
   email_changed_owner:        "E-Mail von %old_email% zu %new_email% geändert"
@@ -565,20 +635,32 @@ history.message:
 
 # --- Übersetzungen für Verlaufs-Zusatzfelder ---
 history.extra:
+  duration:      "Dauer: %value%"
+  expires_at:    "Läuft ab: %value%"
   old_email:     "Alte E-Mail: %value%"
   new_email:     "Neue E-Mail: %value%"
   method:        "Methode: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:
   syntax:           "NOEXPIRE <nickname> {ON|OFF}"
   short:            "Ablaufschutz für einen Nickname setzen oder entfernen."
-  help: |-
-    Legt fest, ob der Nickname wegen Inaktivität abläuft.
-    ON verhindert den Ablauf, OFF wendet die normalen Regeln an.
-  example: "%command_prefix%\x02\x0303NOEXPIRE Benutzer ON\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303NOEXPIRE Benutzer OFF\x03\x0F"
+  help:             |
+    Steuert, ob ein Nickname aufgrund von Inaktivität abläuft.
+    Bei ON läuft der Nickname unabhängig von der letzten Aktivität nie ab.
+    Bei OFF gelten die normalen Ablaufregeln.
+
+    Nur IRCops mit der Berechtigung 'nickserv.noexpire' können diesen Befehl verwenden.
+
+    Syntax: NOEXPIRE <nickname> {ON|OFF}
+    Beispiele:
+      NOEXPIRE WichtigerBenutzer ON
+      NOEXPIRE WichtigerBenutzer OFF
   success_on:       "\x0303✔\x03 Nickname \x02%nickname%\x02 ist jetzt vor Ablauf geschützt."
   success_off:      "\x0303✔\x03 Nickname \x02%nickname%\x02 läuft jetzt normal ab."
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
   forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist gesperrt."
   suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert."
 
@@ -587,14 +669,22 @@ list:
   syntax: "LIST <Muster> [Seite]"
   short: "Listet registrierte Nicknames nach Muster auf."
   help: "Listet registrierte Nicknames auf, die dem angegebenen Muster entsprechen. Das Platzhalterzeichen * steht für eine beliebige Zeichenfolge. Die Seite ist optional und beginnt bei 1."
-  example: "%command_prefix%\x02\x0303LIST Benutzer*\x03\x0F"
-  examples:
-    - "%command_prefix%\x02\x0303LIST Benutzer* 2\x03\x0F"
   header: "Nickname | Registrierung | Letzte Verbindung | IP | Status"
   row: "%nickname% | %registered% | %last_seen% | %ip% | %status%"
+  page: "Seite %page%/%pages% — %total% Treffer"
   empty: "Keine Nicknames entsprechen dem Muster %pattern%."
   status_pending: "Ausstehend"
   status_registered: "Registriert"
+  status_suspended: "Gesperrt"
+  status_pending_deletion: "Löschung ausstehend"
+  status_forbidden: "Verboten"
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message: "%operator% führt Befehl %command% auf %target% aus. %reason%"
+  action_with_option: "%operator% führt Befehl %command% auf %target% aus. Option: %option%. %reason%"
+  action_with_value: "%operator% führt Befehl %command% auf %target% aus. Option: %option%=%value%. %reason%"
+  action_duration: "%operator% führt Befehl %command% auf %target% aus. Dauer: %duration%. %reason%"
+  prefix_reason: "Grund: %reason%"
 
 # --- REGMODE ---------------------------------------------------------------
 regmode:

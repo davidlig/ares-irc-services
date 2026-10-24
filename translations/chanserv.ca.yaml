@@ -1,25 +1,20 @@
-# Traduccions de ChanServ — Català
-# Domini: chanserv
-#
-# Codis de format IRC (cometes dobles o blocs literals !irc):
-#   \x02        activa/desactiva la negreta
-#   \x03NN      color (DECIMAL: 03=verd, 04=vermell, 07=taronja, 14=gris fosc)
-#   \x03        restableix el color
-#   \x0F        restableix tot el format
-#
-# Els colors IRC usen números DECIMALS (0-15), no hexadecimals.
-#   \x0314 = gris fosc (14 decimal): CORRECTE
-#   \x030F = color 0 seguit de la lletra F: ERROR
-#
-# Text IRC multilínia: !irc |- amb salts físics i espais reals.
-# Els blocs sense etiqueta no descodifiquen escapes; conserva els literals CTCP.
-# Exemples HELP: example/examples i %command_prefix%.
-# El presentador afegeix /msg sense color i un marge de dos espais.
+# ChanServ translations — Catalan
+# Domain: chanserv
 
-# --- ERROR -----------------------------------------------------------------
+unknown_command: "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
+
 error:
+  syntax:         "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
+  oper_only:      "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
+  not_identified: "\x0304✗\x03 No esteu identificat. Utilitzeu \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Permís denegat. No teniu accés a aquesta ordre."
   invalid_channel: "\x0304✗\x03 Nom de canal no vàlid. Utilitzeu \x02#channel\x02."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
   generic:        "\x0304✗\x03 S'ha produït un error. Torneu-ho a provar."
+  nick_not_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
+  insufficient_access: "\x0304✗\x03 Accés insuficient per a \x02%operation%\x02 al canal \x02%channel%\x02."
+  mail_failed: "\x0304✗\x03 No s'ha pogut enviar el correu electrònic. Torneu-ho a provar més tard."
+
 register:
   syntax:           "REGISTER <#channel> <description>"
   short:            "Registrar un canal."
@@ -37,6 +32,7 @@ info:
   short:            "Mostrar la informació del canal."
   help:             "Mostra el fundador, la data de registre, el successor, l'URL, el correu electrònic, la descripció, el darrer ús, el tema i les opcions (TOPICLOCK, MLOCK, SECURE)."
   header:          "\x02Informació del canal \x0307%channel%\x03\x02"
+  footer:          "\x0314─────────────────────────────\x03"
   founder:         "  \x0314Fundador\x03           : \x02%nickname%\x02"
   registered:      "  \x0314Registrat\x03          : %date%"
   successor:       "  \x0314Successor\x03          : \x02%nickname%\x02"
@@ -89,6 +85,7 @@ help:
     deletion: "Eliminació i restauració"
     restrictions: "Restriccions"
     lookup: Consulta i investigació
+  unknown_command:  "\x0307✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
   ircop_header: "\x02 ■ Comandes disponibles per als IRCops:\x02"
 
 op:
@@ -338,12 +335,16 @@ akick:
     header:         "\x0303Llista AKICK de \x02%channel%\x02\x03"
     empty:          "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap entrada AKICK."
     entry:          "  #%index% %mask% %reason% (per %nickname%, expira: %expiration%)"
+    no_reason:      "Sense motiu"
+    never_expires:  "mai"
+    unknown_creator: "desconegut"
 
 restore:
   syntax:           "RESTORE <#channel>"
   short:            "Restaurar un canal pendent d'eliminació."
   help:             "Restaura un canal que va ser eliminat manualment i encara està dins del període de gràcia. Requereix permís IRCop: chanserv.restore."
   success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat restaurat."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
   not_pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 no està pendent d'eliminació."
 
 drop:
@@ -354,6 +355,7 @@ drop:
   force_success:    "\x0303✔\x03 El canal \x02%channel%\x02 ha estat eliminat permanentment."
   pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 ja està pendent d'eliminació. Utilitza DROP <#channel> FORCE per eliminar-lo permanentment."
   invalid_channel:  "\x0304✗\x03 Nom de canal no vàlid. Utilitzeu \x02#channel\x02."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
   pending_deletion_reason: "El canal %channel% està en procés d'eliminació. Més informació /msg %bot% INFO %channel%"
 
 suspend:
@@ -361,8 +363,10 @@ suspend:
   short:            "Suspendre un canal."
   help:             "Desactiva temporalment un canal registrat. Formats de durada: 0 = permanent, 1d, 12h, 60m.\nMentre està suspès, els modes del canal, l'accés i l'aplicació estan desactivats.\nAquesta ordre requereix el permís d'IRCop: chanserv.suspend"
   success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat suspès fins a \x02%duration%\x02."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
   already_suspended: "\x0304✗\x03 El canal \x02%channel%\x02 ja està suspès."
   invalid_duration:  "\x0304✗\x03 Durada no vàlida. Utilitzeu: 0 (permanent), 1d, 12h, o 60m."
+  permanent:         "Permanent"
   channel_suspended: "\x0304✗\x03 El canal \x02%channel%\x02 està suspès i no es pot utilitzar."
   notice_channel:    "\x0304⚠\x03 El canal ha estat suspès. Motiu: %reason%"
 
@@ -371,6 +375,7 @@ unsuspend:
   short:            "Aixecar una suspensió de canal."
   help:             "Reactiva un canal suspès, restaurant els seus modes i l'aplicació.\nAquesta ordre requereix el permís d'IRCop: chanserv.suspend"
   success:          "\x0303✔\x03 El canal \x02%channel%\x02 ja no està suspès."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
   not_suspended:    "\x0304✗\x03 El canal \x02%channel%\x02 no està suspès."
   reason_expired:   "suspensió expirada"
 
@@ -408,6 +413,7 @@ noexpire:
       NOEXPIRE #Important OFF
   success_on:       "\x0303✔\x03 El canal \x02%channel%\x02 ara està protegit contra l'expiració."
   success_off:      "\x0303✔\x03 El canal \x02%channel%\x02 ara expirarà normalment."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
   forbidden:         "\x0304✗\x03 El canal \x02%channel%\x02 està prohibit."
   suspended:         "\x0304✗\x03 El canal \x02%channel%\x02 està suspès."
 
@@ -428,7 +434,11 @@ unforbid:
   not_forbidden:    "\x0304✗\x03 El canal \x02%channel%\x02 no està prohibit."
 
 debug:
+  action_message: "%operator% executa l'ordre %command% sobre %target%. %reason%"
+  action_with_option: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%. %reason%"
+  action_with_value: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%=%value%. %reason%"
   founder_action: "Acció de nivell de fundador"
+  prefix_reason:  "Motiu: %reason%"
 
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
@@ -452,6 +462,9 @@ history:
       HISTORY #channel ADD Sospita d'intent de takeover
       HISTORY #channel DEL 42
       HISTORY #channel CLEAR
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  unknown_operator: "(desconegut)"
+
   add:
     syntax:     "HISTORY <#channel> ADD <message>"
     short:      "Afegir una entrada manual a l'historial."
@@ -463,12 +476,17 @@ history:
     syntax:     "HISTORY <#channel> DEL <id>"
     short:      "Esborrar una entrada de l'historial per ID."
     help:       "Elimina una entrada de l'historial pel seu ID."
+    success:    "\x0303✔\x03 Entrada d'historial \x02%id%\x02 esborrada."
+    not_found:  "\x0304✗\x03 Entrada d'historial \x02%id%\x02 no trobada."
+    invalid_id: "\x0304✗\x03 ID d'entrada no vàlid: \x02%id%\x02."
+
   view:
     syntax:     "HISTORY <#channel> VIEW [PAGE|ALL]"
     short:      "Veure l'historial d'accions del canal."
     help:       "Mostra les entrades de l'historial del canal."
     header:     "\x02Historial de \x0307%channel%\x03\x02 (mostrant %start%-%end% de %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 per %operator% — %message%"
+    extra:       "  Extra \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 No s'han trobat entrades d'historial per a \x02%channel%\x02."
     page_hint:   "Utilitzeu \x0303HISTORY %channel% VIEW %next_page%\x03 per a més entrades."
 
@@ -480,6 +498,7 @@ history:
 
 # --- History message translations ---
 history.message:
+  unsuspend:                  "Suspensió aixecada"
   founder_changed:            "Fundador canviat de %old_founder% a %new_founder%"
   successor_changed:          "Successor canviat de %old_successor% a %new_successor%"
   successor_cleared:          "Successor esborrat"
@@ -490,6 +509,8 @@ history.message:
 
 # --- History extra field translations ---
 history.extra:
+  duration:      "Durada: %value%"
+  expires_at:    "Expira: %value%"
   old_founder:     "Fundador anterior: %value%"
   new_founder:     "Nou fundador: %value%"
   old_successor:   "Successor anterior: %value%"
@@ -497,6 +518,10 @@ history.extra:
   target_nickname: "Destinatari: %value%"
   level:           "Nivell: %value%"
   mask:            "Màscara: %value%"
+  ip:            "IP: %value%"
+  host:          "Amfitrió: %value%"
+
+# --- CLEARACCESS (IRCop) ---------------------------------------------------------
 clearaccess:
   syntax:           "CLEARACCESS <#channel>"
   short:            "Esborrar tota la llista d'accés d'un canal."
@@ -537,5 +562,9 @@ list:
   help: "Llista els canals registrats que coincideixen amb el patró indicat. El comodí * coincideix amb qualsevol seqüència de caràcters. La pàgina és opcional i comença per 1."
   header: "Canal | Fundador | Registre | Últim ús | Estat"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
+  page: "Pàgina %page%/%pages% — %total% coincidències"
   empty: "Cap canal coincideix amb el patró %pattern%."
   status_active: "Actiu"
+  status_suspended: "Suspès"
+  status_pending_deletion: "Pendent d'eliminació"
+  status_forbidden: "Prohibit"

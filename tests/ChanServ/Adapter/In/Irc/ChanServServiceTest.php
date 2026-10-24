@@ -257,7 +257,7 @@ final class ChanServServiceTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $translator->expects(self::once())->method('trans')
-            ->with('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'ChanServ'], 'common', 'en')
+            ->with('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'ChanServ'], 'chanserv', 'en')
             ->willReturn('Unknown command');
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Unknown command', 'NOTICE');
 

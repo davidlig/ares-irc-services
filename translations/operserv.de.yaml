@@ -1,24 +1,17 @@
-# Übersetzungen für OperServ — Deutsch
-# Domäne: operserv
-#
-# IRC-Formatcodes (doppelte Anführungszeichen oder !irc-Literalblöcke):
-#   \x02        Fettdruck ein/aus
-#   \x03NN      Farbe (DEZIMAL: 03=grün, 04=rot, 07=orange, 14=dunkelgrau)
-#   \x03        Farbe zurücksetzen
-#   \x0F        gesamte Formatierung zurücksetzen
-#
-# IRC-Farben verwenden DEZIMALZAHLEN (0-15), keine Hexadezimalzahlen.
-#   \x0314 = dunkelgrau (14 dezimal): RICHTIG
-#   \x030F = Farbe 0 gefolgt vom Buchstaben F: FALSCH
-#
-# Mehrzeiliger IRC-Text: !irc |- mit echten Zeilenumbrüchen und Leerzeichen.
-# Blöcke ohne Tag dekodieren keine Escape-Sequenzen; CTCP-Literale erhalten.
-# HELP-Beispiele: example/examples und %command_prefix%.
-# Die Darstellung ergänzt /msg ohne Farbe und einen Rand von zwei Leerzeichen.
+# OperServ-Übersetzungen — Deutsch
+# Domain: operserv
 
-# --- ERROR -----------------------------------------------------------------
+unknown_command: "\x0304✗\x03 Unbekannter Befehl \x02%command%\x02. Verwenden Sie \x0303/msg %bot% HELP\x03."
+
 error:
+  syntax:           "\x0304✗\x03 Falsche Syntax. Verwendung: \x02%syntax%\x02"
+  oper_only:        "\x0304✗\x03 Dieser Befehl ist IRC-Operatoren vorbehalten."
+  not_identified:   "\x0304✗\x03 Sie sind nicht identifiziert. Verwenden Sie \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Sie haben nicht die erforderlichen Berechtigungen, um diesen Befehl auszuführen."
   root_only:        "\x0304✗\x03 Dieser Befehl ist Netzwerk-Root-Administratoren vorbehalten."
+  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
+
+# --- HELP --------------------------------------------------------------------
 help:
   syntax:           "HELP [Befehl [Unteroption]]"
   short:            "Befehle auflisten oder Hilfe für einen Befehl anzeigen."
@@ -42,6 +35,7 @@ help:
     network_security: "Netzwerksicherheit"
     communication: "Kommunikation"
     low_level: "Niedrige Ebene"
+  unknown_command:  "\x0307✗ Unbekannter Befehl\x03\x0F \x02\x0303%command%\x03\x0F. Verwenden Sie \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Verfügbare Befehle für IRC-Operatoren:\x02"
 
 # --- IRCOP --------------------------------------------------------------------
@@ -185,6 +179,7 @@ kill:
   syntax:           "KILL <nickname> <Grund>"
   short:            "Einen Benutzer zwangsweise vom Netzwerk trennen."
   help:             "Trennt einen Benutzer vom IRC-Netzwerk.\nIRCops und Root-Benutzer können nicht gekillt werden.\nDieser Befehl erfordert die Berechtigung operserv.kill.\n\nSyntax: KILL <nickname> <Grund>\nBeispiel: KILL SchlechterBenutzer Flooding in Channels"
+  user_not_online:  "\x0304✗\x03 Nick \x02%nickname%\x02 ist nicht verbunden."
   protected_root:   "\x0304✗\x03 Root-Benutzer \x02%nickname%\x02 kann nicht gekillt werden."
   protected_ircop:  "\x0304✗\x03 IRC-Operator \x02%nickname%\x02 kann nicht gekillt werden."
   done:             "\x0303✓\x03 Benutzer \x02%nickname%\x02 wurde gekillt (%reason%)."
@@ -203,6 +198,8 @@ gline:
   already_exists:   "\x0304✗\x03 G-Line für \x02%mask%\x02 existiert bereits."
   max_entries:      "\x0304✗\x03 Maximale Anzahl von G-Lines (%max%) erreicht."
   not_found:        "\x0304✗\x03 G-Line \x02%mask%\x02 nicht gefunden."
+  user_not_found:   "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht online."
+  permanent:        "dauerhaft"
 
   add:
     syntax:         "GLINE ADD <Maske> <Ablauf> <Grund>"
@@ -222,6 +219,9 @@ gline:
     help:           "Listet alle G-Lines auf. Optional nach Maskenmuster filtern.\nDieser Befehl erfordert die Berechtigung operserv.gline."
     header:         "\x0307---\x03 \x02G-Lines (%count%) \x0307---\x03"
     empty:          "Es gibt keine G-Lines."
+    no_reason:      "Kein Grund"
+    never_expires:  "Dauerhaft"
+    unknown_creator: "unbekannt"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, läuft ab: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
@@ -256,7 +256,10 @@ raw:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
+  action_message:   "%operator% führt Befehl %command% auf %target% aus. %reason%"
+  actionWithDuration: "%operator% führt Befehl %command% auf %target% aus. Dauer: %duration%. %reason%"
   action_global:    "%operator% führt Befehl GLOBAL mit Nickname %target% via %type% an %count% Benutzer aus. Nachricht: %message%"
+  prefix_reason:    "Grund: %reason%"
   prefix_message:   "Nachricht: %reason%"
 
 # --- MOTD ----------------------------------------------------------------------
@@ -290,6 +293,7 @@ motd:
     status_disabled: "\x0304deaktiviert\x03"
     expired:        "\x0304abgelaufen\x03"
     no_bot:         "(kein Bot)"
+    never:          "nie"
     shown_count:    "%count% Mal angezeigt"
   clean:
     syntax:         "MOTD CLEAN"

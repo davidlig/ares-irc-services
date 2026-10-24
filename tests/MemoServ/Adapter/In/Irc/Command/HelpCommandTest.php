@@ -227,7 +227,7 @@ final class HelpCommandTest extends TestCase
 
         $command->execute($context);
 
-        self::assertSame(['unknown_command [%command%: RESTRICTED]'], $replies);
+        self::assertSame(['help.unknown_command [%command%: RESTRICTED]'], $replies);
     }
 
     #[Test]
@@ -240,7 +240,7 @@ final class HelpCommandTest extends TestCase
         $context = $this->createContext($sender, null, ['NONEXISTENT'], $replies, [$command]);
         $command->execute($context);
 
-        self::assertSame(['unknown_command [%command%: NONEXISTENT]'], $replies);
+        self::assertSame(['help.unknown_command [%command%: NONEXISTENT]'], $replies);
     }
 
     #[Test]

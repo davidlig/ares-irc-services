@@ -129,7 +129,7 @@ final class MotdCommandTest extends TestCase
         self::assertSame('motd.list.header', $notifier->messages[0]);
         self::assertStringContainsString('motd.list.expired', $notifier->messages[1]);
         self::assertStringContainsString('motd.list.no_bot', $notifier->messages[1]);
-        self::assertStringContainsString('label.never', $notifier->messages[1]);
+        self::assertStringContainsString('motd.list.never', $notifier->messages[1]);
         self::assertStringContainsString('motd.list.status_enabled', $notifier->messages[2]);
         self::assertStringContainsString('08/09/2026 10:00 UTC', $notifier->messages[2]);
         self::assertStringContainsString('motd.list.status_disabled', $notifier->messages[3]);

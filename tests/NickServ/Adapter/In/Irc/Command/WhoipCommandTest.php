@@ -51,7 +51,6 @@ final class WhoipCommandTest extends TestCase
         self::assertFalse($command->isOperOnly());
         self::assertSame(NickServPermission::WHOIP, $command->getRequiredPermission());
         self::assertSame([], $command->getHelpParams());
-        self::assertSame('whoip.example', $command->getExampleKey());
     }
 
     #[Test]

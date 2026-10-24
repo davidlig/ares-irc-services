@@ -49,7 +49,6 @@ final class DropCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('drop.syntax', $command->getSyntaxKey());
         self::assertSame('drop.help', $command->getHelpKey());
-        self::assertSame('drop.example', $command->getExampleKey());
         self::assertSame(71, $command->getOrder());
         self::assertSame('drop.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -158,7 +157,7 @@ final class DropCommandTest extends TestCase
             ],
             'not_registered' => [
                 DropNickResult::notRegistered('TargetNick'),
-                ['error.nick_not_registered [%nickname%: TargetNick]'],
+                ['drop.not_registered [%nickname%: TargetNick]'],
             ],
             'pending_deletion' => [
                 DropNickResult::pendingDeletion('TargetNick'),

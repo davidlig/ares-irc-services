@@ -163,7 +163,7 @@ final class DisableCommandTest extends TestCase
         $outcomes = [
             [DisableMemosResult::disabledChannel('#chan'), 'disable.disabled_channel [%channel%: #chan]'],
             [DisableMemosResult::alreadyDisabledChannel('#chan'), 'disable.already_disabled_channel [%channel%: #chan]'],
-            [DisableMemosResult::channelNotRegistered('#chan'), 'error.channel_not_registered [%channel%: #chan]'],
+            [DisableMemosResult::channelNotRegistered('#chan'), 'disable.channel_not_registered [%channel%: #chan]'],
             [DisableMemosResult::founderOnly('#chan'), 'disable.founder_only [%channel%: #chan]'],
         ];
 

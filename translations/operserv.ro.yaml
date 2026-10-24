@@ -1,24 +1,17 @@
-# Traduceri OperServ — Română
-# Domeniu: operserv
-#
-# Coduri de formatare IRC (ghilimele duble sau blocuri literale !irc):
-#   \x02        activează/dezactivează caracterele aldine
-#   \x03NN      culoare (ZECIMAL: 03=verde, 04=roșu, 07=portocaliu, 14=gri închis)
-#   \x03        resetează culoarea
-#   \x0F        resetează întreaga formatare
-#
-# Culorile IRC folosesc numere ZECIMALE (0-15), nu hexazecimale.
-#   \x0314 = gri închis (14 zecimal): CORECT
-#   \x030F = culoarea 0 urmată de litera F: EROARE
-#
-# Text IRC pe mai multe rânduri: !irc |- cu rânduri și spații reale.
-# Blocurile fără etichetă nu decodează secvențe escape; păstrează literalii CTCP.
-# Exemple HELP: example/examples și %command_prefix%.
-# Prezentatorul adaugă /msg fără culoare și o margine de două spații.
+# OperServ translations — Romanian
+# Domain: operserv
 
-# --- ERROR -----------------------------------------------------------------
+unknown_command: "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
+
 error:
+  syntax:           "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
+  oper_only:        "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
+  not_identified:   "\x0304✗\x03 Nu sunteți identificat. Folosiți \x0303/msg %nickserv% IDENTIFY\x03."
+  permission_denied: "\x0304✗\x03 Nu aveți permisiuni suficiente pentru a executa această comandă."
   root_only:        "\x0304✗\x03 Această comandă este rezervată administratorilor root ai rețelei."
+  nick_not_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
+
+# --- HELP --------------------------------------------------------------------
 help:
   syntax:           "HELP [comandă [sub-opțiune]]"
   short:            "Listați comenzile sau afișați ajutor pentru o comandă."
@@ -42,6 +35,7 @@ help:
     network_security: "Securitatea rețelei"
     communication: "Comunicare"
     low_level: "Nivel inferior"
+  unknown_command:  "\x0307✗ Comandă necunoscută\x03\x0F \x02\x0303%command%\x03\x0F. Folosiți \x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Comenzi disponibile pentru IRCops:\x02"
 
 # --- IRCOP --------------------------------------------------------------------
@@ -185,6 +179,7 @@ kill:
   syntax:           "KILL <poreclă> <motiv>"
   short:            "Deconectați forțat un utilizator din rețea."
   help:             "Deconectează un utilizator din rețeaua IRC.\nIRCopii și utilizatorii Root nu pot primi kill.\nAceastă comandă necesită permisiunea operserv.kill.\n\nSintaxă: KILL <poreclă> <motiv>\nExemplu: KILL UtilizatorRău Flood pe canale"
+  user_not_online:  "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este conectată."
   protected_root:   "\x0304✗\x03 Nu se poate da kill utilizatorului Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 Nu se poate da kill operatorului IRC \x02%nickname%\x02."
   done:             "\x0303✓\x03 Utilizatorul \x02%nickname%\x02 a primit kill (%reason%)."
@@ -203,6 +198,8 @@ gline:
   already_exists:   "\x0304✗\x03 G-line pentru \x02%mask%\x02 există deja."
   max_entries:      "\x0304✗\x03 Numărul maxim de G-line-uri (%max%) a fost atins."
   not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 nu a fost găsit."
+  user_not_found:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este online."
+  permanent:        "permanent"
 
   add:
     syntax:         "GLINE ADD <mască> <expirare> <motiv>"
@@ -222,6 +219,9 @@ gline:
     help:           "Listează toate G-line-urile. Opțional, filtrați după modelul de mască.\nAceastă comandă necesită permisiunea operserv.gline."
     header:         "\x0307---\x03 \x02G-line-uri (%count%) \x0307---\x03"
     empty:          "Nu există G-line-uri."
+    no_reason:      "Fără motiv"
+    never_expires:  "Permanent"
+    unknown_creator: "necunoscut"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, expiră: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
@@ -256,7 +256,10 @@ raw:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
+  action_message:   "%operator% execută comanda %command% asupra %target%. %reason%"
+  actionWithDuration: "%operator% execută comanda %command% asupra %target%. Durată: %duration%. %reason%"
   action_global:    "%operator% execută comanda GLOBAL cu porecla %target% via %type% către %count% utilizatori. Mesaj: %message%"
+  prefix_reason:    "Motiv: %reason%"
   prefix_message:   "Mesaj: %reason%"
 
 # --- MOTD ----------------------------------------------------------------------
@@ -290,6 +293,7 @@ motd:
     status_disabled: "\x0304dezactivată\x03"
     expired:        "\x0304expirată\x03"
     no_bot:         "(fără bot)"
+    never:          "niciodată"
     shown_count:    "afișat de %count% ori"
   clean:
     syntax:         "MOTD CLEAN"

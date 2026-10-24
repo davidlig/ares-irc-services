@@ -153,7 +153,7 @@ final class InfoCommandTest extends TestCase
 
         self::assertContains('info.header', $rawMessages);
         self::assertContains('info.founder', $rawMessages);
-        self::assertContains('reply.separator', $rawMessages);
+        self::assertContains('info.footer', $rawMessages);
     }
 
     #[Test]
@@ -772,7 +772,7 @@ final class InfoCommandTest extends TestCase
         self::assertContains('info.header', $rawMessages);
         self::assertContains('info.forbidden_status', $rawMessages);
         self::assertContains('info.forbidden_reason', $rawMessages);
-        self::assertContains('reply.separator', $rawMessages);
+        self::assertContains('info.footer', $rawMessages);
         self::assertNotContains('info.founder', $rawMessages);
     }
 

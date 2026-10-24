@@ -1,128 +1,28 @@
-# Mezu komunen itzulpenak — Euskara
-# Domeinua: common
+# Itzulpen komunak — Euskara
+# Eremua: common
 #
-# IRC formatu-kodeak (komatxo bikoitzak edo !irc bloke literalak):
-#   \x02        letra lodia aktibatu/desaktibatu
-#   \x03NN      kolorea (HAMARTARRA: 03=berdea, 04=gorria, 07=laranja, 14=gris iluna)
-#   \x03        kolorea berrezarri
-#   \x0F        formatu osoa berrezarri
-#
-# IRC koloreek zenbaki HAMARTARRAK (0-15) erabiltzen dituzte, ez hamaseitarrak.
-#   \x0314 = gris iluna (14 hamartarra): ZUZENA
-#   \x030F = 0 kolorea eta ondoren F letra: OKERRA
-#
-# Lerro anitzeko IRC testua: !irc |- benetako lerro-jauzi eta zuriuneekin.
-# Etiketarik gabeko blokeek ez dituzte ihesak deskodetzen; gorde CTCP literalak.
-# HELP adibideak: example/examples eta %command_prefix%.
-# Aurkezleak kolorerik gabeko /msg eta bi zuriuneko marjina gehitzen ditu.
+# IRC zerbitzu guztietan erabilitako itzulpen partekatuak.
 
-# --- UNKNOWN COMMAND -------------------------------------------------------
-unknown_command: "\x0304✗\x03\x0F Komando ezezaguna \x0303%command%\x03\x0F. Erabili /msg %bot% \x0303HELP\x03\x0F"
-
-# --- UNKNOWN HELP OPTION ---------------------------------------------------
-unknown_help_option: "\x0304✗\x03\x0F Laguntza aukera \x0303%option%\x03\x0F ezezaguna \x0303%command%\x03\x0Frentzat. Erabili /msg %bot% \x0303HELP %command%\x03\x0F"
-
-# --- ERROR -----------------------------------------------------------------
-error:
-  syntax: "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Komando hau IRC Operadoreentzat mugatuta dago."
-  not_identified: "\x0304✗\x03 Ez zaude identifikatuta. Erabili /msg %nickserv% \x0303IDENTIFY <ezizena> <pasahitza>\x03"
-  permission_denied: "\x0304✗\x03 Baimena ukatuta. Ez duzu komando honetarako sarbiderik."
-  mail_failed: "\x0304✗\x03 Ezin izan da posta elektronikoa bidali. Egiaztatu zure helbidea edo saiatu berriro geroago."
-  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
-  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
-  insufficient_access: "\x0304✗\x03 Ez duzu nahikoa sarbide \x02%operation%\x02 egiteko \x02%channel%\x02 kanalean."
-  nick_not_online: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago konektatuta."
-
-# --- DURATION --------------------------------------------------------------
-duration:
-  unit:
-    year:
-      singular: "urte"
-      plural: "urte"
-    month:
-      singular: "hilabete"
-      plural: "hilabete"
-    day:
-      singular: "egun"
-      plural: "egun"
-    hour:
-      singular: "ordu"
-      plural: "ordu"
-    minute:
-      singular: "minutu"
-      plural: "minutu"
-    second:
-      singular: "segundo"
-      plural: "segundo"
-  list_separator: ", "
-  list_join: "%prefix% eta %last%"
-
-# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Komando tasa muga gainditu duzu. Saiatu berriro %seconds% segundotan."
   debug_channel: "%nick%-(r)en %command% muga iritsi da %host%-(e)ntzat (%seconds%s geratzen dira)"
 
-# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
       \x02Nire lagun leial eta betierekoarentzat,\x02
 
       2023a agur esan behar izan genuen urtea izan zen arren, denborak ez du zure
-      xehentasun bakar bat ere ezabatu. Oraindik gogoan ditut zure energia agortezina,
-      begirada noble eta zuk bakarrik eman zenezakeen poz handi eta kutsakorra.
+      xehetasun bakar bat ere ezabatu. Oraindik gogoratzen ditut zure mugagabeko
+      energia, zure begirada noblea eta zuk bakarrik ematen zenekien poz izugarri
+      eta kutsakor hura.
 
-      Nire etxea bizitzaz bete zenuen, eta nire bizitza inoiz ahaztuko ez dudan
-      baldintzarik gabeko maitasunez. Jada ez ditut zure urratsak entzuten ni
-      agurtzera korrika etortzen, ezta zure burua nire gainean jartzen sentitzen
-      laztan bila; baina badakit zure izpiritu jostalariak laguntzen jarraitzen didala.
+      Nire etxea bizitzaz eta nire bizitza inoiz ahaztuko ez dudan baldintzarik
+      gabeko maitasunez bete zenituen. Jada ez ditudan arren zure oin urratsak
+      entzuten agurtzera korrika nentorrela, ezta zure burua nigan makurtzen sentitzen
+      laztana bilatuz, badakit zure izpiritu jostalariak oraindik laguntzen nauela.
 
-      Eskerrik asko une bakoitzagatik, bihurrikeria bakoitzagatik eta eskatu ahal izan
-      dudan lagunik onena izateagatik. Nire ondoan utzi zenuen lekua oroitzapen
-      zoriontsuenez beteta dago orain. Beti izango zara nire lagun maitea, eta beti
-      izango duzu leku handi bat nire bihotzean.
-
-# --- DEBUG -----------------------------------------------------------------
-debug:
-  action_message: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. %reason%"
-  action_with_option: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Aukera: %option%. %reason%"
-  action_with_value: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Aukera: %option%=%value%. %reason%"
-  prefix_reason: "Arrazoia: %reason%"
-  action_duration: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Iraupena: %duration%. %reason%"
-
-# --- HISTORY ---------------------------------------------------------------
-history:
-  unknown_operator: "(ezezaguna)"
-  del:
-    success: "\x0303✔\x03 \x02%id%\x02 historia sarrera ezabatu da."
-    not_found: "\x0304✗\x03 \x02%id%\x02 historia sarrera ez da aurkitu."
-    invalid_id: "\x0304✗\x03 Sarrera ID baliogabea: \x02%id%\x02."
-  view:
-    extra: "  Gehigarria \x0307→\x03 %extra%"
-  message:
-    unsuspend: "Etenaldia kendua"
-  extra:
-    duration: "Iraupena: %value%"
-    expires_at: "Iraungitzea: %value%"
-    ip: "IPa: %value%"
-    host: "Host-a: %value%"
-
-# --- LIST ------------------------------------------------------------------
-list:
-  page: "%page%/%pages% orria — %total% bat-etortze"
-  status_suspended: "Etena"
-  status_pending_deletion: "Ezabatzeko zain"
-  status_forbidden: "Debekatua"
-
-# --- REPLY -----------------------------------------------------------------
-reply:
-  separator: "\x0314─────────────────────────────\x03"
-
-# --- LABEL -----------------------------------------------------------------
-label:
-  no_reason: "Arrazoirik ez"
-  never: "inoiz ez"
-  unknown_creator: "ezezaguna"
-  permanent: "Iraunkorra"
-  permanent_inline: "iraunkorra"
+      Eskerrik asko une bakoitzagatik, bihurrikeria bakoitzagatik eta eskatu ahal
+      izan dudan lagunik onena izateagatik. Nire ondoan utzi zenuen lekua
+      oroitzapenik zoriontsuenez beteta dago orain. Beti izango zara nire lagun
+      maitea eta beti izango duzu leku izugarri bat nire bihotzean.

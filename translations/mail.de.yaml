@@ -1,10 +1,7 @@
-# Übersetzungen für E-Mails — Deutsch
-# Domäne: mail
-#
-# E-Mail-Betreff und -Text sind Klartext ohne IRC-Formatierung.
-# Echte Zeilenumbrüche und beabsichtigte abschließende Umbrüche erhalten.
+# E-Mail-Inhalt — Domain: mail (Klartext, keine IRC-Codes)
+# Platzhalter: %nickname%, %token%, %new_email%
 
-# --- REGISTER / VERIFY -----------------------------------------------------
+# REGISTER / VERIFY — Verifizierungs-Token
 register_verification_subject: "%bot%: Bestätigen Sie Ihre Nickname-Registrierung"
 register_verification_body: |
   Hallo,
@@ -21,7 +18,7 @@ register_verification_body: |
   Nach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- RESEND ----------------------------------------------------------------
+# RESEND — wie REGISTER, erneutes Senden des Tokens
 resend_verification_subject: "%bot%: Ihr Verifizierungs-Token (erneut gesendet)"
 resend_verification_body: |
   Hallo,
@@ -38,7 +35,7 @@ resend_verification_body: |
   Nach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- SET EMAIL -------------------------------------------------------------
+# SET EMAIL — Bestätigungs-Token an aktuelle E-Mail gesendet
 email_change_token_subject: "%bot%: Bestätigen Sie Ihre neue E-Mail-Adresse"
 email_change_token_body: |
   Hallo,
@@ -52,7 +49,7 @@ email_change_token_body: |
 
   Das Token läuft in 1 Stunde ab. Falls Sie diese Änderung nicht angefordert haben, ignorieren Sie bitte diese E-Mail.
 
-# --- RECOVER ---------------------------------------------------------------
+# RECOVER — Passwort-Wiederherstellungs-Token
 recovery_token_subject: "%bot%: Passwort-Wiederherstellung"
 recovery_token_body: |
   Hallo,
@@ -68,7 +65,7 @@ recovery_token_body: |
 
   Nach der Bestätigung wird dieses Token dein dauerhaftes Wiederherstellungstoken. Bewahre es sicher auf: damit kannst du deinen Nicknamen wiederherstellen. Die Ablaufzeit von einer Stunde gilt nur vor der Bestätigung.
 
-# --- CHANSERV SET FOUNDER --------------------------------------------------
+# ChanServ SET FOUNDER — Founder-Wechsel-Token
 founder_change_token_subject: "%bot%: Founder-Wechsel-Token für %channel%"
 founder_change_token_body: |
   Hallo,

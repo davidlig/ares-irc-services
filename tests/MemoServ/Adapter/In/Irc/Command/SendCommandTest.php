@@ -302,11 +302,11 @@ final class SendCommandTest extends TestCase
             ],
             [
                 SendMemoResult::nickNotRegistered('Unknown'),
-                'error.nick_not_registered [%nick%: Unknown]',
+                'send.nick_not_registered [%nick%: Unknown]',
             ],
             [
                 SendMemoResult::channelNotRegistered('#chan'),
-                'error.channel_not_registered [%channel%: #chan]',
+                'send.channel_not_registered [%channel%: #chan]',
             ],
             [
                 SendMemoResult::ignored(),

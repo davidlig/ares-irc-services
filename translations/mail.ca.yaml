@@ -1,10 +1,7 @@
-# Traduccions de correu — Català
-# Domini: mail
-#
-# Assumptes i cossos de correu en text pla, sense format IRC.
-# Conserva els salts físics i els salts finals intencionats dels cossos.
+# Email content — domain: mail (plain text, no IRC codes)
+# Placeholders: %nickname%, %token%, %new_email%
 
-# --- REGISTER / VERIFY -----------------------------------------------------
+# REGISTER / VERIFY — verification token
 register_verification_subject: "%bot%: verifiqueu el registre del vostre sobrenom"
 register_verification_body: |
   Hola,
@@ -21,7 +18,7 @@ register_verification_body: |
   Un cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- RESEND ----------------------------------------------------------------
+# RESEND — same as register, resend of token
 resend_verification_subject: "%bot%: el vostre token de verificació (reenviament)"
 resend_verification_body: |
   Hola,
@@ -38,7 +35,7 @@ resend_verification_body: |
   Un cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo.
     /msg %bot% RECOVER %nickname% %token%
 
-# --- SET EMAIL -------------------------------------------------------------
+# SET EMAIL — confirmation token sent to current email
 email_change_token_subject: "%bot%: confirmeu la vostra nova adreça de correu electrònic"
 email_change_token_body: |
   Hola,
@@ -52,7 +49,7 @@ email_change_token_body: |
 
   El token expira en 1 hora. Si no heu sol·licitat aquest canvi, ignoreu aquest correu.
 
-# --- RECOVER ---------------------------------------------------------------
+# RECOVER — password recovery token
 recovery_token_subject: "%bot%: recuperació de contrasenya"
 recovery_token_body: |
   Hola,
@@ -68,7 +65,7 @@ recovery_token_body: |
 
   Un cop validat, aquest serà el testimoni de recuperació permanent. Desa’l en un lloc segur: el podràs utilitzar per recuperar el sobrenom. La caducitat d’una hora només s’aplica abans de validar-lo.
 
-# --- CHANSERV SET FOUNDER --------------------------------------------------
+# ChanServ SET FOUNDER — founder change token
 founder_change_token_subject: "%bot%: token de canvi de fundador per a %channel%"
 founder_change_token_body: |
   Hola,
