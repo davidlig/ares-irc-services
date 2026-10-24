@@ -641,6 +641,15 @@ list:
   status_pending: "Zain"
   status_registered: "Erregistratuta"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <ezizena> <pasahitza> [emaila]"
+  short: "Beste erabiltzaile baten izenean ezizena erregistratzen du."
+  help: "<ezizena> kontu aktibo gisa erregistratzen du etorkizuneko jabearen izenean, egiaztapen-pausorik gabe. EMAIL erregistro moduan helbidea derrigorrezkoa da eta bakarra izan behar du; TOKEN moduan hautazkoa da. Berreskuratze-tokena behin bakarrik erakusten zaizu TOKEN moduan eta postaz bidaltzen da EMAIL moduan. Pasahitzak eta tokenak ez dira inoiz auditoretza-erregistroan idazten. nickserv.saregister baimena behar du."
+  created: "\x0303✓\x03 \x02%nickname%\x02 ezizena erregistratu da. Berreskuratze-tokena \x02%email%\x02 helbidera bidali da."
+  created_with_token: "\x0303✓\x03 \x02%nickname%\x02 ezizena erregistratu da.\n  \x02BERRESKURATZE-TOKENA:\x02 \x0303%token%\x03\n  Eman bere jabeari kanal seguru baten bidez.\n  Behin bakarrik erakusten da eta ezin da geroago berreskuratu."
+  created_without_mail: "\x0307→\x03 \x02%nickname%\x02 ezizena berreskuratze-kredentzial baliodunarekin erregistratu da, baina ezin izan da mezua \x02%email%\x02 helbidera bidali. Tokena ez da entregatu; erabili RECOVER edo ezabatu kontua eta erregistratu berriro."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"

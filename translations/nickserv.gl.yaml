@@ -648,6 +648,15 @@ list:
   status_pending: "Pendente"
   status_registered: "Rexistrado"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <alcume> <contrasinal> [correo]"
+  short: "Rexistra un alcume en nome doutro usuario."
+  help: "Rexistra <alcume> como conta activa en nome do seu futuro propietario, sen ningún paso de verificación. No modo de rexistro EMAIL o enderezo é obrigatorio e debe ser único; no modo TOKEN é opcional. O token de rescate amósase unha soa vez no modo TOKEN e envíase por correo no modo EMAIL. Os contrasinais e os tokens nunca se escriben no rexistro de auditoría. Require o permiso nickserv.saregister."
+  created: "\x0303✓\x03 O alcume \x02%nickname%\x02 foi rexistrado. O token de rescate enviouse a \x02%email%\x02."
+  created_with_token: "\x0303✓\x03 O alcume \x02%nickname%\x02 foi rexistrado.\n  \x02TOKEN DE RESCATE:\x02 \x0303%token%\x03\n  Entrégao ao seu propietario por unha canle segura.\n  Só se amosa unha vez e non se pode recuperar despois."
+  created_without_mail: "\x0307→\x03 O alcume \x02%nickname%\x02 rexistrouse cunha credencial de rescate válida, pero non se puido enviar a mensaxe a \x02%email%\x02. O token non se entregou; usa RECOVER ou elimina a conta e volve rexistrala."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"

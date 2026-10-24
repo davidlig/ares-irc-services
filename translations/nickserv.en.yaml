@@ -641,6 +641,15 @@ list:
   status_pending: "Pending"
   status_registered: "Registered"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <nickname> <password> [email]"
+  short: "Register a nickname on behalf of another user."
+  help: "Registers <nickname> as an active account on behalf of its future owner, with no verification step. In EMAIL registration mode the address is required and must be unique; in TOKEN mode it is optional. The rescue token is shown to you once in TOKEN mode and sent by e-mail in EMAIL mode. Passwords and tokens are never written to the audit log. Requires the nickserv.saregister permission."
+  created: "\x0303✓\x03 Nickname \x02%nickname%\x02 has been registered. The rescue token has been sent to \x02%email%\x02."
+  created_with_token: "\x0303✓\x03 Nickname \x02%nickname%\x02 has been registered.\n  \x02RESCUE TOKEN:\x02 \x0303%token%\x03\n  Give it to its owner through a secure channel.\n  It is shown only once and cannot be retrieved later."
+  created_without_mail: "\x0307→\x03 Nickname \x02%nickname%\x02 has been registered with a valid rescue credential, but the message to \x02%email%\x02 could not be sent. The token was not delivered; use RECOVER or drop the account and register it again."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"

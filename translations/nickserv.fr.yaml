@@ -641,6 +641,15 @@ list:
   status_pending: "En attente"
   status_registered: "Enregistré"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <pseudonyme> <mot de passe> [courriel]"
+  short: "Enregistre un pseudonyme au nom d'un autre utilisateur."
+  help: "Enregistre <pseudonyme> comme compte actif au nom de son futur propriétaire, sans étape de vérification. En mode d'enregistrement EMAIL, l'adresse est obligatoire et doit être unique ; en mode TOKEN, elle est facultative. Le jeton de secours est affiché une seule fois en mode TOKEN et envoyé par courriel en mode EMAIL. Les mots de passe et les jetons ne sont jamais écrits dans le journal d'audit. Nécessite la permission nickserv.saregister."
+  created: "\x0303✓\x03 Le pseudonyme \x02%nickname%\x02 a été enregistré. Le jeton de secours a été envoyé à \x02%email%\x02."
+  created_with_token: "\x0303✓\x03 Le pseudonyme \x02%nickname%\x02 a été enregistré.\n  \x02JETON DE SECOURS :\x02 \x0303%token%\x03\n  Remettez-le à son propriétaire par un canal sûr.\n  Il n'est affiché qu'une seule fois et ne peut pas être récupéré ensuite."
+  created_without_mail: "\x0307→\x03 Le pseudonyme \x02%nickname%\x02 a été enregistré avec un justificatif de secours valide, mais le message à \x02%email%\x02 n'a pas pu être envoyé. Le jeton n'a pas été remis ; utilisez RECOVER ou supprimez le compte et enregistrez-le à nouveau."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"

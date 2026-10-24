@@ -641,6 +641,15 @@ list:
   status_pending: "Beklemede"
   status_registered: "Kayıtlı"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <takma ad> <parola> [e-posta]"
+  short: "Başka bir kullanıcı adına bir takma ad kaydeder."
+  help: "<takma ad> adını gelecekteki sahibi adına etkin bir hesap olarak, doğrulama adımı olmadan kaydeder. EMAIL kayıt modunda adres zorunludur ve benzersiz olmalıdır; TOKEN modunda isteğe bağlıdır. Kurtarma belirteci TOKEN modunda bir kez gösterilir ve EMAIL modunda e-posta ile gönderilir. Parolalar ve belirteçler denetim günlüğüne asla yazılmaz. nickserv.saregister iznini gerektirir."
+  created: "\x0303✓\x03 \x02%nickname%\x02 takma adı kaydedildi. Kurtarma belirteci \x02%email%\x02 adresine gönderildi."
+  created_with_token: "\x0303✓\x03 \x02%nickname%\x02 takma adı kaydedildi.\n  \x02KURTARMA BELİRTECİ:\x02 \x0303%token%\x03\n  Güvenli bir kanaldan sahibine iletin.\n  Yalnızca bir kez gösterilir ve daha sonra alınamaz."
+  created_without_mail: "\x0307→\x03 \x02%nickname%\x02 takma adı geçerli bir kurtarma kimlik bilgisiyle kaydedildi, ancak \x02%email%\x02 adresine ileti gönderilemedi. Belirteç teslim edilmedi; RECOVER kullanın veya hesabı silip yeniden kaydedin."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"

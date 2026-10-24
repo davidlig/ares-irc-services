@@ -431,6 +431,17 @@ unforbid:
 debug:
   founder_action: "Acción level-founder"
 
+# --- SAREGISTER (IRCop) -----------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <#canal> <apodo> <descripción>"
+  short: "Registra un canal en nombre de otro usuario."
+  help: "Registra <#canal> en nombre de <apodo>, que debe ser ya una cuenta activa. El canal no necesita existir en la red y no hace falta que te unas a él. La cuenta designada pasa a ser fundadora de inmediato. Requiere el permiso chanserv.saregister."
+  registered: "\x0303✔\x03 El canal \x02%channel%\x02 ha sido registrado con \x02%nickname%\x02 como fundador."
+  already_registered: "\x0304✗\x03 El canal \x02%channel%\x02 ya está registrado."
+  pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 está pendiente de eliminación y no se puede registrar."
+  founder_not_found: "\x0304✗\x03 El apodo \x02%nickname%\x02 no es una cuenta registrada."
+  founder_inactive: "\x0304✗\x03 El apodo \x02%nickname%\x02 no es una cuenta activa y no puede ser fundador."
+
 # --- HISTORY (IRCop) ---------------------------------------------------------
 history:
   syntax:           "HISTORY <#canal> {ADD|DEL|VIEW|CLEAR}"

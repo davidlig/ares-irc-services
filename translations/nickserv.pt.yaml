@@ -641,6 +641,15 @@ list:
   status_pending: "Pendente"
   status_registered: "Registado"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <apelido> <palavra-passe> [email]"
+  short: "Registra um apelido em nome de outro utilizador."
+  help: "Registra <apelido> como conta ativa em nome do futuro proprietário, sem qualquer passo de verificação. No modo de registo EMAIL o endereço é obrigatório e deve ser único; no modo TOKEN é opcional. O token de recuperação é mostrado uma única vez no modo TOKEN e enviado por email no modo EMAIL. As palavras-passe e os tokens nunca são escritos no registo de auditoria. Requer a permissão nickserv.saregister."
+  created: "\x0303✓\x03 O apelido \x02%nickname%\x02 foi registado. O token de recuperação foi enviado para \x02%email%\x02."
+  created_with_token: "\x0303✓\x03 O apelido \x02%nickname%\x02 foi registado.\n  \x02TOKEN DE RECUPERAÇÃO:\x02 \x0303%token%\x03\n  Entregue-o ao proprietário através de um canal seguro.\n  É mostrado apenas uma vez e não pode ser recuperado depois."
+  created_without_mail: "\x0307→\x03 O apelido \x02%nickname%\x02 foi registado com uma credencial de recuperação válida, mas não foi possível enviar a mensagem para \x02%email%\x02. O token não foi entregue; usa RECOVER ou elimina a conta e regista-a novamente."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"

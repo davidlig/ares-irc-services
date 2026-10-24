@@ -641,6 +641,15 @@ list:
   status_pending: "Oczekujący"
   status_registered: "Zarejestrowany"
 
+# --- SAREGISTER ------------------------------------------------------------
+saregister:
+  syntax: "SAREGISTER <pseudonim> <hasło> [e-mail]"
+  short: "Rejestruje pseudonim w imieniu innego użytkownika."
+  help: "Rejestruje <pseudonim> jako aktywne konto w imieniu przyszłego właściciela, bez etapu weryfikacji. W trybie rejestracji EMAIL adres jest obowiązkowy i musi być unikalny; w trybie TOKEN jest opcjonalny. Token ratunkowy jest wyświetlany jednorazowo w trybie TOKEN i wysyłany e-mailem w trybie EMAIL. Hasła i tokeny nigdy nie trafiają do dziennika audytu. Wymaga uprawnienia nickserv.saregister."
+  created: "\x0303✓\x03 Pseudonim \x02%nickname%\x02 został zarejestrowany. Token ratunkowy został wysłany na adres \x02%email%\x02."
+  created_with_token: "\x0303✓\x03 Pseudonim \x02%nickname%\x02 został zarejestrowany.\n  \x02TOKEN RATUNKOWY:\x02 \x0303%token%\x03\n  Przekaż go właścicielowi bezpiecznym kanałem.\n  Jest wyświetlany tylko raz i nie można go później odzyskać."
+  created_without_mail: "\x0307→\x03 Pseudonim \x02%nickname%\x02 został zarejestrowany z ważnymi poświadczeniami ratunkowymi, ale nie udało się wysłać wiadomości na adres \x02%email%\x02. Token nie został dostarczony; użyj RECOVER albo usuń konto i zarejestruj je ponownie."
+
 # --- REGMODE ---------------------------------------------------------------
 regmode:
   syntax: "REGMODE {EMAIL|TOKEN|STATUS}"
