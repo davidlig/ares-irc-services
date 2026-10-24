@@ -60,6 +60,11 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return 'akick.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'akick.example';
+    }
+
     public function getOrder(): int
     {
         return 9;
@@ -73,9 +78,9 @@ final readonly class AkickCommand implements ChanServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'ADD', 'desc_key' => 'akick.add.short', 'help_key' => 'akick.add.help', 'syntax_key' => 'akick.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'akick.del.short', 'help_key' => 'akick.del.help', 'syntax_key' => 'akick.del.syntax'],
-            ['name' => 'LIST', 'desc_key' => 'akick.list.short', 'help_key' => 'akick.list.help', 'syntax_key' => 'akick.list.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'akick.add.short', 'help_key' => 'akick.add.help', 'example_key' => 'akick.add.example', 'syntax_key' => 'akick.add.syntax'],
+            ['name' => 'DEL', 'desc_key' => 'akick.del.short', 'help_key' => 'akick.del.help', 'example_key' => 'akick.del.example', 'syntax_key' => 'akick.del.syntax'],
+            ['name' => 'LIST', 'desc_key' => 'akick.list.short', 'help_key' => 'akick.list.help', 'example_key' => 'akick.list.example', 'syntax_key' => 'akick.list.syntax'],
         ];
     }
 
@@ -219,10 +224,10 @@ final readonly class AkickCommand implements ChanServCommandInterface
             $context->reply('akick.list.entry', [
                 '%index%' => (string) ($index + 1),
                 '%mask%' => sprintf("\x0304%s\x03", $entry->mask),
-                '%reason%' => $entry->reason ?? $context->trans('akick.list.no_reason'),
-                '%nickname%' => $entry->creatorNickname ?? $context->trans('akick.list.unknown_creator'),
+                '%reason%' => $entry->reason ?? $context->trans('label.no_reason'),
+                '%nickname%' => $entry->creatorNickname ?? $context->trans('label.unknown_creator'),
                 '%expiration%' => null === $entry->expiresAt
-                    ? $context->trans('akick.list.never_expires')
+                    ? $context->trans('label.never')
                     : $context->formatDate($entry->expiresAt),
             ]);
         }
@@ -235,7 +240,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $notice = $context->trans('akick.add.notice_channel', [
             '%from%' => $performedBy ?? '',
             '%mask%' => $mask,
-            '%reason%' => null === $result->reason ? $context->trans('akick.list.no_reason') : $result->reason,
+            '%reason%' => null === $result->reason ? $context->trans('label.no_reason') : $result->reason,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $notice);
     }

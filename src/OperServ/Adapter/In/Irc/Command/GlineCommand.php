@@ -50,6 +50,11 @@ final readonly class GlineCommand implements OperServCommandInterface
         return 'gline.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'gline.example';
+    }
+
     public function getOrder(): int
     {
         return 20;
@@ -63,9 +68,9 @@ final readonly class GlineCommand implements OperServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'ADD', 'desc_key' => 'gline.add.short', 'help_key' => 'gline.add.help', 'syntax_key' => 'gline.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'gline.del.short', 'help_key' => 'gline.del.help', 'syntax_key' => 'gline.del.syntax'],
-            ['name' => 'LIST', 'desc_key' => 'gline.list.short', 'help_key' => 'gline.list.help', 'syntax_key' => 'gline.list.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'gline.add.short', 'help_key' => 'gline.add.help', 'syntax_key' => 'gline.add.syntax', 'example_key' => 'gline.add.example'],
+            ['name' => 'DEL', 'desc_key' => 'gline.del.short', 'help_key' => 'gline.del.help', 'syntax_key' => 'gline.del.syntax', 'example_key' => 'gline.del.example'],
+            ['name' => 'LIST', 'desc_key' => 'gline.list.short', 'help_key' => 'gline.list.help', 'syntax_key' => 'gline.list.syntax', 'example_key' => 'gline.list.example'],
         ];
     }
 
@@ -115,7 +120,7 @@ final readonly class GlineCommand implements OperServCommandInterface
             ManageGlineOutcome::UnknownAction => $context->reply('gline.unknown_sub', ['%sub%' => $subcommand]),
             ManageGlineOutcome::InvalidRequest => $context->reply('error.syntax', ['%syntax%' => $context->trans(GlineAction::Delete === $action ? 'gline.del.syntax' : 'gline.add.syntax')]),
             ManageGlineOutcome::InvalidMask => $context->reply('gline.invalid_mask'),
-            ManageGlineOutcome::UserNotFound => $context->reply('gline.user_not_found', ['%nickname%' => (string) $result->mask]),
+            ManageGlineOutcome::UserNotFound => $context->reply('error.nick_not_online', ['%nickname%' => (string) $result->mask]),
             ManageGlineOutcome::GlobalMask => $context->reply('gline.global_mask', ['%mask%' => (string) $result->mask]),
             ManageGlineOutcome::DangerousMask => $context->reply('gline.dangerous_mask', ['%mask%' => (string) $result->mask]),
             ManageGlineOutcome::ProtectedUser => $context->reply('gline.protected_user', ['%nickname%' => (string) $result->protectedNickname]),
@@ -132,7 +137,7 @@ final readonly class GlineCommand implements OperServCommandInterface
 
     private function presentAdded(OperServContext $context, ManageGlineResult $result): void
     {
-        $duration = '0' === $result->expiry ? $context->trans('gline.permanent') : (string) $result->expiry;
+        $duration = '0' === $result->expiry ? $context->trans('label.permanent_inline') : (string) $result->expiry;
         $context->reply('gline.add.done', [
             '%mask%' => (string) $result->mask,
             '%duration%' => $duration,
@@ -153,9 +158,9 @@ final readonly class GlineCommand implements OperServCommandInterface
         $context->reply('gline.list.entry', [
             '%index%' => (string) ($index + 1),
             '%mask%' => "\x0304{$entry->mask}\x03",
-            '%reason%' => $entry->reason ?? $context->trans('gline.list.no_reason'),
-            '%nickname%' => $entry->creatorNickname ?? $context->trans('gline.list.unknown_creator'),
-            '%expiration%' => null === $entry->expiresAt ? $context->trans('gline.list.never_expires') : $context->formatDate($entry->expiresAt),
+            '%reason%' => $entry->reason ?? $context->trans('label.no_reason'),
+            '%nickname%' => $entry->creatorNickname ?? $context->trans('label.unknown_creator'),
+            '%expiration%' => null === $entry->expiresAt ? $context->trans('label.permanent') : $context->formatDate($entry->expiresAt),
         ]);
     }
 }

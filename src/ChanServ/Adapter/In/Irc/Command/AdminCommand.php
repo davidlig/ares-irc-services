@@ -38,6 +38,11 @@ final readonly class AdminCommand implements ChanServCommandInterface
         return 'admin.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'admin.example';
+    }
+
     public function getOrder(): int
     {
         return 18;

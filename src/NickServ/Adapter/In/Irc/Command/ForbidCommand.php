@@ -49,6 +49,11 @@ final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCom
         return 'forbid.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'forbid.example';
+    }
+
     public function getOrder(): int
     {
         return 69;

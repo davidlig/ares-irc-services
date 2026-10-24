@@ -51,6 +51,11 @@ final readonly class RenameCommand implements NickServCommandInterface, IrcopAud
         return 'rename.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'rename.example';
+    }
+
     public function getOrder(): int
     {
         return 65;
@@ -107,7 +112,7 @@ final readonly class RenameCommand implements NickServCommandInterface, IrcopAud
     {
         switch ($result->outcome) {
             case RenameNickOutcome::NotOnline:
-                $context->reply('rename.not_online', ['nickname' => $result->targetNick]);
+                $context->reply('error.nick_not_online', ['nickname' => $result->targetNick]);
 
                 return CommandOutcome::rejected();
             case RenameNickOutcome::CannotRenameRoot:

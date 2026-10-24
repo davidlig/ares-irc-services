@@ -905,6 +905,7 @@ final class AkickCommandTest extends TestCase
         self::assertSame(2, $cmd->getMinArgs());
         self::assertSame('akick.syntax', $cmd->getSyntaxKey());
         self::assertSame('akick.help', $cmd->getHelpKey());
+        self::assertSame('akick.example', $cmd->getExampleKey());
         self::assertSame(9, $cmd->getOrder());
         self::assertSame('akick.short', $cmd->getShortDescKey());
         self::assertCount(3, $cmd->getSubCommandHelp());
@@ -1063,7 +1064,7 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
         self::assertCount(2, $messages);
-        self::assertStringContainsString('akick.list.unknown_creator', $messages[1]);
+        self::assertStringContainsString('label.unknown_creator', $messages[1]);
     }
 
     #[Test]
@@ -1100,7 +1101,7 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
         self::assertCount(2, $messages);
-        self::assertStringContainsString('akick.list.unknown_creator', $messages[1]);
+        self::assertStringContainsString('label.unknown_creator', $messages[1]);
     }
 
     #[Test]

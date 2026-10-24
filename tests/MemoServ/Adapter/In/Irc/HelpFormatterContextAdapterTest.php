@@ -289,6 +289,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return '';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -319,5 +324,27 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return null;
             }
         };
+    }
+
+    #[Test]
+    public function exposesTheConfiguredBotNickname(): void
+    {
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomMemo');
+        $context = new MemoServContext(
+            null,
+            null,
+            'HELP',
+            [],
+            $notifier,
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
+        );
+
+        self::assertSame('CustomMemo', new HelpFormatterContextAdapter($context)->getBotName());
     }
 }

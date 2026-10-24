@@ -22,6 +22,8 @@ interface HelpFormatterContextInterface
      */
     public function trans(string $key, array $params = []): string;
 
+    public function getBotName(): string;
+
     /**
      * Commands to list in general HELP.
      *

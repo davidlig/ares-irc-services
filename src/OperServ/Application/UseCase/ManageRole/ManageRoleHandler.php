@@ -149,9 +149,6 @@ final readonly class ManageRoleHandler implements ManageRoleHandlerInterface
         if (!in_array($permission, $role->permissions, true)) {
             return new ManageRoleResult(RoleOutcome::PermissionMissing, $role);
         }
-        if ($role->protected) {
-            return new ManageRoleResult(RoleOutcome::Protected, $role);
-        }
         $new = array_values(array_diff($role->permissions, [$permission]));
         $this->roles->setPermissions($role->name, $new);
         $this->recordAudit($command, 'ROLE PERMS DEL', $role->name, ['permission_name' => $permission]);
@@ -191,11 +188,12 @@ final readonly class ManageRoleHandler implements ManageRoleHandlerInterface
         if (null === $role) {
             return new ManageRoleResult(RoleOutcome::NotFound);
         }
+        $requestedModes = trim($value);
         $available = $this->modes->available();
         if (null === $available) {
             return new ManageRoleResult(RoleOutcome::ModesNotSupported, $role);
         }
-        $modes = array_values(array_unique(str_split(ltrim(trim($value), '+'))));
+        $modes = '' === $requestedModes ? [] : array_values(array_unique(str_split(ltrim($requestedModes, '+'))));
         $invalid = array_values(array_diff($modes, $available));
         if ([] !== $invalid) {
             return new ManageRoleResult(RoleOutcome::InvalidModes, $role, values: $invalid, availableValues: $available);
@@ -229,7 +227,7 @@ final readonly class ManageRoleHandler implements ManageRoleHandlerInterface
             return new ManageRoleResult(RoleOutcome::NotFound);
         }
         $pattern = trim($value);
-        if ('' === $pattern || 'OFF' === strtoupper($pattern)) {
+        if ('' === $pattern) {
             if (null === $role->forcedVhostPattern) {
                 return new ManageRoleResult(RoleOutcome::VhostCleared, $role);
             }
@@ -278,9 +276,8 @@ final readonly class ManageRoleHandler implements ManageRoleHandlerInterface
         if (!$this->network->supportsOperclass()) {
             return new ManageRoleResult(RoleOutcome::OperclassNotSupported, $role);
         }
-        $available = $this->network->availableOperclasses();
         $operclass = trim($value);
-        if ('' === $operclass || 'OFF' === strtoupper($operclass)) {
+        if ('' === $operclass) {
             if (null === $role->operclass) {
                 return new ManageRoleResult(RoleOutcome::OperclassCleared, $role);
             }
@@ -290,6 +287,7 @@ final readonly class ManageRoleHandler implements ManageRoleHandlerInterface
 
             return new ManageRoleResult(RoleOutcome::OperclassCleared, $role);
         }
+        $available = $this->network->availableOperclasses();
         $selected = null;
         if (null === $available) {
             $selected = $operclass;

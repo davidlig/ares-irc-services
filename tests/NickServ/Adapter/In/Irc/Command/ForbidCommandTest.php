@@ -78,6 +78,7 @@ final class ForbidCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertSame('forbid.help', $cmd->getHelpKey());
+        self::assertSame('forbid.example', $cmd->getExampleKey());
     }
 
     #[Test]

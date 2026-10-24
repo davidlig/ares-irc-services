@@ -40,6 +40,11 @@ final readonly class VoiceCommand implements ChanServCommandInterface
         return 'voice.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'voice.example';
+    }
+
     public function getOrder(): int
     {
         return 24;

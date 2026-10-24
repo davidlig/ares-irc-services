@@ -37,6 +37,7 @@ final class RegmodeCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('regmode.syntax', $command->getSyntaxKey());
         self::assertSame('regmode.help', $command->getHelpKey());
+        self::assertSame('regmode.example', $command->getExampleKey());
         self::assertSame('regmode.short', $command->getShortDescKey());
         self::assertSame(67, $command->getOrder());
         self::assertSame([], $command->getSubCommandHelp());

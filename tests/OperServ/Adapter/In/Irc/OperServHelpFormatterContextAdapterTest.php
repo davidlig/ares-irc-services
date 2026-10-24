@@ -19,9 +19,12 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(OperServHelpFormatterContextAdapter::class)]
+#[CoversClass(OperServContext::class)]
 final class OperServHelpFormatterContextAdapterTest extends TestCase
 {
     #[Test]
@@ -35,6 +38,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $adapter->reply('help.key', ['value' => 'translated']);
         $adapter->replyRaw('raw line');
 
+        self::assertSame('OperServ', $adapter->getBotName());
         self::assertSame(['help.key', 'raw line'], $notifier->messages);
         self::assertSame('translated.key', $adapter->trans('translated.key'));
         self::assertSame([$command], iterator_to_array($adapter->getCommandsForGeneralHelp()));
@@ -96,7 +100,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
     private function context(
         array $commands = [],
         ?FormatterNotifier $notifier = null,
-        ?FormatterTranslation $translator = null,
+        ?TranslatorInterface $translator = null,
         ?OperatorAuthorizationQuery $authorization = null,
     ): OperServContext {
         return new OperServContext(
@@ -113,6 +117,21 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
             new ServiceNicknameRegistry([]),
             $authorization ?? $this->createStub(OperatorAuthorizationQuery::class),
         );
+    }
+
+    #[Test]
+    public function translatesCommonFirstButHonorsExplicitDomains(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['shared.key' => 'Common %value% via %bot%'], 'en', 'common');
+        $translator->addResource('array', ['shared.key' => 'Service %value%'], 'en', 'operserv');
+        $translator->addResource('array', ['drop.short' => 'Explicit %value% via %bot%'], 'en', 'chanserv');
+        $context = $this->context(translator: $translator);
+        $adapter = new OperServHelpFormatterContextAdapter($context);
+
+        self::assertSame('Common x via OperServ', $adapter->trans('shared.key', ['value' => 'x']));
+        self::assertSame('Explicit x via OperServ', $context->transInDomain('drop.short', 'chanserv', ['value' => 'x']));
     }
 }
 
@@ -147,6 +166,11 @@ final readonly class FormatterCommand implements OperServCommandInterface
     public function getHelpKey(): string
     {
         return '';
+    }
+
+    public function getExampleKey(): string
+    {
+        return $this->name . '.example';
     }
 
     public function getOrder(): int

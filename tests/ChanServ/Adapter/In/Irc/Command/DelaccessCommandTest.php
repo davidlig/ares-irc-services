@@ -410,6 +410,7 @@ final class DelaccessCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $cmd = $this->createCommand($channelRepo, $accessRepo, $this->createStub(EventBusInterface::class));
         self::assertSame('delaccess.help', $cmd->getHelpKey());
+        self::assertSame('delaccess.example', $cmd->getExampleKey());
     }
 
     #[Test]

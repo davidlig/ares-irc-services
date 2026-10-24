@@ -153,7 +153,7 @@ final class InfoCommandTest extends TestCase
 
         self::assertContains('info.header', $rawMessages);
         self::assertContains('info.founder', $rawMessages);
-        self::assertContains('info.footer', $rawMessages);
+        self::assertContains('reply.separator', $rawMessages);
     }
 
     #[Test]
@@ -598,6 +598,7 @@ final class InfoCommandTest extends TestCase
             $this->createStub(ChanUserAccountPort::class),
         );
         self::assertSame('info.help', $cmd->getHelpKey());
+        self::assertSame('info.example', $cmd->getExampleKey());
     }
 
     #[Test]
@@ -772,7 +773,7 @@ final class InfoCommandTest extends TestCase
         self::assertContains('info.header', $rawMessages);
         self::assertContains('info.forbidden_status', $rawMessages);
         self::assertContains('info.forbidden_reason', $rawMessages);
-        self::assertContains('info.footer', $rawMessages);
+        self::assertContains('reply.separator', $rawMessages);
         self::assertNotContains('info.founder', $rawMessages);
     }
 

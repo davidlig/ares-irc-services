@@ -56,6 +56,11 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         return 'ignore.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'ignore.example';
+    }
+
     public function getOrder(): int
     {
         return 5;
@@ -69,9 +74,9 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'ADD', 'desc_key' => 'ignore.add.short', 'help_key' => 'ignore.add.help', 'syntax_key' => 'ignore.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'ignore.del.short', 'help_key' => 'ignore.del.help', 'syntax_key' => 'ignore.del.syntax'],
-            ['name' => 'LIST', 'desc_key' => 'ignore.list.short', 'help_key' => 'ignore.list.help', 'syntax_key' => 'ignore.list.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'ignore.add.short', 'help_key' => 'ignore.add.help', 'syntax_key' => 'ignore.add.syntax', 'example_key' => 'ignore.add.example'],
+            ['name' => 'DEL', 'desc_key' => 'ignore.del.short', 'help_key' => 'ignore.del.help', 'syntax_key' => 'ignore.del.syntax', 'example_key' => 'ignore.del.example'],
+            ['name' => 'LIST', 'desc_key' => 'ignore.list.short', 'help_key' => 'ignore.list.help', 'syntax_key' => 'ignore.list.syntax', 'example_key' => 'ignore.list.example'],
         ];
     }
 
@@ -140,7 +145,7 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
                 foreach ($result->ignoredNicks as $name) {
                     $context->replyRaw('  ' . $name);
                 }
-                $context->reply('ignore.list_footer');
+                $context->reply('reply.separator');
                 break;
 
             case IgnoreMemoOutcome::AddedNick:
@@ -162,11 +167,11 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
                 break;
 
             case IgnoreMemoOutcome::NickNotRegistered:
-                $context->reply('ignore.nick_not_registered', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
+                $context->reply('error.nick_not_registered', ['nickname' => $result->targetNick ?? '', 'nick' => $result->targetNick ?? '']);
                 break;
 
             case IgnoreMemoOutcome::ChannelNotRegistered:
-                $context->reply('ignore.channel_not_registered', ['channel' => $result->channelName ?? '']);
+                $context->reply('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
             case IgnoreMemoOutcome::AccessDenied:

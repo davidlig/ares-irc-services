@@ -54,6 +54,11 @@ final readonly class SendCommand implements MemoServCommandInterface
         return 'send.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'send.example';
+    }
+
     public function getOrder(): int
     {
         return 1;
@@ -142,11 +147,11 @@ final readonly class SendCommand implements MemoServCommandInterface
                 break;
 
             case SendMemoOutcome::NickNotRegistered:
-                $context->reply('send.nick_not_registered', ['nick' => $result->targetName ?? $targetArg]);
+                $context->reply('error.nick_not_registered', ['nick' => $result->targetName ?? $targetArg]);
                 break;
 
             case SendMemoOutcome::ChannelNotRegistered:
-                $context->reply('send.channel_not_registered', ['channel' => $result->targetName ?? $targetArg]);
+                $context->reply('error.channel_not_registered', ['channel' => $result->targetName ?? $targetArg]);
                 break;
 
             case SendMemoOutcome::Ignored:

@@ -47,6 +47,11 @@ final readonly class DisableCommand implements MemoServCommandInterface
         return 'disable.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'disable.example';
+    }
+
     public function getOrder(): int
     {
         return 7;
@@ -108,7 +113,7 @@ final readonly class DisableCommand implements MemoServCommandInterface
                 break;
 
             case DisableMemosOutcome::ChannelNotRegistered:
-                $context->reply('disable.channel_not_registered', ['channel' => $result->channelName ?? '']);
+                $context->reply('error.channel_not_registered', ['channel' => $result->channelName ?? '']);
                 break;
 
             case DisableMemosOutcome::FounderOnly:

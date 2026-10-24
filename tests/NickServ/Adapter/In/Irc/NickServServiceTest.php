@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
@@ -153,6 +155,11 @@ final class NickServServiceTest extends TestCase
                 return 'dummy.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'dummy.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -233,7 +240,13 @@ final class NickServServiceTest extends TestCase
         $authorizationChecker = $this->createStub(AuthorizationCheckerInterface::class);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createMock(NickServNotifierInterface::class);
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = new Translator('en');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        foreach (['common', 'nickserv'] as $domain) {
+            $translator->addResource('yaml', __DIR__ . '/../../../../../translations/' . $domain . '.en.yaml', 'en', $domain);
+        }
+        $expected = $translator->trans('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'NickServ'], 'common', 'en');
+        self::assertNotSame('unknown_command', $expected);
         $pendingRegistry = new PendingVerificationRegistry();
         $recoveryRegistry = new RecoveryTokenRegistry();
         $logger = $this->createStub(LoggerInterface::class);
@@ -242,19 +255,10 @@ final class NickServServiceTest extends TestCase
         $registry = new NickServCommandRegistry([]);
 
         $notifier->method('getNick')->willReturn('NickServ');
-        $translator->expects(self::once())
-            ->method('trans')
-            ->with(
-                'unknown_command',
-                ['%command%' => 'UNKNOWN', '%bot%' => 'NickServ'],
-                'nickserv',
-                'en',
-            )
-            ->willReturn('Unknown command');
 
         $notifier->expects(self::once())
             ->method('sendMessage')
-            ->with($sender->uid, 'Unknown command', 'NOTICE');
+            ->with($sender->uid, $expected, 'NOTICE');
 
         $service = new NickServService(
             $authorizationContext,
@@ -335,6 +339,11 @@ final class NickServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'help.example';
             }
 
             public function getOrder(): int
@@ -442,6 +451,11 @@ final class NickServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'help.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -547,6 +561,11 @@ final class NickServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'help.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -643,6 +662,11 @@ final class NickServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'help.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -735,6 +759,11 @@ final class NickServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'help.example';
             }
 
             public function getOrder(): int
@@ -868,6 +897,11 @@ final class NickServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'help.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -982,6 +1016,11 @@ final class NickServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'help.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -1094,6 +1133,11 @@ final class NickServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'help.example';
             }
 
             public function getOrder(): int
@@ -1214,6 +1258,11 @@ final class NickServServiceTest extends TestCase
                 public function getHelpKey(): string
                 {
                     return 'help';
+                }
+
+                public function getExampleKey(): string
+                {
+                    return 'help.example';
                 }
 
                 public function getOrder(): int

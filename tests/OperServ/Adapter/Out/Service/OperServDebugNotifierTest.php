@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\OperServ\Adapter\Out\Service;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\ChannelServiceActionsPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Application\Port\In\NickAccountQuery;
@@ -16,6 +17,7 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(OperServDebugNotifier::class)]
@@ -304,7 +306,7 @@ final class OperServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')
             ->willReturnCallback(static function (string $key, array $params = []): string {
-                if ('debug.actionWithDuration' === $key) {
+                if ('debug.action_duration' === $key) {
                     self::assertArrayHasKey('%duration%', $params);
                     self::assertIsString($params['%duration%']);
 
@@ -376,6 +378,7 @@ final class OperServDebugNotifierTest extends TestCase
         ?OperatorAuthorizationQuery $authorization = null,
         ?TranslatorInterface $translator = null,
         ?string $debugChannel = '#ircops',
+        string $language = 'en',
     ): OperServDebugNotifier {
         return new OperServDebugNotifier(
             channelActions: $channelActions ?? $this->createStub(ChannelServiceActionsPort::class),
@@ -384,7 +387,7 @@ final class OperServDebugNotifierTest extends TestCase
             nickAccounts: $nickAccounts ?? $this->createStub(NickAccountQuery::class),
             authorization: $authorization ?? $this->deniedAuthorization(),
             translator: $translator ?? $this->createStub(TranslatorInterface::class),
-            defaultLanguage: 'en',
+            defaultLanguage: $language,
             debugChannel: $debugChannel,
         );
     }
@@ -395,5 +398,57 @@ final class OperServDebugNotifierTest extends TestCase
         $authorization->method('ircOperator')->willReturn(AuthorizationDecision::denied());
 
         return $authorization;
+    }
+
+    #[Test]
+    public function realCatalogDebugOutputRemainsIdenticalInEveryLocale(): void
+    {
+        // Hashes pin the complete nine-message transcript before common extraction.
+        $expectedHashes = [
+            'ca' => 'dbf4548d8eace03c5d2ad1bd736fb679069ec28f12c9f541adf90cef10f71587',
+            'de' => 'f596866c8b52882817fb0dc6094dd60893933f35bb6e4c00f57a4ff09ee0b8a3',
+            'el' => '0c25dddaf82a01daef0788ebf3aec3e15a3e2fb85d3fcad456418c47e41e1310',
+            'en' => 'bfb08ad9fb1d580e6fc9ec52bab0d16a9d6ab916e52d38857156d30ac986248c',
+            'es' => '2e43e37cb7413783aef9c27cf5c1adf8bf1fa18e843aa813a3f3acd414397ff3',
+            'eu' => '553a9f23b9066d7d03df3ee3aaf3e30bcf889efea4030ea76e47d1dc65a28288',
+            'fr' => '51d97b8e986051c8c8af852ee2cd672cc50d0973a1cd43e3d864b0ba0cace016',
+            'gl' => '2a145b00552f82f7c3aefb7f6daf7f89f2526999323c6bf84515867318a5bcf7',
+            'it' => '73ecb852d16c73571aa40ec145c7b4d10ae75d3713c760c7d404b8ccc0962892',
+            'nl' => '0636752fd65ea15b5a686d4b153f336f0d05d3f76432cd32fa7e2ebe4a4ac5d9',
+            'pl' => 'e8db6ef45dd48e10b627393ab7277ca6cb4a3ea4f09f474c892682a9b2046829',
+            'pt' => '6a07e3cb7d418238f10fc6e254cb1a727e64e9135edf6799d8afa9f63105e13d',
+            'ro' => '654755bf327d6a9d644a71d135e717e6bd4d85698a6924d856c8059618e57c04',
+            'tr' => '13849d5eada302d93db37bebea3564e991c03a7de156765f8acf246e14b73923',
+        ];
+        foreach ($expectedHashes as $locale => $hash) {
+            $translator = new Translator($locale);
+            $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+            foreach (['common', 'operserv'] as $domain) {
+                $translator->addResource('yaml', __DIR__ . '/../../../../../translations/' . $domain . '.' . $locale . '.yaml', $locale, $domain);
+            }
+            $messages = [];
+            $transport = $this->createMock(OperServNotifierInterface::class);
+            $transport->expects(self::exactly(9))->method('sendMessage')->willReturnCallback(
+                static function (string $target, string $message, string $transport) use (&$messages): void {
+                    $messages[] = [$target, $message, $transport];
+                },
+            );
+            $debug = $this->createDebugNotifier(notifier: $transport, translator: $translator, debugChannel: '#debug', language: $locale);
+            $cases = [
+                ['DROP', null, []],
+                ['DROP', 'manual', []],
+                ['SET', 'manual', ['option' => 'EMAIL', 'value' => 'new@example.test']],
+                ['SET', null, ['option' => 'PASSWORD', 'value' => 'secretvalue']],
+                ['SET', null, ['option' => 'EMAIL']],
+                ['SUSPEND', 'manual', ['duration' => '1d']],
+                ['DROP', null, ['founder_action' => true]],
+                ['KILL', 'message', ['reasonType' => 'message']],
+                ['GLOBAL', 'hello', ['type' => 'NOTICE', 'count' => 2]],
+            ];
+            foreach ($cases as [$command, $reason, $extra]) {
+                $debug->log('Admin', $command, 'Target', null, null, $reason, $extra);
+            }
+            self::assertSame($hash, hash('sha256', serialize($messages)), $locale);
+        }
     }
 }

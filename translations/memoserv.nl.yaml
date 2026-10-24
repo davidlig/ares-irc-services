@@ -1,24 +1,33 @@
-# MemoServ translations — Dutch
-# Domain: memoserv
+# MemoServ-vertalingen — Nederlands
+# Domein: memoserv
+#
+# IRC-opmaakcodes (dubbele aanhalingstekens of letterlijke !irc-blokken):
+#   \x02        vet aan/uit
+#   \x03NN      kleur (DECIMAAL: 03=groen, 04=rood, 07=oranje, 14=donkergrijs)
+#   \x03        kleur herstellen
+#   \x0F        alle opmaak herstellen
+#
+# IRC-kleuren gebruiken DECIMALE getallen (0-15), geen hexadecimale.
+#   \x0314 = donkergrijs (14 decimaal): GOED
+#   \x030F = kleur 0 gevolgd door de letter F: FOUT
+#
+# IRC-tekst over meerdere regels: !irc |- met echte regeleinden en spaties.
+# Blokken zonder tag decoderen geen escapes; behoud letterlijke CTCP-waarden.
+# HELP-voorbeelden: example/examples en %command_prefix%.
+# De presentatielaag voegt /msg zonder kleur en een marge van twee spaties toe.
 
-unknown_command: "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax: "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
-  not_identified: "\x0304✗\x03 U bent niet geïdentificeerd. Gebruik \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft geen toegang tot dit commando."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
-  insufficient_access: "\x0304✗\x03 Onvoldoende toegang voor \x02%operation%\x02 op kanaal \x02%channel%\x02."
-
+# --- SEND ------------------------------------------------------------------
 send:
   syntax: "SEND {bijnaam|#kanaal} <bericht>"
   short: "Stuur een bericht naar een bijnaam of kanaal."
-  help: "Stuurt een bericht naar een geregistreerde bijnaam of kanaal. De ontvanger moet berichtenservice ingeschakeld hebben (ENABLE)."
+  help: |-
+    Stuurt een bericht naar een geregistreerde bijnaam of kanaal. De ontvanger moet
+    de berichtendienst hebben ingeschakeld (ENABLE).
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND Anna Hoi, kun je het memo nakijken?\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND #hulp Melding voor het kanaal\x03\x0F"
   sent_nick: "\x0303✔\x03 Bericht verzonden naar \x02%nickname%\x02."
   sent_channel: "\x0303✔\x03 Bericht verzonden naar kanaal \x02%channel%\x02."
-  nick_not_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   throttled: "\x0304✗\x03 U moet \x02%seconds%\x02 seconde(n) wachten voordat u een nieuw bericht verstuurt."
   limit_reached: "\x0304✗\x03 Berichtenlimiet bereikt voor \x02%target%\x02."
   ignored: "\x0304✗\x03 U kunt geen berichten sturen naar deze ontvanger, u staat op hun negeerlijst."
@@ -26,93 +35,149 @@ send:
   message_too_long: "\x0304✗\x03 Bericht te lang. Maximum is \x02%max%\x02 tekens."
   service_disabled_for_target: "\x0304✗\x03 Berichtenservice is uitgeschakeld voor \x02%target%\x02."
 
+# --- READ ------------------------------------------------------------------
 read:
   syntax: "READ [#kanaal] <nummer>"
   short: "Lees een bericht op nummer."
-  help: "Leest het bericht met het opgegeven nummer. Zonder #kanaal leest u uit uw bijnaam-inbox. Met #kanaal is MEMOREAD-niveau vereist."
+  help: |-
+    Leest het bericht met het opgegeven nummer. Zonder #kanaal wordt je
+    bijnaam-inbox
+    gebruikt. Met #kanaal is level MEMOREAD vereist.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303READ 1\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303READ #hulp 2\x03\x0F"
   header: "\x02\x0307Bericht #%index%\x03 van \x02%from%\x02:\x0F"
   footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   not_found: "\x0304✗\x03 Bericht #%index% niet gevonden."
 
+# --- LIST ------------------------------------------------------------------
 list:
   syntax: "LIST [#kanaal]"
   short: "Toon berichten (ongelezen gemarkeerd met rode *)."
-  help: "Toont uw berichten of kanaalberichten. Ongelezen berichten worden getoond met een rode asterisk en een voorbeeld (max 50 tekens). Zonder #kanaal = uw bijnaam-inbox; met #kanaal is MEMOREAD vereist."
+  help: |-
+    Toont je berichten of die van het kanaal. Ongelezen berichten krijgen een rode
+    ster en voorbeeldtekst (max. 50 tekens). Zonder #kanaal = je inbox; met #kanaal
+    is MEMOREAD vereist.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST #hulp\x03\x0F"
   header: "\x02\x0307Berichten voor %target%\x03:\x0F"
-  footer: "\x0314─────────────────────────────\x03"
   empty: "\x0307ℹ\x03 Geen berichten voor \x02%target%\x02."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
 
+# --- DEL -------------------------------------------------------------------
 del:
   syntax: "DEL [#kanaal] <nummer>"
   short: "Verwijder een bericht op nummer."
-  help: "Verwijdert het bericht met het opgegeven nummer. Voor kanalen is MEMOCHANGE-niveau vereist."
+  help: |-
+    Verwijdert het bericht met het opgegeven nummer. Voor kanalen is
+    MEMOCHANGE-niveau vereist.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL 1\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL #hulp 2\x03\x0F"
   deleted: "\x0303✔\x03 Bericht #%index% verwijderd."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   not_found: "\x0304✗\x03 Bericht #%index% niet gevonden."
 
+# --- IGNORE ----------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD|DEL|LIST} [#kanaal] [bijnaam]"
   short: "Beheer negeerlijst voor berichten."
-  help: "ADD voegt een bijnaam toe aan uw (of de kanaal-) negeerlijst; DEL verwijdert; LIST toont de lijst. Voor kanalen vereisen ADD/DEL MEMOCHANGE."
+  help: |-
+    Beheert bijnamen waarvan je geen berichten wilt ontvangen, voor je account of
+    een geregistreerd kanaal. Voor aanpassing van de kanaallijst is MEMOCHANGE
+    vereist.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #hulp Ana\x03\x0F"
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #hulp\x03\x0F"
+
+  # --- IGNORE ADD ----------------------------------------------------------
   add:
     syntax: "IGNORE ADD [#kanaal] <bijnaam>"
-    short: "Voeg bijnaam toe aan negeerlijst."
-    help: "Berichten van deze bijnaam worden niet geaccepteerd voor uw inbox (of die van het kanaal)."
+    short: "Voegt een bijnaam toe aan de negeerlijst."
+    help: |-
+      Berichten van deze bijnaam worden niet geaccepteerd voor uw inbox (of die van
+      het kanaal).
+    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+    examples:
+      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD #hulp Ana\x03\x0F"
+
+  # --- IGNORE DEL ----------------------------------------------------------
   del:
     syntax: "IGNORE DEL [#kanaal] <bijnaam>"
-    short: "Verwijder bijnaam uit negeerlijst."
+    short: "Verwijdert een bijnaam uit de lijst."
     help: "Verwijdert de bijnaam uit de negeerlijst."
+    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL Ana\x03\x0F"
+    examples:
+      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #hulp Ana\x03\x0F"
+
+  # --- IGNORE LIST ---------------------------------------------------------
   list:
     syntax: "IGNORE LIST [#kanaal]"
-    short: "Toon genegeerde bijnamen."
+    short: "Toont genegeerde bijnamen."
     help: "Toont de lijst met bijnamen die u (of het kanaal) negeert voor berichten."
+    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST\x03\x0F"
+    examples:
+      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #hulp\x03\x0F"
   added: "\x0303✔\x03 \x02%nickname%\x02 toegevoegd aan negeerlijst."
   removed: "\x0303✔\x03 \x02%nickname%\x02 verwijderd uit negeerlijst."
   already_ignored: "\x0304✗\x03 \x02%nickname%\x02 staat al op de negeerlijst."
   not_ignored: "\x0304✗\x03 \x02%nickname%\x02 staat niet op de negeerlijst."
-  nick_not_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   limit_reached_nick: "\x0304✗\x03 Negeerlijst-limiet bereikt voor uw bijnaam (max \x02%limit%\x02)."
   limit_reached_channel: "\x0304✗\x03 Negeerlijst-limiet bereikt voor \x02%channel%\x02 (max \x02%limit%\x02)."
   list_empty: "\x0307ℹ\x03 Negeerlijst is leeg."
   list_header: "\x02\x0307Negeerlijst:\x03\x0F"
-  list_footer: "\x0314─────────────────────────────\x03"
 
+# --- ENABLE ----------------------------------------------------------------
 enable:
   syntax: "ENABLE [#kanaal]"
   short: "Schakel berichtenontvangst in."
-  help: "Schakelt het ontvangen van berichten in voor uw bijnaam of, voor kanalen, kan alleen de oprichter inschakelen."
+  help: |-
+    Schakelt berichtontvangst voor je bijnaam in. In kanalen kan alleen de
+    oprichter dit inschakelen.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE #hulp\x03\x0F"
   enabled_nick: "\x0303✔\x03 Berichtenservice ingeschakeld voor uw bijnaam."
   enabled_channel: "\x0303✔\x03 Berichtenservice ingeschakeld voor kanaal \x02%channel%\x02."
   already_enabled_nick: "\x0307ℹ\x03 Berichtenservice is al ingeschakeld voor uw bijnaam."
   already_enabled_channel: "\x0307ℹ\x03 Berichtenservice is al ingeschakeld voor \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   founder_only: "\x0304✗\x03 Alleen de kanaaloprichter kan berichten inschakelen voor \x02%channel%\x02."
 
+# --- DISABLE ---------------------------------------------------------------
 disable:
   syntax: "DISABLE [#kanaal]"
   short: "Schakel berichtenontvangst uit."
-  help: "Schakelt het ontvangen van berichten uit voor uw bijnaam of kanaal. Voor kanalen kan alleen de oprichter uitschakelen."
+  help: |-
+    Schakelt berichtontvangst voor je bijnaam of kanaal uit. In kanalen kan alleen
+    de oprichter dit uitschakelen.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE #hulp\x03\x0F"
   disabled_nick: "\x0303✔\x03 Berichtenservice uitgeschakeld voor uw bijnaam."
   disabled_channel: "\x0303✔\x03 Berichtenservice uitgeschakeld voor kanaal \x02%channel%\x02."
   already_disabled_nick: "\x0307ℹ\x03 Berichtenservice is al uitgeschakeld voor uw bijnaam."
   already_disabled_channel: "\x0307ℹ\x03 Berichtenservice is al uitgeschakeld voor \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
   founder_only: "\x0304✗\x03 Alleen de kanaaloprichter kan berichten uitschakelen voor \x02%channel%\x02."
 
+# --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [commando [sub-optie]]"
   short: "Toon commando's of hulp voor een commando."
-  help: "Zonder argumenten toont alle commando's. Gebruik \x02\x0303HELP <commando>\x03\x0F voor volledige hulp."
+  help: "Toont de lijst met commando’s of uitgebreide hulp bij een commando of optie."
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP IGNORE ADD\x03\x0F"
   header_title: "%bot%"
   header: "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
-  intro: "Berichtenservice voor bijnamen en kanalen."
+  intro: |-
+    Hiermee kunnen geregistreerde gebruikers elkaar berichten sturen en meldingen
+    aan kanalen sturen. Berichten worden bewaard om later te lezen, ook als de
+    ontvanger niet verbonden is.
   general_header: "\x02 ■ Beschikbare opdrachten:\x02"
   command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
   options_header: "\x02 ■ Opties:\x02"
+  examples_header: "\x02 ■ Voorbeelden:\x02"
   general_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP <opdracht>\x03\x0F voor meer informatie."
   set_sub_footer: "\x0310ℹ\x03\x0F Gebruik /msg %bot% \x02\x0303HELP %command% <optie>\x03\x0F voor meer informatie."
   syntax_label: "Syntaxis: \x02\x0303%syntax%\x03\x0F"
@@ -122,9 +187,9 @@ help:
   group:
     messages: "Berichten"
     preferences: "Voorkeuren"
-  unknown_command: "\x0307✗\x03\x0F Onbekend commando \x02\x0303%command%\x03\x0F. Gebruik \x02\x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Beschikbare opdrachten voor IRC-operators:\x02"
 
+# --- NOTIFY ----------------------------------------------------------------
 notify:
-  nick_pending: "U heeft \x02%count%\x02 ongelezen bericht(en). Om ze te tonen: \x0309/msg %bot% LIST\x03"
-  channel_pending: "Het kanaal \x02%channel%\x02 heeft \x02%count%\x02 ongelezen bericht(en). Gebruik \x0309/msg %bot% LIST %channel%\x03 om ze te tonen."
+  nick_pending: "Je hebt \x02%count%\x02 ongelezen bericht(en). Toon de berichten: /msg %bot% \x0303LIST\x03"
+  channel_pending: "Kanaal \x02%channel%\x02 heeft \x02%count%\x02 ongelezen bericht(en). Bekijk berichten met /msg %bot% \x0303LIST %channel%\x03"

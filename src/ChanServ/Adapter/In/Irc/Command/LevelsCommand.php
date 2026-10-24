@@ -89,6 +89,11 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         return 'levels.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'levels.example';
+    }
+
     public function getOrder(): int
     {
         return 9;
@@ -102,9 +107,9 @@ final readonly class LevelsCommand implements ChanServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'LIST', 'desc_key' => 'levels.list.short', 'help_key' => 'levels.list.help', 'syntax_key' => 'levels.list.syntax'],
-            ['name' => 'SET', 'desc_key' => 'levels.set.short', 'help_key' => 'levels.set.help', 'syntax_key' => 'levels.set.syntax'],
-            ['name' => 'RESET', 'desc_key' => 'levels.reset.short', 'help_key' => 'levels.reset.help', 'syntax_key' => 'levels.reset.syntax'],
+            ['name' => 'LIST', 'desc_key' => 'levels.list.short', 'help_key' => 'levels.list.help', 'example_key' => 'levels.list.example', 'syntax_key' => 'levels.list.syntax'],
+            ['name' => 'SET', 'desc_key' => 'levels.set.short', 'help_key' => 'levels.set.help', 'example_key' => 'levels.set.example', 'syntax_key' => 'levels.set.syntax'],
+            ['name' => 'RESET', 'desc_key' => 'levels.reset.short', 'help_key' => 'levels.reset.help', 'example_key' => 'levels.reset.example', 'syntax_key' => 'levels.reset.syntax'],
         ];
     }
 
@@ -200,7 +205,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
                 $context->reply('error.syntax', ['syntax' => $context->trans('levels.set.syntax')]);
                 break;
             case ManageChannelLevelsOutcome::Listed:
-                $context->reply('levels.list.header');
+                $context->reply('levels.list.header', ['%channel%' => $channelName]);
                 foreach ($result->levels as $key => $value) {
                     $context->replyRaw(sprintf('  %s %s', $key, $value));
                 }

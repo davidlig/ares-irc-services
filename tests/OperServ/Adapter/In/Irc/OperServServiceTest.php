@@ -23,8 +23,11 @@ use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(OperServService::class)]
@@ -164,6 +167,57 @@ final class OperServServiceTest extends TestCase
         self::assertSame([['001AAA', 'raw', 'NOTICE']], $notifier->messages);
     }
 
+    /** @return iterable<string, array{string}> */
+    public static function translationLocales(): iterable
+    {
+        yield 'direct locale' => ['en'];
+        yield 'parent locale fallback' => ['en_US'];
+        yield 'configured fallback' => ['zz'];
+    }
+
+    #[Test]
+    #[DataProvider('translationLocales')]
+    public function commonTranslationsTakePrecedenceAndMissingKeysFallBackToOperServ(string $language): void
+    {
+        $translator = new Translator($language);
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->setFallbackLocales(['en']);
+        $translator->addResource('array', ['unknown_command' => 'Shared unknown-command message'], 'en', 'common');
+        $translator->addResource('array', ['unknown_command' => 'Local unknown-command message', 'error.permission_denied' => 'OperServ permission message'], 'en', 'operserv');
+        $notifier = new RecordingOperServNotifier();
+
+        $this->service([], $notifier, account: null, translator: $translator, language: $language)->dispatch('missing', $this->sender());
+        $this->service(
+            [new RecordingOperServCommand('SECURE', 'operserv.secure')],
+            $notifier,
+            account: null,
+            translator: $translator,
+            language: $language,
+        )->dispatch('secure', $this->sender());
+
+        self::assertSame([
+            ['001AAA', 'Shared unknown-command message', 'NOTICE'],
+            ['001AAA', 'OperServ permission message', 'NOTICE'],
+        ], $notifier->messages);
+        $context = new OperServContext(
+            $this->sender(),
+            null,
+            'HELP',
+            [],
+            $notifier,
+            $translator,
+            $language,
+            'UTC',
+            'NOTICE',
+            new OperServCommandRegistry([]),
+            new ServiceNicknameRegistry([]),
+            $this->createStub(OperatorAuthorizationQuery::class),
+        );
+        self::assertSame('Shared unknown-command message', $context->trans('unknown_command'));
+        self::assertSame('OperServ permission message', $context->trans('error.permission_denied'));
+        self::assertSame('missing.key', $context->trans('missing.key'));
+    }
+
     /** @param list<OperServCommandInterface> $commands */
     private function service(
         array $commands,
@@ -171,11 +225,13 @@ final class OperServServiceTest extends TestCase
         ?OperatorAuthorizationQuery $authorization = null,
         ?NickAccountData $account = new NickAccountData(42, 'Test', 'en'),
         bool $prefersPrivate = false,
+        ?TranslatorInterface $translator = null,
+        string $language = 'en',
     ): OperServService {
         $accounts = $this->createStub(NickAccountQuery::class);
         $accounts->method('findAccountByNick')->willReturn($account);
         $languages = $this->createStub(UserLanguageQuery::class);
-        $languages->method('resolveFromAccount')->willReturn('en');
+        $languages->method('resolveFromAccount')->willReturn($language);
         $preferences = $this->createStub(UserMessagePreferenceQuery::class);
         $preferences->method('prefersPrivateMessages')->willReturn($prefersPrivate);
 
@@ -185,9 +241,10 @@ final class OperServServiceTest extends TestCase
             $languages,
             $preferences,
             $notifier,
-            new KeyTranslation(),
+            $translator ?? new KeyTranslation(),
             new ServiceNicknameRegistry([]),
             $authorization ?? $this->createStub(OperatorAuthorizationQuery::class),
+            $language,
         );
     }
 
@@ -236,6 +293,11 @@ final class RecordingOperServCommand implements OperServCommandInterface
     public function getHelpKey(): string
     {
         return 'command.help';
+    }
+
+    public function getExampleKey(): string
+    {
+        return 'command.example';
     }
 
     public function getOrder(): int

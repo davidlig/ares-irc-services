@@ -18,6 +18,8 @@ use App\NickServ\Application\Port\Out\NickServOperatorAccess;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HelpFormatterContextAdapter::class)]
@@ -381,6 +383,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return '';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -451,6 +458,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return '';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -486,5 +498,19 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return null;
             }
         };
+    }
+
+    #[Test]
+    public function delegatesBotNicknameAndLocalizedDurationToTheContext(): void
+    {
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('CustomNick');
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', ['duration.unit.second.singular' => 'second'], 'en', 'common');
+        $adapter = $this->createAdapter($this->createContext(null, $notifier, $translator, new NickServCommandRegistry([])));
+
+        self::assertSame('CustomNick', $adapter->getBotName());
+        self::assertSame('1 second', $adapter->formatDuration(1));
     }
 }

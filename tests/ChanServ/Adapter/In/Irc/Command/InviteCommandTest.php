@@ -290,6 +290,7 @@ final class InviteCommandTest extends TestCase
 
         $cmd = $this->createCommand($channelRepo, $accessHelper);
         self::assertSame('invite.help', $cmd->getHelpKey());
+        self::assertSame('invite.example', $cmd->getExampleKey());
     }
 
     #[Test]

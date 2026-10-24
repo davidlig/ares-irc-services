@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\User;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\User\IrcRescueTokenNotifier;
 use App\NickServ\Application\Model\UserMessagePreference;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Translation\Loader\YamlFileLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -19,7 +19,7 @@ final class IrcRescueTokenNotifierTest extends TestCase
     public function testRealCatalogDeliversTheAgreedNoticeWithConfiguredNicknameAndMessagePreference(): void
     {
         $translator = new Translator('es');
-        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
         $translator->addResource('yaml', __DIR__ . '/../../../../../translations/nickserv.es.yaml', 'es', 'nickserv');
         $expected = "Token de rescate: \x0303example-rescue-token\x03\n\n"
             . "Guarda este token en un lugar seguro. Lo necesitarás para recuperar tu apodo si olvidas tu contraseña.\n\n"

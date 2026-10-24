@@ -1,27 +1,128 @@
-# Common translations — Portuguese
-# Domain: common
+# Traduções de mensagens comuns — Português
+# Domínio: common
 #
-# Traduções partilhadas usadas em todos os serviços IRC.
+# Códigos de formatação IRC (aspas duplas ou blocos literais !irc):
+#   \x02        ativa/desativa o negrito
+#   \x03NN      cor (DECIMAL: 03=verde, 04=vermelho, 07=laranja, 14=cinzento escuro)
+#   \x03        repõe a cor
+#   \x0F        repõe toda a formatação
+#
+# As cores IRC usam números DECIMAIS (0-15), não hexadecimais.
+#   \x0314 = cinzento escuro (14 decimal): CORRETO
+#   \x030F = cor 0 seguida da letra F: ERRO
+#
+# Texto IRC multilinha: !irc |- com quebras de linha e espaços reais.
+# Os blocos sem etiqueta não descodificam escapes; preserva os literais CTCP.
+# Exemplos HELP: example/examples e %command_prefix%.
+# O apresentador acrescenta /msg sem cor e uma margem de dois espaços.
 
+# --- UNKNOWN COMMAND -------------------------------------------------------
+unknown_command: "\x0304✗\x03\x0F Comando desconhecido \x0303%command%\x03\x0F. Utilize /msg %bot% \x0303HELP\x03\x0F"
+
+# --- UNKNOWN HELP OPTION ---------------------------------------------------
+unknown_help_option: "\x0304✗\x03\x0F Opção de ajuda \x0303%option%\x03\x0F desconhecida para \x0303%command%\x03\x0F. Utilize /msg %bot% \x0303HELP %command%\x03\x0F"
+
+# --- ERROR -----------------------------------------------------------------
+error:
+  syntax: "\x0304✗\x03 Sintaxe incorreta. Uso: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Este comando é restrito a Operadores de IRC."
+  not_identified: "\x0304✗\x03 Não está identificado. Utilize /msg %nickserv% \x0303IDENTIFY <nickname> <palavra-passe>\x03"
+  permission_denied: "\x0304✗\x03 Permissão negada. Não tem acesso a este comando."
+  mail_failed: "\x0304✗\x03 O email não pôde ser enviado. Verifique o seu endereço ou tente novamente mais tarde."
+  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
+  nick_not_registered: "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  insufficient_access: "\x0304✗\x03 Acesso insuficiente para \x02%operation%\x02 no canal \x02%channel%\x02."
+  nick_not_online: "\x0304✗\x03 O nickname \x02%nickname%\x02 não está ligado."
+
+# --- DURATION --------------------------------------------------------------
+duration:
+  unit:
+    year:
+      singular: "ano"
+      plural: "anos"
+    month:
+      singular: "mês"
+      plural: "meses"
+    day:
+      singular: "dia"
+      plural: "dias"
+    hour:
+      singular: "hora"
+      plural: "horas"
+    minute:
+      singular: "minuto"
+      plural: "minutos"
+    second:
+      singular: "segundo"
+      plural: "segundos"
+  list_separator: ", "
+  list_join: "%prefix% e %last%"
+
+# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "Excedeu o limite de comandos. Tente novamente dentro de %seconds% segundos."
   debug_channel: "%nick% limite de %command% atingido para %host% (%seconds%s restantes)"
 
+# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
-      \x02Para o meu leal e eterno amigo,\x02
-      
-      Embora 2023 tenha sido o ano em que tivemos de nos despedir, o tempo não apagou um único
-      detalhe teu. Ainda me lembro da tua energia inesgotável, do teu olhar nobre e daquela
-      alegria imensa e contagiante que só tu sabias dar.
-      
+      \x02Ao meu leal e eterno amigo,\x02
+
+      Embora 2023 tenha sido o ano em que tivemos de nos despedir, o tempo não
+      apagou um único detalhe teu. Continuo a recordar a tua energia inesgotável,
+      o teu olhar nobre e aquela alegria imensa e contagiante que só tu sabias dar.
+
       Encheste a minha casa de vida e a minha vida de um amor incondicional que nunca
-      esquecerei. Embora já não oiça os teus passos a correr para me receber ou sinta a tua
-      cabeça apoiada em mim à procura de afeto, sei que o teu espírito brincalhão ainda
-      me acompanha.
-      
-      Obrigado por cada momento, cada travessura e por teres sido o melhor companheiro que eu
-      poderia ter pedido. O espaço que deixaste ao meu lado é agora preenchido pelas memórias
-      mais felizes. Serás sempre o meu querido amigo e terás sempre um lugar imenso
-      no meu coração.
+      esquecerei. Embora já não ouça os teus passos a correr para me receber nem sinta
+      a tua cabeça a apoiar-se em mim à procura de carinho, sei que o teu espírito
+      brincalhão continua a acompanhar-me.
+
+      Obrigado por cada momento, por cada travessura e por teres sido o melhor
+      companheiro que poderia desejar. O espaço que deixaste ao meu lado está agora
+      cheio das recordações mais felizes. Serás sempre o meu grande amigo e terás
+      sempre um lugar imenso no meu coração.
+
+# --- DEBUG -----------------------------------------------------------------
+debug:
+  action_message: "%operator% executa o comando %command% em %target%. %reason%"
+  action_with_option: "%operator% executa o comando %command% em %target%. Opção: %option%. %reason%"
+  action_with_value: "%operator% executa o comando %command% em %target%. Opção: %option%=%value%. %reason%"
+  prefix_reason: "Motivo: %reason%"
+  action_duration: "%operator% executa o comando %command% em %target%. Duração: %duration%. %reason%"
+
+# --- HISTORY ---------------------------------------------------------------
+history:
+  unknown_operator: "(desconhecido)"
+  del:
+    success: "\x0303✔\x03 Entrada de histórico \x02%id%\x02 eliminada."
+    not_found: "\x0304✗\x03 Entrada de histórico \x02%id%\x02 não encontrada."
+    invalid_id: "\x0304✗\x03 ID de entrada inválido: \x02%id%\x02."
+  view:
+    extra: "  Extra \x0307→\x03 %extra%"
+  message:
+    unsuspend: "Suspensão levantada"
+  extra:
+    duration: "Duração: %value%"
+    expires_at: "Expira: %value%"
+    ip: "IP: %value%"
+    host: "Host: %value%"
+
+# --- LIST ------------------------------------------------------------------
+list:
+  page: "Página %page%/%pages% — %total% correspondências"
+  status_suspended: "Suspenso"
+  status_pending_deletion: "Pendente de eliminação"
+  status_forbidden: "Proibido"
+
+# --- REPLY -----------------------------------------------------------------
+reply:
+  separator: "\x0314─────────────────────────────\x03"
+
+# --- LABEL -----------------------------------------------------------------
+label:
+  no_reason: "Sem motivo"
+  never: "nunca"
+  unknown_creator: "desconhecido"
+  permanent: "Permanente"
+  permanent_inline: "permanente"

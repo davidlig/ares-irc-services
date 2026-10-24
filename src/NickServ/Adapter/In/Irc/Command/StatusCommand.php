@@ -44,6 +44,11 @@ final readonly class StatusCommand implements NickServCommandInterface
         return 'status.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'status.example';
+    }
+
     public function getOrder(): int
     {
         return 6;
@@ -106,7 +111,7 @@ final readonly class StatusCommand implements NickServCommandInterface
             StatusNickOutcome::PendingDeletion => $this->presentPendingDeletion($context, $result),
         };
 
-        $context->reply('status.footer');
+        $context->reply('reply.separator');
     }
 
     private function presentPending(NickServContext $context, StatusNickResult $result): void

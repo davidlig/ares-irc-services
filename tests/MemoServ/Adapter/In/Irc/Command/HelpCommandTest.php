@@ -101,13 +101,13 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
-     * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string}> $subcommands
+     * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}> $subcommands
      */
     private function createDummyCommand(string $name, int $order = 1, array $subcommands = [], bool $operOnly = false): MemoServCommandInterface
     {
         return new class($name, $order, $subcommands, $operOnly) implements MemoServCommandInterface {
             /**
-             * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string}> $subcommands
+             * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}> $subcommands
              */
             public function __construct(
                 private string $name,
@@ -141,6 +141,11 @@ final class HelpCommandTest extends TestCase
                 return 'dummy.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'dummy.example';
+            }
+
             public function getOrder(): int
             {
                 return $this->order;
@@ -152,7 +157,7 @@ final class HelpCommandTest extends TestCase
             }
 
             /**
-             * @return list<array{name: string, desc_key: string, help_key: string, syntax_key: string}>
+             * @return list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}>
              */
             public function getSubCommandHelp(): array
             {
@@ -186,6 +191,7 @@ final class HelpCommandTest extends TestCase
         self::assertSame(0, $command->getMinArgs());
         self::assertSame('help.syntax', $command->getSyntaxKey());
         self::assertSame('help.help', $command->getHelpKey());
+        self::assertSame('help.example', $command->getExampleKey());
         self::assertSame(99, $command->getOrder());
         self::assertSame('help.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -227,7 +233,7 @@ final class HelpCommandTest extends TestCase
 
         $command->execute($context);
 
-        self::assertSame(['help.unknown_command [%command%: RESTRICTED]'], $replies);
+        self::assertSame(['unknown_command [%command%: RESTRICTED]'], $replies);
     }
 
     #[Test]
@@ -240,7 +246,7 @@ final class HelpCommandTest extends TestCase
         $context = $this->createContext($sender, null, ['NONEXISTENT'], $replies, [$command]);
         $command->execute($context);
 
-        self::assertSame(['help.unknown_command [%command%: NONEXISTENT]'], $replies);
+        self::assertSame(['unknown_command [%command%: NONEXISTENT]'], $replies);
     }
 
     #[Test]
@@ -266,8 +272,8 @@ final class HelpCommandTest extends TestCase
         $command = new HelpCommand(new UnifiedHelpFormatter());
 
         $subs = [
-            ['name' => 'ADD', 'desc_key' => 'ignore.add.short', 'help_key' => 'ignore.add.help', 'syntax_key' => 'ignore.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'ignore.del.short', 'help_key' => 'ignore.del.help', 'syntax_key' => 'ignore.del.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'ignore.add.short', 'help_key' => 'ignore.add.help', 'syntax_key' => 'ignore.add.syntax', 'example_key' => 'ignore.add.example'],
+            ['name' => 'DEL', 'desc_key' => 'ignore.del.short', 'help_key' => 'ignore.del.help', 'syntax_key' => 'ignore.del.syntax', 'example_key' => 'ignore.del.example'],
         ];
         $targetCmd = $this->createDummyCommand('IGNORE', 1, $subs);
 
@@ -280,13 +286,13 @@ final class HelpCommandTest extends TestCase
     }
 
     #[Test]
-    public function showsCommandHelpWhenSubcommandNotFound(): void
+    public function rejectsUnknownSubcommand(): void
     {
         $sender = new SenderView('001ABC', 'TestUser', 'ident', 'host', 'cloak', 'ip');
         $command = new HelpCommand(new UnifiedHelpFormatter());
 
         $subs = [
-            ['name' => 'ADD', 'desc_key' => 'ignore.add.short', 'help_key' => 'ignore.add.help', 'syntax_key' => 'ignore.add.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'ignore.add.short', 'help_key' => 'ignore.add.help', 'syntax_key' => 'ignore.add.syntax', 'example_key' => 'ignore.add.example'],
         ];
         $targetCmd = $this->createDummyCommand('IGNORE', 1, $subs);
 
@@ -294,8 +300,7 @@ final class HelpCommandTest extends TestCase
         $context = $this->createContext($sender, null, ['IGNORE', 'UNKNOWN_SUB'], $replies, [$targetCmd, $command]);
         $command->execute($context);
 
-        self::assertCount(1, $replies);
-        self::assertStringContainsString('IGNORE', $replies[0]);
+        self::assertSame(['unknown_help_option [%command%: IGNORE, %option%: UNKNOWN_SUB]'], $replies);
     }
 
     /** @return iterable<string, array{list<string>}> */
@@ -325,6 +330,7 @@ final class HelpCommandTest extends TestCase
             'desc_key' => 'ignore.add.short',
             'help_key' => 'ignore.add.help',
             'syntax_key' => 'ignore.add.syntax',
+            'example_key' => 'ignore.add.example',
         ]]);
         $replies = [];
         $context = $this->createContext(
@@ -356,6 +362,7 @@ final class HelpCommandTest extends TestCase
             'desc_key' => 'ignore.add.short',
             'help_key' => 'ignore.add.help',
             'syntax_key' => 'ignore.add.syntax',
+            'example_key' => 'ignore.add.example',
         ]]);
         $replies = [];
         $context = $this->createContext(

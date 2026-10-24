@@ -38,6 +38,11 @@ final readonly class DeopCommand implements ChanServCommandInterface
         return 'deop.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'deop.example';
+    }
+
     public function getOrder(): int
     {
         return 21;

@@ -253,12 +253,62 @@ Application must not know:
 - NOTICE vs PRIVMSG.
 
 Read `.agents/services.md`. For ChanServ policy work also read `.agents/chanserv.md`.
+For HELP copy, line wrapping, and IRC presentation colors, also read
+`.agents/irc-help-style.md`.
+
+### Staged translation rollouts
+
+When translation work is explicitly staged for review in one locale, modify only the approved
+preview locale(s) and wait for the user's explicit validation before translating the remaining
+locales. For the current Spanish-first HELP preview, edit Spanish (`es`) only; keep the other 13
+locale catalogs unchanged until the user validates the Spanish preview. Until then, report
+all-locale translation checks and rollout as pending rather than complete.
+
+### Multiline translation catalog values
+
+For Symfony YAML translation catalogs, represent intended line breaks with physical YAML
+multiline structure; do not encode line breaks as the escaped `\n` sequence. Use literal block
+scalars for plain text whose line breaks must survive parsing; choose the chomping indicator
+(`|-` when no trailing newline belongs to the value) to preserve parsed content. Multiline
+IRC-formatted messages use explicitly tagged literal blocks (`!irc |-`), loaded through the
+Bootstrap IRC YAML translation loader. That loader decodes only `\x02`, `\x03`, and `\x0F`
+(case-insensitively), once and before parameter interpolation; other escape text and untagged
+values remain unchanged. Use physical newlines and real spaces inside these blocks, not `\n`,
+`\x0A`, or `\x20`. Single-line IRC strings remain double-quoted. Preserve intentional literal
+CTCP escapes and mail-body terminal newlines; do not tag or globally decode those values.
+For multi-line HELP examples, keep the first command as a single-line `example` scalar and
+put each remaining command in a single-line entry under a sibling `examples` YAML sequence; the
+service formatter renders entries separately, replaces `%command_prefix%` with the uncolored
+`/msg <configured bot> ` prefix, and applies exactly two leading spaces to each rendered example.
+Do not include outer indentation in translation values. Keep the placeholder immediately before the
+command text and preserve the IRC colors in the translation. In MemoServ, the two-space margin
+precedes the localized marker, which stays before the generated prefix. Existing locale values with
+a literal prefix are not double-prefixed or re-indented during a staged migration. This avoids quoted multiline
+examples and `\x20` indentation escapes. Tagged literal blocks preserve display indentation
+as real spaces relative to the YAML block indentation. After changing multiline formatting, parse the catalog and
+verify decoded line breaks, placeholders, and IRC controls are preserved. This applies to every
+key in bot-service catalogs, not only `help.*` values.
 
 A new command is complete only when it is registered in the runtime command registry, appears in
 `HELP`, has translation keys in all 14 languages, and has a routing/HELP integration test. For an
 IRCop command, also register its permission in the service permission catalog and verify role-based
 authorization, Root access, and permission-filtered `HELP`. Follow the checklist in
 `.agents/services.md`.
+
+### Shared bot-service translations
+
+When adding a bot service or user-visible messages used by multiple services, put generic runtime
+messages (such as `unknown_command`, `unknown_help_option`, shared `error.*` messages, and
+`duration.*` units/formatting) in
+the `common` translation domain (`translations/common.<locale>.yaml`) instead of copying them into
+each service catalog. Service contexts must resolve `common` first and then fall back to their own
+service domain, so service-specific messages continue to work. Keep workflow-specific and all
+`help.*` presentation content in the owning service domain, except generic errors used by every
+service such as `unknown_help_option`, which belong in `common`. Preserve placeholder names expected by
+all service contexts, and add shared keys for every supported locale unless a user explicitly
+authorizes a staged locale rollout. In user-facing command references, leave `/msg <bot>` in the
+default foreground and color only the actionable command and its arguments; omit terminal
+punctuation when the invocation ends the message.
 
 ## 7. Protocol Isolation
 

@@ -45,6 +45,11 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         return 'delaccess.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'delaccess.example';
+    }
+
     public function getOrder(): int
     {
         return 9;

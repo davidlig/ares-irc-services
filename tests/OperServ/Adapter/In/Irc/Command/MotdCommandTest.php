@@ -44,6 +44,7 @@ final class MotdCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('motd.syntax', $command->getSyntaxKey());
         self::assertSame('motd.help', $command->getHelpKey());
+        self::assertSame('motd.example', $command->getExampleKey());
         self::assertSame(39, $command->getOrder());
         self::assertSame('motd.short', $command->getShortDescKey());
         self::assertSame(['ADD', 'DEL', 'LIST', 'CLEAN'], array_column($command->getSubCommandHelp(), 'name'));
@@ -129,7 +130,7 @@ final class MotdCommandTest extends TestCase
         self::assertSame('motd.list.header', $notifier->messages[0]);
         self::assertStringContainsString('motd.list.expired', $notifier->messages[1]);
         self::assertStringContainsString('motd.list.no_bot', $notifier->messages[1]);
-        self::assertStringContainsString('motd.list.never', $notifier->messages[1]);
+        self::assertStringContainsString('label.never', $notifier->messages[1]);
         self::assertStringContainsString('motd.list.status_enabled', $notifier->messages[2]);
         self::assertStringContainsString('08/09/2026 10:00 UTC', $notifier->messages[2]);
         self::assertStringContainsString('motd.list.status_disabled', $notifier->messages[3]);

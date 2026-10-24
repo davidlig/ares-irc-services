@@ -51,6 +51,11 @@ final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCom
         return 'forbid.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'forbid.example';
+    }
+
     public function getOrder(): int
     {
         return 79;

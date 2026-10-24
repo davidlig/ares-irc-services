@@ -82,6 +82,11 @@ final readonly class SetCommand implements ChanServCommandInterface
         return 'set.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'set.example';
+    }
+
     public function getOrder(): int
     {
         return 4;
@@ -95,16 +100,16 @@ final readonly class SetCommand implements ChanServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'FOUNDER', 'desc_key' => 'set.founder.short', 'help_key' => 'set.founder.help', 'syntax_key' => 'set.founder.syntax'],
-            ['name' => 'SUCCESSOR', 'desc_key' => 'set.successor.short', 'help_key' => 'set.successor.help', 'syntax_key' => 'set.successor.syntax'],
-            ['name' => 'DESC', 'desc_key' => 'set.desc.short', 'help_key' => 'set.desc.help', 'syntax_key' => 'set.desc.syntax'],
-            ['name' => 'URL', 'desc_key' => 'set.url.short', 'help_key' => 'set.url.help', 'syntax_key' => 'set.url.syntax'],
-            ['name' => 'EMAIL', 'desc_key' => 'set.email.short', 'help_key' => 'set.email.help', 'syntax_key' => 'set.email.syntax'],
-            ['name' => 'ENTRYMSG', 'desc_key' => 'set.entrymsg.short', 'help_key' => 'set.entrymsg.help', 'syntax_key' => 'set.entrymsg.syntax'],
-            ['name' => 'TOPICLOCK', 'desc_key' => 'set.topiclock.short', 'help_key' => 'set.topiclock.help', 'syntax_key' => 'set.topiclock.syntax'],
-            ['name' => 'MLOCK', 'desc_key' => 'set.mlock.short', 'help_key' => 'set.mlock.help', 'syntax_key' => 'set.mlock.syntax'],
-            ['name' => 'SECURE', 'desc_key' => 'set.secure.short', 'help_key' => 'set.secure.help', 'syntax_key' => 'set.secure.syntax'],
-            ['name' => 'PRIVATE', 'desc_key' => 'set.private.short', 'help_key' => 'set.private.help', 'syntax_key' => 'set.private.syntax'],
+            ['name' => 'FOUNDER', 'desc_key' => 'set.founder.short', 'help_key' => 'set.founder.help', 'example_key' => 'set.founder.example', 'syntax_key' => 'set.founder.syntax'],
+            ['name' => 'SUCCESSOR', 'desc_key' => 'set.successor.short', 'help_key' => 'set.successor.help', 'example_key' => 'set.successor.example', 'syntax_key' => 'set.successor.syntax'],
+            ['name' => 'DESC', 'desc_key' => 'set.desc.short', 'help_key' => 'set.desc.help', 'example_key' => 'set.desc.example', 'syntax_key' => 'set.desc.syntax'],
+            ['name' => 'URL', 'desc_key' => 'set.url.short', 'help_key' => 'set.url.help', 'example_key' => 'set.url.example', 'syntax_key' => 'set.url.syntax'],
+            ['name' => 'EMAIL', 'desc_key' => 'set.email.short', 'help_key' => 'set.email.help', 'example_key' => 'set.email.example', 'syntax_key' => 'set.email.syntax'],
+            ['name' => 'ENTRYMSG', 'desc_key' => 'set.entrymsg.short', 'help_key' => 'set.entrymsg.help', 'example_key' => 'set.entrymsg.example', 'syntax_key' => 'set.entrymsg.syntax'],
+            ['name' => 'TOPICLOCK', 'desc_key' => 'set.topiclock.short', 'help_key' => 'set.topiclock.help', 'example_key' => 'set.topiclock.example', 'syntax_key' => 'set.topiclock.syntax'],
+            ['name' => 'MLOCK', 'desc_key' => 'set.mlock.short', 'help_key' => 'set.mlock.help', 'example_key' => 'set.mlock.example', 'syntax_key' => 'set.mlock.syntax'],
+            ['name' => 'SECURE', 'desc_key' => 'set.secure.short', 'help_key' => 'set.secure.help', 'example_key' => 'set.secure.example', 'syntax_key' => 'set.secure.syntax'],
+            ['name' => 'PRIVATE', 'desc_key' => 'set.private.short', 'help_key' => 'set.private.help', 'example_key' => 'set.private.example', 'syntax_key' => 'set.private.syntax'],
         ];
     }
 

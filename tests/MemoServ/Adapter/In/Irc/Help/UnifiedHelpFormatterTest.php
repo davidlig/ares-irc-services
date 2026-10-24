@@ -7,13 +7,14 @@ namespace App\Tests\MemoServ\Adapter\In\Irc\Help;
 use App\MemoServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\MemoServ\Adapter\In\Irc\Help\HelpFormatterContextInterface;
 use App\MemoServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
+use App\Tests\Shared\Translations\TranslationCatalog;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Stringable;
-use Symfony\Component\Yaml\Yaml;
 
+use function array_slice;
 use function dirname;
 use function in_array;
 use function is_array;
@@ -23,6 +24,40 @@ use function is_string;
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {
+    #[Test]
+    public function keepsSpanishCommandExamplesIndependentOfMessageTransport(): void
+    {
+        $catalog = TranslationCatalog::parseFile(dirname(__DIR__, 6) . '/translations/memoserv.es.yaml');
+        $examples = [];
+        $collectExamples = static function (mixed $value) use (&$collectExamples, &$examples): void {
+            if (!is_array($value)) {
+                return;
+            }
+
+            foreach ($value as $key => $item) {
+                if ('example' === $key && is_string($item)) {
+                    $examples[] = $item;
+                    continue;
+                }
+                if ('examples' === $key && is_array($item)) {
+                    foreach ($item as $example) {
+                        if (is_string($example)) {
+                            $examples[] = $example;
+                        }
+                    }
+                    continue;
+                }
+                $collectExamples($item);
+            }
+        };
+        $collectExamples($catalog);
+        self::assertNotEmpty($examples);
+
+        foreach ($examples as $example) {
+            self::assertStringNotContainsString('/msg ', $example);
+        }
+    }
+
     #[Test]
     public function rendersFilteredGroupedGeneralHelp(): void
     {
@@ -39,12 +74,15 @@ final class UnifiedHelpFormatterTest extends TestCase
 
         self::assertSame([
             'translated:help.header',
+            ' ',
             'translated:help.intro',
+            ' ',
             ' ',
             'translated:help.general_header',
             ' ',
             'translated:help.group_header',
             'translated:help.command_line',
+            ' ',
             ' ',
             'translated:help.general_footer',
         ], $lines);
@@ -83,17 +121,20 @@ final class UnifiedHelpFormatterTest extends TestCase
 
         self::assertSame([
             'translated:help.header',
+            ' ',
             'translated:help.intro',
             ' ',
-            'translated:help.general_header',
             ' ',
-            'translated:help.general_footer',
+            'translated:help.general_header',
             ' ',
             'translated:help.ircop_header',
             ' ',
             'translated:help.subgroup_header',
             'translated:help.command_line',
             'translated:help.command_line',
+            ' ',
+            ' ',
+            'translated:help.general_footer',
         ], $lines);
 
         $keys = array_column($context->translationRequests, 'key');
@@ -131,7 +172,7 @@ final class UnifiedHelpFormatterTest extends TestCase
         ));
         self::assertSame(['EARLY       ', 'LATE        ', 'FUTURE      '], array_column(array_column($commandRequests, 'params'), 'command'));
         self::assertCount(1, array_filter($lines, static fn (string $line): bool => 'translated:help.group_header' === $line));
-        self::assertSame('translated:help.command_line', array_last($lines));
+        self::assertSame([' ', ' ', 'translated:help.general_footer'], array_slice($lines, -3));
     }
 
     #[Test]
@@ -143,12 +184,14 @@ final class UnifiedHelpFormatterTest extends TestCase
             'desc_key' => 'set.email.short',
             'help_key' => 'set.email.help',
             'syntax_key' => 'set.email.syntax',
+            'example_key' => 'set.email.example',
         ]], ['service' => 'MemoServ']);
 
         $lines = new UnifiedHelpFormatter()->renderCommandHelp($context, $command);
 
         self::assertSame([
             'translated:help.header',
+            ' ',
             'translated:set.help',
             ' ',
             'translated:help.options_header',
@@ -157,10 +200,14 @@ final class UnifiedHelpFormatterTest extends TestCase
             'translated:help.set_sub_footer',
             ' ',
             'translated:help.syntax_label',
+            ' ',
+            'translated:help.examples_header',
+            'translated:set.example',
             'translated:help.footer',
         ], $lines);
 
         self::assertContains(['key' => 'set.help', 'params' => ['service' => 'MemoServ']], $context->translationRequests);
+        self::assertContains(['key' => 'set.example', 'params' => []], $context->translationRequests);
         self::assertContains([
             'key' => 'help.subcommand_line',
             'params' => ['command' => 'EMAIL     ', 'description' => 'translated:set.email.short'],
@@ -172,6 +219,18 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function insertsConfiguredMessagePrefixAfterMemoExampleMarker(): void
+    {
+        $context = new MemoServHelpFormatterContext();
+        $context->botName = 'ConfiguredBot';
+        $context->exampleTranslations['test.example'] = "    \x0310›\x03\x0F %command_prefix%\x02\x0303SEND #ayuda Aviso\x03\x0F";
+
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp($context, new MemoServHelpableCommand('TEST', 1));
+
+        self::assertContains("  \x0310›\x03\x0F /msg ConfiguredBot \x02\x0303SEND #ayuda Aviso\x03\x0F", $lines);
+    }
+
+    #[Test]
     public function rendersSubcommandHelpWithOptionalDetails(): void
     {
         $context = new MemoServHelpFormatterContext();
@@ -180,19 +239,51 @@ final class UnifiedHelpFormatterTest extends TestCase
             'name' => 'EMAIL',
             'help_key' => 'set.email.help',
             'syntax_key' => 'set.email.syntax',
+            'example_key' => 'set.email.example',
             'options_key' => 'set.email.options',
         ]);
 
         self::assertSame([
             'translated:help.header',
+            ' ',
             'translated:set.email.help',
             ' ',
-            'translated:set.email.options',
-            ' ',
             'translated:help.syntax_label',
+            ' ',
+            'translated:help.examples_header',
+            'translated:set.email.example',
+            ' ',
+            'translated:set.email.options',
             'translated:help.footer',
         ], $lines);
         self::assertSame('HELP SET EMAIL', $context->translationRequests[0]['params']['title']);
+    }
+
+    #[Test]
+    public function omitsExamplesWhenTheCurrentLocaleHasNoExampleTranslations(): void
+    {
+        $context = new MemoServHelpFormatterContext(translations: []);
+        $formatter = new UnifiedHelpFormatter();
+        $command = new MemoServHelpableCommand('SEND', 1, [[
+            'name' => 'EMAIL',
+            'desc_key' => 'send.email.short',
+            'help_key' => 'send.email.help',
+            'syntax_key' => 'send.email.syntax',
+            'example_key' => 'send.email.example',
+        ]]);
+
+        $commandLines = $formatter->renderCommandHelp($context, $command);
+        $subcommandLines = $formatter->renderSubCommandHelp($context, 'SEND', [
+            'name' => 'EMAIL',
+            'help_key' => 'send.email.help',
+            'syntax_key' => 'send.email.syntax',
+            'example_key' => 'send.email.example',
+        ]);
+
+        self::assertNotContains('help.examples_header', $commandLines);
+        self::assertNotContains('send.example', $commandLines);
+        self::assertNotContains('help.examples_header', $subcommandLines);
+        self::assertNotContains('send.email.example', $subcommandLines);
     }
 
     #[Test]
@@ -200,7 +291,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     {
         foreach (['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'] as $locale) {
             $catalog = $this->requireStringKeyedArray(
-                Yaml::parseFile(dirname(__DIR__, 6) . '/translations/memoserv.' . $locale . '.yaml'),
+                TranslationCatalog::parseFile(dirname(__DIR__, 6) . '/translations/memoserv.' . $locale . '.yaml'),
                 $locale . ' catalog must parse as a mapping',
             );
 
@@ -233,6 +324,7 @@ final class UnifiedHelpFormatterTest extends TestCase
                 'desc_key' => 'ignore.add.short',
                 'help_key' => 'ignore.add.help',
                 'syntax_key' => 'ignore.add.syntax',
+                'example_key' => 'ignore.add.example',
             ]]);
             $context = new MemoServHelpFormatterContext(
                 commands: [$command],
@@ -267,10 +359,17 @@ final class UnifiedHelpFormatterTest extends TestCase
             $syntax = $this->renderedReplyFor($context, 'help.syntax_label');
             self::assertMatchesRegularExpression('/^[^\x02\x03]+ \x02\x0303.+\x03\x0F$/u', $syntax, $locale);
 
-            $formatter->renderSubCommandHelp($context, 'IGNORE', [
+            if ('es' === $locale) {
+                $example = implode("\n", $lines);
+                self::assertStringContainsString("/msg MemoServ \x02\x0303IGNORE ADD Ana\x03\x0F", $example);
+                self::assertStringContainsString("/msg MemoServ \x02\x0303IGNORE DEL #ayuda Ana\x03\x0F", $example);
+            }
+
+            $subcommandLines = $formatter->renderSubCommandHelp($context, 'IGNORE', [
                 'name' => 'ADD',
                 'help_key' => 'ignore.add.help',
                 'syntax_key' => 'ignore.add.syntax',
+                'example_key' => 'ignore.add.example',
             ]);
             $subcommandHeader = null;
             foreach ($context->translationRequests as $index => $reply) {
@@ -280,6 +379,10 @@ final class UnifiedHelpFormatterTest extends TestCase
                 }
             }
             self::assertIsString($subcommandHeader, $locale);
+            if ('es' === $locale) {
+                $subcommandExample = implode("\n", $subcommandLines);
+                self::assertStringContainsString("/msg MemoServ \x02\x0303IGNORE ADD Ana\x03\x0F", $subcommandExample);
+            }
             self::assertStringContainsString("\x02\x0307🤖 HELP IGNORE ADD\x03\x0F", $subcommandHeader, $locale);
         }
     }
@@ -339,6 +442,11 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
     /** @var list<string> */
     public array $renderedTranslations = [];
 
+    /** @var array<string, string> */
+    public array $exampleTranslations = [];
+
+    public string $botName = 'MemoServ';
+
     /**
      * @param list<HelpableCommandInterface>                                                           $commands
      * @param list<HelpableCommandInterface>                                                           $ircopCommands
@@ -368,10 +476,22 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
     public function trans(string $key, array $params = []): string
     {
         $this->translationRequests[] = ['key' => $key, 'params' => $params];
+        if (isset($this->exampleTranslations[$key])) {
+            return $this->exampleTranslations[$key];
+        }
+        if (null === $this->translations && 1 === preg_match('/\.examples\.\d+$/', $key)) {
+            return $key;
+        }
+
         $translation = $this->translate($key, $params);
         $this->renderedTranslations[] = $translation;
 
         return $translation;
+    }
+
+    public function getBotName(): string
+    {
+        return $this->botName;
     }
 
     public function getCommandsForGeneralHelp(): iterable
@@ -437,8 +557,8 @@ final class MemoServHelpFormatterContext implements HelpFormatterContextInterfac
 final readonly class MemoServHelpableCommand implements HelpableCommandInterface
 {
     /**
-     * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> $subcommands
-     * @param array<string, mixed>                                                                                    $helpParams
+     * @param list<array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string, options_key?: string}> $subcommands
+     * @param array<string, mixed>                                                                                                         $helpParams
      */
     public function __construct(
         private string $name,
@@ -470,6 +590,11 @@ final readonly class MemoServHelpableCommand implements HelpableCommandInterface
     public function getHelpKey(): string
     {
         return strtolower($this->name) . '.help';
+    }
+
+    public function getExampleKey(): string
+    {
+        return strtolower($this->name) . '.example';
     }
 
     public function getSubCommandHelp(): array

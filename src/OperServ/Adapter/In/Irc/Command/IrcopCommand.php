@@ -48,6 +48,11 @@ final readonly class IrcopCommand implements OperServCommandInterface
         return 'ircop.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'ircop.example';
+    }
+
     public function getOrder(): int
     {
         return 1;
@@ -60,7 +65,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
     public function getSubCommandHelp(): array
     {
-        return [['name' => 'ADD', 'desc_key' => 'ircop.add.short', 'help_key' => 'ircop.add.help', 'syntax_key' => 'ircop.add.syntax'], ['name' => 'DEL', 'desc_key' => 'ircop.del.short', 'help_key' => 'ircop.del.help', 'syntax_key' => 'ircop.del.syntax'], ['name' => 'LIST', 'desc_key' => 'ircop.list.short', 'help_key' => 'ircop.list.help', 'syntax_key' => 'ircop.list.syntax']];
+        return [['name' => 'ADD', 'desc_key' => 'ircop.add.short', 'help_key' => 'ircop.add.help', 'syntax_key' => 'ircop.add.syntax', 'example_key' => 'ircop.add.example'], ['name' => 'DEL', 'desc_key' => 'ircop.del.short', 'help_key' => 'ircop.del.help', 'syntax_key' => 'ircop.del.syntax', 'example_key' => 'ircop.del.example'], ['name' => 'LIST', 'desc_key' => 'ircop.list.short', 'help_key' => 'ircop.list.help', 'syntax_key' => 'ircop.list.syntax', 'example_key' => 'ircop.list.example']];
     }
 
     public function isOperOnly(): bool

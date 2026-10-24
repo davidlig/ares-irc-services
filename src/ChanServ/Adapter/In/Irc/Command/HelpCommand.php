@@ -52,6 +52,11 @@ final readonly class HelpCommand implements ChanServCommandInterface
         return 'help.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'help.example';
+    }
+
     public function getOrder(): int
     {
         return 99;
@@ -111,14 +116,14 @@ final readonly class HelpCommand implements ChanServCommandInterface
         $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler) {
-            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+            $context->reply('unknown_command', ['command' => $targetCmd]);
 
             return;
         }
 
         $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
         if (!$adapter->canViewCommandInHelp($handler)) {
-            $context->reply('help.unknown_command', ['command' => $targetCmd]);
+            $context->reply('unknown_command', ['command' => $targetCmd]);
 
             return;
         }
@@ -132,6 +137,13 @@ final readonly class HelpCommand implements ChanServCommandInterface
 
                 return;
             }
+
+            $context->reply('unknown_help_option', [
+                'command' => $handler->getName(),
+                'option' => strtoupper($context->args[1]),
+            ]);
+
+            return;
         }
 
         $context->replyRaw(implode("\n", $this->formatter->renderCommandHelp($adapter, $handler)));
@@ -140,19 +152,23 @@ final readonly class HelpCommand implements ChanServCommandInterface
     private function showGeneralHelp(ChanServContext $context): void
     {
         $adapter = new HelpFormatterContextAdapter($context, $this->operatorAccess);
-        $lines = $this->formatter->renderGeneralHelp($adapter);
+        $inactivityNotice = null;
         if ($this->inactivityExpiryDays > 0) {
-            $lines[] = ' ';
-            $lines[] = $context->trans('help.intro_expiration', [
+            $inactivityNotice = $context->trans('help.intro_expiration', [
                 'label' => $context->trans('help.intro_expiration_label'),
                 'days' => $this->inactivityExpiryDays,
             ]);
+        }
+        $lines = $this->formatter->renderGeneralHelp($adapter);
+        if (null !== $inactivityNotice) {
+            $lines[] = ' ';
+            $lines[] = $inactivityNotice;
         }
         $lines[] = $this->formatter->renderFooter($adapter);
         $context->replyRaw(implode("\n", $lines));
     }
 
-    /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */
+    /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string, example_key: string}|null */
     private function findSubCommand(ChanServCommandInterface $handler, string $name): ?array
     {
         return array_find($handler->getSubCommandHelp(), static fn (array $sub): bool => $name === strtoupper($sub['name']));

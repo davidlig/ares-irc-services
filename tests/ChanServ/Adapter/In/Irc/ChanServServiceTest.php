@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Adapter\In\Irc;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\ChanServ\Adapter\In\Irc\ChanAuthorizationCheckerInterface as AuthorizationCheckerInterface;
 use App\ChanServ\Adapter\In\Irc\ChanAuthorizationContextInterface as AuthorizationContextInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
@@ -45,6 +46,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
@@ -175,6 +177,11 @@ final class ChanServServiceTest extends TestCase
                 return 'dummy.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -254,12 +261,15 @@ final class ChanServServiceTest extends TestCase
 
         $nickRepository = $this->createStub(ChanUserAccountPort::class);
         $notifier = $this->createMock(ChanServNotifierInterface::class);
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = new Translator('en');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        foreach (['common', 'chanserv'] as $domain) {
+            $translator->addResource('yaml', __DIR__ . '/../../../../../translations/' . $domain . '.en.yaml', 'en', $domain);
+        }
+        $expected = $translator->trans('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'ChanServ'], 'common', 'en');
+        self::assertNotSame('unknown_command', $expected);
         $notifier->method('getNick')->willReturn('ChanServ');
-        $translator->expects(self::once())->method('trans')
-            ->with('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'ChanServ'], 'chanserv', 'en')
-            ->willReturn('Unknown command');
-        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Unknown command', 'NOTICE');
+        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, $expected, 'NOTICE');
 
         $service = $this->createChanServService(
             new ChanServCommandRegistry([]),
@@ -336,6 +346,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -535,6 +550,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -655,6 +675,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -767,6 +792,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -871,6 +901,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -985,6 +1020,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -1091,6 +1131,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -1195,6 +1240,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -1304,6 +1354,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -1443,6 +1498,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -1559,6 +1619,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -1740,6 +1805,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -1860,6 +1930,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -1963,6 +2038,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -2076,6 +2156,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -2179,6 +2264,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -2310,6 +2400,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -2437,6 +2532,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -2601,6 +2701,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -2736,6 +2841,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -2874,6 +2984,11 @@ final class ChanServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return '';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -3000,6 +3115,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -3129,6 +3249,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int
@@ -3282,6 +3407,11 @@ final class ChanServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return '';
             }
 
             public function getOrder(): int

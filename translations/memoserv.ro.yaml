@@ -1,24 +1,33 @@
-# MemoServ translations — Romanian
-# Domain: memoserv
+# Traduceri MemoServ — Română
+# Domeniu: memoserv
+#
+# Coduri de formatare IRC (ghilimele duble sau blocuri literale !irc):
+#   \x02        activează/dezactivează caracterele aldine
+#   \x03NN      culoare (ZECIMAL: 03=verde, 04=roșu, 07=portocaliu, 14=gri închis)
+#   \x03        resetează culoarea
+#   \x0F        resetează întreaga formatare
+#
+# Culorile IRC folosesc numere ZECIMALE (0-15), nu hexazecimale.
+#   \x0314 = gri închis (14 zecimal): CORECT
+#   \x030F = culoarea 0 urmată de litera F: EROARE
+#
+# Text IRC pe mai multe rânduri: !irc |- cu rânduri și spații reale.
+# Blocurile fără etichetă nu decodează secvențe escape; păstrează literalii CTCP.
+# Exemple HELP: example/examples și %command_prefix%.
+# Prezentatorul adaugă /msg fără culoare și o margine de două spații.
 
-unknown_command: "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
-
-error:
-  syntax: "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
-  oper_only: "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
-  not_identified: "\x0304✗\x03 Nu sunteți identificat. Folosiți \x0303/msg %nickserv% IDENTIFY\x03."
-  permission_denied: "\x0304✗\x03 Permisiune refuzată. Nu aveți acces la această comandă."
-  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
-  insufficient_access: "\x0304✗\x03 Acces insuficient pentru \x02%operation%\x02 pe canalul \x02%channel%\x02."
-
+# --- SEND ------------------------------------------------------------------
 send:
   syntax: "SEND {poreclă|#canal} <mesaj>"
   short: "Trimiteți un mesaj către o poreclă sau un canal."
-  help: "Trimite un mesaj către o poreclă sau un canal înregistrat. Destinatarul trebuie să aibă serviciul de mesaje activat (ENABLE)."
+  help: |-
+    Trimite un mesaj unei porecle sau unui canal înregistrat. Destinatarul trebuie
+    să aibă activat serviciul de mesaje (ENABLE).
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND Ana Salut, poți verifica mesajul?\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303SEND #ajutor Anunț pentru canal\x03\x0F"
   sent_nick: "\x0303✔\x03 Mesaj trimis către \x02%nickname%\x02."
   sent_channel: "\x0303✔\x03 Mesaj trimis către canalul \x02%channel%\x02."
-  nick_not_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
-  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
   throttled: "\x0304✗\x03 Trebuie să așteptați \x02%seconds%\x02 secundă(e) înainte de a trimite alt mesaj."
   limit_reached: "\x0304✗\x03 Limita de mesaje atinsă pentru \x02%target%\x02."
   ignored: "\x0304✗\x03 Nu puteți trimite mesaje către această destinație, vă aflați pe lista sa de ignorare."
@@ -26,93 +35,149 @@ send:
   message_too_long: "\x0304✗\x03 Mesaj prea lung. Maximul este de \x02%max%\x02 caractere."
   service_disabled_for_target: "\x0304✗\x03 Serviciul de mesaje este dezactivat pentru \x02%target%\x02."
 
+# --- READ ------------------------------------------------------------------
 read:
   syntax: "READ [#canal] <număr>"
   short: "Citiți un mesaj după număr."
-  help: "Citește mesajul cu numărul specificat. Fără #canal, citește din inboxul poreclei dumneavoastră. Cu #canal, necesită nivel MEMOREAD."
+  help: |-
+    Citește mesajul cu numărul indicat. Fără #canal, citește din căsuța poreclei.
+    Cu #canal, este necesar nivelul MEMOREAD.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303READ 1\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303READ #ayuda 2\x03\x0F"
   header: "\x02\x0307Mesajul #%index%\x03 de la \x02%from%\x02:\x0F"
   footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
-  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
   not_found: "\x0304✗\x03 Mesajul #%index% nu a fost găsit."
 
+# --- LIST ------------------------------------------------------------------
 list:
   syntax: "LIST [#canal]"
   short: "Listați mesajele (necititele sunt marcate cu * roșu)."
-  help: "Listează mesajele dumneavoastră sau mesajele canalului. Mesajele necitite sunt afișate cu un asterisc roșu și o previzualizare (maxim 50 de caractere). Fără #canal = inboxul poreclei dumneavoastră; cu #canal necesită MEMOREAD."
+  help: |-
+    Listează mesajele tale sau ale canalului. Cele necitite au un asterisc roșu și
+    o previzualizare (max. 50 de caractere). Fără #canal = căsuța ta; cu #canal
+    este necesar MEMOREAD.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303LIST #ayuda\x03\x0F"
   header: "\x02\x0307Mesaje pentru %target%\x03:\x0F"
-  footer: "\x0314─────────────────────────────\x03"
   empty: "\x0307ℹ\x03 Nu există mesaje pentru \x02%target%\x02."
-  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
 
+# --- DEL -------------------------------------------------------------------
 del:
   syntax: "DEL [#canal] <număr>"
   short: "Ștergeți un mesaj după număr."
   help: "Șterge mesajul cu numărul specificat. Pentru canale necesită nivel MEMOCHANGE."
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL 1\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DEL #ayuda 2\x03\x0F"
   deleted: "\x0303✔\x03 Mesajul #%index% a fost șters."
-  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
   not_found: "\x0304✗\x03 Mesajul #%index% nu a fost găsit."
 
+# --- IGNORE ----------------------------------------------------------------
 ignore:
   syntax: "IGNORE {ADD|DEL|LIST} [#canal] [poreclă]"
   short: "Gestionați lista de ignorare pentru mesaje."
-  help: "ADD adaugă o poreclă în lista dumneavoastră (sau a canalului) de ignorare; DEL elimină; LIST afișează lista. Pentru canale, ADD/DEL necesită MEMOCHANGE."
+  help: |-
+    Gestionează poreclele de la care nu dorești să primești mesaje, atât pentru
+    contul
+    tău, cât și pentru un canal înregistrat. Pentru lista canalului ai nevoie de
+    MEMOCHANGE.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #ayuda Ana\x03\x0F"
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #ayuda\x03\x0F"
+
+  # --- IGNORE ADD ----------------------------------------------------------
   add:
     syntax: "IGNORE ADD [#canal] <poreclă>"
-    short: "Adăugați poreclă în lista de ignorare."
-    help: "Mesajele de la această poreclă nu vor fi acceptate pentru inboxul dumneavoastră (sau al canalului)."
+    short: "Adaugă o poreclă în lista de ignorare."
+    help: |-
+      Mesajele de la această poreclă nu vor fi acceptate pentru inboxul dumneavoastră
+      (sau al canalului).
+    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD Ana\x03\x0F"
+    examples:
+      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE ADD #ayuda Ana\x03\x0F"
+
+  # --- IGNORE DEL ----------------------------------------------------------
   del:
     syntax: "IGNORE DEL [#canal] <poreclă>"
-    short: "Eliminați poreclă din lista de ignorare."
+    short: "Elimină o poreclă din listă."
     help: "Elimină porecla din lista de ignorare."
+    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL Ana\x03\x0F"
+    examples:
+      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE DEL #ayuda Ana\x03\x0F"
+
+  # --- IGNORE LIST ---------------------------------------------------------
   list:
     syntax: "IGNORE LIST [#canal]"
-    short: "Listați poreclele ignorate."
-    help: "Afișează lista poreclelor pe care dumneavoastră (sau canalul) le ignorați pentru mesaje."
+    short: "Afișează poreclele ignorate."
+    help: |-
+      Afișează lista poreclelor pe care dumneavoastră (sau canalul) le ignorați pentru
+      mesaje.
+    example: "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST\x03\x0F"
+    examples:
+      - "\x0310›\x03\x0F %command_prefix%\x02\x0303IGNORE LIST #ayuda\x03\x0F"
   added: "\x0303✔\x03 \x02%nickname%\x02 adăugat în lista de ignorare."
   removed: "\x0303✔\x03 \x02%nickname%\x02 eliminat din lista de ignorare."
   already_ignored: "\x0304✗\x03 \x02%nickname%\x02 se află deja în lista de ignorare."
   not_ignored: "\x0304✗\x03 \x02%nickname%\x02 nu se află în lista de ignorare."
-  nick_not_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
-  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
   limit_reached_nick: "\x0304✗\x03 Limita listei de ignorare atinsă pentru porecla dumneavoastră (max \x02%limit%\x02)."
   limit_reached_channel: "\x0304✗\x03 Limita listei de ignorare atinsă pentru \x02%channel%\x02 (max \x02%limit%\x02)."
   list_empty: "\x0307ℹ\x03 Lista de ignorare este goală."
   list_header: "\x02\x0307Lista de ignorare:\x03\x0F"
-  list_footer: "\x0314─────────────────────────────\x03"
 
+# --- ENABLE ----------------------------------------------------------------
 enable:
   syntax: "ENABLE [#canal]"
   short: "Activați recepția de mesaje."
-  help: "Activează recepția de mesaje pentru porecla dumneavoastră sau, pentru canale, doar fondatorul poate activa."
+  help: |-
+    Activează primirea mesajelor pentru porecla ta. În canale, doar fondatorul poate
+    activa.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303ENABLE #ayuda\x03\x0F"
   enabled_nick: "\x0303✔\x03 Serviciul de mesaje activat pentru porecla dumneavoastră."
   enabled_channel: "\x0303✔\x03 Serviciul de mesaje activat pentru canalul \x02%channel%\x02."
   already_enabled_nick: "\x0307ℹ\x03 Serviciul de mesaje este deja activat pentru porecla dumneavoastră."
   already_enabled_channel: "\x0307ℹ\x03 Serviciul de mesaje este deja activat pentru \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
   founder_only: "\x0304✗\x03 Doar fondatorul canalului poate activa mesajele pentru \x02%channel%\x02."
 
+# --- DISABLE ---------------------------------------------------------------
 disable:
   syntax: "DISABLE [#canal]"
   short: "Dezactivați recepția de mesaje."
-  help: "Dezactivează recepția de mesaje pentru porecla dumneavoastră sau canal. Pentru canale, doar fondatorul poate dezactiva."
+  help: |-
+    Dezactivează primirea mesajelor pentru porecla sau canalul tău. În canale, doar
+    fondatorul poate dezactiva.
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303DISABLE #ayuda\x03\x0F"
   disabled_nick: "\x0303✔\x03 Serviciul de mesaje dezactivat pentru porecla dumneavoastră."
   disabled_channel: "\x0303✔\x03 Serviciul de mesaje dezactivat pentru canalul \x02%channel%\x02."
   already_disabled_nick: "\x0307ℹ\x03 Serviciul de mesaje este deja dezactivat pentru porecla dumneavoastră."
   already_disabled_channel: "\x0307ℹ\x03 Serviciul de mesaje este deja dezactivat pentru \x02%channel%\x02."
-  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
   founder_only: "\x0304✗\x03 Doar fondatorul canalului poate dezactiva mesajele pentru \x02%channel%\x02."
 
+# --- HELP ------------------------------------------------------------------
 help:
   syntax: "HELP [comandă [sub-opțiune]]"
   short: "Listați comenzile sau afișați ajutor pentru o comandă."
-  help: "Fără argumente listează toate comenzile. Folosiți \x02\x0303HELP <comandă>\x03\x0F pentru ajutor complet."
+  help: "Afișează lista comenzilor sau ajutor detaliat pentru o comandă ori opțiune."
+  example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"
+  examples:
+    - "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP IGNORE ADD\x03\x0F"
   header_title: "%bot%"
   header: "\x02\x0307🤖 %title%\x03\x0F \x0314─────────────────────────────\x03\x0F"
-  intro: "Serviciu de mesaje pentru porecle și canale."
+  intro: |-
+    Permite trimiterea și primirea mesajelor între utilizatori înregistrați și
+    trimiterea anunțurilor către canale. Mesajele sunt păstrate pentru consultare
+    ulterioară, chiar dacă destinatarul nu este conectat.
   general_header: "\x02 ■ Comenzi disponibile:\x02"
   command_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
   subcommand_line: "    \x0310›\x03\x0F \x02\x0303%command%\x03\x0F%description%"
   options_header: "\x02 ■ Opțiuni:\x02"
+  examples_header: "\x02 ■ Exemple:\x02"
   general_footer: "\x0310ℹ\x03\x0F Folosește /msg %bot% \x02\x0303HELP <comandă>\x03\x0F pentru mai multe informații."
   set_sub_footer: "\x0310ℹ\x03\x0F Folosește /msg %bot% \x02\x0303HELP %command% <opțiune>\x03\x0F pentru mai multe informații."
   syntax_label: "Sintaxă: \x02\x0303%syntax%\x03\x0F"
@@ -122,9 +187,9 @@ help:
   group:
     messages: "Mesaje"
     preferences: "Preferințe"
-  unknown_command: "\x0307✗\x03\x0F Comandă necunoscută \x02\x0303%command%\x03\x0F. Folosiți \x02\x0303/msg %bot% HELP\x03\x0F."
   ircop_header: "\x02 ■ Comenzi disponibile pentru IRCops:\x02"
 
+# --- NOTIFY ----------------------------------------------------------------
 notify:
-  nick_pending: "Aveți \x02%count%\x02 mesaj(e) necitit(e). Pentru a le lista: \x0309/msg %bot% LIST\x03"
-  channel_pending: "Canalul \x02%channel%\x02 are \x02%count%\x02 mesaj(e) necitit(e). Folosiți \x0309/msg %bot% LIST %channel%\x03 pentru a le lista."
+  nick_pending: "Ai \x02%count%\x02 mesaj(e) necitit(e). Listează mesajele: /msg %bot% \x0303LIST\x03"
+  channel_pending: "Canalul \x02%channel%\x02 are \x02%count%\x02 mesaj(e) necitit(e). Verifică mesajele cu /msg %bot% \x0303LIST %channel%\x03"

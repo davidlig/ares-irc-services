@@ -79,6 +79,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertSame('history.help', $cmd->getHelpKey());
+        self::assertSame('history.example', $cmd->getExampleKey());
     }
 
     #[Test]
@@ -194,7 +195,7 @@ final class HistoryCommandTest extends TestCase
         $cmd = $this->createCommand();
         $cmd->execute($context);
 
-        self::assertContains('history.not_registered', $messages);
+        self::assertContains('error.channel_not_registered', $messages);
     }
 
     #[Test]

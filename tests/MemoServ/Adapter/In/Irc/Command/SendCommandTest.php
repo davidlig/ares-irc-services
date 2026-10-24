@@ -115,6 +115,7 @@ final class SendCommandTest extends TestCase
         self::assertSame(2, $command->getMinArgs());
         self::assertSame('send.syntax', $command->getSyntaxKey());
         self::assertSame('send.help', $command->getHelpKey());
+        self::assertSame('send.example', $command->getExampleKey());
         self::assertSame(1, $command->getOrder());
         self::assertSame('send.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -302,11 +303,11 @@ final class SendCommandTest extends TestCase
             ],
             [
                 SendMemoResult::nickNotRegistered('Unknown'),
-                'send.nick_not_registered [%nick%: Unknown]',
+                'error.nick_not_registered [%nick%: Unknown]',
             ],
             [
                 SendMemoResult::channelNotRegistered('#chan'),
-                'send.channel_not_registered [%channel%: #chan]',
+                'error.channel_not_registered [%channel%: #chan]',
             ],
             [
                 SendMemoResult::ignored(),

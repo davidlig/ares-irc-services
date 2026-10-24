@@ -58,6 +58,11 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
         return 'history.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'history.example';
+    }
+
     public function getOrder(): int
     {
         return 200;
@@ -71,10 +76,10 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'ADD', 'desc_key' => 'history.add.short', 'help_key' => 'history.add.help', 'syntax_key' => 'history.add.syntax'],
-            ['name' => 'DEL', 'desc_key' => 'history.del.short', 'help_key' => 'history.del.help', 'syntax_key' => 'history.del.syntax'],
-            ['name' => 'VIEW', 'desc_key' => 'history.view.short', 'help_key' => 'history.view.help', 'syntax_key' => 'history.view.syntax'],
-            ['name' => 'CLEAR', 'desc_key' => 'history.clear.short', 'help_key' => 'history.clear.help', 'syntax_key' => 'history.clear.syntax'],
+            ['name' => 'ADD', 'desc_key' => 'history.add.short', 'help_key' => 'history.add.help', 'example_key' => 'history.add.example', 'syntax_key' => 'history.add.syntax'],
+            ['name' => 'DEL', 'desc_key' => 'history.del.short', 'help_key' => 'history.del.help', 'example_key' => 'history.del.example', 'syntax_key' => 'history.del.syntax'],
+            ['name' => 'VIEW', 'desc_key' => 'history.view.short', 'help_key' => 'history.view.help', 'example_key' => 'history.view.example', 'syntax_key' => 'history.view.syntax'],
+            ['name' => 'CLEAR', 'desc_key' => 'history.clear.short', 'help_key' => 'history.clear.help', 'example_key' => 'history.clear.example', 'syntax_key' => 'history.clear.syntax'],
         ];
     }
 
@@ -187,7 +192,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
     private function present(ChanServContext $context, string $channelName, ?string $message, bool $showAll, ManageChannelHistoryResult $result): CommandOutcome
     {
         if (ManageChannelHistoryOutcome::ChannelNotRegistered === $result->outcome) {
-            $context->reply('history.not_registered', ['%channel%' => $channelName]);
+            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 
             return CommandOutcome::rejected();
         }

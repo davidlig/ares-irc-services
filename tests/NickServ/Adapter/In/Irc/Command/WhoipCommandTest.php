@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\NickServ\Adapter\In\Irc\Command\WhoipCommand;
@@ -22,7 +23,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Translation\Loader\YamlFileLoader;
 use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -179,7 +179,7 @@ final class WhoipCommandTest extends TestCase
     public function rendersLocalizedHeadingOnceAndLiteralNicknames(string $locale, string $heading): void
     {
         $translator = new Translator($locale);
-        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
         $translator->addResource('yaml', __DIR__ . '/../../../../../../translations/nickserv.' . $locale . '.yaml', $locale, 'nickserv');
         $handler = $this->createStub(FindNicknamesByLastConnectIpHandlerInterface::class);
         $handler->method('handle')->willReturn(['Alice', 'PendingNick']);
@@ -203,7 +203,7 @@ final class WhoipCommandTest extends TestCase
     public function rendersConciseLocalizedHelpWithOneSyntaxFooter(string $locale): void
     {
         $translator = new Translator($locale);
-        $translator->addLoader('yaml', new YamlFileLoader());
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
         $translator->addResource('yaml', __DIR__ . '/../../../../../../translations/nickserv.' . $locale . '.yaml', $locale, 'nickserv');
         $handler = $this->createStub(FindNicknamesByLastConnectIpHandlerInterface::class);
         $messages = [];
@@ -218,7 +218,7 @@ final class WhoipCommandTest extends TestCase
         self::assertStringNotContainsString('203.0.113.7', $output);
         $help = $translator->trans('whoip.help', [], 'nickserv', $locale);
         $description = explode("\n", trim($help));
-        self::assertCount(2, $description);
+        self::assertCount('el' === $locale ? 3 : 2, $description);
         foreach ($description as $line) {
             self::assertNotSame('', trim($line));
             self::assertStringContainsString($line, $output);

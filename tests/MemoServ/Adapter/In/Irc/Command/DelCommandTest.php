@@ -101,6 +101,7 @@ final class DelCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('del.syntax', $command->getSyntaxKey());
         self::assertSame('del.help', $command->getHelpKey());
+        self::assertSame('del.example', $command->getExampleKey());
         self::assertSame(4, $command->getOrder());
         self::assertSame('del.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -214,7 +215,7 @@ final class DelCommandTest extends TestCase
         $replies = [];
         $context = $this->createContext($sender, $account, ['#unregistered', '1'], $replies);
         $command->execute($context);
-        self::assertSame(['del.channel_not_registered [%channel%: #unregistered]'], $replies);
+        self::assertSame(['error.channel_not_registered [%channel%: #unregistered]'], $replies);
     }
 
     #[Test]

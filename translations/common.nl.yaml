@@ -1,27 +1,128 @@
-# Common translations — Dutch
-# Domain: common
+# Gemeenschappelijke berichten-vertalingen — Nederlands
+# Domein: common
 #
-# Shared translations used across all IRC services.
+# IRC-opmaakcodes (dubbele aanhalingstekens of letterlijke !irc-blokken):
+#   \x02        vet aan/uit
+#   \x03NN      kleur (DECIMAAL: 03=groen, 04=rood, 07=oranje, 14=donkergrijs)
+#   \x03        kleur herstellen
+#   \x0F        alle opmaak herstellen
+#
+# IRC-kleuren gebruiken DECIMALE getallen (0-15), geen hexadecimale.
+#   \x0314 = donkergrijs (14 decimaal): GOED
+#   \x030F = kleur 0 gevolgd door de letter F: FOUT
+#
+# IRC-tekst over meerdere regels: !irc |- met echte regeleinden en spaties.
+# Blokken zonder tag decoderen geen escapes; behoud letterlijke CTCP-waarden.
+# HELP-voorbeelden: example/examples en %command_prefix%.
+# De presentatielaag voegt /msg zonder kleur en een marge van twee spaties toe.
 
+# --- UNKNOWN COMMAND -------------------------------------------------------
+unknown_command: "\x0304✗\x03\x0F Onbekend commando \x0303%command%\x03\x0F. Gebruik /msg %bot% \x0303HELP\x03\x0F"
+
+# --- UNKNOWN HELP OPTION ---------------------------------------------------
+unknown_help_option: "\x0304✗\x03\x0F Onbekende helpoptie \x0303%option%\x03\x0F voor \x0303%command%\x03\x0F. Gebruik /msg %bot% \x0303HELP %command%\x03\x0F"
+
+# --- ERROR -----------------------------------------------------------------
+error:
+  syntax: "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
+  not_identified: "\x0304✗\x03 Je bent niet geïdentificeerd. Gebruik /msg %nickserv% \x0303IDENTIFY <bijnaam> <wachtwoord>\x03"
+  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft geen toegang tot dit commando."
+  mail_failed: "\x0304✗\x03 De e-mail kon niet worden verzonden. Controleer uw adres of probeer het later opnieuw."
+  channel_not_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
+  nick_not_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  insufficient_access: "\x0304✗\x03 Onvoldoende toegang voor \x02%operation%\x02 op kanaal \x02%channel%\x02."
+  nick_not_online: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verbonden."
+
+# --- DURATION --------------------------------------------------------------
+duration:
+  unit:
+    year:
+      singular: "jaar"
+      plural: "jaar"
+    month:
+      singular: "maand"
+      plural: "maanden"
+    day:
+      singular: "dag"
+      plural: "dagen"
+    hour:
+      singular: "uur"
+      plural: "uur"
+    minute:
+      singular: "minuut"
+      plural: "minuten"
+    second:
+      singular: "seconde"
+      plural: "seconden"
+  list_separator: ", "
+  list_join: "%prefix% en %last%"
+
+# --- ANTIFLOOD -------------------------------------------------------------
 antiflood:
   blocked: "U heeft de commandosnelheidslimiet overschreden. Probeer het opnieuw over %seconds% seconden."
   debug_channel: "%nick% %command% limiet bereikt voor %host% (nog %seconds%s)"
 
+# --- CTCP ------------------------------------------------------------------
 ctcp:
   version:
     tribute: |
       \x02Voor mijn trouwe en eeuwige vriend,\x02
-      
+
       Hoewel 2023 het jaar was waarin we afscheid moesten nemen, heeft de tijd geen enkel
       detail van jou uitgewist. Ik herinner me nog jouw grenzeloze energie, jouw nobele blik en die
       enorme en aanstekelijke vreugde die alleen jij wist te geven.
-      
+
       Je vulde mijn huis met leven en mijn leven met onvoorwaardelijke liefde die ik nooit
       zal vergeten. Hoewel ik je voetstappen niet meer hoor rennen om me te begroeten of je
       hoofd niet meer voel leunen op mij op zoek naar genegenheid, weet ik dat jouw speelse geest nog
       steeds met me meegaat.
-      
+
       Dank je voor elk moment, elke streek, en voor het zijn van de beste metgezel die ik
       had kunnen wensen. De ruimte die je naast me achterliet is nu gevuld met de gelukkigste
       herinneringen. Je zult altijd mijn lieve vriend zijn en je zult altijd een enorme
       plaats in mijn hart hebben.
+
+# --- DEBUG -----------------------------------------------------------------
+debug:
+  action_message: "%operator% voert commando %command% uit op %target%. %reason%"
+  action_with_option: "%operator% voert commando %command% uit op %target%. Optie: %option%. %reason%"
+  action_with_value: "%operator% voert commando %command% uit op %target%. Optie: %option%=%value%. %reason%"
+  prefix_reason: "Reden: %reason%"
+  action_duration: "%operator% voert commando %command% uit op %target%. Duur: %duration%. %reason%"
+
+# --- HISTORY ---------------------------------------------------------------
+history:
+  unknown_operator: "(onbekend)"
+  del:
+    success: "\x0303✔\x03 Geschiedenisvermelding \x02%id%\x02 verwijderd."
+    not_found: "\x0304✗\x03 Geschiedenisvermelding \x02%id%\x02 niet gevonden."
+    invalid_id: "\x0304✗\x03 Ongeldige vermeldings-ID: \x02%id%\x02."
+  view:
+    extra: "  Extra \x0307→\x03 %extra%"
+  message:
+    unsuspend: "Schorsing opgeheven"
+  extra:
+    duration: "Duur: %value%"
+    expires_at: "Verloopt: %value%"
+    ip: "IP: %value%"
+    host: "Host: %value%"
+
+# --- LIST ------------------------------------------------------------------
+list:
+  page: "Pagina %page%/%pages% — %total% overeenkomsten"
+  status_suspended: "Geschorst"
+  status_pending_deletion: "Verwijdering in behandeling"
+  status_forbidden: "Verboden"
+
+# --- REPLY -----------------------------------------------------------------
+reply:
+  separator: "\x0314─────────────────────────────\x03"
+
+# --- LABEL -----------------------------------------------------------------
+label:
+  no_reason: "Geen reden"
+  never: "nooit"
+  unknown_creator: "onbekend"
+  permanent: "Permanent"
+  permanent_inline: "permanent"

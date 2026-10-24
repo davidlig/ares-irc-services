@@ -102,6 +102,7 @@ final class ReadCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('read.syntax', $command->getSyntaxKey());
         self::assertSame('read.help', $command->getHelpKey());
+        self::assertSame('read.example', $command->getExampleKey());
         self::assertSame(2, $command->getOrder());
         self::assertSame('read.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -233,7 +234,7 @@ final class ReadCommandTest extends TestCase
         $replies = [];
         $context = $this->createContext($sender, $account, ['#unregistered', '1'], $replies);
         $command->execute($context);
-        self::assertSame(['read.channel_not_registered [%channel%: #unregistered]'], $replies);
+        self::assertSame(['error.channel_not_registered [%channel%: #unregistered]'], $replies);
     }
 
     #[Test]

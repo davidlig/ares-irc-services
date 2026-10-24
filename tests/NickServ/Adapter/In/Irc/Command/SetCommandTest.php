@@ -40,6 +40,7 @@ final class SetCommandTest extends TestCase
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('set.syntax', $command->getSyntaxKey());
         self::assertSame('set.help', $command->getHelpKey());
+        self::assertSame('set.example', $command->getExampleKey());
         self::assertSame(4, $command->getOrder());
         self::assertSame('set.short', $command->getShortDescKey());
         self::assertFalse($command->isOperOnly());

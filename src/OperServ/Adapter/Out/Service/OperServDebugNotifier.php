@@ -125,7 +125,7 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
                 $formattedReason = $this->translator->trans(
                     $prefixKey,
                     ['%reason%' => $reason],
-                    'operserv',
+                    'reason' === $reasonType ? 'common' : 'operserv',
                     $this->defaultLanguage,
                 );
             }
@@ -138,7 +138,7 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
             ];
 
             $translationKey = null !== $duration && '' !== $duration
-                ? 'debug.actionWithDuration'
+                ? 'debug.action_duration'
                 : 'debug.action_message';
 
             if (null !== $duration && '' !== $duration) {
@@ -148,7 +148,7 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
             $message = $this->translator->trans(
                 $translationKey,
                 $messageParams,
-                'operserv',
+                'common',
                 $this->defaultLanguage,
             );
         }

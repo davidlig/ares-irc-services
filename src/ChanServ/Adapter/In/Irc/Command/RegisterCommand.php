@@ -49,6 +49,11 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return 'register.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'register.example';
+    }
+
     public function getOrder(): int
     {
         return 1;

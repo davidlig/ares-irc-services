@@ -38,6 +38,11 @@ final readonly class HalfopCommand implements ChanServCommandInterface
         return 'halfop.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'halfop.example';
+    }
+
     public function getOrder(): int
     {
         return 22;

@@ -48,6 +48,11 @@ final readonly class DelCommand implements MemoServCommandInterface
         return 'del.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'del.example';
+    }
+
     public function getOrder(): int
     {
         return 4;
@@ -111,7 +116,7 @@ final readonly class DelCommand implements MemoServCommandInterface
                 break;
 
             case DelMemoOutcome::ChannelNotRegistered:
-                $context->reply('del.channel_not_registered', ['channel' => $targetChannel ?? '']);
+                $context->reply('error.channel_not_registered', ['channel' => $targetChannel ?? '']);
                 break;
 
             case DelMemoOutcome::AccessDenied:

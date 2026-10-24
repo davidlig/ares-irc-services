@@ -177,6 +177,22 @@ final class ManageRoleHandlerTest extends TestCase
             'ROLE PERMS DEL',
             ['permission_name' => 'operserv.kill'],
         ];
+        yield 'permission delete from protected role' => [
+            RoleAction::PermissionDelete,
+            self::role(protected: true, permissions: ['operserv.global', 'operserv.kill']),
+            'admin',
+            'operserv.kill',
+            '',
+            [],
+            [],
+            true,
+            false,
+            null,
+            RoleOutcome::PermissionRemoved,
+            ['store:permissions', 'audit'],
+            'ROLE PERMS DEL',
+            ['permission_name' => 'operserv.kill'],
+        ];
         yield 'permission clear' => [
             RoleAction::PermissionClear,
             self::role(permissions: ['operserv.global', 'operserv.kill']),
@@ -245,7 +261,7 @@ final class ManageRoleHandlerTest extends TestCase
             RoleAction::VhostSet,
             self::role(vhost: 'old.example.test'),
             'admin',
-            'OFF',
+            '',
             '',
             [],
             [],
@@ -277,7 +293,7 @@ final class ManageRoleHandlerTest extends TestCase
             RoleAction::OperclassSet,
             self::role(operclass: 'NetAdmin'),
             'admin',
-            'OFF',
+            '',
             '',
             [],
             [],
@@ -426,27 +442,29 @@ final class ManageRoleHandlerTest extends TestCase
         yield 'permission add all no-op' => [RoleAction::PermissionAddAll, self::role(permissions: ['operserv.kill']), 'admin', '', ['operserv.kill'], [], true, false, null, RoleOutcome::PermissionAlreadyAssigned];
         yield 'permission delete missing role' => [RoleAction::PermissionDelete, null, 'missing', 'operserv.kill', [], [], true, false, null, RoleOutcome::NotFound];
         yield 'permission delete absent' => [RoleAction::PermissionDelete, self::role(), 'admin', 'operserv.kill', [], [], true, false, null, RoleOutcome::PermissionMissing];
-        yield 'permission delete protected' => [RoleAction::PermissionDelete, self::role(protected: true, permissions: ['operserv.kill']), 'admin', 'operserv.kill', [], [], true, false, null, RoleOutcome::Protected];
         yield 'permission clear missing role' => [RoleAction::PermissionClear, null, 'missing', '', [], [], true, false, null, RoleOutcome::NotFound];
         yield 'permission clear empty' => [RoleAction::PermissionClear, self::role(), 'admin', '', [], [], true, false, null, RoleOutcome::PermissionsEmpty];
         yield 'modes view missing role' => [RoleAction::ModesView, null, 'missing', '', [], ['o'], true, false, null, RoleOutcome::NotFound];
         yield 'modes set missing role' => [RoleAction::ModesSet, null, 'missing', '+o', [], ['o'], true, false, null, RoleOutcome::NotFound];
         yield 'modes unsupported' => [RoleAction::ModesSet, self::role(), 'admin', '+o', [], null, true, false, null, RoleOutcome::ModesNotSupported];
         yield 'modes invalid' => [RoleAction::ModesSet, self::role(), 'admin', '+x', [], ['o'], true, false, null, RoleOutcome::InvalidModes];
+        yield 'modes OFF is not a clear value' => [RoleAction::ModesSet, self::role(modes: ['o']), 'admin', 'OFF', [], ['o'], true, false, null, RoleOutcome::InvalidModes];
         yield 'modes unchanged' => [RoleAction::ModesSet, self::role(modes: ['o', 's']), 'admin', '+so', [], ['o', 's'], true, false, null, RoleOutcome::ModesSet];
         yield 'modes clear no-op' => [RoleAction::ModesSet, self::role(), 'admin', '', [], ['o'], true, false, null, RoleOutcome::ModesCleared];
         yield 'vhost view missing role' => [RoleAction::VhostView, null, 'missing', '', [], [], true, false, null, RoleOutcome::NotFound];
         yield 'vhost set missing role' => [RoleAction::VhostSet, null, 'missing', 'staff.test', [], [], true, false, null, RoleOutcome::NotFound];
         yield 'vhost invalid' => [RoleAction::VhostSet, self::role(), 'admin', 'invalid', [], [], false, false, null, RoleOutcome::InvalidVhost];
+        yield 'vhost OFF is not a clear value' => [RoleAction::VhostSet, self::role(vhost: 'staff.test'), 'admin', 'OFF', [], [], false, false, null, RoleOutcome::InvalidVhost];
         yield 'vhost unchanged' => [RoleAction::VhostSet, self::role(vhost: 'staff.test'), 'admin', 'staff.test', [], [], true, false, null, RoleOutcome::VhostSet];
-        yield 'vhost clear no-op' => [RoleAction::VhostSet, self::role(), 'admin', 'OFF', [], [], true, false, null, RoleOutcome::VhostCleared];
+        yield 'vhost clear no-op' => [RoleAction::VhostSet, self::role(), 'admin', '', [], [], true, false, null, RoleOutcome::VhostCleared];
         yield 'operclass unsupported list' => [RoleAction::OperclassList, null, '', '', [], [], true, false, null, RoleOutcome::OperclassNotSupported];
         yield 'operclass view missing role' => [RoleAction::OperclassView, null, 'missing', '', [], [], true, true, ['NetAdmin'], RoleOutcome::NotFound];
         yield 'operclass set missing role' => [RoleAction::OperclassSet, null, 'missing', 'NetAdmin', [], [], true, true, ['NetAdmin'], RoleOutcome::NotFound];
         yield 'operclass unsupported set' => [RoleAction::OperclassSet, self::role(), 'admin', 'NetAdmin', [], [], true, false, null, RoleOutcome::OperclassNotSupported];
         yield 'operclass unavailable' => [RoleAction::OperclassSet, self::role(), 'admin', 'LocalAdmin', [], [], true, true, ['NetAdmin'], RoleOutcome::OperclassNotAvailable];
+        yield 'operclass OFF is not a clear value' => [RoleAction::OperclassSet, self::role(operclass: 'NetAdmin'), 'admin', 'OFF', [], [], true, true, ['NetAdmin'], RoleOutcome::OperclassNotAvailable];
         yield 'operclass unchanged' => [RoleAction::OperclassSet, self::role(operclass: 'NetAdmin'), 'admin', 'netadmin', [], [], true, true, ['NetAdmin'], RoleOutcome::OperclassSet];
-        yield 'operclass clear no-op' => [RoleAction::OperclassSet, self::role(), 'admin', 'OFF', [], [], true, true, ['NetAdmin'], RoleOutcome::OperclassCleared];
+        yield 'operclass clear no-op' => [RoleAction::OperclassSet, self::role(), 'admin', '', [], [], true, true, ['NetAdmin'], RoleOutcome::OperclassCleared];
     }
 
     /**

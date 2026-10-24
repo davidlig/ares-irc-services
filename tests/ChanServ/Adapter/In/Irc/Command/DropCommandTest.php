@@ -79,6 +79,7 @@ final class DropCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertSame('drop.help', $cmd->getHelpKey());
+        self::assertSame('drop.example', $cmd->getExampleKey());
     }
 
     #[Test]
@@ -176,7 +177,7 @@ final class DropCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('drop.not_registered', $messages);
+        self::assertContains('error.channel_not_registered', $messages);
     }
 
     #[Test]

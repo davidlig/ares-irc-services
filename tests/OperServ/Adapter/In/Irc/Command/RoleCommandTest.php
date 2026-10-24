@@ -51,6 +51,7 @@ final class RoleCommandTest extends TestCase
         self::assertSame(OperatorAuthorizationAttribute::ROOT, $command->getRequiredPermission());
         self::assertSame($expectedSyntax, $command->getSyntaxKey());
         self::assertSame($expectedHelp, $command->getHelpKey());
+        self::assertSame('role.example', $command->getExampleKey());
         self::assertSame($expectedSubcommands, array_column($command->getSubCommandHelp(), 'name'));
     }
 
@@ -78,7 +79,7 @@ final class RoleCommandTest extends TestCase
         $notifier = new RecordingRoleNotifier();
         $translator = new RecordingRoleTranslation();
 
-        new RoleCommand($handler)->execute($this->context(['OPERCLASS', 'ADMIN', 'VIEW'], $notifier, $translator));
+        new RoleCommand($handler)->execute($this->context(['OPERCLASS', 'VIEW', 'ADMIN'], $notifier, $translator));
 
         self::assertSame([], $handler->commands);
         self::assertSame(['role.unknown_sub'], $notifier->messages);
@@ -116,11 +117,75 @@ final class RoleCommandTest extends TestCase
         $notifier = new RecordingRoleNotifier();
         $translator = new RecordingRoleTranslation();
 
-        new RoleCommand($handler)->execute($this->context(['ADD'], $notifier, $translator));
+        new RoleCommand($handler)->execute($this->context(['PERMS', 'ADD', 'ADMIN', 'invalid'], $notifier, $translator));
 
         self::assertSame($expectedTranslationCalls, $translator->calls);
         self::assertSame($expectedSyntax, $translator->parameters['error.syntax']['%syntax%']);
         self::assertSame(['error.syntax'], $notifier->messages);
+    }
+
+    #[Test]
+    public function deletingRoleWithoutNameReturnsSyntaxErrorInsteadOfLookingUpEmptyRole(): void
+    {
+        $handler = new RecordingManageRoleHandler(true, new ManageRoleResult(RoleOutcome::NotFound));
+        $notifier = new RecordingRoleNotifier();
+        $translator = new RecordingRoleTranslation();
+
+        new RoleCommand($handler)->execute($this->context(['DEL'], $notifier, $translator));
+
+        self::assertSame([], $handler->commands);
+        self::assertSame(['error.syntax'], $notifier->messages);
+        self::assertSame(['role.del.syntax', 'error.syntax'], $translator->calls);
+        self::assertSame('role.del.syntax', $translator->parameters['error.syntax']['%syntax%']);
+    }
+
+    /** @param list<string> $arguments */
+    #[Test]
+    #[DataProvider('missingRequiredArguments')]
+    public function missingRequiredArgumentsReturnTheSpecificSyntax(
+        array $arguments,
+        string $expectedSyntax,
+    ): void {
+        $handler = new RecordingManageRoleHandler(true);
+        $notifier = new RecordingRoleNotifier();
+        $translator = new RecordingRoleTranslation();
+
+        new RoleCommand($handler)->execute($this->context($arguments, $notifier, $translator));
+
+        self::assertSame([], $handler->commands);
+        self::assertSame(['error.syntax'], $notifier->messages);
+        self::assertSame([$expectedSyntax, 'error.syntax'], $translator->calls);
+        self::assertSame($expectedSyntax, $translator->parameters['error.syntax']['%syntax%']);
+    }
+
+    /** @return iterable<string, array{list<string>, string}> */
+    public static function missingRequiredArguments(): iterable
+    {
+        yield 'add role name' => [['ADD'], 'role.add.syntax'];
+        yield 'permissions role name' => [['PERMS'], 'role.perms.syntax'];
+        yield 'permission add role' => [['PERMS', 'ADD'], 'role.perms.syntax'];
+        yield 'permission to add' => [['PERMS', 'ADD', 'ADMIN'], 'role.perms.syntax'];
+        yield 'permission delete role' => [['PERMS', 'DEL'], 'role.perms.syntax'];
+        yield 'permission to delete' => [['PERMS', 'DEL', 'ADMIN'], 'role.perms.syntax'];
+        yield 'permission list role' => [['PERMS', 'LIST'], 'role.perms.syntax'];
+        yield 'permission clear role' => [['PERMS', 'CLEAR'], 'role.perms.syntax'];
+        yield 'permissions clear action' => [['PERMS', 'ADMIN'], 'role.perms.syntax'];
+        yield 'old permissions add order' => [['PERMS', 'ADMIN', 'ADD', 'operserv.kill'], 'role.perms.syntax'];
+        yield 'old permissions list order' => [['PERMS', 'ADMIN', 'LIST'], 'role.perms.syntax'];
+        yield 'old permissions clear order' => [['PERMS', 'ADMIN', 'CLEAR'], 'role.perms.syntax'];
+        yield 'modes role name' => [['MODES'], 'role.modes.syntax'];
+        yield 'modes view role' => [['MODES', 'VIEW'], 'role.modes.syntax'];
+        yield 'modes set role' => [['MODES', 'SET'], 'role.modes.syntax'];
+        yield 'old modes order' => [['MODES', 'ADMIN', 'VIEW'], 'role.modes.syntax'];
+        yield 'vhost role name' => [['VHOST'], 'role.vhost.syntax'];
+        yield 'vhost view role' => [['VHOST', 'VIEW'], 'role.vhost.syntax'];
+        yield 'vhost set role' => [['VHOST', 'SET'], 'role.vhost.syntax'];
+        yield 'old vhost order' => [['VHOST', 'ADMIN', 'VIEW'], 'role.vhost.syntax'];
+        yield 'operclass role name' => [['OPERCLASS'], 'role.operclass.syntax'];
+        yield 'operclass view role' => [['OPERCLASS', 'VIEW'], 'role.operclass.syntax'];
+        yield 'operclass set role' => [['OPERCLASS', 'SET'], 'role.operclass.syntax'];
+        yield 'old operclass order' => [['OPERCLASS', 'ADMIN', 'VIEW'], 'role.operclass.syntax'];
+        yield 'operclass list has no role parameter' => [['OPERCLASS', 'LIST', 'ADMIN'], 'role.operclass.syntax'];
     }
 
     /** @return iterable<string, array{bool, string, list<string>}> */
@@ -194,23 +259,25 @@ final class RoleCommandTest extends TestCase
         yield 'add' => [['ADD', 'admin', 'description', 'with spaces'], RoleAction::Add, 'ADMIN', '', 'description with spaces'];
         yield 'delete' => [['DEL', 'admin'], RoleAction::Delete, 'ADMIN', '', ''];
         yield 'list roles' => [['LIST'], RoleAction::List, '', '', ''];
-        yield 'list permissions' => [['PERMS', 'admin', 'LIST'], RoleAction::PermissionList, 'ADMIN', '', ''];
-        yield 'add permission' => [['PERMS', 'admin', 'ADD', 'operserv.kill'], RoleAction::PermissionAdd, 'ADMIN', 'operserv.kill', ''];
-        yield 'add all permissions' => [['PERMS', 'admin', 'ADD', 'all'], RoleAction::PermissionAddAll, 'ADMIN', 'all', ''];
-        yield 'delete permission' => [['PERMS', 'admin', 'DEL', 'operserv.kill'], RoleAction::PermissionDelete, 'ADMIN', 'operserv.kill', ''];
-        yield 'clear permissions' => [['PERMS', 'admin', 'CLEAR'], RoleAction::PermissionClear, 'ADMIN', '', ''];
+        yield 'list permissions' => [['PERMS', 'LIST', 'admin'], RoleAction::PermissionList, 'ADMIN', '', ''];
+        yield 'add permission' => [['PERMS', 'ADD', 'admin', 'operserv.kill'], RoleAction::PermissionAdd, 'ADMIN', 'operserv.kill', ''];
+        yield 'add all permissions' => [['PERMS', 'ADD', 'admin', 'all'], RoleAction::PermissionAddAll, 'ADMIN', 'all', ''];
+        yield 'delete permission' => [['PERMS', 'DEL', 'admin', 'operserv.kill'], RoleAction::PermissionDelete, 'ADMIN', 'operserv.kill', ''];
+        yield 'clear permissions' => [['PERMS', 'CLEAR', 'admin'], RoleAction::PermissionClear, 'ADMIN', '', ''];
         yield 'unknown permissions verb' => [['PERMS', 'admin', 'BOGUS'], RoleAction::Unknown, 'ADMIN', '', ''];
-        yield 'view modes' => [['MODES', 'admin', 'VIEW'], RoleAction::ModesView, 'ADMIN', '', ''];
-        yield 'set modes' => [['MODES', 'admin', 'SET', 'oO'], RoleAction::ModesSet, 'ADMIN', 'oO', ''];
-        yield 'unknown modes verb' => [['MODES', 'admin', 'BOGUS'], RoleAction::Unknown, 'ADMIN', '', ''];
-        yield 'view vhost' => [['VHOST', 'admin', 'VIEW'], RoleAction::VhostView, 'ADMIN', '', ''];
-        yield 'set vhost' => [['VHOST', 'admin', 'SET', 'staff.example'], RoleAction::VhostSet, 'ADMIN', 'staff.example', ''];
-        yield 'unknown vhost verb' => [['VHOST', 'admin', 'BOGUS'], RoleAction::Unknown, 'ADMIN', '', ''];
-        yield 'list operclasses' => [['OPERCLASS', 'LIST'], RoleAction::OperclassList, 'LIST', '', ''];
-        yield 'view operclass' => [['OPERCLASS', 'admin', 'VIEW'], RoleAction::OperclassView, 'ADMIN', '', ''];
-        yield 'legacy list operclass' => [['OPERCLASS', 'admin', 'LIST'], RoleAction::OperclassView, 'ADMIN', '', ''];
-        yield 'set operclass' => [['OPERCLASS', 'admin', 'SET', 'netadmin'], RoleAction::OperclassSet, 'ADMIN', 'netadmin', ''];
-        yield 'unknown operclass verb' => [['OPERCLASS', 'admin', 'BOGUS'], RoleAction::Unknown, 'ADMIN', '', ''];
+        yield 'view modes' => [['MODES', 'VIEW', 'admin'], RoleAction::ModesView, 'ADMIN', '', ''];
+        yield 'set modes' => [['MODES', 'SET', 'admin', 'oO'], RoleAction::ModesSet, 'ADMIN', 'oO', ''];
+        yield 'clear modes with empty value' => [['MODES', 'SET', 'admin'], RoleAction::ModesSet, 'ADMIN', '', ''];
+        yield 'unknown modes verb' => [['MODES', 'BOGUS', 'admin'], RoleAction::Unknown, 'ADMIN', '', ''];
+        yield 'view vhost' => [['VHOST', 'VIEW', 'admin'], RoleAction::VhostView, 'ADMIN', '', ''];
+        yield 'set vhost' => [['VHOST', 'SET', 'admin', 'staff.example'], RoleAction::VhostSet, 'ADMIN', 'staff.example', ''];
+        yield 'clear vhost with empty value' => [['VHOST', 'SET', 'admin'], RoleAction::VhostSet, 'ADMIN', '', ''];
+        yield 'unknown vhost verb' => [['VHOST', 'BOGUS', 'admin'], RoleAction::Unknown, 'ADMIN', '', ''];
+        yield 'list operclasses' => [['OPERCLASS', 'LIST'], RoleAction::OperclassList, '', '', ''];
+        yield 'view operclass' => [['OPERCLASS', 'VIEW', 'admin'], RoleAction::OperclassView, 'ADMIN', '', ''];
+        yield 'set operclass' => [['OPERCLASS', 'SET', 'admin', 'netadmin'], RoleAction::OperclassSet, 'ADMIN', 'netadmin', ''];
+        yield 'clear operclass with empty value' => [['OPERCLASS', 'SET', 'admin'], RoleAction::OperclassSet, 'ADMIN', '', ''];
+        yield 'unknown operclass verb' => [['OPERCLASS', 'BOGUS', 'admin'], RoleAction::Unknown, 'BOGUS', '', ''];
         yield 'unknown subcommand' => [['BOGUS', 'admin', 'value'], RoleAction::Unknown, 'ADMIN', '', ''];
     }
 
@@ -224,7 +291,7 @@ final class RoleCommandTest extends TestCase
         $translator = new RecordingRoleTranslation();
 
         new RoleCommand($handler)->execute($this->context(
-            ['PERMS', 'admin', 'ADD', 'missing'],
+            ['PERMS', 'ADD', 'admin', 'missing'],
             $notifier,
             $translator,
         ));
@@ -274,7 +341,7 @@ final class RoleCommandTest extends TestCase
         $translator = new RecordingRoleTranslation();
 
         new RoleCommand($handler)->execute($this->context(
-            ['VHOST', 'missing', 'SET', 'staff.example'],
+            ['VHOST', 'SET', 'missing', 'staff.example'],
             $notifier,
             $translator,
         ));
@@ -297,28 +364,28 @@ final class RoleCommandTest extends TestCase
             ['role.list.header'],
         );
         $this->assertCollectionPresentation(
-            new ManageRoleResult(RoleOutcome::PermissionsListed, self::role(), values: ['operserv.kill']),
-            ['PERMS', 'ADMIN', 'LIST'],
-            ['role.perms.list.header'],
+            new ManageRoleResult(RoleOutcome::PermissionsListed, self::role(), values: ['operserv.kill'], availableValues: ['chanserv.drop']),
+            ['PERMS', 'LIST', 'ADMIN'],
+            ['role.perms.list.header', 'role.perms.list.columns', 'role.perms.list.row'],
         );
         $this->assertCollectionPresentation(
             new ManageRoleResult(RoleOutcome::ModesViewed, self::role()),
-            ['MODES', 'ADMIN', 'VIEW'],
+            ['MODES', 'VIEW', 'ADMIN'],
             ['role.modes.view.empty'],
         );
         $this->assertCollectionPresentation(
             new ManageRoleResult(RoleOutcome::ModesViewed, self::role(), values: ['o', 'O']),
-            ['MODES', 'ADMIN', 'VIEW'],
+            ['MODES', 'VIEW', 'ADMIN'],
             ['role.modes.view.header', 'role.modes.view.line'],
         );
         $this->assertCollectionPresentation(
             new ManageRoleResult(RoleOutcome::VhostViewed, self::role()),
-            ['VHOST', 'ADMIN', 'VIEW'],
+            ['VHOST', 'VIEW', 'ADMIN'],
             ['role.vhost.view.empty'],
         );
         $this->assertCollectionPresentation(
             new ManageRoleResult(RoleOutcome::VhostViewed, self::role(), values: ['staff.example']),
-            ['VHOST', 'ADMIN', 'VIEW'],
+            ['VHOST', 'VIEW', 'ADMIN'],
             ['role.vhost.view.header', 'role.vhost.view.line', 'role.vhost.view.example'],
         );
         $this->assertCollectionPresentation(
@@ -328,14 +395,94 @@ final class RoleCommandTest extends TestCase
         );
         $this->assertCollectionPresentation(
             new ManageRoleResult(RoleOutcome::OperclassViewed, self::role()),
-            ['OPERCLASS', 'ADMIN', 'VIEW'],
+            ['OPERCLASS', 'VIEW', 'ADMIN'],
             ['role.operclass.view.empty'],
         );
         $this->assertCollectionPresentation(
             new ManageRoleResult(RoleOutcome::OperclassViewed, self::role(), values: ['netadmin'], availableValues: ['netadmin', 'oper']),
-            ['OPERCLASS', 'ADMIN', 'VIEW'],
+            ['OPERCLASS', 'VIEW', 'ADMIN'],
             ['role.operclass.view.line', 'role.operclass.view.available'],
         );
+    }
+
+    #[Test]
+    public function permissionListShowsEveryPermissionWithAssignedStatusAndDescription(): void
+    {
+        $handler = new RecordingManageRoleHandler(true, new ManageRoleResult(
+            RoleOutcome::PermissionsListed,
+            self::role(),
+            values: ['operserv.kill'],
+            availableValues: ['nickserv.list', 'chanserv.drop', 'chanserv.drop.force', 'chanserv.level_founder'],
+        ));
+        $notifier = new RecordingRoleNotifier();
+        $translator = new RecordingRoleTranslation();
+
+        new RoleCommand($handler)->execute($this->context(['PERMS', 'LIST', 'ADMIN'], $notifier, $translator));
+
+        self::assertSame([
+            'role.perms.list.header',
+            'role.perms.list.columns',
+            'role.perms.list.row',
+            'role.perms.list.row',
+            'role.perms.list.row',
+            'role.perms.list.row',
+            'role.perms.list.row',
+        ], $notifier->messages);
+
+        $rows = [];
+        foreach ($translator->translations as $translation) {
+            if ('role.perms.list.row' === $translation['key']) {
+                $rows[] = $translation['parameters'];
+            }
+        }
+
+        self::assertSame([
+            [
+                '%bot%' => 'OperServ',
+                '%assigned%' => 'role.perms.list.unassigned',
+                '%permission%' => 'chanserv.drop',
+                '%description%' => 'drop.short',
+            ],
+            [
+                '%bot%' => 'OperServ',
+                '%assigned%' => 'role.perms.list.unassigned',
+                '%permission%' => 'chanserv.drop.force',
+                '%description%' => 'drop.force.short',
+            ],
+            [
+                '%bot%' => 'OperServ',
+                '%assigned%' => 'role.perms.list.unassigned',
+                '%permission%' => 'chanserv.level_founder',
+                '%description%' => 'level_founder.short',
+            ],
+            [
+                '%bot%' => 'OperServ',
+                '%assigned%' => 'role.perms.list.unassigned',
+                '%permission%' => 'nickserv.list',
+                '%description%' => 'list.short',
+            ],
+            [
+                '%bot%' => 'OperServ',
+                '%assigned%' => 'role.perms.list.assigned',
+                '%permission%' => 'operserv.kill',
+                '%description%' => 'kill.short',
+            ],
+        ], $rows);
+
+        $descriptionLookups = [];
+        foreach ($translator->translations as $translation) {
+            if (str_ends_with($translation['key'], '.short')) {
+                $descriptionLookups[] = [$translation['key'], $translation['domain']];
+            }
+        }
+
+        self::assertSame([
+            ['drop.short', 'chanserv'],
+            ['drop.force.short', 'chanserv'],
+            ['level_founder.short', 'chanserv'],
+            ['list.short', 'nickserv'],
+            ['kill.short', 'operserv'],
+        ], $descriptionLookups);
     }
 
     /** @param list<string> $arguments
@@ -382,6 +529,35 @@ final class RoleCommandTest extends TestCase
             $this->createStub(OperatorAuthorizationQuery::class),
         );
     }
+
+    #[Test]
+    public function permissionListPreservesMalformedPermissionDescriptions(): void
+    {
+        $handler = new RecordingManageRoleHandler(true, new ManageRoleResult(
+            RoleOutcome::PermissionsListed,
+            self::role(),
+            availableValues: ['invalid', '.missing-domain', 'missing-operation.'],
+        ));
+        $notifier = new RecordingRoleNotifier();
+        $translator = new RecordingRoleTranslation();
+
+        new RoleCommand($handler)->execute($this->context(['PERMS', 'LIST', 'ADMIN'], $notifier, $translator));
+
+        $descriptions = [];
+        foreach ($translator->translations as $translation) {
+            if ('role.perms.list.row' === $translation['key']) {
+                $descriptions[] = $translation['parameters']['%description%'];
+            }
+        }
+        self::assertSame(['.missing-domain', 'invalid', 'missing-operation.'], $descriptions);
+        self::assertSame([
+            'role.perms.list.header',
+            'role.perms.list.columns',
+            'role.perms.list.row',
+            'role.perms.list.row',
+            'role.perms.list.row',
+        ], $notifier->messages);
+    }
 }
 
 final class RecordingManageRoleHandler implements ManageRoleHandlerInterface
@@ -415,11 +591,15 @@ final class RecordingRoleTranslation implements TranslatorInterface
     /** @var array<string, array<string, mixed>> */
     public array $parameters = [];
 
+    /** @var list<array{key: string, parameters: array<string, mixed>, domain: ?string}> */
+    public array $translations = [];
+
     /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
         $this->calls[] = $id;
         $this->parameters[$id] = $parameters;
+        $this->translations[] = ['key' => $id, 'parameters' => $parameters, 'domain' => $domain];
 
         return $id;
     }

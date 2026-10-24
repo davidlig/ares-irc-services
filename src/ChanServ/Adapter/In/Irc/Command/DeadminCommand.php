@@ -38,6 +38,11 @@ final readonly class DeadminCommand implements ChanServCommandInterface
         return 'deadmin.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'deadmin.example';
+    }
+
     public function getOrder(): int
     {
         return 19;

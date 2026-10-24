@@ -266,6 +266,7 @@ final class SetCommandTest extends TestCase
             ),
         );
         self::assertSame('set.help', $cmd->getHelpKey());
+        self::assertSame('set.example', $cmd->getExampleKey());
     }
 
     #[Test]

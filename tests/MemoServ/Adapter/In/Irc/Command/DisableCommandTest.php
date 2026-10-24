@@ -101,6 +101,7 @@ final class DisableCommandTest extends TestCase
         self::assertSame(0, $command->getMinArgs());
         self::assertSame('disable.syntax', $command->getSyntaxKey());
         self::assertSame('disable.help', $command->getHelpKey());
+        self::assertSame('disable.example', $command->getExampleKey());
         self::assertSame(7, $command->getOrder());
         self::assertSame('disable.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
@@ -163,7 +164,7 @@ final class DisableCommandTest extends TestCase
         $outcomes = [
             [DisableMemosResult::disabledChannel('#chan'), 'disable.disabled_channel [%channel%: #chan]'],
             [DisableMemosResult::alreadyDisabledChannel('#chan'), 'disable.already_disabled_channel [%channel%: #chan]'],
-            [DisableMemosResult::channelNotRegistered('#chan'), 'disable.channel_not_registered [%channel%: #chan]'],
+            [DisableMemosResult::channelNotRegistered('#chan'), 'error.channel_not_registered [%channel%: #chan]'],
             [DisableMemosResult::founderOnly('#chan'), 'disable.founder_only [%channel%: #chan]'],
         ];
 

@@ -28,19 +28,28 @@ final class VerifyCommandTest extends TestCase
     #[Test]
     public function exposesVerifyMetadata(): void
     {
-        $command = new VerifyCommand($this->createStub(VerifyNickHandlerInterface::class));
+        $command = new VerifyCommand($this->createStub(VerifyNickHandlerInterface::class), verificationTokenTtlSeconds: 3600);
 
         self::assertSame('VERIFY', $command->getName());
         self::assertSame([], $command->getAliases());
         self::assertSame(1, $command->getMinArgs());
         self::assertSame('verify.syntax', $command->getSyntaxKey());
         self::assertSame('verify.help', $command->getHelpKey());
+        self::assertSame('verify.example', $command->getExampleKey());
         self::assertSame(3, $command->getOrder());
         self::assertSame('verify.short', $command->getShortDescKey());
         self::assertSame([], $command->getSubCommandHelp());
         self::assertFalse($command->isOperOnly());
         self::assertNull($command->getRequiredPermission());
-        self::assertSame([], $command->getHelpParams());
+        self::assertSame(['duration_seconds' => 3600], $command->getHelpParams());
+    }
+
+    #[Test]
+    public function exposesConfiguredSecondsForHelp(): void
+    {
+        $command = new VerifyCommand($this->createStub(VerifyNickHandlerInterface::class), verificationTokenTtlSeconds: 300);
+
+        self::assertSame(['duration_seconds' => 300], $command->getHelpParams());
     }
 
     #[Test]
@@ -49,7 +58,7 @@ final class VerifyCommandTest extends TestCase
         $handler = $this->createMock(VerifyNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new VerifyCommand($handler);
+        $command = new VerifyCommand($handler, verificationTokenTtlSeconds: 3600);
         $messages = [];
         $command->execute($this->createContext(null, $messages, ['token123']));
 
@@ -69,7 +78,7 @@ final class VerifyCommandTest extends TestCase
                 && 'UID1' === $input->senderUid))
             ->willReturn(VerifyNickResult::invalidToken());
 
-        $command = new VerifyCommand($handler);
+        $command = new VerifyCommand($handler, verificationTokenTtlSeconds: 3600);
         $messages = [];
         $command->execute($this->createContext($sender, $messages, ['tok123']));
 
@@ -92,7 +101,7 @@ final class VerifyCommandTest extends TestCase
             $notifier->expects(self::never())->method('setUserAccount');
         }
 
-        $command = new VerifyCommand($handler);
+        $command = new VerifyCommand($handler, verificationTokenTtlSeconds: 3600);
         /** @var list<array{0: string, 1: array<string, mixed>}> $calls */
         $calls = [];
         $command->execute($this->createContext($sender, $calls, ['tok123'], captureParams: true, notifier: $notifier));
@@ -127,7 +136,7 @@ final class VerifyCommandTest extends TestCase
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('setUserAccount');
 
-        $command = new VerifyCommand($handler);
+        $command = new VerifyCommand($handler, verificationTokenTtlSeconds: 3600);
         $calls = [];
         $command->execute($this->createContext($sender, $calls, ['tok123'], notifier: $notifier));
 

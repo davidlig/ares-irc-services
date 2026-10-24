@@ -25,6 +25,7 @@ use RuntimeException;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_slice;
 use function is_scalar;
 
 #[CoversClass(HelpCommand::class)]
@@ -125,6 +126,11 @@ final class HelpCommandTest extends TestCase
                 return 'register.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'register.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -165,7 +171,7 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['UNKNOWNCMD'], $notifier, $translator, $registry));
 
-        self::assertContains('help.unknown_command', $messages);
+        self::assertContains('unknown_command', $messages);
     }
 
     #[Test]
@@ -204,6 +210,11 @@ final class HelpCommandTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'help.example';
             }
 
             public function getOrder(): int
@@ -301,6 +312,11 @@ final class HelpCommandTest extends TestCase
                 return 'help.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'help.example';
+            }
+
             public function getOrder(): int
             {
                 return 99;
@@ -345,6 +361,11 @@ final class HelpCommandTest extends TestCase
             "\x0304⚠\x03\x0F NOTE: Nicknames unused for more than \x1F\x030430 days\x03\x1F are automatically removed.",
             $messages,
         );
+        $tail = array_slice($messages, -4);
+        self::assertSame('help.general_footer', $tail[0]);
+        self::assertSame(' ', $tail[1]);
+        self::assertStringContainsString('Nicknames unused for more than', $tail[2]);
+        self::assertSame('help.footer', $tail[3]);
         self::assertContains([
             'id' => 'help.intro_expiration',
             'parameters' => [
@@ -398,6 +419,11 @@ final class HelpCommandTest extends TestCase
                 return 'opercmd.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'opercmd.example';
+            }
+
             public function getOrder(): int
             {
                 return 1;
@@ -438,7 +464,7 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['OPERCMD'], $notifier, $translator, $registry));
 
-        self::assertContains('help.unknown_command', $messages);
+        self::assertContains('unknown_command', $messages);
     }
 
     #[Test]
@@ -477,6 +503,11 @@ final class HelpCommandTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'register.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'register.example';
             }
 
             public function getOrder(): int
@@ -560,6 +591,11 @@ final class HelpCommandTest extends TestCase
                 return 'set.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'set.example';
+            }
+
             public function getOrder(): int
             {
                 return 10;
@@ -578,6 +614,7 @@ final class HelpCommandTest extends TestCase
                         'desc_key' => 'set.password.desc',
                         'help_key' => 'set.password.help',
                         'syntax_key' => 'set.password.syntax',
+                        'example_key' => 'set.password.example',
                     ],
                 ];
             }
@@ -608,6 +645,7 @@ final class HelpCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, ['SET', 'PASSWORD'], $notifier, $translator, $registry));
 
         self::assertNotEmpty($messages);
+        self::assertSame(' ', $messages[1]);
     }
 
     #[Test]
@@ -619,15 +657,20 @@ final class HelpCommandTest extends TestCase
         $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages = explode("\n", $m);
         });
+        $notifier->method('getNick')->willReturn('CustomNickServ');
         $translations = [];
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
             static function (string $id, array $parameters = []) use (&$translations): string {
                 $translations[] = ['id' => $id, 'parameters' => $parameters];
 
-                $translation = 'help.set_timezone.region_header' === $id
-                    ? 'Timezones for %region%:'
-                    : $id;
+                $translation = match ($id) {
+                    'help.set_timezone.region_header' => 'Timezones for %region%:',
+                    'help.examples_header' => 'Examples:',
+                    'set.timezone.example' => '%command_prefix%SET TIMEZONE Europe/Madrid',
+                    'set.timezone.examples.0' => '%command_prefix%SET TIMEZONE Europe/Paris',
+                    default => $id,
+                };
 
                 return self::replaceTranslationParameters($translation, self::requireStringKeyedParameters($parameters));
             },
@@ -659,6 +702,11 @@ final class HelpCommandTest extends TestCase
                 return 'set.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'set.example';
+            }
+
             public function getOrder(): int
             {
                 return 10;
@@ -677,6 +725,7 @@ final class HelpCommandTest extends TestCase
                         'desc_key' => 'set.timezone.desc',
                         'help_key' => 'set.timezone.help',
                         'syntax_key' => 'set.timezone.syntax',
+                        'example_key' => 'set.timezone.example',
                     ],
                 ];
             }
@@ -707,17 +756,35 @@ final class HelpCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, ['SET', 'TIMEZONE', 'Europe'], $notifier, $translator, $registry));
 
         self::assertNotEmpty($messages);
+        self::assertSame(' ', $messages[1]);
         self::assertContains('Timezones for Europe:', $messages);
         self::assertContains([
             'id' => 'help.set_timezone.region_header',
             'parameters' => [
                 ...self::SERVICE_NICKNAME_PLACEHOLDERS,
+                '%bot%' => 'CustomNickServ',
                 '%region%' => 'Europe',
             ],
         ], $translations);
         $output = implode("\n", $messages);
         self::assertStringNotContainsString('help.set_timezone.region_header', $output);
         self::assertStringNotContainsString('%region%', $output);
+        self::assertContains('Examples:', $messages);
+        self::assertContains('  /msg CustomNickServ SET TIMEZONE Europe/Madrid', $messages);
+        self::assertContains('  /msg CustomNickServ SET TIMEZONE Europe/Paris', $messages);
+        self::assertStringNotContainsString('%command_prefix%', $output);
+        $purposePosition = array_search('Timezones for Europe:', $messages, true);
+        $syntaxPosition = array_search('help.syntax_label', $messages, true);
+        $examplesHeaderPosition = array_search('Examples:', $messages, true);
+        $examplePosition = array_search('  /msg CustomNickServ SET TIMEZONE Europe/Madrid', $messages, true);
+        self::assertIsInt($purposePosition);
+        self::assertIsInt($syntaxPosition);
+        self::assertIsInt($examplesHeaderPosition);
+        self::assertIsInt($examplePosition);
+        self::assertSame(' ', $messages[$examplesHeaderPosition - 1]);
+        self::assertLessThan($syntaxPosition, $purposePosition);
+        self::assertLessThan($examplesHeaderPosition, $syntaxPosition);
+        self::assertLessThan($examplePosition, $examplesHeaderPosition);
     }
 
     #[Test]
@@ -772,6 +839,11 @@ final class HelpCommandTest extends TestCase
                 return 'set.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'set.example';
+            }
+
             public function getOrder(): int
             {
                 return 10;
@@ -790,6 +862,7 @@ final class HelpCommandTest extends TestCase
                         'desc_key' => 'set.timezone.desc',
                         'help_key' => 'set.timezone.help',
                         'syntax_key' => 'set.timezone.syntax',
+                        'example_key' => 'set.timezone.example',
                     ],
                 ];
             }
@@ -819,6 +892,7 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['SET', 'TIMEZONE', 'UnknownRegion'], $notifier, $translator, $registry));
 
+        self::assertSame(' ', $messages[1]);
         self::assertContains(
             'translated:help.error_marker Unknown region. Use HELP SET TIMEZONE for the index.',
             $messages,
@@ -854,6 +928,8 @@ final class HelpCommandTest extends TestCase
                 $translation = match ($id) {
                     'help.set_timezone.index_syntax' => 'HELP SET TIMEZONE <region>',
                     'help.set_timezone.index_label' => 'Regions (use %syntax% for list):',
+                    'help.examples_header' => 'Examples:',
+                    'set.timezone.example' => '/msg NickServ SET TIMEZONE Europe/Madrid',
                     default => $id,
                 };
 
@@ -887,6 +963,11 @@ final class HelpCommandTest extends TestCase
                 return 'set.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'set.example';
+            }
+
             public function getOrder(): int
             {
                 return 10;
@@ -905,6 +986,7 @@ final class HelpCommandTest extends TestCase
                         'desc_key' => 'set.timezone.desc',
                         'help_key' => 'set.timezone.help',
                         'syntax_key' => 'set.timezone.syntax',
+                        'example_key' => 'set.timezone.example',
                     ],
                 ];
             }
@@ -948,19 +1030,38 @@ final class HelpCommandTest extends TestCase
         $output = implode("\n", $messages);
         self::assertStringNotContainsString('help.set_timezone.index_syntax', $output);
         self::assertStringNotContainsString('%syntax%', $output);
+        self::assertContains('Examples:', $messages);
+        self::assertContains('/msg NickServ SET TIMEZONE Europe/Madrid', $messages);
+        $syntaxPosition = array_search('help.syntax_label', $messages, true);
+        $examplesHeaderPosition = array_search('Examples:', $messages, true);
+        $examplePosition = array_search('/msg NickServ SET TIMEZONE Europe/Madrid', $messages, true);
+        $indexPosition = array_search('Regions (use HELP SET TIMEZONE <region> for list):', $messages, true);
+        self::assertIsInt($syntaxPosition);
+        self::assertIsInt($examplesHeaderPosition);
+        self::assertIsInt($examplePosition);
+        self::assertIsInt($indexPosition);
+        self::assertSame(' ', $messages[1]);
+        self::assertLessThan($examplesHeaderPosition, $syntaxPosition);
+        self::assertLessThan($examplePosition, $examplesHeaderPosition);
+        self::assertLessThan($indexPosition, $examplePosition);
     }
 
     #[Test]
-    public function commandWithUnknownSubCommandShowsCommandHelp(): void
+    public function commandWithUnknownSubCommandShowsInvalidOption(): void
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $messages = [];
+        $translationCalls = [];
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages = explode("\n", $m);
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translationCalls): string {
+            $translationCalls[] = ['id' => $id, 'parameters' => $parameters];
+
+            return $id;
+        });
 
         $handlerWithSub = new class implements NickServCommandInterface {
             public function getName(): string
@@ -988,6 +1089,11 @@ final class HelpCommandTest extends TestCase
                 return 'set.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'set.example';
+            }
+
             public function getOrder(): int
             {
                 return 10;
@@ -1006,6 +1112,7 @@ final class HelpCommandTest extends TestCase
                         'desc_key' => 'set.password.desc',
                         'help_key' => 'set.password.help',
                         'syntax_key' => 'set.password.syntax',
+                        'example_key' => 'set.password.example',
                     ],
                 ];
             }
@@ -1033,9 +1140,12 @@ final class HelpCommandTest extends TestCase
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
         $cmd = $this->createHelpCommand(0);
-        $cmd->execute($this->createContext($sender, ['SET', 'UNKNOWN'], $notifier, $translator, $registry));
+        $cmd->execute($this->createContext($sender, ['SET', 'ascsas'], $notifier, $translator, $registry));
 
-        self::assertNotEmpty($messages);
+        self::assertSame(['unknown_help_option'], $messages);
+        self::assertSame('unknown_help_option', $translationCalls[0]['id']);
+        self::assertSame('SET', $translationCalls[0]['parameters']['%command%']);
+        self::assertSame('ASCSAS', $translationCalls[0]['parameters']['%option%']);
     }
 
     #[Test]
@@ -1064,6 +1174,7 @@ final class HelpCommandTest extends TestCase
     {
         $cmd = $this->createHelpCommand(0);
         self::assertSame('help.help', $cmd->getHelpKey());
+        self::assertSame('help.example', $cmd->getExampleKey());
     }
 
     #[Test]
@@ -1135,9 +1246,10 @@ final class HelpCommandTest extends TestCase
         $handler->method('getName')->willReturn($args[0] ?? 'INFO');
         $handler->method('getHelpKey')->willReturn('command.help');
         $handler->method('getSyntaxKey')->willReturn('command.syntax');
+        $handler->method('getExampleKey')->willReturn('command.example');
         $handler->method('getSubCommandHelp')->willReturn([
-            ['name' => 'EMAIL', 'desc_key' => 'set.email.short', 'help_key' => 'set.email.help', 'syntax_key' => 'set.email.syntax'],
-            ['name' => 'TIMEZONE', 'desc_key' => 'set.timezone.short', 'help_key' => 'set.timezone.help', 'syntax_key' => 'set.timezone.syntax'],
+            ['name' => 'EMAIL', 'desc_key' => 'set.email.short', 'help_key' => 'set.email.help', 'syntax_key' => 'set.email.syntax', 'example_key' => 'set.email.example'],
+            ['name' => 'TIMEZONE', 'desc_key' => 'set.timezone.short', 'help_key' => 'set.timezone.help', 'syntax_key' => 'set.timezone.syntax', 'example_key' => 'set.timezone.example'],
         ]);
         $registry = new NickServCommandRegistry([$handler]);
 

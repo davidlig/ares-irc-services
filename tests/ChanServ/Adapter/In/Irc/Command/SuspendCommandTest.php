@@ -78,6 +78,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertSame('suspend.help', $cmd->getHelpKey());
+        self::assertSame('suspend.example', $cmd->getExampleKey());
     }
 
     #[Test]
@@ -194,7 +195,7 @@ final class SuspendCommandTest extends TestCase
 
         $cmd->execute($context);
 
-        self::assertContains('suspend.not_registered', $messages);
+        self::assertContains('error.channel_not_registered', $messages);
     }
 
     #[Test]

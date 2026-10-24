@@ -55,6 +55,11 @@ final readonly class DropCommand implements NickServCommandInterface, IrcopAudit
         return 'drop.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'drop.example';
+    }
+
     public function getOrder(): int
     {
         return 71;
@@ -115,7 +120,7 @@ final readonly class DropCommand implements NickServCommandInterface, IrcopAudit
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::NotRegistered:
-                $context->reply('drop.not_registered', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('error.nick_not_registered', ['%nickname%' => $result->nickname ?? '']);
 
                 return CommandOutcome::rejected();
             case DropNickOutcome::PendingDeletion:

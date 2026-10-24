@@ -45,6 +45,11 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
         return 'clearaccess.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'clearaccess.example';
+    }
+
     public function getOrder(): int
     {
         return 74;

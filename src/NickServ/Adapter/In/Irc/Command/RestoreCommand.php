@@ -44,6 +44,11 @@ final readonly class RestoreCommand implements NickServCommandInterface, IrcopAu
         return 'restore.help';
     }
 
+    public function getExampleKey(): string
+    {
+        return 'restore.example';
+    }
+
     public function getOrder(): int
     {
         return 72;
@@ -95,7 +100,7 @@ final readonly class RestoreCommand implements NickServCommandInterface, IrcopAu
     {
         switch ($result->outcome) {
             case RestoreNickOutcome::NotRegistered:
-                $context->reply('restore.not_registered', ['%nickname%' => $result->nickname ?? '']);
+                $context->reply('error.nick_not_registered', ['%nickname%' => $result->nickname ?? '']);
 
                 return CommandOutcome::rejected();
             case RestoreNickOutcome::NotPendingDeletion:

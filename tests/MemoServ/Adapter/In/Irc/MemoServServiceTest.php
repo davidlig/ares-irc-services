@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\MemoServ\Adapter\In\Irc;
 
+use App\Bootstrap\Adapter\Out\Translation\IrcYamlTranslationLoader;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
@@ -25,6 +26,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Component\Translation\Translator;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function is_string;
@@ -145,6 +147,11 @@ final class MemoServServiceTest extends TestCase
                 return 'dummy.help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'dummy.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -212,12 +219,15 @@ final class MemoServServiceTest extends TestCase
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
         $userAccountPort = $this->createStub(MemoUserAccountPort::class);
         $notifier = $this->createMock(MemoServNotifierInterface::class);
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = new Translator('en');
+        $translator->addLoader('yaml', new IrcYamlTranslationLoader());
+        foreach (['common', 'memoserv'] as $domain) {
+            $translator->addResource('yaml', __DIR__ . '/../../../../../translations/' . $domain . '.en.yaml', 'en', $domain);
+        }
+        $expected = $translator->trans('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'MemoServ'], 'common', 'en');
+        self::assertNotSame('unknown_command', $expected);
         $notifier->method('getNick')->willReturn('MemoServ');
-        $translator->expects(self::once())->method('trans')
-            ->with('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'MemoServ'], 'memoserv', 'en')
-            ->willReturn('Unknown command');
-        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Unknown command', 'NOTICE');
+        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, $expected, 'NOTICE');
 
         $service = $this->createMemoServService(
             new MemoServCommandRegistry([]),
@@ -284,6 +294,11 @@ final class MemoServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'help.example';
             }
 
             public function getOrder(): int
@@ -394,6 +409,11 @@ final class MemoServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'help.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -492,6 +512,11 @@ final class MemoServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'help.example';
             }
 
             public function getOrder(): int
@@ -596,6 +621,11 @@ final class MemoServServiceTest extends TestCase
                 return 'help';
             }
 
+            public function getExampleKey(): string
+            {
+                return 'help.example';
+            }
+
             public function getOrder(): int
             {
                 return 0;
@@ -675,6 +705,11 @@ final class MemoServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'help.example';
             }
 
             public function getOrder(): int
@@ -764,6 +799,11 @@ final class MemoServServiceTest extends TestCase
             public function getHelpKey(): string
             {
                 return 'test.help';
+            }
+
+            public function getExampleKey(): string
+            {
+                return 'test.example';
             }
 
             public function getOrder(): int
