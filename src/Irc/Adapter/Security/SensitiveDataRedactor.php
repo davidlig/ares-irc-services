@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Security;
 
+use App\Irc\Adapter\Protocol\IRCMessage;
+
 use function count;
 use function in_array;
 
@@ -21,6 +23,45 @@ use function in_array;
 final readonly class SensitiveDataRedactor
 {
     private const string MASK = '******';
+
+    public static function redactIrcMessage(IRCMessage $message): IRCMessage
+    {
+        $command = strtoupper($message->command);
+        $params = $message->params;
+        $trailing = $message->trailing;
+
+        if ('PASS' === $command) {
+            if (isset($params[0])) {
+                $params[0] = self::MASK;
+            } elseif (null !== $trailing) {
+                $trailing = self::MASK;
+            }
+        } elseif ('SERVER' === $command && isset($params[2]) && 1 === preg_match('/^[A-Za-z0-9]{3}$/D', $params[2])) {
+            // InspIRCd SERVER is <name> <password> <sid>; Unreal SERVER has
+            // no password and uses <name> <hop-count> instead.
+            $params[1] = self::MASK;
+        }
+
+        if ($params === $message->params && $trailing === $message->trailing) {
+            return $message;
+        }
+
+        return new IRCMessage(
+            command: $message->command,
+            prefix: $message->prefix,
+            params: $params,
+            trailing: $trailing,
+            direction: $message->direction,
+        );
+    }
+
+    public static function redactIrcLine(string $line): string
+    {
+        $message = IRCMessage::fromRawLine($line);
+        $redacted = self::redactIrcMessage($message);
+
+        return $redacted === $message ? $line : $redacted->toRawLine();
+    }
 
     public static function redactNickServCommand(string $text): string
     {

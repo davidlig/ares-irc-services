@@ -10,6 +10,7 @@ use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
+use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -144,7 +145,7 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
     {
         $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
         $this->logger->critical('Remote server sent ERROR — closing link.', [
-            'reason' => $reason,
+            'reason' => SensitiveDataRedactor::redactIrcLine($reason),
         ]);
     }
 
@@ -286,6 +287,6 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
     private function writeLine(ConnectionInterface $connection, string $line): void
     {
         $connection->writeLine($line);
-        $this->logger->debug('> ' . $line);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($line));
     }
 }

@@ -14,6 +14,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use App\Irc\Adapter\Protocol\UnrealUdb\Wire\UdbWireCodec;
 use App\Irc\Adapter\Runtime\SessionEventPump;
 use App\Irc\Adapter\Runtime\SessionEventPumpAwareInterface;
+use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -177,7 +178,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
     {
         $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
         $this->logger->critical('Remote server sent ERROR — closing link.', [
-            'reason' => $reason,
+            'reason' => SensitiveDataRedactor::redactIrcLine($reason),
         ]);
     }
 
@@ -186,7 +187,7 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
         $target = $message->trailing ?? ($message->params[0] ?? '');
         $pong = 'PONG :' . $target;
         $connection->writeLine($pong);
-        $this->logger->debug('> ' . $pong);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($pong));
     }
 
     private function sendHandshake(ConnectionInterface $connection, ServerLink $link): void
@@ -201,15 +202,15 @@ final class UnrealUdbProtocolHandler implements ProtocolHandlerInterface, Sessio
 
         $eauth = sprintf('PROTOCTL EAUTH=%s SID=%s', $link->serverName, $this->sid);
         $connection->writeLine($eauth);
-        $this->logger->debug('> ' . $eauth);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($eauth));
 
         $capabilities = sprintf('PROTOCTL %s', implode(' ', self::CAPABILITIES));
         $connection->writeLine($capabilities);
-        $this->logger->debug('> ' . $capabilities);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($capabilities));
 
         $server = sprintf('SERVER %s 1 :%s', $link->serverName, $link->description);
         $connection->writeLine($server);
-        $this->logger->debug('> ' . $server);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($server));
 
         $this->logger->info('UnrealUdb handshake sent.', [
             'server' => (string) $link->serverName,

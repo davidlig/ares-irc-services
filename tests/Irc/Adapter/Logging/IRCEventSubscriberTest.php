@@ -94,6 +94,16 @@ final class IRCEventSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onConnectionLostRedactsCredentialBearingWireReason(): void
+    {
+        $this->subscriber->onConnectionLost(new ConnectionLostEvent($this->createServerLink(), 'PASS :lost-pass-secret'));
+
+        $serialized = serialize($this->record());
+        self::assertStringNotContainsString('lost-pass-secret', $serialized);
+        self::assertStringContainsString('PASS :******', $serialized);
+    }
+
+    #[Test]
     public function onIncomingMessageLogsDebug(): void
     {
         $message = new IRCMessage(
@@ -189,6 +199,24 @@ final class IRCEventSubscriberTest extends TestCase
             self::assertStringNotContainsString('rescue-token', $context);
             self::assertStringNotContainsString('extra-secret', $context);
             self::assertSame('SET #channel FOUNDER NewOwner ******', $record->context['trailing']);
+            $this->handler->clear();
+        }
+    }
+
+    #[Test]
+    public function passwordBearingPassAndInspServerNeverReachSerializedIncomingLogRecord(): void
+    {
+        foreach ([
+            new IRCMessage(command: 'PASS', params: ['incoming-pass-secret']),
+            new IRCMessage(command: 'SERVER', params: ['services.test.local', 'incoming-server-secret', '00A'], trailing: 'Ares Services'),
+        ] as $message) {
+            $this->subscriber->onIncomingMessage(new IncomingIrcMessageEvent($message));
+
+            $record = $this->record();
+            $serialized = serialize($record);
+            self::assertStringNotContainsString('incoming-pass-secret', $serialized);
+            self::assertStringNotContainsString('incoming-server-secret', $serialized);
+            self::assertStringContainsString('******', $serialized);
             $this->handler->clear();
         }
     }

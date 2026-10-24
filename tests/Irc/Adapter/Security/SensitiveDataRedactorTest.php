@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Security;
 
+use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -199,5 +200,30 @@ final class SensitiveDataRedactorTest extends TestCase
         self::assertSame('SET #channel FOUNDER NewOwner', SensitiveDataRedactor::redactNickServCommand('SET #channel FOUNDER NewOwner'));
         self::assertSame('SET #channel TOPICLOCK ON', SensitiveDataRedactor::redactNickServCommand('SET #channel TOPICLOCK ON'));
         self::assertSame('SET EMAIL ****** ******', SensitiveDataRedactor::redactNickServCommand('SET EMAIL address@example.test token'));
+    }
+
+    #[Test]
+    public function redactIrcMessageMasksPassAndInspServerPasswordsButPreservesUnrealServerDescription(): void
+    {
+        $pass = SensitiveDataRedactor::redactIrcMessage(new IRCMessage(
+            command: 'PASS',
+            trailing: 'pass-secret',
+        ));
+        $inspircdServer = SensitiveDataRedactor::redactIrcMessage(new IRCMessage(
+            command: 'SERVER',
+            params: ['services.test.local', 'server-secret', '00A'],
+            trailing: 'Ares Services',
+        ));
+        $unrealServer = SensitiveDataRedactor::redactIrcMessage(new IRCMessage(
+            command: 'SERVER',
+            params: ['services.test.local', '1'],
+            trailing: 'Ares Services',
+        ));
+
+        self::assertSame('******', $pass->trailing);
+        self::assertSame(['services.test.local', '******', '00A'], $inspircdServer->params);
+        self::assertSame('Ares Services', $inspircdServer->trailing);
+        self::assertSame(['services.test.local', '1'], $unrealServer->params);
+        self::assertSame('Ares Services', $unrealServer->trailing);
     }
 }
