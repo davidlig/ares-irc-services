@@ -232,11 +232,12 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         if (!$isNewChannel && $event->timestamp > 0
             && $channel->getCreatedAt()->getTimestamp() === $event->timestamp
             && $existingTimestamp === $event->timestamp) {
-            $this->channelModeStateSynchronizer->mergeEqualTimestampParams(
+            $this->channelModeStateSynchronizer->applyInitialParams(
                 $channel,
                 $event->modeStr,
                 $event->modeParams,
                 $this->modeSupportProvider->getSupport(),
+                $event->parameterMergeRules,
             );
         } else {
             $this->channelModeStateSynchronizer->applyInitialParams(
@@ -297,7 +298,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         if (null === $channel) {
             return;
         }
-        if (null !== $event->creationTimestamp && $event->creationTimestamp !== $channel->getCreatedAt()->getTimestamp()) {
+        if (null !== $event->creationTimestamp && $event->creationTimestamp > $channel->getCreatedAt()->getTimestamp()) {
             return;
         }
 
@@ -319,7 +320,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         if (null === $channel) {
             return;
         }
-        if (null !== $event->creationTimestamp && $event->creationTimestamp !== $channel->getCreatedAt()->getTimestamp()) {
+        if (null !== $event->creationTimestamp && $event->creationTimestamp > $channel->getCreatedAt()->getTimestamp()) {
             return;
         }
 

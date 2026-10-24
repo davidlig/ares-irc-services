@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Network\Event;
 
+use App\Irc\Adapter\Network\ChannelModeParameterMerge;
 use App\Irc\Domain\Network\ChannelMemberRole;
 use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Uid;
@@ -18,6 +19,7 @@ final readonly class ChannelJoinReceivedEvent
     /**
      * @param array<int, array{uid: Uid, role: ChannelMemberRole, prefixLetters?: list<string>}> $members
      * @param array{b?: string[], e?: string[], I?: string[]}                                    $listModes
+     * @param array<string, ChannelModeParameterMerge>                                           $parameterMergeRules
      * @param list<string>                                                                       $modeParams
      */
     public function __construct(
@@ -27,5 +29,6 @@ final readonly class ChannelJoinReceivedEvent
         public array $members,
         public array $listModes = [],
         public array $modeParams = [],
+        public array $parameterMergeRules = ['k' => ChannelModeParameterMerge::LexicalMaximum, 'l' => ChannelModeParameterMerge::NumericMaximum],
     ) {}
 }

@@ -24,6 +24,7 @@ final readonly class ChannelModeStateSynchronizer
         string $modeStr,
         array $modeParams,
         ChannelModeSupportInterface $support,
+        ?array $parameterMergeRules = null,
     ): void {
         if ([] === $modeParams) {
             return;
@@ -47,46 +48,9 @@ final readonly class ChannelModeStateSynchronizer
             if ($paramIdx >= count($modeParams)) {
                 break;
             }
-            $channel->applyModeParam($char, $modeParams[$paramIdx]);
-            ++$paramIdx;
-        }
-    }
-
-    /**
-     * Merge equal-TS parameter modes using the native ordering rules for common modes.
-     * Unreal's limit mode keeps the higher limit and its key mode keeps the lexically higher key;
-     * other conflicting parameters retain the already-established value.
-     *
-     * @param list<string> $modeParams
-     */
-    public function mergeEqualTimestampParams(
-        Channel $channel,
-        string $modeStr,
-        array $modeParams,
-        ChannelModeSupportInterface $support,
-    ): void {
-        $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
-        $paramIdx = 0;
-        $adding = true;
-        foreach (str_split($modeStr) as $char) {
-            if ('+' === $char) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $char) {
-                $adding = false;
-                continue;
-            }
-            if (!$adding || !in_array($char, $withParamOnSet, true)) {
-                continue;
-            }
-            if ($paramIdx >= count($modeParams)) {
-                break;
-            }
             $incoming = $modeParams[$paramIdx++];
             $existing = $channel->getModeParam($char);
-            if (null === $existing || ('l' === $char && is_numeric($existing) && is_numeric($incoming) && (float) $incoming > (float) $existing)
-                || ('k' === $char && strcmp($incoming, $existing) > 0)) {
+            if (null === $parameterMergeRules || null === $existing || ($parameterMergeRules[$char] ?? null)?->prefersIncoming($existing, $incoming)) {
                 $channel->applyModeParam($char, $incoming);
             }
         }
@@ -95,25 +59,9 @@ final readonly class ChannelModeStateSynchronizer
     /** Union two channel mode snapshots without applying one side's removals over the other. */
     public function mergeEqualTimestampModes(string $current, string $incoming): string
     {
-        $letters = array_fill_keys(str_split(str_replace(['+', '-'], '', $current)), true);
-        $adding = true;
-        foreach (str_split($incoming) as $char) {
-            if ('+' === $char) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $char) {
-                $adding = false;
-                continue;
-            }
-            if ($adding) {
-                $letters[$char] = true;
-            } else {
-                unset($letters[$char]);
-            }
-        }
+        $letters = array_unique(str_split(str_replace('+', '', $current . $incoming)));
 
-        return [] === $letters ? '' : '+' . implode('', array_keys($letters));
+        return [] === $letters ? '' : '+' . implode('', $letters);
     }
 
     /**

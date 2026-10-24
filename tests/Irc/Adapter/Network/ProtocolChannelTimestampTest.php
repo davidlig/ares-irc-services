@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Network;
 
+use App\Irc\Adapter\Network\ChannelModeParameterMerge;
 use App\Irc\Adapter\Network\ChannelModeStateSynchronizer;
 use App\Irc\Adapter\Network\Event\ChannelJoinReceivedEvent;
 use App\Irc\Adapter\Network\NetworkEventEnricher;
@@ -29,6 +30,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[CoversClass(NetworkEventEnricher::class)]
 #[CoversClass(ChannelModeStateSynchronizer::class)]
+#[CoversClass(ChannelModeParameterMerge::class)]
 #[CoversClass(Channel::class)]
 final class ProtocolChannelTimestampTest extends TestCase
 {
@@ -128,7 +130,7 @@ final class ProtocolChannelTimestampTest extends TestCase
                 self::assertSame($winnerTimestamp, $channel->getCreatedAt()->getTimestamp());
                 self::assertSame('lower' === $relation ? '+nlk' : '+ntlk', $channel->getModes());
                 self::assertSame('higher' === $relation ? '10' : '20', $channel->getModeParam('l'));
-                self::assertSame('higher' === $relation ? 'akey' : 'zkey', $channel->getModeParam('k'));
+                self::assertSame('higher' === $relation || ('inspircd' === $protocol && 'equal' === $relation) ? 'akey' : 'zkey', $channel->getModeParam('k'));
                 $expectedExistingPrefixes = match ($relation) {
                     'lower' => ['v'],
                     'equal' => ['o', 'v'],

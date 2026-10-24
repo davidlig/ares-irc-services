@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\InspIRCd;
 
+use App\Irc\Adapter\Network\ChannelModeParameterMerge;
 use App\Irc\Adapter\Network\Event\ChannelJoinReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelKickReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelListModeReceivedEvent;
@@ -263,7 +264,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             }
         }
 
-        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members, modeParams: $modeParams));
+        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members, modeParams: $modeParams, parameterMergeRules: ['k' => ChannelModeParameterMerge::LexicalMinimum, 'l' => ChannelModeParameterMerge::NumericMaximum]));
     }
 
     /**
