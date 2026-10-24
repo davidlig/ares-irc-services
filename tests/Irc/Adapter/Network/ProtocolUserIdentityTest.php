@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Network;
 
+use App\Irc\Adapter\Network\Event\UserIdentityReceivedEvent;
 use App\Irc\Adapter\Network\InMemoryNetworkUserRepository;
 use App\Irc\Adapter\Network\NetworkEventEnricher;
 use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdNetworkStateAdapter;
@@ -26,6 +27,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 #[CoversClass(InspIRCdNetworkStateAdapter::class)]
 #[CoversClass(NetworkEventEnricher::class)]
 #[CoversClass(NetworkUser::class)]
+#[CoversClass(UserIdentityReceivedEvent::class)]
 final class ProtocolUserIdentityTest extends TestCase
 {
     #[Test]

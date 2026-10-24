@@ -241,7 +241,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         $channelStr = $message->params[0];
         $timestamp = (int) $message->params[1];
         $modeStr = $message->params[2] ?? '';
-        $modeParams = array_slice($message->params, 3);
+        $modeParams = array_values(array_slice($message->params, 3));
         $buffer = trim($message->trailing ?? '');
 
         try {
@@ -428,7 +428,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         $channelStr = $message->params[0];
         $modeStr = $message->params[2] ?? '';
-        $modeParams = array_slice($message->params, 3);
+        $modeParams = array_values(array_slice($message->params, 3));
         if (null !== $message->trailing && '' !== $message->trailing) {
             $modeParams[] = $message->trailing;
         }

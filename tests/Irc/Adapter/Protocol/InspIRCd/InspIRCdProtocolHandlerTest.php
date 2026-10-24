@@ -27,6 +27,7 @@ use Monolog\Logger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -67,7 +68,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     }
 
     /** @param list<string> $written */
-    private function createRecordingConnection(array &$written): ConnectionInterface
+    private function createRecordingConnection(array &$written): ConnectionInterface&MockObject
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
@@ -307,16 +308,11 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     #[Test]
     public function serverBeforeValidCapabEndRejectsLinkBeforeBurst(): void
     {
-        $written = [];
-        $connection = $this->createRecordingConnection($written);
-        $handler = $this->createHandler('C2C');
-        $handler->performHandshake($connection, $this->createServerLink());
-        $written = [];
-
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::once())->method('disconnect');
+        $connection->expects(self::never())->method('writeLine');
+        $handler = $this->createHandler('C2C');
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['hub.example.net', 'pass', '0A1']), $connection);
-
-        self::assertSame([], $written);
     }
 
     #[Test]
@@ -409,6 +405,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
     /**
      * @param list<string> $modules
+     * @param list<string> $extraLines
      * @param list<string> $modSupport
      */
     private function sendRequiredCapab(

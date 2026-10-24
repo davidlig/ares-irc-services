@@ -1,6 +1,11 @@
 <?php
 
-$finder = (new PhpCsFixer\Finder())
+declare(strict_types=1);
+
+use PhpCsFixer\Config;
+use PhpCsFixer\Finder;
+
+$finder = new Finder()
     ->in(__DIR__)
     ->exclude('var')
     ->exclude('vendor')
@@ -9,7 +14,7 @@ $finder = (new PhpCsFixer\Finder())
     ->notPath('config/reference.php')
 ;
 
-return (new PhpCsFixer\Config())
+return new Config()
     ->setRules([
         // Base Symfony rules
         '@Symfony' => true,

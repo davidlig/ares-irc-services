@@ -176,6 +176,7 @@ final class ProtocolChannelTimestampTest extends TestCase
         $dispatcher->dispatch($event);
     }
 
+    /** @param 'inspircd'|'unreal'|'unrealudb' $protocol */
     private function enrichFromAdapter(Channel $channel, string $protocol, int $timestamp, bool $equalTimestamp): void
     {
         $channels = $this->createMock(ChannelRepositoryInterface::class);

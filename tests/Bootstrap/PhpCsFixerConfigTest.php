@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Bootstrap;
 
+use PhpCsFixer\ConfigInterface;
 use PhpCsFixer\FixerFactory;
 use PhpCsFixer\RuleSet\RuleSet;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -17,6 +18,7 @@ final class PhpCsFixerConfigTest extends TestCase
     public function riskyFixersMustBeExplicitProjectConventions(): void
     {
         $config = require dirname(__DIR__, 2) . '/.php-cs-fixer.dist.php';
+        self::assertInstanceOf(ConfigInterface::class, $config);
         $configured = $config->getRules();
         self::assertArrayNotHasKey('@Symfony:risky', $configured);
         self::assertArrayNotHasKey('@PHP8x5Migration:risky', $configured);
