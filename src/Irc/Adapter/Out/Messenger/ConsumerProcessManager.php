@@ -29,8 +29,6 @@ use const STDOUT;
  */
 final class ConsumerProcessManager implements ConsumerProcessManagerInterface
 {
-    private const int STOP_TIMEOUT_SECONDS = 10;
-
     private const int HEALTHY_RUNTIME_SECONDS = 60;
 
     private const int MAX_RESTART_DELAY_SECONDS = 30;
@@ -62,6 +60,7 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
         private readonly LoopSchedulerInterface $scheduler = new RevoltLoopScheduler(),
         ?Closure $now = null,
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly int $stopGraceSeconds = 10,
     ) {
         $this->now = $now ?? static fn (): float => microtime(true);
     }
@@ -154,7 +153,7 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
 
         proc_terminate($this->process, SIGTERM);
 
-        $end = time() + self::STOP_TIMEOUT_SECONDS;
+        $end = time() + $this->stopGraceSeconds;
         while (time() < $end) {
             $status = proc_get_status($this->process);
             if (!$status['running']) {
