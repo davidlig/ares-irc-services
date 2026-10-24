@@ -10,6 +10,7 @@ use App\Irc\Adapter\Network\Event\ChannelListModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelPartReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent;
+use App\Irc\Adapter\Network\Event\UserIdentityReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserMetadataReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
@@ -76,6 +77,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             'MODE' => $this->handleMode($message),
             'METADATA' => $this->handleMetadata($message),
             'OPERTYPE' => $this->handleOpertype($message),
+            'FHOST', 'FIDENT' => $this->handleIdentity($message),
             default => null,
         };
     }
@@ -117,6 +119,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             $nick = new Nick($nickStr);
             $uid = new Uid($uidStr);
             $ident = new Ident($username);
+            $realIdent = new Ident($params[5]);
         } catch (InvalidArgumentException $e) {
             $this->logger->warning('UID skipped: invalid value — ' . $e->getMessage(), [
                 'raw' => $message->toRawLine(),
@@ -140,6 +143,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             serverSid: $serverSid,
             ipBase64: $ipBase64,
             serviceStamp: 0,
+            realIdent: $realIdent,
         );
 
         $this->logger->info(sprintf(
@@ -168,6 +172,24 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         }
 
         return base64_encode($ip);
+    }
+
+    private function handleIdentity(IRCMessage $message): void
+    {
+        if (null === $message->prefix || [] === $message->params) {
+            return;
+        }
+        $display = '*' === $message->params[0] ? null : $message->params[0];
+        $real = $message->params[1] ?? '*';
+        $real = '*' === $real ? null : $real;
+        try {
+            $event = 'FHOST' === $message->command
+                ? new UserIdentityReceivedEvent($message->prefix, displayHost: $display, realHost: $real)
+                : new UserIdentityReceivedEvent($message->prefix, displayIdent: null === $display ? null : new Ident($display), realIdent: null === $real ? null : new Ident($real));
+        } catch (InvalidArgumentException) {
+            return;
+        }
+        $this->eventDispatcher->dispatch($event);
     }
 
     private function handleNick(IRCMessage $message): void

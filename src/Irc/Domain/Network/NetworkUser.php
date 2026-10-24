@@ -20,11 +20,13 @@ use function in_array;
  * Fields sourced from the UID command:
  *   UID nickname hopcount timestamp username hostname uid servicestamp umodes virthost cloakedhost ip :gecos
  *
- * The uid, ident, hostname, cloakedhost, connectedAt and server are immutable.
- * nick, virtualHost and modes may change during the session.
+ * The uid, cloakedhost, connectedAt and server are immutable.
+ * Nick, displayed/real identity, virtualHost and modes may change during the session.
  */
 class NetworkUser
 {
+    public private(set) Ident $realIdent;
+
     private Nick $nick;
 
     private string $virtualHost;
@@ -37,8 +39,8 @@ class NetworkUser
     public function __construct(
         public readonly Uid $uid,
         Nick $nick,
-        public readonly Ident $ident,
-        public readonly string $hostname,
+        public private(set) Ident $ident,
+        public private(set) string $hostname,
         public readonly string $cloakedHost,
         string $virtualHost,
         string $modes,
@@ -47,10 +49,21 @@ class NetworkUser
         public readonly string $serverSid,
         public readonly string $ipBase64,
         public readonly int $serviceStamp = 0,
+        ?Ident $realIdent = null,
     ) {
+        $this->realIdent = $realIdent ?? $ident;
         $this->nick = $nick;
         $this->virtualHost = $virtualHost;
         $this->modes = $modes;
+    }
+
+    /** Null fields are unchanged; membership and authentication state belong to this same user. */
+    public function updateIdentity(?string $displayHost, ?string $realHost, ?Ident $displayIdent, ?Ident $realIdent): void
+    {
+        $this->virtualHost = $displayHost ?? $this->virtualHost;
+        $this->hostname = $realHost ?? $this->hostname;
+        $this->ident = $displayIdent ?? $this->ident;
+        $this->realIdent = $realIdent ?? $this->realIdent;
     }
 
     public function getNick(): Nick

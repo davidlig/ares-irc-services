@@ -11,6 +11,7 @@ use App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelPartReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserHostReceivedEvent;
+use App\Irc\Adapter\Network\Event\UserIdentityReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserMetadataReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
@@ -81,6 +82,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             ChannelTopicReceivedEvent::class => ['onChannelTopicReceived', 256],
             UserModeReceivedEvent::class => ['onUserModeReceived', 256],
             UserHostReceivedEvent::class => ['onUserHostReceived', 256],
+            UserIdentityReceivedEvent::class => ['onUserIdentityReceived', 256],
             UserMetadataReceivedEvent::class => ['onUserMetadataReceived', 256],
         ];
     }
@@ -396,6 +398,18 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         }
 
         $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, $event->modeStr));
+    }
+
+    public function onUserIdentityReceived(UserIdentityReceivedEvent $event): void
+    {
+        $user = $this->resolveUser($event->sourceId);
+        if (null === $user) {
+            return;
+        }
+        $user->updateIdentity($event->displayHost, $event->realHost, $event->displayIdent, $event->realIdent);
+        if (null !== $event->displayHost) {
+            $this->eventDispatcher->dispatch(new UserHostChangedEvent($user->uid, $event->displayHost));
+        }
     }
 
     public function onUserHostReceived(UserHostReceivedEvent $event): void
