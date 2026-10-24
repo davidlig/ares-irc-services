@@ -126,7 +126,7 @@ class ReferenceTests(unittest.TestCase):
         self.assertEqual((), parsed.errors)
 
     def test_empty_or_punctuated_bad_declarations_fail_alongside_valid_one(self):
-        for bad in ("Fixes: , #wat", "Closes:", "Fixes: ; #13", "Fixes #12, closes nonsense", "Fixes #12; closes nonsense", "Fixes #12 and closes nonsense"):
+        for bad in ("Fixes: , #wat", "Closes:", "Fixes: ; #13", "Fixes #12, closes nonsense", "Fixes #12; closes nonsense", "Fixes #12 and closes nonsense", "Fixes #12 & closes nonsense"):
             self.assertTrue(self.parse("Resolves #12\n" + bad).errors)
 
     def test_malformed_first_declaration_cannot_be_hidden_by_valid_later_one(self):
