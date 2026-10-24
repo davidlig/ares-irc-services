@@ -284,6 +284,25 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function bootstrapRejectsSourcesDependingOnOurAuthorityBeforeAnyStaging(): void
+    {
+        foreach ([UdbFrameKind::Hel, UdbFrameKind::HelAck] as $kind) {
+            $takeover = $this->createWireTakeover();
+            $coordinator = $this->bootstrapCoordinator($takeover);
+            $coordinator->setOwnName(self::OWN_NAME);
+            $coordinator->onRemoteServer('001', 'ircd.example.net');
+            $connection = $this->captureConnection($coordinator);
+            $coordinator->onLinkReady($connection);
+            $this->written = [];
+            $coordinator->handleFrame(new UdbFrame($kind, '001', '002', propagator: strtoupper(self::OWN_NAME), epoch: self::PEER_EPOCH, capabilities: ['OCL', 'OCLG']), $connection);
+            $coordinator->handleFrame($this->inventoryFrame(UdbBlock::Ips, hash('sha256', 'synthetic snapshot'), 1, 1), $connection);
+            self::assertSame([], $this->written);
+            self::assertNull($takeover->roundId());
+            self::assertFalse($coordinator->isAuthorityReady());
+        }
+    }
+
+    #[Test]
     public function bootstrapRejectsMalformedSelectorBeforeConfirmationOrInventoryAdmission(): void
     {
         $takeover = $this->createWireTakeover();
@@ -1857,7 +1876,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
 
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $this->written = [];
 
         // The peer first advertises the inventory. Services request the
@@ -1899,7 +1918,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $this->written = [];
 
         $coordinator->handleFrame(new UdbFrame(
@@ -1925,7 +1944,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $this->written = [];
 
         $coordinator->handleFrame($this->inventoryFrame(UdbBlock::Ips, UdbChecksum::empty(UdbBlock::Ips), 7, 0), $connection);
@@ -1949,8 +1968,8 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $connection = $this->captureConnection($coordinator);
 
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHel(), $connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHel(propagator: 'hub1.example'), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
 
         self::assertStringNotContainsString(' INF ', implode("\n", $this->written));
         self::assertFalse($coordinator->isAuthorityReady());
@@ -1965,7 +1984,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $this->written = [];
 
         $digest = UdbTestValues::digest(UdbBlock::Ips, ['1.2.3.4::clones' => '*5']);
@@ -1990,7 +2009,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $coordinator->handleFrame($this->inventoryFrame(UdbBlock::Ips, UdbChecksum::empty(UdbBlock::Ips), 1, 0), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Begin, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: UdbChecksum::empty(UdbBlock::Ips), watermark: 0), $connection);
 
@@ -2057,9 +2076,9 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
             $this->written[] = $line;
         });
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         // The peer announces itself (its HEL authorizes the bootstrap exchange).
-        $coordinator->handleFrame($this->peerHel(), $connection);
+        $coordinator->handleFrame($this->peerHel(propagator: 'hub1.example'), $connection);
         $this->written = [];
 
         // Stage every block over the wire (SQL-owned blocks are discarded).
@@ -2120,7 +2139,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
         $handler = new UnrealUdbProtocolHandler('002', $coordinator);
-        $handler->handleIncoming(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ACK services.example.net ' . self::PEER_EPOCH . ' OCL OCLG'), $connection);
+        $handler->handleIncoming(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ACK hub1.example ' . self::PEER_EPOCH . ' OCL OCLG'), $connection);
         self::assertNull($coordinator->getDeadlineWatcherId());
         $this->written = [];
         $rootEpoch = '3333333333333333';
@@ -2175,13 +2194,13 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $mutation = new UdbFrame(UdbFrameKind::Del, '003', '*', epoch: self::PEER_EPOCH, sequence: 40, path: 'N::nick');
         $coordinator->handleFrame($mutation, $connection);
         self::assertSame(80, $takeover->nextDeadline());
-        $coordinator->handleFrame($this->peerHel(epoch: '2222222222222222'), $connection);
+        $coordinator->handleFrame($this->peerHel(propagator: 'hub1.example', epoch: '2222222222222222'), $connection);
         self::assertNull($takeover->nextDeadline());
-        $coordinator->handleFrame($this->peerHelAck(epoch: '2222222222222222'), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example', epoch: '2222222222222222'), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Del, '004', '*', epoch: '2222222222222222', sequence: 10, path: 'N::nick'), $connection);
         self::assertSame(80, $takeover->nextDeadline());
         $coordinator->reset();
@@ -2189,7 +2208,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->setOwnName(self::OWN_NAME);
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $coordinator->handleFrame($mutation, $connection);
         $this->clock->advance(60);
         $this->written = [];
@@ -2207,7 +2226,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $mutation = new UdbFrame(UdbFrameKind::Ins, '001', '*', epoch: self::PEER_EPOCH, sequence: 1, path: 'I::192.0.2.1::clones', typedValue: UdbValue::number(UdbUnsignedDecimal::fromInt(1)));
         $coordinator->handleFrame($mutation, $connection);
         $sql = $this->entityManager->getConnection();
@@ -2218,7 +2237,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         self::assertSame(0, $sql->fetchOne('SELECT COUNT(*) FROM udb_staged_generations'));
         self::assertSame(0, $sql->fetchOne('SELECT COUNT(*) FROM udb_staged_mutations'));
         self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 \? /', $this->firstWrittenLine());
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $coordinator->handleFrame($this->inventoryFrame(UdbBlock::Ips, UdbChecksum::empty(UdbBlock::Ips), 2, 0), $connection);
         $this->written = [];
         $coordinator->handleFrame($mutation, $connection);
@@ -2241,8 +2260,8 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
 
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
-        $coordinator->handleFrame($this->peerHel(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
+        $coordinator->handleFrame($this->peerHel(propagator: 'hub1.example'), $connection);
         $this->written = [];
 
         foreach ($this->bootstrapRecords() as [$block, $path, $value]) {
@@ -2325,7 +2344,7 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
             $this->written[] = $line;
         });
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
         $this->written = [];
 
         // Complete a full six-block exchange with a broken authority store.
@@ -3088,8 +3107,8 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $connection = $this->captureConnection($coordinator);
         $coordinator->onLinkReady($connection);
-        $coordinator->handleFrame($this->peerHelAck(), $connection);
-        $coordinator->handleFrame($this->peerHel(), $connection);
+        $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
+        $coordinator->handleFrame($this->peerHel(propagator: 'hub1.example'), $connection);
         foreach ($this->bootstrapRecords() as [$block, $path, $value]) {
             $this->stageBootstrapRecord($coordinator, $connection, $block, $path, $value);
         }
@@ -3113,8 +3132,8 @@ final class UdbSessionCoordinatorTest extends DoctrineIntegrationTestCase
             $coordinator->onRemoteServer('001', 'ircd.example.net');
             $connection = $this->captureConnection($coordinator);
             $coordinator->onLinkReady($connection);
-            $coordinator->handleFrame($this->peerHelAck(), $connection);
-            $coordinator->handleFrame($this->peerHel(), $connection);
+            $coordinator->handleFrame($this->peerHelAck(propagator: 'hub1.example'), $connection);
+            $coordinator->handleFrame($this->peerHel(propagator: 'hub1.example'), $connection);
             $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Inf, '001', '002', roundId: 1, block: UdbBlock::Ips, checksum: str_repeat('a', 64), count: 1, watermark: 0, rootSid: '001', rootEpoch: self::PEER_EPOCH), $connection);
             self::assertNotNull($takeover->roundId());
             $frame = $gap
