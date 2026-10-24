@@ -22,6 +22,56 @@ use function str_contains;
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {
+    private function createCommandWithExampleKey(string $name, string $exampleKey): HelpableCommandInterface
+    {
+        return new class($name, $exampleKey) implements HelpableCommandInterface {
+            public function __construct(
+                private readonly string $name,
+                private readonly string $exampleKey,
+            ) {}
+
+            public function getName(): string
+            {
+                return $this->name;
+            }
+
+            public function getOrder(): int
+            {
+                return 1;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'command.short';
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'command.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'command.help';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getExampleKey(): string
+            {
+                return $this->exampleKey;
+            }
+        };
+    }
+
     #[Test]
     public function nickServHelpCatalogsUseOnlyTheApprovedResetPalette(): void
     {
@@ -390,47 +440,7 @@ final class UnifiedHelpFormatterTest extends TestCase
             'register.example' => "%command_prefix%\x02\x0303REGISTER FirstPassword\x03\x0F",
             'register.examples.0' => "%command_prefix%\x02\x0303REGISTER SecondPassword\x03\x0F",
         ];
-        $command = new class implements HelpableCommandInterface {
-            public function getName(): string
-            {
-                return 'REGISTER';
-            }
-
-            public function getOrder(): int
-            {
-                return 1;
-            }
-
-            public function getShortDescKey(): string
-            {
-                return 'register.short';
-            }
-
-            public function getSyntaxKey(): string
-            {
-                return 'register.syntax';
-            }
-
-            public function getHelpKey(): string
-            {
-                return 'register.help';
-            }
-
-            public function getSubCommandHelp(): array
-            {
-                return [];
-            }
-
-            public function isOperOnly(): bool
-            {
-                return false;
-            }
-
-            public function getExampleKey(): string
-            {
-                return 'register.example';
-            }
-        };
+        $command = $this->createCommandWithExampleKey('REGISTER', 'register.example');
 
         $lines = new UnifiedHelpFormatter()->renderCommandHelp($context, $command);
 
@@ -452,6 +462,40 @@ final class UnifiedHelpFormatterTest extends TestCase
 
         self::assertNotContains('Examples:', $lines);
         self::assertNotContains('help.examples_header', array_column($context->translations, 'key'));
+    }
+
+    #[Test]
+    public function omitsRootExamplesWhenTheCurrentLocaleHasNoExampleTranslations(): void
+    {
+        $context = new NickServHelpFormatterContext();
+
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp(
+            $context,
+            $this->createCommandWithExampleKey('IDENTIFY', 'identify.example'),
+        );
+
+        self::assertNotContains('help.examples_header', $lines);
+        self::assertNotContains('identify.example', $lines);
+    }
+
+    #[Test]
+    public function leavesNativeIdentifyExampleWithoutMessagePrefixUnchanged(): void
+    {
+        $nativeExample = "\x02\x0303/NICK User:<password>\x03\x0F";
+        $context = new NickServHelpFormatterContext();
+        $context->exampleTranslations = [
+            'help.examples_header' => 'Examples:',
+            'identify.example' => $nativeExample,
+        ];
+
+        $lines = new UnifiedHelpFormatter()->renderCommandHelp(
+            $context,
+            $this->createCommandWithExampleKey('IDENTIFY', 'identify.example'),
+        );
+
+        self::assertContains('Examples:', $lines);
+        self::assertContains($nativeExample, $lines);
+        self::assertNotContains('/msg NickServ ' . $nativeExample, $lines);
     }
 
     #[Test]
