@@ -28,7 +28,7 @@ final class ResendCommandTest extends TestCase
     #[Test]
     public function exposesResendMetadata(): void
     {
-        $command = new ResendCommand($this->createStub(ResendVerificationHandlerInterface::class));
+        $command = new ResendCommand($this->createStub(ResendVerificationHandlerInterface::class), 300);
 
         self::assertSame('RESEND', $command->getName());
         self::assertSame([], $command->getAliases());
@@ -40,7 +40,7 @@ final class ResendCommandTest extends TestCase
         self::assertSame([], $command->getSubCommandHelp());
         self::assertFalse($command->isOperOnly());
         self::assertNull($command->getRequiredPermission());
-        self::assertSame([], $command->getHelpParams());
+        self::assertSame(['duration_seconds' => 300], $command->getHelpParams());
     }
 
     #[Test]
@@ -49,7 +49,7 @@ final class ResendCommandTest extends TestCase
         $handler = $this->createMock(ResendVerificationHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new ResendCommand($handler);
+        $command = new ResendCommand($handler, 3600);
         $messages = [];
         $command->execute($this->createContext(null, $messages));
 
@@ -68,7 +68,7 @@ final class ResendCommandTest extends TestCase
                 && 'es' === $input->language))
             ->willReturn(ResendVerificationResult::noPending());
 
-        $command = new ResendCommand($handler);
+        $command = new ResendCommand($handler, 3600);
         $messages = [];
         $command->execute($this->createContext($sender, $messages));
 
@@ -84,7 +84,7 @@ final class ResendCommandTest extends TestCase
         $handler = $this->createStub(ResendVerificationHandlerInterface::class);
         $handler->method('handle')->willReturn($result);
 
-        $command = new ResendCommand($handler);
+        $command = new ResendCommand($handler, 3600);
         /** @var list<array{0: string, 1: array<string, mixed>}> $calls */
         $calls = [];
         $command->execute($this->createContext($sender, $calls, captureParams: true));

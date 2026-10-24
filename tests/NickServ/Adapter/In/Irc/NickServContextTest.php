@@ -272,6 +272,63 @@ final class NickServContextTest extends TestCase
     }
 
     #[Test]
+    public function formatDurationUsesTheActiveCommonCatalog(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', [
+            'duration.unit.hour.singular' => 'hour',
+            'duration.unit.minute.plural' => 'minutes',
+            'duration.unit.second.singular' => 'second',
+            'duration.unit.second.plural' => 'seconds',
+            'duration.list_separator' => ', ',
+            'duration.list_join' => '%prefix% and %last%',
+        ], 'en', 'common');
+        $context = $this->createContext(
+            null,
+            $this->createStub(NickServNotifierInterface::class),
+            $translator,
+            language: 'en',
+        );
+
+        self::assertSame('1 hour and 1 second', $context->formatDuration(3601));
+        self::assertSame('5 minutes', $context->formatDuration(300));
+    }
+
+    #[Test]
+    public function formatDurationFallsBackToSpanishCommonCatalogForMissingLocaleKeys(): void
+    {
+        $translator = new Translator('fr');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', [
+            'duration.unit.minute.plural' => 'minutos',
+        ], 'es', 'common');
+        $context = $this->createContext(
+            null,
+            $this->createStub(NickServNotifierInterface::class),
+            $translator,
+            language: 'fr',
+        );
+
+        self::assertSame('5 minutos', $context->formatDuration(300));
+    }
+
+    #[Test]
+    public function formatDurationPreservesMissingTranslationKeys(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $context = $this->createContext(
+            null,
+            $this->createStub(NickServNotifierInterface::class),
+            $translator,
+            language: 'en',
+        );
+
+        self::assertSame('0 duration.unit.second.plural', $context->formatDuration(0));
+    }
+
+    #[Test]
     public function transInUsesExplicitLanguageWhenProvided(): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);

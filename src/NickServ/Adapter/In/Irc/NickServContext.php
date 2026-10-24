@@ -164,6 +164,14 @@ readonly class NickServContext implements IrcopAuthorizationSubject
         return $this->translateWithCommonFallback($key, $this->wrapParams($params), $lang);
     }
 
+    public function formatDuration(int $seconds): string
+    {
+        return DurationFormatter::format(
+            $seconds,
+            fn (string $key, array $params): string => $this->translateDurationKey($key, $params),
+        );
+    }
+
     /**
      * Ensures each parameter key is wrapped with % for Symfony's strtr-based translator.
      * Idempotent: keys already wrapped are left unchanged.
@@ -193,6 +201,25 @@ readonly class NickServContext implements IrcopAuthorizationSubject
         }
 
         return $this->translator->trans($key, $params, 'nickserv', $locale);
+    }
+
+    /** @param array<string, string> $params */
+    private function translateDurationKey(string $key, array $params): string
+    {
+        $wrappedParams = $this->wrapParams($params);
+        $translation = $this->translateWithCommonFallback($key, $wrappedParams, $this->language);
+
+        if ($key !== $translation) {
+            return $translation;
+        }
+
+        if ($this->translator instanceof TranslatorBagInterface
+            && !$this->translator->getCatalogue('es')->has($key, 'common')
+        ) {
+            return $key;
+        }
+
+        return $this->translator->trans($key, $wrappedParams, 'common', 'es');
     }
 
     private function sendRaw(string $message): void

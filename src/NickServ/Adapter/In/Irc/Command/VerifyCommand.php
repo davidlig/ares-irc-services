@@ -15,7 +15,10 @@ use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
 
 final readonly class VerifyCommand implements NickServCommandInterface
 {
-    public function __construct(private VerifyNickHandlerInterface $handler) {}
+    public function __construct(
+        private VerifyNickHandlerInterface $handler,
+        private int $verificationTokenTtlSeconds,
+    ) {}
 
     public function getName(): string
     {
@@ -69,7 +72,7 @@ final readonly class VerifyCommand implements NickServCommandInterface
 
     public function getHelpParams(): array
     {
-        return [];
+        return ['duration_seconds' => $this->verificationTokenTtlSeconds];
     }
 
     public function execute(NickServContext $context): null

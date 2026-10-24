@@ -22,13 +22,16 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function array_key_exists;
+use function strtr;
+
 #[CoversClass(RegisterCommand::class)]
 final class RegisterCommandTest extends TestCase
 {
     #[Test]
     public function exposesRegisterMetadata(): void
     {
-        $command = new RegisterCommand($this->createStub(RegisterNickHandlerInterface::class));
+        $command = new RegisterCommand($this->createStub(RegisterNickHandlerInterface::class), 300);
 
         self::assertSame('REGISTER', $command->getName());
         self::assertSame([], $command->getAliases());
@@ -40,7 +43,7 @@ final class RegisterCommandTest extends TestCase
         self::assertSame([], $command->getSubCommandHelp());
         self::assertFalse($command->isOperOnly());
         self::assertNull($command->getRequiredPermission());
-        self::assertSame([], $command->getHelpParams());
+        self::assertSame(['duration_seconds' => 300], $command->getHelpParams());
     }
 
     /** @param array{uid: string, nick: string, ident: string, hostname: string, cloakedHost: string, ipBase64: string} $senderData */
@@ -59,7 +62,7 @@ final class RegisterCommandTest extends TestCase
         ))->willReturn(RegisterNickResult::verificationRequired('user@example.com'));
 
         $messages = [];
-        $command = new RegisterCommand($handler);
+        $command = new RegisterCommand($handler, 3600);
         $command->execute($this->context($sender, $messages));
 
         self::assertSame(['register.pending'], $messages);
@@ -94,7 +97,7 @@ final class RegisterCommandTest extends TestCase
         /** @var list<array{0: string, 1: array<string, mixed>}> $calls */
         $calls = [];
 
-        $command = new RegisterCommand($handler);
+        $command = new RegisterCommand($handler, 3600);
         $command->execute($this->context(
             new SenderView('UID1', 'CurrentNick', 'ident', 'host', 'cloak', 'ip'),
             $calls,
@@ -112,12 +115,35 @@ final class RegisterCommandTest extends TestCase
         }
     }
 
+    #[Test]
+    public function pendingReplyUsesTheConfiguredVerificationTokenDuration(): void
+    {
+        $handler = $this->createStub(RegisterNickHandlerInterface::class);
+        $handler->method('handle')->willReturn(RegisterNickResult::verificationRequired('a@b.test'));
+        $calls = [];
+
+        new RegisterCommand($handler, 300)->execute($this->context(
+            new SenderView('UID1', 'CurrentNick', 'ident', 'host', 'cloak', 'ip'),
+            $calls,
+            captureParams: true,
+        ));
+
+        self::assertSame([
+            ['register.pending', [
+                '%bot%' => 'NickServ',
+                '%nickserv%' => 'NickServ',
+                '%email%' => 'a@b.test',
+                '%duration%' => '5 minutes',
+            ]],
+        ], $calls);
+    }
+
     /** @return iterable<string, array{RegisterNickResult, string, array<string, mixed>}> */
     public static function presentations(): iterable
     {
         yield 'token verification' => [RegisterNickResult::tokenVerificationRequired('uuid'), 'rescue.issued', ['%token%' => 'uuid']];
         yield 'token unavailable' => [RegisterNickResult::temporarilyUnavailable(), 'register.token_unavailable', []];
-        yield 'verification required' => [RegisterNickResult::verificationRequired('a@b.test'), 'register.pending', ['%email%' => 'a@b.test']];
+        yield 'verification required' => [RegisterNickResult::verificationRequired('a@b.test'), 'register.pending', ['%email%' => 'a@b.test', '%duration%' => '1 hour']];
         yield 'throttled rounds up minutes' => [RegisterNickResult::throttled(61), 'register.throttled', ['%minutes%' => '2']];
         yield 'guest prefix' => [RegisterNickResult::guestPrefixForbidden('Guest-'), 'register.guest_prefix_forbidden', ['%prefix%' => 'Guest-']];
         yield 'invalid email' => [RegisterNickResult::invalidEmail(), 'register.invalid_email', []];
@@ -136,7 +162,7 @@ final class RegisterCommandTest extends TestCase
         $handler->expects(self::never())->method('handle');
         $messages = [];
 
-        new RegisterCommand($handler)->execute($this->context(null, $messages));
+        new RegisterCommand($handler, 3600)->execute($this->context(null, $messages));
 
         self::assertSame([], $messages);
     }
@@ -147,7 +173,7 @@ final class RegisterCommandTest extends TestCase
         $handler = $this->createMock(RegisterNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with(self::callback(static fn (RegisterNick $input): bool => null === $input->email && 'plain-secret' === $input->password))->willReturn(RegisterNickResult::tokenVerificationRequired('uuid'));
         $messages = [];
-        new RegisterCommand($handler)->execute($this->context(new SenderView('UID1', 'Alice', 'i', 'h', 'c', 'ip'), $messages, args: ['plain-secret']));
+        new RegisterCommand($handler, 3600)->execute($this->context(new SenderView('UID1', 'Alice', 'i', 'h', 'c', 'ip'), $messages, args: ['plain-secret']));
         self::assertSame(['rescue.issued'], $messages);
     }
 
@@ -158,6 +184,20 @@ final class RegisterCommandTest extends TestCase
     {
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $key, array $params) use (&$messages, $captureParams): string {
+            $durationTranslations = [
+                'duration.unit.hour.singular' => 'hour',
+                'duration.unit.hour.plural' => 'hours',
+                'duration.unit.minute.singular' => 'minute',
+                'duration.unit.minute.plural' => 'minutes',
+                'duration.unit.second.singular' => 'second',
+                'duration.unit.second.plural' => 'seconds',
+                'duration.list_separator' => ', ',
+                'duration.list_join' => '%prefix% and %last%',
+            ];
+            if (array_key_exists($key, $durationTranslations)) {
+                return strtr($durationTranslations[$key], $params);
+            }
+
             $messages[] = $captureParams ? [$key, $params] : $key;
 
             return $key;

@@ -107,6 +107,27 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function verificationMessagesUseDurationPlaceholdersInEveryLocale(): void
+    {
+        $root = dirname(__DIR__, 6);
+        $locales = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
+        $messages = ['register.help', 'register.pending', 'verify.help', 'resend.help'];
+
+        foreach ($locales as $locale) {
+            $catalog = Yaml::parseFile($root . '/translations/nickserv.' . $locale . '.yaml');
+            self::assertIsArray($catalog, $locale);
+
+            foreach ($messages as $path) {
+                [$section, $message] = explode('.', $path);
+                self::assertIsArray($catalog[$section] ?? null, $locale . ': ' . $section);
+                $value = $catalog[$section][$message] ?? null;
+                self::assertIsString($value, $locale . ': ' . $path);
+                self::assertStringContainsString('%duration%', $value, $locale . ': ' . $path);
+            }
+        }
+    }
+
+    #[Test]
     public function nickServListShortDescriptionsOmitTheIrcopOnlyQualifierInEveryLocale(): void
     {
         $root = dirname(__DIR__, 6);
@@ -303,6 +324,21 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function formatsConfiguredDurationBeforeTranslatingCommandHelp(): void
+    {
+        $context = new NickServHelpFormatterContext();
+        $command = new NickServHelpableCommand('REGISTER', 1, helpParams: ['duration_seconds' => 300]);
+
+        new UnifiedHelpFormatter()->renderCommandHelp($context, $command);
+
+        self::assertSame([300], $context->formattedDurations);
+        self::assertContains([
+            'key' => 'register.help',
+            'params' => ['duration' => '5 minutes'],
+        ], $context->translations);
+    }
+
+    #[Test]
     public function rendersSubcommandHelpWithOptionalDetails(): void
     {
         $context = new NickServHelpFormatterContext();
@@ -345,6 +381,9 @@ final class NickServHelpFormatterContext implements HelpFormatterContextInterfac
     /** @var list<array{key: string, params: array<string, mixed>}> */
     public array $translations = [];
 
+    /** @var list<int> */
+    public array $formattedDurations = [];
+
     /**
      * @param list<HelpableCommandInterface> $commands
      * @param list<HelpableCommandInterface> $ircopCommands
@@ -372,6 +411,13 @@ final class NickServHelpFormatterContext implements HelpFormatterContextInterfac
         $this->translations[] = ['key' => $key, 'params' => $params];
 
         return 'translated:' . $key;
+    }
+
+    public function formatDuration(int $seconds): string
+    {
+        $this->formattedDurations[] = $seconds;
+
+        return 300 === $seconds ? '5 minutes' : $seconds . ' seconds';
     }
 
     public function getCommandsForGeneralHelp(): iterable

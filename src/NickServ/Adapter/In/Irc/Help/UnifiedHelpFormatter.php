@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Adapter\In\Irc\Help;
 
 use function is_array;
+use function is_int;
 use function strtoupper;
 
 /**
@@ -139,6 +140,10 @@ final readonly class UnifiedHelpFormatter
         $rawParams = method_exists($handler, 'getHelpParams') ? $handler->getHelpParams() : [];
         /** @var array<string, mixed> $params */
         $params = is_array($rawParams) ? $rawParams : [];
+        if (is_int($params['duration_seconds'] ?? null)) {
+            $params['duration'] = $context->formatDuration($params['duration_seconds']);
+            unset($params['duration_seconds']);
+        }
         $lines[] = $context->trans($handler->getHelpKey(), $params);
 
         $subCmds = $handler->getSubCommandHelp();
