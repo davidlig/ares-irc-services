@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol\InspIRCd;
 
+use App\Irc\Adapter\Network\ChannelModeParameterMerge;
 use App\Irc\Adapter\Network\Event\ChannelJoinReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelKickReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelListModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelPartReceivedEvent;
 use App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent;
+use App\Irc\Adapter\Network\Event\UserIdentityReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserMetadataReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
 use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
@@ -76,6 +78,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             'MODE' => $this->handleMode($message),
             'METADATA' => $this->handleMetadata($message),
             'OPERTYPE' => $this->handleOpertype($message),
+            'FHOST', 'FIDENT' => $this->handleIdentity($message),
             default => null,
         };
     }
@@ -117,6 +120,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             $nick = new Nick($nickStr);
             $uid = new Uid($uidStr);
             $ident = new Ident($username);
+            $realIdent = new Ident($params[5]);
         } catch (InvalidArgumentException $e) {
             $this->logger->warning('UID skipped: invalid value — ' . $e->getMessage(), [
                 'raw' => $message->toRawLine(),
@@ -140,6 +144,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             serverSid: $serverSid,
             ipBase64: $ipBase64,
             serviceStamp: 0,
+            realIdent: $realIdent,
         );
 
         $this->logger->info(sprintf(
@@ -168,6 +173,24 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         }
 
         return base64_encode($ip);
+    }
+
+    private function handleIdentity(IRCMessage $message): void
+    {
+        if (null === $message->prefix || [] === $message->params) {
+            return;
+        }
+        $display = '*' === $message->params[0] ? null : $message->params[0];
+        $real = $message->params[1] ?? '*';
+        $real = '*' === $real ? null : $real;
+        try {
+            $event = 'FHOST' === $message->command
+                ? new UserIdentityReceivedEvent($message->prefix, displayHost: $display, realHost: $real)
+                : new UserIdentityReceivedEvent($message->prefix, displayIdent: null === $display ? null : new Ident($display), realIdent: null === $real ? null : new Ident($real));
+        } catch (InvalidArgumentException) {
+            return;
+        }
+        $this->eventDispatcher->dispatch($event);
     }
 
     private function handleNick(IRCMessage $message): void
@@ -219,6 +242,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         $channelStr = $message->params[0];
         $timestamp = (int) $message->params[1];
         $modeStr = $message->params[2] ?? '';
+        $modeParams = array_values(array_slice($message->params, 3));
         $buffer = trim($message->trailing ?? '');
 
         try {
@@ -240,7 +264,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             }
         }
 
-        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members));
+        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members, modeParams: $modeParams, parameterMergeRules: ['k' => ChannelModeParameterMerge::LexicalMinimum, 'l' => ChannelModeParameterMerge::NumericMaximum]));
     }
 
     /**
@@ -405,7 +429,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         $channelStr = $message->params[0];
         $modeStr = $message->params[2] ?? '';
-        $modeParams = array_slice($message->params, 3);
+        $modeParams = array_values(array_slice($message->params, 3));
         if (null !== $message->trailing && '' !== $message->trailing) {
             $modeParams[] = $message->trailing;
         }
@@ -416,7 +440,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $this->eventDispatcher->dispatch(new ChannelModeReceivedEvent($channelName, $modeStr, $modeParams));
+        $this->eventDispatcher->dispatch(new ChannelModeReceivedEvent($channelName, $modeStr, $modeParams, (int) $message->params[1]));
     }
 
     private function handleLmode(IRCMessage $message): void
@@ -439,7 +463,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             $params[] = $message->trailing;
         }
 
-        $this->eventDispatcher->dispatch(new ChannelListModeReceivedEvent($channelName, $modeChar, $params));
+        $this->eventDispatcher->dispatch(new ChannelListModeReceivedEvent($channelName, $modeChar, $params, (int) $message->params[1]));
     }
 
     private function handleFtopic(IRCMessage $message): void

@@ -36,12 +36,14 @@ use App\NickServ\Domain\ValueObject\RegistrationMode;
 use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 
 #[CoversNothing]
 final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
 {
-    public function testCapacityFailureBlocksSameIpOnlyAfterSqlPersistence(): void
+    #[Test]
+    public function capacityFailureBlocksSameIpOnlyAfterSqlPersistence(): void
     {
         $now = new DateTimeImmutable('2026-10-22T12:00:00Z');
         $db = $this->entityManager->getConnection();
@@ -76,7 +78,8 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         self::assertSame(0, $count);
     }
 
-    public function testMailFailureAlsoBlocksSameIpWithoutPersistingSecret(): void
+    #[Test]
+    public function mailFailureAlsoBlocksSameIpWithoutPersistingSecret(): void
     {
         $now = new DateTimeImmutable('2026-10-22T12:00:00Z');
         $db = $this->entityManager->getConnection();
@@ -111,7 +114,8 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         self::assertSame(0, $count);
     }
 
-    public function testResendRenewsSqlAndMemoryExpiryWithoutRevivingExpired(): void
+    #[Test]
+    public function resendRenewsSqlAndMemoryExpiryWithoutRevivingExpired(): void
     {
         $now = new DateTimeImmutable('2026-10-22T12:00:00Z');
         $originalDeadline = $now->modify('+1 second');

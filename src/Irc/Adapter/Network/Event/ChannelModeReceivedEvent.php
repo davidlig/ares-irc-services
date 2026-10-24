@@ -18,5 +18,6 @@ final readonly class ChannelModeReceivedEvent
         public ChannelName $channelName,
         public string $modeStr,
         public array $modeParams = [],
+        public ?int $creationTimestamp = null,
     ) {}
 }

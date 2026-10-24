@@ -24,6 +24,7 @@ use App\Irc\Domain\ValueObject\ChannelName;
 use App\Irc\Domain\ValueObject\Ident;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
+use DateMalformedStringException;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
@@ -98,18 +99,24 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
         $serverSid = $message->prefix ?? '';
 
         try {
+            $decimal = ltrim($timestamp, '0');
+            $maximum = (string) PHP_INT_MAX;
+            if (1 !== preg_match('/^[0-9]+$/D', $timestamp)
+                || strlen($decimal) > strlen($maximum)
+                || (strlen($decimal) === strlen($maximum) && strcmp($decimal, $maximum) > 0)) {
+                throw new InvalidArgumentException('Invalid unsigned UID timestamp.');
+            }
+            $connectedAt = new DateTimeImmutable('@' . (int) $timestamp);
             $nick = new Nick($nickStr);
             $uid = new Uid($uidStr);
             $ident = new Ident($username);
-        } catch (InvalidArgumentException $e) {
+        } catch (DateMalformedStringException|InvalidArgumentException $e) {
             $this->logger->warning('UID skipped: invalid value — ' . $e->getMessage(), [
                 'raw' => $message->toRawLine(),
             ]);
 
             return;
         }
-
-        $connectedAt = new DateTimeImmutable('@' . $timestamp);
 
         $user = new NetworkUser(
             uid: $uid,

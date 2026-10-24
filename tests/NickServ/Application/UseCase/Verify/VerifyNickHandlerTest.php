@@ -24,6 +24,7 @@ use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
@@ -48,7 +49,8 @@ final class VerifyNickHandlerTest extends TestCase
         $this->sessions = new IdentifiedSessionRegistry();
     }
 
-    public function testNoPendingForMissingDisabledOrAlreadyConfirmedAccounts(): void
+    #[Test]
+    public function noPendingForMissingDisabledOrAlreadyConfirmedAccounts(): void
     {
         $confirmed = $this->account();
         $confirmed->activate();
@@ -60,7 +62,8 @@ final class VerifyNickHandlerTest extends TestCase
         }
     }
 
-    public function testTokenRegistrationActivatesThroughCasAndPublishesExistingPasswordEvent(): void
+    #[Test]
+    public function tokenRegistrationActivatesThroughCasAndPublishesExistingPasswordEvent(): void
     {
         $account = $this->account();
         $hash = $this->challenge();
@@ -75,7 +78,8 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertFalse($this->temporary->matches(42, $hash, $this->now()));
     }
 
-    public function testEmailPendingUsesTemporaryChallengeAndNativeModeDoesNotIdentify(): void
+    #[Test]
+    public function emailPendingUsesTemporaryChallengeAndNativeModeDoesNotIdentify(): void
     {
         $account = $this->account();
         $hash = $this->challenge();
@@ -88,7 +92,8 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertNull($account->getRescueTokenHash());
     }
 
-    public function testLegacyConfirmationRequiresSameAuthenticatedAccountAndDoesNotRepeatActivation(): void
+    #[Test]
+    public function legacyConfirmationRequiresSameAuthenticatedAccountAndDoesNotRepeatActivation(): void
     {
         $account = $this->account();
         $account->activate();
@@ -104,7 +109,8 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertTrue($account->isRegistered());
     }
 
-    public function testLegacySessionTrackerCanAuthorizeMatchingAccount(): void
+    #[Test]
+    public function legacySessionTrackerCanAuthorizeMatchingAccount(): void
     {
         $account = $this->account();
         $account->activate();
@@ -115,7 +121,8 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertSame(VerifyNickOutcome::CredentialConfirmed, $this->handler($account, $store)->handle($this->input())->outcome);
     }
 
-    public function testMalformedStaleMissingAndExpiredChallengesAreRejectedWithoutPersistence(): void
+    #[Test]
+    public function malformedStaleMissingAndExpiredChallengesAreRejectedWithoutPersistence(): void
     {
         $account = $this->account();
         $persistence = $this->createMock(RescueCredentialPersistence::class);
@@ -133,7 +140,8 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertSame(VerifyNickOutcome::InvalidToken, $this->handler($expired, $persistence)->handle($this->input())->outcome);
     }
 
-    public function testConfirmedActiveAccountCanConfirmOptionalReplacementWithoutRevokingOldHashFirst(): void
+    #[Test]
+    public function confirmedActiveAccountCanConfirmOptionalReplacementWithoutRevokingOldHashFirst(): void
     {
         $account = $this->account();
         $account->activate();
@@ -151,7 +159,8 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertFalse($this->temporary->matches(42, $hash, $this->now()));
     }
 
-    public function testIgnoredExpiredOrWrongOptionalReplacementPreservesConfirmedCredential(): void
+    #[Test]
+    public function ignoredExpiredOrWrongOptionalReplacementPreservesConfirmedCredential(): void
     {
         $account = $this->account();
         $account->activate();
@@ -169,7 +178,8 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertSame($oldHash, $account->getRescueTokenHash());
     }
 
-    public function testCasFailureRetainsChallengeAndReturnsInvalid(): void
+    #[Test]
+    public function casFailureRetainsChallengeAndReturnsInvalid(): void
     {
         $hash = $this->challenge();
         $result = $this->handler($this->account())->handle($this->input());
@@ -177,7 +187,8 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertTrue($this->temporary->matches(42, $hash, $this->now()));
     }
 
-    public function testStorageFailureDoesNotConsumeChallenge(): void
+    #[Test]
+    public function storageFailureDoesNotConsumeChallenge(): void
     {
         $hash = $this->challenge();
         $store = $this->createStub(RescueCredentialPersistence::class);
@@ -191,7 +202,8 @@ final class VerifyNickHandlerTest extends TestCase
         }
     }
 
-    public function testSharedLimiterBlocksBeforeTokenValidation(): void
+    #[Test]
+    public function sharedLimiterBlocksBeforeTokenValidation(): void
     {
         $limiter = $this->createStub(RescueAttemptLimiter::class);
         $limiter->method('remainingCooldownSeconds')->willReturn(123);

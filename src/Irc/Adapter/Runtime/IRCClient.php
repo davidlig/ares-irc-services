@@ -12,6 +12,7 @@ use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
+use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use App\Irc\Application\BurstCompleteRegistry;
 use App\Irc\Application\IrcSessionInterface;
 use App\Irc\Application\Port\In\Maintenance\RunMaintenanceCycle;
@@ -175,7 +176,7 @@ class IRCClient implements IrcSessionInterface
     public function disconnect(?string $reason = null): void
     {
         $effectiveReason = $reason ?? 'Disconnect requested';
-        $this->logger->info('Disconnecting.', ['reason' => $effectiveReason]);
+        $this->logger->info('Disconnecting.', ['reason' => SensitiveDataRedactor::redactIrcLine($effectiveReason)]);
         $this->firstCloseReason ??= $effectiveReason;
 
         $this->finalizeSession($effectiveReason);

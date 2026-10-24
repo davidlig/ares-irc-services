@@ -17,6 +17,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SQLiteSchemaManager;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -24,7 +25,8 @@ use Psr\Log\NullLogger;
 final class RegistrationPolicyMigrationTest extends TestCase
 {
     #[DataProvider('platforms')]
-    public function testPortableQueuedMigrationAndDetachedTarget(AbstractPlatform $platform): void
+    #[Test]
+    public function portableQueuedMigrationAndDetachedTarget(AbstractPlatform $platform): void
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('getDatabasePlatform')->willReturn($platform);
@@ -51,7 +53,8 @@ final class RegistrationPolicyMigrationTest extends TestCase
         self::assertTrue($target->hasTable('nickserv_registration_policy'));
     }
 
-    public function testSqliteMigrationPreservesUnrelatedDataAndRollsBackOwnTableOnly(): void
+    #[Test]
+    public function sqliteMigrationPreservesUnrelatedDataAndRollsBackOwnTableOnly(): void
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         $connection->executeStatement('CREATE TABLE existing_data (id INTEGER PRIMARY KEY, value TEXT)');

@@ -211,7 +211,7 @@ final class UnrealStandaloneProtocolServiceActionsTest extends TestCase
         $actions->setChannelTopic('001', '#test', null, '001CSRV');
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001CSRV TOPIC #test', $this->written[0]);
+        self::assertSame(':001CSRV TOPIC #test :', $this->written[0]);
     }
 
     #[Test]

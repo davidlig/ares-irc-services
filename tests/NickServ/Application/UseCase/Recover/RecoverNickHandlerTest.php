@@ -26,6 +26,7 @@ use App\NickServ\Domain\ValueObject\RegistrationMode;
 use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -54,14 +55,16 @@ final class RecoverNickHandlerTest extends TestCase
         $this->limiter = new InMemoryRescueAttemptLimiter();
     }
 
-    public function testTokenModeNoArgumentOnlyExplainsWithoutAccountLookup(): void
+    #[Test]
+    public function tokenModeNoArgumentOnlyExplainsWithoutAccountLookup(): void
     {
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::never())->method('findByNick');
         self::assertSame(RecoverNickOutcome::Instructions, $this->handler(repository: $repo, mode: RegistrationMode::Token)->handle(new RecoverNick('User'))->outcome);
     }
 
-    public function testEmailRequestKeepsConfirmedCredentialAndMailsNewProvisionalToken(): void
+    #[Test]
+    public function emailRequestKeepsConfirmedCredentialAndMailsNewProvisionalToken(): void
     {
         $account = $this->account();
         $mail = $this->createMock(RecoveryMailSender::class);
@@ -79,7 +82,8 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertNull($result->rescueToken);
     }
 
-    public function testInvalidProvidedTokenCountsAttemptAndRequestsEmailWithoutRevokingOld(): void
+    #[Test]
+    public function invalidProvidedTokenCountsAttemptAndRequestsEmailWithoutRevokingOld(): void
     {
         $result = $this->handler($this->account())->handle(new RecoverNick('User', 'wrong', clientKey: 'ip:raw'));
         self::assertSame(RecoverNickOutcome::TokenSent, $result->outcome);
@@ -89,7 +93,8 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertGreaterThan(0, $this->limiter->remainingCooldownSeconds(42, 'ip:raw', $this->now));
     }
 
-    public function testEmailedTokenPromotesSameHashIncludingLegacyNullCredential(): void
+    #[Test]
+    public function emailedTokenPromotesSameHashIncludingLegacyNullCredential(): void
     {
         foreach ([null, hash('sha256', self::OLD)] as $old) {
             $this->pending->store('User', self::TOKEN, $this->now->modify('+1 hour'));
@@ -108,7 +113,8 @@ final class RecoverNickHandlerTest extends TestCase
         }
     }
 
-    public function testAlreadyEmailedProofRemainsValidAfterSwitchToTokenMode(): void
+    #[Test]
+    public function alreadyEmailedProofRemainsValidAfterSwitchToTokenMode(): void
     {
         $this->pending->store('User', self::TOKEN, $this->now->modify('+1 hour'));
         $mail = $this->createMock(RecoveryMailSender::class);
@@ -122,7 +128,8 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertFalse($this->pending->matches('User', self::TOKEN, $this->now));
     }
 
-    public function testConfirmedProofPreservesOldHashAndReturnsOnlyOptionalMemoryReplacement(): void
+    #[Test]
+    public function confirmedProofPreservesOldHashAndReturnsOnlyOptionalMemoryReplacement(): void
     {
         $old = hash('sha256', self::OLD);
         $credentials = $this->createMock(RescueCredentialPersistence::class);
@@ -135,7 +142,8 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertFalse($this->optional->matches(42, hash('sha256', $result->rescueToken), $this->now->modify('+3600 seconds')));
     }
 
-    public function testFailedCasPreservesProvisionalProofAndPublishesNothing(): void
+    #[Test]
+    public function failedCasPreservesProvisionalProofAndPublishesNothing(): void
     {
         $this->pending->store('User', self::TOKEN, $this->now->modify('+1 hour'));
         $credentials = $this->createMock(RescueCredentialPersistence::class);
@@ -148,7 +156,8 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertTrue($this->pending->matches('User', self::TOKEN, $this->now));
     }
 
-    public function testMailIntervalAndSharedLockoutRejectFurtherRequests(): void
+    #[Test]
+    public function mailIntervalAndSharedLockoutRejectFurtherRequests(): void
     {
         $this->pending->recordRecover('User', $this->now->modify('-60 seconds'));
         $result = $this->handler($this->account())->handle(new RecoverNick('User'));
@@ -160,14 +169,16 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertSame(RecoverNickOutcome::Throttled, $this->handler($this->account())->handle(new RecoverNick('User', self::OLD, clientKey: 'client'))->outcome);
     }
 
-    public function testInvalidOrMissingEmailCannotRequestRecovery(): void
+    #[Test]
+    public function invalidOrMissingEmailCannotRequestRecovery(): void
     {
         foreach ([null, '', 'not-email'] as $email) {
             self::assertSame(RecoverNickOutcome::NoEmail, $this->handler($this->account(email: $email))->handle(new RecoverNick('User'))->outcome);
         }
     }
 
-    public function testMailFailureReturnsHonestErrorAndNoConfirmedMutation(): void
+    #[Test]
+    public function mailFailureReturnsHonestErrorAndNoConfirmedMutation(): void
     {
         $mail = $this->createStub(RecoveryMailSender::class);
         $mail->method('sendRecovery')->willThrowException(new RuntimeException('smtp failed'));
@@ -175,13 +186,15 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertNotNull($this->pending->getLastRecoverAt('User'));
     }
 
-    public function testExpiredEmailProofIsNotPromotedAndRequestsFreshMail(): void
+    #[Test]
+    public function expiredEmailProofIsNotPromotedAndRequestsFreshMail(): void
     {
         $this->pending->store('User', self::TOKEN, $this->now);
         self::assertSame(RecoverNickOutcome::TokenSent, $this->handler($this->account())->handle(new RecoverNick('User', self::TOKEN))->outcome);
     }
 
-    public function testOptionalStoreCapacityDoesNotTurnSuccessfulPasswordResetIntoFailure(): void
+    #[Test]
+    public function optionalStoreCapacityDoesNotTurnSuccessfulPasswordResetIntoFailure(): void
     {
         $this->optional = new InMemoryTemporaryRescueTokenStore(1);
         $this->optional->replace(99, hash('sha256', self::TOKEN), $this->now->modify('+1 hour'));
@@ -192,7 +205,8 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertSame('new-password', $result->temporaryPassword);
     }
 
-    public function testUnknownAndRestrictedAccountsRemainRejected(): void
+    #[Test]
+    public function unknownAndRestrictedAccountsRemainRejected(): void
     {
         self::assertSame(RecoverNickOutcome::NotRegistered, $this->handler()->handle(new RecoverNick('Missing'))->outcome);
         foreach (['isPending' => RecoverNickOutcome::Pending, 'isSuspended' => RecoverNickOutcome::Suspended, 'isForbidden' => RecoverNickOutcome::Forbidden, 'isPendingDeletion' => RecoverNickOutcome::PendingDeletion] as $method => $expected) {
@@ -202,7 +216,8 @@ final class RecoverNickHandlerTest extends TestCase
         }
     }
 
-    public function testEmailCapacityFailureReturnsUnavailableWithoutSending(): void
+    #[Test]
+    public function emailCapacityFailureReturnsUnavailableWithoutSending(): void
     {
         $this->pending = new RecoveryTokenRegistry(1);
         $this->pending->store('Other', self::TOKEN, $this->now->modify('+1 hour'));
@@ -211,7 +226,8 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertSame(RecoverNickOutcome::TemporarilyUnavailable, $this->handler($this->account(), mail: $mail)->handle(new RecoverNick('User'))->outcome);
     }
 
-    public function testWrongTokenInTokenModeDoesNotSendMailAndDistinguishesMissingCredential(): void
+    #[Test]
+    public function wrongTokenInTokenModeDoesNotSendMailAndDistinguishesMissingCredential(): void
     {
         $mail = $this->createMock(RecoveryMailSender::class);
         $mail->expects(self::never())->method('sendRecovery');
@@ -219,14 +235,16 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertSame(RecoverNickOutcome::CredentialUnavailable, $this->handler($this->account(null), mail: $mail, mode: RegistrationMode::Token)->handle(new RecoverNick('User', 'bad'))->outcome);
     }
 
-    public function testConfirmedTokenProofWorksWithoutEmailInBothGlobalModes(): void
+    #[Test]
+    public function confirmedTokenProofWorksWithoutEmailInBothGlobalModes(): void
     {
         foreach ([RegistrationMode::Email, RegistrationMode::Token] as $mode) {
             self::assertSame(RecoverNickOutcome::PasswordReset, $this->handler($this->account(email: null), mode: $mode)->handle(new RecoverNick('User', self::OLD))->outcome);
         }
     }
 
-    public function testFailedConfirmedProofCasPreservesPreviousOptionalChallenge(): void
+    #[Test]
+    public function failedConfirmedProofCasPreservesPreviousOptionalChallenge(): void
     {
         $oldChallenge = hash('sha256', self::TOKEN);
         $this->optional->replace(42, $oldChallenge, $this->now->modify('+1 hour'));
@@ -240,7 +258,8 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertTrue($this->optional->matches(42, $oldChallenge, $this->now));
     }
 
-    public function testFifthInvalidAttemptStopsBeforeAnotherMailRequest(): void
+    #[Test]
+    public function fifthInvalidAttemptStopsBeforeAnotherMailRequest(): void
     {
         for ($i = 0; $i < 4; ++$i) {
             $this->limiter->recordFailure(42, 'client', $this->now);
@@ -250,7 +269,8 @@ final class RecoverNickHandlerTest extends TestCase
         self::assertSame(RecoverNickOutcome::Throttled, $this->handler($this->account(), mail: $mail)->handle(new RecoverNick('User', 'bad', clientKey: 'client'))->outcome);
     }
 
-    public function testInvalidGeneratedReplacementCannotCommitPasswordChange(): void
+    #[Test]
+    public function invalidGeneratedReplacementCannotCommitPasswordChange(): void
     {
         $codec = $this->createStub(RescueTokenCodec::class);
         $codec->method('hash')->willReturnCallback(static fn (string $token): ?string => self::OLD === $token ? hash('sha256', self::OLD) : null);

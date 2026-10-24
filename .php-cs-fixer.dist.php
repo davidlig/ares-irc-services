@@ -1,6 +1,11 @@
 <?php
 
-$finder = (new PhpCsFixer\Finder())
+declare(strict_types=1);
+
+use PhpCsFixer\Config;
+use PhpCsFixer\Finder;
+
+$finder = new Finder()
     ->in(__DIR__)
     ->exclude('var')
     ->exclude('vendor')
@@ -9,15 +14,13 @@ $finder = (new PhpCsFixer\Finder())
     ->notPath('config/reference.php')
 ;
 
-return (new PhpCsFixer\Config())
+return new Config()
     ->setRules([
         // Base Symfony rules
         '@Symfony' => true,
-        '@Symfony:risky' => true,
 
         // Specific rules for modern PHP (8.5+)
         '@PHP8x5Migration' => true,
-        '@PHP8x5Migration:risky' => true,
 
         // Mandatory strict typing
         'declare_strict_types' => true,

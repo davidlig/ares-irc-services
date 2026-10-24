@@ -7,12 +7,14 @@ namespace App\Tests\NickServ\Domain\Entity;
 use App\NickServ\Domain\Entity\RegistrationPolicy;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(RegistrationPolicy::class)]
 final class RegistrationPolicyTest extends TestCase
 {
-    public function testSingletonDefaultsToTokenAndChangesMode(): void
+    #[Test]
+    public function singletonDefaultsToTokenAndChangesMode(): void
     {
         $policy = new RegistrationPolicy();
         self::assertSame(1, $policy->getId());

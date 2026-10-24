@@ -10,11 +10,15 @@ use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
+use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function array_filter;
+use function array_values;
+use function implode;
 use function sprintf;
 
 /**
@@ -56,6 +60,9 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
 
     private const int PROTOCOL_VERSION = 1206;
 
+    /** @var list<string> */
+    private const array REQUIRED_MODULES = ['services', 'account', 'chghost', 'cloak'];
+
     private bool $outgoingBurstSent = false;
 
     private ?string $remoteSid = null;
@@ -66,6 +73,12 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
     private array $remoteCapabLines = [];
 
     private bool $remoteCapabActive = false;
+
+    private ?string $remoteProtocolVersion = null;
+
+    private bool $remoteCapabValidated = false;
+
+    private bool $remoteCapabRejected = false;
 
     public function __construct(
         private readonly string $sid = '0A0',
@@ -119,6 +132,9 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
         $this->remoteBurstComplete = false;
         $this->remoteCapabLines = [];
         $this->remoteCapabActive = false;
+        $this->remoteProtocolVersion = null;
+        $this->remoteCapabValidated = false;
+        $this->remoteCapabRejected = false;
         $this->sendCapabilities($connection);
         $this->sendServerLine($connection, $link);
 
@@ -133,7 +149,7 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
         match ($message->command) {
             'PING' => $this->handlePing($message, $connection),
             'ERROR' => $this->handleError($message),
-            'CAPAB' => $this->handleCapab($message),
+            'CAPAB' => $this->handleCapab($message, $connection),
             'SERVER' => $this->handleRemoteServer($message, $connection),
             'ENDBURST' => $this->handleEndburst($message, $connection),
             default => null,
@@ -144,23 +160,34 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
     {
         $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
         $this->logger->critical('Remote server sent ERROR — closing link.', [
-            'reason' => $reason,
+            'reason' => SensitiveDataRedactor::redactIrcLine($reason),
         ]);
     }
 
-    private function handleCapab(IRCMessage $message): void
+    private function handleCapab(IRCMessage $message, ConnectionInterface $connection): void
     {
+        if ($this->remoteCapabRejected) {
+            return;
+        }
+
         $subCommand = strtoupper($message->params[0] ?? '');
 
         if ('START' === $subCommand) {
             $this->remoteCapabLines = [];
             $this->remoteCapabActive = true;
+            $this->remoteProtocolVersion = $message->params[1] ?? null;
+            $this->remoteCapabValidated = false;
 
             return;
         }
 
         if ('END' === $subCommand) {
             $this->remoteCapabActive = false;
+            if (!$this->validateRemoteCapab()) {
+                $this->rejectLink($connection, $this->capabFailureReason());
+
+                return;
+            }
             $this->applyRemoteCapab();
 
             return;
@@ -189,6 +216,51 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
                 'hasRegistered' => $newModeSupport->hasChannelRegisteredMode(),
             ]);
         }
+    }
+
+    private function validateRemoteCapab(): bool
+    {
+        if ((string) self::PROTOCOL_VERSION !== $this->remoteProtocolVersion) {
+            return false;
+        }
+
+        $capab = InspIRCdCapab::fromCapabLines($this->remoteCapabLines);
+        foreach (self::REQUIRED_MODULES as $module) {
+            if (!$capab->hasModule($module)) {
+                return false;
+            }
+        }
+
+        $this->remoteCapabValidated = true;
+
+        return true;
+    }
+
+    private function capabFailureReason(): string
+    {
+        $capab = InspIRCdCapab::fromCapabLines($this->remoteCapabLines);
+        $missingModules = array_values(array_filter(
+            self::REQUIRED_MODULES,
+            static fn (string $module): bool => !$capab->hasModule($module),
+        ));
+
+        return sprintf(
+            'CAPAB prerequisites missing or invalid (expected protocol %d, received %s; missing modules: %s).',
+            self::PROTOCOL_VERSION,
+            $this->remoteProtocolVersion ?? 'missing',
+            [] === $missingModules ? 'none' : implode(', ', $missingModules),
+        );
+    }
+
+    private function rejectLink(ConnectionInterface $connection, string $reason): void
+    {
+        if ($this->remoteCapabRejected) {
+            return;
+        }
+
+        $this->remoteCapabRejected = true;
+        $this->logger->critical('Rejecting InspIRCd link before startup.', ['reason' => $reason]);
+        $connection->disconnect();
     }
 
     private function handlePing(IRCMessage $message, ConnectionInterface $connection): void
@@ -231,6 +303,12 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
 
     private function handleRemoteServer(IRCMessage $message, ConnectionInterface $connection): void
     {
+        if (!$this->remoteCapabValidated || $this->remoteCapabRejected) {
+            $this->rejectLink($connection, 'Received SERVER before valid CAPAB 1206 prerequisites.');
+
+            return;
+        }
+
         if (null !== $message->prefix) {
             return;
         }
@@ -274,7 +352,7 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
 
     private function handleEndburst(IRCMessage $message, ConnectionInterface $connection): void
     {
-        if ($this->remoteBurstComplete || null === $this->remoteSid || $message->prefix !== $this->remoteSid) {
+        if ($this->remoteBurstComplete || null === $this->remoteSid || (null !== $message->prefix && $message->prefix !== $this->remoteSid)) {
             return;
         }
 
@@ -286,6 +364,6 @@ final class InspIRCdProtocolHandler implements ProtocolHandlerInterface
     private function writeLine(ConnectionInterface $connection, string $line): void
     {
         $connection->writeLine($line);
-        $this->logger->debug('> ' . $line);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($line));
     }
 }

@@ -8,6 +8,7 @@ use Amp\ByteStream\StreamException;
 use Amp\Cancellation;
 use Amp\DeferredFuture;
 use Amp\Socket\ConnectContext;
+use Amp\Socket\DnsSocketConnector;
 use Amp\Socket\InternetAddress;
 use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\Socket;
@@ -398,42 +399,52 @@ final class SocketConnectionTest extends TestCase
     #[Test]
     public function connectThrowsWhenConnectionFails(): void
     {
-        $conn = new SocketConnection('127.0.0.1', 59999, false, 1);
-
-        try {
-            $conn->connect();
-            self::fail('Expected connection failure exception');
-        } catch (RuntimeException $e) {
-            self::assertStringContainsString('Failed to connect to 127.0.0.1:59999', $e->getMessage());
-            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
-        }
+        $this->assertConnectionFailsAtClosedLoopbackPort(false, true);
     }
 
     #[Test]
     public function connectWithTlsAndVerifyPeerThrowsWhenConnectionFails(): void
     {
-        $conn = new SocketConnection('127.0.0.1', 59999, useTls: true, timeoutSeconds: 1, tlsVerifyPeer: true);
-
-        try {
-            $conn->connect();
-            self::fail('Expected connection failure exception');
-        } catch (RuntimeException $e) {
-            self::assertStringContainsString('Failed to connect to 127.0.0.1:59999', $e->getMessage());
-            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
-        }
+        $this->assertConnectionFailsAtClosedLoopbackPort(true, true);
     }
 
     #[Test]
     public function connectWithTlsWithoutVerifyPeerThrowsWhenConnectionFails(): void
     {
-        $conn = new SocketConnection('127.0.0.1', 59999, useTls: true, timeoutSeconds: 1, tlsVerifyPeer: false);
+        $this->assertConnectionFailsAtClosedLoopbackPort(true, false);
+    }
+
+    private function closedLoopbackPort(): int
+    {
+        // Avoid shared services that bind ephemeral ports on 127.0.0.1 in the test environment.
+        $server = listen('127.0.0.1:0');
+        $port = $this->serverPort($server);
+        $server->close();
+
+        return $port;
+    }
+
+    private function assertConnectionFailsAtClosedLoopbackPort(bool $useTls, bool $verifyPeer): void
+    {
+        $port = $this->closedLoopbackPort();
+        $originalConnector = socketConnector();
+        socketConnector(new DnsSocketConnector());
+        $connection = new SocketConnection('127.77.3.1', $port, $useTls, 1, $verifyPeer);
 
         try {
-            $conn->connect();
+            try {
+                $connection->connect();
+            } catch (RuntimeException $e) {
+                self::assertStringContainsString('Failed to connect to 127.77.3.1:' . $port, $e->getMessage());
+                self::assertSame(ConnectionStatus::Error, $connection->getStatus());
+
+                return;
+            }
+
             self::fail('Expected connection failure exception');
-        } catch (RuntimeException $e) {
-            self::assertStringContainsString('Failed to connect to 127.0.0.1:59999', $e->getMessage());
-            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
+        } finally {
+            socketConnector($originalConnector);
+            $connection->disconnect();
         }
     }
 

@@ -11,6 +11,7 @@ use App\Tests\Shared\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 
 #[CoversClass(DoctrineRescueCredentialPersistence::class)]
 final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationTestCase
@@ -24,7 +25,8 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         return $nick;
     }
 
-    public function testConfirmationActivatesAndSynchronizesWithoutAllowingStaleMutation(): void
+    #[Test]
+    public function confirmationActivatesAndSynchronizesWithoutAllowingStaleMutation(): void
     {
         $nick = $this->account();
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
@@ -40,7 +42,8 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         self::assertSame($hash, $this->entityManager->getConnection()->fetchOne('SELECT token FROM registered_nicks WHERE id = ?', [$nick->getId()]));
     }
 
-    public function testActiveMigrationAndRecoveryAreCompareAndSwap(): void
+    #[Test]
+    public function activeMigrationAndRecoveryAreCompareAndSwap(): void
     {
         $nick = $this->account();
         $nick->activate();
@@ -57,7 +60,8 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         self::assertFalse($store->rotateAfterRecovery($nick->getId(), $hash, 'other-password', str_repeat('c', 64), $now));
     }
 
-    public function testExpiredAndDisabledAccountsStayUnchanged(): void
+    #[Test]
+    public function expiredAndDisabledAccountsStayUnchanged(): void
     {
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
         $now = new DateTimeImmutable('2026-01-02');
@@ -77,14 +81,16 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         self::assertSame('old-password', $nick->getPasswordHash());
     }
 
-    public function testMalformedStoredHashIsRejected(): void
+    #[Test]
+    public function malformedStoredHashIsRejected(): void
     {
         $store = new DoctrineRescueCredentialPersistence($this->entityManager);
         $this->expectException(InvalidArgumentException::class);
         $store->confirm(1, NickStatus::Registered, null, 'plaintext', new DateTimeImmutable('2026-01-01'));
     }
 
-    public function testEmailConfirmationRetainsPersistentHash(): void
+    #[Test]
+    public function emailConfirmationRetainsPersistentHash(): void
     {
         $nick = $this->account();
         $hash = str_repeat('a', 64);
@@ -97,7 +103,8 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         self::assertTrue($nick->isRegistered());
     }
 
-    public function testRejectedOperationsPreserveWholeRowAndRotationSurvivesFlush(): void
+    #[Test]
+    public function rejectedOperationsPreserveWholeRowAndRotationSurvivesFlush(): void
     {
         $now = new DateTimeImmutable('2026-01-01');
         $nick = RegisteredNick::createPending('Snapshot', 'old-password', 'snapshot@example.test', 'en', $now->modify('+1 hour'), $now);
@@ -130,7 +137,8 @@ final class DoctrineRescueCredentialPersistenceTest extends DoctrineIntegrationT
         self::assertSame($b, $loaded->getRescueTokenHash());
     }
 
-    public function testEmailRecoveryCanPromoteFirstCredentialAndRejectStaleNullExpectation(): void
+    #[Test]
+    public function emailRecoveryCanPromoteFirstCredentialAndRejectStaleNullExpectation(): void
     {
         $nick = $this->account('Legacy');
         $nick->activate();

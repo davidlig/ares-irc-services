@@ -9,6 +9,7 @@ use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
+use App\Irc\Adapter\Security\SensitiveDataRedactor;
 use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -91,15 +92,15 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
 
         $eauth = sprintf('PROTOCTL EAUTH=%s SID=%s', $link->serverName, $this->sid);
         $connection->writeLine($eauth);
-        $this->logger->debug('> ' . $eauth);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($eauth));
 
         $capabilities = sprintf('PROTOCTL %s', implode(' ', self::CAPABILITIES));
         $connection->writeLine($capabilities);
-        $this->logger->debug('> ' . $capabilities);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($capabilities));
 
         $server = sprintf('SERVER %s 1 :%s', $link->serverName, $link->description);
         $connection->writeLine($server);
-        $this->logger->debug('> ' . $server);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($server));
 
         $this->logger->info('Standalone UnrealIRCd handshake sent.', [
             'server' => (string) $link->serverName,
@@ -123,7 +124,7 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
     {
         $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
         $this->logger->critical('Remote server sent ERROR — closing link.', [
-            'reason' => $reason,
+            'reason' => SensitiveDataRedactor::redactIrcLine($reason),
         ]);
     }
 
@@ -132,7 +133,7 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
         $target = $message->trailing ?? ($message->params[0] ?? '');
         $pong = 'PONG :' . $target;
         $connection->writeLine($pong);
-        $this->logger->debug('> ' . $pong);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($pong));
     }
 
     private function handleEos(IRCMessage $message, ConnectionInterface $connection): void
@@ -176,6 +177,6 @@ final class UnrealStandaloneProtocolHandler implements ProtocolHandlerInterface
         $netinfo = sprintf('NETINFO 0 %d 6100 * 0 0 0 :%s', time(), $networkName);
 
         $connection->writeLine($netinfo);
-        $this->logger->debug('> ' . $netinfo);
+        $this->logger->debug('> ' . SensitiveDataRedactor::redactIrcLine($netinfo));
     }
 }

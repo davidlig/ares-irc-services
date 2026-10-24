@@ -66,6 +66,28 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     /** @var list<string> */
     private array $effects = [];
 
+    /** @var list<string> */
+    private array $lockDirectories = [];
+
+    /** @var list<UdbSessionLock> */
+    private array $sessionLocks = [];
+
+    protected function tearDown(): void
+    {
+        foreach ($this->sessionLocks as $lock) {
+            $lock->release();
+        }
+
+        foreach ($this->lockDirectories as $directory) {
+            @unlink($directory . '/udb.lock');
+            @rmdir($directory);
+            @rmdir(dirname($directory));
+            @rmdir(dirname(dirname($directory)));
+        }
+
+        parent::tearDown();
+    }
+
     private function createConnection(): ConnectionInterface
     {
         $connection = $this->createStub(ConnectionInterface::class);
@@ -90,7 +112,17 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
             new FakeUdbSnapshots(),
         );
 
-        return new UnrealUdbProtocolHandler($sid, $coordinator, eventDispatcher: $eventDispatcher);
+        return new UnrealUdbProtocolHandler($sid, $coordinator, $this->createSessionLock(), eventDispatcher: $eventDispatcher);
+    }
+
+    private function createSessionLock(): UdbSessionLock
+    {
+        $directory = sys_get_temp_dir() . '/ares-udb-handler-' . uniqid('', true) . '/var/lock';
+        $this->lockDirectories[] = $directory;
+        $lock = new UdbSessionLock($directory);
+        $this->sessionLocks[] = $lock;
+
+        return $lock;
     }
 
     private function createServerLink(): ServerLink
@@ -121,7 +153,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     public function performHandshakeAcquiresTheUdbLockBeforeTheHandshake(): void
     {
         $directory = sys_get_temp_dir() . '/ares-udb-handler-' . uniqid('', true);
-        mkdir($directory);
+        $lock = new UdbSessionLock($directory);
 
         try {
             $handler = new UnrealUdbProtocolHandler(
@@ -131,13 +163,16 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
                     $this->createStub(UdbBlockStateRepositoryInterface::class),
                     new FakeUdbSnapshots(),
                 ),
-                new UdbSessionLock($directory),
+                $lock,
             );
 
             $handler->performHandshake($this->createConnection(), $this->createServerLink());
 
             self::assertStringStartsWith('PASS :', $this->written[0] ?? '');
+            self::assertTrue($lock->isHeld());
         } finally {
+            $lock->release();
+            @unlink($directory . '/udb.lock');
             @rmdir($directory);
         }
     }
@@ -154,6 +189,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
                 $this->createStub(UdbBlockStateRepositoryInterface::class),
                 new FakeUdbSnapshots(),
             ),
+            $this->createSessionLock(),
             logger: $logger,
         );
         $connection = $this->createConnection();
@@ -176,7 +212,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     {
         $directory = sys_get_temp_dir() . '/ares-udb-handler-' . uniqid('', true);
         mkdir($directory);
-        $foreign = fopen($directory . '/.udb.lock', 'c');
+        $foreign = fopen($directory . '/udb.lock', 'c');
         self::assertNotFalse($foreign);
         self::assertTrue(flock($foreign, LOCK_EX | LOCK_NB));
 
@@ -196,7 +232,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         } finally {
             flock($foreign, LOCK_UN);
             fclose($foreign);
-            @unlink($directory . '/.udb.lock');
+            @unlink($directory . '/udb.lock');
             @rmdir($directory);
         }
     }
@@ -225,7 +261,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
             // If lock was properly released, we should be able to acquire it again without error
             $lock->acquire();
             $lock->release();
-            @unlink($directory . '/.udb.lock');
+            @unlink($directory . '/udb.lock');
             @rmdir($directory);
         }
     }
@@ -242,7 +278,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $coordinator->expects(self::once())->method('tick')->willReturnCallback(static function () use (&$effects): void {
             $effects[] = 'tick';
         });
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $this->createSessionLock());
 
         $handler->handleIncoming(new IRCMessage(command: 'PING', params: ['123']), $connection);
 
@@ -303,7 +339,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $coordinator->method('onRemoteServer')->willReturnCallback(static function (string $sid, string $name) use (&$observed): void {
             $observed[] = [$sid, $name];
         });
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $this->createSessionLock());
         $connection = $this->createConnection();
 
         $handler->performHandshake($connection, $this->createServerLink());
@@ -363,7 +399,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
 
             return $event;
         });
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator, eventDispatcher: $eventDispatcher);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $this->createSessionLock(), eventDispatcher: $eventDispatcher);
 
         $handler->performHandshake($connection, $this->createServerLink());
         $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=0A1']), $connection);
@@ -498,7 +534,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
             $states->upsert($block->letter(), UdbChecksum::empty($block), 0);
         }
         $coordinator = new UdbSessionCoordinator('002', $states, new FakeUdbSnapshots(), scheduler: new DeterministicLoopScheduler(), clock: new MutableUdbClock());
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $this->createSessionLock());
         $connection = $this->createConnection();
         $handler->performHandshake($connection, $this->createServerLink());
         $handler->handleIncoming($handler->parseRawLine('PROTOCTL SID=001'), $connection);
@@ -536,7 +572,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $coordinator->expects(self::exactly(3))->method('handleFrame')->willReturnCallback(static function (UdbFrame $frame) use (&$received): void {
             $received[] = $frame;
         });
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $this->createSessionLock());
         $connection = $this->createConnection();
         foreach ([
             ':003 DB * INS 1111111111111111 18446744073709551613 C::#chan::access::nick :!sKjE=',
@@ -625,7 +661,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         }
         $snapshots = new FakeUdbSnapshots(['I' => ['1.2.3.4::clones' => '*5']]);
         $coordinator = new UdbSessionCoordinator('002', $states, $snapshots, mutationQueue: new UdbMutationQueue(2));
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $this->createSessionLock());
         $connection = $this->createConnection();
 
         $handler->performHandshake($connection, $this->createServerLink());
@@ -679,7 +715,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
             new FakeUdbSnapshots(),
             $logger,
         );
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator, logger: $logger);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $this->createSessionLock(), logger: $logger);
 
         $this->written = [];
         $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'BOGUS']), $this->createConnection());
@@ -741,7 +777,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $controller = $this->createMock(UdbSessionController::class);
         $controller->expects(self::once())->method('tick')->with($connection);
         $controller->expects(self::once())->method('handlePong')->with('001', 'UDB4-1-token', $connection);
-        $handler = new UnrealUdbProtocolHandler('002', $controller);
+        $handler = new UnrealUdbProtocolHandler('002', $controller, $this->createSessionLock());
 
         $handler->handleIncoming(
             new IRCMessage(command: 'PONG', prefix: '001', params: ['002'], trailing: 'UDB4-1-token'),
@@ -760,7 +796,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $logger->expects(self::once())
             ->method('critical')
             ->with('Remote server sent ERROR — closing link.', ['reason' => 'Link rejected']);
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator, logger: $logger);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $this->createSessionLock(), logger: $logger);
 
         $handler->handleIncoming(new IRCMessage(command: 'ERROR', trailing: 'Link rejected'), $connection);
 
@@ -784,7 +820,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $controller = $this->createMock(UdbSessionController::class);
         $controller->expects(self::once())->method('handleTransportBarrier')
             ->with('ircd.example.net', 'services.test.local', 'UDB4-1-nonce', $connection);
-        $handler = new UnrealUdbProtocolHandler('002', $controller);
+        $handler = new UnrealUdbProtocolHandler('002', $controller, $this->createSessionLock());
         $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 services.test.local UDB4-1-nonce :No such server'), $connection);
         $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 services.test.local :No such server'), $connection);
         $handler->handleIncoming(IRCMessage::fromRawLine(':ircd.example.net 402 services.test.local UDB4-1-nonce extra :No such server'), $connection);

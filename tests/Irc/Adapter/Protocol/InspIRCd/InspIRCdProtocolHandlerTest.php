@@ -22,9 +22,14 @@ use App\Irc\Domain\ValueObject\Hostname;
 use App\Irc\Domain\ValueObject\LinkPassword;
 use App\Irc\Domain\ValueObject\Port;
 use App\Irc\Domain\ValueObject\ServerName;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -39,12 +44,13 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         ?ActiveConnectionHolder $connectionHolder = null,
         ?InspIRCdChannelModeSupportFactory $factory = null,
         ?EventDispatcherInterface $eventDispatcher = null,
+        ?LoggerInterface $logger = null,
     ): InspIRCdProtocolHandler {
         return new InspIRCdProtocolHandler(
             sid: $sid,
             connectionHolder: $connectionHolder ?? new ActiveConnectionHolder(),
             modeSupportFactory: $factory ?? new InspIRCdChannelModeSupportFactory(),
-            logger: new NullLogger(),
+            logger: $logger ?? new NullLogger(),
             eventDispatcher: $eventDispatcher,
         );
     }
@@ -62,7 +68,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     }
 
     /** @param list<string> $written */
-    private function createRecordingConnection(array &$written): ConnectionInterface
+    private function createRecordingConnection(array &$written): ConnectionInterface&MockObject
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
@@ -263,6 +269,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         $connectionHolder = new ActiveConnectionHolder();
         $handler = $this->createHandler('C2C', $connectionHolder, eventDispatcher: $eventDispatcher);
         $handler->performHandshake($connection, $this->createServerLink());
+        $this->sendRequiredCapab($handler, $connection);
         $this->effects = [];
 
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['hub.example.net', 'pass', '0A1']), $connection);
@@ -284,6 +291,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         $this->assertCompletedBurstEffects();
 
         $handler->performHandshake($connection, $this->createServerLink());
+        $this->sendRequiredCapab($handler, $connection);
         $this->effects = [];
 
         $handler->handleIncoming(new IRCMessage(command: 'ENDBURST', prefix: '0A1'), $connection);
@@ -295,6 +303,172 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
         self::assertSame('0B1', $connectionHolder->getRemoteServerSid());
         $this->assertCompletedBurstEffects();
+    }
+
+    #[Test]
+    public function serverBeforeValidCapabEndRejectsLinkBeforeBurst(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('disconnect');
+        $connection->expects(self::never())->method('writeLine');
+        $handler = $this->createHandler('C2C');
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['hub.example.net', 'pass', '0A1']), $connection);
+    }
+
+    #[Test]
+    public function rejectedLinkIgnoresFurtherCapabilityNegotiation(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('disconnect');
+        $connection->expects(self::never())->method('writeLine');
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::never())->method('dispatch');
+        $holder = new ActiveConnectionHolder();
+        $log = new TestHandler();
+        $handler = $this->createHandler(connectionHolder: $holder, eventDispatcher: $dispatcher, logger: new Logger('test', [$log]));
+
+        $this->sendRequiredCapab($handler, $connection, version: '1205');
+        $this->sendRequiredCapab($handler, $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST'), $connection);
+
+        self::assertNull($holder->getRemoteServerSid());
+        self::assertCount(1, $log->getRecords());
+        self::assertTrue($log->hasCriticalRecords());
+    }
+
+    #[Test]
+    public function repeatedServerOnRejectedLinkDoesNotDisconnectOrStartBurstAgain(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('disconnect');
+        $connection->expects(self::never())->method('writeLine');
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::never())->method('dispatch');
+        $holder = new ActiveConnectionHolder();
+        $log = new TestHandler();
+        $handler = $this->createHandler(connectionHolder: $holder, eventDispatcher: $dispatcher, logger: new Logger('test', [$log]));
+
+        $server = new IRCMessage(command: 'SERVER', params: ['hub.example.net', 'pass', '0A1']);
+        $handler->handleIncoming($server, $connection);
+        $handler->handleIncoming($server, $connection);
+
+        self::assertNull($holder->getRemoteServerSid());
+        self::assertCount(1, $log->getRecords());
+        self::assertTrue($log->hasCriticalRecords());
+    }
+
+    #[Test]
+    public function capabEndRejectsMissingOrWrongProtocol1206(): void
+    {
+        foreach ([null, '1205', '1207'] as $version) {
+            $handlerLog = new TestHandler();
+            $logger = new Logger('test', [$handlerLog]);
+            $handler = $this->createHandler(logger: $logger);
+            $connection = $this->createMock(ConnectionInterface::class);
+            $connection->expects(self::once())->method('disconnect');
+            $connection->expects(self::never())->method('writeLine');
+
+            $this->sendRequiredCapab($handler, $connection, version: $version);
+
+            $serialized = serialize($handlerLog->getRecords());
+            self::assertStringContainsString('1206', $serialized);
+            self::assertStringNotContainsString('SERVER hub.example.net pass', $serialized);
+        }
+    }
+
+    #[Test]
+    #[DataProvider('missingRequiredModuleProvider')]
+    public function capabEndRejectsEachMissingRequiredModule(string $missingModule): void
+    {
+        $handlerLog = new TestHandler();
+        $logger = new Logger('test', [$handlerLog]);
+        $handler = $this->createHandler(logger: $logger);
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('disconnect');
+        $connection->expects(self::never())->method('writeLine');
+
+        $modules = ['services', 'cloak=cloak-host=synthetic.example'];
+        $modSupport = ['account', 'chghost=hostchars=example'];
+        if ('services' === $missingModule || 'cloak' === $missingModule) {
+            $modules = array_values(array_filter($modules, static fn (string $module): bool => !str_starts_with($module, $missingModule)));
+        } else {
+            $modSupport = array_values(array_filter($modSupport, static fn (string $module): bool => !str_starts_with($module, $missingModule)));
+        }
+
+        $this->sendRequiredCapab($handler, $connection, modules: $modules, modSupport: $modSupport);
+
+        self::assertStringContainsString($missingModule, serialize($handlerLog->getRecords()));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function missingRequiredModuleProvider(): iterable
+    {
+        yield 'services' => ['services'];
+        yield 'account' => ['account'];
+        yield 'chghost' => ['chghost'];
+        yield 'cloak' => ['cloak'];
+    }
+
+    #[Test]
+    public function prefixlessEndburstCompletesOnlyAfterDirectPeerAndOnlyOncePerConnection(): void
+    {
+        $this->effects = [];
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->effects[] = 'write:' . $line;
+        });
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(function (object $event): object {
+            $this->effects[] = 'event:' . $event::class;
+
+            return $event;
+        });
+        $handler = $this->createHandler('C2C', eventDispatcher: $eventDispatcher);
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $this->sendRequiredCapab($handler, $connection);
+        $this->effects = [];
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST'), $connection);
+        self::assertSame([], $this->effects);
+
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['hub.example.net', 'pass', '0A1']), $connection);
+        $this->effects = [];
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST', prefix: '0A2'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST'), $connection);
+        self::assertSame(['event:' . NetworkSyncCompleteEvent::class], $this->effects);
+
+        $handler->performHandshake($connection, $this->createServerLink());
+        $this->sendRequiredCapab($handler, $connection);
+        $this->effects = [];
+        $handler->handleIncoming(new IRCMessage(command: 'ENDBURST'), $connection);
+        self::assertSame([], $this->effects);
+    }
+
+    /**
+     * @param list<string> $modules
+     * @param list<string> $extraLines
+     * @param list<string> $modSupport
+     */
+    private function sendRequiredCapab(
+        InspIRCdProtocolHandler $handler,
+        ConnectionInterface $connection,
+        ?string $version = '1206',
+        array $modules = ['services', 'cloak=cloak-host=synthetic.example'],
+        array $modSupport = ['account', 'chghost=hostchars=example'],
+        array $extraLines = [],
+    ): void {
+        $startParams = ['START'];
+        if (null !== $version) {
+            $startParams[] = $version;
+        }
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: $startParams), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['MODULES'], trailing: implode(' ', $modules)), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['MODSUPPORT'], trailing: implode(' ', $modSupport)), $connection);
+        foreach ($extraLines as $line) {
+            $handler->handleIncoming(IRCMessage::fromRawLine($line), $connection);
+        }
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
     }
 
     private function assertOutgoingBurstEffects(): void
@@ -345,9 +519,9 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
         $connection = $this->createStub(ConnectionInterface::class);
 
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b list:banexception=e list:invex=I param-set:key=k prefix:10000:voice=+v prefix:30000:op=@o simple:inviteonly=i simple:c_registered=r simple:topiclock=t'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
+        $this->sendRequiredCapab($handler, $connection, extraLines: [
+            'CAPAB CHANMODES :list:ban=b list:banexception=e list:invex=I param-set:key=k prefix:10000:voice=+v prefix:30000:op=@o simple:inviteonly=i simple:c_registered=r simple:topiclock=t',
+        ]);
 
         self::assertFalse($module->getChannelModeSupport()->hasPermanentChannelMode());
         self::assertFalse($module->getChannelModeSupport()->hasHalfOp());
@@ -376,9 +550,9 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
         $connection = $this->createStub(ConnectionInterface::class);
 
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b param-set:key=k prefix:10000:voice=+v prefix:20000:halfop=%h prefix:30000:op=@o prefix:40000:admin=&a prefix:50000:founder=~q simple:c_registered=r simple:P=P simple:inviteonly=i'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
+        $this->sendRequiredCapab($handler, $connection, extraLines: [
+            'CAPAB CHANMODES :list:ban=b param-set:key=k prefix:10000:voice=+v prefix:20000:halfop=%h prefix:30000:op=@o prefix:40000:admin=&a prefix:50000:founder=~q simple:c_registered=r simple:P=P simple:inviteonly=i',
+        ]);
 
         self::assertTrue($module->getChannelModeSupport()->hasHalfOp());
         self::assertTrue($module->getChannelModeSupport()->hasAdmin());
@@ -408,9 +582,9 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
         $connection = $this->createStub(ConnectionInterface::class);
 
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b prefix:10000:voice=+v prefix:30000:op=@o simple:inviteonly=i'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
+        $this->sendRequiredCapab($handler, $connection, extraLines: [
+            'CAPAB CHANMODES :list:ban=b prefix:10000:voice=+v prefix:30000:op=@o simple:inviteonly=i',
+        ]);
 
         self::assertTrue($module->getChannelModeSupport()->hasPermanentChannelMode());
         self::assertTrue($module->getChannelModeSupport()->hasOwner());
@@ -436,14 +610,14 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         $written = [];
         $connection = $this->createRecordingConnection($written);
 
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START', '1206']), $connection);
         $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b prefix:10000:voice=+v simple:c_registered=r'), $connection);
 
         $handler->performHandshake($connection, $this->createServerLink());
 
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b param-set:key=k prefix:10000:voice=+v prefix:20000:halfop=%h prefix:30000:op=@o prefix:40000:admin=&a prefix:50000:founder=~q simple:c_registered=r simple:P=P'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
+        $this->sendRequiredCapab($handler, $connection, extraLines: [
+            'CAPAB CHANMODES :list:ban=b param-set:key=k prefix:10000:voice=+v prefix:20000:halfop=%h prefix:30000:op=@o prefix:40000:admin=&a prefix:50000:founder=~q simple:c_registered=r simple:P=P',
+        ]);
 
         self::assertTrue($module->getChannelModeSupport()->hasHalfOp());
         self::assertTrue($module->getChannelModeSupport()->hasOwner());

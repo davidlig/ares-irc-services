@@ -17,13 +17,15 @@ use function str_split;
 final readonly class ChannelModeStateSynchronizer
 {
     /**
-     * @param array<int, string> $modeParams
+     * @param array<int, string>                            $modeParams
+     * @param array<string, ChannelModeParameterMerge>|null $parameterMergeRules null replaces parameters; supplied rules merge equal-TS snapshots
      */
     public function applyInitialParams(
         Channel $channel,
         string $modeStr,
         array $modeParams,
         ChannelModeSupportInterface $support,
+        ?array $parameterMergeRules = null,
     ): void {
         if ([] === $modeParams) {
             return;
@@ -47,9 +49,20 @@ final readonly class ChannelModeStateSynchronizer
             if ($paramIdx >= count($modeParams)) {
                 break;
             }
-            $channel->applyModeParam($char, $modeParams[$paramIdx]);
-            ++$paramIdx;
+            $incoming = $modeParams[$paramIdx++];
+            $existing = $channel->getModeParam($char);
+            if (null === $parameterMergeRules || null === $existing || ($parameterMergeRules[$char] ?? null)?->prefersIncoming($existing, $incoming)) {
+                $channel->applyModeParam($char, $incoming);
+            }
         }
+    }
+
+    /** Union two channel mode snapshots without applying one side's removals over the other. */
+    public function mergeEqualTimestampModes(string $current, string $incoming): string
+    {
+        $letters = array_unique(str_split(str_replace('+', '', $current . $incoming)));
+
+        return [] === $letters ? '' : '+' . implode('', $letters);
     }
 
     /**

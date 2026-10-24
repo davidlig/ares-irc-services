@@ -10,6 +10,7 @@ use App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeInput;
 use App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeResult;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(RegistrationModeHandler::class)]
@@ -17,7 +18,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(RegistrationModeResult::class)]
 final class RegistrationModeHandlerTest extends TestCase
 {
-    public function testDenialDoesNotReadOrWritePolicy(): void
+    #[Test]
+    public function denialDoesNotReadOrWritePolicy(): void
     {
         $repository = $this->createMock(RegistrationPolicyRepository::class);
         $repository->expects(self::never())->method('current');
@@ -28,7 +30,8 @@ final class RegistrationModeHandlerTest extends TestCase
         self::assertFalse($result->changed);
     }
 
-    public function testStatusReadsWithoutMutation(): void
+    #[Test]
+    public function statusReadsWithoutMutation(): void
     {
         $repository = $this->createMock(RegistrationPolicyRepository::class);
         $repository->expects(self::once())->method('current')->willReturn(RegistrationMode::Email);
@@ -39,7 +42,8 @@ final class RegistrationModeHandlerTest extends TestCase
         self::assertFalse($result->changed);
     }
 
-    public function testUpdatesModeAndDetectsNoop(): void
+    #[Test]
+    public function updatesModeAndDetectsNoop(): void
     {
         $repository = $this->createMock(RegistrationPolicyRepository::class);
         $repository->expects(self::exactly(2))->method('change')->with(RegistrationMode::Email)->willReturnOnConsecutiveCalls(RegistrationMode::Token, RegistrationMode::Email);

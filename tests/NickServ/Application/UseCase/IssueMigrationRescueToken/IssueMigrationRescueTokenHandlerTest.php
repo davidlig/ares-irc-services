@@ -14,6 +14,7 @@ use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRes
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
@@ -21,7 +22,8 @@ use ReflectionProperty;
 #[CoversClass(IssueMigrationRescueToken::class)]
 final class IssueMigrationRescueTokenHandlerTest extends TestCase
 {
-    public function testEachAuthenticationReplacesOnlyMemoryChallengeUntilConfirmation(): void
+    #[Test]
+    public function eachAuthenticationReplacesOnlyMemoryChallengeUntilConfirmation(): void
     {
         $account = $this->account();
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
@@ -56,7 +58,8 @@ final class IssueMigrationRescueTokenHandlerTest extends TestCase
         self::assertSame($lastHash, $account->getRescueTokenHash());
     }
 
-    public function testMissingPendingAndCapacityExhaustionNeverClaimDelivery(): void
+    #[Test]
+    public function missingPendingAndCapacityExhaustionNeverClaimDelivery(): void
     {
         $pending = RegisteredNick::createPending('Pending', 'hash', 'p@example.com', 'en', new DateTimeImmutable('+1 hour'), new DateTimeImmutable());
         foreach ([null, $pending, $this->account()] as $account) {
@@ -73,7 +76,8 @@ final class IssueMigrationRescueTokenHandlerTest extends TestCase
         }
     }
 
-    public function testAccountMessagePreferenceIsPreserved(): void
+    #[Test]
+    public function accountMessagePreferenceIsPreserved(): void
     {
         $account = $this->account();
         $account->switchMsg(true);

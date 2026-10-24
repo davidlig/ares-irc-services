@@ -27,6 +27,8 @@ use App\Irc\Domain\ValueObject\ServerName;
 use App\Shared\Application\Port\AsyncMessageDispatcherInterface;
 use App\Shared\Application\Port\EventBusInterface;
 use Closure;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -696,6 +698,28 @@ final class IRCClientTest extends TestCase
 
         $this->client->disconnect('closing');
         self::assertNull($awareProtocol->pump);
+    }
+
+    #[Test]
+    public function disconnectLogRedactsCredentialBearingWireReason(): void
+    {
+        $handler = new TestHandler();
+        $logger = new Logger('test', [$handler]);
+        $client = new IRCClient(
+            $this->connection,
+            $this->protocol,
+            $this->eventDispatcher,
+            $this->messageBus,
+            $this->burstCompleteRegistry,
+            60,
+            $logger,
+        );
+
+        $client->disconnect('PASS :client-pass-secret');
+
+        $serialized = serialize($handler->getRecords());
+        self::assertStringNotContainsString('client-pass-secret', $serialized);
+        self::assertStringContainsString('PASS :******', $serialized);
     }
 
     #[Test]

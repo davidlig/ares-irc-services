@@ -138,6 +138,19 @@ class Channel
         unset($this->modeParams[$letter]);
     }
 
+    /** Clear generation-scoped channel state while retaining channel membership. */
+    public function resetModeSnapshot(): void
+    {
+        $this->modes = '';
+        $this->modeParams = [];
+        $this->bans = [];
+        $this->exempts = [];
+        $this->inviteExceptions = [];
+        foreach ($this->members as $uid => $member) {
+            $this->members[$uid] = $member->withPrefixLetters([]);
+        }
+    }
+
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;

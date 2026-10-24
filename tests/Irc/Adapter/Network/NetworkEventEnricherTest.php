@@ -1825,7 +1825,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onChannelJoinReceivedExistingChannelUpdatesModesWhenNonEmpty(): void
+    public function onChannelJoinReceivedHigherTimestampPreservesExistingGeneration(): void
     {
         $originalTimestamp = new DateTimeImmutable('@1000000000');
         $existingChannel = new Channel(new ChannelName('#test'), '+n', $originalTimestamp);
@@ -1854,7 +1854,9 @@ final class NetworkEventEnricherTest extends TestCase
         );
         $enricher->onChannelJoinReceived($event);
 
-        self::assertSame(1704067200, $existingChannel->getCreatedAt()->getTimestamp());
+        self::assertSame(1000000000, $existingChannel->getCreatedAt()->getTimestamp());
+        self::assertSame('+n', $existingChannel->getModes());
+        self::assertSame([], $existingChannel->getMember(new Uid('001NEW'))?->prefixLetters);
     }
 
     #[Test]

@@ -387,7 +387,7 @@ final class ConsumerProcessManagerTest extends TestCase
         $script = $this->createTemporaryConsoleScriptIgnoringSigterm($ready);
 
         try {
-            $manager = new ConsumerProcessManager($script);
+            $manager = new ConsumerProcessManager($script, stopGraceSeconds: 1);
             $manager->start();
             $deadline = microtime(true) + 2.0;
             while (!file_exists($ready) && microtime(true) < $deadline) {
@@ -398,6 +398,9 @@ final class ConsumerProcessManagerTest extends TestCase
             $manager->stop();
 
             self::assertFalse($manager->isRunning());
+            $reflection = new ReflectionClass($manager);
+            self::assertNull($reflection->getProperty('process')->getValue($manager));
+            self::assertNull($reflection->getProperty('pipes')->getValue($manager));
         } finally {
             @unlink($script);
             @unlink($ready);

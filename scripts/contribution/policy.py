@@ -180,16 +180,22 @@ def parse_closing_references(body: str, repository: str) -> ParsedReferences:
     keywords = list(_KEYWORD.finditer(visible))
     references = set()
     errors = []
+    continuation_required = False
     for index, keyword in enumerate(keywords):
         end = keywords[index + 1].start() if index + 1 < len(keywords) else len(visible)
         segment = visible[keyword.end():end]
         colon = bool(re.match(r"\s*:", segment))
         segment = re.sub(r"^\s*:\s*", "", segment).lstrip()
         prefix = visible[:keyword.start()].rstrip()
-        declaration = (colon or not prefix or prefix[-1] in ".!?:,;"
-                       or bool(re.search(r"\band$", prefix, re.IGNORECASE))
+        declaration = (colon or not prefix or prefix[-1] in ".!?:" or continuation_required
                        or not visible[:keyword.start()].split("\n")[-1].strip())
+        continuation_required = False
         segment = re.sub(r"^(?:[-*+]|[0-9]+[.)])\s+", "", segment)
+        # Punctuation/conjunctions in prose do not start declarations. Only an
+        # actual closing list may require the next keyword to supply a reference.
+        first_token = re.match(r"([^\s,;]+)", segment)
+        if not declaration and (first_token is None or not _looks_like_reference(first_token[1])):
+            continue
         found = False
         required = False
         while segment:
@@ -228,6 +234,7 @@ def parse_closing_references(body: str, repository: str) -> ParsedReferences:
                 segment = re.sub(r"^(?:[-*+]|[0-9]+[.)])\s+", "", segment)
             if not segment and required and index + 1 == len(keywords):
                 errors.append("Closing reference list has a missing item")
+        continuation_required = found and required and not segment
         if not found and not segment and declaration:
             errors.append("Closing declaration has no issue reference")
     return ParsedReferences(tuple(sorted(references)), tuple(errors))

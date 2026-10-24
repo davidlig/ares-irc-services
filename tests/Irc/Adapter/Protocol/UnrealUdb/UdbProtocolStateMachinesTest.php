@@ -108,7 +108,7 @@ final class UdbProtocolStateMachinesTest extends TestCase
             $peer = new UdbPeerSession();
             $peer->setOwnName('services.example.net');
             $peer->captureRemote('001', 'ircd.example.net');
-            $peer->observeAdvertisement($this->hel(), $bootstrap);
+            $peer->observeAdvertisement($bootstrap ? $this->hel(propagator: 'upstream.example.net') : $this->hel(), $bootstrap);
             foreach (['', 'no-dot', 'bad/name', 'bad@name.example', str_repeat('a', 62) . '.x', "bad\xff.example", 'bad name.example'] as $selector) {
                 $frame = new UdbFrame(UdbFrameKind::HelAck, '001', '002', propagator: $selector, epoch: '2222222222222222', capabilities: ['OCL']);
                 self::assertSame(UdbPeerAdvertisementChange::Invalid, $peer->observeAdvertisement($frame, $bootstrap));
@@ -127,7 +127,7 @@ final class UdbProtocolStateMachinesTest extends TestCase
             $frame = new UdbFrame(UdbFrameKind::Hel, '001', '002', propagator: $selector, epoch: '1111111111111111', capabilities: ['OCL']);
             self::assertSame(UdbPeerAdvertisementChange::SameInstance, $peer->observeAdvertisement($frame, false));
             self::assertSame($authorized, $peer->isAuthorized());
-            self::assertSame(UdbPeerAdvertisementChange::SameInstance, $peer->observeAdvertisement($frame, true));
+            self::assertSame('SERVICES.EXAMPLE.NET' === $selector ? UdbPeerAdvertisementChange::Invalid : UdbPeerAdvertisementChange::SameInstance, $peer->observeAdvertisement($frame, true));
             self::assertTrue($peer->isAuthorized());
         }
     }
@@ -274,13 +274,13 @@ final class UdbProtocolStateMachinesTest extends TestCase
         ));
     }
 
-    private function hel(string $epoch = '1111111111111111'): UdbFrame
+    private function hel(string $epoch = '1111111111111111', string $propagator = 'services.example.net'): UdbFrame
     {
         return new UdbFrame(
             UdbFrameKind::Hel,
             '001',
             '002',
-            propagator: 'services.example.net',
+            propagator: $propagator,
             epoch: $epoch,
             capabilities: ['OCL', 'OCLG'],
         );

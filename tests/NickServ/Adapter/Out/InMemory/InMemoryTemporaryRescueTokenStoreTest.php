@@ -9,12 +9,14 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(InMemoryTemporaryRescueTokenStore::class)]
 final class InMemoryTemporaryRescueTokenStoreTest extends TestCase
 {
-    public function testLatestChallengeExpirationAndConditionalRemoval(): void
+    #[Test]
+    public function latestChallengeExpirationAndConditionalRemoval(): void
     {
         $store = new InMemoryTemporaryRescueTokenStore();
         $now = new DateTimeImmutable('2026-01-01');
@@ -34,7 +36,8 @@ final class InMemoryTemporaryRescueTokenStoreTest extends TestCase
         self::assertFalse($store->matches(1, 'c', $now));
     }
 
-    public function testConfirmedMailRecoveryDiscardsOlderOptionalChallenges(): void
+    #[Test]
+    public function confirmedMailRecoveryDiscardsOlderOptionalChallenges(): void
     {
         $store = new InMemoryTemporaryRescueTokenStore();
         $now = new DateTimeImmutable('2026-01-01');
@@ -45,7 +48,8 @@ final class InMemoryTemporaryRescueTokenStoreTest extends TestCase
         self::assertSame(0, $store->prune($now));
     }
 
-    public function testCapacityFailsClosedWithoutDiscardingExistingChallenge(): void
+    #[Test]
+    public function capacityFailsClosedWithoutDiscardingExistingChallenge(): void
     {
         $store = new InMemoryTemporaryRescueTokenStore(1);
         $expires = new DateTimeImmutable('2026-01-01');
@@ -55,7 +59,8 @@ final class InMemoryTemporaryRescueTokenStoreTest extends TestCase
         $store->replace(2, 'c', $expires);
     }
 
-    public function testInvalidCapacityIsRejected(): void
+    #[Test]
+    public function invalidCapacityIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
         new InMemoryTemporaryRescueTokenStore(0);

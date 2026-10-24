@@ -21,6 +21,7 @@ use App\NickServ\Domain\ValueObject\RegistrationMode;
 use DateTimeImmutable;
 use OverflowException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
@@ -30,14 +31,16 @@ use RuntimeException;
 #[CoversClass(ResendVerificationResult::class)]
 final class ResendVerificationHandlerTest extends TestCase
 {
-    public function testTokenPolicyDisablesEveryResendBeforeAccountLookup(): void
+    #[Test]
+    public function tokenPolicyDisablesEveryResendBeforeAccountLookup(): void
     {
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::never())->method('findByNick');
         self::assertSame(ResendVerificationOutcome::Disabled, $this->handler($this->account(), mode: RegistrationMode::Token, repo: $repo)->handle($this->input())->outcome);
     }
 
-    public function testMissingActiveExpiredAndMissingEmailAccountsCannotResend(): void
+    #[Test]
+    public function missingActiveExpiredAndMissingEmailAccountsCannotResend(): void
     {
         $active = $this->account();
         $active->activate();
@@ -50,7 +53,8 @@ final class ResendVerificationHandlerTest extends TestCase
         }
     }
 
-    public function testThrottlePreservedAndReportsRemainingSeconds(): void
+    #[Test]
+    public function throttlePreservedAndReportsRemainingSeconds(): void
     {
         $throttle = $this->createMock(ResendThrottle::class);
         $throttle->expects(self::once())->method('remainingCooldownSeconds')->with('Alice', 60, $this->now())->willReturn(45);
@@ -59,7 +63,8 @@ final class ResendVerificationHandlerTest extends TestCase
         self::assertSame(45, $result->retryAfterSeconds);
     }
 
-    public function testResendRenewsPendingDeadlineAndMemoryChallengeWithoutPersistingToken(): void
+    #[Test]
+    public function resendRenewsPendingDeadlineAndMemoryChallengeWithoutPersistingToken(): void
     {
         $account = RegisteredNick::createPending('Alice', 'hash', 'alice@example.com', 'en', $this->now()->modify('+30 seconds'), $this->now());
         new ReflectionProperty($account, 'id')->setValue($account, 42);
@@ -95,7 +100,8 @@ final class ResendVerificationHandlerTest extends TestCase
         self::assertFalse($temporary->matches(42, $newHash, $this->now()->modify('+3600 seconds')));
     }
 
-    public function testMailFailureLeavesPendingAndNewMemoryChallengeRetryable(): void
+    #[Test]
+    public function mailFailureLeavesPendingAndNewMemoryChallengeRetryable(): void
     {
         $account = $this->account();
         $temporary = $this->createMock(TemporaryRescueTokenStore::class);
@@ -109,7 +115,8 @@ final class ResendVerificationHandlerTest extends TestCase
         self::assertNull($account->getRescueTokenHash());
     }
 
-    public function testCapacityFailureDoesNotClaimDelivery(): void
+    #[Test]
+    public function capacityFailureDoesNotClaimDelivery(): void
     {
         $temporary = $this->createStub(TemporaryRescueTokenStore::class);
         $temporary->method('replace')->willThrowException(new OverflowException());

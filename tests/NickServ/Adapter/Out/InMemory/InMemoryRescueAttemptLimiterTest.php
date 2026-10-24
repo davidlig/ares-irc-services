@@ -8,12 +8,14 @@ use App\NickServ\Adapter\Out\InMemory\InMemoryRescueAttemptLimiter;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(InMemoryRescueAttemptLimiter::class)]
 final class InMemoryRescueAttemptLimiterTest extends TestCase
 {
-    public function testAccountAndClientAggregationAndExpiration(): void
+    #[Test]
+    public function accountAndClientAggregationAndExpiration(): void
     {
         $limiter = new InMemoryRescueAttemptLimiter();
         $now = new DateTimeImmutable('2026-01-01');
@@ -32,7 +34,8 @@ final class InMemoryRescueAttemptLimiterTest extends TestCase
         self::assertSame(0, $limiter->prune($now->modify('+902 seconds')));
     }
 
-    public function testOldFailuresDoNotAccumulateAndCapacityFailsClosed(): void
+    #[Test]
+    public function oldFailuresDoNotAccumulateAndCapacityFailsClosed(): void
     {
         $limiter = new InMemoryRescueAttemptLimiter(2, 10, 5, 2);
         $now = new DateTimeImmutable('2026-01-01');
@@ -44,7 +47,8 @@ final class InMemoryRescueAttemptLimiterTest extends TestCase
         self::assertSame(0, $limiter->remainingCooldownSeconds(99, 'z', $now->modify('+16 seconds')));
     }
 
-    public function testInvalidConfigurationIsRejected(): void
+    #[Test]
+    public function invalidConfigurationIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
         new InMemoryRescueAttemptLimiter(0);

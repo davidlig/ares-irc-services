@@ -57,14 +57,14 @@ final readonly class IRCEventSubscriber implements EventSubscriberInterface
     {
         $this->logger->warning('Server link lost.', [
             'server' => (string) $event->serverLink->serverName,
-            'reason' => $event->reason ?? 'unknown',
+            'reason' => null === $event->reason ? 'unknown' : SensitiveDataRedactor::redactIrcLine($event->reason),
             'occurred' => $event->occurredAt->format(DateTimeInterface::ATOM),
         ]);
     }
 
     public function onIncomingMessage(IncomingIrcMessageEvent $event): void
     {
-        $message = $event->message;
+        $message = SensitiveDataRedactor::redactIrcMessage($event->message);
         $trailing = $message->trailing;
         $raw = $message->toRawLine();
 

@@ -16,6 +16,7 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbRecordDoctrineRep
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbRecordMutationDoctrineStore;
 use App\Irc\Adapter\Protocol\UnrealUdb\Reconciliation\UdbSnapshotProvider;
 use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionCoordinator;
+use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNickReservation;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbRecordWriter;
@@ -81,20 +82,29 @@ final class UdbAuthorityStateDoctrineRepositoryTest extends DoctrineIntegrationT
             $reservation->reserveNick('NickServ', 'managed service');
             $called = true;
         }, 200);
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator, eventDispatcher: $events);
+        $lockDirectory = sys_get_temp_dir() . '/ares-burst-lock-' . bin2hex(random_bytes(8));
+        $lock = new UdbSessionLock($lockDirectory);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, lock: $lock, eventDispatcher: $events);
         $link = new ServerLink(new ServerName('services.test'), new Hostname('127.0.0.1'), new Port(6667), new LinkPassword('dummy'), 'test');
-        $handler->performHandshake($connection, $link);
-        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=001']), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['ircd.test', '1']), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '001'), $connection);
-        self::assertTrue($called);
-        $checkpoint = new UdbAuthorityStateDoctrineRepository($this->entityManager)->state()->getDatasetCheckpoint();
-        self::assertNotNull($checkpoint);
-        self::assertSame($coordinator->epoch(), $checkpoint->origin->epoch);
-        self::assertSame('3', (string) $checkpoint->watermark);
-        $coordinator->prepareLocalStream();
-        $checkpoint = new UdbAuthorityStateDoctrineRepository($this->entityManager)->state()->getDatasetCheckpoint();
-        self::assertNotNull($checkpoint);
-        self::assertSame('3', (string) $checkpoint->watermark);
+        try {
+            $handler->performHandshake($connection, $link);
+            $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=001']), $connection);
+            $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['ircd.test', '1']), $connection);
+            $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '001'), $connection);
+            self::assertTrue($called);
+            $checkpoint = new UdbAuthorityStateDoctrineRepository($this->entityManager)->state()->getDatasetCheckpoint();
+            self::assertNotNull($checkpoint);
+            self::assertSame($coordinator->epoch(), $checkpoint->origin->epoch);
+            self::assertSame('3', (string) $checkpoint->watermark);
+            $coordinator->prepareLocalStream();
+            $checkpoint = new UdbAuthorityStateDoctrineRepository($this->entityManager)->state()->getDatasetCheckpoint();
+            self::assertNotNull($checkpoint);
+            self::assertSame('3', (string) $checkpoint->watermark);
+        } finally {
+            $handler->resetRemoteIdentity();
+            $lock->release();
+            @unlink($lockDirectory . '/udb.lock');
+            @rmdir($lockDirectory);
+        }
     }
 }

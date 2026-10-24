@@ -76,10 +76,29 @@ Replace the numbers with actual issues in plain PR text. Qualified
 malformed extra references or any invalid linked issue block admission; ordinary
 mentions do not grant authorization.
 
+For an unambiguous declaration, put closing references on their own line, such as
+`Closes #123`, and keep explanatory prose in a separate paragraph. Commas,
+semicolons and conjunctions in ordinary prose (for example, “reproduced, fixed in
+one batch”) do not create closing declarations. They are separators only within
+an actual reference list. A malformed continuation such as `Fixes #123, closes
+nonsense` still blocks admission; a valid later declaration cannot hide it.
+
+The check evaluates trusted `main`, not policy code proposed by the PR. If an
+older trusted parser mistakes ordinary prose for a closing declaration, reword
+only that prose while retaining the real closing references. A candidate parser
+correction cannot change its own admission check before it reaches trusted main.
+
 All steps use GitHub timestamps and must be strictly ordered:
 **latest issue scope edit/reopening < grant comment < grant-pointer application <
 original approved application < PR opening/latest reopening**. Equal timestamps
 fail conservatively. Do not batch both labels; verify distinct times before opening.
+
+If only the PR description has an invalid or ambiguous closing reference, correct
+that description and manually reopen the **same** PR after verifying its linked
+issues and grants. A description-only correction does not edit issue scope or
+renew a grant: the original first-consumer binding still applies. Do not create a
+replacement PR or cycle approval labels to recover it. If the correction adds a
+new behavior, that behavior needs its own issue and grant before reopening.
 
 Closing an issue revokes admission. Reopening it, changing its body/title, editing
 or deleting the grant, losing maintainer authority, or consuming it with another PR

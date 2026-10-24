@@ -81,6 +81,11 @@ final class UdbPeerSession
             return UdbPeerAdvertisementChange::Invalid;
         }
 
+        // A first-store source cannot depend on the authority we have not adopted yet.
+        if ($bootstrap && null !== $this->ownName && 0 === strcasecmp($frame->propagator, $this->ownName)) {
+            return UdbPeerAdvertisementChange::Invalid;
+        }
+
         $changed = null !== $this->remoteEpoch && $this->remoteEpoch !== $frame->epoch;
         $this->remoteEpoch = $frame->epoch;
         $this->authorized = $bootstrap
