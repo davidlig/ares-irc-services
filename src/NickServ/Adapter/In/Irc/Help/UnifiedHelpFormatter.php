@@ -6,6 +6,7 @@ namespace App\NickServ\Adapter\In\Irc\Help;
 
 use function is_array;
 use function is_int;
+use function is_string;
 use function ltrim;
 use function str_contains;
 use function str_replace;
@@ -173,7 +174,10 @@ final readonly class UnifiedHelpFormatter
         }
 
         if (method_exists($handler, 'getExampleKey')) {
-            $lines = [...$lines, ...$this->renderExamples($context, $handler->getExampleKey())];
+            $exampleKey = $handler->getExampleKey();
+            if (is_string($exampleKey)) {
+                $lines = [...$lines, ...$this->renderExamples($context, $exampleKey)];
+            }
         }
 
         $lines[] = ' ';
