@@ -83,6 +83,19 @@ class ReferenceTests(unittest.TestCase):
         for text in ("See #12", "This fixes the parser described in #12", "Issue #12 is approved"):
             self.assertEqual((), self.parse(text).references)
 
+    def test_explanatory_prose_after_punctuation_or_conjunction_is_not_a_declaration(self):
+        for prose in (
+            "Three regressions were reproduced, fixed in one bounded batch and rechecked.",
+            "Three regressions were reproduced; fixed in one bounded batch and rechecked.",
+            "Three regressions were reproduced and fixed in one bounded batch and rechecked.",
+            "No formatter differences remain to fix; all checks passed.",
+        ):
+            for body, expected in ((prose, ()), ("Closes #12\n\n" + prose, (IssueReference(REPO, 12),))):
+                with self.subTest(body=body):
+                    parsed = self.parse(body)
+                    self.assertEqual(expected, parsed.references)
+                    self.assertEqual((), parsed.errors)
+
     def test_markdown_examples_do_not_authorize(self):
         body = ("<!-- Fixes #1 -->\n```text\nFixes #2\n```\n~~~\nFixes #3\n~~~\n"
                 "Example `Fixes #4`\n    Fixes #5\nFixes #12")
@@ -113,7 +126,7 @@ class ReferenceTests(unittest.TestCase):
         self.assertEqual((), parsed.errors)
 
     def test_empty_or_punctuated_bad_declarations_fail_alongside_valid_one(self):
-        for bad in ("Fixes: , #wat", "Closes:", "Fixes: ; #13", "Fixes #12, closes nonsense"):
+        for bad in ("Fixes: , #wat", "Closes:", "Fixes: ; #13", "Fixes #12, closes nonsense", "Fixes #12; closes nonsense", "Fixes #12 and closes nonsense"):
             self.assertTrue(self.parse("Resolves #12\n" + bad).errors)
 
     def test_malformed_first_declaration_cannot_be_hidden_by_valid_later_one(self):
@@ -133,6 +146,14 @@ class ReferenceTests(unittest.TestCase):
 
 
 class AdmissionTests(unittest.TestCase):
+    def test_explanatory_fixed_in_prose_does_not_reject_an_approved_pr(self):
+        result = decision(pull(body="Closes #12\n\nThree regressions were reproduced, fixed in one bounded batch and rechecked."))
+        self.assertTrue(result.admitted)
+        self.assertTrue(result.review_satisfied)
+        self.assertEqual((12,), result.issue_numbers)
+        self.assertEqual((), result.admission_errors)
+        self.assertFalse(decision(pull(body="Three regressions were reproduced, fixed in one bounded batch and rechecked.")).admitted)
+
     def test_approved_issue_and_current_review_admit(self):
         result = decision()
         self.assertTrue(result.admitted)
