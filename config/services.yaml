@@ -597,7 +597,6 @@ services:
 
     App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight:
         arguments:
-            $directory: '%env(string:default::IRC_UDB_DIRECTORY)%'
             $bootstrapFromPeer: '%env(bool:IRC_UDB_BOOTSTRAP_FROM_PEER)%'
 
     App\Irc\Application\Connect\ProtocolConnectionPreflightInterface:
@@ -628,8 +627,8 @@ services:
 
     App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock:
         arguments:
-            $directory: '%env(string:default::IRC_UDB_DIRECTORY)%'
-            $logger:    '@monolog.logger.irc'
+            $lockDirectory: '%kernel.project_dir%/var/lock'
+            $logger:        '@monolog.logger.irc'
 
     App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
@@ -1045,10 +1044,6 @@ services:
 
     App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface:
         class: App\Irc\Adapter\Protocol\UnrealUdb\Persistence\Doctrine\UdbAuthorityStateDoctrineRepository
-
-    App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbOfflineTakeoverInterface:
-        alias: App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbOfflineTakeover
-
 
     # --- NickServ Bot pseudo-client ---------------------------------------------
 

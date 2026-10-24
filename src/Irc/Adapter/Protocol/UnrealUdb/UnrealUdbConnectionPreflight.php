@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Irc\Adapter\Protocol\UnrealUdb;
 
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface;
-use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbOfflineTakeoverInterface;
 use App\Irc\Application\Connect\ConnectionPreflightResult;
 use App\Irc\Application\Connect\ProtocolConnectionPreflightInterface;
 use Throwable;
@@ -19,8 +18,6 @@ final readonly class UnrealUdbConnectionPreflight implements ProtocolConnectionP
 
     public function __construct(
         private UdbAuthorityStateRepositoryInterface $authority,
-        private UdbOfflineTakeoverInterface $takeover,
-        private string $directory,
         private bool $bootstrapFromPeer = false,
     ) {}
 
@@ -37,11 +34,7 @@ final readonly class UnrealUdbConnectionPreflight implements ProtocolConnectionP
             );
         }
 
-        if ('' === $this->directory) {
-            return $this->approveFreshStore();
-        }
-
-        return $this->takeOverOfflineStore();
+        return $this->approveFreshStore();
     }
 
     private function approveFreshStore(): ConnectionPreflightResult
@@ -54,21 +47,7 @@ final readonly class UnrealUdbConnectionPreflight implements ProtocolConnectionP
 
         return new ConnectionPreflightResult(
             true,
-            'UDB fresh bootstrap approved: blocks seed from SQL on the first link (no offline dataset configured).',
-        );
-    }
-
-    private function takeOverOfflineStore(): ConnectionPreflightResult
-    {
-        try {
-            $fingerprint = $this->takeover->takeover($this->directory);
-        } catch (Throwable $exception) {
-            return new ConnectionPreflightResult(false, sprintf('Automatic udb:takeover failed: %s', $exception->getMessage()));
-        }
-
-        return new ConnectionPreflightResult(
-            true,
-            sprintf('Automatic udb:takeover approved the dataset (fingerprint %s).', $fingerprint),
+            'UDB fresh bootstrap approved: blocks seed from SQL on the first link.',
         );
     }
 }

@@ -8,9 +8,9 @@ use App\Irc\Adapter\Protocol\UnrealUdb\Session\UdbSessionLock;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 
+use function chmod;
 use function fclose;
 use function flock;
 use function fopen;
@@ -31,26 +31,25 @@ final class UdbSessionLockTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->directory = sys_get_temp_dir() . '/ares-udb-lock-' . uniqid('', true);
-        mkdir($this->directory);
+        $this->directory = sys_get_temp_dir() . '/ares-udb-lock-' . uniqid('', true) . '/var/lock';
     }
 
     protected function tearDown(): void
     {
-        @unlink($this->directory . '/.udb.lock');
+        @unlink($this->directory . '/udb.lock');
         @rmdir($this->directory);
+        @rmdir(dirname($this->directory));
+        @rmdir(dirname(dirname($this->directory)));
     }
 
     #[Test]
-    public function anEmptyDirectoryDisablesTheLockWithAWarning(): void
+    public function acquireCreatesTheApplicationLockDirectoryWhenMissing(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->once())->method('warning');
-
-        $lock = new UdbSessionLock('', $logger);
+        $lock = new UdbSessionLock($this->directory);
         $lock->acquire();
 
-        self::assertFalse($lock->isHeld());
+        self::assertTrue($lock->isHeld());
+        self::assertFileExists($this->directory . '/udb.lock');
     }
 
     #[Test]
@@ -61,16 +60,16 @@ final class UdbSessionLockTest extends TestCase
         $lock->acquire();
 
         self::assertTrue($lock->isHeld());
-        self::assertFileExists($this->directory . '/.udb.lock');
+        self::assertFileExists($this->directory . '/udb.lock');
     }
 
     #[Test]
-    public function theHeldLockExcludesTakeoverStyleFlock(): void
+    public function theHeldLockExcludesOtherLocalFlockUsers(): void
     {
         $lock = new UdbSessionLock($this->directory);
         $lock->acquire();
 
-        $foreign = fopen($this->directory . '/.udb.lock', 'c');
+        $foreign = fopen($this->directory . '/udb.lock', 'c');
         self::assertNotFalse($foreign);
         self::assertFalse(flock($foreign, LOCK_EX | LOCK_NB));
         fclose($foreign);
@@ -86,7 +85,7 @@ final class UdbSessionLockTest extends TestCase
 
         self::assertFalse($lock->isHeld());
 
-        $foreign = fopen($this->directory . '/.udb.lock', 'c');
+        $foreign = fopen($this->directory . '/udb.lock', 'c');
         self::assertNotFalse($foreign);
         self::assertTrue(flock($foreign, LOCK_EX | LOCK_NB));
         flock($foreign, LOCK_UN);
@@ -96,7 +95,8 @@ final class UdbSessionLockTest extends TestCase
     #[Test]
     public function acquireFailsWhenAnotherProcessHoldsTheDirectory(): void
     {
-        $foreign = fopen($this->directory . '/.udb.lock', 'c');
+        mkdir($this->directory, 0o770, true);
+        $foreign = fopen($this->directory . '/udb.lock', 'c');
         self::assertNotFalse($foreign);
         self::assertTrue(flock($foreign, LOCK_EX | LOCK_NB));
 
@@ -119,5 +119,45 @@ final class UdbSessionLockTest extends TestCase
         $lock->release();
 
         self::assertFalse($lock->isHeld());
+    }
+
+    #[Test]
+    public function anExistingFileCannotBeUsedAsTheLockDirectory(): void
+    {
+        $parent = dirname(dirname($this->directory));
+        mkdir($parent);
+        $file = $parent . '/not-a-directory';
+        file_put_contents($file, '');
+
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('UDB lock directory is not a directory.');
+            new UdbSessionLock($file)->acquire();
+        } finally {
+            unlink($file);
+        }
+    }
+
+    #[Test]
+    public function aMissingLockDirectoryConfigurationFailsExplicitly(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('UDB lock directory is not configured.');
+        new UdbSessionLock('')->acquire();
+    }
+
+    #[Test]
+    public function aDirectoryWithoutWritePermissionFailsExplicitly(): void
+    {
+        mkdir($this->directory, 0o770, true);
+        chmod($this->directory, 0o555);
+
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('is not writable.');
+            new UdbSessionLock($this->directory)->acquire();
+        } finally {
+            chmod($this->directory, 0o770);
+        }
     }
 }

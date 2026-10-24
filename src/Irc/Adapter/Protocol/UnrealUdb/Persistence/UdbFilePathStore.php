@@ -22,9 +22,8 @@ use const LOCK_UN;
  * Symfony Lock store backed by flock on ONE exact file path.
  *
  * FlockStore derives the lock filename from the key hash, so it cannot target
- * the shared `<directory>/.udb.lock` contract that the offline takeover also
- * holds. This store locks that exact path so daemon and takeover exclude each
- * other.
+ * the application's exact `var/lock/udb.lock` path. This store locks that
+ * local path for the lifetime of a UDB session.
  */
 final class UdbFilePathStore implements PersistingStoreInterface
 {
@@ -38,14 +37,10 @@ final class UdbFilePathStore implements PersistingStoreInterface
             return;
         }
 
-        $handle = fopen($this->path, 'c');
-        // @codeCoverageIgnoreStart
-        // fopen can only fail through a concurrent removal (TOCTOU) of a path
-        // the caller already validated; not reproducible deterministically.
+        $handle = @fopen($this->path, 'c');
         if (false === $handle) {
             throw new RuntimeException('Unable to open the UDB lock file.');
         }
-        // @codeCoverageIgnoreEnd
 
         if (!flock($handle, LOCK_EX | LOCK_NB)) {
             fclose($handle);

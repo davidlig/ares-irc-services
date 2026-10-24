@@ -7,7 +7,6 @@ namespace App\Tests\Bootstrap\Protocol;
 use App\Bootstrap\Protocol\ProtocolComposition;
 use App\Irc\Adapter\Protocol\NetworkStateAdapterInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\Persistence\UdbAuthorityStateRepositoryInterface;
-use App\Irc\Adapter\Protocol\UnrealUdb\Takeover\UdbOfflineTakeoverInterface;
 use App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbConnectionPreflight;
 use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use InvalidArgumentException;
@@ -82,8 +81,6 @@ final class ProtocolCompositionTest extends TestCase
     {
         return new UnrealUdbConnectionPreflight(
             $authority ?? $this->createStub(UdbAuthorityStateRepositoryInterface::class),
-            $this->createStub(UdbOfflineTakeoverInterface::class),
-            '',
         );
     }
 }
