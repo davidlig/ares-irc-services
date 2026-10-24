@@ -81,6 +81,22 @@ final class UnrealUdbNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
+    public function invalidUidTimestampsDoNotDispatchOrPreventTheNextValidUser(): void
+    {
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::exactly(4))->method('dispatch')
+            ->with(self::callback(static fn (object $event): bool => $event instanceof UserJoinedNetworkEvent));
+        $adapter = new UnrealUdbNetworkStateAdapter($dispatcher);
+        foreach (['', '-1', '+1', '1.5', '1e3', 'tomorrow', '9223372036854775808', '999999999999999999999999', '1\n'] as $timestamp) {
+            $adapter->handleMessage(new IRCMessage('UID', '001', ['Nick', '1', $timestamp, 'ident', 'host.test', '001ABC', '0', '+i', '*', 'cloak.test', 'aXB4'], 'Real name'));
+        }
+        // No clock-relative window: epoch, leading zeroes and the platform maximum are valid.
+        foreach (['0', '000123', (string) PHP_INT_MAX, '1234567890'] as $timestamp) {
+            $adapter->handleMessage(new IRCMessage('UID', '001', ['Nick', '1', $timestamp, 'ident', 'host.test', '001ABC', '0', '+i', '*', 'cloak.test', 'aXB4'], 'Real name'));
+        }
+    }
+
+    #[Test]
     public function handleNickDispatchesUserNickChangeReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
