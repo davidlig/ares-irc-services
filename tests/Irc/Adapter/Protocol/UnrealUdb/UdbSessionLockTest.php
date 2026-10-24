@@ -58,6 +58,7 @@ final class UdbSessionLockTest extends TestCase
         $lock = new UdbSessionLock($this->directory);
 
         $lock->acquire();
+        $lock->acquire();
 
         self::assertTrue($lock->isHeld());
         self::assertFileExists($this->directory . '/udb.lock');
