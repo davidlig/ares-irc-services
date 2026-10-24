@@ -80,10 +80,7 @@ final class UdbSessionLock
             throw new RuntimeException('UDB lock directory is not configured.');
         }
 
-        $directory = rtrim($this->lockDirectory, '/');
-        if ('' === $directory) {
-            $directory = '/';
-        }
+        $directory = $this->lockDirectory;
 
         if (!is_dir($directory)) {
             if (is_file($directory)) {

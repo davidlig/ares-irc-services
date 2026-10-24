@@ -139,6 +139,35 @@ final class UdbSessionLockTest extends TestCase
     }
 
     #[Test]
+    public function cannotCreateADirectoryUnderAnExistingFile(): void
+    {
+        $parent = dirname(dirname($this->directory));
+        mkdir($parent);
+        $file = $parent . '/file';
+        file_put_contents($file, '');
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Unable to create UDB lock directory');
+            new UdbSessionLock($file . '/child')->acquire();
+        } finally {
+            unlink($file);
+        }
+    }
+
+    #[Test]
+    public function lockFileFilesystemErrorsFailExplicitlyWithoutHoldingTheLock(): void
+    {
+        mkdir($this->directory . '/udb.lock', 0o770, true);
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Unable to acquire the local UDB session lock');
+            new UdbSessionLock($this->directory)->acquire();
+        } finally {
+            rmdir($this->directory . '/udb.lock');
+        }
+    }
+
+    #[Test]
     public function aMissingLockDirectoryConfigurationFailsExplicitly(): void
     {
         $this->expectException(RuntimeException::class);
