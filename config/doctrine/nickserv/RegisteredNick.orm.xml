@@ -32,7 +32,9 @@
         <field name="vhost" type="string" length="48" nullable="true" column="vhost" unique="true"/>
         <field name="timezone" type="string" length="64" nullable="true" column="timezone"/>
         <field name="msgPrivmsg" type="boolean" column="msg_privmsg"/>
-        <field name="noExpire" type="boolean" column="no_expire"/>
+        <field name="noExpire" type="boolean" column="no_expire">
+            <options><option name="default">0</option></options>
+        </field>
         <field name="pendingDeletionAt" type="datetime_immutable" nullable="true" column="pending_deletion_at"/>
     </entity>
 </doctrine-mapping>

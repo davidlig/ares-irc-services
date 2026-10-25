@@ -231,6 +231,18 @@ DATABASE_URL="mysql://user:pass@host:3306/db?serverVersion=8.0.32&charset=utf8mb
 DATABASE_URL="postgresql://user:pass@host:5432/db?serverVersion=16&charset=utf8"
 ```
 
+Validate a migrated database with `php bin/console doctrine:schema:validate`. This read-only check
+compares ORM-owned structures while preserving the explicitly owned DBAL tables and native LIST
+extensions. Its temporary schema filter is restored afterward; migrations and other schema commands
+keep their normal behavior. Do not use `doctrine:schema:update --force` to repair a migrated database.
+
+Migration `Version20261025000002` restores explicit UDB unique indexes without rebuilding tables.
+Duplicate legacy record identities make it fail rather than delete or rewrite records; resolve those
+conflicts deliberately before retrying. Its rollback removes only the new indexes and restores the
+redundant forbidden-vhost index, retaining records, earlier constraints and native LIST extensions.
+MySQL/MariaDB DDL is not transactional: inspect partial index creation after a failed migration before
+retrying, and use the deployment backup and maintenance procedure.
+
 ### NickServ
 
 | Variable | Default | Description |

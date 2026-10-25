@@ -5,7 +5,7 @@
                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
     <entity name="App\Irc\Adapter\Protocol\UnrealUdb\Model\UdbRecord" table="udb_records">
         <unique-constraints>
-            <unique-constraint name="uniq_udb_record_block_identity" columns="block,identity_hash"/>
+            <unique-constraint name="uniq_udb_records_block_identity" columns="block,identity_hash"/>
         </unique-constraints>
         <indexes>
             <index name="idx_udb_record_block" columns="block"/>
