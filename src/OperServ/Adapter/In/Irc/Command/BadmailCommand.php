@@ -94,7 +94,13 @@ final readonly class BadmailCommand implements OperServCommandInterface
         $authorized = $context->isAuthorized(OperServPermission::BADMAIL);
         $input = $this->parse($context->args, $authorized, $sender->nick, new DateTimeImmutable());
         if (null === $input) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+            $syntaxKey = match (strtoupper($context->args[0] ?? '')) {
+                'ADD' => 'badmail.add.syntax',
+                'DEL' => 'badmail.del.syntax',
+                'LIST' => 'badmail.list.syntax',
+                default => $this->getSyntaxKey(),
+            };
+            $context->reply('error.syntax', ['syntax' => $context->trans($syntaxKey)]);
 
             return;
         }

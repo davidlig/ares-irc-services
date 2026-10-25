@@ -34,6 +34,13 @@ reports zero pages. Each page contains at most `OPERSERV_BADMAIL_LIST_PAGE_SIZE`
 entries (default 50, minimum effective value 1), independently of
 `NICKSERV_LIST_PAGE_SIZE`. HELP BADMAIL ADD, DEL and LIST describe each operation.
 
+Malformed arguments for a recognized ADD, DEL or LIST subcommand show that
+subcommand's localized syntax. Missing or unknown subcommands show the general
+BADMAIL syntax. ADD accepts a multiword reason; LIST does not accept a reason.
+Successful ADD, DEL and DEL ALL replies use a green check mark and bold the
+domain, permanent ID or removed-entry count respectively, in every supported
+language. Formatting belongs to the replies, not to stored administrative reasons.
+
 ## Where the policy applies
 
 | Operation | Policy |

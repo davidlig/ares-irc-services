@@ -507,7 +507,7 @@ badmail:
     Gesperrte E-Mail-Domains verwalten.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <Domain> <Grund>"
+    syntax: "BADMAIL ADD <Domain> <Begründung>"
     short: "Eine Domain sperren."
     help: |-
       Akzeptiert ASCII- oder Punycode-Domains, keine Adressen oder Muster.
@@ -534,9 +534,9 @@ badmail:
   invalid_reason: "Eine nicht leere, einzeilige administrative Begründung ist erforderlich."
   duplicate: "Diese Domain ist bereits gesperrt."
   not_found: "Keine gesperrte Domain mit dieser Kennung gefunden."
-  added: "Domain %domain% gesperrt."
-  deleted: "Domainsperre %id% entfernt."
-  cleared: "%total% Domainsperren entfernt."
+  added: "\x0303✓\x03 Domain \x02%domain%\x02 gesperrt."
+  deleted: "\x0303✓\x03 Domainsperre \x02%id%\x02 entfernt."
+  cleared: "\x0303✓\x03 \x02%total%\x02 Domainsperren entfernt."
   empty: "Keine passenden gesperrten Domains."
   header: "ID | Domain | Begründung"
   page: "Seite %page%/%pages%, %total% passende Domains."
