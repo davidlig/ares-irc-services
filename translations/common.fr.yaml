@@ -24,6 +24,7 @@ unknown_help_option: "\x0304✗\x03\x0F Option d’aide \x0303%option%\x03\x0F i
 
 # --- ERROR -----------------------------------------------------------------
 error:
+  email_domain_blocked: "\x0304✗\x03 Ce domaine de courriel est bloqué par l’administration."
   syntax: "\x0304✗\x03 Syntaxe incorrecte. Usage : \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Cette commande est réservée aux opérateurs IRC."
   not_identified: "\x0304✗\x03 Vous n’êtes pas identifié. Utilisez /msg %nickserv% \x0303IDENTIFY <pseudonyme> <mot de passe>\x03"

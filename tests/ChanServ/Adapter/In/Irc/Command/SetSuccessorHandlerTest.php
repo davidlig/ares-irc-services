@@ -10,6 +10,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetSuccessorHandler;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelSuccessorChangedEvent;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
@@ -335,7 +336,7 @@ final class SetSuccessorHandlerTest extends TestCase
         ChanUserAccountPort $accounts,
         EventBusInterface $events,
     ): SetSuccessorHandler {
-        return new SetSuccessorHandler(new UpdateChannelSettingHandler($channels, $accounts, $events));
+        return new SetSuccessorHandler(new UpdateChannelSettingHandler($this->createStub(EmailDomainPolicy::class), $channels, $accounts, $events));
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

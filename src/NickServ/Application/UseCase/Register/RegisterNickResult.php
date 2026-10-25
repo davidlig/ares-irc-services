@@ -40,6 +40,11 @@ final readonly class RegisterNickResult
         return new self(RegisterNickOutcome::GuestPrefixForbidden, guestPrefix: $prefix);
     }
 
+    public static function blockedEmailDomain(): self
+    {
+        return new self(RegisterNickOutcome::BlockedEmailDomain);
+    }
+
     public static function invalidEmail(): self
     {
         return new self(RegisterNickOutcome::InvalidEmail);

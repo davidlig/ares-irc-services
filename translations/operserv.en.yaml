@@ -492,3 +492,44 @@ motd:
     none: "\x0303✓\x03 No expired MOTD entries to remove."
   debug:
     finalized: "MOTD message #%id% has ended: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Manage blocked email domains."
+  help: |-
+    Manage blocked email domains.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Block a domain."
+    help: |-
+      Accepts ASCII or punycode domains, not addresses or patterns. A reason
+      is required. Blocking is exact and does not include subdomains.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Remove blocked domains."
+    help: |-
+      Delete a permanent identifier, or ALL entries. Other identifiers do
+      not change.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "List blocked domains."
+    help: |-
+      The pattern is required. Only * is a wildcard, matching any sequence.
+      Matching ignores case. The optional page starts at 1. Filtering and
+      pages preserve permanent identifiers.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Invalid domain. Use an ASCII or punycode domain without a trailing dot."
+  invalid_reason: "A nonblank, single-line administrative reason is required."
+  duplicate: "This domain is already blocked."
+  not_found: "No blocked domain has that identifier."
+  added: "Blocked domain %domain%."
+  deleted: "Removed blocked domain %id%."
+  cleared: "Removed %total% blocked domains."
+  empty: "No blocked domains match."
+  header: "ID | Domain | Reason"
+  page: "Page %page%/%pages%, %total% matching domains."
+  row: "%id% | %domain% | %reason%"

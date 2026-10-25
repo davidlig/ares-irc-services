@@ -523,3 +523,46 @@ motd:
     none: "\x0303✓\x03 Δεν υπάρχουν ληγμένες καταχωρήσεις MOTD προς αφαίρεση."
   debug:
     finalized: "Το μήνυμα MOTD #%id% ολοκληρώθηκε: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Διαχείριση αποκλεισμένων τομέων email."
+  help: |-
+    Διαχείριση αποκλεισμένων τομέων email.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Αποκλεισμός τομέα."
+    help: |-
+      Δέχεται τομείς ASCII ή punycode, όχι διευθύνσεις ή μοτίβα. Απαιτείται
+      αιτιολογία. Ο αποκλεισμός είναι ακριβής και δεν περιλαμβάνει
+      υποτομείς.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Αφαίρεση αποκλεισμών τομέων."
+    help: |-
+      Διαγραφή μόνιμου αναγνωριστικού ή όλων των εγγραφών με ALL. Τα άλλα
+      αναγνωριστικά δεν αλλάζουν.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Λίστα αποκλεισμένων τομέων."
+    help: |-
+      Το μοτίβο είναι υποχρεωτικό. Μόνο το * ταιριάζει με οποιαδήποτε
+      ακολουθία. Δεν γίνεται διάκριση πεζών και κεφαλαίων. Η προαιρετική
+      σελίδα αρχίζει από 1. Τα αναγνωριστικά διατηρούνται κατά το
+      φιλτράρισμα και τη σελιδοποίηση.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Μη έγκυρος τομέας. Χρησιμοποιήστε ASCII ή punycode χωρίς τελική τελεία."
+  invalid_reason: "Απαιτείται μη κενή διοικητική αιτιολογία μίας γραμμής."
+  duplicate: "Ο τομέας είναι ήδη αποκλεισμένος."
+  not_found: "Δεν υπάρχει αποκλεισμένος τομέας με αυτό το αναγνωριστικό."
+  added: "Ο τομέας %domain% αποκλείστηκε."
+  deleted: "Ο αποκλεισμός %id% αφαιρέθηκε."
+  cleared: "Αφαιρέθηκαν %total% αποκλεισμένοι τομείς."
+  empty: "Δεν βρέθηκαν αντίστοιχοι αποκλεισμένοι τομείς."
+  header: "ID | Τομέας | Αιτιολογία"
+  page: "Σελίδα %page%/%pages%, %total% αντίστοιχοι τομείς."
+  row: "%id% | %domain% | %reason%"

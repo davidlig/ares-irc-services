@@ -29,6 +29,7 @@ register:
     Une fois validé, il deviendra votre jeton de récupération permanent :
     conservez-le en lieu sûr.
     La durée de validité de %duration% ne s’applique qu’avant sa validation.
+    Les domaines de courriel bloqués par l’administration sont refusés.
   example: "%command_prefix%\x02\x0303REGISTER MotDePasse$ur_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER MotDePasse$ur_123 utilisateur@exemple.com\x03\x0F"
@@ -234,6 +235,7 @@ set:
       SET EMAIL modifie l’adresse e-mail de contact après validation du jeton de
       récupération, sans le consommer. Le format et l’unicité sont vérifiés ; aucun
       e-mail de confirmation n’est envoyé.
+      Les domaines de courriel bloqués par l’administration sont refusés.
     example: "%command_prefix%\x02\x0303SET EMAIL utilisateur@exemple.com <token_confirmado>\x03\x0F"
     success: "\x0303✔\x03 Votre e-mail a été mis à jour en \x02%email%\x02."
     pending_sent: !irc |-
@@ -363,6 +365,7 @@ saset:
     help: |-
       Modifie l’adresse e-mail d’un autre pseudonyme. Le changement est immédiat et
       ne nécessite ni jeton de récupération ni e-mail de confirmation.
+      BADMAIL ne limite pas ce changement administratif de courriel.
     example: "%command_prefix%\x02\x0303SASET Utilisateur EMAIL utilisateur@exemple.com\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

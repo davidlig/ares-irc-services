@@ -29,6 +29,7 @@ register:
     Doğrulandıktan sonra kalıcı kurtarma tokenınız olur:
     güvenli bir yerde saklayın.
     %duration% süresi yalnızca doğrulama öncesinde geçerlidir.
+    Yönetim tarafından engellenen e-posta alan adları kullanılamaz.
   example: "%command_prefix%\x02\x0303REGISTER Güvenli$Parola_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Güvenli$Parola_123 kullanici@ornek.com\x03\x0F"
@@ -231,6 +232,7 @@ set:
     help: |-
       SET EMAIL, kurtarma tokenını tüketmeden doğruladıktan sonra iletişim e-postasını
       değiştirir. Biçimi ve benzersizliği denetler; onay e-postası göndermez.
+      Yönetim tarafından engellenen e-posta alan adları kullanılamaz.
     example: "%command_prefix%\x02\x0303SET EMAIL kullanici@ornek.com <token_confirmado>\x03\x0F"
     success: "\x0303✔\x03 E-postanız \x02%email%\x02 olarak güncellendi."
     pending_sent: !irc |-
@@ -356,6 +358,7 @@ saset:
     help: |-
       Başka bir takma adın e-posta adresini değiştirir. Değişiklik hemen uygulanır;
       kurtarma tokenı gerekmez ve onay e-postası gönderilmez.
+      BADMAIL bu yönetimsel e-posta değişikliğini kısıtlamaz.
     example: "%command_prefix%\x02\x0303SASET Kullanıcı EMAIL kullanici@ornek.com\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

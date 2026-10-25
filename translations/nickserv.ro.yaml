@@ -29,6 +29,7 @@ register:
     După verificare, acesta devine tokenul tău permanent de recuperare:
     Păstrează-l într-un loc sigur.
     Durata de expirare %duration% se aplică doar înainte de verificare.
+    Domeniile email blocate administrativ nu sunt permise.
   example: "%command_prefix%\x02\x0303REGISTER Parolă$Sigură_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Parolă$Sigură_123 utilizator@exemplu.ro\x03\x0F"
@@ -234,6 +235,7 @@ set:
     help: |-
       SET EMAIL schimbă adresa de contact după validarea tokenului de recuperare, fără
       a-l consuma. Verifică formatul și unicitatea; nu trimite e-mail de confirmare.
+      Domeniile email blocate administrativ nu sunt permise.
     example: "%command_prefix%\x02\x0303SET EMAIL utilizator@exemplu.ro <token_confirmado>\x03\x0F"
     success: "\x0303✔\x03 E-mailul dumneavoastră a fost actualizat la \x02%email%\x02."
     pending_sent: !irc |-
@@ -362,6 +364,7 @@ saset:
     help: |-
       Schimbă imediat e-mailul altei porecle. Nu este necesar tokenul de recuperare și
       nu se trimite un e-mail de confirmare.
+      BADMAIL nu restricționează această schimbare administrativă de email.
     example: "%command_prefix%\x02\x0303SASET Utilizator EMAIL utilizator@exemplu.ro\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

@@ -34,6 +34,6 @@ final class OperServIrcopPermissionTest extends TestCase
     {
         $permission = new OperServIrcopPermission();
 
-        self::assertSame(['operserv.kill', 'operserv.gline', 'operserv.global', 'operserv.raw', 'operserv.motd'], $permission->getPermissions());
+        self::assertSame(['operserv.kill', 'operserv.gline', 'operserv.global', 'operserv.raw', 'operserv.motd', 'operserv.badmail'], $permission->getPermissions());
     }
 }

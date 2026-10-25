@@ -98,6 +98,8 @@ storage details.
 
 Additional features include brute-force lockout, custom vhosts, suspension and inactivity
 expiry, action history, and IRCop search and restoration tools.
+[OperServ BADMAIL](docs/operserv-badmail.md) manages the network-wide email-domain
+policy used by registration and email changes, with explicit administrative exceptions.
 
 ### ChanServ
 
@@ -284,6 +286,7 @@ DATABASE_URL="postgresql://user:pass@host:5432/db?serverVersion=16&charset=utf8"
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `OPERSERV_NICK` | `OperServ` | Bot nickname |
+| `OPERSERV_BADMAIL_LIST_PAGE_SIZE` | `50` | Matching blocked domains per BADMAIL LIST page |
 | `OPERSERV_IDENT` | `OperServ` | Bot ident |
 | `OPERSERV_REALNAME` | `Network Operations Services` | Bot realname |
 | `OPERSERV_ROOT_USERS` | `ares` | ⚠ Comma-separated nicknames with full access |

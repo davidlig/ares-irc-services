@@ -498,3 +498,46 @@ motd:
     none: "\x0303✓\x03 Keine abgelaufenen MOTD-Einträge zum Entfernen."
   debug:
     finalized: "MOTD-Nachricht #%id% wurde beendet: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Gesperrte E-Mail-Domains verwalten."
+  help: |-
+    Gesperrte E-Mail-Domains verwalten.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Eine Domain sperren."
+    help: |-
+      Akzeptiert ASCII- oder Punycode-Domains, keine Adressen oder Muster.
+      Eine Begründung ist erforderlich. Die Sperre gilt exakt, nicht für
+      Subdomains.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Domainsperren entfernen."
+    help: |-
+      Eine dauerhafte Kennung oder mit ALL alle Einträge löschen. Andere
+      Kennungen bleiben unverändert.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Gesperrte Domains auflisten."
+    help: |-
+      Ein Muster ist erforderlich. Nur * ist ein Platzhalter für beliebige
+      Zeichenfolgen. Groß- und Kleinschreibung wird ignoriert. Die optionale
+      Seite beginnt bei 1. Kennungen bleiben beim Filtern und Blättern
+      erhalten.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Ungültige Domain. ASCII oder Punycode ohne abschließenden Punkt verwenden."
+  invalid_reason: "Eine nicht leere, einzeilige administrative Begründung ist erforderlich."
+  duplicate: "Diese Domain ist bereits gesperrt."
+  not_found: "Keine gesperrte Domain mit dieser Kennung gefunden."
+  added: "Domain %domain% gesperrt."
+  deleted: "Domainsperre %id% entfernt."
+  cleared: "%total% Domainsperren entfernt."
+  empty: "Keine passenden gesperrten Domains."
+  header: "ID | Domain | Begründung"
+  page: "Seite %page%/%pages%, %total% passende Domains."
+  row: "%id% | %domain% | %reason%"

@@ -123,6 +123,9 @@ final readonly class RegisterCommand implements NickServCommandInterface
             case RegisterNickOutcome::GuestPrefixForbidden:
                 $context->reply('register.guest_prefix_forbidden', ['prefix' => $result->guestPrefix]);
                 break;
+            case RegisterNickOutcome::BlockedEmailDomain:
+                $context->reply('error.email_domain_blocked');
+                break;
             case RegisterNickOutcome::InvalidEmail:
                 $context->reply('register.invalid_email');
                 break;

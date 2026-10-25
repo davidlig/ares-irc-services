@@ -212,7 +212,11 @@ set:
     examples:
       - "%command_prefix%\x02\x0303SET #kanaal EMAIL\x03\x0F"
     short: "Stel kanaal-e-mail in."
-    help: "Wijzigt het e-mailadres van een kanaal. Laat e-mail weg om het te verwijderen."
+    help: |-
+      Wijzigt het e-mailadres van een kanaal. Laat e-mail weg om het te
+      verwijderen. Administratief geblokkeerde e-maildomeinen zijn niet
+      toegestaan. Administratieve uitzondering: operators met toegang op
+      oprichtersniveau.
     invalid: "\x0304✗\x03 Ongeldig e-mailadres."
     updated: "\x0303✔\x03 E-mail bijgewerkt."
     cleared: "\x0303✔\x03 E-mail gewist."

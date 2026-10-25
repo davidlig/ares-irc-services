@@ -24,6 +24,7 @@ unknown_help_option: "\x0304✗\x03\x0F \x0303%command%\x03\x0F için bilinmeyen
 
 # --- ERROR -----------------------------------------------------------------
 error:
+  email_domain_blocked: "\x0304✗\x03 Bu e-posta alan adı yönetim tarafından engellenmiştir."
   syntax: "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
   not_identified: "\x0304✗\x03 Kimliğiniz doğrulanmadı. /msg %nickserv% \x0303IDENTIFY <takma_ad> <parola>\x03 kullanın"

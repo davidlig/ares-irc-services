@@ -212,7 +212,10 @@ set:
     examples:
       - "%command_prefix%\x02\x0303SET #canale EMAIL\x03\x0F"
     short: "Imposta l'email del canale."
-    help: "Modifica l'indirizzo email del canale. Ometti l'email per rimuoverla."
+    help: |-
+      Modifica l'indirizzo email del canale. Ometti l'email per rimuoverla.
+      I domini email bloccati amministrativamente non sono consentiti.
+      Eccezione amministrativa: operatori con accesso di livello fondatore.
     invalid: "\x0304✗\x03 Indirizzo email non valido."
     updated: "\x0303✔\x03 Email aggiornata."
     cleared: "\x0303✔\x03 Email rimossa."

@@ -9,6 +9,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetUrlHandler;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
@@ -119,6 +120,7 @@ final class SetUrlHandlerTest extends TestCase
     private function createHandler(RegisteredChannelRepositoryInterface $channels): SetUrlHandler
     {
         return new SetUrlHandler(new UpdateChannelSettingHandler(
+            $this->createStub(EmailDomainPolicy::class),
             $channels,
             $this->createStub(ChanUserAccountPort::class),
             $this->createStub(EventBusInterface::class),

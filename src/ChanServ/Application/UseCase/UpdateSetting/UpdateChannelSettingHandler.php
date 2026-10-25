@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\UseCase\UpdateSetting;
 
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelSuccessorChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
@@ -19,6 +20,7 @@ use const FILTER_VALIDATE_EMAIL;
 final readonly class UpdateChannelSettingHandler implements UpdateChannelSettingHandlerInterface
 {
     public function __construct(
+        private EmailDomainPolicy $emailDomainPolicy,
         private RegisteredChannelRepositoryInterface $channels,
         private ChanUserAccountPort $accounts,
         private EventBusInterface $events,
@@ -54,6 +56,9 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
         $email = trim($command->value);
         if ('' !== $email && false === filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::InvalidEmail);
+        }
+        if ('' !== $email && !$command->hasEmailDomainBypass && $this->emailDomainPolicy->isBlocked($email)) {
+            return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::BlockedEmailDomain);
         }
         $command->channel->updateEmail('' === $email ? null : $email);
         $this->channels->save($command->channel);

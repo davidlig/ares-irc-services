@@ -496,3 +496,44 @@ motd:
     none: "\x0303✓\x03 Non hai entradas MOTD caducadas que eliminar."
   debug:
     finalized: "A mensaxe MOTD #%id% finalizou: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Administrar dominios de correo bloqueados."
+  help: |-
+    Administrar dominios de correo bloqueados.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Bloquear un dominio."
+    help: |-
+      Acepta dominios ASCII ou punycode, non enderezos nin patróns. O motivo
+      é obrigatorio. O bloqueo é exacto e non inclúe subdominios.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Eliminar dominios bloqueados."
+    help: |-
+      Elimina un identificador permanente ou todas as entradas con ALL. Os
+      demais identificadores non cambian.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Listar dominios bloqueados."
+    help: |-
+      O patrón é obrigatorio. Só * é un comodín e coincide con calquera
+      secuencia. Non distingue maiúsculas. A páxina opcional comeza en 1. Os
+      identificadores consérvanse ao filtrar e paxinar.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Dominio non válido. Usa ASCII ou punycode, sen punto final."
+  invalid_reason: "Requírese un motivo administrativo non baleiro e dunha soa liña."
+  duplicate: "Este dominio xa está bloqueado."
+  not_found: "Non existe un dominio bloqueado con ese identificador."
+  added: "Dominio %domain% bloqueado."
+  deleted: "Dominio bloqueado %id% eliminado."
+  cleared: "Elimináronse %total% dominios bloqueados."
+  empty: "Ningún dominio bloqueado coincide."
+  header: "ID | Dominio | Motivo"
+  page: "Páxina %page%/%pages%, %total% dominios coincidentes."
+  row: "%id% | %domain% | %reason%"

@@ -29,6 +29,7 @@ register:
     Μόλις επαληθευτεί, γίνεται το μόνιμο διακριτικό ανάκτησής σας:
     Φυλάξτε το σε ασφαλές μέρος.
     Η διάρκεια ισχύος %duration% εφαρμόζεται μόνο πριν από την επαλήθευση.
+    Δεν επιτρέπονται διοικητικά αποκλεισμένοι τομείς email.
   example: "%command_prefix%\x02\x0303REGISTER Ασφαλές$Pass123_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Ασφαλές$Pass123_123 user@example.gr\x03\x0F"
@@ -236,6 +237,7 @@ set:
       Το SET EMAIL αλλάζει τη διεύθυνση επικοινωνίας μετά την επικύρωση του
       διακριτικού διάσωσης, χωρίς να το καταναλώνει. Ελέγχει μορφή και μοναδικότητα·
       δεν στέλνει email επιβεβαίωσης.
+      Δεν επιτρέπονται διοικητικά αποκλεισμένοι τομείς email.
     example: "%command_prefix%\x02\x0303SET EMAIL user@example.gr <token_confirmado>\x03\x0F"
     success: "\x0303✔\x03 Το email σας έχει ενημερωθεί σε \x02%email%\x02."
     pending_sent: !irc |-
@@ -386,6 +388,7 @@ saset:
 
       Σύνταξη: SASET <ψευδώνυμο> EMAIL <νέο_email>
       Παράδειγμα: SASET Χρήστης EMAIL χρήστης@παράδειγμα.com
+      Το BADMAIL δεν περιορίζει αυτή τη διοικητική αλλαγή email.
     example: "%command_prefix%\x02\x0303SASET Χρήστης EMAIL user@example.gr\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

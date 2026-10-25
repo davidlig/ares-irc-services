@@ -28,6 +28,7 @@ final class SetNickSettingPresentation
             SetNickSettingOutcome::MissingValue, SetNickSettingOutcome::InvalidFlag => self::reject($context, 'error.syntax', [
                 'syntax' => $context->trans('set.' . strtolower($result->option->value) . '.syntax'),
             ]),
+            SetNickSettingOutcome::BlockedEmailDomain => self::reject($context, 'error.email_domain_blocked'),
             SetNickSettingOutcome::InvalidEmail => self::reject($context, 'register.invalid_email'),
             SetNickSettingOutcome::EmailAlreadyUsed => self::reject($context, 'register.email_already_used', ['email' => $result->value]),
             SetNickSettingOutcome::InvalidEmailToken => self::reject($context, 'set.email.invalid_token'),

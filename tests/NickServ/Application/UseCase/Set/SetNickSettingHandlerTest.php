@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Set;
 
+use App\NickServ\Application\Event\NickEmailChangedEvent;
 use App\NickServ\Application\Model\NetworkUser;
 use App\NickServ\Application\Model\NickOperationActor;
 use App\NickServ\Application\Port\In\RescueTokenValidation;
@@ -11,6 +12,7 @@ use App\NickServ\Application\Port\In\RescueTokenValidationOutcome;
 use App\NickServ\Application\Port\In\RescueTokenValidationResult;
 use App\NickServ\Application\Port\In\RescueTokenValidator;
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\EmailDomainPolicy;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
@@ -294,6 +296,27 @@ final class SetNickSettingHandlerTest extends TestCase
         self::assertSame('OFF', $result->value);
     }
 
+    #[Test]
+    public function blocksOwnerEmailChangeWithoutMutationButAllowsExplicitSasetBypass(): void
+    {
+        $account = $this->account();
+        $original = $account->getEmail();
+        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repository->method('findByNick')->willReturn($account);
+        $repository->expects(self::once())->method('save')->with($account);
+        $policy = $this->createMock(EmailDomainPolicy::class);
+        $policy->expects(self::once())->method('isBlocked')->with('user@blocked.org')->willReturn(true);
+        $events = $this->createMock(NickServEventPublisher::class);
+        $events->expects(self::once())->method('publish')->with(self::isInstanceOf(NickEmailChangedEvent::class));
+        $validator = $this->createMock(RescueTokenValidator::class);
+        $validator->expects(self::never())->method('validate');
+        $handler = $this->handler($repository, events: $events, validator: $validator, emailPolicy: $policy);
+        self::assertSame(SetNickSettingOutcome::BlockedEmailDomain, $handler->handle($this->input(SetNickSettingOption::Email, 'user@blocked.org credential'))->outcome);
+        self::assertSame($original, $account->getEmail());
+        self::assertSame(SetNickSettingOutcome::Changed, $handler->handle($this->input(SetNickSettingOption::Email, 'user@blocked.org', true))->outcome);
+        self::assertSame('user@blocked.org', $account->getEmail());
+    }
+
     private function handler(
         RegisteredNickRepositoryInterface $repository,
         ?NickProtectionExemption $exemption = null,
@@ -306,11 +329,13 @@ final class SetNickSettingHandlerTest extends TestCase
         ?ForcedVhostCheckerInterface $forced = null,
         ?ForbiddenVhostRepositoryInterface $forbidden = null,
         ?VhostDisplayResolver $display = null,
+        ?EmailDomainPolicy $emailPolicy = null,
     ): SetNickSettingHandler {
         $clock = $this->createStub(Clock::class);
         $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-09 12:00:00 UTC'));
 
         return new SetNickSettingHandler(
+            $emailPolicy ?? $this->createStub(EmailDomainPolicy::class),
             $repository,
             new NickTargetValidator($exemption ?? $this->createStub(NickProtectionExemption::class), $repository),
             $hasher ?? $this->createStub(PasswordHasher::class),

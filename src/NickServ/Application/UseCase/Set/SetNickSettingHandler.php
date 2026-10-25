@@ -10,6 +10,7 @@ use App\NickServ\Application\Port\In\RescueTokenValidation;
 use App\NickServ\Application\Port\In\RescueTokenValidationOutcome;
 use App\NickServ\Application\Port\In\RescueTokenValidator;
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\EmailDomainPolicy;
 use App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface;
 use App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface;
 use App\NickServ\Application\Port\Out\NickNetworkActions;
@@ -39,6 +40,7 @@ use const FILTER_VALIDATE_EMAIL;
 final readonly class SetNickSettingHandler implements SetNickSettingHandlerInterface
 {
     public function __construct(
+        private EmailDomainPolicy $emailDomainPolicy,
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickTargetValidator $targetValidator,
         private PasswordHasher $passwordHasher,
@@ -139,6 +141,9 @@ final readonly class SetNickSettingHandler implements SetNickSettingHandlerInter
 
         if ($input->operatorMode) {
             return $this->applyEmailChange($input, $account, $newEmail, false);
+        }
+        if ($this->emailDomainPolicy->isBlocked($newEmail)) {
+            return $this->result(SetNickSettingOutcome::BlockedEmailDomain, $input);
         }
         if (null === $token || '' === $token) {
             return $this->result(SetNickSettingOutcome::TokenRequired, $input);

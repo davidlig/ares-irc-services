@@ -69,6 +69,7 @@ final class SetNickSettingPresentationTest extends TestCase
         yield 'service target' => [SetNickSettingOutcome::TargetIsService, SetNickSettingOption::Language, null, 'saset.cannot_modify_oper', false];
         yield 'missing value' => [SetNickSettingOutcome::MissingValue, SetNickSettingOption::Email, null, 'error.syntax', false];
         yield 'invalid flag' => [SetNickSettingOutcome::InvalidFlag, SetNickSettingOption::PrivateMode, null, 'error.syntax', false];
+        yield 'blocked domain' => [SetNickSettingOutcome::BlockedEmailDomain, SetNickSettingOption::Email, null, 'error.email_domain_blocked', false];
         yield 'invalid email' => [SetNickSettingOutcome::InvalidEmail, SetNickSettingOption::Email, 'bad', 'register.invalid_email', false];
         yield 'email used' => [SetNickSettingOutcome::EmailAlreadyUsed, SetNickSettingOption::Email, 'used@example.com', 'register.email_already_used', false];
         yield 'email token' => [SetNickSettingOutcome::InvalidEmailToken, SetNickSettingOption::Email, null, 'set.email.invalid_token', false];

@@ -503,3 +503,45 @@ motd:
     none:           "\x0303✓\x03 No hay entradas MOTD caducadas para eliminar."
   debug:
     finalized:      "El mensaje #%id% MOTD ha finalizado: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Administrar dominios de correo bloqueados."
+  help: |-
+    Administrar dominios de correo bloqueados.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Bloquear un dominio."
+    help: |-
+      Acepta dominios ASCII o punycode, no direcciones ni patrones. El
+      motivo es obligatorio. El bloqueo es exacto y no incluye subdominios.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Eliminar dominios bloqueados."
+    help: |-
+      Elimina un identificador permanente o todas las entradas con ALL. Los
+      demás identificadores no cambian.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Listar dominios bloqueados."
+    help: |-
+      El patrón es obligatorio. Solo * es un comodín y coincide con
+      cualquier secuencia. No distingue mayúsculas. La página opcional
+      empieza en 1. El filtro y las páginas conservan los identificadores
+      permanentes.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Dominio inválido. Usa ASCII o punycode, sin punto final."
+  invalid_reason: "Se requiere un motivo administrativo no vacío y de una sola línea."
+  duplicate: "Este dominio ya está bloqueado."
+  not_found: "No existe un dominio bloqueado con ese identificador."
+  added: "Dominio %domain% bloqueado."
+  deleted: "Dominio bloqueado %id% eliminado."
+  cleared: "Se han eliminado %total% dominios bloqueados."
+  empty: "Ningún dominio bloqueado coincide."
+  header: "ID | Dominio | Motivo"
+  page: "Página %page%/%pages%, %total% dominios coincidentes."
+  row: "%id% | %domain% | %reason%"

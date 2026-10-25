@@ -23,6 +23,11 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             return;
         }
         $result = $this->handler->handle($request);
+        if (UpdateChannelSettingOutcome::BlockedEmailDomain === $result->outcome) {
+            $context->reply('error.email_domain_blocked');
+
+            return;
+        }
         if (UpdateChannelSettingOutcome::InvalidEmail === $result->outcome) {
             $context->reply('set.email.invalid');
 

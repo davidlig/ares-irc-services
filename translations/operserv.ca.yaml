@@ -501,3 +501,44 @@ motd:
     none: "\x0303✓\x03 No hi ha entrades MOTD expirades per treure."
   debug:
     finalized: "El missatge MOTD #%id% ha finalitzat: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Administrar dominis de correu bloquejats."
+  help: |-
+    Administrar dominis de correu bloquejats.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Bloquejar un domini."
+    help: |-
+      Accepta dominis ASCII o punycode, no adreces ni patrons. El motiu és
+      obligatori. El bloqueig és exacte i no inclou subdominis.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Eliminar dominis bloquejats."
+    help: |-
+      Elimina un identificador permanent o totes les entrades amb ALL. Els
+      altres identificadors no canvien.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Llistar dominis bloquejats."
+    help: |-
+      El patró és obligatori. Només * és un comodí i coincideix amb
+      qualsevol seqüència. No distingeix majúscules. La pàgina opcional
+      comença a 1. Els identificadors es conserven en filtrar i paginar.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Domini invàlid. Usa ASCII o punycode, sense punt final."
+  invalid_reason: "Cal un motiu administratiu no buit i d’una sola línia."
+  duplicate: "Aquest domini ja està bloquejat."
+  not_found: "No hi ha cap domini bloquejat amb aquest identificador."
+  added: "Domini %domain% bloquejat."
+  deleted: "Domini bloquejat %id% eliminat."
+  cleared: "S’han eliminat %total% dominis bloquejats."
+  empty: "Cap domini bloquejat coincideix."
+  header: "ID | Domini | Motiu"
+  page: "Pàgina %page%/%pages%, %total% dominis coincidents."
+  row: "%id% | %domain% | %reason%"

@@ -213,7 +213,11 @@ set:
     examples:
       - "%command_prefix%\x02\x0303SET #salon EMAIL\x03\x0F"
     short: "Définir l'e-mail du canal."
-    help: "Modifie l’adresse e-mail du salon. Omettez l’adresse pour la supprimer."
+    help: |-
+      Modifie l’adresse e-mail du salon. Omettez l’adresse pour la
+      supprimer. Les domaines de courriel bloqués par l’administration sont
+      refusés. Exception administrative : opérateurs avec accès de niveau
+      fondateur.
     invalid: "\x0304✗\x03 Adresse e-mail invalide."
     updated: "\x0303✔\x03 E-mail mis à jour."
     cleared: "\x0303✔\x03 E-mail effacé."

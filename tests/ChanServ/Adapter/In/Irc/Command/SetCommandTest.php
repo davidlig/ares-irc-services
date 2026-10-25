@@ -23,6 +23,7 @@ use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
 use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandlerInterface;
@@ -94,7 +95,7 @@ final class SetCommandTest extends TestCase
         $eventDispatcher = $this->createStub(EventBusInterface::class);
         $trans = $this->createStub(TranslatorInterface::class);
         $trans->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $settingUpdater = new UpdateChannelSettingHandler($channelRepo, $nickRepo, $eventDispatcher);
+        $settingUpdater = new UpdateChannelSettingHandler($this->createStub(EmailDomainPolicy::class), $channelRepo, $nickRepo, $eventDispatcher);
 
         return new SetCommand(
             new ResolveChannelSettingHandler($channelRepo, $accessHelper),

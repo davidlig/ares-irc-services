@@ -211,7 +211,10 @@ set:
     examples:
       - "%command_prefix%\x02\x0303SET #channel EMAIL\x03\x0F"
     short: "Set channel email."
-    help: "Changes the channel email address. Omit the email to clear it."
+    help: |-
+      Changes the channel email address. Omit the email to clear it.
+      Administratively blocked email domains cannot be used. Administrative
+      exception: operators with founder-level access.
     invalid: "\x0304✗\x03 Invalid email address."
     updated: "\x0303✔\x03 Email updated."
     cleared: "\x0303✔\x03 Email cleared."
