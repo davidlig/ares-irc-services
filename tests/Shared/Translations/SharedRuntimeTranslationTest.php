@@ -89,8 +89,8 @@ final class SharedRuntimeTranslationTest extends TestCase
         $keys = ['debug.action_message', 'debug.action_with_option', 'debug.action_with_value', 'debug.prefix_reason', 'debug.action_duration'];
         $expectedHashes = [
             'ca' => '744bdc79ab61d8c241f35997ef503e8e512781819c6786ab50f63af34bf6ee16',
-            'de' => 'ef2f12251301386e56da10758b76122e34ddae511b752632418222e258dbd0e2',
-            'el' => '62d65daf956cf69990db78ef9539acdf5bcee0cce867c7c965b0abdefc7ef2c0',
+            'de' => '9db23ad686ffd7b6306ca29c3ea6a0752c95d492e5c21daaeae5fa492f23c9d5',
+            'el' => '382ee0d04a32da23f0ddac770863ea8522f2d1d5ccc6c93724830a60fd654469',
             'en' => '79397735417c3a794896f0281e86af4beb37d3ca9c86fc49aebee1a3feaabf68',
             'es' => 'f05a989218a4af9ee5e30e01ae8e6eb88a232793a0ff52434ef591de1d625e4c',
             'eu' => '4688baca0096fc5be9991a5e957a65c6ce3d09b67fdc31fc866d9d6a6932088e',
@@ -101,7 +101,7 @@ final class SharedRuntimeTranslationTest extends TestCase
             'pl' => '0cd18118f32ebaa226eb3194b5d0e1800d8e7c543a94753ddbe1eb470bb49197',
             'pt' => '4336e632fbd443b2e154dc5a6d2e47a4efecc95c2ce8fcb13f105691f65b7d04',
             'ro' => '87fdcce18e74b626a8172d5d461cd21dea2ac9e70177e8f7f39ce2766ad13c40',
-            'tr' => '7c1753545eec1a1058457fddf53b0ff8f53a4122fb9a81a7f70c31b1efb5d123',
+            'tr' => 'ef6cc1d313b85a50a9f6198db484af94966c6f3eabd76f749a098739fa3b2566',
         ];
 
         foreach (self::LOCALES as $locale) {
@@ -193,8 +193,8 @@ final class SharedRuntimeTranslationTest extends TestCase
         $keys = ['reply.separator', 'error.nick_not_online', 'label.no_reason', 'label.never', 'label.unknown_creator', 'label.permanent', 'label.permanent_inline'];
         $expectedHashes = [
             'ca' => 'dbba2d20cf7cc1bfad668a9d4672fdbaee353dff524eb130cb57bb51dd5b0829',
-            'de' => '178e8e57fb09ccb7d41749b6f89fceafabf76436791f9e8010e1bf35a2ad8911',
-            'el' => 'c7729d3be44e40215349896fa5375364e7715288ed3aacc93ecc4564cf0fc385',
+            'de' => 'bb5c7b944d631ce972a093da3dae916932ffe36eb23daa05fa32607db1d1324f',
+            'el' => 'da004a0248d28724e72d451d7652b70d9d110a8fa27e6da0ab1e157163034d51',
             'en' => 'be6e37cf26331c24b4332f0efd5f08b0e5d69190abc05de074b24f316b8fe871',
             'es' => '18dcc1e881233f9888a9c89a8d706aaf2d5e25501d57eeafc1e2deeeb9c034bf',
             'eu' => '0159c29a89f0433c3d18183f32ad620cafda04a6721f2432d541288ece7a443b',
@@ -205,7 +205,7 @@ final class SharedRuntimeTranslationTest extends TestCase
             'pl' => '1cd1c0cd1825f1846d9f5f36528d21e07e2372f47955c19fcae18c7efae064f5',
             'pt' => 'f85185be9b28c458713d9bfc751fc87aec67a6e4fbb144a65fe75628640bffa3',
             'ro' => '0fc6d1876c233bda19b87764c86ed3c446beabbe085b5c5bd0549e5e713d4f71',
-            'tr' => '8ed3bb773442a203a7a1266f3e7255d7bb6f6873a4c64760c679ccc086b83232',
+            'tr' => '022eb37124b042ecd9a3c3e3f3242957446990dc0399f60778e39b8b1d9d7836',
         ];
 
         foreach (self::LOCALES as $locale) {

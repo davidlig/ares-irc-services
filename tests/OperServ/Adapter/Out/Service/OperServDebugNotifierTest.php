@@ -403,11 +403,11 @@ final class OperServDebugNotifierTest extends TestCase
     #[Test]
     public function realCatalogDebugOutputRemainsIdenticalInEveryLocale(): void
     {
-        // Hashes pin the complete nine-message transcript before common extraction.
+        // Hashes pin the complete nine-message transcript, including localized reason labels.
         $expectedHashes = [
             'ca' => 'dbf4548d8eace03c5d2ad1bd736fb679069ec28f12c9f541adf90cef10f71587',
-            'de' => 'f596866c8b52882817fb0dc6094dd60893933f35bb6e4c00f57a4ff09ee0b8a3',
-            'el' => '0c25dddaf82a01daef0788ebf3aec3e15a3e2fb85d3fcad456418c47e41e1310',
+            'de' => '306a0a892defc8cc945051c88dc2bd70002c696b320167f2db5719ffc1367775',
+            'el' => '1ffbef3ff394df1e18cead8d565e5b642c70b66a1bff27b8fad4c5ceefafc7fa',
             'en' => 'bfb08ad9fb1d580e6fc9ec52bab0d16a9d6ab916e52d38857156d30ac986248c',
             'es' => '2e43e37cb7413783aef9c27cf5c1adf8bf1fa18e843aa813a3f3acd414397ff3',
             'eu' => '553a9f23b9066d7d03df3ee3aaf3e30bcf889efea4030ea76e47d1dc65a28288',
@@ -418,7 +418,7 @@ final class OperServDebugNotifierTest extends TestCase
             'pl' => 'e8db6ef45dd48e10b627393ab7277ca6cb4a3ea4f09f474c892682a9b2046829',
             'pt' => '6a07e3cb7d418238f10fc6e254cb1a727e64e9135edf6799d8afa9f63105e13d',
             'ro' => '654755bf327d6a9d644a71d135e717e6bd4d85698a6924d856c8059618e57c04',
-            'tr' => '13849d5eada302d93db37bebea3564e991c03a7de156765f8acf246e14b73923',
+            'tr' => '7764d21fa2eb19579d17863fb4bd4ce834db91cc9d9510a78a7cca2f90577dd3',
         ];
         foreach ($expectedHashes as $locale => $hash) {
             $translator = new Translator($locale);

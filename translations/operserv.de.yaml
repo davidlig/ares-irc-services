@@ -313,7 +313,7 @@ role:
 
 # --- KILL ------------------------------------------------------------------
 kill:
-  syntax: "KILL <nickname> <Grund>"
+  syntax: "KILL <nickname> <Begründung>"
   short: "Einen Benutzer zwangsweise vom Netzwerk trennen."
   help: |-
     Trennt einen Benutzer vom IRC-Netzwerk.
@@ -325,11 +325,11 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [Maske] [Ablauf] [Grund]"
+  syntax: "GLINE {ADD|DEL|LIST} [Maske] [Ablauf] [Begründung]"
   short: "Netzwerkweite G-Lines verwalten."
   help: |-
     Verwaltet netzwerkweite G-Lines (Bans).
-    ADD fügt eine G-Line mit Maske, Ablaufzeit und Grund hinzu.
+    ADD fügt eine G-Line mit Maske, Ablaufzeit und Begründung hinzu.
     DEL entfernt eine G-Line anhand der Maske oder Eintragsnummer.
     LIST zeigt alle G-Lines an und kann nach Maske gefiltert werden.
 
@@ -351,7 +351,7 @@ gline:
 
   # --- GLINE ADD -----------------------------------------------------------
   add:
-    syntax: "GLINE ADD <Maske> <Ablauf> <Grund>"
+    syntax: "GLINE ADD <Maske> <Ablauf> <Begründung>"
     short: "Eine netzwerkweite G-Line hinzufügen."
     help: |-
       Fügt eine netzwerkweite G-Line (Ban) hinzu.

@@ -500,7 +500,7 @@ whoip:
 
 # --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax: "SUSPEND <nickname> <duration> <reason>"
+  syntax: "SUSPEND <nickname> <duration> <motiu>"
   short: "Suspendre un sobrenom."
   help: |-
     Impedeix que el propietari s'identifiqui. La durada es pot expressar en dies
@@ -575,7 +575,7 @@ restore:
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax: "FORBID <nickname> <reason>"
+  syntax: "FORBID <nickname> <motiu>"
   short: "Bloquejar permanentment l'ús d'un sobrenom."
   help: |-
     Prohibeix permanentment un sobrenom perquè ningú no

@@ -94,6 +94,16 @@ There is no separate UDB Domain/Application test tree.
 
 ## 5. What to test
 
+### Translation catalog smoke tests
+
+`tests/Shared/Translations/TranslationCatalogTest.php` checks English (`en`) only.
+Keep it limited to catalog loading and essential key/placeholder checks. Do not add
+cross-locale comparisons, exhaustive prose snapshots, or color, padding, and line-wrapping
+assertions. Do not move removed checks to another test just to retain them.
+The class uses `CoversNothing`; production line coverage comes from focused behavior tests,
+such as the IRC YAML loader tests, not additional catalog assertions. Continue reviewing all
+14 supported locales when changing translations.
+
 ### Domain
 Invariants, transitions, policies, value objects.
 

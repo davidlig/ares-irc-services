@@ -60,11 +60,11 @@ info:
   no_expire: "  \x0314Ποτέ δεν λήγει\x03  : Ναι"
   mlock_modes: "  \x0314Κλείδωμα λειτ.\x03  : %modes%"
   suspended_status: "  \x0314Κατάσταση\x03       : \x0304Σε αναστολή\x03"
-  suspended_reason: "  \x0314Αιτία\x03           : %reason%"
+  suspended_reason: "  \x0314Αιτιολογία\x03      : %reason%"
   suspended_until: "  \x0314Λήγει στις\x03      : %date%"
   suspended_permanent: "  \x0314Λήγει στις\x03      : Μόνιμη"
   forbidden_status: "  \x0314Κατάσταση\x03       : \x0304Απαγορευμένο\x03"
-  forbidden_reason: "  \x0314Αιτία\x03           : %reason%"
+  forbidden_reason: "  \x0314Αιτιολογία\x03      : %reason%"
   pending_deletion_status: "  \x0314Κατάσταση\x03          : \x0307Σε εκκρεμότητα διαγραφής\x03"
   pending_deletion_at: "  \x0314Διαγράφηκε\x03         : %date%"
   pending_deletion_until: "  \x0314Οριστική διαγραφή\x03  : %date%"
@@ -457,7 +457,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [reason]"
+  syntax: "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [αιτιολογία]"
   example: "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 7d Spam\x03\x0F"
@@ -466,7 +466,8 @@ akick:
     - "%command_prefix%\x02\x0303AKICK #κανάλι LIST\x03\x0F"
   short: "Διαχείριση λίστας auto-kick."
   help: |-
-    ADD <μάσκα> [expiry] [reason]: προσθήκη καταχώρησης. DEL <mask|num>: αφαίρεση.
+    ADD <μάσκα> [expiry] [αιτιολογία]: προσθήκη καταχώρησης.
+    DEL <mask|num>: αφαίρεση.
     LIST: λίστα καταχωρήσεων.
   unknown_sub: "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL ή LIST."
   invalid_mask: "\x0304✗\x03 Μη έγκυρη μορφή μάσκας. Χρησιμοποιήστε \x02nick!ident@host\x02 με χαρακτήρες wildcard (*)."
@@ -476,13 +477,14 @@ akick:
 
   # --- AKICK ADD -----------------------------------------------------------
   add:
-    syntax: "AKICK <#channel> ADD <mask> [expiry] [reason]"
+    syntax: "AKICK <#channel> ADD <mask> [expiry] [αιτιολογία]"
     example: "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 0\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #κανάλι ADD *!*@* 7d Spam\x03\x0F"
     short: "Προσθήκη καταχώρησης AKICK."
     help: |-
-      Απαιτείται λήξη αν καθορίζεται αιτία. Μορφές: 0 (μόνιμο), 1d, 7d, 30d, 12h, 60m.
+      Απαιτείται λήξη αν καθορίζεται αιτιολογία.
+      Μορφές: 0 (μόνιμο), 1d, 7d, 30d, 12h, 60m.
       Παραδείγματα: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'.
     done: "\x0303✔\x03 Το AKICK \x02%mask%\x02 προστέθηκε."
     already_exists: "\x0304✗\x03 Το AKICK \x02%mask%\x02 υπάρχει ήδη."
@@ -505,7 +507,7 @@ akick:
     syntax: "AKICK <#channel> LIST"
     example: "%command_prefix%\x02\x0303AKICK #κανάλι LIST\x03\x0F"
     short: "Λίστα καταχωρήσεων AKICK."
-    help: "Εμφανίζει μάσκα, αιτία, λήξη και ποιος πρόσθεσε."
+    help: "Εμφανίζει μάσκα, αιτιολογία, λήξη και ποιος πρόσθεσε."
     header: "\x0303Λίστα AKICK για \x02%channel%\x02\x03"
     empty: "\x0307ℹ\x03 Το κανάλι \x02%channel%\x02 δεν έχει καταχωρήσεις AKICK."
     entry: "  #%index% %mask% %reason% (από %nickname%, λήγει: %expiration%)"
@@ -543,7 +545,7 @@ drop:
 
 # --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax: "SUSPEND <#channel> <duration> <reason>"
+  syntax: "SUSPEND <#channel> <duration> <αιτιολογία>"
   example: "%command_prefix%\x02\x0303SUSPEND #κανάλι 7d Παραβίαση κανόνων\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SUSPEND #κανάλι 0 Παραβίαση κανόνων\x03\x0F"
@@ -558,7 +560,7 @@ suspend:
   already_suspended: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη σε αναστολή."
   invalid_duration: "\x0304✗\x03 Μη έγκυρη διάρκεια. Χρησιμοποιήστε: 0 (μόνιμη), 1d, 12h, ή 60m."
   channel_suspended: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναστολή και δεν μπορεί να χρησιμοποιηθεί."
-  notice_channel: "\x0304⚠\x03 Το κανάλι έχει τεθεί σε αναστολή. Αιτία: %reason%"
+  notice_channel: "\x0304⚠\x03 Το κανάλι έχει τεθεί σε αναστολή. Αιτιολογία: %reason%"
 
 # --- UNSUSPEND -------------------------------------------------------------
 unsuspend:
@@ -621,7 +623,7 @@ noexpire:
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax: "FORBID <#channel> <reason>"
+  syntax: "FORBID <#channel> <αιτιολογία>"
   example: "%command_prefix%\x02\x0303FORBID #κανάλι Παραβίαση κανόνων\x03\x0F"
   short: "Απαγόρευση χρήσης καναλιού."
   help: |-
@@ -629,9 +631,9 @@ forbid:
     Αν το κανάλι είναι τρέχοντα καταχωρημένο, θα διαγραφεί πρώτα.
     Όλοι οι χρήστες στο κανάλι θα γίνουν kick και το κανάλι θα κλειδωθεί.
     Αυτή η εντολή απαιτεί άδεια IRCop: chanserv.forbid
-  reason_required: "\x0304✗\x03 Πρέπει να καθορίσετε μια αιτία."
+  reason_required: "\x0304✗\x03 Πρέπει να καθορίσετε μια αιτιολογία."
   success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει απαγορευτεί."
-  updated: "\x0303✔\x03 Η αιτία απαγόρευσης για το κανάλι \x02%channel%\x02 έχει ενημερωθεί."
+  updated: "\x0303✔\x03 Η αιτιολογία απαγόρευσης για το κανάλι \x02%channel%\x02 έχει ενημερωθεί."
   channel_forbidden: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι απαγορευμένο και δεν μπορεί να χρησιμοποιηθεί."
 
 # --- UNFORBID --------------------------------------------------------------
@@ -757,7 +759,7 @@ clearaccess:
 
 # --- CLEARUSERS ------------------------------------------------------------
 clearusers:
-  syntax: "CLEARUSERS <#channel> [reason]"
+  syntax: "CLEARUSERS <#channel> [αιτιολογία]"
   example: "%command_prefix%\x02\x0303CLEARUSERS #κανάλι\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303CLEARUSERS #κανάλι κατάκλυση\x03\x0F"
@@ -766,13 +768,13 @@ clearusers:
     Κάνει kick όλους τους χρήστες από το καθορισμένο κανάλι.
     Αυτή είναι μια εντολή μόνο για IRCop, που χρησιμοποιείται για διαχείριση
     καναλιού.
-    Μπορεί να δοθεί προαιρετική αιτία· αν παραλειφθεί, χρησιμοποιείται μια
-    προεπιλεγμένη αιτία.
+    Μπορεί να δοθεί προαιρετική αιτιολογία· αν παραλειφθεί, χρησιμοποιείται μια
+    προεπιλεγμένη αιτιολογία.
 
     Μόνο IRCops με άδεια 'chanserv.clearusers' μπορούν να χρησιμοποιήσουν αυτήν την
     εντολή.
 
-    Σύνταξη: CLEARUSERS <#κανάλι> [reason]
+    Σύνταξη: CLEARUSERS <#κανάλι> [αιτιολογία]
     Παραδείγματα:
       CLEARUSERS #channel
       CLEARUSERS #channel flooding

@@ -89,7 +89,7 @@ debug:
   action_message: "%operator% führt Befehl %command% auf %target% aus. %reason%"
   action_with_option: "%operator% führt Befehl %command% auf %target% aus. Option: %option%. %reason%"
   action_with_value: "%operator% führt Befehl %command% auf %target% aus. Option: %option%=%value%. %reason%"
-  prefix_reason: "Grund: %reason%"
+  prefix_reason: "Begründung: %reason%"
   action_duration: "%operator% führt Befehl %command% auf %target% aus. Dauer: %duration%. %reason%"
 
 # --- HISTORY ---------------------------------------------------------------
@@ -122,7 +122,7 @@ reply:
 
 # --- LABEL -----------------------------------------------------------------
 label:
-  no_reason: "Kein Grund"
+  no_reason: "Keine Begründung"
   never: "nie"
   unknown_creator: "unbekannt"
   permanent: "Dauerhaft"

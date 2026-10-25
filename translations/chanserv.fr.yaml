@@ -484,9 +484,9 @@ akick:
     help: |-
       Ajoute un masque à la liste d’expulsion automatique du salon.
 
-      Vous pouvez indiquer une durée et un motif. Si vous ajoutez un motif, vous devez
-      aussi préciser la durée : 0 pour permanente, d pour les jours, h pour les heures
-      ou m pour les minutes.
+      Vous pouvez indiquer une durée et une raison. Si vous ajoutez une raison,
+      vous devez aussi préciser la durée : 0 pour permanente, d pour les jours,
+      h pour les heures ou m pour les minutes.
     done: "\x0303✔\x03 AKICK \x02%mask%\x02 ajouté."
     already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 existe déjà."
     notice_channel: "\x02%from%\x02 ajoute AKICK : \x02%mask%\x02 (%reason%)"

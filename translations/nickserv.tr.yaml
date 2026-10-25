@@ -96,7 +96,7 @@ recover:
   examples:
     - "%command_prefix%\x02\x0303RECOVER Kullanıcı <alınan_token>\x03\x0F"
   pending: "\x0307→\x03 \x02%nickname%\x02 takma adının kaydı beklemede. \x0303VERIFY <token>\x03 kullanın. Token e-postayla gönderildiyse ve geçerli bir adres tanımlıysa \x0303RESEND\x03 ile yenisini isteyebilirsiniz."
-  suspended: "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Sebep: %reason%"
+  suspended: "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Gerekçe: %reason%"
   forbidden: "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kullanılamaz."
   throttled: "\x0304✗\x03 Çok fazla geçersiz belirteç. \x02%minutes%\x02 dakika sonra tekrar deneyin."
   invalid_token: "\x0304✗\x03 Kurtarma belirteci geçersiz."
@@ -130,7 +130,7 @@ identify:
   pending: !irc |-
     \x0304✗\x03 \x02%nickname%\x02 takma adı e-posta doğrulaması bekliyor.
       /msg %bot% \x0303VERIFY <token>\x03 veya /msg %bot% \x0303RESEND\x03 komutunu çalıştırın.
-  suspended: "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Sebep: %reason%"
+  suspended: "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Gerekçe: %reason%"
   forbidden: "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kullanılamaz."
   pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi bekliyor ve kullanılamaz."
 
@@ -152,11 +152,11 @@ status:
   not_identified: "  Durum           : \x0307Kimlik doğrulanmamış\x03"
   identified: "  Durum           : \x0303Kimlik doğrulandı\x03"
   suspended: "  Durum           : \x0304Askıya alındı\x03"
-  suspended_reason: "  Sebep           : %reason%"
+  suspended_reason: "  Gerekçe         : %reason%"
   suspended_until: "  Bitiş tarihi     : %date%"
   suspended_permanent: "  Bitiş tarihi     : Kalıcı"
   forbidden: "  Durum           : \x0304Yasaklandı\x03"
-  forbidden_reason: "  Sebep           : %reason%"
+  forbidden_reason: "  Gerekçe         : %reason%"
   pending_deletion: "  \x0314Durum\x03          : \x0307Silinmeyi bekliyor\x03"
   pending_deletion_at: "  \x0314Silindi\x03         : %date%"
 
@@ -178,7 +178,7 @@ info:
   status_suspended: "\x0304Askıya alındı\x03"
   status_forbidden: "\x0304Yasaklandı\x03"
   status_pending_deletion: "\x0307Silinmeyi bekliyor\x03"
-  reason: "  \x0314Sebep\x03              : %reason%"
+  reason: "  \x0314Gerekçe\x03            : %reason%"
   suspended_until: "  \x0314Bitiş tarihi\x03       : %date%"
   suspended_permanent: "  \x0314Bitiş tarihi\x03       : Kalıcı"
   registered_at: "  \x0314Kayıt\x03              : %date%"
@@ -496,7 +496,7 @@ whoip:
 
 # --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax: "SUSPEND <nickname> <süre> <sebep>"
+  syntax: "SUSPEND <nickname> <süre> <gerekçe>"
   short: "Bir rumuzu askıya alın."
   help: |-
     Sahibinin kimliğini doğrulamasını engeller. Süre gün (d), saat (h), dakika (m)
@@ -569,7 +569,7 @@ restore:
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax: "FORBID <nickname> <sebep>"
+  syntax: "FORBID <nickname> <gerekçe>"
   short: "Bir rumuzu kalıcı olarak kullanımdan engelleyin."
   help: |-
     Bir takma adın kaydedilmesini veya kullanılmasını kalıcı olarak yasaklar.
@@ -578,8 +578,8 @@ forbid:
     ve hizmet takma adları yasaklanamaz.
   example: "%command_prefix%\x02\x0303FORBID MalKullanıcı Tekrarlanan politika ihlalleri\x03\x0F"
   success: "\x0303✔\x03 \x02%nickname%\x02 rumuzu yasaklandı."
-  updated: "\x0303✔\x03 \x02%nickname%\x02 için yasaklama sebebi güncellendi."
-  reason_required: "\x0304✗\x03 Yasaklama için bir sebep belirtmelisiniz."
+  updated: "\x0303✔\x03 \x02%nickname%\x02 için yasaklama gerekçesi güncellendi."
+  reason_required: "\x0304✗\x03 Yasaklama için bir gerekçe belirtmelisiniz."
   cannot_forbid_root: "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 yasaklanamaz."
   cannot_forbid_oper: "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 yasaklanamaz."
   cannot_forbid_service: "\x0304✗\x03 Hizmet rumuzu \x02%nickname%\x02 yasaklanamaz."

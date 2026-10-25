@@ -100,7 +100,7 @@ recover:
   examples:
     - "%command_prefix%\x02\x0303RECOVER Benutzer <erhaltenes_Token>\x03\x0F"
   pending: "\x0307→\x03 Die Registrierung von \x02%nickname%\x02 steht aus. Verwende \x0303VERIFY <token>\x03. Wurde das Token per E-Mail gesendet und ist eine gültige Adresse hinterlegt, kannst du mit \x0303RESEND\x03 ein neues anfordern."
-  suspended: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert. Grund: %reason%"
+  suspended: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert. Begründung: %reason%"
   forbidden: "\x0304✗\x03 Nickname \x02%nickname%\x02 kann in diesem Netzwerk nicht verwendet werden."
   throttled: "\x0304✗\x03 Zu viele ungültige Token. Versuche es in \x02%minutes%\x02 Minute(n) erneut."
   invalid_token: "\x0304✗\x03 Das Rettungstoken ist ungültig."
@@ -135,7 +135,7 @@ identify:
   pending: !irc |-
     \x0304✗\x03 Der Nickname \x02%nickname%\x02 wartet auf E-Mail-Verifizierung.
       Führe /msg %bot% \x0303VERIFY <token>\x03 oder /msg %bot% \x0303RESEND\x03 aus.
-  suspended: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert. Grund: %reason%"
+  suspended: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist suspendiert. Begründung: %reason%"
   forbidden: "\x0304✗\x03 Nickname \x02%nickname%\x02 kann in diesem Netzwerk nicht verwendet werden."
   pending_deletion: "\x0304✗\x03 Der Nickname \x02%nickname%\x02 steht zur Löschung an und kann nicht verwendet werden."
 
@@ -157,11 +157,11 @@ status:
   not_identified: "  Status          : \x0307Nicht identifiziert\x03"
   identified: "  Status          : \x0303Identifiziert\x03"
   suspended: "  Status          : \x0304Suspendiert\x03"
-  suspended_reason: "  Grund           : %reason%"
+  suspended_reason: "  Begründung      : %reason%"
   suspended_until: "  Endet am        : %date%"
   suspended_permanent: "  Endet am        : Dauerhaft"
   forbidden: "  Status          : \x0304Gesperrt\x03"
-  forbidden_reason: "  Grund           : %reason%"
+  forbidden_reason: "  Begründung      : %reason%"
   pending_deletion: "  \x0314Status\x03          : \x0307Löschung ausstehend\x03"
   pending_deletion_at: "  \x0314Gelöscht\x03        : %date%"
 
@@ -183,7 +183,7 @@ info:
   status_suspended: "\x0304Suspendiert\x03"
   status_forbidden: "\x0304Gesperrt\x03"
   status_pending_deletion: "\x0307Löschung ausstehend\x03"
-  reason: "  \x0314Grund\x03                  : %reason%"
+  reason: "  \x0314Begründung\x03             : %reason%"
   suspended_until: "  \x0314Endet am\x03               : %date%"
   suspended_permanent: "  \x0314Endet am\x03               : Dauerhaft"
   registered_at: "  \x0314Registriert\x03            : %date%"
@@ -508,7 +508,7 @@ whoip:
 
 # --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax: "SUSPEND <nickname> <Dauer> <Grund>"
+  syntax: "SUSPEND <nickname> <Dauer> <Begründung>"
   short: "Einen Nickname suspendieren."
   help: |-
     Verhindert, dass sich der Eigentümer identifiziert. Die Dauer kann in Tagen
@@ -587,7 +587,7 @@ restore:
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax: "FORBID <nickname> <Grund>"
+  syntax: "FORBID <nickname> <Begründung>"
   short: "Einen Nickname dauerhaft für die Nutzung sperren."
   help: |-
     Verbietet einen Nickname dauerhaft, sodass ihn niemand registrieren oder
@@ -596,8 +596,8 @@ forbid:
     Dienste können nicht gesperrt werden.
   example: "%command_prefix%\x02\x0303FORBID SchlechterBenutzer Wiederholte Regelverstöße\x03\x0F"
   success: "\x0303✔\x03 Nickname \x02%nickname%\x02 wurde gesperrt."
-  updated: "\x0303✔\x03 Sperrgrund für \x02%nickname%\x02 wurde aktualisiert."
-  reason_required: "\x0304✗\x03 Sie müssen einen Grund für die Sperrung angeben."
+  updated: "\x0303✔\x03 Begründung für die Sperre von \x02%nickname%\x02 wurde aktualisiert."
+  reason_required: "\x0304✗\x03 Sie müssen eine Begründung für die Sperrung angeben."
   cannot_forbid_root: "\x0304✗\x03 Root-Benutzer \x02%nickname%\x02 kann nicht gesperrt werden."
   cannot_forbid_oper: "\x0304✗\x03 IRC-Operator \x02%nickname%\x02 kann nicht gesperrt werden."
   cannot_forbid_service: "\x0304✗\x03 Service-Nickname \x02%nickname%\x02 kann nicht gesperrt werden."

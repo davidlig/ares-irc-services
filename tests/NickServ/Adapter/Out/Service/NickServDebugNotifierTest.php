@@ -405,11 +405,11 @@ final class NickServDebugNotifierTest extends TestCase
     #[Test]
     public function realCatalogDebugOutputRemainsIdenticalInEveryLocale(): void
     {
-        // Hashes pin the complete nine-message transcript before common extraction.
+        // Hashes pin the complete nine-message transcript, including localized reason labels.
         $expectedHashes = [
             'ca' => 'a4b97bb38ad34f9bf0e661b9635a1bcf06fcc3587be22854dba771def03e8038',
-            'de' => 'b0bcf9c373af50cf0a4e5ac3eaa58bc00ec091ceeaf10e254a3ff2d558c70e08',
-            'el' => '92bed673a879fcb2f38419c136fa5064c332e2127beab5b6a7d40ef4020f52ac',
+            'de' => '10532145c356563de83750ff805167b13b9a0daca8be9898ab7e0d572cf0746d',
+            'el' => 'fcd92f0ea064c804de3f897f1c5d241b252d7a9ed73ac3776ad1527d02d8a55c',
             'en' => '581287b83b6085d1fa028b334f1fac664481aa3f8123496b9628a92880af9c26',
             'es' => '66625d60acc0472c52af6ba5754169e1ad86bc7726a9e07d73320af148363931',
             'eu' => '6c17f7efc172c3940d57346f18a75787b6cad6a0bb2b3437ee2fc8005ab1ac8c',
@@ -420,7 +420,7 @@ final class NickServDebugNotifierTest extends TestCase
             'pl' => '0735b3d363c0e0c4a31597c2639407ad874312a9a53b176e2050f79beac3dc8a',
             'pt' => 'eb82ecfb3d8d3304dcf5a3404497e116a14dc693eacfc8c9cc36aa238bc876a2',
             'ro' => 'f86cb41c982fd12c5efc0ced9b4b7eb5cdd1e811784ec352176b71ffcbefd05b',
-            'tr' => '28708dc0850f74bf113081debf9367806a604606e16db950d47018b869dbe0d5',
+            'tr' => '230136b32854f36071577fc51a1f82e23579982d08c9874360c780c6d4378c8e',
         ];
         foreach ($expectedHashes as $locale => $hash) {
             $translator = new Translator($locale);
