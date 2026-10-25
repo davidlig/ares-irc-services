@@ -512,11 +512,11 @@ badmail:
     Administrar dominios de correo bloqueados.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <dominio> <motivo>"
+    syntax: "BADMAIL ADD <dominio> <razón>"
     short: "Bloquear un dominio."
     help: |-
-      Acepta dominios ASCII o punycode, no direcciones ni patrones. El
-      motivo es obligatorio. El bloqueo es exacto y no incluye subdominios.
+      Acepta dominios ASCII o punycode, no direcciones ni patrones. La
+      razón es obligatoria. El bloqueo es exacto y no incluye subdominios.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
     syntax: "BADMAIL DEL {número|ALL}"
@@ -535,13 +535,13 @@ badmail:
       permanentes.
     example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
   invalid_domain: "Dominio inválido. Usa ASCII o punycode, sin punto final."
-  invalid_reason: "Se requiere un motivo administrativo no vacío y de una sola línea."
+  invalid_reason: "Se requiere una razón administrativa no vacía y de una sola línea."
   duplicate: "Este dominio ya está bloqueado."
   not_found: "No existe un dominio bloqueado con ese identificador."
-  added: "Dominio %domain% bloqueado."
-  deleted: "Dominio bloqueado %id% eliminado."
-  cleared: "Se han eliminado %total% dominios bloqueados."
+  added: "\x0303✓\x03 Dominio \x02%domain%\x02 bloqueado."
+  deleted: "\x0303✓\x03 Dominio bloqueado \x02%id%\x02 eliminado."
+  cleared: "\x0303✓\x03 Se han eliminado \x02%total%\x02 dominios bloqueados."
   empty: "Ningún dominio bloqueado coincide."
-  header: "ID | Dominio | Motivo"
+  header: "ID | Dominio | Razón"
   page: "Página %page%/%pages%, %total% dominios coincidentes."
   row: "%id% | %domain% | %reason%"

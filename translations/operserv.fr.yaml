@@ -508,7 +508,7 @@ badmail:
     short: "Bloquer un domaine."
     help: |-
       Accepte les domaines ASCII ou punycode, pas les adresses ni les
-      motifs. Un motif administratif est requis. Le blocage est exact et
+      motifs. Une raison administrative est requise. Le blocage est exact et
       exclut les sous-domaines.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
@@ -527,13 +527,13 @@ badmail:
       identifiants sont conservés lors du filtrage et de la pagination.
     example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
   invalid_domain: "Domaine invalide. Utilisez ASCII ou punycode sans point final."
-  invalid_reason: "Un motif administratif non vide sur une seule ligne est requis."
+  invalid_reason: "Une raison administrative non vide sur une seule ligne est requise."
   duplicate: "Ce domaine est déjà bloqué."
   not_found: "Aucun domaine bloqué ne porte cet identifiant."
-  added: "Domaine %domain% bloqué."
-  deleted: "Blocage %id% supprimé."
-  cleared: "%total% domaines bloqués supprimés."
+  added: "\x0303✓\x03 Domaine \x02%domain%\x02 bloqué."
+  deleted: "\x0303✓\x03 Blocage \x02%id%\x02 supprimé."
+  cleared: "\x0303✓\x03 \x02%total%\x02 domaines bloqués supprimés."
   empty: "Aucun domaine bloqué ne correspond."
-  header: "ID | Domaine | Motif"
+  header: "ID | Domaine | Raison"
   page: "Page %page%/%pages%, %total% domaines correspondants."
   row: "%id% | %domain% | %reason%"

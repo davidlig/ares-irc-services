@@ -72,10 +72,10 @@ final class TranslationCatalogTest extends TestCase
     /** @var array<string, array{string, string, string, string, string, string, string, string, string, string, string}> */
     private const array SYNTAX_TERMS = [
         'ca' => ['ordre', 'opció', 'contrasenya', 'paràmetres', 'domini', 'motiu', 'número', 'patró', 'pàgina', 'canal', 'sobrenom'],
-        'de' => ['Befehl', 'Option', 'Passwort', 'Parameter', 'Domain', 'Grund', 'Nummer', 'Muster', 'Seite', 'Kanal', 'Nickname'],
-        'el' => ['εντολή', 'επιλογή', 'κωδικός', 'παράμετροι', 'τομέας', 'αιτία', 'αριθμός', 'μοτίβο', 'σελίδα', 'κανάλι', 'ψευδώνυμο'],
+        'de' => ['Befehl', 'Option', 'Passwort', 'Parameter', 'Domain', 'Begründung', 'Nummer', 'Muster', 'Seite', 'Kanal', 'Nickname'],
+        'el' => ['εντολή', 'επιλογή', 'κωδικός', 'παράμετροι', 'τομέας', 'αιτιολογία', 'αριθμός', 'μοτίβο', 'σελίδα', 'κανάλι', 'ψευδώνυμο'],
         'en' => ['command', 'option', 'password', 'parameters', 'domain', 'reason', 'number', 'pattern', 'page', 'channel', 'nickname'],
-        'es' => ['comando', 'opción', 'contraseña', 'parámetros', 'dominio', 'motivo', 'número', 'patrón', 'página', 'canal', 'apodo'],
+        'es' => ['comando', 'opción', 'contraseña', 'parámetros', 'dominio', 'razón', 'número', 'patrón', 'página', 'canal', 'apodo'],
         'eu' => ['komandoa', 'aukera', 'pasahitza', 'parametroak', 'domeinua', 'arrazoia', 'zenbakia', 'eredua', 'orria', 'kanala', 'ezizena'],
         'fr' => ['commande', 'option', 'motdepasse', 'paramètres', 'domaine', 'raison', 'numéro', 'motif', 'page', 'canal', 'surnom'],
         'gl' => ['comando', 'opción', 'contrasinal', 'parámetros', 'dominio', 'motivo', 'número', 'patrón', 'páxina', 'canle', 'alcume'],
@@ -84,7 +84,7 @@ final class TranslationCatalogTest extends TestCase
         'pl' => ['komenda', 'opcja', 'hasło', 'parametry', 'domena', 'powód', 'numer', 'wzorzec', 'strona', 'kanał', 'nick'],
         'pt' => ['comando', 'opção', 'palavra-passe', 'parâmetros', 'domínio', 'motivo', 'número', 'padrão', 'página', 'canal', 'apelido'],
         'ro' => ['comandă', 'opțiune', 'parolă', 'parametri', 'domeniu', 'motiv', 'număr', 'model', 'pagină', 'canal', 'poreclă'],
-        'tr' => ['komut', 'seçenek', 'şifre', 'parametreler', 'alan_adı', 'sebep', 'numara', 'kalıp', 'sayfa', 'kanal', 'takma_ad'],
+        'tr' => ['komut', 'seçenek', 'şifre', 'parametreler', 'alan_adı', 'gerekçe', 'numara', 'kalıp', 'sayfa', 'kanal', 'takma_ad'],
     ];
 
     #[Test]

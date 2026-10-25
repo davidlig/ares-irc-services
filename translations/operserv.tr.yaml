@@ -498,7 +498,7 @@ badmail:
     Engellenen e-posta alan adlarını yönet.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <alan_adı> <sebep>"
+    syntax: "BADMAIL ADD <alan_adı> <gerekçe>"
     short: "Bir alan adını engelle."
     help: |-
       ASCII veya punycode alan adlarını kabul eder; adres veya kalıp kabul
@@ -524,9 +524,9 @@ badmail:
   invalid_reason: "Boş olmayan, tek satırlık bir yönetim gerekçesi gereklidir."
   duplicate: "Bu alan adı zaten engellenmiş."
   not_found: "Bu kimliğe sahip engellenmiş alan adı yok."
-  added: "%domain% alan adı engellendi."
-  deleted: "%id% alan adı engeli kaldırıldı."
-  cleared: "%total% alan adı engeli kaldırıldı."
+  added: "\x0303✓\x03 \x02%domain%\x02 alan adı engellendi."
+  deleted: "\x0303✓\x03 \x02%id%\x02 alan adı engeli kaldırıldı."
+  cleared: "\x0303✓\x03 \x02%total%\x02 alan adı engeli kaldırıldı."
   empty: "Eşleşen engellenmiş alan adı yok."
   header: "ID | Alan adı | Gerekçe"
   page: "Sayfa %page%/%pages%, eşleşen %total% alan adı."
