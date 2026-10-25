@@ -74,7 +74,7 @@ info:
 # --- HELP ------------------------------------------------------------------
 help:
   examples_header: "\x02 ■ Exemple:\x02"
-  syntax: "HELP [comandă [sub-opțiune]]"
+  syntax: "HELP [comandă] [sub-opțiune]"
   example: "%command_prefix%\x02\x0303HELP\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
@@ -148,7 +148,7 @@ set:
 
   # --- SET FOUNDER ---------------------------------------------------------
   founder:
-    token_required: "Folosește SET <#channel> FOUNDER <nickname> <token> cu tokenul confirmat al fondatorului actual."
+    token_required: "Folosește SET <#canal> FOUNDER <poreclă> <token> cu tokenul confirmat al fondatorului actual."
     token_unavailable: "Fondatorul actual nu are token de salvare confirmat. Trebuie să se autentifice și să folosească VERIFY mai întâi."
     syntax: "SET <#canal> FOUNDER <poreclă> [token]"
     example: "%command_prefix%\x02\x0303SET #canal FOUNDER Alice\x03\x0F"

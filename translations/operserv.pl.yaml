@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [komenda [pod-opcja]]"
+  syntax: "HELP [komenda] [podopcja]"
   short: "Lista komend lub pomoc dla komendy."
   help: !irc |-
     Bez argumentów wyświetla wszystkie polecenia. Użyj \x0303HELP <polecenie>\x03, aby
@@ -495,27 +495,27 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <argumenty>"
   short: "Zarządzaj zablokowanymi domenami email."
   help: |-
     Zarządzaj zablokowanymi domenami email.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <domain> <reason>"
+    syntax: "BADMAIL ADD <domena> <powód>"
     short: "Zablokuj domenę."
     help: |-
       Akceptuje domeny ASCII lub punycode, nie adresy ani wzorce. Wymagany
       jest powód. Blokada jest dokładna i nie obejmuje subdomen.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
-    syntax: "BADMAIL DEL {id|ALL}"
+    syntax: "BADMAIL DEL {numer|ALL}"
     short: "Usuń blokady domen."
     help: |-
       Usuń stały identyfikator lub wszystkie wpisy za pomocą ALL. Inne
       identyfikatory pozostają bez zmian.
     example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
   list:
-    syntax: "BADMAIL LIST <pattern> [page]"
+    syntax: "BADMAIL LIST <wzorzec> [strona]"
     short: "Wyświetl zablokowane domeny."
     help: |-
       Wzorzec jest wymagany. Tylko * jest symbolem wieloznacznym dla

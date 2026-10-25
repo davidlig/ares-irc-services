@@ -73,7 +73,7 @@ info:
 # --- HELP ------------------------------------------------------------------
 help:
   examples_header: "\x02 ■ Παραδείγματα:\x02"
-  syntax: "HELP [command [sub-option]]"
+  syntax: "HELP [εντολή] [υποεπιλογή]"
   example: "%command_prefix%\x02\x0303HELP\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
@@ -147,9 +147,9 @@ set:
 
   # --- SET FOUNDER ---------------------------------------------------------
   founder:
-    token_required: "Χρησιμοποίησε SET <#channel> FOUNDER <nickname> <token> με το επιβεβαιωμένο διακριτικό του τρέχοντος ιδρυτή."
+    token_required: "Χρησιμοποίησε SET <#κανάλι> FOUNDER <ψευδώνυμο> <token> με το επιβεβαιωμένο διακριτικό του τρέχοντος ιδρυτή."
     token_unavailable: "Ο τρέχων ιδρυτής δεν έχει επιβεβαιωμένο διακριτικό διάσωσης. Πρέπει πρώτα να συνδεθεί και να χρησιμοποιήσει VERIFY."
-    syntax: "SET <#channel> FOUNDER <nickname> [token]"
+    syntax: "SET <#κανάλι> FOUNDER <ψευδώνυμο> [token]"
     example: "%command_prefix%\x02\x0303SET #κανάλι FOUNDER Αλίκη\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303SET #κανάλι FOUNDER Αλίκη επιβεβαιωμένο-διακριτικό\x03\x0F"

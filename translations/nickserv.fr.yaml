@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 L’inscription est en attente, mais le jeton n’a pas pu être remis.
     Attendez son expiration avant de vous réinscrire.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <motdepasse> [email]"
   short: "Enregistrer votre surnom auprès des services."
   help: |-
     Enregistre votre pseudonyme. Selon la configuration du réseau, le jeton de

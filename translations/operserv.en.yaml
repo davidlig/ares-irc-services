@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [command [sub-option]]"
+  syntax: "HELP [command] [sub-option]"
   short: "List commands or show help for a command."
   help: !irc |-
     Without arguments, lists all commands. Use \x0303HELP <command>\x03 for full help,
@@ -508,7 +508,7 @@ badmail:
       is required. Blocking is exact and does not include subdomains.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
-    syntax: "BADMAIL DEL {id|ALL}"
+    syntax: "BADMAIL DEL {number|ALL}"
     short: "Remove blocked domains."
     help: |-
       Delete a permanent identifier, or ALL entries. Other identifiers do

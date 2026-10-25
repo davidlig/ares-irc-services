@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 O rexistro está pendente, pero non se puido entregar o token.
     Agarda a que caduque antes de rexistrarte de novo.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <contrasinal> [email]"
   short: "Rexistrar o seu alcume cos servizos."
   help: |-
     Rexistra o teu alcume. A rede indicaráche o token de verificación por chat

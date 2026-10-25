@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [komut [alt-seçenek]]"
+  syntax: "HELP [komut] [alt-seçenek]"
   short: "Komutları listeleyin veya bir komut için yardım gösterin."
   help: !irc |-
     Argüman olmadan tüm komutları listeler. Tam yardım için \x0303HELP <komut>\x03, alt
@@ -492,13 +492,13 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <argümanlar>"
   short: "Engellenen e-posta alan adlarını yönet."
   help: |-
     Engellenen e-posta alan adlarını yönet.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <domain> <reason>"
+    syntax: "BADMAIL ADD <alan_adı> <sebep>"
     short: "Bir alan adını engelle."
     help: |-
       ASCII veya punycode alan adlarını kabul eder; adres veya kalıp kabul
@@ -506,14 +506,14 @@ badmail:
       kapsamaz.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
-    syntax: "BADMAIL DEL {id|ALL}"
+    syntax: "BADMAIL DEL {numara|ALL}"
     short: "Alan adı engellerini kaldır."
     help: |-
       Kalıcı bir kimliği veya ALL ile tüm kayıtları siler. Diğer kimlikler
       değişmez.
     example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
   list:
-    syntax: "BADMAIL LIST <pattern> [page]"
+    syntax: "BADMAIL LIST <kalıp> [sayfa]"
     short: "Engellenen alan adlarını listele."
     help: |-
       Kalıp zorunludur. Yalnızca * herhangi bir diziyi eşleştiren joker

@@ -161,7 +161,7 @@ disable:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [comandă [sub-opțiune]]"
+  syntax: "HELP [comandă] [sub-opțiune]"
   short: "Listați comenzile sau afișați ajutor pentru o comandă."
   help: "Afișează lista comenzilor sau ajutor detaliat pentru o comandă ori opțiune."
   example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"

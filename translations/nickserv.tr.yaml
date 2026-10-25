@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 Kayıt beklemede ancak belirteç teslim edilemedi.
     Yeniden kaydolmadan önce bu kaydın süresinin dolmasını bekleyin.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <şifre> [email]"
   short: "Rumuzunuzu hizmetlere kaydedin."
   help: |-
     Takma adınızı kaydeder. Ağ yapılandırmasına göre doğrulama tokenı size sohbet

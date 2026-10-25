@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 El registre està pendent, però no s’ha pogut lliurar el testimoni.
     Espera que caduqui abans de registrar-te de nou.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <contrasenya> [email]"
   short: "Registrar el vostre sobrenom amb els serveis."
   help: |-
     Registra el teu sobrenom. La xarxa t'indicarà el token de verificació

@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [comandă [sub-opțiune]]"
+  syntax: "HELP [comandă] [sub-opțiune]"
   short: "Listați comenzile sau afișați ajutor pentru o comandă."
   help: !irc |-
     Fără argumente, listează toate comenzile. Folosește \x0303HELP <comandă>\x03 pentru ajutor
@@ -496,27 +496,27 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <argumente>"
   short: "Administrează domeniile email blocate."
   help: |-
     Administrează domeniile email blocate.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <domain> <reason>"
+    syntax: "BADMAIL ADD <domeniu> <motiv>"
     short: "Blochează un domeniu."
     help: |-
       Acceptă domenii ASCII sau punycode, nu adrese sau modele. Motivul este
       obligatoriu. Blocarea este exactă și nu include subdomenii.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
-    syntax: "BADMAIL DEL {id|ALL}"
+    syntax: "BADMAIL DEL {număr|ALL}"
     short: "Elimină blocările domeniilor."
     help: |-
       Șterge un identificator permanent sau toate intrările cu ALL. Ceilalți
       identificatori nu se schimbă.
     example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
   list:
-    syntax: "BADMAIL LIST <pattern> [page]"
+    syntax: "BADMAIL LIST <model> [pagină]"
     short: "Listează domeniile blocate."
     help: |-
       Modelul este obligatoriu. Numai * este un metacaracter pentru orice
