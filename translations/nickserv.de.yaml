@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 Die Registrierung ist ausstehend, aber das Token konnte nicht ausgegeben werden.
     Warte auf den Ablauf dieser Registrierung, bevor du dich erneut registrierst.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <Passwort> [email]"
   short: "Ihren Nickname bei den Services registrieren."
   help: |-
     Registriert deinen Nickname. Das Netzwerk sendet dir je nach Konfiguration

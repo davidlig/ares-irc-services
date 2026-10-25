@@ -74,7 +74,7 @@ info:
 # --- HELP ------------------------------------------------------------------
 help:
   examples_header: "\x02 ■ Exemples:\x02"
-  syntax: "HELP [command [sub-option]]"
+  syntax: "HELP [ordre] [subopció]"
   example: "%command_prefix%\x02\x0303HELP\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
@@ -147,9 +147,9 @@ set:
 
   # --- SET FOUNDER ---------------------------------------------------------
   founder:
-    token_required: "Utilitza SET <#channel> FOUNDER <nickname> <token> amb el testimoni confirmat del fundador actual."
+    token_required: "Utilitza SET <#canal> FOUNDER <sobrenom> <token> amb el testimoni confirmat del fundador actual."
     token_unavailable: "El fundador actual no té cap testimoni de rescat confirmat. Primer s’ha d’autenticar i utilitzar VERIFY."
-    syntax: "SET <#channel> FOUNDER <nickname> [token]"
+    syntax: "SET <#canal> FOUNDER <sobrenom> [token]"
     example: "%command_prefix%\x02\x0303SET #canal FOUNDER Alícia\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303SET #canal FOUNDER Alícia token-confirmat\x03\x0F"

@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 O registo está pendente, mas não foi possível entregar o token.
     Aguarde a sua expiração antes de se registar novamente.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <palavra-passe> [email]"
   short: "Registe o seu nickname nos serviços."
   help: |-
     Registe o seu nickname. A rede indicará o token de verificação por chat ou

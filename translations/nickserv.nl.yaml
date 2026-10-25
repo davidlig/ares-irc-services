@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 De registratie is in behandeling, maar het token kon niet worden verstrekt.
     Wacht tot deze registratie verloopt voordat je opnieuw registreert.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <wachtwoord> [email]"
   short: "Registreer uw bijnaam bij de services."
   help: |-
     Registreert je bijnaam. Het netwerk stuurt het verificatietoken via chat of

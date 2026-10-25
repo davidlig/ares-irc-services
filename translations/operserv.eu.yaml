@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [komandoa [azpi-aukera]]"
+  syntax: "HELP [komandoa] [azpi-aukera]"
   short: "Zerrendatu komandoak edo erakutsi komando baten laguntza."
   help: !irc |-
     Argumenturik gabe komando guztiak zerrendatzen ditu. Erabili \x0303HELP <komandoa>\x03
@@ -524,13 +524,13 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <argumentuak>"
   short: "Blokeatutako posta-domeinuak kudeatu."
   help: |-
     Blokeatutako posta-domeinuak kudeatu.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <domain> <reason>"
+    syntax: "BADMAIL ADD <domeinua> <arrazoia>"
     short: "Domeinu bat blokeatu."
     help: |-
       ASCII edo punycode domeinuak onartzen ditu, ez helbideak edo ereduak.
@@ -538,14 +538,14 @@ badmail:
       azpidomeinuak hartzen.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
-    syntax: "BADMAIL DEL {id|ALL}"
+    syntax: "BADMAIL DEL {zenbakia|ALL}"
     short: "Domeinuen blokeoak kendu."
     help: |-
       Ezabatu identifikatzaile iraunkor bat edo sarrera guztiak ALL
       erabiliz. Beste identifikatzaileak ez dira aldatzen.
     example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
   list:
-    syntax: "BADMAIL LIST <pattern> [page]"
+    syntax: "BADMAIL LIST <eredua> [orria]"
     short: "Blokeatutako domeinuak zerrendatu."
     help: |-
       Eredua derrigorrezkoa da. * da komodin bakarra eta edozein

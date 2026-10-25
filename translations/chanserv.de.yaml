@@ -73,7 +73,7 @@ info:
 # --- HELP ------------------------------------------------------------------
 help:
   examples_header: "\x02 ■ Beispiele:\x02"
-  syntax: "HELP [Befehl [Unteroption]]"
+  syntax: "HELP [Befehl] [Unteroption]"
   example: "%command_prefix%\x02\x0303HELP\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
@@ -147,9 +147,9 @@ set:
 
   # --- SET FOUNDER ---------------------------------------------------------
   founder:
-    token_required: "Verwende SET <#channel> FOUNDER <nickname> <token> mit dem bestätigten Token des aktuellen Gründers."
+    token_required: "Verwende SET <#Kanal> FOUNDER <Nickname> <token> mit dem bestätigten Token des aktuellen Gründers."
     token_unavailable: "Der aktuelle Gründer hat kein bestätigtes Rettungstoken. Er muss sich zuerst authentifizieren und VERIFY verwenden."
-    syntax: "SET <#channel> FOUNDER <nickname> [Token]"
+    syntax: "SET <#Kanal> FOUNDER <Nickname> [Token]"
     example: "%command_prefix%\x02\x0303SET #channel FOUNDER Alice\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303SET #channel FOUNDER Alice bestätigtes-Token\x03\x0F"

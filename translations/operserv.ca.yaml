@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [command [sub-option]]"
+  syntax: "HELP [ordre] [subopció]"
   short: "Llistar les ordres o mostrar l'ajuda d'una ordre."
   help: !irc |-
     Sense arguments, llista totes les ordres. Fes servir
@@ -510,21 +510,21 @@ badmail:
     Administrar dominis de correu bloquejats.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <domain> <reason>"
+    syntax: "BADMAIL ADD <domini> <motiu>"
     short: "Bloquejar un domini."
     help: |-
       Accepta dominis ASCII o punycode, no adreces ni patrons. El motiu és
       obligatori. El bloqueig és exacte i no inclou subdominis.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
-    syntax: "BADMAIL DEL {id|ALL}"
+    syntax: "BADMAIL DEL {número|ALL}"
     short: "Eliminar dominis bloquejats."
     help: |-
       Elimina un identificador permanent o totes les entrades amb ALL. Els
       altres identificadors no canvien.
     example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
   list:
-    syntax: "BADMAIL LIST <pattern> [page]"
+    syntax: "BADMAIL LIST <patró> [pàgina]"
     short: "Llistar dominis bloquejats."
     help: |-
       El patró és obligatori. Només * és un comodí i coincideix amb
