@@ -156,7 +156,7 @@ disable:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [comando] [sub-opción]"
+  syntax: "HELP [comando] [opción]"
   short: "Lista comandos o muestra ayuda de un comando."
   help: "Muestra la lista de comandos o la ayuda detallada de un comando u opción."
   example: "\x0310›\x03\x0f %command_prefix%\x02\x0303HELP\x03\x0f"

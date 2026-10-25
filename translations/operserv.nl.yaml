@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [commando] [sub-optie]"
+  syntax: "HELP [commando] [optie]"
   short: "Toon commando's of hulp voor een commando."
   help: !irc |-
     Toont zonder argumenten alle commando’s. Gebruik \x0303HELP <commando>\x03 voor volledige
@@ -499,7 +499,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <argumenten>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <parameters>"
   short: "Geblokkeerde e-maildomeinen beheren."
   help: |-
     Geblokkeerde e-maildomeinen beheren.

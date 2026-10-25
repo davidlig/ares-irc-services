@@ -74,7 +74,7 @@ info:
 # --- HELP ------------------------------------------------------------------
 help:
   examples_header: "\x02 ■ Exemples:\x02"
-  syntax: "HELP [ordre] [subopció]"
+  syntax: "HELP [ordre] [opció]"
   example: "%command_prefix%\x02\x0303HELP\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HELP SET\x03\x0F"

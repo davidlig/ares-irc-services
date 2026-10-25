@@ -157,7 +157,7 @@ disable:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [komut] [alt-seçenek]"
+  syntax: "HELP [komut] [seçenek]"
   short: "Komutları listeleyin veya bir komut için yardım gösterin."
   help: "Komut listesini veya bir komut ya da seçeneğin ayrıntılı yardımını gösterir."
   example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"

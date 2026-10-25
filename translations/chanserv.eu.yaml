@@ -73,7 +73,7 @@ info:
 # --- HELP ------------------------------------------------------------------
 help:
   examples_header: "\x02 ■ Adibideak:\x02"
-  syntax: "HELP [komandoa] [azpi-aukera]"
+  syntax: "HELP [komandoa] [aukera]"
   example: "%command_prefix%\x02\x0303HELP\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HELP SET\x03\x0F"

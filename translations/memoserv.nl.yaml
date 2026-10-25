@@ -161,7 +161,7 @@ disable:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [commando] [sub-optie]"
+  syntax: "HELP [commando] [optie]"
   short: "Toon commando's of hulp voor een commando."
   help: "Toont de lijst met commando’s of uitgebreide hulp bij een commando of optie."
   example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"

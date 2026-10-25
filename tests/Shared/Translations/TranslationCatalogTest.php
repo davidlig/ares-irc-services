@@ -71,29 +71,29 @@ final class TranslationCatalogTest extends TestCase
 
     /** @var array<string, array{string, string, string, string, string, string, string, string, string, string, string}> */
     private const array SYNTAX_TERMS = [
-        'ca' => ['ordre', 'subopció', 'contrasenya', 'arguments', 'domini', 'motiu', 'número', 'patró', 'pàgina', 'canal', 'sobrenom'],
-        'de' => ['Befehl', 'Unteroption', 'Passwort', 'Argumente', 'Domain', 'Grund', 'Nummer', 'Muster', 'Seite', 'Kanal', 'Nickname'],
-        'el' => ['εντολή', 'υποεπιλογή', 'κωδικός', 'ορίσματα', 'τομέας', 'αιτία', 'αριθμός', 'μοτίβο', 'σελίδα', 'κανάλι', 'ψευδώνυμο'],
-        'en' => ['command', 'sub-option', 'password', 'arguments', 'domain', 'reason', 'number', 'pattern', 'page', 'channel', 'nickname'],
-        'es' => ['comando', 'sub-opción', 'contraseña', 'argumentos', 'dominio', 'motivo', 'número', 'patrón', 'página', 'canal', 'apodo'],
-        'eu' => ['komandoa', 'azpi-aukera', 'pasahitza', 'argumentuak', 'domeinua', 'arrazoia', 'zenbakia', 'eredua', 'orria', 'kanala', 'ezizena'],
-        'fr' => ['commande', 'sous-option', 'motdepasse', 'arguments', 'domaine', 'raison', 'numéro', 'motif', 'page', 'canal', 'surnom'],
-        'gl' => ['comando', 'subopción', 'contrasinal', 'argumentos', 'dominio', 'motivo', 'número', 'patrón', 'páxina', 'canle', 'alcume'],
-        'it' => ['comando', 'sotto-opzione', 'password', 'argomenti', 'dominio', 'motivo', 'numero', 'modello', 'pagina', 'canale', 'soprannome'],
-        'nl' => ['commando', 'sub-optie', 'wachtwoord', 'argumenten', 'domein', 'reden', 'nummer', 'patroon', 'pagina', 'kanaal', 'bijnaam'],
-        'pl' => ['komenda', 'podopcja', 'hasło', 'argumenty', 'domena', 'powód', 'numer', 'wzorzec', 'strona', 'kanał', 'nick'],
-        'pt' => ['comando', 'sub-opção', 'palavra-passe', 'argumentos', 'domínio', 'motivo', 'número', 'padrão', 'página', 'canal', 'apelido'],
-        'ro' => ['comandă', 'sub-opțiune', 'parolă', 'argumente', 'domeniu', 'motiv', 'număr', 'model', 'pagină', 'canal', 'poreclă'],
-        'tr' => ['komut', 'alt-seçenek', 'şifre', 'argümanlar', 'alan_adı', 'sebep', 'numara', 'kalıp', 'sayfa', 'kanal', 'takma_ad'],
+        'ca' => ['ordre', 'opció', 'contrasenya', 'paràmetres', 'domini', 'motiu', 'número', 'patró', 'pàgina', 'canal', 'sobrenom'],
+        'de' => ['Befehl', 'Option', 'Passwort', 'Parameter', 'Domain', 'Grund', 'Nummer', 'Muster', 'Seite', 'Kanal', 'Nickname'],
+        'el' => ['εντολή', 'επιλογή', 'κωδικός', 'παράμετροι', 'τομέας', 'αιτία', 'αριθμός', 'μοτίβο', 'σελίδα', 'κανάλι', 'ψευδώνυμο'],
+        'en' => ['command', 'option', 'password', 'parameters', 'domain', 'reason', 'number', 'pattern', 'page', 'channel', 'nickname'],
+        'es' => ['comando', 'opción', 'contraseña', 'parámetros', 'dominio', 'motivo', 'número', 'patrón', 'página', 'canal', 'apodo'],
+        'eu' => ['komandoa', 'aukera', 'pasahitza', 'parametroak', 'domeinua', 'arrazoia', 'zenbakia', 'eredua', 'orria', 'kanala', 'ezizena'],
+        'fr' => ['commande', 'option', 'motdepasse', 'paramètres', 'domaine', 'raison', 'numéro', 'motif', 'page', 'canal', 'surnom'],
+        'gl' => ['comando', 'opción', 'contrasinal', 'parámetros', 'dominio', 'motivo', 'número', 'patrón', 'páxina', 'canle', 'alcume'],
+        'it' => ['comando', 'opzione', 'password', 'parametri', 'dominio', 'motivo', 'numero', 'modello', 'pagina', 'canale', 'soprannome'],
+        'nl' => ['commando', 'optie', 'wachtwoord', 'parameters', 'domein', 'reden', 'nummer', 'patroon', 'pagina', 'kanaal', 'bijnaam'],
+        'pl' => ['komenda', 'opcja', 'hasło', 'parametry', 'domena', 'powód', 'numer', 'wzorzec', 'strona', 'kanał', 'nick'],
+        'pt' => ['comando', 'opção', 'palavra-passe', 'parâmetros', 'domínio', 'motivo', 'número', 'padrão', 'página', 'canal', 'apelido'],
+        'ro' => ['comandă', 'opțiune', 'parolă', 'parametri', 'domeniu', 'motiv', 'număr', 'model', 'pagină', 'canal', 'poreclă'],
+        'tr' => ['komut', 'seçenek', 'şifre', 'parametreler', 'alan_adı', 'sebep', 'numara', 'kalıp', 'sayfa', 'kanal', 'takma_ad'],
     ];
 
     #[Test]
-    public function helpSyntaxSeparatesOptionalCommandAndSubOptionInEveryLocale(): void
+    public function helpSyntaxSeparatesOptionalCommandAndOptionInEveryLocale(): void
     {
-        foreach (self::SYNTAX_TERMS as $locale => [$command, $subOption]) {
+        foreach (self::SYNTAX_TERMS as $locale => [$command, $option]) {
             foreach (['chanserv', 'memoserv', 'operserv'] as $domain) {
                 $catalog = self::flatten(self::parseDomain($domain, $locale));
-                self::assertSame('HELP [' . $command . '] [' . $subOption . ']', $catalog['help.syntax'], $domain . '.' . $locale);
+                self::assertSame('HELP [' . $command . '] [' . $option . ']', $catalog['help.syntax'], $domain . '.' . $locale);
             }
         }
     }
@@ -111,9 +111,9 @@ final class TranslationCatalogTest extends TestCase
     public function badmailSyntaxLocalizesArgumentsAndPreservesCommandKeywordsInEveryLocale(): void
     {
         foreach (self::SYNTAX_TERMS as $locale => $terms) {
-            [, , , $arguments, $domain, $reason, $number, $pattern, $page] = $terms;
+            [, , , $parameters, $domain, $reason, $number, $pattern, $page] = $terms;
             $catalog = self::flatten(self::parseDomain('operserv', $locale));
-            self::assertSame('BADMAIL {ADD|DEL|LIST} <' . $arguments . '>', $catalog['badmail.syntax'], $locale);
+            self::assertSame('BADMAIL {ADD|DEL|LIST} <' . $parameters . '>', $catalog['badmail.syntax'], $locale);
             self::assertSame('BADMAIL ADD <' . $domain . '> <' . $reason . '>', $catalog['badmail.add.syntax'], $locale);
             self::assertSame('BADMAIL DEL {' . $number . '|ALL}', $catalog['badmail.del.syntax'], $locale);
             self::assertSame('BADMAIL LIST <' . $pattern . '> [' . $page . ']', $catalog['badmail.list.syntax'], $locale);

@@ -160,7 +160,7 @@ disable:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [ordre] [subopció]"
+  syntax: "HELP [ordre] [opció]"
   short: "Llistar les ordres o mostrar l'ajuda d'una ordre."
   help: "Mostra la llista d'ordres o l'ajuda detallada d'una ordre o opció."
   example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"
