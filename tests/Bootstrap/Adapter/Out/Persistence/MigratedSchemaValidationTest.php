@@ -42,8 +42,17 @@ final class MigratedSchemaValidationTest extends TestCase
 
     private EntityManagerInterface $entityManager;
 
+    /** @var array{env: array<string, mixed>, server: array<string, mixed>} */
+    private array $previousDatabaseUrl;
+
     protected function setUp(): void
     {
+        $this->previousDatabaseUrl = [
+            'env' => array_intersect_key($_ENV, ['DATABASE_URL' => true]),
+            'server' => array_intersect_key($_SERVER, ['DATABASE_URL' => true]),
+        ];
+        // Each case owns its database, regardless of the runner's configured URL.
+        $_ENV['DATABASE_URL'] = $_SERVER['DATABASE_URL'] = 'sqlite:///:memory:';
         $this->kernel = new Kernel('test', true);
         $this->application = new Application($this->kernel);
         $this->application->setAutoExit(false);
@@ -54,11 +63,18 @@ final class MigratedSchemaValidationTest extends TestCase
         self::assertInstanceOf(EntityManagerInterface::class, $manager);
         $this->entityManager = $manager;
         $this->connection = $manager->getConnection();
+        self::assertTrue($this->connection->getParams()['memory'] ?? false);
     }
 
     protected function tearDown(): void
     {
-        $this->kernel->shutdown();
+        try {
+            $this->kernel->shutdown();
+        } finally {
+            unset($_ENV['DATABASE_URL'], $_SERVER['DATABASE_URL']);
+            $_ENV += $this->previousDatabaseUrl['env'];
+            $_SERVER += $this->previousDatabaseUrl['server'];
+        }
     }
 
     public function testFullyMigratedDatabaseMatchesOrmMetadataWithoutChangingDataOrTechnicalAssets(): void
