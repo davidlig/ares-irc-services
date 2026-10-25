@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 Înregistrarea este în așteptare, dar tokenul nu a putut fi livrat.
     Așteaptă expirarea înainte de a te înregistra din nou.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <parolă> [email]"
   short: "Înregistrați-vă porecla la servicii."
   help: |-
     Înregistrează-ți porecla. Rețeaua îți va trimite tokenul de verificare prin chat

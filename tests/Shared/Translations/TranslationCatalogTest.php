@@ -69,6 +69,70 @@ final class TranslationCatalogTest extends TestCase
         'OperServ' => 'operserv',
     ];
 
+    /** @var array<string, array{string, string, string, string, string, string, string, string, string, string, string}> */
+    private const array SYNTAX_TERMS = [
+        'ca' => ['ordre', 'subopció', 'contrasenya', 'arguments', 'domini', 'motiu', 'número', 'patró', 'pàgina', 'canal', 'sobrenom'],
+        'de' => ['Befehl', 'Unteroption', 'Passwort', 'Argumente', 'Domain', 'Grund', 'Nummer', 'Muster', 'Seite', 'Kanal', 'Nickname'],
+        'el' => ['εντολή', 'υποεπιλογή', 'κωδικός', 'ορίσματα', 'τομέας', 'αιτία', 'αριθμός', 'μοτίβο', 'σελίδα', 'κανάλι', 'ψευδώνυμο'],
+        'en' => ['command', 'sub-option', 'password', 'arguments', 'domain', 'reason', 'number', 'pattern', 'page', 'channel', 'nickname'],
+        'es' => ['comando', 'sub-opción', 'contraseña', 'argumentos', 'dominio', 'motivo', 'número', 'patrón', 'página', 'canal', 'apodo'],
+        'eu' => ['komandoa', 'azpi-aukera', 'pasahitza', 'argumentuak', 'domeinua', 'arrazoia', 'zenbakia', 'eredua', 'orria', 'kanala', 'ezizena'],
+        'fr' => ['commande', 'sous-option', 'motdepasse', 'arguments', 'domaine', 'raison', 'numéro', 'motif', 'page', 'canal', 'surnom'],
+        'gl' => ['comando', 'subopción', 'contrasinal', 'argumentos', 'dominio', 'motivo', 'número', 'patrón', 'páxina', 'canle', 'alcume'],
+        'it' => ['comando', 'sotto-opzione', 'password', 'argomenti', 'dominio', 'motivo', 'numero', 'modello', 'pagina', 'canale', 'soprannome'],
+        'nl' => ['commando', 'sub-optie', 'wachtwoord', 'argumenten', 'domein', 'reden', 'nummer', 'patroon', 'pagina', 'kanaal', 'bijnaam'],
+        'pl' => ['komenda', 'podopcja', 'hasło', 'argumenty', 'domena', 'powód', 'numer', 'wzorzec', 'strona', 'kanał', 'nick'],
+        'pt' => ['comando', 'sub-opção', 'palavra-passe', 'argumentos', 'domínio', 'motivo', 'número', 'padrão', 'página', 'canal', 'apelido'],
+        'ro' => ['comandă', 'sub-opțiune', 'parolă', 'argumente', 'domeniu', 'motiv', 'număr', 'model', 'pagină', 'canal', 'poreclă'],
+        'tr' => ['komut', 'alt-seçenek', 'şifre', 'argümanlar', 'alan_adı', 'sebep', 'numara', 'kalıp', 'sayfa', 'kanal', 'takma_ad'],
+    ];
+
+    #[Test]
+    public function helpSyntaxSeparatesOptionalCommandAndSubOptionInEveryLocale(): void
+    {
+        foreach (self::SYNTAX_TERMS as $locale => [$command, $subOption]) {
+            foreach (['chanserv', 'memoserv', 'operserv'] as $domain) {
+                $catalog = self::flatten(self::parseDomain($domain, $locale));
+                self::assertSame('HELP [' . $command . '] [' . $subOption . ']', $catalog['help.syntax'], $domain . '.' . $locale);
+            }
+        }
+    }
+
+    #[Test]
+    public function registrationSyntaxLocalizesPasswordWithoutChangingEmailInEveryLocale(): void
+    {
+        foreach (self::SYNTAX_TERMS as $locale => $terms) {
+            $catalog = self::flatten(self::parseDomain('nickserv', $locale));
+            self::assertSame('REGISTER <' . $terms[2] . '> [email]', $catalog['register.syntax'], $locale);
+        }
+    }
+
+    #[Test]
+    public function badmailSyntaxLocalizesArgumentsAndPreservesCommandKeywordsInEveryLocale(): void
+    {
+        foreach (self::SYNTAX_TERMS as $locale => $terms) {
+            [, , , $arguments, $domain, $reason, $number, $pattern, $page] = $terms;
+            $catalog = self::flatten(self::parseDomain('operserv', $locale));
+            self::assertSame('BADMAIL {ADD|DEL|LIST} <' . $arguments . '>', $catalog['badmail.syntax'], $locale);
+            self::assertSame('BADMAIL ADD <' . $domain . '> <' . $reason . '>', $catalog['badmail.add.syntax'], $locale);
+            self::assertSame('BADMAIL DEL {' . $number . '|ALL}', $catalog['badmail.del.syntax'], $locale);
+            self::assertSame('BADMAIL LIST <' . $pattern . '> [' . $page . ']', $catalog['badmail.list.syntax'], $locale);
+        }
+    }
+
+    #[Test]
+    public function founderSyntaxAndTokenGuidanceUseLocalizedChannelAndNicknameInEveryLocale(): void
+    {
+        foreach (self::SYNTAX_TERMS as $locale => $terms) {
+            $catalog = self::flatten(self::parseDomain('chanserv', $locale));
+            $syntax = 'SET <#' . $terms[9] . '> FOUNDER <' . $terms[10] . '>';
+            self::assertIsString($catalog['set.founder.syntax']);
+            self::assertStringStartsWith($syntax . ' [', $catalog['set.founder.syntax'], $locale);
+            self::assertIsString($catalog['set.founder.token_required']);
+            self::assertStringContainsString($syntax . ' <token>', $catalog['set.founder.token_required'], $locale);
+        }
+    }
+
     #[Test]
     public function everyLocalePreservesSpanishCatalogStructureAndPlaceholderOccurrences(): void
     {

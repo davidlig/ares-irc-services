@@ -154,7 +154,7 @@ disable:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [komandoa [azpi-aukera]]"
+  syntax: "HELP [komandoa] [azpi-aukera]"
   short: "Zerrendatu komandoak edo erakutsi komando baten laguntza."
   help: "Erakutsi komandoen zerrenda edo komando edo aukera baten laguntza zehatza."
   example: "\x0310›\x03\x0F %command_prefix%\x02\x0303HELP\x03\x0F"

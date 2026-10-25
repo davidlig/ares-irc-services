@@ -73,7 +73,7 @@ info:
 # --- HELP ------------------------------------------------------------------
 help:
   examples_header: "\x02 ■ Örnekler:\x02"
-  syntax: "HELP [komut [alt-seçenek]]"
+  syntax: "HELP [komut] [alt-seçenek]"
   example: "%command_prefix%\x02\x0303HELP\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303HELP SET\x03\x0F"
@@ -146,9 +146,9 @@ set:
 
   # --- SET FOUNDER ---------------------------------------------------------
   founder:
-    token_required: "Mevcut kurucunun onaylanmış belirteciyle SET <#channel> FOUNDER <nickname> <token> kullanın."
+    token_required: "Mevcut kurucunun onaylanmış belirteciyle SET <#kanal> FOUNDER <takma_ad> <token> kullanın."
     token_unavailable: "Mevcut kurucunun onaylanmış kurtarma belirteci yok. Önce kimliğini doğrulamalı ve VERIFY kullanmalıdır."
-    syntax: "SET <#channel> FOUNDER <nickname> [token]"
+    syntax: "SET <#kanal> FOUNDER <takma_ad> [token]"
     example: "%command_prefix%\x02\x0303SET #kanal FOUNDER Alicia\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303SET #kanal FOUNDER Alicia token-confirmado\x03\x0F"

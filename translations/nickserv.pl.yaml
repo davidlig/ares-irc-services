@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 Rejestracja oczekuje, ale nie udało się dostarczyć tokenu.
     Poczekaj na jej wygaśnięcie przed ponowną rejestracją.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <hasło> [email]"
   short: "Zarejestruj swój nick w serwisach."
   help: |-
     Rejestruje Twój pseudonim. W zależności od konfiguracji sieci token

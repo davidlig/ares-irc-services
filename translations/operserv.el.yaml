@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [command [sub-option]]"
+  syntax: "HELP [εντολή] [υποεπιλογή]"
   short: "Λίστα εντολών ή βοήθεια για μια εντολή."
   help: !irc |-
     Χωρίς ορίσματα εμφανίζει όλες τις εντολές. Χρησιμοποιήστε \x0303HELP <εντολή>\x03 για
@@ -526,13 +526,13 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <ορίσματα>"
   short: "Διαχείριση αποκλεισμένων τομέων email."
   help: |-
     Διαχείριση αποκλεισμένων τομέων email.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <domain> <reason>"
+    syntax: "BADMAIL ADD <τομέας> <αιτία>"
     short: "Αποκλεισμός τομέα."
     help: |-
       Δέχεται τομείς ASCII ή punycode, όχι διευθύνσεις ή μοτίβα. Απαιτείται
@@ -540,14 +540,14 @@ badmail:
       υποτομείς.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
-    syntax: "BADMAIL DEL {id|ALL}"
+    syntax: "BADMAIL DEL {αριθμός|ALL}"
     short: "Αφαίρεση αποκλεισμών τομέων."
     help: |-
       Διαγραφή μόνιμου αναγνωριστικού ή όλων των εγγραφών με ALL. Τα άλλα
       αναγνωριστικά δεν αλλάζουν.
     example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
   list:
-    syntax: "BADMAIL LIST <pattern> [page]"
+    syntax: "BADMAIL LIST <μοτίβο> [σελίδα]"
     short: "Λίστα αποκλεισμένων τομέων."
     help: |-
       Το μοτίβο είναι υποχρεωτικό. Μόνο το * ταιριάζει με οποιαδήποτε

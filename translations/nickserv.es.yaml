@@ -21,7 +21,7 @@ register:
   token_unavailable: !irc |-
     \x0304✗\x03 El registro está pendiente, pero no se pudo entregar su token.
     Espera a que caduque este registro antes de registrarte de nuevo.
-  syntax: "REGISTER <password> [email]"
+  syntax: "REGISTER <contraseña> [email]"
   short:            "Registra tu apodo en los servicios."
   help: |-
     Registra tu apodo. La red te indicará el token de verificación

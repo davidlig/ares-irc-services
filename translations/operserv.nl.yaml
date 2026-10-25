@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [commando [sub-optie]]"
+  syntax: "HELP [commando] [sub-optie]"
   short: "Toon commando's of hulp voor een commando."
   help: !irc |-
     Toont zonder argumenten alle commando’s. Gebruik \x0303HELP <commando>\x03 voor volledige
@@ -499,27 +499,27 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <argumenten>"
   short: "Geblokkeerde e-maildomeinen beheren."
   help: |-
     Geblokkeerde e-maildomeinen beheren.
   example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
   add:
-    syntax: "BADMAIL ADD <domain> <reason>"
+    syntax: "BADMAIL ADD <domein> <reden>"
     short: "Een domein blokkeren."
     help: |-
       Accepteert ASCII- of punycode-domeinen, geen adressen of patronen. Een
       reden is verplicht. De blokkade geldt exact, niet voor subdomeinen.
     example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
   del:
-    syntax: "BADMAIL DEL {id|ALL}"
+    syntax: "BADMAIL DEL {nummer|ALL}"
     short: "Domeinblokkades verwijderen."
     help: |-
       Verwijder een blijvend nummer of alle vermeldingen met ALL. Andere
       nummers veranderen niet.
     example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
   list:
-    syntax: "BADMAIL LIST <pattern> [page]"
+    syntax: "BADMAIL LIST <patroon> [pagina]"
     short: "Geblokkeerde domeinen tonen."
     help: |-
       Een patroon is verplicht. Alleen * is een joker voor elke tekenreeks.
