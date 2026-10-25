@@ -87,7 +87,7 @@ debug:
   action_message: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. %reason%"
   action_with_option: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%. %reason%"
   action_with_value: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%=%value%. %reason%"
-  prefix_reason: "Sebep: %reason%"
+  prefix_reason: "Gerekçe: %reason%"
   action_duration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
 
 # --- HISTORY ---------------------------------------------------------------
@@ -120,7 +120,7 @@ reply:
 
 # --- LABEL -----------------------------------------------------------------
 label:
-  no_reason: "Sebep yok"
+  no_reason: "Gerekçe yok"
   never: "hiçbir zaman"
   unknown_creator: "bilinmiyor"
   permanent: "Kalıcı"

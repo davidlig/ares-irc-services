@@ -325,7 +325,7 @@ gline:
   short: "Gérer les G-lines du réseau."
   help: |-
     Gère les G-lines (bannissements réseau globaux).
-    ADD ajoute une G-line avec masque, expiration et motif.
+    ADD ajoute une G-line avec masque, expiration et raison.
     DEL supprime une G-line par masque ou numéro d’entrée.
     LIST affiche toutes les G-lines, avec filtrage facultatif par masque.
 

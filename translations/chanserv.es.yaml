@@ -472,7 +472,7 @@ akick:
     help: |-
       Añade una máscara a la lista de expulsión automática del canal.
 
-      Puedes indicar una duración y un motivo. Si incluyes un motivo, debes
+      Puedes indicar una duración y una razón. Si incluyes una razón, debes
       especificar también la duración: 0 para permanente, d para días, h para
       horas o m para minutos.
     done:           "\x0303✔\x03 AKICK \x02%mask%\x02 añadido."

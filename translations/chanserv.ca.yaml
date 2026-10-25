@@ -452,7 +452,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [reason]"
+  syntax: "AKICK <#channel> {ADD|DEL|LIST} [mask] [expiry] [motiu]"
   example: "%command_prefix%\x02\x0303AKICK #canal ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #canal ADD *!*@* 7d Spam\x03\x0F"
@@ -469,7 +469,7 @@ akick:
 
   # --- AKICK ADD -----------------------------------------------------------
   add:
-    syntax: "AKICK <#channel> ADD <mask> [expiry] [reason]"
+    syntax: "AKICK <#channel> ADD <mask> [expiry] [motiu]"
     example: "%command_prefix%\x02\x0303AKICK #canal ADD *!*@* 0\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #canal ADD *!*@* 7d Spam\x03\x0F"
@@ -536,7 +536,7 @@ drop:
 
 # --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax: "SUSPEND <#channel> <duration> <reason>"
+  syntax: "SUSPEND <#channel> <duration> <motiu>"
   example: "%command_prefix%\x02\x0303SUSPEND #canal 7d Incompliment de les normes\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SUSPEND #canal 0 Incompliment de les normes\x03\x0F"
@@ -600,7 +600,7 @@ noexpire:
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax: "FORBID <#channel> <reason>"
+  syntax: "FORBID <#channel> <motiu>"
   example: "%command_prefix%\x02\x0303FORBID #canal Incompliment de les normes\x03\x0F"
   short: "Prohibir l'ús d'un canal."
   help: |-
@@ -707,7 +707,7 @@ clearaccess:
 
 # --- CLEARUSERS ------------------------------------------------------------
 clearusers:
-  syntax: "CLEARUSERS <#channel> [reason]"
+  syntax: "CLEARUSERS <#channel> [motiu]"
   example: "%command_prefix%\x02\x0303CLEARUSERS #canal\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303CLEARUSERS #canal flooding\x03\x0F"

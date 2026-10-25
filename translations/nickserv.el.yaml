@@ -98,7 +98,7 @@ recover:
   examples:
     - "%command_prefix%\x02\x0303RECOVER Χρήστης <ληφθέν_διακριτικό>\x03\x0F"
   pending: "\x0307→\x03 Η εγγραφή του \x02%nickname%\x02 εκκρεμεί. Χρησιμοποίησε \x0303VERIFY <token>\x03. Το \x0303RESEND\x03 διατίθεται μόνο με REGMODE EMAIL και έγκυρη διεύθυνση email."
-  suspended: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Αιτία: %reason%"
+  suspended: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Αιτιολογία: %reason%"
   forbidden: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν μπορεί να χρησιμοποιηθεί σε αυτό το δίκτυο."
   throttled: "\x0304✗\x03 Πάρα πολλά λανθασμένα διακριτικά. Δοκίμασε ξανά σε \x02%minutes%\x02 λεπτά."
   invalid_token: "\x0304✗\x03 Το διακριτικό διάσωσης είναι άκυρο."
@@ -134,7 +134,7 @@ identify:
   pending: !irc |-
     \x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει εκκρεμή επαλήθευση email.
       Εκτελέστε \x0303/msg %bot% VERIFY <token>\x03 ή \x0303/msg %bot% RESEND\x03.
-  suspended: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Αιτία: %reason%"
+  suspended: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Αιτιολογία: %reason%"
   forbidden: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν μπορεί να χρησιμοποιηθεί σε αυτό το δίκτυο."
   pending_deletion: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναμονή διαγραφής και δεν μπορεί να χρησιμοποιηθεί."
 
@@ -157,11 +157,11 @@ status:
   not_identified: "  Κατάσταση      : \x0307Μη ταυτοποιημένο\x03"
   identified: "  Κατάσταση      : \x0303Ταυτοποιημένο\x03"
   suspended: "  Κατάσταση      : \x0304Σε αναστολή\x03"
-  suspended_reason: "  Αιτία          : %reason%"
+  suspended_reason: "  Αιτιολογία     : %reason%"
   suspended_until: "  Λήγει στις     : %date%"
   suspended_permanent: "  Λήγει στις     : Μόνιμη"
   forbidden: "  Κατάσταση      : \x0304Απαγορευμένο\x03"
-  forbidden_reason: "  Αιτία          : %reason%"
+  forbidden_reason: "  Αιτιολογία     : %reason%"
   pending_deletion: "  \x0314Κατάσταση\x03          : \x0307Σε αναμονή διαγραφής\x03"
   pending_deletion_at: "  \x0314Διαγράφηκε\x03      : %date%"
 
@@ -182,7 +182,7 @@ info:
   status_suspended: "\x0304Σε αναστολή\x03"
   status_forbidden: "\x0304Απαγορευμένο\x03"
   status_pending_deletion: "\x0307Σε αναμονή διαγραφής\x03"
-  reason: "  \x0314Αιτία\x03                 : %reason%"
+  reason: "  \x0314Αιτιολογία\x03            : %reason%"
   suspended_until: "  \x0314Λήγει στις\x03      : %date%"
   suspended_permanent: "  \x0314Λήγει στις\x03      : Μόνιμη"
   registered_at: "  \x0314Καταχωρήθηκε\x03    : %date%"
@@ -546,7 +546,7 @@ whoip:
 
 # --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax: "SUSPEND <nickname> <duration> <reason>"
+  syntax: "SUSPEND <nickname> <duration> <αιτιολογία>"
   short: "Αναστολή ψευδωνύμου."
   help: !irc |-
     Θέτει σε αναστολή ένα ψευδώνυμο, εμποδίζοντας τον κάτοχο από το να ταυτοποιηθεί.
@@ -558,7 +558,7 @@ suspend:
     Οι χρήστες σε αναστολή δεν μπορούν να ταυτοποιηθούν στο ψευδώνυμό τους.
     Οι IRC operators και οι root χρήστες δεν μπορούν να τεθούν σε αναστολή.
 
-    Σύνταξη: SUSPEND <ψευδώνυμο> <διάρκεια> <αιτία>
+    Σύνταξη: SUSPEND <ψευδώνυμο> <διάρκεια> <αιτιολογία>
     Παραδείγματα:
       SUSPEND BadUser 7d Spamming στο #help
       SUSPEND Abuser 30d Επαναλαμβανόμενο flood
@@ -645,7 +645,7 @@ restore:
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax: "FORBID <nickname> <reason>"
+  syntax: "FORBID <nickname> <αιτιολογία>"
   short: "Μόνιμος αποκλεισμός ψευδωνύμου από χρήση."
   help: |-
     Απαγορεύει τη χρήση ενός ψευδωνύμου στο δίκτυο.
@@ -659,12 +659,12 @@ forbid:
 
     Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbid
 
-    Σύνταξη: FORBID <ψευδώνυμο> <αιτία>
+    Σύνταξη: FORBID <ψευδώνυμο> <αιτιολογία>
     Παράδειγμα: FORBID BadNick Επαναλαμβανόμενες παραβιάσεις πολιτικής
   example: "%command_prefix%\x02\x0303FORBID ΚακόςΧρήστης Επαναλαμβανόμενες παραβιάσεις κανόνων\x03\x0F"
   success: "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει απαγορευτεί."
-  updated: "\x0303✔\x03 Η αιτία απαγόρευσης για το \x02%nickname%\x02 έχει ενημερωθεί."
-  reason_required: "\x0304✗\x03 Πρέπει να δώσετε αιτία για την απαγόρευση."
+  updated: "\x0303✔\x03 Η αιτιολογία απαγόρευσης για το \x02%nickname%\x02 έχει ενημερωθεί."
+  reason_required: "\x0304✗\x03 Πρέπει να δώσετε αιτιολογία για την απαγόρευση."
   cannot_forbid_root: "\x0304✗\x03 Δεν μπορεί να απαγορευτεί ο root χρήστης \x02%nickname%\x02."
   cannot_forbid_oper: "\x0304✗\x03 Δεν μπορεί να απαγορευτεί ο IRC operator \x02%nickname%\x02."
   cannot_forbid_service: "\x0304✗\x03 Δεν μπορεί να απαγορευτεί το ψευδώνυμο υπηρεσίας \x02%nickname%\x02."

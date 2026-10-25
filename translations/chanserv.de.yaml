@@ -60,11 +60,11 @@ info:
   no_expire: "  \x0314Läuft nie ab\x03       : Ja"
   mlock_modes: "  \x0314Mode-Sperre\x03        : %modes%"
   suspended_status: "  \x0314Status\x03             : \x0304Suspendiert\x03"
-  suspended_reason: "  \x0314Grund\x03              : %reason%"
+  suspended_reason: "  \x0314Begründung\x03         : %reason%"
   suspended_until: "  \x0314Endet am\x03           : %date%"
   suspended_permanent: "  \x0314Endet am\x03           : Dauerhaft"
   forbidden_status: "  \x0314Status\x03             : \x0304Gesperrt\x03"
-  forbidden_reason: "  \x0314Grund\x03              : %reason%"
+  forbidden_reason: "  \x0314Begründung\x03         : %reason%"
   pending_deletion_status: "  \x0314Status\x03             : \x0307Löschung ausstehend\x03"
   pending_deletion_at: "  \x0314Gelöscht\x03           : %date%"
   pending_deletion_until: "  \x0314Endgültig am\x03       : %date%"
@@ -451,7 +451,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD|DEL|LIST} [Maske] [Ablauf] [Grund]"
+  syntax: "AKICK <#channel> {ADD|DEL|LIST} [Maske] [Ablauf] [Begründung]"
   example: "%command_prefix%\x02\x0303AKICK #channel ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #channel ADD *!*@* 7d Spam\x03\x0F"
@@ -468,7 +468,7 @@ akick:
 
   # --- AKICK ADD -----------------------------------------------------------
   add:
-    syntax: "AKICK <#channel> ADD <Maske> [Ablauf] [Grund]"
+    syntax: "AKICK <#channel> ADD <Maske> [Ablauf] [Begründung]"
     example: "%command_prefix%\x02\x0303AKICK #channel ADD *!*@* 0\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #channel ADD *!*@* 7d Spam\x03\x0F"
@@ -476,8 +476,8 @@ akick:
     help: |-
       Fügt der automatischen Kick-Liste des Channels eine Maske hinzu.
 
-      Du kannst Dauer und Grund angeben. Wenn du einen Grund angibst, musst du
-      auch eine Dauer angeben: 0 für dauerhaft, d für Tage, h für Stunden oder m
+      Du kannst Dauer und Begründung angeben. Wenn du eine Begründung angibst, musst
+      du auch eine Dauer angeben: 0 für dauerhaft, d für Tage, h für Stunden oder m
       für Minuten.
     done: "\x0303✔\x03 AKICK \x02%mask%\x02 hinzugefügt."
     already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 existiert bereits."
@@ -500,7 +500,7 @@ akick:
     syntax: "AKICK <#channel> LIST"
     example: "%command_prefix%\x02\x0303AKICK #channel LIST\x03\x0F"
     short: "AKICK-Einträge auflisten."
-    help: "Zeigt Maske, Grund, Ablauf und wer hinzugefügt hat."
+    help: "Zeigt Maske, Begründung, Ablauf und wer hinzugefügt hat."
     header: "\x0303AKICK-Liste für \x02%channel%\x02\x03"
     empty: "\x0307ℹ\x03 Channel \x02%channel%\x02 hat keine AKICK-Einträge."
     entry: "  #%index% %mask% %reason% (von %nickname%, läuft ab: %expiration%)"
@@ -536,7 +536,7 @@ drop:
 
 # --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax: "SUSPEND <#channel> <Dauer> <Grund>"
+  syntax: "SUSPEND <#channel> <Dauer> <Begründung>"
   example: "%command_prefix%\x02\x0303SUSPEND #channel 7d Regelverstoß\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SUSPEND #channel 0 Regelverstoß\x03\x0F"
@@ -549,7 +549,7 @@ suspend:
   already_suspended: "\x0304✗\x03 Channel \x02%channel%\x02 ist bereits suspendiert."
   invalid_duration: "\x0304✗\x03 Ungültige Dauer. Verwenden Sie: 0 (dauerhaft), 1d, 12h oder 60m."
   channel_suspended: "\x0304✗\x03 Channel \x02%channel%\x02 ist suspendiert und kann nicht verwendet werden."
-  notice_channel: "\x0304⚠\x03 Channel wurde suspendiert. Grund: %reason%"
+  notice_channel: "\x0304⚠\x03 Channel wurde suspendiert. Begründung: %reason%"
 
 # --- UNSUSPEND -------------------------------------------------------------
 unsuspend:
@@ -601,16 +601,16 @@ noexpire:
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax: "FORBID <#channel> <Grund>"
+  syntax: "FORBID <#channel> <Begründung>"
   example: "%command_prefix%\x02\x0303FORBID #channel Regelverstoß\x03\x0F"
   short: "Einen Channel für die Nutzung sperren."
   help: |-
     Verbietet die Nutzung eines Channels, kickt alle Benutzer und verhindert
     ihren erneuten Beitritt. Ein registrierter Channel wird vor der Sperre
     aufgehoben.
-  reason_required: "\x0304✗\x03 Sie müssen einen Grund angeben."
+  reason_required: "\x0304✗\x03 Sie müssen eine Begründung angeben."
   success: "\x0303✔\x03 Channel \x02%channel%\x02 wurde gesperrt."
-  updated: "\x0303✔\x03 Sperrgrund für Channel \x02%channel%\x02 wurde aktualisiert."
+  updated: "\x0303✔\x03 Begründung für die Sperre von Channel \x02%channel%\x02 wurde aktualisiert."
   channel_forbidden: "\x0304✗\x03 Channel \x02%channel%\x02 ist gesperrt und kann nicht verwendet werden."
 
 # --- UNFORBID --------------------------------------------------------------
@@ -708,14 +708,14 @@ clearaccess:
 
 # --- CLEARUSERS ------------------------------------------------------------
 clearusers:
-  syntax: "CLEARUSERS <#channel> [Grund]"
+  syntax: "CLEARUSERS <#channel> [Begründung]"
   example: "%command_prefix%\x02\x0303CLEARUSERS #channel\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303CLEARUSERS #channel flooding\x03\x0F"
   short: "Alle Benutzer aus einem Channel kicken."
   help: |-
     Kickt alle Benutzer aus dem Channel. Dieser Befehl ist IRC-Operatoren
-    vorbehalten; ohne angegebenen Grund wird ein Standardgrund verwendet.
+    vorbehalten; ohne angegebene Begründung wird eine Standardbegründung verwendet.
   not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 ist derzeit nicht im Netzwerk."
   empty: "\x0307ℹ\x03 Channel \x02%channel%\x02 hat keine Benutzer zum Kicken."
   success: "\x0303✔\x03 \x02%count%\x02 Benutzer aus \x02%channel%\x02 gekickt."

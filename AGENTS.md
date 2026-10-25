@@ -393,6 +393,12 @@ Run the full suite with coverage exactly once at final verification:
 ./scripts/check-coverage.sh 100 --issues
 ```
 
+`tests/Shared/Translations/TranslationCatalogTest.php` is English-only and intentionally minimal:
+keep basic catalog loading and essential key/placeholder checks, not exhaustive wording snapshots,
+cross-locale comparisons, or presentation/style assertions. Do not relocate removed checks into
+another test merely to preserve them. Production coverage belongs to focused behavior tests,
+including the translation loader tests. This does not narrow the required 14-locale translation review.
+
 Read `.agents/testing.md`.
 
 ## 11. PHP & Code Quality

@@ -60,11 +60,11 @@ info:
   no_expire: "  \x0314Hiç Sona Ermez\x03     : Evet"
   mlock_modes: "  \x0314Mod kilidi\x03         : %modes%"
   suspended_status: "  \x0314Durum\x03              : \x0304Askıya alındı\x03"
-  suspended_reason: "  \x0314Sebep\x03              : %reason%"
+  suspended_reason: "  \x0314Gerekçe\x03            : %reason%"
   suspended_until: "  \x0314Bitiş tarihi\x03       : %date%"
   suspended_permanent: "  \x0314Bitiş tarihi\x03       : Kalıcı"
   forbidden_status: "  \x0314Durum\x03              : \x0304Yasaklandı\x03"
-  forbidden_reason: "  \x0314Sebep\x03              : %reason%"
+  forbidden_reason: "  \x0314Gerekçe\x03            : %reason%"
   pending_deletion_status: "  \x0314Durum\x03              : \x0307Silinme bekleniyor\x03"
   pending_deletion_at: "  \x0314Silindi\x03            : %date%"
   pending_deletion_until: "  \x0314Kalıcı silinme\x03     : %date%"
@@ -452,7 +452,7 @@ dehalfop:
 
 # --- AKICK -----------------------------------------------------------------
 akick:
-  syntax: "AKICK <#channel> {ADD|DEL|LIST} [maske] [süre] [sebep]"
+  syntax: "AKICK <#channel> {ADD|DEL|LIST} [maske] [süre] [gerekçe]"
   example: "%command_prefix%\x02\x0303AKICK #kanal ADD *!*@* 0\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303AKICK #kanal ADD *!*@* 7d Spam\x03\x0F"
@@ -469,7 +469,7 @@ akick:
 
   # --- AKICK ADD -----------------------------------------------------------
   add:
-    syntax: "AKICK <#channel> ADD <maske> [süre] [sebep]"
+    syntax: "AKICK <#channel> ADD <maske> [süre] [gerekçe]"
     example: "%command_prefix%\x02\x0303AKICK #kanal ADD *!*@* 0\x03\x0F"
     examples:
       - "%command_prefix%\x02\x0303AKICK #kanal ADD *!*@* 7d Spam\x03\x0F"
@@ -477,8 +477,8 @@ akick:
     help: |-
       Kanalın otomatik atma listesine bir maske ekler.
 
-      Süre ve neden belirtebilirsiniz. Neden eklerseniz süreyi de belirtmelisiniz: 0
-      süresiz, d gün, h saat veya m dakika anlamına gelir.
+      Süre ve gerekçe belirtebilirsiniz. Gerekçe eklerseniz süreyi de belirtmelisiniz:
+      0 süresiz, d gün, h saat veya m dakika anlamına gelir.
     done: "\x0303✔\x03 AKICK \x02%mask%\x02 eklendi."
     already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 zaten mevcut."
     notice_channel: "\x02%from%\x02 AKICK ekliyor: \x02%mask%\x02 (%reason%)"
@@ -500,7 +500,7 @@ akick:
     syntax: "AKICK <#channel> LIST"
     example: "%command_prefix%\x02\x0303AKICK #kanal LIST\x03\x0F"
     short: "AKICK girişlerini listeleyin."
-    help: "Maske, sebep, süre ve ekleyeni gösterir."
+    help: "Maske, gerekçe, süre ve ekleyeni gösterir."
     header: "\x0303\x02%channel%\x02 için AKICK listesi\x03"
     empty: "\x0307ℹ\x03 \x02%channel%\x02 kanalının AKICK girişi yok."
     entry: "  #%index% %mask% %reason% (ekleyen: %nickname%, bitiş: %expiration%)"
@@ -534,7 +534,7 @@ drop:
 
 # --- SUSPEND ---------------------------------------------------------------
 suspend:
-  syntax: "SUSPEND <#channel> <süre> <sebep>"
+  syntax: "SUSPEND <#channel> <süre> <gerekçe>"
   example: "%command_prefix%\x02\x0303SUSPEND #kanal 7d Kuralların ihlali\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303SUSPEND #kanal 0 Kuralların ihlali\x03\x0F"
@@ -548,7 +548,7 @@ suspend:
   already_suspended: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten askıya alınmış."
   invalid_duration: "\x0304✗\x03 Geçersiz süre. Kullanın: 0 (kalıcı), 1g, 12s veya 60d."
   channel_suspended: "\x0304✗\x03 \x02%channel%\x02 kanalı askıya alınmış ve kullanılamaz."
-  notice_channel: "\x0304⚠\x03 Kanal askıya alındı. Sebep: %reason%"
+  notice_channel: "\x0304⚠\x03 Kanal askıya alındı. Gerekçe: %reason%"
 
 # --- UNSUSPEND -------------------------------------------------------------
 unsuspend:
@@ -600,16 +600,16 @@ noexpire:
 
 # --- FORBID ----------------------------------------------------------------
 forbid:
-  syntax: "FORBID <#channel> <sebep>"
+  syntax: "FORBID <#channel> <gerekçe>"
   example: "%command_prefix%\x02\x0303FORBID #kanal Kuralların ihlali\x03\x0F"
   short: "Bir kanalın kullanımını yasaklayın."
   help: |-
     Bir kanalın kullanımını yasaklar, tüm kullanıcıları atar ve yeniden
     katılmalarını
     engeller. Kanal kayıtlıysa yasak uygulanmadan önce kaydı silinir.
-  reason_required: "\x0304✗\x03 Bir sebep belirtmelisiniz."
+  reason_required: "\x0304✗\x03 Bir gerekçe belirtmelisiniz."
   success: "\x0303✔\x03 \x02%channel%\x02 kanalı yasaklandı."
-  updated: "\x0303✔\x03 \x02%channel%\x02 kanalı için yasaklama sebebi güncellendi."
+  updated: "\x0303✔\x03 \x02%channel%\x02 kanalı için yasaklama gerekçesi güncellendi."
   channel_forbidden: "\x0304✗\x03 \x02%channel%\x02 kanalı yasaklanmış ve kullanılamaz."
 
 # --- UNFORBID --------------------------------------------------------------
@@ -707,15 +707,15 @@ clearaccess:
 
 # --- CLEARUSERS ------------------------------------------------------------
 clearusers:
-  syntax: "CLEARUSERS <#channel> [sebep]"
+  syntax: "CLEARUSERS <#channel> [gerekçe]"
   example: "%command_prefix%\x02\x0303CLEARUSERS #kanal\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303CLEARUSERS #kanal flooding\x03\x0F"
   short: "Bir kanaldaki tüm kullanıcıları atın."
   help: |-
-    Kanaldaki tüm kullanıcıları atar. Yalnızca IRCop kullanabilir; neden
+    Kanaldaki tüm kullanıcıları atar. Yalnızca IRCop kullanabilir; gerekçe
     belirtilmezse
-    varsayılan bir neden kullanılır.
+    varsayılan bir gerekçe kullanılır.
   not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanalı şu anda ağda değil."
   empty: "\x0307ℹ\x03 \x02%channel%\x02 kanalında atılacak kullanıcı yok."
   success: "\x0303✔\x03 \x02%channel%\x02 kanalından \x02%count%\x02 kullanıcı atıldı."

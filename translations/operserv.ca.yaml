@@ -312,7 +312,7 @@ role:
 
 # --- KILL ------------------------------------------------------------------
 kill:
-  syntax: "KILL <nickname> <reason>"
+  syntax: "KILL <nickname> <motiu>"
   short: "Desconnectar forçosament un usuari de la xarxa."
   help: |-
     Desconnecta un usuari de la xarxa IRC.
@@ -324,7 +324,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [mask] [expiry] [reason]"
+  syntax: "GLINE {ADD|DEL|LIST} [mask] [expiry] [motiu]"
   short: "Gestionar les G-lines de tota la xarxa."
   help: |-
     Gestiona les G-lines (prohibicions globals) de la xarxa.
@@ -350,7 +350,7 @@ gline:
 
   # --- GLINE ADD -----------------------------------------------------------
   add:
-    syntax: "GLINE ADD <mask> <expiry> <reason>"
+    syntax: "GLINE ADD <mask> <expiry> <motiu>"
     short: "Afegir una G-line de tota la xarxa."
     help: |-
       Afegeix una G-line (prohibició global) a la xarxa.

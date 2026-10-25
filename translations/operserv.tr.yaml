@@ -306,7 +306,7 @@ role:
 
 # --- KILL ------------------------------------------------------------------
 kill:
-  syntax: "KILL <nickname> <sebep>"
+  syntax: "KILL <nickname> <gerekçe>"
   short: "Bir kullanıcıyı ağdan zorla ayırın."
   help: |-
     Bir kullanıcının IRC ağındaki bağlantısını keser.
@@ -318,11 +318,11 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [maske] [süre] [sebep]"
+  syntax: "GLINE {ADD|DEL|LIST} [maske] [süre] [gerekçe]"
   short: "Ağ genelindeki G-line'ları yönetin."
   help: |-
     Ağ genelindeki G-line yasaklarını yönetir.
-    ADD maske, süre ve nedenle yeni G-line ekler.
+    ADD maske, süre ve gerekçeyle yeni G-line ekler.
     DEL maskeye veya kayıt numarasına göre G-line siler.
     LIST tüm G-line kayıtlarını listeler; isteğe bağlı olarak maskeyle filtreler.
 
@@ -344,7 +344,7 @@ gline:
 
   # --- GLINE ADD -----------------------------------------------------------
   add:
-    syntax: "GLINE ADD <maske> <süre> <sebep>"
+    syntax: "GLINE ADD <maske> <süre> <gerekçe>"
     short: "Ağ genelinde bir G-line ekleyin."
     help: |-
       Ağa genel G-line yasağı ekler.

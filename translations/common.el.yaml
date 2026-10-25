@@ -89,7 +89,7 @@ debug:
   action_message: "%operator% εκτελεί την εντολή %command% σε %target%. %reason%"
   action_with_option: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%. %reason%"
   action_with_value: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%=%value%. %reason%"
-  prefix_reason: "Αιτία: %reason%"
+  prefix_reason: "Αιτιολογία: %reason%"
   action_duration: "%operator% εκτελεί την εντολή %command% σε %target%. Διάρκεια: %duration%. %reason%"
 
 # --- HISTORY ---------------------------------------------------------------
@@ -122,7 +122,7 @@ reply:
 
 # --- LABEL -----------------------------------------------------------------
 label:
-  no_reason: "Χωρίς αιτία"
+  no_reason: "Χωρίς αιτιολογία"
   never: "ποτέ"
   unknown_creator: "άγνωστος"
   permanent: "Μόνιμη"
