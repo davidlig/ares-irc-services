@@ -9,14 +9,16 @@
             <generator strategy="AUTO"/>
         </id>
 
-        <field name="pattern" type="string" length="255" unique="true"/>
+        <field name="pattern" type="string" length="255"/>
 
         <field name="createdByNickId" type="integer" nullable="true" column="created_by_nick_id"/>
 
         <field name="createdAt" type="datetime_immutable"/>
 
+        <unique-constraints>
+            <unique-constraint name="UNIQ_pattern" columns="pattern"/>
+        </unique-constraints>
         <indexes>
-            <index name="idx_pattern" columns="pattern"/>
             <index name="idx_created_by" columns="created_by_nick_id"/>
         </indexes>
     </entity>

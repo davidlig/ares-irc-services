@@ -28,8 +28,12 @@
         <field name="mlock" type="string" length="64" column="mlock"/>
         <field name="mlockParams" type="json" column="mlock_params"/>
         <field name="secure" type="boolean" column="secure"/>
-        <field name="ircopOnly" type="boolean" column="ircop_only"/>
-        <field name="private" type="boolean" column="private"/>
+        <field name="ircopOnly" type="boolean" column="ircop_only">
+            <options><option name="default">0</option></options>
+        </field>
+        <field name="private" type="boolean" column="private">
+            <options><option name="default">0</option></options>
+        </field>
         <field name="topic" type="text" nullable="true" column="topic"/>
         <field name="lastTopicSetAt" type="datetime_immutable" nullable="true" column="last_topic_set_at"/>
         <field name="lastTopicSetByNick" type="string" length="64" nullable="true" column="last_topic_set_by_nick"/>
@@ -43,7 +47,9 @@
         <field name="suspendedReason" type="string" length="255" nullable="true" column="suspended_reason"/>
         <field name="suspendedUntil" type="datetime_immutable" nullable="true" column="suspended_until"/>
         <field name="forbiddenReason" type="string" length="255" nullable="true" column="forbidden_reason"/>
-        <field name="noExpire" type="boolean" column="no_expire"/>
+        <field name="noExpire" type="boolean" column="no_expire">
+            <options><option name="default">0</option></options>
+        </field>
         <field name="pendingDeletionAt" type="datetime_immutable" nullable="true" column="pending_deletion_at"/>
     </entity>
 </doctrine-mapping>

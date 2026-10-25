@@ -146,6 +146,11 @@ parameters:
     mailer.send_delay_seconds: '%env(int:default:mailer.send_delay_seconds_default:MAILER_SEND_DELAY_SECONDS)%'
 
 services:
+    doctrine.schema_validate_command:
+        class: App\Bootstrap\Adapter\In\Console\ValidateSchemaCommand
+        arguments: ['@doctrine.orm.command.entity_manager_provider']
+        tags: [{name: console.command, command: 'doctrine:schema:validate'}]
+
     _defaults:
         autowire: true
         autoconfigure: true
@@ -2404,3 +2409,6 @@ services:
 
     App\OperServ\Adapter\Out\Irc\DebugChannelCommandAuditSink:
         tags: ['app.command_audit_sink']
+
+    App\Bootstrap\Adapter\In\Console\ValidateSchemaCommand:
+        alias: doctrine.schema_validate_command
