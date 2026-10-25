@@ -162,7 +162,7 @@ disable:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [Befehl] [Unteroption]"
+  syntax: "HELP [Befehl] [Option]"
   short: "Befehle auflisten oder Hilfe für einen Befehl anzeigen."
   help: |-
     Zeigt die Befehlsliste oder ausführliche Hilfe zu einem Befehl oder einer

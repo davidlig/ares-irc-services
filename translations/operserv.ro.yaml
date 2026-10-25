@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [comandă] [sub-opțiune]"
+  syntax: "HELP [comandă] [opțiune]"
   short: "Listați comenzile sau afișați ajutor pentru o comandă."
   help: !irc |-
     Fără argumente, listează toate comenzile. Folosește \x0303HELP <comandă>\x03 pentru ajutor
@@ -496,7 +496,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <argumente>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <parametri>"
   short: "Administrează domeniile email blocate."
   help: |-
     Administrează domeniile email blocate.

@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [komandoa] [azpi-aukera]"
+  syntax: "HELP [komandoa] [aukera]"
   short: "Zerrendatu komandoak edo erakutsi komando baten laguntza."
   help: !irc |-
     Argumenturik gabe komando guztiak zerrendatzen ditu. Erabili \x0303HELP <komandoa>\x03
@@ -524,7 +524,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <argumentuak>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <parametroak>"
   short: "Blokeatutako posta-domeinuak kudeatu."
   help: |-
     Blokeatutako posta-domeinuak kudeatu.

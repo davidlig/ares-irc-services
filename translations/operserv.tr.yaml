@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [komut] [alt-seçenek]"
+  syntax: "HELP [komut] [seçenek]"
   short: "Komutları listeleyin veya bir komut için yardım gösterin."
   help: !irc |-
     Argüman olmadan tüm komutları listeler. Tam yardım için \x0303HELP <komut>\x03, alt
@@ -492,7 +492,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <argümanlar>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <parametreler>"
   short: "Engellenen e-posta alan adlarını yönet."
   help: |-
     Engellenen e-posta alan adlarını yönet.
