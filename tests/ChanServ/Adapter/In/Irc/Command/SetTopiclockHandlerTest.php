@@ -9,6 +9,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetTopiclockHandler;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
@@ -165,6 +166,7 @@ final class SetTopiclockHandlerTest extends TestCase
         EventBusInterface $events,
     ): SetTopiclockHandler {
         return new SetTopiclockHandler(new UpdateChannelSettingHandler(
+            $this->createStub(EmailDomainPolicy::class),
             $channels,
             $this->createStub(ChanUserAccountPort::class),
             $events,

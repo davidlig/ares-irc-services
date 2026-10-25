@@ -493,3 +493,44 @@ motd:
     none: "\x0303✓\x03 Nu există intrări MOTD expirate de eliminat."
   debug:
     finalized: "Mesajul MOTD #%id% s-a încheiat: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Administrează domeniile email blocate."
+  help: |-
+    Administrează domeniile email blocate.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Blochează un domeniu."
+    help: |-
+      Acceptă domenii ASCII sau punycode, nu adrese sau modele. Motivul este
+      obligatoriu. Blocarea este exactă și nu include subdomenii.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Elimină blocările domeniilor."
+    help: |-
+      Șterge un identificator permanent sau toate intrările cu ALL. Ceilalți
+      identificatori nu se schimbă.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Listează domeniile blocate."
+    help: |-
+      Modelul este obligatoriu. Numai * este un metacaracter pentru orice
+      secvență. Nu se diferențiază majusculele. Pagina opțională începe de
+      la 1. Filtrarea și paginarea păstrează identificatorii.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Domeniu invalid. Folosește ASCII sau punycode fără punct final."
+  invalid_reason: "Este necesar un motiv administrativ nevid, pe o singură linie."
+  duplicate: "Acest domeniu este deja blocat."
+  not_found: "Nu există un domeniu blocat cu acest identificator."
+  added: "Domeniul %domain% a fost blocat."
+  deleted: "Blocarea %id% a fost eliminată."
+  cleared: "Au fost eliminate %total% domenii blocate."
+  empty: "Niciun domeniu blocat nu corespunde."
+  header: "ID | Domeniu | Motiv"
+  page: "Pagina %page%/%pages%, %total% domenii corespunzătoare."
+  row: "%id% | %domain% | %reason%"

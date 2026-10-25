@@ -144,3 +144,11 @@ also excludes extraneous tokens supplied with privileged account-setting command
 Operations share a stable client identity selected in this order: raw protocol IP, cloaked
 host, hostname, then UID. Email changes and founder transfers do not reset shared failure
 budgets or rotate tokens.
+
+## Blocked email domains
+
+[OperServ BADMAIL](operserv-badmail.md) rejects newly supplied blocked domains in
+REGISTER and ordinary SET EMAIL before workflow side effects. SASET EMAIL explicitly
+bypasses it. ChanServ SET EMAIL applies the same policy unless `chanserv.level_founder`
+is granted, and still permits clearing the contact. VERIFY, RESEND and RECOVER retain
+access to stored addresses: blocking a domain does not retroactively disable recovery.

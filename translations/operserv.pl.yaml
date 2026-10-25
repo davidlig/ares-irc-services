@@ -492,3 +492,45 @@ motd:
     none: "\x0303✓\x03 Brak wygasłych wpisów MOTD do usunięcia."
   debug:
     finalized: "Wiadomość MOTD #%id% zakończyła się: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Zarządzaj zablokowanymi domenami email."
+  help: |-
+    Zarządzaj zablokowanymi domenami email.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Zablokuj domenę."
+    help: |-
+      Akceptuje domeny ASCII lub punycode, nie adresy ani wzorce. Wymagany
+      jest powód. Blokada jest dokładna i nie obejmuje subdomen.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Usuń blokady domen."
+    help: |-
+      Usuń stały identyfikator lub wszystkie wpisy za pomocą ALL. Inne
+      identyfikatory pozostają bez zmian.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Wyświetl zablokowane domeny."
+    help: |-
+      Wzorzec jest wymagany. Tylko * jest symbolem wieloznacznym dla
+      dowolnego ciągu. Wielkość liter nie ma znaczenia. Opcjonalna strona
+      zaczyna się od 1. Filtrowanie i stronicowanie zachowują
+      identyfikatory.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Nieprawidłowa domena. Użyj ASCII lub punycode bez końcowej kropki."
+  invalid_reason: "Wymagany jest niepusty powód administracyjny w jednym wierszu."
+  duplicate: "Ta domena jest już zablokowana."
+  not_found: "Nie ma zablokowanej domeny o tym identyfikatorze."
+  added: "Zablokowano domenę %domain%."
+  deleted: "Usunięto blokadę %id%."
+  cleared: "Usunięto %total% zablokowanych domen."
+  empty: "Brak pasujących zablokowanych domen."
+  header: "ID | Domena | Powód"
+  page: "Strona %page%/%pages%, %total% pasujących domen."
+  row: "%id% | %domain% | %reason%"

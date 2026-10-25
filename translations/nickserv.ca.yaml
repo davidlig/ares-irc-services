@@ -29,6 +29,7 @@ register:
     Un cop validat, serà el teu token de recuperació permanent:
     guarda'l en un lloc segur.
     La caducitat de %duration% només s'aplica abans de validar-lo.
+    No s’admeten dominis de correu bloquejats administrativament.
   example: "%command_prefix%\x02\x0303REGISTER Clau$egura_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Clau$egura_123 usuari@exemple.com\x03\x0F"
@@ -233,6 +234,7 @@ set:
       SET EMAIL canvia el correu de contacte després de
       validar el token de recuperació, sense consumir-lo.
       Comprova el format i la unicitat; no envia confirmació.
+      No s’admeten dominis de correu bloquejats administrativament.
     example: "%command_prefix%\x02\x0303SET EMAIL usuari@exemple.com <token-validat>\x03\x0F"
     success: "\x0303✔\x03 El vostre correu s'ha actualitzat a \x02%email%\x02."
     pending_sent: !irc |-
@@ -359,6 +361,7 @@ saset:
     help: |-
       Canvia el correu electrònic d'un altre sobrenom. El canvi és immediat i no
       requereix el token de recuperació ni envia cap correu de confirmació.
+      BADMAIL no restringeix aquest canvi administratiu de correu.
     example: "%command_prefix%\x02\x0303SASET Usuari EMAIL usuari@exemple.com\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

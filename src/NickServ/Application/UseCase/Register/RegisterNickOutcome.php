@@ -12,6 +12,7 @@ enum RegisterNickOutcome
     case Throttled;
     case GuestPrefixForbidden;
     case InvalidEmail;
+    case BlockedEmailDomain;
     case EmailAlreadyUsed;
     case AlreadyPending;
     case Forbidden;

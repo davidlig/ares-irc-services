@@ -9,6 +9,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetEmailHandler;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
+use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
@@ -21,6 +22,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,9 +38,11 @@ final class SetEmailHandlerTest extends TestCase
         ChanServNotifierInterface $notifier,
         TranslatorInterface $translator,
         bool $withoutSender = false,
+        bool $levelFounder = false,
+        bool $ircop = false,
     ): ChanServContext {
         return new ChanServContext(
-            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true, $ircop),
             null,
             'SET',
             ['EMAIL', 'test@example.com'],
@@ -52,6 +56,7 @@ final class SetEmailHandlerTest extends TestCase
             new NullChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
+            isLevelFounder: $levelFounder,
         );
     }
 
@@ -177,9 +182,32 @@ final class SetEmailHandlerTest extends TestCase
         );
     }
 
-    private function createHandler(RegisteredChannelRepositoryInterface $channels): SetEmailHandler
+    #[Test]
+    public function blockedEmailRequiresExplicitFounderLevelPermissionNotMerelyIrcopMode(): void
+    {
+        foreach ([[false, false], [false, true], [true, false], [true, true]] as [$levelFounder, $ircop]) {
+            $channel = RegisteredChannel::register(new DateTimeImmutable('2026-10-25'), '#example', 1, 'Example');
+            $channel->updateEmail('original@example.org');
+            $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
+            $channels->expects($levelFounder ? self::once() : self::never())->method('save');
+            $policy = $this->createMock(EmailDomainPolicy::class);
+            $policy->expects($levelFounder ? self::never() : self::once())->method('isBlocked')->with('user@blocked.org')->willReturn(true);
+            $messages = [];
+            $notifier = $this->createStub(ChanServNotifierInterface::class);
+            $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void { $messages[] = $message; });
+            $translator = $this->createStub(TranslatorInterface::class);
+            $translator->method('trans')->willReturnCallback(static fn (string $key): string => $key);
+            $context = $this->createContext($notifier, $translator, levelFounder: $levelFounder, ircop: $ircop);
+            $this->createHandler($channels, $policy)->handle($context, $channel, 'user@blocked.org');
+            self::assertSame($levelFounder ? 'user@blocked.org' : 'original@example.org', $channel->getEmail());
+            self::assertSame([$levelFounder ? 'set.email.updated' : 'error.email_domain_blocked'], $messages);
+        }
+    }
+
+    private function createHandler(RegisteredChannelRepositoryInterface $channels, ?EmailDomainPolicy $emailPolicy = null): SetEmailHandler
     {
         return new SetEmailHandler(new UpdateChannelSettingHandler(
+            $emailPolicy ?? $this->createStub(EmailDomainPolicy::class),
             $channels,
             $this->createStub(ChanUserAccountPort::class),
             $this->createStub(EventBusInterface::class),

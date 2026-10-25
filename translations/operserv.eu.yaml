@@ -521,3 +521,46 @@ motd:
     none: "\x0303✓\x03 Ez dago kentzeko iraungitako MOTD sarrerarik."
   debug:
     finalized: "#%id% MOTD mezua amaitu da: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Blokeatutako posta-domeinuak kudeatu."
+  help: |-
+    Blokeatutako posta-domeinuak kudeatu.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Domeinu bat blokeatu."
+    help: |-
+      ASCII edo punycode domeinuak onartzen ditu, ez helbideak edo ereduak.
+      Arrazoia derrigorrezkoa da. Blokeoa zehatza da eta ez ditu
+      azpidomeinuak hartzen.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Domeinuen blokeoak kendu."
+    help: |-
+      Ezabatu identifikatzaile iraunkor bat edo sarrera guztiak ALL
+      erabiliz. Beste identifikatzaileak ez dira aldatzen.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Blokeatutako domeinuak zerrendatu."
+    help: |-
+      Eredua derrigorrezkoa da. * da komodin bakarra eta edozein
+      sekuentziarekin bat dator. Ez ditu maiuskulak bereizten. Aukerako
+      orria 1ean hasten da. Identifikatzaileak mantentzen dira iragaztean
+      eta orrialdekatzean.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Domeinu baliogabea. Erabili ASCII edo punycode, amaierako punturik gabe."
+  invalid_reason: "Lerro bakarreko administrazio-arrazoi ez hutsa behar da."
+  duplicate: "Domeinu hau dagoeneko blokeatuta dago."
+  not_found: "Ez dago identifikatzaile hori duen domeinu blokeaturik."
+  added: "%domain% domeinua blokeatu da."
+  deleted: "%id% domeinu-blokeoa kendu da."
+  cleared: "%total% domeinu-blokeo kendu dira."
+  empty: "Ez dago bat datorren domeinu blokeaturik."
+  header: "ID | Domeinua | Arrazoia"
+  page: "%page%/%pages% orria, bat datozen %total% domeinu."
+  row: "%id% | %domain% | %reason%"

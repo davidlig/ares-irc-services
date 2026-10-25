@@ -16,6 +16,7 @@ use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineReposito
 use App\NickServ\Adapter\Out\Security\UuidRescueTokenCodec;
 use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\EmailDomainPolicy;
 use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
@@ -57,7 +58,7 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $hasher->method('hash')->willReturn('hash');
         $mail = $this->createMock(RegistrationMailSender::class);
         $mail->expects(self::never())->method('sendVerification');
-        $register = new RegisterNickHandler(new DoctrineRegisterNickRepository($this->entityManager), $hasher, $codec, $clock, $store, $policy, new InMemoryRegistrationThrottle(new RegisterThrottleRegistry()), $mail, 300);
+        $register = new RegisterNickHandler($this->createStub(EmailDomainPolicy::class), new DoctrineRegisterNickRepository($this->entityManager), $hasher, $codec, $clock, $store, $policy, new InMemoryRegistrationThrottle(new RegisterThrottleRegistry()), $mail, 300);
         self::assertSame(RegisterNickOutcome::TemporarilyUnavailable, $register->handle(new RegisterNick('First', 'pw', null, 'en', 'ip:one'))->outcome);
         $count = $db->fetchOne('SELECT COUNT(*) FROM registered_nicks');
         self::assertIsInt($count);
@@ -93,7 +94,7 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $hasher->method('hash')->willReturn('hash');
         $mail = $this->createMock(RegistrationMailSender::class);
         $mail->expects(self::exactly(2))->method('sendVerification')->willThrowException(new RuntimeException('synthetic mail failure'));
-        $register = new RegisterNickHandler(new DoctrineRegisterNickRepository($this->entityManager), $hasher, $codec, $clock, $store, $policy, new InMemoryRegistrationThrottle(new RegisterThrottleRegistry()), $mail, 300);
+        $register = new RegisterNickHandler($this->createStub(EmailDomainPolicy::class), new DoctrineRegisterNickRepository($this->entityManager), $hasher, $codec, $clock, $store, $policy, new InMemoryRegistrationThrottle(new RegisterThrottleRegistry()), $mail, 300);
         self::assertSame(RegisterNickOutcome::MailDeliveryFailed, $register->handle(new RegisterNick('First', 'pw', 'first@example.test', 'en', 'ip:one'))->outcome);
         $count = $db->fetchOne('SELECT COUNT(*) FROM registered_nicks');
         self::assertIsInt($count);

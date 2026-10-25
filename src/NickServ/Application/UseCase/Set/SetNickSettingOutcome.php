@@ -18,6 +18,7 @@ enum SetNickSettingOutcome
     case TargetIsService;
     case MissingValue;
     case InvalidEmail;
+    case BlockedEmailDomain;
     case EmailAlreadyUsed;
     case NoCurrentEmail;
     case InvalidEmailToken;

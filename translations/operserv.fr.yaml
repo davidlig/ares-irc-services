@@ -495,3 +495,45 @@ motd:
     none: "\x0303✓\x03 Aucune entrée MOTD expirée à supprimer."
   debug:
     finalized: "Le message MOTD #%id% est terminé : [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Gérer les domaines de courriel bloqués."
+  help: |-
+    Gérer les domaines de courriel bloqués.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Bloquer un domaine."
+    help: |-
+      Accepte les domaines ASCII ou punycode, pas les adresses ni les
+      motifs. Un motif administratif est requis. Le blocage est exact et
+      exclut les sous-domaines.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Supprimer des blocages de domaines."
+    help: |-
+      Supprime un identifiant permanent ou toutes les entrées avec ALL. Les
+      autres identifiants ne changent pas.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Lister les domaines bloqués."
+    help: |-
+      Le filtre est obligatoire. Seul * est un joker et correspond à toute
+      séquence. La casse est ignorée. La page facultative commence à 1. Les
+      identifiants sont conservés lors du filtrage et de la pagination.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Domaine invalide. Utilisez ASCII ou punycode sans point final."
+  invalid_reason: "Un motif administratif non vide sur une seule ligne est requis."
+  duplicate: "Ce domaine est déjà bloqué."
+  not_found: "Aucun domaine bloqué ne porte cet identifiant."
+  added: "Domaine %domain% bloqué."
+  deleted: "Blocage %id% supprimé."
+  cleared: "%total% domaines bloqués supprimés."
+  empty: "Aucun domaine bloqué ne correspond."
+  header: "ID | Domaine | Motif"
+  page: "Page %page%/%pages%, %total% domaines correspondants."
+  row: "%id% | %domain% | %reason%"

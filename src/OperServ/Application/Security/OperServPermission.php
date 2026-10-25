@@ -16,5 +16,7 @@ final class OperServPermission
 
     public const string MOTD = 'operserv.motd';
 
+    public const string BADMAIL = 'operserv.badmail';
+
     private function __construct() {}
 }

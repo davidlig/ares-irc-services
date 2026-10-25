@@ -75,7 +75,10 @@ parameters:
     # History view: maximum entries per page in VIEW (default: 40)
     nickserv.history_view_limit_default: 40
     nickserv.history_view_limit: '%env(int:default:nickserv.history_view_limit_default:NICKSERV_HISTORY_VIEW_LIMIT)%'
-    # IRCOP LIST: maximum matching nicknames shown per page
+    # OperServ BADMAIL LIST: maximum matching blocked domains per page
+    operserv.badmail_list_page_size_default: 50
+    operserv.badmail_list_page_size: '%env(int:default:operserv.badmail_list_page_size_default:OPERSERV_BADMAIL_LIST_PAGE_SIZE)%'
+    # NickServ IRCOP LIST: maximum matching nicknames shown per page
     nickserv.list_page_size_default: 50
     nickserv.list_page_size: '%env(int:default:nickserv.list_page_size_default:NICKSERV_LIST_PAGE_SIZE)%'
 
@@ -171,6 +174,22 @@ services:
         arguments:
             $from: '%mailer.from%'
             $senderName: '%irc.server_name%'
+
+    App\ChanServ\Application\Port\Out\EmailDomainPolicy:
+        alias: App\ChanServ\Adapter\Out\OperServ\OperServEmailDomainPolicy
+
+    # OperServ owns the global BADMAIL policy; each consumer owns its boundary.
+    App\OperServ\Application\Port\Out\BadmailRepository:
+        alias: App\OperServ\Adapter\Out\Persistence\Doctrine\DoctrineBadmailRepository
+    App\NickServ\Application\Port\Out\EmailDomainPolicy:
+        alias: App\NickServ\Adapter\Out\OperServ\OperServEmailDomainPolicy
+    App\OperServ\Application\Port\In\EmailDomainPolicy:
+        alias: App\OperServ\Application\UseCase\Badmail\BadmailEmailPolicy
+    App\OperServ\Application\UseCase\Badmail\ManageBadmailHandler:
+        arguments:
+            $pageSize: '%operserv.badmail_list_page_size%'
+    App\OperServ\Adapter\In\Irc\Command\BadmailCommand:
+        tags: ['operserv.command.new']
 
     # Unified rescue credentials and runtime registration policy
     App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandlerInterface:

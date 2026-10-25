@@ -30,6 +30,7 @@ register:
     Na verificatie wordt dit je permanente hersteltoken:
     Bewaar het op een veilige plaats.
     De geldigheidsduur van %duration% geldt alleen vóór verificatie.
+    Administratief geblokkeerde e-maildomeinen zijn niet toegestaan.
   example: "%command_prefix%\x02\x0303REGISTER Veilig$Wachtwoord_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Veilig$Wachtwoord_123 gebruiker@voorbeeld.nl\x03\x0F"
@@ -233,6 +234,7 @@ set:
       SET EMAIL wijzigt het contactadres na controle van het herstel-token, zonder dit
       te verbruiken. Formaat en uniekheid worden gecontroleerd; er wordt geen
       bevestigingsmail verstuurd.
+      Administratief geblokkeerde e-maildomeinen zijn niet toegestaan.
     example: "%command_prefix%\x02\x0303SET EMAIL gebruiker@voorbeeld.nl <token_confirmado>\x03\x0F"
     success: "\x0303✔\x03 Uw e-mail is bijgewerkt naar \x02%email%\x02."
     pending_sent: !irc |-
@@ -359,6 +361,7 @@ saset:
     help: |-
       Wijzigt het e-mailadres van een andere bijnaam direct. Het herstel-token is niet
       nodig en er wordt geen bevestigingsmail verstuurd.
+      BADMAIL beperkt deze administratieve e-mailwijziging niet.
     example: "%command_prefix%\x02\x0303SASET Gebruiker EMAIL gebruiker@voorbeeld.nl\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

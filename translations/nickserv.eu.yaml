@@ -28,6 +28,7 @@ register:
     bidaliko dizu, konfigurazioaren arabera. Balioztatu ondoren, tokena
     berreskuratze-token iraunkorra izango da: gorde leku seguruan. %duration%ko
     iraungitzea balioztatu aurretik bakarrik aplikatzen da.
+    Administrazioak blokeatutako posta-domeinuak ez dira onartzen.
   example: "%command_prefix%\x02\x0303REGISTER Pasahitz$Segurua_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Pasahitz$Segurua_123 erabiltzailea@adibidea.com\x03\x0F"
@@ -233,6 +234,7 @@ set:
       SET EMAIL komandoak kontaktu-helbidea aldatzen du erreskate-tokena balioztatu
       ondoren, kontsumitu gabe. Formatua eta bakartasuna egiaztatzen ditu; ez du
       berrespen-mezurik bidaltzen.
+      Administrazioak blokeatutako posta-domeinuak ez dira onartzen.
     example: "%command_prefix%\x02\x0303SET EMAIL erabiltzailea@adibidea.com <token-berretsia>\x03\x0F"
     success: "\x0303✔\x03 Zure posta elektronikoa \x02%email%\x02 helbidera eguneratu da."
     pending_sent: !irc |-
@@ -382,6 +384,7 @@ saset:
 
       Sintaxia: SASET <ezizen> EMAIL <posta_berria>
       Adibidea: SASET Erabiltzaile EMAIL erabiltzaile@adibidea.com
+      BADMAILek ez du administrazioaren posta-aldaketa hau mugatzen.
     example: "%command_prefix%\x02\x0303SASET Erabiltzailea EMAIL erabiltzailea@adibidea.com\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

@@ -19,6 +19,7 @@ final readonly class OperServIrcopPermission implements PermissionProviderInterf
             OperServPermission::GLOBAL,
             OperServPermission::RAW,
             OperServPermission::MOTD,
+            OperServPermission::BADMAIL,
         ];
     }
 }

@@ -490,3 +490,44 @@ motd:
     none: "\x0303✓\x03 Nenhuma entrada MOTD expirada para remover."
   debug:
     finalized: "A mensagem MOTD #%id% terminou: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Gerir domínios de email bloqueados."
+  help: |-
+    Gerir domínios de email bloqueados.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Bloquear um domínio."
+    help: |-
+      Aceita domínios ASCII ou punycode, não endereços nem padrões. O motivo
+      é obrigatório. O bloqueio é exato e não inclui subdomínios.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Remover bloqueios de domínios."
+    help: |-
+      Elimina um identificador permanente ou todas as entradas com ALL. Os
+      outros identificadores não mudam.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Listar domínios bloqueados."
+    help: |-
+      O padrão é obrigatório. Apenas * é um caráter universal para qualquer
+      sequência. Não distingue maiúsculas. A página opcional começa em 1. Os
+      identificadores são mantidos ao filtrar e paginar.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Domínio inválido. Use ASCII ou punycode sem ponto final."
+  invalid_reason: "É necessário um motivo administrativo não vazio numa única linha."
+  duplicate: "Este domínio já está bloqueado."
+  not_found: "Não existe um domínio bloqueado com esse identificador."
+  added: "Domínio %domain% bloqueado."
+  deleted: "Bloqueio %id% removido."
+  cleared: "Foram removidos %total% domínios bloqueados."
+  empty: "Nenhum domínio bloqueado corresponde."
+  header: "ID | Domínio | Motivo"
+  page: "Página %page%/%pages%, %total% domínios correspondentes."
+  row: "%id% | %domain% | %reason%"

@@ -28,6 +28,7 @@ register:
     token di verifica via chat o email. Una volta convalidato, sarà il tuo token di
     recupero permanente: conservalo in un luogo sicuro. La scadenza di %duration%
     si applica solo prima della convalida.
+    I domini email bloccati amministrativamente non sono consentiti.
   example: "%command_prefix%\x02\x0303REGISTER Password$Sicura_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Password$Sicura_123 utente@esempio.com\x03\x0F"
@@ -231,6 +232,7 @@ set:
       SET EMAIL cambia l'indirizzo di contatto dopo aver convalidato il token di
       recupero, senza consumarlo. Verifica formato e unicità; non invia email di
       conferma.
+      I domini email bloccati amministrativamente non sono consentiti.
     example: "%command_prefix%\x02\x0303SET EMAIL utente@esempio.com <token_confermato>\x03\x0F"
     success: "\x0303✔\x03 La sua email è stata aggiornata a \x02%email%\x02."
     pending_sent: !irc |-
@@ -358,6 +360,7 @@ saset:
     help: |-
       Cambia l'email di un altro nickname. La modifica è immediata, non richiede il
       token di recupero e non invia un'email di conferma.
+      BADMAIL non limita questa modifica amministrativa dell’email.
     example: "%command_prefix%\x02\x0303SASET Utente EMAIL utente@esempio.com\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

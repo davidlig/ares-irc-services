@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping">
+    <entity name="App\OperServ\Domain\Entity\BadmailEntry" table="operserv_badmail">
+        <id name="id" type="integer"><generator strategy="AUTO"/></id>
+        <field name="domain" type="string" length="253"/>
+        <field name="reason" type="text"/>
+        <unique-constraints>
+            <unique-constraint name="uniq_operserv_badmail_domain" columns="domain"/>
+        </unique-constraints>
+    </entity>
+</doctrine-mapping>

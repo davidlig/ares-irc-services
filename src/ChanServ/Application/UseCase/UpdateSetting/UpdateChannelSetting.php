@@ -18,5 +18,6 @@ final readonly class UpdateChannelSetting
         public string $actorIp,
         public string $actorHost,
         public DateTimeImmutable $occurredAt,
+        public bool $hasEmailDomainBypass = false,
     ) {}
 }

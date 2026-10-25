@@ -7,6 +7,7 @@ namespace App\Tests\NickServ\Application\UseCase\Register;
 use App\NickServ\Adapter\Out\InMemory\InMemoryRegistrationThrottle;
 use App\NickServ\Adapter\Out\InMemory\RegisterThrottleRegistry;
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\EmailDomainPolicy;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
@@ -288,6 +289,33 @@ final class RegisterNickHandlerTest extends TestCase
         self::assertNull($result->token);
     }
 
+    #[Test]
+    public function rejectsBlockedDomainsInBothModesBeforeAnyRegistrationSideEffect(): void
+    {
+        foreach ([RegistrationMode::Email, RegistrationMode::Token] as $mode) {
+            $policy = $this->createMock(EmailDomainPolicy::class);
+            $policy->expects(self::once())->method('isBlocked')->with('user@BLOCKED.ORG')->willReturn(true);
+            $repository = $this->createMock(RegisterNickRepository::class);
+            $repository->expects(self::never())->method('findByEmail');
+            $repository->expects(self::never())->method('findByNick');
+            $repository->expects(self::never())->method('save');
+            $hasher = $this->createMock(PasswordHasher::class);
+            $hasher->expects(self::never())->method('hash');
+            $tokens = $this->createMock(RescueTokenCodec::class);
+            $tokens->expects(self::never())->method('generate');
+            $mail = $this->createMock(RegistrationMailSender::class);
+            $mail->expects(self::never())->method('sendVerification');
+            $store = $this->createMock(TemporaryRescueTokenStore::class);
+            $store->expects(self::never())->method('replace');
+            $store->expects(self::never())->method('prune');
+            $throttle = $this->createMock(RegistrationThrottle::class);
+            $throttle->method('remainingCooldownSeconds')->willReturn(0);
+            $throttle->expects(self::never())->method('recordAttempt');
+            $result = $this->handler(repository: $repository, passwordHasher: $hasher, tokenGenerator: $tokens, verificationStore: $store, mail: $mail, throttle: $throttle, mode: $mode, emailPolicy: $policy)->handle($this->input(email: 'user@BLOCKED.ORG'));
+            self::assertSame(RegisterNickOutcome::BlockedEmailDomain, $result->outcome);
+        }
+    }
+
     private function input(
         string $nickname = 'NewNick',
         ?string $email = 'user@example.com',
@@ -305,6 +333,7 @@ final class RegisterNickHandlerTest extends TestCase
         int $tokenTtl = 3600,
         string $guestPrefix = 'Guest-',
         RegistrationMode $mode = RegistrationMode::Email,
+        ?EmailDomainPolicy $emailPolicy = null,
     ): RegisterNickHandler {
         if (null === $repository) {
             $repository = $this->createStub(RegisterNickRepository::class);
@@ -321,6 +350,7 @@ final class RegisterNickHandlerTest extends TestCase
         $policy->method('current')->willReturn($mode);
 
         return new RegisterNickHandler(
+            $emailPolicy ?? $this->createStub(EmailDomainPolicy::class),
             $repository,
             $passwordHasher ?? $this->passwordHasher(),
             $tokenGenerator ?? $this->tokenGenerator(),

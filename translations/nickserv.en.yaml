@@ -29,6 +29,7 @@ register:
     Once validated, it becomes your permanent recovery token:
     keep it somewhere safe.
     The %duration% expiry applies only before validation.
+    Administratively blocked email domains cannot be used.
   example: "%command_prefix%\x02\x0303REGISTER SafePa$$word_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER SafePa$$word_123 user@example.com\x03\x0F"
@@ -233,6 +234,7 @@ set:
       SET EMAIL changes the contact email after validating the rescue token,
       without consuming it. It checks format and uniqueness and sends no
       confirmation email.
+      Administratively blocked email domains cannot be used.
     example: "%command_prefix%\x02\x0303SET EMAIL user@example.com <confirmed_token>\x03\x0F"
     success: "\x0303✔\x03 Your email has been updated to \x02%email%\x02."
     pending_sent: !irc |-
@@ -357,6 +359,7 @@ saset:
     help: |-
       Changes another nickname's email address immediately. No rescue token is
       required and no confirmation email is sent.
+      BADMAIL does not restrict this administrative email change.
     example: "%command_prefix%\x02\x0303SASET User EMAIL user@example.com\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

@@ -208,7 +208,10 @@ set:
     examples:
       - "%command_prefix%\x02\x0303SET #kanał EMAIL\x03\x0F"
     short: "Ustaw e-mail kanału."
-    help: "Zmienia adres e-mail kanału. Pomiń adres, aby go usunąć."
+    help: |-
+      Zmienia adres e-mail kanału. Pomiń adres, aby go usunąć.
+      Administracyjnie zablokowane domeny email nie są dozwolone. Wyjątek
+      administracyjny: operatorzy z dostępem na poziomie założyciela.
     invalid: "\x0304✗\x03 Nieprawidłowy adres e-mail."
     updated: "\x0303✔\x03 E-mail został zaktualizowany."
     cleared: "\x0303✔\x03 E-mail został wyczyszczony."

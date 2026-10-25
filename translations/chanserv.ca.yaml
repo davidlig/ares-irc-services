@@ -211,7 +211,10 @@ set:
     examples:
       - "%command_prefix%\x02\x0303SET #canal EMAIL\x03\x0F"
     short: "Establir el correu electrònic del canal."
-    help: "Canvia el correu electrònic d'un canal. Omet el correu per esborrar-lo."
+    help: |-
+      Canvia el correu electrònic d'un canal. Omet el correu per esborrar-
+      lo. No s’admeten dominis de correu bloquejats administrativament.
+      Excepció administrativa: operadors amb accés de nivell fundador.
     invalid: "\x0304✗\x03 Adreça de correu no vàlida."
     updated: "\x0303✔\x03 Correu electrònic actualitzat."
     cleared: "\x0303✔\x03 Correu electrònic esborrat."

@@ -10,6 +10,7 @@ enum UpdateChannelSettingOutcome
     case Cleared;
     case MissingValue;
     case InvalidEmail;
+    case BlockedEmailDomain;
     case EntryMessageTooLong;
     case SuccessorNotFound;
     case SuccessorSuspended;

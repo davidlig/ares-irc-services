@@ -24,6 +24,7 @@ unknown_help_option: "\x0304✗\x03\x0F Nieznana opcja pomocy \x0303%option%\x03
 
 # --- ERROR -----------------------------------------------------------------
 error:
+  email_domain_blocked: "\x0304✗\x03 Ta domena email jest zablokowana administracyjnie."
   syntax: "\x0304✗\x03 Nieprawidłowa składnia. Użycie: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Ta komenda jest dostępna tylko dla Operatorów IRC."
   not_identified: "\x0304✗\x03 Nie jesteś zidentyfikowany. Użyj /msg %nickserv% \x0303IDENTIFY <pseudonim> <hasło>\x03"

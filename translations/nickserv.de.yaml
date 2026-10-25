@@ -29,6 +29,7 @@ register:
     Nach der Bestätigung wird er zu deinem dauerhaften Wiederherstellungstoken:
     Bewahre ihn sicher auf.
     Die Gültigkeitsdauer von %duration% gilt nur vor der Bestätigung.
+    Administrativ gesperrte E-Mail-Domains sind nicht zulässig.
   example: "%command_prefix%\x02\x0303REGISTER Sicheres$Passwort_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Sicheres$Passwort_123 benutzer@beispiel.de\x03\x0F"
@@ -237,6 +238,7 @@ set:
       SET EMAIL ändert nach Prüfung des Rettungstokens die Kontakt-E-Mail-Adresse,
       ohne das Token zu verbrauchen. Format und Eindeutigkeit werden geprüft; es wird
       keine Bestätigungs-E-Mail gesendet.
+      Administrativ gesperrte E-Mail-Domains sind nicht zulässig.
     example: "%command_prefix%\x02\x0303SET EMAIL benutzer@beispiel.de <token_confirmado>\x03\x0F"
     success: "\x0303✔\x03 Ihre E-Mail wurde auf \x02%email%\x02 aktualisiert."
     pending_sent: !irc |-
@@ -366,6 +368,7 @@ saset:
     help: |-
       Ändert die E-Mail-Adresse eines anderen Nicknames sofort. Das Rettungstoken
       ist nicht erforderlich und es wird keine Bestätigungs-E-Mail gesendet.
+      BADMAIL beschränkt diese administrative E-Mail-Änderung nicht.
     example: "%command_prefix%\x02\x0303SASET Benutzer EMAIL benutzer@beispiel.de\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

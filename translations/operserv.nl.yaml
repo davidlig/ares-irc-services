@@ -496,3 +496,44 @@ motd:
     none: "\x0303✓\x03 Geen verlopen MOTD-vermeldingen om te verwijderen."
   debug:
     finalized: "MOTD-bericht #%id% is beëindigd: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Geblokkeerde e-maildomeinen beheren."
+  help: |-
+    Geblokkeerde e-maildomeinen beheren.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Een domein blokkeren."
+    help: |-
+      Accepteert ASCII- of punycode-domeinen, geen adressen of patronen. Een
+      reden is verplicht. De blokkade geldt exact, niet voor subdomeinen.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Domeinblokkades verwijderen."
+    help: |-
+      Verwijder een blijvend nummer of alle vermeldingen met ALL. Andere
+      nummers veranderen niet.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Geblokkeerde domeinen tonen."
+    help: |-
+      Een patroon is verplicht. Alleen * is een joker voor elke tekenreeks.
+      Hoofdletters worden genegeerd. De optionele pagina begint bij 1.
+      Nummers blijven behouden bij filteren en pagineren.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Ongeldig domein. Gebruik ASCII of punycode zonder afsluitende punt."
+  invalid_reason: "Een niet-lege administratieve reden op één regel is verplicht."
+  duplicate: "Dit domein is al geblokkeerd."
+  not_found: "Geen geblokkeerd domein met dit nummer."
+  added: "Domein %domain% geblokkeerd."
+  deleted: "Domeinblokkade %id% verwijderd."
+  cleared: "%total% domeinblokkades verwijderd."
+  empty: "Geen overeenkomende geblokkeerde domeinen."
+  header: "ID | Domein | Reden"
+  page: "Pagina %page%/%pages%, %total% overeenkomende domeinen."
+  row: "%id% | %domain% | %reason%"

@@ -24,6 +24,7 @@ unknown_help_option: "\x0304✗\x03\x0F Laguntza aukera \x0303%option%\x03\x0F e
 
 # --- ERROR -----------------------------------------------------------------
 error:
+  email_domain_blocked: "\x0304✗\x03 Posta-domeinu hau administrazioak blokeatu du."
   syntax: "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Komando hau IRC Operadoreentzat mugatuta dago."
   not_identified: "\x0304✗\x03 Ez zaude identifikatuta. Erabili /msg %nickserv% \x0303IDENTIFY <ezizena> <pasahitza>\x03"

@@ -489,3 +489,45 @@ motd:
     none: "\x0303✓\x03 Kaldırılacak süresi dolmuş MOTD girişi yok."
   debug:
     finalized: "MOTD mesajı #%id% sona erdi: [%type%] %message% | %date% | %shown_count%"
+
+# --- BADMAIL ---------------------------------------------------------------
+badmail:
+  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  short: "Engellenen e-posta alan adlarını yönet."
+  help: |-
+    Engellenen e-posta alan adlarını yönet.
+  example: "%command_prefix%\x02\x0303BADMAIL LIST *\x03\x0f"
+  add:
+    syntax: "BADMAIL ADD <domain> <reason>"
+    short: "Bir alan adını engelle."
+    help: |-
+      ASCII veya punycode alan adlarını kabul eder; adres veya kalıp kabul
+      etmez. Gerekçe zorunludur. Engel tam eşleşir, alt alan adlarını
+      kapsamaz.
+    example: "%command_prefix%\x02\x0303BADMAIL ADD example.org abuse\x03\x0f"
+  del:
+    syntax: "BADMAIL DEL {id|ALL}"
+    short: "Alan adı engellerini kaldır."
+    help: |-
+      Kalıcı bir kimliği veya ALL ile tüm kayıtları siler. Diğer kimlikler
+      değişmez.
+    example: "%command_prefix%\x02\x0303BADMAIL DEL 1\x03\x0f"
+  list:
+    syntax: "BADMAIL LIST <pattern> [page]"
+    short: "Engellenen alan adlarını listele."
+    help: |-
+      Kalıp zorunludur. Yalnızca * herhangi bir diziyi eşleştiren joker
+      karakterdir. Büyük ve küçük harf ayrımı yapılmaz. İsteğe bağlı sayfa
+      1’den başlar. Filtreleme ve sayfalama kimlikleri korur.
+    example: "%command_prefix%\x02\x0303BADMAIL LIST *.org 2\x03\x0f"
+  invalid_domain: "Geçersiz alan adı. Sonda nokta olmadan ASCII veya punycode kullanın."
+  invalid_reason: "Boş olmayan, tek satırlık bir yönetim gerekçesi gereklidir."
+  duplicate: "Bu alan adı zaten engellenmiş."
+  not_found: "Bu kimliğe sahip engellenmiş alan adı yok."
+  added: "%domain% alan adı engellendi."
+  deleted: "%id% alan adı engeli kaldırıldı."
+  cleared: "%total% alan adı engeli kaldırıldı."
+  empty: "Eşleşen engellenmiş alan adı yok."
+  header: "ID | Alan adı | Gerekçe"
+  page: "Sayfa %page%/%pages%, eşleşen %total% alan adı."
+  row: "%id% | %domain% | %reason%"

@@ -29,6 +29,7 @@ register:
     Una vez validado, será tu token de recuperación permanente:
     Guárdalo en un lugar seguro.
     La caducidad de %duration% solo se aplica antes de validarlo.
+    No se admiten dominios de correo bloqueados administrativamente.
   example: "%command_prefix%\x02\x0303REGISTER Clave$egura_123\x03\x0f"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Clave$egura_123 usuario@ejemplo.com\x03\x0f"
@@ -232,6 +233,7 @@ set:
     help: |-
       SET EMAIL cambia el correo de contacto tras validar el token de rescate, sin
       consumirlo. Comprueba formato y unicidad; no envía correo de confirmación.
+      No se admiten dominios de correo bloqueados administrativamente.
     example: "%command_prefix%\x02\x0303SET EMAIL usuario@ejemplo.com <token_confirmado>\x03\x0F"
     success:        "\x0303✔\x03 Tu correo ha sido actualizado a \x02%email%\x02."
     pending_sent:   !irc |-
@@ -357,6 +359,7 @@ saset:
     help: |-
       Cambia el correo electrónico de otro apodo. El cambio es inmediato y no
       requiere el token de rescate ni envía un correo de confirmación.
+      BADMAIL no restringe este cambio administrativo de correo.
     example: "%command_prefix%\x02\x0303SASET Usuario EMAIL usuario@ejemplo.com\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------

@@ -1467,10 +1467,12 @@ final class TranslationCatalogTest extends TestCase
         $catalog = self::flatten(self::parseDomain('chanserv', 'es'));
 
         self::assertSame('SET <#canal> EMAIL [email]', $catalog['set.email.syntax'] ?? null);
-        self::assertSame(
-            'Cambia el correo electrónico de un canal. Omite email para borrar.',
-            $catalog['set.email.help'] ?? null,
-        );
+        $emailHelp = $catalog['set.email.help'];
+        self::assertIsString($emailHelp);
+        $emailHelp = str_replace("\n", ' ', $emailHelp);
+        self::assertStringContainsString('Cambia el correo electrónico de un canal. Omite email para borrar.', $emailHelp);
+        self::assertStringContainsString('No se admiten dominios de correo bloqueados administrativamente.', $emailHelp);
+        self::assertStringContainsString('Excepción administrativa: operadores con acceso de nivel fundador.', $emailHelp);
         self::assertSame(
             "%command_prefix%\x02\x0303SET #canal EMAIL equipo@example.test\x03\x0f",
             $catalog['set.email.example'] ?? null,
@@ -2023,6 +2025,7 @@ final class TranslationCatalogTest extends TestCase
                 'regmode.short',
             ],
             'operserv' => [
+                'badmail.short',
                 'kill.short',
                 'gline.short',
                 'global.short',

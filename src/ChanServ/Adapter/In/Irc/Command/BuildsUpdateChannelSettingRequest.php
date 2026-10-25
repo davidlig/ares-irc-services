@@ -36,6 +36,7 @@ trait BuildsUpdateChannelSettingRequest
             actorIp: $this->decodeSettingIp($sender->ipBase64),
             actorHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
             occurredAt: new DateTimeImmutable(),
+            hasEmailDomainBypass: $context->isLevelFounder,
         );
     }
 

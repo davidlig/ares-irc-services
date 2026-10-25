@@ -24,6 +24,7 @@ unknown_help_option: "\x0304✗\x03\x0F Onbekende helpoptie \x0303%option%\x03\x
 
 # --- ERROR -----------------------------------------------------------------
 error:
+  email_domain_blocked: "\x0304✗\x03 Dit e-maildomein is administratief geblokkeerd."
   syntax: "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
   not_identified: "\x0304✗\x03 Je bent niet geïdentificeerd. Gebruik /msg %nickserv% \x0303IDENTIFY <bijnaam> <wachtwoord>\x03"

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\NickServ\Application\UseCase\Register;
 
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\EmailDomainPolicy;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
@@ -27,6 +28,7 @@ use const FILTER_VALIDATE_EMAIL;
 final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
 {
     public function __construct(
+        private EmailDomainPolicy $emailDomainPolicy,
         private RegisterNickRepository $nickRepository,
         private PasswordHasher $passwordHasher,
         private RescueTokenCodec $tokenGenerator,
@@ -61,6 +63,10 @@ final readonly class RegisterNickHandler implements RegisterNickHandlerInterface
         if ((RegistrationMode::Email === $mode && null === $command->email)
             || (null !== $command->email && false === filter_var($command->email, FILTER_VALIDATE_EMAIL))) {
             return RegisterNickResult::invalidEmail();
+        }
+
+        if (null !== $command->email && $this->emailDomainPolicy->isBlocked($command->email)) {
+            return RegisterNickResult::blockedEmailDomain();
         }
 
         if (null !== $command->email && null !== $this->nickRepository->findByEmail($command->email)) {

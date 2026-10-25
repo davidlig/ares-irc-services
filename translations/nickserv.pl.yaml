@@ -29,6 +29,7 @@ register:
     Po weryfikacji stanie się stałym tokenem odzyskiwania:
     przechowuj go w bezpiecznym miejscu.
     Czas ważności %duration% dotyczy wyłącznie okresu przed weryfikacją.
+    Administracyjnie zablokowane domeny email nie są dozwolone.
   example: "%command_prefix%\x02\x0303REGISTER Hasło$bezpieczne_123\x03\x0F"
   examples:
     - "%command_prefix%\x02\x0303REGISTER Hasło$bezpieczne_123 uzytkownik@przyklad.com\x03\x0F"
@@ -233,6 +234,7 @@ set:
       SET EMAIL zmienia kontaktowy adres e-mail po weryfikacji tokenu odzyskiwania,
       nie zużywając go. Sprawdza format i unikalność; nie wysyła potwierdzenia
       e-mailem.
+      Administracyjnie zablokowane domeny email nie są dozwolone.
     example: "%command_prefix%\x02\x0303SET EMAIL uzytkownik@przyklad.com <token_confirmado>\x03\x0F"
     success: "\x0303✔\x03 Twój e-mail został zaktualizowany na \x02%email%\x02."
     pending_sent: !irc |-
@@ -358,6 +360,7 @@ saset:
     help: |-
       Zmienia adres e-mail innego pseudonimu. Zmiana jest natychmiastowa i nie
       wymaga tokenu odzyskiwania ani wysłania wiadomości potwierdzającej.
+      BADMAIL nie ogranicza tej administracyjnej zmiany adresu email.
     example: "%command_prefix%\x02\x0303SASET Użytkownik EMAIL uzytkownik@przyklad.com\x03\x0F"
 
   # --- SASET LANGUAGE ------------------------------------------------------
