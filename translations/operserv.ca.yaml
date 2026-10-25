@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [ordre] [subopció]"
+  syntax: "HELP [ordre] [opció]"
   short: "Llistar les ordres o mostrar l'ajuda d'una ordre."
   help: !irc |-
     Sense arguments, llista totes les ordres. Fes servir
@@ -504,7 +504,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <arguments>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <paràmetres>"
   short: "Administrar dominis de correu bloquejats."
   help: |-
     Administrar dominis de correu bloquejats.

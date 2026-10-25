@@ -22,7 +22,7 @@ error:
 
 # --- HELP ------------------------------------------------------------------
 help:
-  syntax: "HELP [comando] [sotto-opzione]"
+  syntax: "HELP [comando] [opzione]"
   short: "Elenca i comandi o mostra l'aiuto per un comando."
   help: !irc |-
     Senza argomenti elenca tutti i comandi. Usa \x0303HELP <comando>\x03 per l'aiuto
@@ -498,7 +498,7 @@ motd:
 
 # --- BADMAIL ---------------------------------------------------------------
 badmail:
-  syntax: "BADMAIL {ADD|DEL|LIST} <argomenti>"
+  syntax: "BADMAIL {ADD|DEL|LIST} <parametri>"
   short: "Gestire i domini email bloccati."
   help: |-
     Gestire i domini email bloccati.
