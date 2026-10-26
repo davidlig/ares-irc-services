@@ -9,11 +9,13 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\UnsuspendCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Application\Security\ChanServPermission;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChannelSuspensionService;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleResult;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
@@ -309,6 +311,7 @@ final class UnsuspendCommandTest extends TestCase
             $this->createStub(ChannelForbiddenService::class),
             $this->createStub(ChannelSuspensionService::class),
             $events,
+            new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
         ));
     }
 

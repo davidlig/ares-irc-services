@@ -9,10 +9,12 @@ use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelSuccessorChangedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\Shared\Application\Port\EventBusInterface;
 use InvalidArgumentException;
 
 use function filter_var;
+use function strtolower;
 use function trim;
 
 use const FILTER_VALIDATE_EMAIL;
@@ -24,6 +26,7 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
         private RegisteredChannelRepositoryInterface $channels,
         private ChanUserAccountPort $accounts,
         private EventBusInterface $events,
+        private ChannelHistoryService $history,
     ) {}
 
     public function handle(UpdateChannelSetting $command): UpdateChannelSettingResult
@@ -47,6 +50,7 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
         }
         $command->channel->updateDescription($description);
         $this->channels->save($command->channel);
+        $this->record($command, 'SET_DESC');
 
         return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::Updated);
     }
@@ -62,6 +66,7 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
         }
         $command->channel->updateEmail('' === $email ? null : $email);
         $this->channels->save($command->channel);
+        $this->record($command, 'SET_EMAIL');
 
         return new UpdateChannelSettingResult('' === $email ? UpdateChannelSettingOutcome::Cleared : UpdateChannelSettingOutcome::Updated);
     }
@@ -74,6 +79,7 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
             return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::EntryMessageTooLong);
         }
         $this->channels->save($command->channel);
+        $this->record($command, 'SET_ENTRYMSG');
 
         return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::Updated);
     }
@@ -127,6 +133,7 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
         $enabled = 'ON' === $command->value;
         $command->channel->configureTopicLock($enabled);
         $this->channels->save($command->channel);
+        $this->record($command, 'SET_TOPICLOCK_' . ($enabled ? 'ON' : 'OFF'));
         $this->events->dispatch(new ChannelTopiclockUpdatedEvent($command->channel->getName()));
 
         return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::Updated);
@@ -136,6 +143,7 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
     {
         $command->channel->configurePrivate('ON' === $command->value);
         $this->channels->save($command->channel);
+        $this->record($command, 'SET_PRIVATE_' . ('ON' === $command->value ? 'ON' : 'OFF'));
 
         return new UpdateChannelSettingResult(UpdateChannelSettingOutcome::Updated);
     }
@@ -145,7 +153,20 @@ final readonly class UpdateChannelSettingHandler implements UpdateChannelSetting
         $url = trim($command->value);
         $command->channel->updateUrl('' === $url ? null : $url);
         $this->channels->save($command->channel);
+        $this->record($command, 'SET_URL');
 
         return new UpdateChannelSettingResult('' === $url ? UpdateChannelSettingOutcome::Cleared : UpdateChannelSettingOutcome::Updated);
+    }
+
+    private function record(UpdateChannelSetting $command, string $action): void
+    {
+        $this->history->recordWithExplicitMetadata(
+            channelId: $command->channel->getId(),
+            action: $action,
+            performedBy: $command->actorNickname,
+            performedByNickId: null,
+            performedAt: $command->occurredAt,
+            message: 'history.message.' . strtolower($action),
+        );
     }
 }

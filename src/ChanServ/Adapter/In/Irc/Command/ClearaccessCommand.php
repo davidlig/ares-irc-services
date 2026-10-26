@@ -15,6 +15,7 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use DateTimeImmutable;
 
 final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
@@ -107,7 +108,11 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
             return CommandOutcome::rejected();
         }
 
-        $result = $this->handler->handle(new ClearChannelAccess($channelName));
+        $result = $this->handler->handle(new ClearChannelAccess(
+            channelName: $channelName,
+            actorNickname: $context->sender->nick,
+            occurredAt: new DateTimeImmutable(),
+        ));
         if (ClearChannelAccessOutcome::ChannelNotRegistered === $result->outcome) {
             $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 

@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace App\Tests\ChanServ\Application\UseCase\ManageLifecycle;
 
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelIrcopOnlyUpdatedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChannelSuspensionService;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleAction;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleOutcome;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ChannelLifecycleResult;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycle;
 use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandler;
+use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Shared\Application\Port\EventBusInterface;
 use DateTimeImmutable;
@@ -48,12 +51,22 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         $channels->expects(self::exactly(2))->method('save')->with($channel);
         $events = $this->createMock(EventBusInterface::class);
         $events->expects(self::exactly(2))->method('dispatch')->with(self::isInstanceOf(ChannelIrcopOnlyUpdatedEvent::class));
-        $handler = $this->handler($channels, events: $events);
+        $historyEntryCount = 0;
+        $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $history->expects(self::exactly(2))->method('save')->willReturnCallback(static function (ChannelHistory $entry) use (&$historyEntryCount): void {
+            ++$historyEntryCount;
+            self::assertSame('IRCOPONLY_' . (1 === $historyEntryCount ? 'ON' : 'OFF'), $entry->getAction());
+            self::assertSame('Oper', $entry->getPerformedBy());
+            self::assertNull($entry->getPerformedByNickId());
+            self::assertSame([], $entry->getExtraData());
+        });
+        $handler = $this->handler($channels, events: $events, history: new ChannelHistoryService($history));
 
         self::assertSame(ChannelLifecycleOutcome::IrcopOnlyEnabled, $handler->handle($this->command(ChannelLifecycleAction::EnableIrcopOnly))->outcome);
         self::assertTrue($channel->isIrcopOnly());
         self::assertSame(ChannelLifecycleOutcome::IrcopOnlyDisabled, $handler->handle($this->command(ChannelLifecycleAction::DisableIrcopOnly))->outcome);
         self::assertFalse($channel->isIrcopOnly());
+        self::assertSame(2, $historyEntryCount);
     }
 
     #[Test]
@@ -238,6 +251,22 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         self::assertSame(ChannelLifecycleOutcome::ChannelSuspended, $result->outcome);
     }
 
+    #[Test]
+    public function rejectedNoExpireOperationsDoNotRecordHistory(): void
+    {
+        $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $history->expects(self::never())->method('save');
+        $service = new ChannelHistoryService($history);
+        $handler = fn (RegisteredChannelRepositoryInterface $channels): ManageChannelLifecycleHandler => $this->handler($channels, history: $service);
+
+        $handler($this->channelsReturning(null))->handle($this->command(ChannelLifecycleAction::EnableNoExpire));
+        $forbidden = RegisteredChannel::createForbidden($this->now, '#test', 'reason');
+        $handler($this->channelsReturning($forbidden))->handle($this->command(ChannelLifecycleAction::EnableNoExpire));
+        $suspended = $this->channel();
+        $suspended->suspend('reason');
+        $handler($this->channelsReturning($suspended))->handle($this->command(ChannelLifecycleAction::EnableNoExpire));
+    }
+
     /**
      * @return iterable<string, array{ChannelLifecycleAction, ChannelLifecycleOutcome, bool}>
      */
@@ -258,8 +287,15 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channels->method('findByChannelName')->willReturn($channel);
         $channels->expects(self::once())->method('save')->with($channel);
+        $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $history->expects(self::once())->method('save')->willReturnCallback(static function (ChannelHistory $entry) use ($enabled): void {
+            self::assertSame('NOEXPIRE_' . ($enabled ? 'ON' : 'OFF'), $entry->getAction());
+            self::assertSame('Oper', $entry->getPerformedBy());
+            self::assertNull($entry->getPerformedByNickId());
+            self::assertSame([], $entry->getExtraData());
+        });
 
-        $result = $this->handler($channels)->handle($this->command($action));
+        $result = $this->handler($channels, history: new ChannelHistoryService($history))->handle($this->command($action));
 
         self::assertSame($expected, $result->outcome);
         self::assertSame($enabled, $channel->isNoExpire());
@@ -457,6 +493,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         ?ChannelForbiddenService $forbidden = null,
         ?ChannelSuspensionService $suspensions = null,
         ?EventBusInterface $events = null,
+        ?ChannelHistoryService $history = null,
     ): ManageChannelLifecycleHandler {
         return new ManageChannelLifecycleHandler(
             $channels,
@@ -464,6 +501,7 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
             $forbidden ?? $this->createStub(ChannelForbiddenService::class),
             $suspensions ?? $this->createStub(ChannelSuspensionService::class),
             $events ?? $this->createStub(EventBusInterface::class),
+            $history ?? new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
         );
     }
 }

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\ChanServ\Application\UseCase\ClearChannel;
 
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanNetworkActions;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\UseCase\ClearAccess\ClearChannelAccess;
 use App\ChanServ\Application\UseCase\ClearAccess\ClearChannelAccessHandler;
 use App\ChanServ\Application\UseCase\ClearAccess\ClearChannelAccessOutcome;
@@ -15,6 +17,7 @@ use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsers;
 use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsersHandler;
 use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsersOutcome;
 use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsersResult;
+use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -36,12 +39,12 @@ final class ClearChannelHandlersTest extends TestCase
         $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $access = $this->createMock(ChannelAccessRepositoryInterface::class);
         $access->expects(self::never())->method('deleteByChannelId');
-        $handler = new ClearChannelAccessHandler($channels, $access);
-        self::assertSame(ClearChannelAccessOutcome::ChannelNotRegistered, $handler->handle(new ClearChannelAccess('#Missing'))->outcome);
+        $handler = new ClearChannelAccessHandler($channels, $access, $this->historyService());
+        self::assertSame(ClearChannelAccessOutcome::ChannelNotRegistered, $handler->handle($this->accessCommand('#Missing'))->outcome);
 
         $channels = $this->channels();
         $access = $this->createStub(ChannelAccessRepositoryInterface::class);
-        self::assertSame(ClearChannelAccessOutcome::AlreadyEmpty, new ClearChannelAccessHandler($channels, $access)->handle(new ClearChannelAccess('#Channel'))->outcome);
+        self::assertSame(ClearChannelAccessOutcome::AlreadyEmpty, new ClearChannelAccessHandler($channels, $access, $this->historyService())->handle($this->accessCommand('#Channel'))->outcome);
     }
 
     #[Test]
@@ -51,10 +54,18 @@ final class ClearChannelHandlersTest extends TestCase
         $access->expects(self::once())->method('countByChannel')->with(11)->willReturn(4);
         $access->expects(self::once())->method('deleteByChannelId')->with(11)->willReturn(4);
 
-        $result = new ClearChannelAccessHandler($this->channels(), $access)->handle(new ClearChannelAccess('#CHANNEL'));
+        $saved = null;
+        $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $history->expects(self::once())->method('save')->willReturnCallback(static function (ChannelHistory $entry) use (&$saved): void { $saved = $entry; });
+        $result = new ClearChannelAccessHandler($this->channels(), $access, new ChannelHistoryService($history))->handle($this->accessCommand('#CHANNEL'));
 
         self::assertSame(ClearChannelAccessOutcome::Cleared, $result->outcome);
         self::assertSame(4, $result->removedCount);
+        self::assertNotNull($saved);
+        self::assertSame('CLEARACCESS', $saved->getAction());
+        self::assertSame('Founder', $saved->getPerformedBy());
+        self::assertNull($saved->getPerformedByNickId());
+        self::assertSame([], $saved->getExtraData());
     }
 
     #[Test]
@@ -64,16 +75,18 @@ final class ClearChannelHandlersTest extends TestCase
         $network->expects(self::never())->method('kickFromChannel');
         self::assertSame(
             ClearChannelUsersOutcome::ChannelNotRegistered,
-            new ClearChannelUsersHandler($this->createStub(RegisteredChannelRepositoryInterface::class), $network)
-                ->handle(new ClearChannelUsers('#Missing', 'reason'))->outcome,
+            new ClearChannelUsersHandler($this->createStub(RegisteredChannelRepositoryInterface::class), $network, $this->historyService())
+                ->handle($this->usersCommand('#Missing'))->outcome,
         );
 
         $network = $this->createStub(ChanNetworkActions::class);
         $network->method('isChannelOnNetwork')->willReturnOnConsecutiveCalls(false, true);
         $network->method('getChannelMemberUids')->willReturn([]);
-        $handler = new ClearChannelUsersHandler($this->channels(), $network);
-        self::assertSame(ClearChannelUsersOutcome::ChannelNotOnNetwork, $handler->handle(new ClearChannelUsers('#Channel', 'reason'))->outcome);
-        self::assertSame(ClearChannelUsersOutcome::AlreadyEmpty, $handler->handle(new ClearChannelUsers('#Channel', 'reason'))->outcome);
+        $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $history->expects(self::never())->method('save');
+        $handler = new ClearChannelUsersHandler($this->channels(), $network, new ChannelHistoryService($history));
+        self::assertSame(ClearChannelUsersOutcome::ChannelNotOnNetwork, $handler->handle($this->usersCommand('#Channel'))->outcome);
+        self::assertSame(ClearChannelUsersOutcome::AlreadyEmpty, $handler->handle($this->usersCommand('#Channel'))->outcome);
     }
 
     #[Test]
@@ -90,10 +103,18 @@ final class ClearChannelHandlersTest extends TestCase
             },
         );
 
-        $result = new ClearChannelUsersHandler($this->channels(), $network)->handle(new ClearChannelUsers('#Channel', 'reason'));
+        $saved = null;
+        $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $history->expects(self::once())->method('save')->willReturnCallback(static function (ChannelHistory $entry) use (&$saved): void { $saved = $entry; });
+        $result = new ClearChannelUsersHandler($this->channels(), $network, new ChannelHistoryService($history))->handle($this->usersCommand('#Channel'));
 
         self::assertSame(ClearChannelUsersOutcome::Cleared, $result->outcome);
         self::assertSame(2, $result->kickedCount);
+        self::assertNotNull($saved);
+        self::assertSame('CLEARUSERS', $saved->getAction());
+        self::assertSame('Founder', $saved->getPerformedBy());
+        self::assertNull($saved->getPerformedByNickId());
+        self::assertSame([], $saved->getExtraData());
     }
 
     private function channels(): RegisteredChannelRepositoryInterface
@@ -104,5 +125,20 @@ final class ClearChannelHandlersTest extends TestCase
         $channels->method('findByChannelName')->willReturn($channel);
 
         return $channels;
+    }
+
+    private function historyService(): ChannelHistoryService
+    {
+        return new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class));
+    }
+
+    private function accessCommand(string $channelName): ClearChannelAccess
+    {
+        return new ClearChannelAccess($channelName, 'Founder', new DateTimeImmutable('2026-01-02'));
+    }
+
+    private function usersCommand(string $channelName): ClearChannelUsers
+    {
+        return new ClearChannelUsers($channelName, 'reason', 'Founder', new DateTimeImmutable('2026-01-02'));
     }
 }

@@ -9,5 +9,7 @@ final readonly class ResendVerification
     public function __construct(
         public string $nickname,
         public string $language,
+        public string $actorNickname,
+        public ?string $sourceIp = null,
     ) {}
 }

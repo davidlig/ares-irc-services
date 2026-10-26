@@ -22,6 +22,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function base64_encode;
+use function inet_pton;
+
 #[CoversClass(ResendCommand::class)]
 final class ResendCommandTest extends TestCase
 {
@@ -68,13 +71,15 @@ final class ResendCommandTest extends TestCase
     #[Test]
     public function mapsSenderAndLanguageToTypedInput(): void
     {
-        $sender = new SenderView('UID1', 'Alice', 'ident', 'host', 'cloak', 'ip');
+        $sender = new SenderView('UID1', 'Alice', 'ident', 'host', 'cloak', base64_encode((string) inet_pton('192.0.2.2')));
 
         $handler = $this->createMock(ResendVerificationHandlerInterface::class);
         $handler->expects(self::once())
             ->method('handle')
             ->with(self::callback(static fn (ResendVerification $input): bool => 'Alice' === $input->nickname
-                && 'es' === $input->language))
+                && 'es' === $input->language
+                && 'Alice' === $input->actorNickname
+                && '192.0.2.2' === $input->sourceIp))
             ->willReturn(ResendVerificationResult::noPending());
 
         $command = new ResendCommand($handler, verificationTokenTtlSeconds: 3600);
@@ -82,6 +87,25 @@ final class ResendCommandTest extends TestCase
         $command->execute($this->createContext($sender, $messages));
 
         self::assertSame(['resend.no_pending'], $messages);
+    }
+
+    #[Test]
+    public function preservesRepliesForUnknownAndMalformedSourceIps(): void
+    {
+        foreach ([['*', null], ['???notbase64???', '???notbase64???']] as [$source, $expectedIp]) {
+            $sender = new SenderView('UID1', 'Alice', 'ident', 'host', 'cloak', $source);
+            $handler = $this->createMock(ResendVerificationHandlerInterface::class);
+            $handler->expects(self::once())->method('handle')->with(self::callback(
+                static fn (ResendVerification $input): bool => 'Alice' === $input->actorNickname && $expectedIp === $input->sourceIp,
+            ))->willReturn(ResendVerificationResult::noPending());
+
+            $command = new ResendCommand($handler, verificationTokenTtlSeconds: 3600);
+            $messages = [];
+            $command->execute($this->createContext($sender, $messages));
+
+            self::assertSame(['resend.no_pending'], $messages);
+            self::assertStringNotContainsString('???notbase64???', implode(' ', $messages));
+        }
     }
 
     /** @param array<string, mixed> $expectedParams */

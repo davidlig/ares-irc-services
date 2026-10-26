@@ -102,11 +102,29 @@ final readonly class VerifyCommand implements NickServCommandInterface
             senderUid: $sender->uid,
             clientKey: new NickServClientKeyResolver()->getClientKey(IrcNetworkUserMapper::map($sender)),
             authenticatedAccountId: $context->isSenderIdentified() ? $context->getSenderAccountId() : null,
+            actorNickname: $sender->nick,
+            sourceIp: self::decodeIp($sender->ipBase64),
         ));
 
         $this->present($context, $result);
 
         return null;
+    }
+
+    private static function decodeIp(string $ipBase64): ?string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return null;
+        }
+
+        $binary = base64_decode($ipBase64, true);
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 
     private function present(NickServContext $context, VerifyNickResult $result): void

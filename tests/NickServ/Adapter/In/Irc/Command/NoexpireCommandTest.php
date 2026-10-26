@@ -13,10 +13,12 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNick;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandlerInterface;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickResult;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +33,7 @@ final class NoexpireCommandTest extends TestCase
     #[Test]
     public function exposesNoexpireMetadata(): void
     {
-        $command = new NoexpireCommand($this->createStub(SetNoexpireNickHandlerInterface::class));
+        $command = new NoexpireCommand($this->createStub(SetNoexpireNickHandlerInterface::class), $this->clock());
 
         self::assertSame('NOEXPIRE', $command->getName());
         self::assertSame([], $command->getAliases());
@@ -53,7 +55,7 @@ final class NoexpireCommandTest extends TestCase
         $handler = $this->createMock(SetNoexpireNickHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new NoexpireCommand($handler);
+        $command = new NoexpireCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext(null, $messages, ['Target', 'ON']));
 
@@ -68,7 +70,7 @@ final class NoexpireCommandTest extends TestCase
         $handler->expects(self::never())->method('handle');
 
         $sender = new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip');
-        $command = new NoexpireCommand($handler);
+        $command = new NoexpireCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Target', 'INVALID']));
 
@@ -82,10 +84,10 @@ final class NoexpireCommandTest extends TestCase
         $sender = new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip');
         $handler = $this->createMock(SetNoexpireNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with(self::callback(
-            static fn (SetNoexpireNick $dto): bool => 'TargetNick' === $dto->nickname && $dto->noexpire,
+            static fn (SetNoexpireNick $dto): bool => 'TargetNick' === $dto->nickname && $dto->noexpire && 'Oper' === $dto->actorNickname && '2026-09-06 12:00:00 UTC' === $dto->occurredAt->format('Y-m-d H:i:s T'),
         ))->willReturn(SetNoexpireNickResult::success('TargetNick', true));
 
-        $command = new NoexpireCommand($handler);
+        $command = new NoexpireCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick', 'ON']));
 
@@ -102,10 +104,10 @@ final class NoexpireCommandTest extends TestCase
         $sender = new SenderView('UID1', 'Oper', 'ident', 'host', 'cloak', 'ip');
         $handler = $this->createMock(SetNoexpireNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with(self::callback(
-            static fn (SetNoexpireNick $dto): bool => 'TargetNick' === $dto->nickname && !$dto->noexpire,
+            static fn (SetNoexpireNick $dto): bool => 'TargetNick' === $dto->nickname && !$dto->noexpire && 'Oper' === $dto->actorNickname && '2026-09-06 12:00:00 UTC' === $dto->occurredAt->format('Y-m-d H:i:s T'),
         ))->willReturn(SetNoexpireNickResult::success('TargetNick', false));
 
-        $command = new NoexpireCommand($handler);
+        $command = new NoexpireCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick', 'off']));
 
@@ -123,7 +125,7 @@ final class NoexpireCommandTest extends TestCase
         $handler = $this->createMock(SetNoexpireNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->willReturn(SetNoexpireNickResult::notRegistered('TargetNick'));
 
-        $command = new NoexpireCommand($handler);
+        $command = new NoexpireCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick', 'ON']));
 
@@ -138,7 +140,7 @@ final class NoexpireCommandTest extends TestCase
         $handler = $this->createMock(SetNoexpireNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->willReturn(SetNoexpireNickResult::forbidden('TargetNick'));
 
-        $command = new NoexpireCommand($handler);
+        $command = new NoexpireCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick', 'ON']));
 
@@ -153,7 +155,7 @@ final class NoexpireCommandTest extends TestCase
         $handler = $this->createMock(SetNoexpireNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->willReturn(SetNoexpireNickResult::suspended('TargetNick'));
 
-        $command = new NoexpireCommand($handler);
+        $command = new NoexpireCommand($handler, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['TargetNick', 'ON']));
 
@@ -202,6 +204,14 @@ final class NoexpireCommandTest extends TestCase
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
         );
+    }
+
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

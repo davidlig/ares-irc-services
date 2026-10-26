@@ -45,7 +45,7 @@ final readonly class NickHistoryService
             'host' => $performedByHost,
         ], $extraData);
 
-        $history = NickHistory::record(
+        return $this->recordWithExplicitMetadata(
             nickId: $nickId,
             action: $action,
             performedBy: $performedBy,
@@ -53,6 +53,31 @@ final readonly class NickHistoryService
             message: $message,
             performedAt: $performedAt,
             extraData: $extra,
+        );
+    }
+
+    /**
+     * Record a history entry without adding actor IP/host metadata.
+     *
+     * @param array<string, mixed> $extraData
+     */
+    public function recordWithExplicitMetadata(
+        int $nickId,
+        string $action,
+        string $performedBy,
+        ?int $performedByNickId,
+        string $message,
+        DateTimeImmutable $performedAt,
+        array $extraData = [],
+    ): NickHistory {
+        $history = NickHistory::record(
+            nickId: $nickId,
+            action: $action,
+            performedBy: $performedBy,
+            performedByNickId: $performedByNickId,
+            message: $message,
+            performedAt: $performedAt,
+            extraData: $extraData,
         );
 
         $this->historyRepository->save($history);

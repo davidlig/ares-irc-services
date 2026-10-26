@@ -35,7 +35,7 @@ final readonly class ChannelHistoryService
             'host' => $performedByHost,
         ], $extraData);
 
-        $history = ChannelHistory::record(
+        return $this->recordWithExplicitMetadata(
             channelId: $channelId,
             action: $action,
             performedBy: $performedBy,
@@ -43,6 +43,32 @@ final readonly class ChannelHistoryService
             performedAt: $performedAt,
             message: $message,
             extraData: $extra,
+        );
+    }
+
+    /**
+     * Records only explicitly approved metadata, without the actor IP/host enrichment
+     * retained for subscriber-driven history records.
+     *
+     * @param array<string, mixed> $extraData
+     */
+    public function recordWithExplicitMetadata(
+        int $channelId,
+        string $action,
+        string $performedBy,
+        ?int $performedByNickId,
+        DateTimeImmutable $performedAt,
+        string $message,
+        array $extraData = [],
+    ): ChannelHistory {
+        $history = ChannelHistory::record(
+            channelId: $channelId,
+            action: $action,
+            performedBy: $performedBy,
+            performedByNickId: $performedByNickId,
+            performedAt: $performedAt,
+            message: $message,
+            extraData: $extraData,
         );
 
         $this->historyRepository->save($history);

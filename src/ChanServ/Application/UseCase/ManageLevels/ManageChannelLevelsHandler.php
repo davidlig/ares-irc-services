@@ -6,6 +6,7 @@ namespace App\ChanServ\Application\UseCase\ManageLevels;
 
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 
 use function in_array;
@@ -15,6 +16,7 @@ final readonly class ManageChannelLevelsHandler implements ManageChannelLevelsHa
     public function __construct(
         private RegisteredChannelRepositoryInterface $channels,
         private ChannelLevelRepositoryInterface $levels,
+        private ChannelHistoryService $history,
     ) {}
 
     public function handle(ManageChannelLevels $command): ManageChannelLevelsResult
@@ -34,7 +36,7 @@ final readonly class ManageChannelLevelsHandler implements ManageChannelLevelsHa
             ManageChannelLevelsAction::Unknown => new ManageChannelLevelsResult(ManageChannelLevelsOutcome::UnknownAction),
             ManageChannelLevelsAction::List => $this->list($channel->getId(), $command->availableKeys),
             ManageChannelLevelsAction::Set => $this->set($channel->getId(), $command),
-            ManageChannelLevelsAction::Reset => $this->reset($channel->getId()),
+            ManageChannelLevelsAction::Reset => $this->reset($channel->getId(), $command),
         };
     }
 
@@ -71,19 +73,38 @@ final readonly class ManageChannelLevelsHandler implements ManageChannelLevelsHa
         }
 
         $level = $this->levels->findByChannelAndKey($channelId, $key);
+        $oldValue = $level?->getValue() ?? ChannelLevel::getDefault($key);
         if (null === $level) {
             $level = new ChannelLevel($channelId, $key, $value);
         } else {
             $level->updateLevelValue($value);
         }
         $this->levels->save($level);
+        $this->history->recordWithExplicitMetadata(
+            channelId: $channelId,
+            action: 'LEVELS_SET',
+            performedBy: $command->actorNickname,
+            performedByNickId: null,
+            performedAt: $command->occurredAt,
+            message: 'history.message.levels_set',
+            extraData: ['option' => $key, 'old_value' => $oldValue, 'new_value' => $value],
+        );
 
         return new ManageChannelLevelsResult(ManageChannelLevelsOutcome::LevelSet, levelKey: $key, value: $value);
     }
 
-    private function reset(int $channelId): ManageChannelLevelsResult
+    private function reset(int $channelId, ManageChannelLevels $command): ManageChannelLevelsResult
     {
         $this->levels->removeAllForChannel($channelId);
+        // Reset is successful even if no overrides existed; each invocation is tracked.
+        $this->history->recordWithExplicitMetadata(
+            channelId: $channelId,
+            action: 'LEVELS_RESET',
+            performedBy: $command->actorNickname,
+            performedByNickId: null,
+            performedAt: $command->occurredAt,
+            message: 'history.message.levels_reset',
+        );
 
         return new ManageChannelLevelsResult(ManageChannelLevelsOutcome::LevelsReset);
     }

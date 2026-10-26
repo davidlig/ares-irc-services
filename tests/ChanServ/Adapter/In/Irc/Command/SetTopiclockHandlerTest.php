@@ -8,10 +8,12 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetTopiclockHandler;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelTopiclockUpdatedEvent;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingResult;
@@ -170,6 +172,7 @@ final class SetTopiclockHandlerTest extends TestCase
             $channels,
             $this->createStub(ChanUserAccountPort::class),
             $events,
+            new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
         ));
     }
 

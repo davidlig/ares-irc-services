@@ -696,6 +696,12 @@ history:
 
 # --- Mensajes de historial (usados al ver el historial) ---
 history.message:
+  verify: "Cuenta activada"
+  resend: "Correo de verificación reenviado"
+  noexpire_on: "Protección de expiración activada"
+  noexpire_off: "Protección de expiración desactivada"
+  userip: "Consulta USERIP"
+  history_clear: "Historial borrado"
   password_changed_owner:     "Contraseña cambiada por el propietario"
   password_changed_operator:   "Contraseña cambiada por un operador"
   email_changed_owner:        "Email cambiado de %old_email% a %new_email%"

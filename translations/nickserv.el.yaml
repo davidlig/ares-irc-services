@@ -837,6 +837,12 @@ history:
     example: "%command_prefix%\x02\x0303HISTORY Χρήστης CLEAR\x03\x0F"
     success: "\x0303✔\x03 Εκκαθαρίστηκαν \x02%count%\x02 καταχωρήσεις ιστορικού για \x02%nickname%\x02."
 history.message:
+  verify: "Ο λογαριασμός ενεργοποιήθηκε"
+  resend: "Το email επαλήθευσης στάλθηκε ξανά"
+  noexpire_on: "Η προστασία λήξης ενεργοποιήθηκε"
+  noexpire_off: "Η προστασία λήξης απενεργοποιήθηκε"
+  userip: "Ερώτημα USERIP"
+  history_clear: "Το ιστορικό διαγράφηκε"
   password_changed_owner: "Ο κωδικός άλλαξε από τον κάτοχο"
   password_changed_operator: "Ο κωδικός άλλαξε από operator"
   email_changed_owner: "Το email άλλαξε από %old_email% σε %new_email%"

@@ -22,6 +22,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function base64_encode;
+use function inet_pton;
+
 #[CoversClass(VerifyCommand::class)]
 final class VerifyCommandTest extends TestCase
 {
@@ -68,14 +71,16 @@ final class VerifyCommandTest extends TestCase
     #[Test]
     public function mapsSenderAndTokenToTypedInput(): void
     {
-        $sender = new SenderView('UID1', 'Alice', 'ident', 'host', 'cloak', 'ip');
+        $sender = new SenderView('UID1', 'Alice', 'ident', 'host', 'cloak', base64_encode((string) inet_pton('192.0.2.1')));
 
         $handler = $this->createMock(VerifyNickHandlerInterface::class);
         $handler->expects(self::once())
             ->method('handle')
             ->with(self::callback(static fn (VerifyNick $input): bool => 'Alice' === $input->nickname
                 && 'tok123' === $input->token
-                && 'UID1' === $input->senderUid))
+                && 'UID1' === $input->senderUid
+                && 'Alice' === $input->actorNickname
+                && '192.0.2.1' === $input->sourceIp))
             ->willReturn(VerifyNickResult::invalidToken());
 
         $command = new VerifyCommand($handler, verificationTokenTtlSeconds: 3600);
@@ -83,6 +88,25 @@ final class VerifyCommandTest extends TestCase
         $command->execute($this->createContext($sender, $messages, ['tok123']));
 
         self::assertSame(['verify.invalid_token'], $messages);
+    }
+
+    #[Test]
+    public function preservesRepliesForUnknownAndMalformedSourceIps(): void
+    {
+        foreach ([['*', null], ['???notbase64???', '???notbase64???']] as [$source, $expectedIp]) {
+            $sender = new SenderView('UID1', 'Alice', 'ident', 'host', 'cloak', $source);
+            $handler = $this->createMock(VerifyNickHandlerInterface::class);
+            $handler->expects(self::once())->method('handle')->with(self::callback(
+                static fn (VerifyNick $input): bool => 'tok123' === $input->token && $expectedIp === $input->sourceIp,
+            ))->willReturn(VerifyNickResult::invalidToken());
+
+            $command = new VerifyCommand($handler, verificationTokenTtlSeconds: 3600);
+            $messages = [];
+            $command->execute($this->createContext($sender, $messages, ['tok123']));
+
+            self::assertSame(['verify.invalid_token'], $messages);
+            self::assertStringNotContainsString('tok123', implode(' ', $messages));
+        }
     }
 
     /** @param array<string, mixed> $expectedParams */

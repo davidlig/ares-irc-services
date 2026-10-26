@@ -12,6 +12,7 @@ use App\NickServ\Adapter\Out\InMemory\RegisterThrottleRegistry;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegisterNickRepository;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRescueCredentialPersistence;
+use App\NickServ\Adapter\Out\Persistence\Doctrine\NickHistoryDoctrineRepository;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Adapter\Out\Security\UuidRescueTokenCodec;
 use App\NickServ\Application\Model\NicknameAuthenticationMode;
@@ -23,6 +24,7 @@ use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
 use App\NickServ\Application\Port\Out\RegistrationMailSender;
 use App\NickServ\Application\Port\Out\ResendMailSender;
 use App\NickServ\Application\Port\Out\ResendThrottle;
+use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Application\UseCase\Register\RegisterNickHandler;
 use App\NickServ\Application\UseCase\Register\RegisterNickOutcome;
@@ -139,8 +141,9 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $sent = null;
         $mailer = $this->createMock(ResendMailSender::class);
         $mailer->expects(self::once())->method('sendResend')->willReturnCallback(static function (string $n, string $e, string $t) use (&$sent): void {$sent = $t; });
-        $resend = new ResendVerificationHandler($repo, $throttle, $codec, $store, $policy, $mailer, $clock, 600, 7200);
-        self::assertSame(ResendVerificationOutcome::Success, $resend->handle(new ResendVerification('Renew', 'en'))->outcome);
+        $history = new NickHistoryService(new NickHistoryDoctrineRepository($this->entityManager));
+        $resend = new ResendVerificationHandler($repo, $throttle, $codec, $store, $policy, $mailer, $clock, $history, 600, 7200);
+        self::assertSame(ResendVerificationOutcome::Success, $resend->handle(new ResendVerification('Renew', 'en', 'Oper'))->outcome);
         self::assertIsString($sent);
         self::assertNotSame($old, $sent);
         self::assertSame($now->modify('+7200 seconds')->format('c'), $nick->getExpiresAt()?->format('c'));
@@ -157,16 +160,16 @@ final class RegistrationReviewRegressionTest extends DoctrineIntegrationTestCase
         $auth->method('current')->willReturn(NicknameAuthenticationMode::ServiceCommand);
         $events = $this->createMock(RegistrationEventPublisher::class);
         $events->expects(self::once())->method('publish');
-        $verify = new VerifyNickHandler($repo, $codec, $store, new InMemoryRescueAttemptLimiter(), new DoctrineRescueCredentialPersistence($this->entityManager), new IdentifiedSessionRegistry(), $laterClock, $auth, $events);
-        self::assertSame(VerifyNickOutcome::Success, $verify->handle(new VerifyNick('Renew', $sent, 'UID', 'ip:one'))->outcome);
+        $verify = new VerifyNickHandler($repo, $codec, $store, new InMemoryRescueAttemptLimiter(), new DoctrineRescueCredentialPersistence($this->entityManager), new IdentifiedSessionRegistry(), $laterClock, $auth, $events, $history);
+        self::assertSame(VerifyNickOutcome::Success, $verify->handle(new VerifyNick('Renew', $sent, 'UID', 'Renew', clientKey: 'ip:one'))->outcome);
         $expired = RegisteredNick::createPending('Expired', 'hash', 'expired@example.test', 'en', $now, $now->modify('-1 hour'));
         $repo->save($expired);
         $digest = static fn () => hash('sha256', serialize($db->fetchAllAssociative('SELECT * FROM registered_nicks ORDER BY id')));
         $before = $digest();
-        self::assertSame(ResendVerificationOutcome::NoPending, $resend->handle(new ResendVerification('Expired', 'en'))->outcome);
+        self::assertSame(ResendVerificationOutcome::NoPending, $resend->handle(new ResendVerification('Expired', 'en', 'Oper'))->outcome);
         self::assertSame($before, $digest());
         $policy->change(RegistrationMode::Token);
-        self::assertSame(ResendVerificationOutcome::Disabled, $resend->handle(new ResendVerification('Expired', 'en'))->outcome);
+        self::assertSame(ResendVerificationOutcome::Disabled, $resend->handle(new ResendVerification('Expired', 'en', 'Oper'))->outcome);
         self::assertSame($before, $digest());
     }
 }

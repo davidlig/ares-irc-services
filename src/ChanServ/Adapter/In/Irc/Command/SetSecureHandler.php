@@ -8,6 +8,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecure;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandlerInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
+use DateTimeImmutable;
 
 use function strtoupper;
 use function trim;
@@ -20,6 +21,9 @@ final readonly class SetSecureHandler implements SetOptionHandlerInterface
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
+        if (null === $context->sender) {
+            return;
+        }
         $normalized = strtoupper(trim($value));
         if ('ON' !== $normalized && 'OFF' !== $normalized) {
             $context->reply('error.syntax', ['syntax' => $context->trans('set.secure.syntax')]);
@@ -27,10 +31,15 @@ final readonly class SetSecureHandler implements SetOptionHandlerInterface
             return;
         }
         $on = 'ON' === $normalized;
-        $this->configureSecure->handle(new ConfigureChannelSecure($channel, $on));
+        $this->configureSecure->handle(new ConfigureChannelSecure(
+            $channel,
+            $on,
+            $context->sender->nick,
+            new DateTimeImmutable(),
+        ));
         $context->reply($on ? 'set.secure.on' : 'set.secure.off');
 
-        $nick = $context->sender->nick ?? '';
+        $nick = $context->sender->nick;
         if ('' !== $nick) {
             $key = $on ? 'set.secure.notice_on' : 'set.secure.notice_off';
             $notice = $context->trans($key, ['%nickname%' => $nick]);

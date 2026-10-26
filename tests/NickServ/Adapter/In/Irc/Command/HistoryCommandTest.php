@@ -199,7 +199,10 @@ final class HistoryCommandTest extends TestCase
         $handler = $this->createMock(HistoryNickHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with(self::callback(
             static fn (HistoryNick $dto): bool => 'Target' === $dto->nickname
-                && HistoryNickAction::Clear === $dto->action,
+                && HistoryNickAction::Clear === $dto->action
+                && 'Oper' === $dto->operatorNick
+                && null === $dto->operatorNickId
+                && '2026-09-06 12:00:00 UTC' === $dto->occurredAt->format('Y-m-d H:i:s T'),
         ))->willReturn(HistoryNickResult::clearSuccess('Target', 5));
 
         $command = new HistoryCommand($handler, $this->clock());

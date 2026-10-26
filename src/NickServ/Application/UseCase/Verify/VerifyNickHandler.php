@@ -15,7 +15,9 @@ use App\NickServ\Application\Port\Out\RescueCredentialPersistence;
 use App\NickServ\Application\Port\Out\RescueTokenCodec;
 use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use DateTimeImmutable;
 
 final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
 {
@@ -29,6 +31,7 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
         private Clock $clock,
         private NicknameAuthenticationModeQuery $authenticationMode,
         private RegistrationEventPublisher $eventPublisher,
+        private NickHistoryService $history,
     ) {}
 
     public function handle(VerifyNick $command): VerifyNickResult
@@ -75,11 +78,27 @@ final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
         ));
 
         if (NicknameAuthenticationMode::NativeNick === $this->authenticationMode->current()) {
+            $this->recordActivation($command, $account->getId(), $now);
+
             return VerifyNickResult::successNativeAuthenticationRequired($account->getNickname());
         }
 
         $this->identifiedRegistry->register($command->senderUid, $account->getNickname());
+        $this->recordActivation($command, $account->getId(), $now);
 
         return VerifyNickResult::success($account->getNickname());
+    }
+
+    private function recordActivation(VerifyNick $command, int $nickId, DateTimeImmutable $occurredAt): void
+    {
+        $this->history->recordWithExplicitMetadata(
+            nickId: $nickId,
+            action: 'VERIFY',
+            performedBy: $command->actorNickname,
+            performedByNickId: null,
+            message: 'history.message.verify',
+            performedAt: $occurredAt,
+            extraData: null !== $command->sourceIp ? ['ip' => $command->sourceIp] : [],
+        );
     }
 }

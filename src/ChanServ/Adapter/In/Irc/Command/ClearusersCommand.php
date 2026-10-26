@@ -15,6 +15,7 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use DateTimeImmutable;
 
 use function array_slice;
 use function trim;
@@ -112,7 +113,12 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
         }
         $reason = trim(implode(' ', array_slice($context->args, 1)));
         $kickReason = '' !== $reason ? $reason : $context->trans('clearusers.default_reason');
-        $result = $this->handler->handle(new ClearChannelUsers($channelName, $kickReason));
+        $result = $this->handler->handle(new ClearChannelUsers(
+            channelName: $channelName,
+            reason: $kickReason,
+            actorNickname: $context->sender->nick,
+            occurredAt: new DateTimeImmutable(),
+        ));
         if (ClearChannelUsersOutcome::ChannelNotRegistered === $result->outcome) {
             $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
 

@@ -14,10 +14,12 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Userip\GetUserip;
 use App\NickServ\Application\UseCase\Userip\GetUseripHandlerInterface;
 use App\NickServ\Application\UseCase\Userip\GetUseripResult;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,6 +39,7 @@ final class UseripCommandTest extends TestCase
         $command = new UseripCommand(
             $this->createStub(GetUseripHandlerInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->clock(),
         );
 
         self::assertSame('USERIP', $command->getName());
@@ -59,7 +62,7 @@ final class UseripCommandTest extends TestCase
         $handler = $this->createMock(GetUseripHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
 
-        $command = new UseripCommand($handler, $this->createStub(NetworkUserLookupPort::class));
+        $command = new UseripCommand($handler, $this->createStub(NetworkUserLookupPort::class), $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext(null, $messages, ['Target']));
 
@@ -77,11 +80,13 @@ final class UseripCommandTest extends TestCase
         $handler = $this->createMock(GetUseripHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with(self::callback(
             static fn (GetUserip $dto): bool => 'OfflineNick' === $dto->nickname
+                && 'Oper' === $dto->actorNickname
+                && '2026-09-06 12:00:00 UTC' === $dto->occurredAt->format('Y-m-d H:i:s T')
                 && null === $dto->ip
                 && null === $dto->hostname,
         ))->willReturn(GetUseripResult::notOnline('OfflineNick'));
 
-        $command = new UseripCommand($handler, $userLookup);
+        $command = new UseripCommand($handler, $userLookup, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['OfflineNick']));
 
@@ -101,11 +106,13 @@ final class UseripCommandTest extends TestCase
         $handler = $this->createMock(GetUseripHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with(self::callback(
             static fn (GetUserip $dto): bool => 'OnlineNick' === $dto->nickname
+                && 'Oper' === $dto->actorNickname
+                && '2026-09-06 12:00:00 UTC' === $dto->occurredAt->format('Y-m-d H:i:s T')
                 && '10.0.0.5' === $dto->ip
                 && 'client.net' === $dto->hostname,
         ))->willReturn(GetUseripResult::success('OnlineNick', '10.0.0.5', 'client.net'));
 
-        $command = new UseripCommand($handler, $userLookup);
+        $command = new UseripCommand($handler, $userLookup, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['OnlineNick']));
 
@@ -133,7 +140,7 @@ final class UseripCommandTest extends TestCase
                 && bin2hex($ipv6Binary) === $dto->ip,
         ))->willReturn(GetUseripResult::success('Ipv6Nick', bin2hex($ipv6Binary), 'client.org'));
 
-        $command = new UseripCommand($handler, $userLookup);
+        $command = new UseripCommand($handler, $userLookup, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['Ipv6Nick']));
 
@@ -155,7 +162,7 @@ final class UseripCommandTest extends TestCase
                 && '???notbase64???' === $dto->ip,
         ))->willReturn(GetUseripResult::success('OddNick', '???notbase64???', 'client.org'));
 
-        $command = new UseripCommand($handler, $userLookup);
+        $command = new UseripCommand($handler, $userLookup, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['OddNick']));
 
@@ -177,15 +184,23 @@ final class UseripCommandTest extends TestCase
                 && base64_encode('12345678') === $dto->ip,
         ))->willReturn(GetUseripResult::success('EightByteNick', 'raw', 'client.org'));
 
-        $command = new UseripCommand($handler, $userLookup);
+        $command = new UseripCommand($handler, $userLookup, $this->clock());
         $messages = [];
         $outcome = $command->execute($this->createContext($sender, $messages, ['EightByteNick']));
 
         self::assertTrue($outcome->success);
     }
 
+    private function clock(): Clock
+    {
+        $clock = $this->createStub(Clock::class);
+        $clock->method('now')->willReturn(new DateTimeImmutable('2026-09-06 12:00:00 UTC'));
+
+        return $clock;
+    }
+
     /**
-     * @param string[]     $messages
+     * @param list<string> $messages
      * @param list<string> $args
      */
     private function createContext(?SenderView $sender, array &$messages, array $args): NickServContext

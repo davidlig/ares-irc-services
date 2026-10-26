@@ -699,6 +699,12 @@ history:
     example: "%command_prefix%\x02\x0303HISTORY Utilizator CLEAR\x03\x0F"
     success: "\x0303✔\x03 S-au șters \x02%count%\x02 intrări din istoricul poreclei \x02%nickname%\x02."
 history.message:
+  verify: "Cont activat"
+  resend: "Email de verificare retrimis"
+  noexpire_on: "Protecție împotriva expirării activată"
+  noexpire_off: "Protecție împotriva expirării dezactivată"
+  userip: "Consultare USERIP"
+  history_clear: "Istoric șters"
   password_changed_owner: "Parolă schimbată de proprietar"
   password_changed_operator: "Parolă schimbată de operator"
   email_changed_owner: "E-mail schimbat din %old_email% în %new_email%"

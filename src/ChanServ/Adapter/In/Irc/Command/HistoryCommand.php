@@ -298,7 +298,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
         }
 
         $params = [];
-        foreach (['old_founder', 'new_founder', 'old_successor', 'new_successor', 'target_nickname', 'level', 'mask'] as $key) {
+        foreach (['old_founder', 'new_founder', 'old_successor', 'new_successor', 'target_nickname', 'level', 'mask', 'option', 'old_value', 'new_value'] as $key) {
             if (isset($extraData[$key])) {
                 $params['%' . $key . '%'] = $this->stringifyExtra($extraData[$key]);
             }
@@ -311,7 +311,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
     private function formatExtraData(array $extraData, ChanServContext $context): string
     {
         $parts = [];
-        foreach (['duration', 'expires_at', 'old_founder', 'new_founder', 'old_successor', 'new_successor', 'target_nickname', 'level', 'mask', 'ip', 'host'] as $key) {
+        foreach (['duration', 'expires_at', 'old_founder', 'new_founder', 'old_successor', 'new_successor', 'target_nickname', 'level', 'mask', 'option', 'old_value', 'new_value', 'ip', 'host'] as $key) {
             if (isset($extraData[$key])) {
                 $parts[] = $context->trans('history.extra.' . $key, ['%value%' => $this->stringifyExtra($extraData[$key])]);
             }

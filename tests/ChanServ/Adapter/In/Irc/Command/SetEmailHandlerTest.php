@@ -8,9 +8,11 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetEmailHandler;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingResult;
@@ -26,6 +28,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetEmailHandler::class)]
@@ -187,6 +190,7 @@ final class SetEmailHandlerTest extends TestCase
     {
         foreach ([[false, false], [false, true], [true, false], [true, true]] as [$levelFounder, $ircop]) {
             $channel = RegisteredChannel::register(new DateTimeImmutable('2026-10-25'), '#example', 1, 'Example');
+            new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($channel, 1);
             $channel->updateEmail('original@example.org');
             $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
             $channels->expects($levelFounder ? self::once() : self::never())->method('save');
@@ -211,6 +215,7 @@ final class SetEmailHandlerTest extends TestCase
             $channels,
             $this->createStub(ChanUserAccountPort::class),
             $this->createStub(EventBusInterface::class),
+            new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
         ));
     }
 

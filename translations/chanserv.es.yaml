@@ -679,6 +679,27 @@ history:
 
 # --- Historial: traducciones de mensajes ---
 history.message:
+  levels_set: "Nivel de acceso cambiado"
+  levels_reset: "Niveles de acceso restablecidos"
+  clearaccess: "Lista de acceso vaciada"
+  clearusers: "Usuarios del canal expulsados"
+  noexpire_on: "Protección de expiración activada"
+  noexpire_off: "Protección de expiración desactivada"
+  ircoponly_on: "Restricción a IRCops activada"
+  ircoponly_off: "Restricción a IRCops desactivada"
+  history_clear: "Historial borrado"
+  set_desc: "Opción DESC actualizada"
+  set_url: "Opción URL actualizada"
+  set_email: "Opción EMAIL actualizada"
+  set_entrymsg: "Opción ENTRYMSG actualizada"
+  set_topiclock_on: "Opción TOPICLOCK activada"
+  set_topiclock_off: "Opción TOPICLOCK desactivada"
+  set_mlock_on: "Opción MLOCK activada"
+  set_mlock_off: "Opción MLOCK desactivada"
+  set_secure_on: "Opción SECURE activada"
+  set_secure_off: "Opción SECURE desactivada"
+  set_private_on: "Opción PRIVATE activada"
+  set_private_off: "Opción PRIVATE desactivada"
   founder_changed:            "Fundador cambiado de %old_founder% a %new_founder%"
   successor_changed:          "Sucesor cambiado de %old_successor% a %new_successor%"
   successor_cleared:          "Sucesor eliminado"
@@ -689,6 +710,9 @@ history.message:
 
 # --- Historial: traducciones de campos extra ---
 history.extra:
+  option: "Opción: %value%"
+  old_value: "Nivel anterior: %value%"
+  new_value: "Nivel nuevo: %value%"
   old_founder:     "Fundador anterior: %value%"
   new_founder:     "Fundador nuevo: %value%"
   old_successor:   "Sucesor anterior: %value%"

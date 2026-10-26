@@ -698,6 +698,12 @@ history:
     example: "%command_prefix%\x02\x0303HISTORY Usuari CLEAR\x03\x0F"
     success: "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'historial de \x02%nickname%\x02."
 history.message:
+  verify: "Compte activat"
+  resend: "Correu de verificació reenviat"
+  noexpire_on: "Protecció de caducitat activada"
+  noexpire_off: "Protecció de caducitat desactivada"
+  userip: "Consulta USERIP"
+  history_clear: "Historial esborrat"
   password_changed_owner: "Contrasenya canviada pel propietari"
   password_changed_operator: "Contrasenya canviada per l'operador"
   email_changed_owner: "Correu canviat de %old_email% a %new_email%"

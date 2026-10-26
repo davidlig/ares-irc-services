@@ -22,10 +22,12 @@ use App\ChanServ\Adapter\In\Irc\Command\SetUrlHandler;
 use App\ChanServ\Adapter\In\Irc\MlockStateFromChannelResolver;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChanServAccessHelper;
 use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandlerInterface;
 use App\ChanServ\Application\UseCase\ConfigureSecure\ConfigureChannelSecureHandlerInterface;
@@ -101,7 +103,7 @@ final class SetCommandTest extends TestCase
         $eventDispatcher = $this->createStub(EventBusInterface::class);
         $trans = $this->createStub(TranslatorInterface::class);
         $trans->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $settingUpdater = new UpdateChannelSettingHandler($this->createStub(EmailDomainPolicy::class), $channelRepo, $nickRepo, $eventDispatcher);
+        $settingUpdater = new UpdateChannelSettingHandler($this->createStub(EmailDomainPolicy::class), $channelRepo, $nickRepo, $eventDispatcher, new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)));
 
         return new SetCommand(
             new ResolveChannelSettingHandler($channelRepo, $accessHelper),

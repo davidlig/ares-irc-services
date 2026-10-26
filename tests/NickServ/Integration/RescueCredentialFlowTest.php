@@ -12,6 +12,7 @@ use App\NickServ\Adapter\Out\OperServ\OperServEmailDomainPolicy;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegisterNickRepository;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegistrationPolicyRepository;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRescueCredentialPersistence;
+use App\NickServ\Adapter\Out\Persistence\Doctrine\NickHistoryDoctrineRepository;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository;
 use App\NickServ\Adapter\Out\Security\UuidRescueTokenCodec;
 use App\NickServ\Application\Model\NicknameAuthenticationMode;
@@ -28,6 +29,7 @@ use App\NickServ\Application\Port\Out\RescueTokenNotifier;
 use App\NickServ\Application\Port\Out\ResendMailSender;
 use App\NickServ\Application\Port\Out\ResendThrottle;
 use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
+use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueToken;
 use App\NickServ\Application\UseCase\IssueMigrationRescueToken\IssueMigrationRescueTokenHandler;
 use App\NickServ\Application\UseCase\Recover\RecoverNick;
@@ -60,6 +62,7 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $db = $this->entityManager->getConnection();
         self::assertArrayNotHasKey('registration_mode', $db->createSchemaManager()->listTableColumns('registered_nicks'));
         $repo = new RegisteredNickDoctrineRepository($this->entityManager);
+        $history = new NickHistoryService(new NickHistoryDoctrineRepository($this->entityManager));
         $regrepo = new DoctrineRegisterNickRepository($this->entityManager);
         $cas = new DoctrineRescueCredentialPersistence($this->entityManager);
         $policy = new DoctrineRegistrationPolicyRepository($db);
@@ -82,7 +85,7 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $events->expects(self::exactly(2))->method('publish');
         $auth = $this->createStub(NicknameAuthenticationModeQuery::class);
         $auth->method('current')->willReturn(NicknameAuthenticationMode::ServiceCommand);
-        $makeVerify = static fn (TemporaryRescueTokenStore $store): VerifyNickHandler => new VerifyNickHandler($repo, $codec, $store, $limiter, $cas, $sessions, $clock, $auth, $events);
+        $makeVerify = static fn (TemporaryRescueTokenStore $store): VerifyNickHandler => new VerifyNickHandler($repo, $codec, $store, $limiter, $cas, $sessions, $clock, $auth, $events, $history);
         $verify = $makeVerify($temp);
         $digest = static fn () => hash('sha256', serialize($db->fetchAllAssociative('SELECT * FROM registered_nicks ORDER BY id')));
         $result = $register->handle(new RegisterNick('Token', 'password', null, 'en', 'clientA'));
@@ -97,9 +100,9 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $before = $digest();
         $register->handle(new RegisterNick('Token', 'another', null, 'en', 'clientA'));
         self::assertSame($before, $digest());
-        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Token', 'wrong', 'UID', 'clientA'))->outcome);
+        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Token', 'wrong', 'UID', 'Token', clientKey: 'clientA'))->outcome);
         self::assertSame($before, $digest());
-        self::assertSame(VerifyNickOutcome::Success, $verify->handle(new VerifyNick('Token', $token, 'UID', 'clientA'))->outcome);
+        self::assertSame(VerifyNickOutcome::Success, $verify->handle(new VerifyNick('Token', $token, 'UID', 'Token', clientKey: 'clientA'))->outcome);
         self::assertSame($codec->hash($token), $db->fetchOne('SELECT token FROM registered_nicks WHERE id=?', [$account->getId()]));
         self::assertTrue($account->isRegistered());
         $pw = $this->createStub(RecoveryPasswordGenerator::class);
@@ -123,10 +126,10 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         self::assertSame($codec->hash($token), $account->getRescueTokenHash());
         self::assertTrue($temp->matches($account->getId(), (string) $codec->hash($reset->rescueToken), $now));
         $beforeOptional = $digest();
-        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Token', $reset->rescueToken, 'FOREIGN', 'clientX'))->outcome);
+        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Token', $reset->rescueToken, 'FOREIGN', 'Token', clientKey: 'clientX'))->outcome);
         self::assertSame($beforeOptional, $digest());
         self::assertSame($codec->hash($token), $account->getRescueTokenHash());
-        self::assertSame(VerifyNickOutcome::CredentialConfirmed, $verify->handle(new VerifyNick('Token', $reset->rescueToken, 'UID', 'clientA'))->outcome);
+        self::assertSame(VerifyNickOutcome::CredentialConfirmed, $verify->handle(new VerifyNick('Token', $reset->rescueToken, 'UID', 'Token', clientKey: 'clientA'))->outcome);
         self::assertSame($codec->hash($reset->rescueToken), $account->getRescueTokenHash());
         $before = $digest();
         self::assertSame(RecoverNickOutcome::InvalidToken, $recover->handle(new RecoverNick('Token', $token, clientKey: 'clientA'))->outcome);
@@ -148,10 +151,10 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $resendMail = $this->createMock(ResendMailSender::class);
         $resentToken = null;
         $resendMail->expects(self::once())->method('sendResend')->willReturnCallback(static function (string $n, string $e, string $t) use (&$resentToken): void {$resentToken = $t; });
-        $resend = new ResendVerificationHandler($repo, $resendThrottle, $codec, $temp, $policy, $resendMail, $clock, 600);
+        $resend = new ResendVerificationHandler($repo, $resendThrottle, $codec, $temp, $policy, $resendMail, $clock, $history, 600);
         $originalDeadline = $mailAccount->getExpiresAt();
         $now = $now->modify('+59 minutes');
-        $resend->handle(new ResendVerification('Mail', 'en'));
+        $resend->handle(new ResendVerification('Mail', 'en', 'Oper'));
         self::assertSame($now->modify('+1 hour')->format('c'), $mailAccount->getExpiresAt()?->format('c'));
         $persistedExpiry = $db->fetchOne('SELECT expires_at FROM registered_nicks WHERE id=?', [$mailAccount->getId()]);
         self::assertIsString($persistedExpiry);
@@ -159,7 +162,7 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $pendingDigest = $digest();
         self::assertNotNull($resentToken);
         self::assertNotSame($mailToken, $resentToken);
-        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Mail', $mailToken, 'MAILUID', 'clientB'))->outcome);
+        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Mail', $mailToken, 'MAILUID', 'Mail', clientKey: 'clientB'))->outcome);
         self::assertSame($pendingDigest, $digest());
         $mailToken = $resentToken;
         $now = $now->modify('+2 minutes');
@@ -167,8 +170,8 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         self::assertGreaterThan($originalDeadline->getTimestamp(), $now->getTimestamp());
         $this->entityManager->clear();
         // Unconfirmed EMAIL tokens are memory-only too; restart cannot promote them.
-        self::assertSame(VerifyNickOutcome::InvalidToken, $makeVerify(new InMemoryTemporaryRescueTokenStore())->handle(new VerifyNick('Mail', $mailToken, 'MAILUID', 'clientB'))->outcome);
-        self::assertSame(VerifyNickOutcome::Success, $verify->handle(new VerifyNick('Mail', $mailToken, 'MAILUID', 'clientB'))->outcome);
+        self::assertSame(VerifyNickOutcome::InvalidToken, $makeVerify(new InMemoryTemporaryRescueTokenStore())->handle(new VerifyNick('Mail', $mailToken, 'MAILUID', 'Mail', clientKey: 'clientB'))->outcome);
+        self::assertSame(VerifyNickOutcome::Success, $verify->handle(new VerifyNick('Mail', $mailToken, 'MAILUID', 'Mail', clientKey: 'clientB'))->outcome);
         $mailAccount = $repo->findByNick('Mail');
         self::assertNotNull($mailAccount);
         $before = $digest();
@@ -201,12 +204,12 @@ final class RescueCredentialFlowTest extends DoctrineIntegrationTestCase
         $issue->handle(new IssueMigrationRescueToken($legacy->getId(), 'LEGACYUID', $now));
         self::assertNull($db->fetchOne('SELECT token FROM registered_nicks WHERE id=?', [$legacy->getId()]));
         $before = $digest();
-        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Legacy', $issued[1], 'FOREIGN', 'clientC'))->outcome);
+        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Legacy', $issued[1], 'FOREIGN', 'Legacy', clientKey: 'clientC'))->outcome);
         self::assertSame($before, $digest());
         $sessions->register('LEGACYUID', 'Legacy');
-        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Legacy', $issued[0], 'LEGACYUID', 'clientC'))->outcome);
+        self::assertSame(VerifyNickOutcome::InvalidToken, $verify->handle(new VerifyNick('Legacy', $issued[0], 'LEGACYUID', 'Legacy', clientKey: 'clientC'))->outcome);
         self::assertSame($before, $digest());
-        self::assertSame(VerifyNickOutcome::CredentialConfirmed, $verify->handle(new VerifyNick('Legacy', $issued[1], 'LEGACYUID', 'clientC'))->outcome);
+        self::assertSame(VerifyNickOutcome::CredentialConfirmed, $verify->handle(new VerifyNick('Legacy', $issued[1], 'LEGACYUID', 'Legacy', clientKey: 'clientC'))->outcome);
         $issue->handle(new IssueMigrationRescueToken($legacy->getId(), 'LEGACYUID', $now));
         self::assertSame($codec->hash($issued[1]), $legacy->getRescueTokenHash());
     }

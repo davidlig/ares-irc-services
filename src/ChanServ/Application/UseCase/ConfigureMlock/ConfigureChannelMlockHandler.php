@@ -8,6 +8,7 @@ use App\ChanServ\Application\Port\Out\ChannelMlockStorage;
 use App\ChanServ\Application\Port\Out\ChanServEventPublisher;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelMlockUpdatedEvent;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 
 final readonly class ConfigureChannelMlockHandler implements ConfigureChannelMlockHandlerInterface
 {
@@ -15,6 +16,7 @@ final readonly class ConfigureChannelMlockHandler implements ConfigureChannelMlo
         private RegisteredChannelRepositoryInterface $channels,
         private ChannelMlockStorage $mlockStorage,
         private ChanServEventPublisher $events,
+        private ChannelHistoryService $history,
     ) {}
 
     public function handle(ConfigureChannelMlock $command): ConfigureChannelMlockResult
@@ -22,6 +24,14 @@ final readonly class ConfigureChannelMlockHandler implements ConfigureChannelMlo
         $this->mlockStorage->store($command->channel, $command->modeLock);
         $this->channels->save($command->channel);
         $this->events->publish(new ChannelMlockUpdatedEvent($command->channel->getName()));
+        $this->history->recordWithExplicitMetadata(
+            channelId: $command->channel->getId(),
+            action: 'SET_MLOCK_' . ($command->modeLock->active ? 'ON' : 'OFF'),
+            performedBy: $command->actorNickname,
+            performedByNickId: null,
+            performedAt: $command->occurredAt,
+            message: 'history.message.set_mlock_' . ($command->modeLock->active ? 'on' : 'off'),
+        );
 
         return new ConfigureChannelMlockResult($command->modeLock);
     }

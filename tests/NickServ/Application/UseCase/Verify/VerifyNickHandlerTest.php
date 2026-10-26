@@ -10,16 +10,19 @@ use App\NickServ\Adapter\Out\InMemory\InMemoryTemporaryRescueTokenStore;
 use App\NickServ\Adapter\Out\Security\UuidRescueTokenCodec;
 use App\NickServ\Application\Model\NicknameAuthenticationMode;
 use App\NickServ\Application\Port\Out\Clock;
+use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
 use App\NickServ\Application\Port\Out\NicknameAuthenticationModeQuery;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Port\Out\RegistrationEventPublisher;
 use App\NickServ\Application\Port\Out\RescueAttemptLimiter;
 use App\NickServ\Application\Port\Out\RescueCredentialPersistence;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Application\UseCase\Verify\VerifyNick;
 use App\NickServ\Application\UseCase\Verify\VerifyNickHandler;
 use App\NickServ\Application\UseCase\Verify\VerifyNickOutcome;
 use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
+use App\NickServ\Domain\Entity\NickHistory;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
@@ -71,7 +74,13 @@ final class VerifyNickHandlerTest extends TestCase
         $persistence->expects(self::once())->method('confirm')->with(42, NickStatus::Pending, null, $hash, $this->now())->willReturn(true);
         $publisher = $this->createMock(RegistrationEventPublisher::class);
         $publisher->expects(self::once())->method('publish')->with(self::callback(static fn (NickPasswordHashAvailable $event): bool => 42 === $event->nickId && 'password-hash' === $event->passwordHash));
-        $result = $this->handler($account, $persistence, publisher: $publisher)->handle($this->input());
+        $historyRepository = $this->createMock(NickHistoryRepositoryInterface::class);
+        $historyRepository->expects(self::once())->method('save')->with(self::callback(static fn (NickHistory $entry): bool => 42 === $entry->getNickId()
+            && 'VERIFY' === $entry->getAction()
+            && 'Alice' === $entry->getPerformedBy()
+            && null === $entry->getPerformedByNickId()
+            && ['ip' => '192.0.2.1'] === $entry->getExtraData()));
+        $result = $this->handler($account, $persistence, publisher: $publisher, history: new NickHistoryService($historyRepository))->handle($this->input());
         self::assertSame(VerifyNickOutcome::Success, $result->outcome);
         self::assertSame('Alice', $result->nickname);
         self::assertSame('Alice', $this->sessions->findNick('UID1'));
@@ -86,7 +95,12 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertNull($account->getRescueTokenHash());
         $persistence = $this->createMock(RescueCredentialPersistence::class);
         $persistence->expects(self::once())->method('confirm')->with(42, NickStatus::Pending, null, $hash, $this->now())->willReturn(true);
-        $result = $this->handler($account, $persistence, mode: NicknameAuthenticationMode::NativeNick)->handle($this->input());
+        $historyRepository = $this->createMock(NickHistoryRepositoryInterface::class);
+        $historyRepository->expects(self::once())->method('save')->with(self::callback(static fn (NickHistory $entry): bool => 'VERIFY' === $entry->getAction()
+            && 'Alice' === $entry->getPerformedBy()
+            && null === $entry->getPerformedByNickId()
+            && ['ip' => '192.0.2.1'] === $entry->getExtraData()));
+        $result = $this->handler($account, $persistence, mode: NicknameAuthenticationMode::NativeNick, history: new NickHistoryService($historyRepository))->handle($this->input());
         self::assertSame(VerifyNickOutcome::SuccessNativeAuthenticationRequired, $result->outcome);
         self::assertNull($this->sessions->findNick('UID1'));
         self::assertNull($account->getRescueTokenHash());
@@ -101,9 +115,11 @@ final class VerifyNickHandlerTest extends TestCase
         self::assertSame(VerifyNickOutcome::InvalidToken, $this->handler($account)->handle($this->input())->outcome);
         $publisher = $this->createMock(RegistrationEventPublisher::class);
         $publisher->expects(self::never())->method('publish');
+        $historyRepository = $this->createMock(NickHistoryRepositoryInterface::class);
+        $historyRepository->expects(self::never())->method('save');
         $persistence = $this->createMock(RescueCredentialPersistence::class);
         $persistence->expects(self::once())->method('confirm')->with(42, NickStatus::Registered, null, $hash, $this->now())->willReturn(true);
-        $result = $this->handler($account, $persistence, publisher: $publisher)->handle($this->input(authenticatedAccountId: 42));
+        $result = $this->handler($account, $persistence, publisher: $publisher, history: new NickHistoryService($historyRepository))->handle($this->input(authenticatedAccountId: 42));
         self::assertSame(VerifyNickOutcome::CredentialConfirmed, $result->outcome);
         self::assertNull($this->sessions->findNick('UID1'));
         self::assertTrue($account->isRegistered());
@@ -231,10 +247,10 @@ final class VerifyNickHandlerTest extends TestCase
 
     private function input(string $token = self::TOKEN, ?int $authenticatedAccountId = null): VerifyNick
     {
-        return new VerifyNick('Alice', $token, 'UID1', 'ip:client', $authenticatedAccountId);
+        return new VerifyNick('Alice', $token, 'UID1', 'Alice', '192.0.2.1', 'ip:client', $authenticatedAccountId);
     }
 
-    private function handler(?RegisteredNick $account, ?RescueCredentialPersistence $persistence = null, ?RegistrationEventPublisher $publisher = null, NicknameAuthenticationMode $mode = NicknameAuthenticationMode::ServiceCommand, ?RescueAttemptLimiter $limiter = null): VerifyNickHandler
+    private function handler(?RegisteredNick $account, ?RescueCredentialPersistence $persistence = null, ?RegistrationEventPublisher $publisher = null, NicknameAuthenticationMode $mode = NicknameAuthenticationMode::ServiceCommand, ?RescueAttemptLimiter $limiter = null, ?NickHistoryService $history = null): VerifyNickHandler
     {
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn($account);
@@ -243,7 +259,7 @@ final class VerifyNickHandlerTest extends TestCase
         $auth = $this->createStub(NicknameAuthenticationModeQuery::class);
         $auth->method('current')->willReturn($mode);
 
-        return new VerifyNickHandler($repo, $this->codec, $this->temporary, $limiter ?? new InMemoryRescueAttemptLimiter(), $persistence ?? $this->createStub(RescueCredentialPersistence::class), $this->sessions, $clock, $auth, $publisher ?? $this->createStub(RegistrationEventPublisher::class));
+        return new VerifyNickHandler($repo, $this->codec, $this->temporary, $limiter ?? new InMemoryRescueAttemptLimiter(), $persistence ?? $this->createStub(RescueCredentialPersistence::class), $this->sessions, $clock, $auth, $publisher ?? $this->createStub(RegistrationEventPublisher::class), $history ?? new NickHistoryService($this->createStub(NickHistoryRepositoryInterface::class)));
     }
 
     private function now(): DateTimeImmutable

@@ -9,6 +9,7 @@ use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNick;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandlerInterface;
@@ -22,7 +23,7 @@ use function strtoupper;
 
 final readonly class NoexpireCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    public function __construct(private SetNoexpireNickHandlerInterface $handler) {}
+    public function __construct(private SetNoexpireNickHandlerInterface $handler, private Clock $clock) {}
 
     public function getName(): string
     {
@@ -109,6 +110,8 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
         $result = $this->handler->handle(new SetNoexpireNick(
             nickname: $context->args[0],
             noexpire: 'ON' === $action,
+            actorNickname: $context->sender->nick,
+            occurredAt: $this->clock->now(),
         ));
 
         return $this->present($context, $result);

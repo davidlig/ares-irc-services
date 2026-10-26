@@ -9,10 +9,13 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetSuccessorHandler;
 use App\ChanServ\Application\Model\ChanAccountView;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelSuccessorChangedEvent;
+use App\ChanServ\Application\Service\ChannelHistoryService;
+use App\ChanServ\Application\UseCase\UpdateSetting\ChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandlerInterface;
@@ -26,6 +29,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -279,6 +283,75 @@ final class SetSuccessorHandlerTest extends TestCase
     }
 
     #[Test]
+    public function settingSuccessorPreservesLegacyEventMetadataWithoutHistoryEntry(): void
+    {
+        $this->assertSuccessorEvent('Next', 8);
+    }
+
+    #[Test]
+    public function clearingSuccessorPreservesLegacyEventMetadataWithoutHistoryEntry(): void
+    {
+        $this->assertSuccessorEvent('', null);
+    }
+
+    private function assertSuccessorEvent(string $value, ?int $newSuccessorId): void
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(42);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('getSuccessorNickId')->willReturn(5);
+        $channel->expects(self::once())->method('assignSuccessor')->with($newSuccessorId);
+        if (null !== $newSuccessorId) {
+            $channel->expects(self::once())->method('isFounder')->with($newSuccessorId)->willReturn(false);
+        } else {
+            $channel->expects(self::never())->method('isFounder');
+        }
+        $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channels->expects(self::once())->method('save')->with($channel);
+        $accounts = $this->createStub(ChanUserAccountPort::class);
+        if (null !== $newSuccessorId) {
+            $accounts->method('findAccountByNick')->willReturn(new ChanAccountView($newSuccessorId, 'Next', 'en'));
+        }
+        $history = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $history->expects(self::never())->method('save');
+        $events = $this->createMock(EventBusInterface::class);
+        $when = new DateTimeImmutable('2026-01-02');
+        $events->expects(self::once())->method('dispatch')->with(self::callback(static function (ChannelSuccessorChangedEvent $event) use ($newSuccessorId, $when): bool {
+            self::assertSame(42, $event->channelId);
+            self::assertSame('#test', $event->channelName);
+            self::assertSame(5, $event->oldSuccessorNickId);
+            self::assertSame($newSuccessorId, $event->newSuccessorNickId);
+            self::assertSame('Founder', $event->performedBy);
+            self::assertSame(7, $event->performedByNickId);
+            self::assertSame('192.0.2.1', $event->performedByIp);
+            self::assertSame('i@h', $event->performedByHost);
+            self::assertSame($when, $event->occurredAt);
+
+            return true;
+        }));
+        $handler = new UpdateChannelSettingHandler(
+            $this->createStub(EmailDomainPolicy::class),
+            $channels,
+            $accounts,
+            $events,
+            new ChannelHistoryService($history),
+        );
+
+        $result = $handler->handle(new UpdateChannelSetting(
+            $channel,
+            ChannelSetting::Successor,
+            $value,
+            'Founder',
+            7,
+            '192.0.2.1',
+            'i@h',
+            $when,
+        ));
+
+        self::assertContains($result->outcome, [UpdateChannelSettingOutcome::Updated, UpdateChannelSettingOutcome::Cleared]);
+    }
+
+    #[Test]
     public function validNickWithInvalidBase64IpDispatchesEventWithRawIp(): void
     {
         $account = new ChanAccountView(20, 'Successor', 'en');
@@ -336,7 +409,7 @@ final class SetSuccessorHandlerTest extends TestCase
         ChanUserAccountPort $accounts,
         EventBusInterface $events,
     ): SetSuccessorHandler {
-        return new SetSuccessorHandler(new UpdateChannelSettingHandler($this->createStub(EmailDomainPolicy::class), $channels, $accounts, $events));
+        return new SetSuccessorHandler(new UpdateChannelSettingHandler($this->createStub(EmailDomainPolicy::class), $channels, $accounts, $events, new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class))));
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry
