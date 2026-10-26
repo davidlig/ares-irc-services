@@ -23,17 +23,17 @@ Add the requirement to the new-command checklist in `AGENTS.md`, with the detail
 Add an automated registry-wide check across all four services that fails when a registered command or declared variant lacks its argument definition or required syntax metadata. Extend existing HELP-alignment coverage for metadata consistency and keep focused runtime tests for actual validation and output.
 
 ### S3 — Acceptance
-- [ ] Audit and migrate every registered command in the four services; record which commands required corrections.
-- [ ] Recognized options and nested subcommands automatically select their specific localized syntax for structural argument errors.
-- [ ] Generic syntax accurately represents required/optional parameters; Spanish NickServ SET uses `SET <opción> [valor]`.
-- [ ] Missing PASSWORD values show `SET PASSWORD <nueva_contraseña>`; bare `SET VHOST` remains valid.
-- [ ] Preserve appropriate generic or unknown-option responses when a valid variant cannot be identified.
-- [ ] Cover missing, extra and structurally invalid arguments where applicable, preserving optional values and multiword free text.
-- [ ] Cover option-first, channel-first and nested layouts through public routing/dispatch interfaces.
-- [ ] Rejected structural input does not invoke business operations or mutate persisted data; verify using isolated state and suitable test doubles.
-- [ ] Preserve accepted aliases, legacy forms, valid effects, business errors, permissions, channel policy and audit behavior.
-- [ ] Automated registry checks detect missing declarations/metadata for future commands; behavioral tests assert actual presented syntax, not merely key presence.
-- [ ] Update agent rules and necessary localized syntax consistently across supported locales, respecting any separately staged HELP rollout and avoiding unrelated wording changes.
+- [x] Audit and migrate every registered command in the four services; record which commands required corrections.
+- [x] Recognized options and nested subcommands automatically select their specific localized syntax for structural argument errors.
+- [x] Generic syntax accurately represents required/optional parameters; Spanish NickServ SET uses `SET <opción> [valor]`.
+- [x] Missing PASSWORD values show `SET PASSWORD <nueva_contraseña>`; bare `SET VHOST` remains valid.
+- [x] Preserve appropriate generic or unknown-option responses when a valid variant cannot be identified.
+- [x] Cover missing, extra and structurally invalid arguments where applicable, preserving optional values and multiword free text.
+- [x] Cover option-first, channel-first and nested layouts through public routing/dispatch interfaces.
+- [x] Rejected structural input does not invoke business operations or mutate persisted data; verify using isolated state and suitable test doubles.
+- [x] Preserve accepted aliases, legacy forms, valid effects, business errors, permissions, channel policy and audit behavior.
+- [x] Automated registry checks detect missing declarations/metadata for future commands; behavioral tests assert actual presented syntax, not merely key presence.
+- [x] Update agent rules and necessary localized syntax consistently across supported locales, respecting any separately staged HELP rollout and avoiding unrelated wording changes.
 - [ ] Follow project test-first discipline, focused checks, architecture checks and final quality gates, including the final 100% coverage gate.
 
 ### S4 — Accepted planning decisions
@@ -44,13 +44,13 @@ Add an automated registry-wide check across all four services that fails when a 
 - No push, PR creation, merge, remote execution, live daemon/database, credential discovery or dependency upgrades.
 
 ## Tasks
-- T1 [S1,S3,S4] inline — complete, focused checks passed; commit pending — immutable definitions/matcher, checkpoint tests, architecture layer; commit pending. Risk: none (additive core, no existing command consumes it yet).
-- T2 [S1,S3,S4] delegated — in progress — NickServ migration, SET/SASET regressions and syntax translations; commit pending. Risk: items 2,3 (authorization precedence/shared parser).
-- T3 [S1,S3,S4] inline — pending — MemoServ migration and routing regressions; commit pending. Risk: items 2,3.
-- T4 [S1,S3,S4] delegated — in progress — ChanServ migration and policy/leaf checkpoint regressions; commit pending. Risk: items 2,3.
-- T5 [S1,S3,S4] delegated — in progress — OperServ migration and nested/legacy regression coverage; commit pending. Risk: items 2,3.
-- T6 [S2,S3] inline — pending — registry-wide prevention, HELP metadata alignment, agent contract; commit pending. Risk: item 3.
-- T7 [S1-S4] delegated verify — pending — final normalization/gates, differential verification and independent risk verifier; commit pending. Trigger: high-risk items 2,3 and long full-suite action.
+- T1 [S1,S3,S4] inline — complete, focused checks passed — immutable definitions/matcher, checkpoint tests, architecture layer; commit dee11565. Risk: none (additive core, no existing command consumes it yet).
+- T2 [S1,S3,S4] delegated — implemented and independently verified; final coverage gate pending — NickServ migration, SET/SASET regressions and syntax translations; commit 0b505814. Risk: items 2,3 (authorization precedence/shared parser).
+- T3 [S1,S3,S4] inline — implemented and independently verified; final coverage gate pending — MemoServ migration and routing regressions; commit d976eeb5. Risk: items 2,3.
+- T4 [S1,S3,S4] delegated — implemented and independently verified; final coverage gate pending — ChanServ migration and policy/leaf checkpoint regressions; commit 8afe5e1b. Risk: items 2,3.
+- T5 [S1,S3,S4] delegated — implemented and independently verified; final coverage gate pending — OperServ migration and nested/legacy regression coverage; commit f18508d3. Risk: items 2,3.
+- T6 [S2,S3] inline — implemented and independently verified; final coverage gate pending — registry-wide prevention, HELP metadata alignment, agent contract; commit 57ed7f8f. Risk: item 3.
+- T7 [S1-S4] delegated verify — NEEDS DECISION — independent verification and bounded correction recheck passed; single full coverage run failed, renewed full coverage authorization required. Core correction commit46a8ceca and service commits above. Trigger: high-risk items2,3 and long full-suite action.
 
 ## Log
 
@@ -151,3 +151,34 @@ Modelo para workers: gpt-6-luna max
 Entrega: Un solo PR con excepción de tamaño
 
 Delivery is single-pr with the accepted size exception, not a chain. No push/PR creation authorized. Worker override is gpt-6-luna/max. T2/T4/T5 use parallel bounded writers on disjoint service adapter/test/catalog surfaces after the additive core is frozen; parent owns Shared/config/docs/registry and T3. Independent verification remains at feature end for integrated risk items2,3. T1 actual diff is additive and unused by existing commands, so Risk:none; architecture additions permit only the new layer and remove no prior rules.
+
+### L7 — Core work unit
+Committed dee11565 feat(irc): add pure service argument validation grammar (379 authored additions including task document). RDD off => disabled/unmanaged, no native review started. Parallel worker units T2 NickServ, T4 ChanServ and T5 OperServ launched with gpt-6-luna/max, disjoint service adapter/test/catalog surfaces. Parent T3 MemoServ and T6 global prevention.
+
+### L8 — Migrated command inventory and correction classes
+NickServ (24): DROP, FORBID, FORBIDVHOST, HELP, HISTORY, IDENTIFY, INFO, LIST, NOEXPIRE, RECOVER, REGISTER, REGMODE, RENAME, RESEND, RESTORE, SASET, SET, STATUS, SUSPEND, UNFORBID, UNSUSPEND, USERIP, VERIFY, WHOIP. Structural-check migrations/corrections in SET/SASET, HISTORY/FORBIDVHOST, LIST/NOEXPIRE/REGMODE/SUSPEND/WHOIP; the other commands needed declarations/metadata projection. SET/SASET generic optional values corrected in all14 locales.
+MemoServ (8): DEL, DISABLE, ENABLE, HELP, IGNORE, LIST, READ, SEND. Existing structural checks moved into declarations for DEL/READ numeric indices and optional channel, SEND rest text, IGNORE variants/conditional channel; other commands needed metadata/prefix migration only. No locale changes needed. Public routing replies/mutation interaction assertions match c9fafbce: 6tests/13assertions on both versions in /tmp/memoserv-argument-diff.erl0lgf1.
+OperServ (9): BADMAIL, GLINE, GLOBAL, HELP, IRCOP, KILL, MOTD, RAW, ROLE. Structural variants/corrections in GLINE/MOTD/IRCOP/ROLE; BADMAIL preserves #83 output and FILTER_VALIDATE_INT signed/leading-zero semantics. Generic/nested syntax corrected only where necessary in all14 locales. Selected differential probes match: BADMAIL5/35, IRCOP5/12, ROLE28/131.
+ChanServ (29, including manual rank commands): all runtime registry entries have definitions. ACCESS/AKICK/LEVELS/HISTORY/SET and manual-rank target checks migrated; other commands needed declaration/projection only. No catalog wording changes needed. Existing setting resolution, founder/channel policy and audit order retained. See registry gate for canonical command names and all HELP variant syntax coverage.
+
+### L9 — Compatibility corrections and local proof
+Parent spot-check found an unauthorized SET MSG/PRIVATE value-policy and EMAIL-token reclassification plus erased invalid-IP/business-outcome test. One correction batch restored semantic ownership and original test, made SET/SASET values rest tails, and derived HELP/unknown-option lists from variants. New tests pin TokenRequired/invalid mode/SASET Root precedence; focused16/92 and NickServ adapter541/4007 passed. NickServ baseline/candidate public probes matched prior accepted/business outcomes; only missing-value contextual syntax differs as requested.
+Shared grammar gained conditional prefixed tokens, opt-in digits/nonBlank, unknown fallback and canonical legacy token permutations based on concrete MemoServ/NickServ/OperServ cases, each with observed missing-parameter RED then GREEN. Shared13tests/73assertions. No generic value-policy validation added.
+MemoServ suite126/1665; ChanServ772/6901; OperServ248/3039 passed. ChanServ base764/6876; own focused250/772. Base test runs alone are not claimed as full differential proof. Source ownership checked: writers touched only their service adapter/test/catalog surfaces; parent adapted the OperServ event-listener fake outside its writer surface.
+
+### L10 — Integrated checks and assessment
+Final source normalizer ran before integration checks (7 intended test files fixed). Combined adapter/core/registry/event seam suite:1714tests/20027assertions, zero issues. Parent scoped PHPStan max passed; Deptrac0violations/0uncovered/0warnings/errors. Registry gate5tests/4296assertions covers all70 definitions, each nested syntax in14locales, HELP-reference consistency, aliases and deliberately missing root/variant metadata. Replaced obsolete translated-English-braces parser with this definition-based alignment, not a second translated grammar.
+Native review assess initially refused undeclared untracked files; parent staged exactly the4 intended new files, reassessed high/item3 successfully (currentchanges160paths/3873lines at assessment). RDD remains globally OFF; no native review STATUS/START or consent invoked. Independent functional verifier for items2,3 follows own checks; final global coverage has not run yet.
+
+### L11 — Resumed session and immutable candidate check
+User requested continuation from the historical Orca transcript, read-only. Workspace source/test/catalog bytes matched the previously verified frozen candidate exactly. Memory observations 4427/4428 and transcript final verifier handoff confirm independent verification completed: public Spanish syntax probes, baseline/candidate comparison, and seeded fake-state digest equality with zero mutator calls. Parent registry spot check passed 5 tests/4308 assertions. No historical provider session was resumed or edited. RDD remains globally off.
+
+### L12 — First final global gates and one bounded correction
+Final global run: PHP lint129files PASS; container PASS; YAML127files PASS; Deptrac0violations/0uncovered PASS; fixer dry-run2078files PASS. PHPStan exposed17test typing errors. The single full coverage invocation ran6552tests60681assertions with2architecture failures,23267/23279covered statements (99.94845139%), not a passing gate. The architecture test still disallowed the explicitly approved Shared adapter grammar; it now allowlists exactly its4files. Test helpers now declare positional lists and narrow translator values to strings without suppressions.
+Added direct Application handler tests for partial ACCESS/AKICK/LEVELS input with no persistence/event/network effects; retained all Application guards. Removed unreachable duplicate LEVELS/MOTD presenter paths, made SUSPEND rest reason nonblank in its grammar with whitespace/no-effects coverage, and derived BADMAIL parse-error syntax from variants rather than a second mapping. Added unknown/blank BADMAIL input checks and missing MOTD-ID handler-not-called checks. Committed-regression candidate now includes the prior verifier's seeded-state digest probe, independent of git history or environment.
+Correction normalization completed before checks. Focused coverage:199tests8813assertions zeroissues; targeted Application handlers and NickServ SUSPEND/MOTD fully covered, original missing handler guard lines covered. This is not a replacement claim for a successful full coverage gate. Full PHPStan now0errors; independent bounded correction recheck105tests8598assertions PASS, frozen prior command batch82tests251assertions PASS. No new blocker reproduced. Parent final spot check204tests13121assertions PASS; container/YAML/Deptrac/fixer rechecks PASS.
+The exactly-once full coverage budget has been consumed; no full rerun was performed. T7 remains incomplete pending explicit authorization to repeat the final coverage gate after corrections. No push, PR, remote operation or native review was performed. Original global-gate logs: /tmp/tmp.ZexbwJeWZw; focused coverage/log: /tmp/issue87-focused-clover.xml and /tmp/issue87-focused-coverage.log. Scratch remains retained while this final-proof decision is pending.
+
+### L13 — Local work units and delivery state
+Local commits: 46a8ceca Shared grammar extensions/exact architecture allowlist; 0b505814 NickServ; d976eeb5 MemoServ; 8afe5e1b ChanServ plus application guard tests; f18508d3 OperServ; 57ed7f8f registry-wide prevention and agent rules. Each service commit includes its regression tests and relevant syntax catalogs; the accepted one-PR size exception remains in effect. Rollback boundaries are each service's inbound adapters/tests/catalogs; core and prevention own separate commits. Earlier focused suite and runtime routing evidence is recorded in L8-L12; runtime daemon N/A because live/remote operations are outside authorization. All commits are disabled/unmanaged under the globally off native review switch; no review START or consent was run.
+Final parent checks: PHP syntax147modified/new files PASS; scoped/core13tests73assertions PASS; correction/architecture/registry204tests13121assertions PASS; PHPStanmax0errors PASS; container PASS; YAML127files PASS; Deptrac0violations/0uncovered PASS; fixer dry-run0/2082files PASS; git diff --check PASS. The first full coverage result is still failed historical proof, not replaced by focused tests or merged coverage claims. Required next decision: authorize one renewed full coverage run after corrections; until that proof is observed T7 and final feature acceptance remain incomplete. No changes to composer dependencies or business-use-case production code.
