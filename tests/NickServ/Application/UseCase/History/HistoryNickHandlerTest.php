@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\NickServ\Application\UseCase\History;
 
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
+use App\NickServ\Application\Port\Out\NickTransactionBoundary;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Application\UseCase\History\HistoryNick;
@@ -16,6 +17,7 @@ use App\NickServ\Application\UseCase\History\NickHistoryEntryView;
 use App\NickServ\Domain\Entity\NickHistory;
 use App\NickServ\Domain\Entity\RegisteredNick;
 use DateTimeImmutable;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +38,7 @@ final class HistoryNickHandlerTest extends TestCase
             $nickRepo,
             $this->createStub(NickHistoryRepositoryInterface::class),
             $this->createHistoryService(),
+            $this->createTransactionBoundary(),
         );
 
         $result = $handler->handle(new HistoryNick(nickname: 'Unknown', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable()));
@@ -66,6 +69,7 @@ final class HistoryNickHandlerTest extends TestCase
             $nickRepo,
             $historyRepo,
             $this->createHistoryService($historyRepo),
+            $this->createTransactionBoundary(),
         );
 
         $result = $handler->handle(new HistoryNick(
@@ -97,6 +101,7 @@ final class HistoryNickHandlerTest extends TestCase
             $nickRepo,
             $this->createStub(NickHistoryRepositoryInterface::class),
             $this->createHistoryService(),
+            $this->createTransactionBoundary(),
         );
 
         $result = $handler->handle(new HistoryNick(
@@ -129,6 +134,7 @@ final class HistoryNickHandlerTest extends TestCase
             $nickRepo,
             $historyRepo,
             $this->createHistoryService($historyRepo),
+            $this->createTransactionBoundary(),
         );
 
         $resultMissing = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new DateTimeImmutable(), entryId: 100));
@@ -158,6 +164,7 @@ final class HistoryNickHandlerTest extends TestCase
             $nickRepo,
             $historyRepo,
             $this->createHistoryService($historyRepo),
+            $this->createTransactionBoundary(),
         );
 
         $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Del, occurredAt: new DateTimeImmutable(), entryId: 55));
@@ -177,19 +184,81 @@ final class HistoryNickHandlerTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($account);
 
         $historyRepo = $this->createMock(NickHistoryRepositoryInterface::class);
-        $historyRepo->expects(self::once())->method('deleteByNickId')->with(10)->willReturn(7);
+        $historyRepo->expects(self::exactly(2))->method('deleteByNickId')->with(10)->willReturnOnConsecutiveCalls(7, 0);
+        $historyRepo->expects(self::exactly(2))->method('save')->with(self::callback(static fn (NickHistory $entry): bool => 'HISTORY_CLEAR' === $entry->getAction()
+            && 'Oper' === $entry->getPerformedBy()
+            && null === $entry->getPerformedByNickId()
+            && [] === $entry->getExtraData()));
 
         $handler = new HistoryNickHandler(
             $nickRepo,
             $historyRepo,
             $this->createHistoryService($historyRepo),
+            $this->createTransactionBoundary(),
         );
 
-        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable()));
+        $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable(), operatorNick: 'Oper'));
 
         self::assertSame(HistoryNickOutcome::ClearSuccess, $result->outcome);
         self::assertSame('TargetNick', $result->targetNick);
         self::assertSame(7, $result->deletedCount);
+
+        $emptyResult = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable(), operatorNick: 'Oper'));
+        self::assertSame(0, $emptyResult->deletedCount);
+    }
+
+    #[Test]
+    public function clearWithoutActorFailsBeforeOpeningTransactionOrDeletingEntries(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+        $historyRepository = $this->createMock(NickHistoryRepositoryInterface::class);
+        $historyRepository->expects(self::never())->method('deleteByNickId');
+        $historyRepository->expects(self::never())->method('save');
+        $transactionBoundary = $this->createMock(NickTransactionBoundary::class);
+        $transactionBoundary->expects(self::never())->method('transactional');
+        $handler = new HistoryNickHandler(
+            $nickRepository,
+            $historyRepository,
+            $this->createHistoryService($historyRepository),
+            $transactionBoundary,
+        );
+
+        try {
+            $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable()));
+            self::fail('A clear without its actor must fail closed.');
+        } catch (LogicException $exception) {
+            self::assertSame('HISTORY CLEAR requires its originating nickname.', $exception->getMessage());
+        }
+    }
+
+    #[Test]
+    public function invalidTransactionResultFailsWithoutDeletingOrSavingHistory(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+        $historyRepository = $this->createMock(NickHistoryRepositoryInterface::class);
+        $historyRepository->expects(self::never())->method('deleteByNickId');
+        $historyRepository->expects(self::never())->method('save');
+        $transactionBoundary = $this->createMock(NickTransactionBoundary::class);
+        $transactionBoundary->expects(self::once())->method('transactional')->willReturn('invalid result');
+        $handler = new HistoryNickHandler(
+            $nickRepository,
+            $historyRepository,
+            $this->createHistoryService($historyRepository),
+            $transactionBoundary,
+        );
+
+        try {
+            $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::Clear, occurredAt: new DateTimeImmutable(), operatorNick: 'Oper'));
+            self::fail('A non-integer deletion count must fail closed.');
+        } catch (LogicException $exception) {
+            self::assertSame('Nick history transaction must return the deleted count.', $exception->getMessage());
+        }
     }
 
     #[Test]
@@ -208,6 +277,7 @@ final class HistoryNickHandlerTest extends TestCase
             $nickRepo,
             $historyRepo,
             $this->createHistoryService($historyRepo),
+            $this->createTransactionBoundary(),
         );
 
         $result = $handler->handle(new HistoryNick(nickname: 'TargetNick', action: HistoryNickAction::View, occurredAt: new DateTimeImmutable()));
@@ -242,6 +312,7 @@ final class HistoryNickHandlerTest extends TestCase
             $nickRepo,
             $historyRepo,
             $this->createHistoryService($historyRepo),
+            $this->createTransactionBoundary(),
             historyViewLimit: 10,
         );
 
@@ -282,6 +353,7 @@ final class HistoryNickHandlerTest extends TestCase
             $nickRepo,
             $historyRepo,
             $this->createHistoryService($historyRepo),
+            $this->createTransactionBoundary(),
             historyViewLimit: 2,
         );
 
@@ -297,6 +369,14 @@ final class HistoryNickHandlerTest extends TestCase
     private function createHistoryService(?NickHistoryRepositoryInterface $historyRepo = null): NickHistoryService
     {
         return new NickHistoryService($historyRepo ?? $this->createStub(NickHistoryRepositoryInterface::class));
+    }
+
+    private function createTransactionBoundary(): NickTransactionBoundary
+    {
+        $boundary = $this->createStub(NickTransactionBoundary::class);
+        $boundary->method('transactional')->willReturnCallback(static fn (callable $operation): mixed => $operation());
+
+        return $boundary;
     }
 
     private function createEntry(

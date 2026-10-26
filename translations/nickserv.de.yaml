@@ -707,6 +707,12 @@ history:
     example: "%command_prefix%\x02\x0303HISTORY Benutzer CLEAR\x03\x0F"
     success: "\x0303✔\x03 \x02%count%\x02 Verlaufseinträge für \x02%nickname%\x02 gelöscht."
 history.message:
+  verify: "Konto aktiviert"
+  resend: "Bestätigungs-E-Mail erneut gesendet"
+  noexpire_on: "Ablaufschutz aktiviert"
+  noexpire_off: "Ablaufschutz deaktiviert"
+  userip: "USERIP-Abfrage"
+  history_clear: "Verlauf gelöscht"
   password_changed_owner: "Passwort vom Besitzer geändert"
   password_changed_operator: "Passwort vom Operator geändert"
   email_changed_owner: "E-Mail von %old_email% zu %new_email% geändert"

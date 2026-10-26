@@ -10,6 +10,7 @@ use App\Irc\Application\Port\In\Command\IrcopAuditData;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Userip\GetUserip;
 use App\NickServ\Application\UseCase\Userip\GetUseripHandlerInterface;
@@ -28,6 +29,7 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
     public function __construct(
         private GetUseripHandlerInterface $handler,
         private NetworkUserLookupPort $userLookup,
+        private Clock $clock,
     ) {}
 
     public function getName(): string
@@ -111,6 +113,8 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
             nickname: $targetNick,
             ip: $ip,
             hostname: $host,
+            actorNickname: $context->sender->nick,
+            occurredAt: $this->clock->now(),
         ));
 
         return $this->present($context, $result);

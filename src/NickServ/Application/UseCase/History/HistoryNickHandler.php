@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\NickServ\Application\UseCase\History;
 
 use App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface;
+use App\NickServ\Application\Port\Out\NickTransactionBoundary;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Service\NickHistoryService;
+use LogicException;
 
 use function ceil;
 use function min;
@@ -17,6 +19,7 @@ final readonly class HistoryNickHandler implements HistoryNickHandlerInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private NickHistoryRepositoryInterface $historyRepository,
         private NickHistoryService $historyService,
+        private NickTransactionBoundary $transactionBoundary,
         private int $historyViewLimit = 40,
     ) {}
 
@@ -71,7 +74,28 @@ final readonly class HistoryNickHandler implements HistoryNickHandlerInterface
 
     private function handleClear(HistoryNick $command, int $nickId): HistoryNickResult
     {
-        $count = $this->historyRepository->deleteByNickId($nickId);
+        $actorNickname = $command->operatorNick;
+        if (null === $actorNickname) {
+            throw new LogicException('HISTORY CLEAR requires its originating nickname.');
+        }
+
+        $count = $this->transactionBoundary->transactional(function () use ($command, $nickId, $actorNickname): int {
+            $count = $this->historyRepository->deleteByNickId($nickId);
+            $this->historyService->recordWithExplicitMetadata(
+                nickId: $nickId,
+                action: 'HISTORY_CLEAR',
+                performedBy: $actorNickname,
+                performedByNickId: null,
+                message: 'history.message.history_clear',
+                performedAt: $command->occurredAt,
+            );
+
+            return $count;
+        });
+
+        if (!is_int($count)) {
+            throw new LogicException('Nick history transaction must return the deleted count.');
+        }
 
         return HistoryNickResult::clearSuccess($command->nickname, $count);
     }

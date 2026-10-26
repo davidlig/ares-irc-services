@@ -10,6 +10,8 @@ final readonly class VerifyNick
         public string $nickname,
         public string $token,
         public string $senderUid,
+        public string $actorNickname,
+        public ?string $sourceIp = null,
         public string $clientKey = '',
         public ?int $authenticatedAccountId = null,
     ) {}

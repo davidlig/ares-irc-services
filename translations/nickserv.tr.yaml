@@ -689,6 +689,12 @@ history:
     example: "%command_prefix%\x02\x0303HISTORY Kullanıcı CLEAR\x03\x0F"
     success: "\x0303✔\x03 \x02%nickname%\x02 için \x02%count%\x02 geçmiş girişi temizlendi."
 history.message:
+  verify: "Hesap etkinleştirildi"
+  resend: "Doğrulama e-postası yeniden gönderildi"
+  noexpire_on: "Süre aşımı koruması etkinleştirildi"
+  noexpire_off: "Süre aşımı koruması devre dışı bırakıldı"
+  userip: "USERIP sorgusu"
+  history_clear: "Geçmiş temizlendi"
   password_changed_owner: "Şifre sahibi tarafından değiştirildi"
   password_changed_operator: "Şifre operatör tarafından değiştirildi"
   email_changed_owner: "E-posta %old_email% yerine %new_email% olarak değiştirildi"

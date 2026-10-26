@@ -781,6 +781,12 @@ history:
     example: "%command_prefix%\x02\x0303HISTORY Erabiltzailea CLEAR\x03\x0F"
     success: "\x0303✔\x03 \x02%count%\x02 historia sarrera garbitu dira \x02%nickname%\x02 ezizenarentzat."
 history.message:
+  verify: "Kontua aktibatu da"
+  resend: "Egiaztapen-mezua berriz bidali da"
+  noexpire_on: "Iraungitze-babesa aktibatu da"
+  noexpire_off: "Iraungitze-babesa desaktibatu da"
+  userip: "USERIP kontsulta"
+  history_clear: "Historia ezabatu da"
   password_changed_owner: "Pasahitza jabeak aldatua"
   password_changed_operator: "Pasahitza operadoreak aldatua"
   email_changed_owner: "Posta %old_email%-(e)tik %new_email%-(e)ra aldatua"

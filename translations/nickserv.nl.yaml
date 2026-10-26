@@ -694,6 +694,12 @@ history:
     example: "%command_prefix%\x02\x0303HISTORY Gebruiker CLEAR\x03\x0F"
     success: "\x0303✔\x03 \x02%count%\x02 geschiedenisvermeldingen gewist voor \x02%nickname%\x02."
 history.message:
+  verify: "Account geactiveerd"
+  resend: "Verificatiemail opnieuw verzonden"
+  noexpire_on: "Vervalbeveiliging ingeschakeld"
+  noexpire_off: "Vervalbeveiliging uitgeschakeld"
+  userip: "USERIP-raadpleging"
+  history_clear: "Geschiedenis gewist"
   password_changed_owner: "Wachtwoord gewijzigd door eigenaar"
   password_changed_operator: "Wachtwoord gewijzigd door operator"
   email_changed_owner: "E-mail gewijzigd van %old_email% naar %new_email%"

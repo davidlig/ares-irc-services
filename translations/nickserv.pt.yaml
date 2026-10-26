@@ -693,6 +693,12 @@ history:
     example: "%command_prefix%\x02\x0303HISTORY Utilizador CLEAR\x03\x0F"
     success: "\x0303✔\x03 Eliminadas \x02%count%\x02 entradas de histórico de \x02%nickname%\x02."
 history.message:
+  verify: "Conta ativada"
+  resend: "Email de verificação reenviado"
+  noexpire_on: "Proteção contra expiração ativada"
+  noexpire_off: "Proteção contra expiração desativada"
+  userip: "Consulta USERIP"
+  history_clear: "Histórico limpo"
   password_changed_owner: "Palavra-passe alterada pelo proprietário"
   password_changed_operator: "Palavra-passe alterada pelo operador"
   email_changed_owner: "Email alterado de %old_email% para %new_email%"

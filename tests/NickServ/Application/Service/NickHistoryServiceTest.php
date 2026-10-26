@@ -58,6 +58,25 @@ final class NickHistoryServiceTest extends TestCase
     }
 
     #[Test]
+    public function recordWithExplicitMetadataDoesNotEnrichActorIpOrHost(): void
+    {
+        $repo = $this->createMock(NickHistoryRepositoryInterface::class);
+        $repo->expects(self::once())->method('save');
+        $service = new NickHistoryService($repo);
+
+        $history = $service->recordWithExplicitMetadata(
+            nickId: 1,
+            action: 'USERIP',
+            performedBy: 'Oper',
+            performedByNickId: 2,
+            message: 'history.message.userip',
+            performedAt: new DateTimeImmutable('2026-01-01 UTC'),
+        );
+
+        self::assertSame([], $history->getExtraData());
+    }
+
+    #[Test]
     public function recordActionWithNullNickId(): void
     {
         $repo = $this->createMock(NickHistoryRepositoryInterface::class);

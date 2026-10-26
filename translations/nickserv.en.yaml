@@ -689,6 +689,12 @@ history:
     example: "%command_prefix%\x02\x0303HISTORY User CLEAR\x03\x0F"
     success: "\x0303✔\x03 Cleared \x02%count%\x02 history entries for \x02%nickname%\x02."
 history.message:
+  verify: "Account activated"
+  resend: "Verification email resent"
+  noexpire_on: "Expiration protection enabled"
+  noexpire_off: "Expiration protection disabled"
+  userip: "USERIP consultation"
+  history_clear: "History cleared"
   password_changed_owner: "Password changed by owner"
   password_changed_operator: "Password changed by operator"
   email_changed_owner: "Email changed from %old_email% to %new_email%"

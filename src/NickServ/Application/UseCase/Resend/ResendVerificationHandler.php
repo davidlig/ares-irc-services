@@ -11,6 +11,7 @@ use App\NickServ\Application\Port\Out\RescueTokenCodec;
 use App\NickServ\Application\Port\Out\ResendMailSender;
 use App\NickServ\Application\Port\Out\ResendThrottle;
 use App\NickServ\Application\Port\Out\TemporaryRescueTokenStore;
+use App\NickServ\Application\Service\NickHistoryService;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
 use LogicException;
 use OverflowException;
@@ -30,6 +31,7 @@ final readonly class ResendVerificationHandler implements ResendVerificationHand
         private RegistrationModeQuery $registrationMode,
         private ResendMailSender $mailSender,
         private Clock $clock,
+        private NickHistoryService $history,
         private int $resendMinIntervalSeconds,
         private int $verificationTokenTtlSeconds = 3600,
     ) {}
@@ -87,6 +89,15 @@ final readonly class ResendVerificationHandler implements ResendVerificationHand
             return ResendVerificationResult::mailDeliveryFailed();
         }
 
+        $this->history->recordWithExplicitMetadata(
+            nickId: $account->getId(),
+            action: 'RESEND',
+            performedBy: $command->actorNickname,
+            performedByNickId: null,
+            message: 'history.message.resend',
+            performedAt: $now,
+            extraData: null !== $command->sourceIp ? ['ip' => $command->sourceIp] : [],
+        );
         $this->throttle->recordResend($command->nickname, $now);
 
         return ResendVerificationResult::success($recipientEmail);
