@@ -383,8 +383,8 @@ final class ForbidCommandTest extends TestCase
     }
 
     /**
-     * @param string[] $args
-     * @param string[] $messages
+     * @param list<string> $args
+     * @param string[]     $messages
      */
     private function createContext(
         ?SenderView $sender,

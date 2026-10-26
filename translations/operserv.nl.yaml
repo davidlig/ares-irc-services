@@ -55,7 +55,7 @@ help:
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD|DEL|LIST} [bijnaam] [rol]"
+  syntax: "IRCOP {ADD <bijnaam> <rol>|DEL <bijnaam>|LIST}"
   short: "Beheer netwerk IRC-operators."
   help: |-
     Beheer netwerk IRC-operators. ADD voegt een geregistreerde bijnaam toe
@@ -111,7 +111,7 @@ role:
 
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
-    syntax: "ROLE OPERCLASS {LIST|VIEW|SET} [rol] [parameters]"
+    syntax: "ROLE OPERCLASS {LIST|VIEW <rol>|SET <rol> [operclass]}"
     short: "Beheert de UnrealIRCd-operatorclass."
     help: !irc |-
       Bekijk en configureer de operclass van een rol.
@@ -141,7 +141,7 @@ role:
       done: "\x0303✓\x03 De operclass voor rol %role% is ingesteld."
       cleared: "\x0303✓\x03 De operclass voor rol %role% is verwijderd."
       not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 is niet beschikbaar in het netwerk. Beschikbare operclasses: %available%."
-  syntax: "ROLE <optie> [naam] [...]"
+  syntax: "ROLE <optie> [parameters]"
   short: "Beheert operatorrollen, rechten en instellingen."
   help: |-
     Beheert operatorrollen, rechten en instellingen.
@@ -149,7 +149,7 @@ role:
     De rollen ADMIN, OPER en PREOPER zijn beschermd en kunnen niet verwijderd
     worden.
     Alleen voor Root-gebruikers.
-  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <naam> ..."
+  syntax_operclass: "ROLE <optie> [parameters]"
   help_operclass: |-
     Beheer operatorrollen. ADD maakt een nieuwe rol aan, DEL verwijdert deze,
     LIST toont alle rollen, PERMS beheert permissies voor een rol, MODES beheert IRCOP-modi,
@@ -200,7 +200,7 @@ role:
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
-    syntax: "ROLE PERMS {ADD|DEL|LIST|CLEAR} <rol> [parameters]"
+    syntax: "ROLE PERMS {{ADD|DEL} <rol> <permissie>|{LIST|CLEAR} <rol>}"
     short: "Beheert de rechten van een rol."
     help: !irc |-
       Beheert toegewezen rechten voor een rol.
@@ -241,7 +241,7 @@ role:
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
-    syntax: "ROLE MODES {VIEW|SET} <rol> [modi]"
+    syntax: "ROLE MODES {VIEW <rol>|SET <rol> [modi]}"
     short: "Configureert gebruikersmodi voor een rol."
     help: !irc |-
       Beheert IRCOP-gebruikersmodi die aan een rol zijn toegewezen.
@@ -272,7 +272,7 @@ role:
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
-    syntax: "ROLE VHOST {VIEW|SET} <rol> [vhost]"
+    syntax: "ROLE VHOST {VIEW <rol>|SET <rol> [vhost]}"
     short: "Stelt het virtuele hostpatroon van een rol in."
     help: !irc |-
       Stelt de virtuele host in die operators van een rol bij identificatie krijgen,
@@ -322,7 +322,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [masker] [verloop] [reden]"
+  syntax: "GLINE {ADD <masker> <verloop> <reden>|DEL <masker|nummer>|LIST [masker]}"
   short: "Beheer netwerkbrede G-lines."
   help: |-
     Beheert netwerkbrede G-lines (bans).
@@ -439,7 +439,7 @@ debug:
 # --- MOTD ------------------------------------------------------------------
 motd:
   short: "Beheer connect MOTD-berichten die naar gebruikers worden gestuurd bij verbinding."
-  syntax: "MOTD {ADD|DEL|LIST|CLEAN} [args]"
+  syntax: "MOTD {ADD <doel> {PRIVMSG|NOTICE} <verloop> <bericht>|DEL <id>|LIST|CLEAN}"
   help: |-
     Beheert MOTD-vermeldingen (bericht van de dag) die bij verbinding naar
     gebruikers

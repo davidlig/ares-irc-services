@@ -14,6 +14,9 @@ use App\NickServ\Application\UseCase\ForbidVhost\ForbiddenVhostAction;
 use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhost;
 use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostHandler;
 use App\NickServ\Application\UseCase\ForbidVhost\ManageForbiddenVhostOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
 use function count;
 use function sprintf;
@@ -36,14 +39,23 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('forbidvhost.syntax', [new Argument('action')], [
+            'ADD' => new CommandArgumentDefinition('forbidvhost.add.syntax', [new Argument('pattern')]),
+            'DEL' => new CommandArgumentDefinition('forbidvhost.del.syntax', [new Argument('pattern')]),
+            'LIST' => new CommandArgumentDefinition('forbidvhost.list.syntax'),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'forbidvhost.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -96,6 +108,13 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
             return CommandOutcome::rejected();
         }
 
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
+            $context->reply('error.syntax', ['%syntax%' => $context->trans($validation->syntaxKey)]);
+
+            return CommandOutcome::rejected();
+        }
+
         $sub = strtoupper($context->args[0] ?? '');
 
         return match ($sub) {
@@ -116,9 +135,9 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
     private function doAdd(NickServContext $context): CommandOutcome
     {
         $syntaxKey = 'forbidvhost.add.syntax';
-        $pattern = count($context->args) >= 2 ? trim($context->args[1]) : '';
+        $pattern = trim($context->args[1] ?? '');
 
-        if (count($context->args) < 2 || '' === $pattern) {
+        if ('' === $pattern) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans($syntaxKey)]);
 
             return CommandOutcome::rejected();
@@ -140,13 +159,7 @@ final class ForbidVhostCommand implements NickServCommandInterface, IrcopAuditab
 
     private function doDel(NickServContext $context): CommandOutcome
     {
-        if (count($context->args) < 2) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('forbidvhost.del.syntax')]);
-
-            return CommandOutcome::rejected();
-        }
-
-        $pattern = trim($context->args[1]);
+        $pattern = trim($context->args[1] ?? '');
         if ('' === $pattern) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('forbidvhost.del.syntax')]);
 

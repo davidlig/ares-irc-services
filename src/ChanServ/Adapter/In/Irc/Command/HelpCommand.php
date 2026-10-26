@@ -9,6 +9,8 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\ChanServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function array_find;
 use function strtoupper;
@@ -21,6 +23,8 @@ use function strtoupper;
  */
 final readonly class HelpCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(
         private UnifiedHelpFormatter $formatter,
         private ChanServOperatorAccess $operatorAccess,
@@ -37,14 +41,15 @@ final readonly class HelpCommand implements ChanServCommandInterface
         return ['?'];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 0;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'help.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'help.syntax',
+            arguments: [
+                new Argument('command', optional: true),
+                new Argument('option', optional: true),
+            ],
+        );
     }
 
     public function getHelpKey(): string

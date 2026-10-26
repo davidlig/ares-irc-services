@@ -16,6 +16,9 @@ use App\NickServ\Application\UseCase\History\HistoryNickAction;
 use App\NickServ\Application\UseCase\History\HistoryNickHandlerInterface;
 use App\NickServ\Application\UseCase\History\HistoryNickOutcome;
 use App\NickServ\Application\UseCase\History\HistoryNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use Stringable;
 
 use function array_slice;
@@ -46,14 +49,27 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('history.syntax', [
+            new Argument('nickname'),
+            new Argument('action'),
+        ], [
+            'ADD' => new CommandArgumentDefinition('history.add.syntax', [new Argument('message', rest: true)]),
+            'DEL' => new CommandArgumentDefinition('history.del.syntax', [new Argument('id')]),
+            'VIEW' => new CommandArgumentDefinition('history.view.syntax', [new Argument('page', optional: true)]),
+            'CLEAR' => new CommandArgumentDefinition('history.clear.syntax'),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 2;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'history.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -108,10 +124,17 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
             return CommandOutcome::rejected();
         }
 
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
+
+            return CommandOutcome::rejected();
+        }
+
         $targetNick = $context->args[0];
         $action = HistoryNickAction::tryFrom(strtoupper($context->args[1]));
 
-        if (null === $action) {
+        if (!$validation->recognized || null === $action) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
             return CommandOutcome::rejected();
@@ -124,12 +147,6 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
 
         switch ($action) {
             case HistoryNickAction::Add:
-                if (count($context->args) < 3) {
-                    $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
-
-                    return CommandOutcome::rejected();
-                }
-
                 $message = trim(implode(' ', array_slice($context->args, 2)));
                 if ('' === $message) {
                     $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
@@ -139,12 +156,6 @@ final readonly class HistoryCommand implements NickServCommandInterface, IrcopAu
                 break;
 
             case HistoryNickAction::Del:
-                if (count($context->args) < 3) {
-                    $context->reply('error.syntax', ['syntax' => $context->trans('history.del.syntax')]);
-
-                    return CommandOutcome::rejected();
-                }
-
                 $rawId = $context->args[2];
                 $entryId = (int) $rawId;
                 if ($entryId <= 0) {

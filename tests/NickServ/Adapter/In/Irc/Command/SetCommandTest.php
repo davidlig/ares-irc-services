@@ -47,7 +47,7 @@ final class SetCommandTest extends TestCase
         self::assertSame(NickServPermission::IDENTIFIED_OWNER, $command->getRequiredPermission());
         self::assertSame([], $command->getHelpParams());
         self::assertCount(7, $command->getSubCommandHelp());
-        self::assertSame('PASSWORD', $command->getSubCommandHelp()[0]['name']);
+        self::assertSame(['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'VHOST'], array_column($command->getSubCommandHelp(), 'name'));
     }
 
     #[Test]
@@ -58,11 +58,27 @@ final class SetCommandTest extends TestCase
         $command = new SetCommand($handler);
 
         self::assertFalse($command->execute($this->context(null, []))->success);
-        self::assertFalse($command->execute($this->context($this->sender(), ['PASSWORD']))->success);
+        $translations = [];
+        self::assertFalse($command->execute($this->context($this->sender(), ['PASSWORD'], translationCalls: $translations))->success);
+        self::assertContains('set.password.syntax', $translations);
+
+        $translations = [];
+        self::assertFalse($command->execute($this->context($this->sender(), ['UNKNOWN'], translationCalls: $translations))->success);
+        self::assertContains('set.syntax', $translations);
 
         $messages = [];
-        self::assertFalse($command->execute($this->context($this->sender(), ['UNKNOWN', 'value'], $messages))->success);
+        $translations = [];
+        $translationParameters = [];
+        self::assertFalse($command->execute($this->context(
+            $this->sender(),
+            ['UNKNOWN', 'value'],
+            $messages,
+            translationCalls: $translations,
+            translationParameters: $translationParameters,
+        ))->success);
         self::assertSame(['set.unknown_option'], $messages);
+        self::assertSame(['set.unknown_option'], $translations);
+        self::assertSame('PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST', $translationParameters[0]['%options%']);
     }
 
     #[Test]
@@ -146,6 +162,50 @@ final class SetCommandTest extends TestCase
     }
 
     #[Test]
+    public function leavesInvalidPrivateModeToBusinessValidation(): void
+    {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (SetNickSetting $input): bool => SetNickSettingOption::PrivateMode === $input->option
+                && 'MAYBE' === $input->value,
+        ))->willReturn(new SetNickSettingResult(
+            SetNickSettingOutcome::InvalidFlag,
+            SetNickSettingOption::PrivateMode,
+            'Alice',
+        ));
+
+        $messages = [];
+        $outcome = new SetCommand($handler)->execute($this->context($this->sender(), ['PRIVATE', 'MAYBE'], $messages));
+
+        self::assertFalse($outcome->success);
+        self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function leavesEmailTokenRequirementToTheUseCase(): void
+    {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (SetNickSetting $input): bool => SetNickSettingOption::Email === $input->option
+                && 'new@example.com' === $input->value,
+        ))->willReturn(new SetNickSettingResult(
+            SetNickSettingOutcome::TokenRequired,
+            SetNickSettingOption::Email,
+            'Alice',
+        ));
+
+        $messages = [];
+        $outcome = new SetCommand($handler)->execute($this->context(
+            $this->sender(),
+            ['EMAIL', 'new@example.com'],
+            $messages,
+        ));
+
+        self::assertFalse($outcome->success);
+        self::assertSame(['set.email.token_required'], $messages);
+    }
+
+    #[Test]
     public function normalizesMissingEncodedIpToWildcard(): void
     {
         $handler = $this->createMock(SetNickSettingHandlerInterface::class);
@@ -164,14 +224,18 @@ final class SetCommandTest extends TestCase
     }
 
     /**
-     * @param list<string> $args
-     * @param list<string> $messages
+     * @param list<string>               $args
+     * @param list<string>               $messages
+     * @param list<string>               $translationCalls
+     * @param list<array<string, mixed>> $translationParameters
      */
     private function context(
         ?SenderView $sender,
         array $args,
         array &$messages = [],
         ?RegisteredNick $account = null,
+        array &$translationCalls = [],
+        array &$translationParameters = [],
     ): NickServContext {
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('NickServ');
@@ -179,7 +243,12 @@ final class SetCommandTest extends TestCase
             $messages[] = $message;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translationCalls, &$translationParameters): string {
+            $translationCalls[] = $id;
+            $translationParameters[] = $parameters;
+
+            return $id;
+        });
         $provider = $this->createStub(ServiceNicknameProviderInterface::class);
         $provider->method('getServiceKey')->willReturn('nickserv');
         $provider->method('getNickname')->willReturn('NickServ');

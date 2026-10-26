@@ -8,6 +8,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\AkickCommand;
+use App\ChanServ\Adapter\In\Irc\Command\ChanServArgumentDefinitionSupport;
 use App\ChanServ\Adapter\Out\Event\SymfonyChanServEventPublisher;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Model\ChannelEntryMember;
@@ -24,6 +25,7 @@ use App\ChanServ\Application\Service\ChanServAccessHelper;
 use App\ChanServ\Application\UseCase\ManageAkick\ChannelAkickEntryView;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkick;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickHandler;
+use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickHandlerInterface;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickResult;
 use App\ChanServ\Domain\Entity\ChannelAccess;
 use App\ChanServ\Domain\Entity\ChannelAkick;
@@ -43,13 +45,16 @@ use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function assert;
+use function is_string;
 
+#[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(AkickCommand::class)]
 #[CoversClass(SymfonyChanServEventPublisher::class)]
 #[CoversClass(ManageChannelAkick::class)]
@@ -791,6 +796,37 @@ final class AkickCommandTest extends TestCase
 
         self::assertCount(1, $messages);
         self::assertStringContainsString('error.syntax', $messages[0]);
+    }
+
+    #[Test]
+    public function recognizedAddWithMissingMaskUsesItsSyntaxWithoutCallingUseCase(): void
+    {
+        $handler = $this->createMock(ManageChannelAkickHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []): string {
+                $syntax = $parameters['%syntax%'] ?? null;
+
+                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+            }
+        );
+
+        $command = new AkickCommand($handler);
+        $command->execute($this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            new ChanAccountView(1, 'User', 'en'),
+            ['#test', 'ADD'],
+            $notifier,
+            $translator,
+        ));
+
+        self::assertSame(['error.syntax|akick.add.syntax'], $messages);
     }
 
     #[Test]

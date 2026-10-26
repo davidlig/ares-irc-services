@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <option> <value>"
+  syntax: "SET <option> [value]"
   short: "Canviar les opcions del teu sobrenom."
   help: |-
     Modifica la configuració del teu sobrenom. T'has d'haver identificat per canviar
@@ -336,7 +336,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <sobrenom> <opció> <valor>"
+  syntax: "SASET <sobrenom> <opció> [valor]"
   short: "Modificar la configuració d'un altre sobrenom."
   help: |-
     Permet que un IRCop canviï la configuració d'un altre sobrenom registrat. No

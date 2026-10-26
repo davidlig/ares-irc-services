@@ -15,6 +15,8 @@ use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
 use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function in_array;
 use function sprintf;
@@ -28,6 +30,8 @@ use function strtoupper;
  */
 final readonly class LevelsCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     /** Level keys that require admin mode (a). Hidden if !hasAdmin(). */
     private const array ADMIN_LEVEL_KEYS = [
         ChannelLevel::KEY_AUTOADMIN,
@@ -74,14 +78,27 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'levels.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'levels.syntax',
+            arguments: [new Argument('channel'), new Argument('option')],
+            variants: [
+                'LIST' => new CommandArgumentDefinition(
+                    syntaxKey: 'levels.list.syntax',
+                ),
+                'SET' => new CommandArgumentDefinition(
+                    syntaxKey: 'levels.set.syntax',
+                    arguments: [
+                        new Argument('level', nonBlank: true),
+                        new Argument('value', nonBlank: true),
+                    ],
+                ),
+                'RESET' => new CommandArgumentDefinition(
+                    syntaxKey: 'levels.reset.syntax',
+                ),
+            ],
+        );
     }
 
     public function getHelpKey(): string
@@ -148,6 +165,10 @@ final readonly class LevelsCommand implements ChanServCommandInterface
             return;
         }
 
+        if (!$this->validateArguments($context)) {
+            return;
+        }
+
         $sub = strtoupper($context->args[1] ?? '');
         $modeSupport = $context->getChannelModeSupport();
         $action = match ($sub) {
@@ -200,9 +221,6 @@ final readonly class LevelsCommand implements ChanServCommandInterface
                 throw InsufficientAccessException::forOperation($channelName, 'LEVELS');
             case ManageChannelLevelsOutcome::UnknownAction:
                 $context->reply('levels.unknown_sub', ['%sub%' => $subcommand]);
-                break;
-            case ManageChannelLevelsOutcome::InvalidRequest:
-                $context->reply('error.syntax', ['syntax' => $context->trans('levels.set.syntax')]);
                 break;
             case ManageChannelLevelsOutcome::Listed:
                 $context->reply('levels.list.header', ['%channel%' => $channelName]);

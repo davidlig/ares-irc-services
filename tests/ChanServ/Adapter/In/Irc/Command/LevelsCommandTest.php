@@ -7,12 +7,14 @@ namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Adapter\In\Irc\Command\ChanServArgumentDefinitionSupport;
 use App\ChanServ\Adapter\In\Irc\Command\LevelsCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevels;
 use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsHandler;
+use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsHandlerInterface;
 use App\ChanServ\Application\UseCase\ManageLevels\ManageChannelLevelsResult;
 use App\ChanServ\Domain\Entity\ChannelLevel;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
@@ -25,6 +27,7 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -32,6 +35,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use function count;
 use function is_string;
 
+#[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(LevelsCommand::class)]
 #[CoversClass(ManageChannelLevels::class)]
 #[CoversClass(ManageChannelLevelsHandler::class)]
@@ -325,6 +329,36 @@ final class LevelsCommandTest extends TestCase
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'SET', 'AUTOOP', ''], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function recognizedSetWithMissingValueUsesItsSyntaxWithoutCallingUseCase(): void
+    {
+        $handler = $this->createMock(ManageChannelLevelsHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []): string {
+                $syntax = $parameters['%syntax%'] ?? null;
+
+                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+            }
+        );
+
+        new LevelsCommand($handler)->execute($this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            new ChanAccountView(1, 'User', 'en'),
+            ['#test', 'SET', 'AUTOOP'],
+            $notifier,
+            $translator,
+        ));
+
+        self::assertSame(['error.syntax|levels.set.syntax'], $messages);
     }
 
     #[Test]

@@ -79,7 +79,7 @@ final class RoleCommandTest extends TestCase
         $notifier = new RecordingRoleNotifier();
         $translator = new RecordingRoleTranslation();
 
-        new RoleCommand($handler)->execute($this->context(['OPERCLASS', 'VIEW', 'ADMIN'], $notifier, $translator));
+        new RoleCommand($handler)->execute($this->context(['OPERCLASS'], $notifier, $translator));
 
         self::assertSame([], $handler->commands);
         self::assertSame(['role.unknown_sub'], $notifier->messages);
@@ -156,6 +156,45 @@ final class RoleCommandTest extends TestCase
         self::assertSame(['error.syntax'], $notifier->messages);
         self::assertSame([$expectedSyntax, 'error.syntax'], $translator->calls);
         self::assertSame($expectedSyntax, $translator->parameters['error.syntax']['%syntax%']);
+    }
+
+    /** @param list<string> $arguments */
+    #[Test]
+    #[DataProvider('extraNestedOperands')]
+    public function rejectsExtraNestedOperandsUsingTheSubcommandSyntax(array $arguments, string $syntaxKey): void
+    {
+        $handler = new RecordingManageRoleHandler(true);
+        $notifier = new RecordingRoleNotifier();
+        $translator = new RecordingRoleTranslation();
+
+        new RoleCommand($handler)->execute($this->context($arguments, $notifier, $translator));
+
+        self::assertSame([], $handler->commands);
+        self::assertSame(['error.syntax'], $notifier->messages);
+        self::assertSame($syntaxKey, $translator->parameters['error.syntax']['%syntax%']);
+    }
+
+    /** @return iterable<string, array{list<string>, string}> */
+    public static function extraNestedOperands(): iterable
+    {
+        yield 'extra permission operand' => [['PERMS', 'ADD', 'ADMIN', 'operserv.kill', 'ignored'], 'role.perms.syntax'];
+        yield 'extra modes operand' => [['MODES', 'VIEW', 'ADMIN', 'extra'], 'role.modes.syntax'];
+        yield 'extra vhost operand' => [['VHOST', 'VIEW', 'ADMIN', 'extra'], 'role.vhost.syntax'];
+    }
+
+    #[Test]
+    public function roleDeleteContinuesToIgnoreTrailingArguments(): void
+    {
+        $handler = new RecordingManageRoleHandler(true);
+        $notifier = new RecordingRoleNotifier();
+        $translator = new RecordingRoleTranslation();
+
+        new RoleCommand($handler)->execute($this->context(['DEL', 'ADMIN', 'ignored'], $notifier, $translator));
+
+        self::assertCount(1, $handler->commands);
+        self::assertSame(RoleAction::Delete, $handler->commands[0]->action);
+        self::assertSame('ADMIN', $handler->commands[0]->roleName);
+        self::assertSame(['role.unknown_sub_operclass'], $notifier->messages);
     }
 
     /** @return iterable<string, array{list<string>, string}> */

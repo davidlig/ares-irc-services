@@ -55,7 +55,7 @@ help:
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD|DEL|LIST} [nickname] [rol]"
+  syntax: "IRCOP {ADD <nickname> <rol>|DEL <nickname>|LIST}"
   short: "Ağ IRC operatörlerini yönetin."
   help: |-
     Ağ IRC operatörlerini yönetin. ADD, kayıtlı bir rumuzu
@@ -110,7 +110,7 @@ role:
 
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
-    syntax: "ROLE OPERCLASS {LIST|VIEW|SET} [rol] [parametreler]"
+    syntax: "ROLE OPERCLASS {LIST|VIEW <rol>|SET <rol> [operclass]}"
     short: "UnrealIRCd operatör sınıfını yapılandırır."
     help: !irc |-
       Bir rolün operclass değerini görüntüler ve yapılandırır.
@@ -140,14 +140,14 @@ role:
       done: "\x0303✓\x03 %role% rolü için operclass yapılandırıldı."
       cleared: "\x0303✓\x03 %role% rolünün operclass değeri silindi."
       not_available: "\x0304✗\x03 \x02%operclass%\x02 operclass'i agda mevcut degil. Mevcut operclass'lar: %available%."
-  syntax: "ROLE <seçenek> [ad] [...]"
+  syntax: "ROLE <seçenek> [parametreler]"
   short: "Operatör rollerini, izinlerini ve yapılandırmalarını yönetir."
   help: |-
     Operatör rollerini, izinlerini ve yapılandırmalarını yönetir.
 
     ADMIN, OPER ve PREOPER rolleri korumalıdır ve silinemez.
     Yalnızca Root kullanıcıları kullanabilir.
-  syntax_operclass: "ROLE <seçenek> [ad] [...]"
+  syntax_operclass: "ROLE <seçenek> [parametreler]"
   help_operclass: |-
     Operatör rollerini, izinlerini ve yapılandırmalarını yönetir.
 
@@ -197,7 +197,7 @@ role:
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
-    syntax: "ROLE PERMS {ADD|DEL|LIST|CLEAR} <rol> [parametreler]"
+    syntax: "ROLE PERMS {{ADD|DEL} <rol> <izin>|{LIST|CLEAR} <rol>}"
     short: "Rolün izinlerini yönetir."
     help: !irc |-
       Bir role atanmış izinleri yönetir.
@@ -238,7 +238,7 @@ role:
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
-    syntax: "ROLE MODES {VIEW|SET} <rol> [modlar]"
+    syntax: "ROLE MODES {VIEW <rol>|SET <rol> [modlar]}"
     short: "Rolün kullanıcı modlarını yapılandırır."
     help: !irc |-
       Bir role atanmış IRCOP kullanıcı modlarını yönetir.
@@ -269,7 +269,7 @@ role:
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
-    syntax: "ROLE VHOST {VIEW|SET} <rol> [sanal_host]"
+    syntax: "ROLE VHOST {VIEW <rol>|SET <rol> [sanal_host]}"
     short: "Rolün sanal ana bilgisayar kalıbını yapılandırır."
     help: !irc |-
       Kimlik doğrularken rol operatörlerine kişisel hostlarının yerine verilecek sanal
@@ -318,7 +318,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [maske] [süre] [gerekçe]"
+  syntax: "GLINE {ADD <maske> <süre> <gerekçe>|DEL <maske|numara>|LIST [maske]}"
   short: "Ağ genelindeki G-line'ları yönetin."
   help: |-
     Ağ genelindeki G-line yasaklarını yönetir.
@@ -437,7 +437,7 @@ debug:
 # --- MOTD ------------------------------------------------------------------
 motd:
   short: "Bağlantıda kullanıcılara gönderilen MOTD mesajlarını yönetin."
-  syntax: "MOTD {ADD|DEL|LIST|CLEAN} [argümanlar]"
+  syntax: "MOTD {ADD <hedef> {PRIVMSG|NOTICE} <süre> <mesaj>|DEL <id>|LIST|CLEAN}"
   help: "Kullanıcı ağa bağlandığında gönderilen günün mesajı (MOTD) kayıtlarını yönetir."
   example: "%command_prefix%\x02\x0303MOTD LIST\x03\x0F"
   unknown_sub: "\x0304✗\x03 Bilinmeyen alt komut. Kullanın: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"

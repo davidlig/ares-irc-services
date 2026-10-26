@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <aukera> <balioa>"
+  syntax: "SET <aukera> [balioa]"
   short: "Aldatu zure ezizenaren aukerak."
   help: |-
     Zure ezizenaren ezarpenak aldatzen ditu. Aukera hauek aldatzeko
@@ -339,7 +339,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <ezizen> <aukera> <balio>"
+  syntax: "SASET <ezizen> <aukera> [balio]"
   short: "Beste ezizen baten ezarpenak aldatu."
   help: |-
     IRC Operadore bati erregistratutako ezizen baten ezarpenak aldatzea ahalbidetzen

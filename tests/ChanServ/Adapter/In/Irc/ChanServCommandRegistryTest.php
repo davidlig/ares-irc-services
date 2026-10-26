@@ -60,6 +60,8 @@ final class ChanServCommandRegistryTest extends TestCase
     private function createHandler(string $name, array $aliases = []): ChanServCommandInterface
     {
         return new class($name, $aliases) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             /**
              * @param string[] $aliases
              */

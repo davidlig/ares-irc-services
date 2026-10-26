@@ -7,6 +7,7 @@ namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Adapter\In\Irc\Command\ChanServArgumentDefinitionSupport;
 use App\ChanServ\Adapter\In\Irc\Command\SetCommand;
 use App\ChanServ\Adapter\In\Irc\Command\SetDescHandler;
 use App\ChanServ\Adapter\In\Irc\Command\SetEmailHandler;
@@ -48,10 +49,14 @@ use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function is_string;
+
+#[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(SetCommand::class)]
 #[CoversClass(ResolveChannelSetting::class)]
 #[CoversClass(ResolveChannelSettingHandler::class)]
@@ -88,6 +93,7 @@ final class SetCommandTest extends TestCase
         ChanServAccessHelper $accessHelper,
         ?ChanUserAccountPort $nickRepo = null,
         ?SetFounderHandler $founderHandler = null,
+        ?ConfigureChannelSecureHandlerInterface $configureSecure = null,
     ): SetCommand {
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo ??= $this->createStub(ChanUserAccountPort::class);
@@ -107,7 +113,7 @@ final class SetCommandTest extends TestCase
             new SetEntrymsgHandler($settingUpdater),
             new SetTopiclockHandler($settingUpdater),
             new SetMlockHandler($this->createStub(ConfigureChannelMlockHandlerInterface::class), new MlockStateFromChannelResolver()),
-            new SetSecureHandler($this->createStub(ConfigureChannelSecureHandlerInterface::class)),
+            new SetSecureHandler($configureSecure ?? $this->createStub(ConfigureChannelSecureHandlerInterface::class)),
             new SetPrivateHandler($settingUpdater),
         );
     }
@@ -475,8 +481,8 @@ final class SetCommandTest extends TestCase
         $channel->method('isFounder')->willReturn(true);
         $channel->method('getFounderNickId')->willReturn(10);
         $channel->method('getSuccessorNickId')->willReturn(null);
-        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
         $accessHelper = new ChanServAccessHelper(
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
@@ -490,7 +496,9 @@ final class SetCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = new ChanAccountView(10, 'User', 'en');
 
-        $cmd = $this->createSetCommand($channelRepo, $accessHelper);
+        $founderHandler = $this->createMock(TransferChannelFounderHandlerInterface::class);
+        $founderHandler->expects(self::never())->method('handle');
+        $cmd = $this->createSetCommand($channelRepo, $accessHelper, founderHandler: new SetFounderHandler($founderHandler));
         $cmd->execute($this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $account,
@@ -500,6 +508,85 @@ final class SetCommandTest extends TestCase
         ));
 
         self::assertSame(['set.founder.syntax'], $messages);
+    }
+
+    #[Test]
+    public function missingDescriptionUsesLeafSyntaxAfterResolutionWithoutUpdatingChannel(): void
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->method('isFounder')->willReturn(true);
+        $channel->expects(self::never())->method('updateDescription');
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $channelRepo->expects(self::never())->method('save');
+        $accessHelper = new ChanServAccessHelper(
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []): string {
+                $syntax = $parameters['%syntax%'] ?? null;
+
+                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+            }
+        );
+
+        $command = $this->createSetCommand($channelRepo, $accessHelper);
+        $command->execute($this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            new ChanAccountView(10, 'User', 'en'),
+            ['#test', 'DESC'],
+            $notifier,
+            $translator,
+        ));
+
+        self::assertSame(['error.syntax|set.desc.syntax'], $messages);
+    }
+
+    #[Test]
+    public function invalidSecureValueUsesDefinitionWithoutExecutingSettingHandler(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isFounder')->willReturn(true);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $channelRepo->expects(self::never())->method('save');
+        $configureSecure = $this->createMock(ConfigureChannelSecureHandlerInterface::class);
+        $configureSecure->expects(self::never())->method('handle');
+        $accessHelper = new ChanServAccessHelper(
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []): string {
+                $syntax = $parameters['%syntax%'] ?? null;
+
+                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+            }
+        );
+
+        $command = $this->createSetCommand($channelRepo, $accessHelper, configureSecure: $configureSecure);
+        $command->execute($this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            new ChanAccountView(10, 'User', 'en'),
+            ['#test', 'SECURE', 'MAYBE'],
+            $notifier,
+            $translator,
+        ));
+
+        self::assertSame(['error.syntax|set.secure.syntax'], $messages);
     }
 
     #[Test]

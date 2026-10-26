@@ -19,7 +19,7 @@ use function trim;
 final readonly class MemoServContext implements IrcopAuthorizationSubject
 {
     /**
-     * @param string[]           $args
+     * @param list<string>       $args
      * @param 'NOTICE'|'PRIVMSG' $messageType
      */
     public function __construct(

@@ -59,7 +59,7 @@ help:
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD|DEL|LIST} [nickname] [role]"
+  syntax: "IRCOP {ADD <nickname> <rol>|DEL <nickname>|LIST}"
   short: "Gestionar els operadors d'IRC de la xarxa."
   help: |-
     Gestiona els operadors d'IRC de la xarxa. ADD afegeix un sobrenom registrat
@@ -114,7 +114,7 @@ role:
 
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
-    syntax: "ROLE OPERCLASS {LIST|VIEW|SET} [rol] [paràmetres]"
+    syntax: "ROLE OPERCLASS {LIST|VIEW <rol>|SET <rol> [operclass]}"
     short: "Configura la classe d'operador d'UnrealIRCd."
     help: !irc |-
       Permet consultar i configurar l'operclass d'un rol.
@@ -144,14 +144,14 @@ role:
       done: "\x0303✓\x03 S'ha configurat l'operclass per al rol %role%."
       cleared: "\x0303✓\x03 S'ha eliminat l'operclass del rol %role%."
       not_available: "\x0304✗\x03 L'operclass \x02%operclass%\x02 no està disponible a la xarxa. Operclasses disponibles: %available%."
-  syntax: "ROLE <opció> [nom] [...]"
+  syntax: "ROLE <opció> [paràmetres]"
   short: "Permet gestionar els rols d'operador, els seus permisos i la configuració."
   help: |-
     Permet gestionar els rols d'operador, els seus permisos i la configuració.
 
     Els rols ADMIN, OPER i PREOPER estan protegits i no es poden eliminar.
     Ordre exclusiva per a usuaris Root.
-  syntax_operclass: "ROLE <opció> [nom] [...]"
+  syntax_operclass: "ROLE <opció> [paràmetres]"
   help_operclass: |-
     Permet gestionar els rols d'operador, els seus permisos i la configuració.
 
@@ -201,7 +201,7 @@ role:
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
-    syntax: "ROLE PERMS {ADD|DEL|LIST|CLEAR} <rol> [paràmetres]"
+    syntax: "ROLE PERMS {{ADD|DEL} <rol> <permís>|{LIST|CLEAR} <rol>}"
     short: "Gestiona els permisos del rol."
     help: !irc |-
       Gestiona els permisos assignats a un rol.
@@ -243,7 +243,7 @@ role:
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
-    syntax: "ROLE MODES {VIEW|SET} <rol> [modes]"
+    syntax: "ROLE MODES {VIEW <rol>|SET <rol> [modes]}"
     short: "Configura els modes d'usuari del rol."
     help: !irc |-
       Gestiona els modes d'usuari IRCOP assignats a un rol.
@@ -274,7 +274,7 @@ role:
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
-    syntax: "ROLE VHOST {VIEW|SET} <rol> [vhost]"
+    syntax: "ROLE VHOST {VIEW <rol>|SET <rol> [vhost]}"
     short: "Configura el patró d'host virtual del rol."
     help: !irc |-
       Permet configurar l'host virtual que reben els operadors d'un rol quan
@@ -324,7 +324,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [mask] [expiry] [motiu]"
+  syntax: "GLINE {ADD <mask> <expiry> <motiu>|DEL <mask|number>|LIST [mask]}"
   short: "Gestionar les G-lines de tota la xarxa."
   help: |-
     Gestiona les G-lines (prohibicions globals) de la xarxa.
@@ -445,7 +445,7 @@ debug:
 # --- MOTD ------------------------------------------------------------------
 motd:
   short: "Gestionar els missatges MOTD enviats als usuaris en connectar-se."
-  syntax: "MOTD {ADD|DEL|LIST|CLEAN} [args]"
+  syntax: "MOTD {ADD <destinació> {PRIVMSG|NOTICE} <expiry> <missatge>|DEL <id>|LIST|CLEAN}"
   help: |-
     Gestiona les entrades del missatge del dia (MOTD) que s'envien quan un usuari
     es connecta a la xarxa.

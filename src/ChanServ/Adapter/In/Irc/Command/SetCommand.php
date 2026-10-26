@@ -8,6 +8,8 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\UseCase\ResolveSetting\ResolveChannelSetting;
 use App\ChanServ\Application\UseCase\ResolveSetting\ResolveChannelSettingHandlerInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function array_slice;
 use function implode;
@@ -22,6 +24,8 @@ use function strtoupper;
  */
 final readonly class SetCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     private const array SUPPORTED_OPTIONS = [
         'FOUNDER', 'SUCCESSOR', 'DESC', 'URL', 'EMAIL', 'ENTRYMSG',
         'TOPICLOCK', 'MLOCK', 'SECURE', 'PRIVATE',
@@ -67,14 +71,79 @@ final readonly class SetCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'set.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'set.syntax',
+            arguments: [new Argument('channel'), new Argument('option')],
+            variants: [
+                'FOUNDER' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.founder.syntax',
+                    arguments: [
+                        new Argument('nickname', nonBlank: true),
+                        new Argument('token', optional: true),
+                    ],
+                ),
+                'SUCCESSOR' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.successor.syntax',
+                    arguments: [
+                        new Argument('nickname', optional: true, rest: true),
+                    ],
+                ),
+                'DESC' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.desc.syntax',
+                    arguments: [
+                        new Argument('description', rest: true, nonBlank: true),
+                    ],
+                ),
+                'URL' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.url.syntax',
+                    arguments: [
+                        new Argument('url', optional: true, rest: true),
+                    ],
+                ),
+                'EMAIL' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.email.syntax',
+                    arguments: [
+                        new Argument('email', optional: true, rest: true),
+                    ],
+                ),
+                'ENTRYMSG' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.entrymsg.syntax',
+                    arguments: [
+                        new Argument('message', optional: true, rest: true),
+                    ],
+                ),
+                'TOPICLOCK' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.topiclock.syntax',
+                    arguments: [
+                        new Argument('state', alternatives: ['ON', 'OFF']),
+                    ],
+                    allowExtra: false,
+                ),
+                'MLOCK' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.mlock.syntax',
+                    arguments: [
+                        new Argument('state', alternatives: ['ON', 'OFF']),
+                    ],
+                    allowExtra: false,
+                ),
+                'SECURE' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.secure.syntax',
+                    arguments: [
+                        new Argument('state', alternatives: ['ON', 'OFF']),
+                    ],
+                    allowExtra: false,
+                ),
+                'PRIVATE' => new CommandArgumentDefinition(
+                    syntaxKey: 'set.private.syntax',
+                    arguments: [
+                        new Argument('state', alternatives: ['ON', 'OFF']),
+                    ],
+                    allowExtra: false,
+                ),
+            ],
+        );
     }
 
     public function getHelpKey(): string
@@ -173,6 +242,10 @@ final readonly class SetCommand implements ChanServCommandInterface
             founderEquivalent: $context->isLevelFounder,
             option: $option,
         ));
+
+        if (!$this->validateArguments($context, 'set.founder.syntax')) {
+            return;
+        }
 
         $value = 'FOUNDER' === $option
             ? (trim($context->args[2] ?? ''))

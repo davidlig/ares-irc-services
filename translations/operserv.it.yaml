@@ -55,7 +55,7 @@ help:
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD|DEL|LIST} [nickname] [ruolo]"
+  syntax: "IRCOP {ADD <nickname> <ruolo>|DEL <nickname>|LIST}"
   short: "Gestisce gli operatori IRC di rete."
   help: |-
     Gestisce gli operatori IRC di rete. ADD aggiunge un nickname registrato
@@ -111,7 +111,7 @@ role:
 
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
-    syntax: "ROLE OPERCLASS {LIST|VIEW|SET} [ruolo] [parametri]"
+    syntax: "ROLE OPERCLASS {LIST|VIEW <ruolo>|SET <ruolo> [operclass]}"
     short: "Configura la classe operatore di UnrealIRCd."
     help: !irc |-
       Consente di consultare e configurare l'operclass di un ruolo.
@@ -141,7 +141,7 @@ role:
       done: "\x0303✓\x03 Operclass configurata per il ruolo %role%."
       cleared: "\x0303✓\x03 Operclass rimossa dal ruolo %role%."
       not_available: "\x0304✗\x03 L'operclass \x02%operclass%\x02 non e disponibile nella rete. Operclass disponibili: %available%."
-  syntax: "ROLE <opzione> [nome] [...]"
+  syntax: "ROLE <opzione> [parametri]"
   short: "Consente di gestire i ruoli degli operatori, i relativi permessi e la configurazione."
   help: |-
     Consente di gestire i ruoli degli operatori, i relativi permessi e la
@@ -149,7 +149,7 @@ role:
 
     I ruoli ADMIN, OPER e PREOPER sono protetti e non possono essere eliminati.
     Comando riservato agli utenti Root.
-  syntax_operclass: "ROLE <opzione> [nome] [...]"
+  syntax_operclass: "ROLE <opzione> [parametri]"
   help_operclass: |-
     Consente di gestire i ruoli degli operatori, i relativi permessi e la configurazione.
 
@@ -199,7 +199,7 @@ role:
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
-    syntax: "ROLE PERMS {ADD|DEL|LIST|CLEAR} <ruolo> [parametri]"
+    syntax: "ROLE PERMS {{ADD|DEL} <ruolo> <permesso>|{LIST|CLEAR} <ruolo>}"
     short: "Gestisce i permessi del ruolo."
     help: !irc |-
       Gestisce i permessi assegnati a un ruolo.
@@ -240,7 +240,7 @@ role:
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
-    syntax: "ROLE MODES {VIEW|SET} <ruolo> [modalità]"
+    syntax: "ROLE MODES {VIEW <ruolo>|SET <ruolo> [modalità]}"
     short: "Configura le modalità utente del ruolo."
     help: !irc |-
       Gestisce le modalità utente IRCOP assegnate a un ruolo.
@@ -271,7 +271,7 @@ role:
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
-    syntax: "ROLE VHOST {VIEW|SET} <ruolo> [vhost]"
+    syntax: "ROLE VHOST {VIEW <ruolo>|SET <ruolo> [vhost]}"
     short: "Configura il modello di host virtuale del ruolo."
     help: !irc |-
       Consente di configurare l'host virtuale assegnato agli operatori di un ruolo
@@ -321,7 +321,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [maschera] [scadenza] [motivo]"
+  syntax: "GLINE {ADD <maschera> <scadenza> <motivo>|DEL <maschera|numero>|LIST [maschera]}"
   short: "Gestisce i G-line a livello di rete."
   help: |-
     Gestisce le G-line (ban globali) della rete.
@@ -439,7 +439,7 @@ debug:
 # --- MOTD ------------------------------------------------------------------
 motd:
   short: "Gestisce i messaggi MOTD inviati agli utenti alla connessione."
-  syntax: "MOTD {ADD|DEL|LIST|CLEAN} [args]"
+  syntax: "MOTD {ADD <destinatario> {PRIVMSG|NOTICE} <scadenza> <messaggio>|DEL <id>|LIST|CLEAN}"
   help: |-
     Gestisce le voci del messaggio del giorno (MOTD) inviate quando un utente
     si connette alla rete.

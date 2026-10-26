@@ -9,6 +9,8 @@ use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Application\UseCase\Disable\DisableMemos;
 use App\MemoServ\Application\UseCase\Disable\DisableMemosHandlerInterface;
 use App\MemoServ\Application\UseCase\Disable\DisableMemosOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function str_starts_with;
 
@@ -32,14 +34,19 @@ final readonly class DisableCommand implements MemoServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('disable.syntax', [new Argument('channel', optional: true, prefix: '#')]);
+    }
+
     public function getMinArgs(): int
     {
-        return 0;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'disable.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

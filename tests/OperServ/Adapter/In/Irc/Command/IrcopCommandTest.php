@@ -146,6 +146,30 @@ final class IrcopCommandTest extends TestCase
         self::assertSame('ircop.syntax', $translation->lastParameters['%syntax%']);
     }
 
+    /** @param list<string> $arguments */
+    #[Test]
+    #[DataProvider('invalidRecognizedArguments')]
+    public function rejectsInvalidRecognizedArgumentsWithContextualSyntax(array $arguments, string $syntaxKey): void
+    {
+        $handler = $this->createMock(ManageIrcopHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $translation = new IrcopCommandTranslation();
+
+        new IrcopCommand($handler)->execute($this->context($arguments, $translation));
+
+        self::assertSame('error.syntax', $translation->lastKey);
+        self::assertSame($syntaxKey, $translation->lastParameters['%syntax%']);
+    }
+
+    /** @return iterable<string, array{list<string>, string}> */
+    public static function invalidRecognizedArguments(): iterable
+    {
+        yield 'missing add operands' => [['ADD', 'Target'], 'ircop.add.syntax'];
+        yield 'missing delete nickname' => [['DEL'], 'ircop.del.syntax'];
+        yield 'extra list operand' => [['LIST', 'ignored'], 'ircop.list.syntax'];
+        yield 'legacy add missing role' => [['Target', 'ADD'], 'ircop.add.syntax'];
+    }
+
     /** @param array<string, string> $expectedParameters */
     #[Test]
     #[DataProvider('outcomePresentations')]

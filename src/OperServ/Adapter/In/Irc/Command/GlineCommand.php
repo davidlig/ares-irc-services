@@ -12,6 +12,9 @@ use App\OperServ\Application\UseCase\ManageGline\ManageGline;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineOutcome;
 use App\OperServ\Application\UseCase\ManageGline\ManageGlineResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -37,12 +40,25 @@ final readonly class GlineCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('gline.syntax', [new Argument('action')], [
+            'ADD' => new CommandArgumentDefinition('gline.add.syntax', [
+                new Argument('mask'),
+                new Argument('expiry'),
+                new Argument('reason', rest: true),
+            ]),
+            'DEL' => new CommandArgumentDefinition('gline.del.syntax', [new Argument('mask')], allowExtra: false),
+            'LIST' => new CommandArgumentDefinition('gline.list.syntax', [new Argument('pattern', optional: true)], allowExtra: false),
+        ]);
     }
 
     public function getSyntaxKey(): string
     {
-        return 'gline.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -87,6 +103,13 @@ final readonly class GlineCommand implements OperServCommandInterface
     public function execute(OperServContext $context): void
     {
         if (null === $context->sender) {
+            return;
+        }
+
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if ($validation->recognized && !$validation->isValid()) {
+            $context->reply('error.syntax', ['%syntax%' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
+
             return;
         }
 

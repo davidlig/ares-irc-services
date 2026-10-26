@@ -6,6 +6,7 @@ namespace App\NickServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\NickServ\Adapter\In\Irc\Help\HelpableCommandInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 /**
  * Contract every NickServ command module must implement.
@@ -26,9 +27,12 @@ interface NickServCommandInterface extends HelpableCommandInterface
      */
     public function getAliases(): array;
 
+    /** Declarative transport grammar, including contextual syntax keys. */
+    public function getArgumentDefinition(): CommandArgumentDefinition;
+
     /**
-     * Minimum number of arguments required.
-     * If the user provides fewer, NickServService sends the syntax hint.
+     * Minimum required root arguments, derived from getArgumentDefinition().
+     * If the user provides fewer, NickServService sends the root syntax hint.
      */
     public function getMinArgs(): int;
 

@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 /**
  * HALFOP <#channel> <nickname>. ChanServ gives +h. Requires HALFOPDEHALFOP; only if IRCd supports halfop mode.
  */
 final readonly class HalfopCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
     use ManualRankCommandPresentation;
 
     public function getName(): string
@@ -23,14 +26,15 @@ final readonly class HalfopCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'halfop.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'halfop.syntax',
+            arguments: [
+                new Argument('channel'),
+                new Argument('nickname'),
+            ],
+        );
     }
 
     public function getHelpKey(): string

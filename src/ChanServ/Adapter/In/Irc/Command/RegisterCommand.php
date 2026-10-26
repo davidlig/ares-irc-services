@@ -11,6 +11,8 @@ use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandlerInter
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelOutcome;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelResult;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -20,6 +22,8 @@ use function in_array;
 /** REGISTER <#channel> <description>. */
 final readonly class RegisterCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     private const array REQUIRED_REGISTER_PREFIX_MODES = ['q', 'a', 'o'];
 
     public function __construct(private RegisterChannelHandlerInterface $handler) {}
@@ -34,14 +38,15 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'register.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'register.syntax',
+            arguments: [
+                new Argument('channel'),
+                new Argument('description', rest: true),
+            ],
+        );
     }
 
     public function getHelpKey(): string

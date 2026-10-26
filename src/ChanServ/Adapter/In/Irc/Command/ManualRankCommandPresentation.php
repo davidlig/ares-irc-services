@@ -32,12 +32,11 @@ trait ManualRankCommandPresentation
             return;
         }
 
-        $targetNickname = $context->args[1] ?? '';
-        if ('' === $targetNickname) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
+        if (!$this->validateArguments($context)) {
             return;
         }
+
+        $targetNickname = $context->args[1];
 
         $operation = ManualRankOperation::from($this->getName());
         $result = $this->manualRankHandler->handle(new ManageManualRank(

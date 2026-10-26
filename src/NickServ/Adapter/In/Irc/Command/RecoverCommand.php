@@ -14,6 +14,8 @@ use App\NickServ\Application\UseCase\Recover\RecoverNick;
 use App\NickServ\Application\UseCase\Recover\RecoverNickHandlerInterface;
 use App\NickServ\Application\UseCase\Recover\RecoverNickOutcome;
 use App\NickServ\Application\UseCase\Recover\RecoverNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Application\EmailHintMasker;
 
 use function base64_decode;
@@ -38,14 +40,22 @@ final readonly class RecoverCommand implements NickServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('recover.syntax', [
+            new Argument('nickname'),
+            new Argument('token', optional: true),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'recover.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

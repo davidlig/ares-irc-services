@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <optie> <waarde>"
+  syntax: "SET <optie> [waarde]"
   short: "Wijzig de opties van je bijnaam."
   help: |-
     Wijzigt de instellingen van je bijnaam. Je moet geïdentificeerd zijn om deze
@@ -336,7 +336,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <bijnaam> <optie> <waarde>"
+  syntax: "SASET <bijnaam> <optie> [waarde]"
   short: "Instellingen van een andere bijnaam wijzigen."
   help: |-
     Hiermee kan een IRC-operator instellingen van een andere geregistreerde bijnaam

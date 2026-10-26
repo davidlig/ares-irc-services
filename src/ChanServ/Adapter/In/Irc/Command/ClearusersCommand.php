@@ -13,12 +13,16 @@ use App\ChanServ\Application\UseCase\ClearUsers\ClearChannelUsersOutcome;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function array_slice;
 use function trim;
 
 final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(
         private readonly ClearChannelUsersHandlerInterface $handler,
     ) {}
@@ -33,14 +37,15 @@ final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditabl
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 1;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'clearusers.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'clearusers.syntax',
+            arguments: [
+                new Argument('channel'),
+                new Argument('reason', optional: true, rest: true),
+            ],
+        );
     }
 
     public function getHelpKey(): string

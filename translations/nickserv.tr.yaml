@@ -203,7 +203,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <seçenek> <değer>"
+  syntax: "SET <seçenek> [değer]"
   short: "Rumuz seçeneklerinizi değiştirin."
   help: |-
     Takma adınızın ayarlarını değiştirir. Bu seçenekleri değiştirmek için
@@ -333,7 +333,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <rumuz> <seçenek> <değer>"
+  syntax: "SASET <rumuz> <seçenek> [değer]"
   short: "Başka bir rumuzun ayarlarını değiştir."
   help: |-
     IRCop kullanıcısının başka bir kayıtlı takma adın ayarlarını değiştirmesini

@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 /**
  * ADMIN <#channel> <nickname>. ChanServ gives +a. Requires ADMINDEADMIN; only if IRCd supports admin mode.
  */
 final readonly class AdminCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
     use ManualRankCommandPresentation;
 
     public function getName(): string
@@ -23,14 +26,15 @@ final readonly class AdminCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'admin.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'admin.syntax',
+            arguments: [
+                new Argument('channel'),
+                new Argument('nickname'),
+            ],
+        );
     }
 
     public function getHelpKey(): string

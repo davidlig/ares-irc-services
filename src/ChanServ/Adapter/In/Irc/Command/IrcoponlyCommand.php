@@ -13,12 +13,14 @@ use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandl
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
-use function in_array;
 use function strtoupper;
 
 final readonly class IrcoponlyCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
     use BuildsChannelLifecycleRequest;
 
     public function __construct(private ManageChannelLifecycleHandlerInterface $handler) {}
@@ -33,14 +35,15 @@ final readonly class IrcoponlyCommand implements ChanServCommandInterface, Ircop
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'ircoponly.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'ircoponly.syntax',
+            arguments: [
+                new Argument('channel'),
+                new Argument('state', alternatives: ['ON', 'OFF']),
+            ],
+        );
     }
 
     public function getHelpKey(): string
@@ -110,12 +113,12 @@ final readonly class IrcoponlyCommand implements ChanServCommandInterface, Ircop
 
             return CommandOutcome::rejected();
         }
-        $value = strtoupper($context->args[1]);
-        if (!in_array($value, ['ON', 'OFF'], true)) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
+        if (!$this->validateArguments($context)) {
             return CommandOutcome::rejected();
         }
+
+        $value = strtoupper($context->args[1]);
         $enabled = 'ON' === $value;
         $result = $this->handler->handle($this->lifecycleRequest(
             $context,

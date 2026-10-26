@@ -31,6 +31,7 @@ use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Domain\Exception\InvalidCredentialsException;
 use App\NickServ\Domain\Exception\NickAlreadyRegisteredException;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -317,14 +318,19 @@ final class NickServCommandListenerTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('dummy.syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'dummy.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string

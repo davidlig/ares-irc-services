@@ -165,6 +165,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
     public function getCommandsForGeneralHelpReturnsRegistryAll(): void
     {
         $cmd = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'REGISTER';
@@ -255,6 +257,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
     public function shouldShowCommandInGeneralHelpReturnsFalseForOperOnly(): void
     {
         $cmd = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'DROP';
@@ -342,6 +346,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
     public function shouldShowCommandInGeneralHelpReturnsTrueForNormalCommand(): void
     {
         $cmd = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'INFO';
@@ -429,6 +435,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
     public function shouldShowCommandInGeneralHelpRespectsModeDependentCommandWhenSupportHasAdmin(): void
     {
         $cmd = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'ADMIN';
@@ -519,6 +527,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
     public function shouldShowCommandInGeneralHelpHidesModeDependentCommandWhenSupportLacksMode(): void
     {
         $cmd = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'ADMIN';
@@ -687,6 +697,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
     public function shouldShowCommandInGeneralHelpReturnsFalseForIrcopPermission(): void
     {
         $cmd = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'DROP';
@@ -804,6 +816,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
     public function getIrcopCommandsReturnsAllForRoot(): void
     {
         $dropCmd = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'DROP';
@@ -1136,6 +1150,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
     public function filterByPermissionReturnsOnlyCommandsOperHasPermissionFor(): void
     {
         $dropCmd = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'DROP';
@@ -1209,6 +1225,8 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function execute(ChanServContext $c): void {}
         };
         $infoCmd = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'INFO';

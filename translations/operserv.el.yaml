@@ -56,7 +56,7 @@ help:
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD|DEL|LIST} [nickname] [role]"
+  syntax: "IRCOP {ADD <nickname> <ρόλος>|DEL <nickname>|LIST}"
   short: "Διαχείριση IRC operators του δικτύου."
   help: |-
     Διαχείριση IRC operators του δικτύου. ADD προσθέτει ένα καταχωρημένο
@@ -112,7 +112,7 @@ role:
 
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
-    syntax: "ROLE OPERCLASS {LIST|<ρόλος>} [{VIEW|SET}] [operclass]"
+    syntax: "ROLE OPERCLASS {LIST|VIEW <ρόλος>|SET <ρόλος> [operclass]}"
     short: "Διαχειρίζεται την operclass του UnrealIRCd."
     help: !irc |-
       Εμφανίζει και ρυθμίζει την operclass ενός ρόλου.
@@ -142,7 +142,7 @@ role:
       done: "\x0303✓\x03 Η operclass ρυθμίστηκε για τον ρόλο %role%."
       cleared: "\x0303✓\x03 Η operclass αφαιρέθηκε από τον ρόλο %role%."
       not_available: "\x0304✗\x03 Η operclass \x02%operclass%\x02 δεν είναι διαθέσιμη στο δίκτυο. Διαθέσιμες operclasses: %available%."
-  syntax: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <όνομα> ..."
+  syntax: "ROLE <επιλογή> [παράμετροι]"
   short: "Διαχείριση ρόλων operator."
   help: |-
     Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,
@@ -151,7 +151,7 @@ role:
     αναγκαστικού vhost για έναν ρόλο.
     Οι προστατευμένοι ρόλοι (ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.
     Αυτή η εντολή περιορίζεται σε Root χρήστες.
-  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <όνομα> ..."
+  syntax_operclass: "ROLE <επιλογή> [παράμετροι]"
   help_operclass: |-
     Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,
     LIST εμφανίζει όλους τους ρόλους, PERMS διαχειρίζεται άδειες για έναν ρόλο,
@@ -205,7 +205,7 @@ role:
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
-    syntax: "ROLE PERMS <ρόλος> {LIST|ADD|DEL|CLEAR} [permission|ALL]"
+    syntax: "ROLE PERMS {{ADD|DEL} <ρόλος> <permission>|{LIST|CLEAR} <ρόλος>}"
     short: "Διαχείριση αδειών ρόλου."
     help: !irc |-
       Διαχείριση αδειών που ανατίθενται σε έναν ρόλο.
@@ -244,7 +244,7 @@ role:
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
-    syntax: "ROLE MODES <ρόλος> {VIEW|SET} [modes]"
+    syntax: "ROLE MODES {VIEW <ρόλος>|SET <ρόλος> [modes]}"
     short: "Διαχείριση λειτουργιών χρήστη IRCOP για τον ρόλο."
     help: !irc |-
       Διαχειρίζεται τις λειτουργίες χρήστη IRCOP που ανατίθενται σε ρόλο.
@@ -275,7 +275,7 @@ role:
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
-    syntax: "ROLE VHOST <ρόλος> {VIEW|SET} [pattern]"
+    syntax: "ROLE VHOST {VIEW <ρόλος>|SET <ρόλος> [pattern]}"
     short: "Διαχείριση μοτίβου αναγκαστικού vhost για έναν ρόλο."
     help: !irc |-
       Ορίζει το εικονικό host που λαμβάνουν οι operators ενός ρόλου κατά την
@@ -329,7 +329,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [mask] [expiry] [αιτιολογία]"
+  syntax: "GLINE {ADD <mask> <expiry> <αιτιολογία>|DEL <mask|number>|LIST [mask]}"
   short: "Διαχείριση G-lines σε όλο το δίκτυο."
   help: |-
     Διαχείριση G-lines σε όλο το δίκτυο (καθολικοί αποκλεισμοί).
@@ -459,7 +459,7 @@ debug:
 # --- MOTD ------------------------------------------------------------------
 motd:
   short: "Διαχείριση μηνυμάτων MOTD που στέλνονται στους χρήστες κατά τη σύνδεση."
-  syntax: "MOTD {ADD|DEL|LIST|CLEAN} [args]"
+  syntax: "MOTD {ADD <στόχος> {PRIVMSG|NOTICE} <expiry> <μήνυμα>|DEL <id>|LIST|CLEAN}"
   help: |-
     Διαχείριση καταχωρήσεων Message Of The Day που στέλνονται στους χρήστες όταν
     συνδέονται στο δίκτυο.

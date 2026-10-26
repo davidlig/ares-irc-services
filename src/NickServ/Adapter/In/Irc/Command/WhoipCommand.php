@@ -12,6 +12,9 @@ use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIp;
 use App\NickServ\Application\UseCase\Whoip\FindNicknamesByLastConnectIpHandlerInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
 use function count;
 use function inet_ntop;
@@ -31,14 +34,19 @@ final readonly class WhoipCommand implements NickServCommandInterface, IrcopAudi
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('whoip.syntax', [new Argument('ip')], allowExtra: false);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'whoip.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -87,7 +95,8 @@ final readonly class WhoipCommand implements NickServCommandInterface, IrcopAudi
             return CommandOutcome::rejected();
         }
 
-        if (1 !== count($context->args)) {
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
             return $this->rejectSyntax($context);
         }
 

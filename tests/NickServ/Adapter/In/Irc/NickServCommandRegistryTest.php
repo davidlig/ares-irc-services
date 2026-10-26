@@ -7,6 +7,7 @@ namespace App\Tests\NickServ\Adapter\In\Irc;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -81,14 +82,19 @@ final class NickServCommandRegistryTest extends TestCase
                 return $this->aliases;
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return '';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string

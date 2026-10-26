@@ -205,7 +205,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <opción> <valor>"
+  syntax: "SET <opción> [valor]"
   short: "Cambiar as opcións do teu alcume."
   help: |-
     Modifica a configuración do teu alcume. Debes identificarte para cambiarestas
@@ -335,7 +335,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <alcume> <opción> <valor>"
+  syntax: "SASET <alcume> <opción> [valor]"
   short: "Modificar a configuración doutro alcume."
   help: |-
     Permite a un IRCop cambiar a configuración doutro alcume rexistrado. Non

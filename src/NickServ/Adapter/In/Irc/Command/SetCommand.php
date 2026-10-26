@@ -14,15 +14,15 @@ use App\NickServ\Application\Service\NickServClientKeyResolver;
 use App\NickServ\Application\UseCase\Set\SetNickSetting;
 use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
 use function array_slice;
-use function count;
 use function sprintf;
 
 final readonly class SetCommand implements NickServCommandInterface
 {
-    private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'VHOST'];
-
     public function __construct(private SetNickSettingHandlerInterface $handler) {}
 
     public function getName(): string
@@ -35,14 +35,27 @@ final readonly class SetCommand implements NickServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('set.syntax', [new Argument('option')], [
+            'PASSWORD' => new CommandArgumentDefinition('set.password.syntax', [new Argument('value', rest: true)]),
+            'EMAIL' => new CommandArgumentDefinition('set.email.syntax', [new Argument('value', rest: true)]),
+            'LANGUAGE' => new CommandArgumentDefinition('set.language.syntax', [new Argument('value', rest: true)]),
+            'TIMEZONE' => new CommandArgumentDefinition('set.timezone.syntax', [new Argument('value', rest: true)]),
+            'PRIVATE' => new CommandArgumentDefinition('set.private.syntax', [new Argument('value', rest: true)]),
+            'MSG' => new CommandArgumentDefinition('set.msg.syntax', [new Argument('value', rest: true)]),
+            'VHOST' => new CommandArgumentDefinition('set.vhost.syntax', [new Argument('value', optional: true, rest: true)]),
+        ], unknownVariant: new CommandArgumentDefinition('set.syntax', [new Argument('value', rest: true)]));
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'set.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -67,13 +80,15 @@ final readonly class SetCommand implements NickServCommandInterface
 
     public function getSubCommandHelp(): array
     {
+        $options = array_keys($this->getArgumentDefinition()->variants);
+
         return array_map(static fn (string $option): array => [
             'name' => $option,
             'desc_key' => 'set.' . strtolower($option) . '.short',
             'help_key' => 'set.' . strtolower($option) . '.help',
             'syntax_key' => 'set.' . strtolower($option) . '.syntax',
             'example_key' => 'set.' . strtolower($option) . '.example',
-        ], self::SUPPORTED_OPTIONS);
+        ], $options);
     }
 
     public function isOperOnly(): bool
@@ -98,8 +113,9 @@ final readonly class SetCommand implements NickServCommandInterface
             return CommandOutcome::rejected();
         }
 
-        if (count($context->args) < 2 && !$this->isBareVhostClear($context->args)) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
 
             return CommandOutcome::rejected();
         }
@@ -109,7 +125,7 @@ final readonly class SetCommand implements NickServCommandInterface
         if (null === $option) {
             $context->reply('set.unknown_option', [
                 'option' => $rawOption,
-                'options' => implode(', ', self::SUPPORTED_OPTIONS),
+                'options' => implode(', ', array_keys($this->getArgumentDefinition()->variants)),
             ]);
 
             return CommandOutcome::rejected();
@@ -135,12 +151,6 @@ final readonly class SetCommand implements NickServCommandInterface
         return SetNickSettingPresentation::present($context, $result)
             ? CommandOutcome::success()
             : CommandOutcome::rejected();
-    }
-
-    /** @param array<string> $args */
-    private function isBareVhostClear(array $args): bool
-    {
-        return 1 === count($args) && SetNickSettingOption::Vhost->value === strtoupper($args[0]);
     }
 
     private static function decodeIp(string $ipBase64): string

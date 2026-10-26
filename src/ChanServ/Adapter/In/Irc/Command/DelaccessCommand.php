@@ -10,6 +10,8 @@ use App\ChanServ\Application\UseCase\RemoveOwnAccess\RemoveOwnChannelAccess;
 use App\ChanServ\Application\UseCase\RemoveOwnAccess\RemoveOwnChannelAccessHandlerInterface;
 use App\ChanServ\Application\UseCase\RemoveOwnAccess\RemoveOwnChannelAccessOutcome;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
 use function base64_decode;
@@ -18,6 +20,8 @@ use function sprintf;
 
 final readonly class DelaccessCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(private RemoveOwnChannelAccessHandlerInterface $handler) {}
 
     public function getName(): string
@@ -30,14 +34,14 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 1;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'delaccess.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'delaccess.syntax',
+            arguments: [
+                new Argument('channel'),
+            ],
+        );
     }
 
     public function getHelpKey(): string

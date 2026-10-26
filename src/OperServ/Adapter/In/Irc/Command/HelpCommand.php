@@ -8,6 +8,8 @@ use App\OperServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Adapter\In\Irc\OperServHelpFormatterContextAdapter;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function array_find;
 use function implode;
@@ -29,12 +31,20 @@ final readonly class HelpCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 0;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('help.syntax', [
+            new Argument('command', optional: true),
+            new Argument('subcommand', optional: true),
+        ]);
     }
 
     public function getSyntaxKey(): string
     {
-        return 'help.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

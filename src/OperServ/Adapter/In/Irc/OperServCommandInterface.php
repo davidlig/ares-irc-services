@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\OperServ\Adapter\In\Irc;
 
 use App\OperServ\Adapter\In\Irc\Help\HelpableCommandInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 /**
  * IRC metadata and presentation boundary for an OperServ operation.
@@ -18,6 +19,8 @@ interface OperServCommandInterface extends HelpableCommandInterface
 
     /** @return list<string> */
     public function getAliases(): array;
+
+    public function getArgumentDefinition(): CommandArgumentDefinition;
 
     public function getMinArgs(): int;
 

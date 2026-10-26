@@ -9,6 +9,8 @@ use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Application\UseCase\List\ListMemos;
 use App\MemoServ\Application\UseCase\List\ListMemosHandlerInterface;
 use App\MemoServ\Application\UseCase\List\ListMemosOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function mb_strlen;
 use function mb_substr;
@@ -47,14 +49,19 @@ final readonly class ListCommand implements MemoServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('list.syntax', [new Argument('channel', optional: true, prefix: '#')]);
+    }
+
     public function getMinArgs(): int
     {
-        return 0;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'list.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

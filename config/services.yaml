@@ -157,6 +157,7 @@ services:
 
     App\:
         resource: '../src/'
+        exclude: '../src/Shared/Adapter/In/Irc/CommandArgument/'
 
     # One YAML loader for both Symfony aliases; only !irc values decode IRC escapes.
     translation.loader.yml:

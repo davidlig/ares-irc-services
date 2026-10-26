@@ -13,6 +13,8 @@ use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandl
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function array_slice;
 use function implode;
@@ -20,6 +22,7 @@ use function trim;
 
 final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
     use BuildsChannelLifecycleRequest;
 
     public function __construct(
@@ -36,14 +39,16 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 3;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'suspend.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'suspend.syntax',
+            arguments: [
+                new Argument('channel'),
+                new Argument('duration'),
+                new Argument('reason', rest: true, nonBlank: true),
+            ],
+        );
     }
 
     public function getHelpKey(): string
@@ -111,22 +116,14 @@ final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCo
             return CommandOutcome::rejected();
         }
 
-        $durationStr = $context->args[1] ?? '';
-
-        if ('' === $durationStr) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
+        if (!$this->validateArguments($context)) {
             return CommandOutcome::rejected();
         }
+
+        $durationStr = $context->args[1] ?? '';
 
         $reasonParts = array_slice($context->args, 2);
         $reason = trim(implode(' ', $reasonParts));
-
-        if ('' === $reason) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-            return CommandOutcome::rejected();
-        }
 
         $result = $this->handler->handle($this->lifecycleRequest(
             $context,

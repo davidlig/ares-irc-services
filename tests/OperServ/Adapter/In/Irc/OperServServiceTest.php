@@ -10,6 +10,7 @@ use App\NickServ\Application\Port\In\NickAccountData;
 use App\NickServ\Application\Port\In\NickAccountQuery;
 use App\NickServ\Application\Port\In\UserLanguageQuery;
 use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
+use App\OperServ\Adapter\In\Irc\Command\GlineCommand;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
@@ -20,6 +21,9 @@ use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorActor;
 use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\OperServ\Application\UseCase\ManageGline\ManageGlineHandlerInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -33,6 +37,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(OperServService::class)]
 #[CoversClass(OperServContext::class)]
 #[CoversClass(OperServCommandRegistry::class)]
+#[CoversClass(GlineCommand::class)]
 final class OperServServiceTest extends TestCase
 {
     #[Test]
@@ -134,6 +139,41 @@ final class OperServServiceTest extends TestCase
 
         self::assertFalse($command->executed);
         self::assertSame([['001AAA', 'error.syntax', 'NOTICE']], $notifier->messages);
+    }
+
+    #[Test]
+    public function rootDenialPrecedesMissingArgumentSyntax(): void
+    {
+        $notifier = new RecordingOperServNotifier();
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('root')->willReturn(AuthorizationDecision::denied());
+        $command = new RecordingOperServCommand('ROOT', OperatorAuthorizationAttribute::ROOT, minArgs: 1);
+
+        $this->service([$command], $notifier, $authorization)->dispatch('root', $this->sender(identified: true));
+
+        self::assertFalse($command->executed);
+        self::assertSame([['001AAA', 'error.root_only', 'NOTICE']], $notifier->messages);
+    }
+
+    #[Test]
+    public function dispatchUsesContextualSyntaxWithoutInvokingTheCommandUseCase(): void
+    {
+        $handler = $this->createMock(ManageGlineHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $authorization = $this->createStub(OperatorAuthorizationQuery::class);
+        $authorization->method('permission')->willReturn(AuthorizationDecision::grantedBy(AuthorizationGrant::RootIdentity));
+        $translator = new Translator('en');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', [
+            'error.syntax' => 'Syntax: %syntax%',
+            'gline.add.syntax' => 'GLINE ADD <mask> <expiry> <reason>',
+        ], 'en', 'operserv');
+        $notifier = new RecordingOperServNotifier();
+
+        $this->service([new GlineCommand($handler)], $notifier, $authorization, translator: $translator)
+            ->dispatch('GLINE ADD ident@host.test', $this->sender(identified: true, oper: true));
+
+        self::assertSame([['001AAA', 'Syntax: GLINE ADD <mask> <expiry> <reason>', 'NOTICE']], $notifier->messages);
     }
 
     #[Test]
@@ -282,12 +322,17 @@ final class RecordingOperServCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return $this->minArgs;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('command.syntax', array_fill(0, $this->minArgs, new Argument('argument')));
     }
 
     public function getSyntaxKey(): string
     {
-        return 'command.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

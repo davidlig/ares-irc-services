@@ -10,6 +10,7 @@ use App\NickServ\Application\UseCase\Resend\ResendVerification;
 use App\NickServ\Application\UseCase\Resend\ResendVerificationHandlerInterface;
 use App\NickServ\Application\UseCase\Resend\ResendVerificationOutcome;
 use App\NickServ\Application\UseCase\Resend\ResendVerificationResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function ceil;
 
@@ -30,14 +31,19 @@ final readonly class ResendCommand implements NickServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('resend.syntax');
+    }
+
     public function getMinArgs(): int
     {
-        return 0;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'resend.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

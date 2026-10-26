@@ -14,11 +14,14 @@ use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandl
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function strcasecmp;
 
 final class DropCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
     use BuildsChannelLifecycleRequest;
 
     public function __construct(
@@ -36,14 +39,15 @@ final class DropCommand implements ChanServCommandInterface, IrcopAuditableComma
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 1;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'drop.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'drop.syntax',
+            arguments: [
+                new Argument('channel'),
+                new Argument('force', optional: true, alternatives: ['FORCE']),
+            ],
+        );
     }
 
     public function getHelpKey(): string

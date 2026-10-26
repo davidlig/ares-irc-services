@@ -14,6 +14,8 @@ use App\NickServ\Application\UseCase\Restore\RestoreNick;
 use App\NickServ\Application\UseCase\Restore\RestoreNickHandlerInterface;
 use App\NickServ\Application\UseCase\Restore\RestoreNickOutcome;
 use App\NickServ\Application\UseCase\Restore\RestoreNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 final readonly class RestoreCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
@@ -29,14 +31,19 @@ final readonly class RestoreCommand implements NickServCommandInterface, IrcopAu
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('restore.syntax', [new Argument('nickname')]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'restore.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

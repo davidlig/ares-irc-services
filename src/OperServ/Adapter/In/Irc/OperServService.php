@@ -11,11 +11,11 @@ use App\NickServ\Application\Port\In\UserLanguageQuery;
 use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
 use App\OperServ\Application\Port\In\OperatorAuthorizationAttribute;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_shift;
-use function count;
 use function is_string;
 use function preg_split;
 use function strtoupper;
@@ -104,8 +104,9 @@ final readonly class OperServService
             return;
         }
 
-        if (count($context->args) < $handler->getMinArgs()) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($handler->getSyntaxKey())]);
+        $validation = CommandArgumentValidator::validatePrefix($handler->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
 
             return;
         }

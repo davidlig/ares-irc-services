@@ -11,6 +11,8 @@ use App\NickServ\Application\UseCase\Status\StatusNick;
 use App\NickServ\Application\UseCase\Status\StatusNickHandlerInterface;
 use App\NickServ\Application\UseCase\Status\StatusNickOutcome;
 use App\NickServ\Application\UseCase\Status\StatusNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 final readonly class StatusCommand implements NickServCommandInterface
 {
@@ -29,14 +31,19 @@ final readonly class StatusCommand implements NickServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('status.syntax', [new Argument('nickname')]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'status.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

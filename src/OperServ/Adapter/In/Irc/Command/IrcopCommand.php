@@ -12,6 +12,9 @@ use App\OperServ\Application\UseCase\ManageIrcop\IrcopOutcome;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcop;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopHandlerInterface;
 use App\OperServ\Application\UseCase\ManageIrcop\ManageIrcopResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use DateTimeImmutable;
 
 use function count;
@@ -35,12 +38,21 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('ircop.syntax', [new Argument('action')], [
+            'ADD' => new CommandArgumentDefinition('ircop.add.syntax', [new Argument('nickname'), new Argument('role')], allowExtra: false),
+            'DEL' => new CommandArgumentDefinition('ircop.del.syntax', [new Argument('nickname')], allowExtra: false),
+            'LIST' => new CommandArgumentDefinition('ircop.list.syntax', [], allowExtra: false),
+        ], alternativeOrders: [[1, 0]]);
     }
 
     public function getSyntaxKey(): string
     {
-        return 'ircop.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -82,7 +94,15 @@ final readonly class IrcopCommand implements OperServCommandInterface
     {
         if (null === $c->sender) {
             return;
-        }$first = strtoupper($c->args[0] ?? '');
+        }
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $c->args);
+        if ($validation->recognized && !$validation->isValid()) {
+            $this->syntax($c, $validation->syntaxKey ?? $this->getSyntaxKey());
+
+            return;
+        }
+
+        $first = strtoupper($c->args[0] ?? '');
         $action = match ($first) {
             'ADD' => IrcopAction::Add,'DEL' => IrcopAction::Delete,'LIST' => IrcopAction::List,default => IrcopAction::Unknown
         };
@@ -103,9 +123,9 @@ final readonly class IrcopCommand implements OperServCommandInterface
         $this->present($c, $first, $r);
     }
 
-    private function syntax(OperServContext $c): void
+    private function syntax(OperServContext $c, string $syntaxKey = 'ircop.syntax'): void
     {
-        $c->reply('error.syntax', ['%syntax%' => $c->trans('ircop.syntax')]);
+        $c->reply('error.syntax', ['%syntax%' => $c->trans($syntaxKey)]);
     }
 
     private function present(OperServContext $c, string $sub, ManageIrcopResult $r): void

@@ -265,6 +265,28 @@ final class SuspendCommandTest extends TestCase
     }
 
     #[Test]
+    public function whitespaceOnlyReasonDoesNotReachTheRepository(): void
+    {
+        $repository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repository->expects(self::never())->method('findByNick');
+        $events = $this->createMock(EventBusInterface::class);
+        $events->expects(self::never())->method('dispatch');
+        $messages = [];
+        $context = $this->createContext($this->createSender(), ['TestNick', '7d', ' ', ' '], $messages, nickRepository: $repository);
+        $command = $this->createCommandWith(
+            $repository,
+            $this->createStub(NickTargetValidator::class),
+            $this->createStub(NickSuspensionService::class),
+            $events,
+            $this->clock(),
+        );
+
+        $command->execute($context);
+
+        self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
     public function executeWithNonexistentNickRepliesNotRegistered(): void
     {
         $sender = $this->createSender();
@@ -641,8 +663,8 @@ final class SuspendCommandTest extends TestCase
     }
 
     /**
-     * @param string[] $args
-     * @param string[] $messages
+     * @param list<string> $args
+     * @param string[]     $messages
      */
     private function createContext(
         ?SenderView $sender,

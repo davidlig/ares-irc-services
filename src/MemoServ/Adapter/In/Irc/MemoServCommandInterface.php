@@ -6,6 +6,7 @@ namespace App\MemoServ\Adapter\In\Irc;
 
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\MemoServ\Adapter\In\Irc\Help\HelpableCommandInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 /**
  * Contract every MemoServ command module must implement.
@@ -18,6 +19,8 @@ interface MemoServCommandInterface extends HelpableCommandInterface
 
     /** @return string[] */
     public function getAliases(): array;
+
+    public function getArgumentDefinition(): CommandArgumentDefinition;
 
     public function getMinArgs(): int;
 

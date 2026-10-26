@@ -7,6 +7,7 @@ namespace App\Tests\ChanServ\Adapter\In\Irc\Command;
 use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
+use App\ChanServ\Adapter\In\Irc\Command\ChanServArgumentDefinitionSupport;
 use App\ChanServ\Adapter\In\Irc\Command\HistoryCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
@@ -17,6 +18,7 @@ use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\UseCase\ManageHistory\ChannelHistoryEntryView;
 use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistory;
 use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryHandler;
+use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryHandlerInterface;
 use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryResult;
 use App\ChanServ\Domain\Entity\ChannelHistory;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
@@ -29,11 +31,13 @@ use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(HistoryCommand::class)]
 #[CoversClass(ChannelHistoryEntryView::class)]
 #[CoversClass(ManageChannelHistory::class)]
@@ -220,6 +224,19 @@ final class HistoryCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
+    public function recognizedAddWithMissingMessageUsesItsSyntaxWithoutCallingUseCase(): void
+    {
+        $handler = $this->createMock(ManageChannelHistoryHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $messages = [];
+        $context = $this->createContext(['#test', 'ADD'], $messages);
+
+        new HistoryCommand($handler)->execute($context);
+
+        self::assertSame(['error.syntax'], $messages);
     }
 
     #[Test]

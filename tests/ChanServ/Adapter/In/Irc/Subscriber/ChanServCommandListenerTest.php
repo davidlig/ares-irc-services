@@ -33,6 +33,7 @@ use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Irc\Application\PublishedEvent\ServiceIntroductionRequestedEvent;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
 use App\Shared\Application\Port\EventBusInterface;
+use App\Tests\ChanServ\Adapter\In\Irc\ChanServCommandDefinitionTestTrait;
 use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -167,6 +168,8 @@ final class ChanServCommandListenerTest extends TestCase
     private function createThrowCommand(string $name, Throwable $exception): ChanServCommandInterface
     {
         return new class($name, $exception) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(
                 private readonly string $name,
                 private readonly Throwable $exception,
@@ -252,6 +255,8 @@ final class ChanServCommandListenerTest extends TestCase
     private function createDummyCommand(string $name, Closure $callback): ChanServCommandInterface
     {
         return new class($name, $callback) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(
                 private readonly string $name,
                 private readonly Closure $callback,

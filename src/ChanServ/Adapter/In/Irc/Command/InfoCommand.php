@@ -10,6 +10,8 @@ use App\ChanServ\Application\UseCase\ShowInfo\ChannelInfoView;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfo;
 use App\ChanServ\Application\UseCase\ShowInfo\ShowChannelInfoHandlerInterface;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
 use function implode;
@@ -23,6 +25,8 @@ use function str_contains;
  */
 final readonly class InfoCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(private ShowChannelInfoHandlerInterface $handler) {}
 
     public function getName(): string
@@ -35,14 +39,14 @@ final readonly class InfoCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 1;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'info.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'info.syntax',
+            arguments: [
+                new Argument('channel'),
+            ],
+        );
     }
 
     public function getHelpKey(): string

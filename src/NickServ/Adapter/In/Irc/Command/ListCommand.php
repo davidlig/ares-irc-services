@@ -15,9 +15,11 @@ use App\NickServ\Application\UseCase\List\ListNickAccounts;
 use App\NickServ\Application\UseCase\List\ListNickAccountsHandlerInterface;
 use App\NickServ\Application\UseCase\List\ListNickAccountsResult;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
 use function ceil;
-use function count;
 use function filter_var;
 
 use const FILTER_VALIDATE_INT;
@@ -36,14 +38,22 @@ final readonly class ListCommand implements NickServCommandInterface, IrcopAudit
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('list.syntax', [
+            new Argument('pattern'),
+            new Argument('page', optional: true),
+        ], allowExtra: false);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'list.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -92,7 +102,8 @@ final readonly class ListCommand implements NickServCommandInterface, IrcopAudit
             return CommandOutcome::rejected();
         }
 
-        if (1 > count($context->args) || 2 < count($context->args)) {
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
             return $this->rejectSyntax($context);
         }
 

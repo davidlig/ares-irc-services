@@ -247,7 +247,8 @@ A service command is correctly separated only if:
 
 Before calling a service command complete:
 
-1. Put IRC parsing and reply handling in `<Service>/Adapter/In/Irc/Command`; send typed input to an
+1. Declare the argument structure and contextual syntax through `getArgumentDefinition()` and add
+   routing-level regression tests. Put IRC parsing and reply handling in `<Service>/Adapter/In/Irc/Command`; send typed input to an
    Application use case for the behavior. Define name, aliases, minimum arguments, syntax, order,
    short description, subcommand help, and permission metadata in the command adapter.
 2. Register the command in the service's runtime command registry. Where the registry uses a tagged
@@ -281,3 +282,32 @@ For an IRCop command, also:
    `ROLE PERMS <role> ADD <permission>`, and makes the command appear in the IRCop `HELP` section
    only for an authorized actor. Check denial for actors without that permission.
 4. Record successful privileged operations through the command audit path with safe metadata.
+
+## 14. Declarative structural argument validation
+
+Every new or modified service command must declare its argument structure and contextual syntax
+through the command validation system. Required and optional parameters must match runtime
+behavior. Include routing-level regression tests before considering the command complete.
+
+- Own `getArgumentDefinition()` in the service inbound command adapter. Describe actual ordered
+  arguments, optional values, literal alternatives, nested variants, rest text and accepted legacy
+  layouts. Derive `getMinArgs()` and `getSyntaxKey()` from it, never the reverse. Reference the same
+  syntax keys as service-local HELP metadata; never parse translated usage text as a grammar.
+- Use the pure `Shared/Adapter/In/Irc/CommandArgument` validator. Variant nodes append arguments and
+  select on their final declared token. Optional prefixed tokens model conditional channel layouts;
+  digit and nonblank constraints are structural only where the existing adapter uses syntax errors.
+  Keep value policies and semantic business errors in their existing owners.
+- Prefix checks stay at the old dispatch-minimum checkpoint. Contextual checks stay after any
+  pre-existing command/option authorization or channel policy. Never validate all variants early if
+  doing so changes denial precedence. Do not invoke mutators after structural rejection.
+- `unknownVariant` declares the legacy structural fallback for an unrecognized selector, without
+  replacing its unknown-option response. `alternativeOrders` reuses the canonical grammar for
+  accepted legacy token orders. Unknown-variant replies remain service-local. Extra tokens stay
+  accepted where historically tolerated; use exact bounds only where runtime already imposes them.
+- Keep HELP presentation, aliases, Root/founder semantics, channel policy and audit behavior local
+  and unchanged. Syntax-only locale changes do not authorize a broader staged HELP rollout.
+- Extend the runtime registry/HELP alignment gate for every command and declared variant, and
+  verify all syntax references in the fourteen catalogs. Add focused public-routing tests for
+  presented contextual syntax, missing/extra/invalid arguments, optional/rest forms, accepted
+  aliases/legacy forms, no mutation on rejection and permission/policy precedence. A declaration
+  passing metadata checks does not replace behavioral proof. Keep tests with the command change.

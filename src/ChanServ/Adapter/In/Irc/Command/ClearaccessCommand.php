@@ -13,9 +13,13 @@ use App\ChanServ\Application\UseCase\ClearAccess\ClearChannelAccessOutcome;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(
         private readonly ClearChannelAccessHandlerInterface $handler,
     ) {}
@@ -30,14 +34,14 @@ final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditab
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 1;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'clearaccess.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'clearaccess.syntax',
+            arguments: [
+                new Argument('channel'),
+            ],
+        );
     }
 
     public function getHelpKey(): string
