@@ -34,7 +34,7 @@ Add an automated registry-wide check across all four services that fails when a 
 - [x] Preserve accepted aliases, legacy forms, valid effects, business errors, permissions, channel policy and audit behavior.
 - [x] Automated registry checks detect missing declarations/metadata for future commands; behavioral tests assert actual presented syntax, not merely key presence.
 - [x] Update agent rules and necessary localized syntax consistently across supported locales, respecting any separately staged HELP rollout and avoiding unrelated wording changes.
-- [ ] Follow project test-first discipline, focused checks, architecture checks and final quality gates, including the final 100% coverage gate.
+- [x] Follow project test-first discipline, focused checks, architecture checks and final quality gates, including the final 100% coverage gate.
 
 ### S4 — Accepted planning decisions
 - The user authorized strictly necessary syntax corrections across all 14 locales, without extending the separate Spanish-first HELP descriptions/examples/style preview.
@@ -45,12 +45,12 @@ Add an automated registry-wide check across all four services that fails when a 
 
 ## Tasks
 - T1 [S1,S3,S4] inline — complete, focused checks passed — immutable definitions/matcher, checkpoint tests, architecture layer; commit dee11565. Risk: none (additive core, no existing command consumes it yet).
-- T2 [S1,S3,S4] delegated — implemented and independently verified; final coverage gate pending — NickServ migration, SET/SASET regressions and syntax translations; commit 0b505814. Risk: items 2,3 (authorization precedence/shared parser).
-- T3 [S1,S3,S4] inline — implemented and independently verified; final coverage gate pending — MemoServ migration and routing regressions; commit d976eeb5. Risk: items 2,3.
-- T4 [S1,S3,S4] delegated — implemented and independently verified; final coverage gate pending — ChanServ migration and policy/leaf checkpoint regressions; commit 8afe5e1b. Risk: items 2,3.
-- T5 [S1,S3,S4] delegated — implemented and independently verified; final coverage gate pending — OperServ migration and nested/legacy regression coverage; commit f18508d3. Risk: items 2,3.
-- T6 [S2,S3] inline — implemented and independently verified; final coverage gate pending — registry-wide prevention, HELP metadata alignment, agent contract; commit 57ed7f8f. Risk: item 3.
-- T7 [S1-S4] delegated verify — NEEDS DECISION — independent verification and bounded correction recheck passed; single full coverage run failed, renewed full coverage authorization required. Core correction commit46a8ceca and service commits above. Trigger: high-risk items2,3 and long full-suite action.
+- T2 [S1,S3,S4] delegated — complete, independently verified; final coverage gate passed — NickServ migration, SET/SASET regressions and syntax translations; commit 0b505814. Risk: items 2,3 (authorization precedence/shared parser).
+- T3 [S1,S3,S4] inline — complete, independently verified; final coverage gate passed — MemoServ migration and routing regressions; commit d976eeb5. Risk: items 2,3.
+- T4 [S1,S3,S4] delegated — complete, independently verified; final coverage gate passed — ChanServ migration and policy/leaf checkpoint regressions; commit 8afe5e1b. Risk: items 2,3.
+- T5 [S1,S3,S4] delegated — complete, independently verified; final coverage gate passed — OperServ migration and nested/legacy regression coverage; commit f18508d3. Risk: items 2,3.
+- T6 [S2,S3] inline — complete, independently verified; final coverage gate passed — registry-wide prevention, HELP metadata alignment, agent contract; commit 57ed7f8f. Risk: item 3.
+- T7 [S1-S4] delegated verify — complete — full coverage6560tests60758assertions zeroissues;23262/23262exact statements. Independent feature and bounded correction verification passed. Core46a8ceca and service commits above. Trigger: high-risk items2,3 and long full-suite action.
 
 ## Log
 
@@ -116,7 +116,7 @@ Add an automated registry-wide check across all four services that fails when a 
 - [ ] Preserve accepted aliases, legacy forms, valid effects, business errors, permissions, channel policy and audit behavior.
 - [ ] Automated registry checks detect missing declarations/metadata for future commands; behavioral tests assert actual presented syntax, not merely key presence.
 - [ ] Update agent rules and necessary localized syntax consistently across supported locales, respecting any separately staged HELP rollout and avoiding unrelated wording changes.
-- [ ] Follow project test-first discipline, focused checks, architecture checks and final quality gates, including the final 100% coverage gate.
+- [x] Follow project test-first discipline, focused checks, architecture checks and final quality gates, including the final 100% coverage gate.
 
 ## Evidence and related work
 
@@ -182,3 +182,11 @@ The exactly-once full coverage budget has been consumed; no full rerun was perfo
 ### L13 — Local work units and delivery state
 Local commits: 46a8ceca Shared grammar extensions/exact architecture allowlist; 0b505814 NickServ; d976eeb5 MemoServ; 8afe5e1b ChanServ plus application guard tests; f18508d3 OperServ; 57ed7f8f registry-wide prevention and agent rules. Each service commit includes its regression tests and relevant syntax catalogs; the accepted one-PR size exception remains in effect. Rollback boundaries are each service's inbound adapters/tests/catalogs; core and prevention own separate commits. Earlier focused suite and runtime routing evidence is recorded in L8-L12; runtime daemon N/A because live/remote operations are outside authorization. All commits are disabled/unmanaged under the globally off native review switch; no review START or consent was run.
 Final parent checks: PHP syntax147modified/new files PASS; scoped/core13tests73assertions PASS; correction/architecture/registry204tests13121assertions PASS; PHPStanmax0errors PASS; container PASS; YAML127files PASS; Deptrac0violations/0uncovered PASS; fixer dry-run0/2082files PASS; git diff --check PASS. The first full coverage result is still failed historical proof, not replaced by focused tests or merged coverage claims. Required next decision: authorize one renewed full coverage run after corrections; until that proof is observed T7 and final feature acceptance remain incomplete. No changes to composer dependencies or business-use-case production code.
+
+### L14 — Renewed final coverage authorization
+User (verbatim): `si`
+The user explicitly authorized one renewed `./scripts/check-coverage.sh 100 --issues` invocation after the bounded corrections. No other authorization or delivery scope changes. T7 resumes for this single final proof run; previous failed coverage evidence is retained.
+
+### L15 — Renewed final coverage PASS and closure
+Executed the explicitly renewed `./scripts/check-coverage.sh 100 --issues` exactly once: exit0,6560tests60758assertions,zero failures/errors/warnings/notices/skipped/incomplete/risky/deprecations. Clover exact equality:23262coveredstatements/23262statements. Parent read back Clover metrics and log and reran registry alignment:5tests4308assertions PASS; git diff --check PASS. No source/test/config changes during the run. The previous failed invocation remains historical evidence, now followed by successful renewed proof; no thresholds, source filters, exclusions or dependency versions changed. All S1-S4/T1-T7 outcomes now have observed proof; no failed, skipped or pending required check remains. Native review remains globally off, disabled/unmanaged; live daemon/DB/remote testing remains outside authorized scope. No push/PR/merge performed.
+Final generated coverage remains in ignored var/coverage/clover.xml. Used external verifier/test scratch is removed by the parent after evidence capture; no source scratch was left in the worktree. Delivery remains one future PR with the accepted size exception, publication not authorized.
