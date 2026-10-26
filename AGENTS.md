@@ -256,6 +256,20 @@ Read `.agents/services.md`. For ChanServ policy work also read `.agents/chanserv
 For HELP copy, line wrapping, and IRC presentation colors, also read
 `.agents/irc-help-style.md`.
 
+### HISTORY policy for commands and options
+
+Before adding a NickServ or ChanServ command, option, or subcommand, ask the user whether
+its action should be recorded in the registered nickname's or channel's HISTORY, respectively.
+When options or subcommands apply, confirm the decision separately for each one rather than
+assuming a single policy for the entire command. Do not assume inclusion or exclusion.
+
+- NickServ example: ask separately whether `SET PASSWORD` and `SET EMAIL` should record
+  their actions in the registered nickname's HISTORY.
+- ChanServ example: ask separately whether `LEVELS SET`, `LEVELS RESET`, and `LEVELS LIST`
+  should record their actions in the registered channel's HISTORY.
+
+These examples illustrate decision granularity; preserve policies already explicitly agreed.
+
 ### Staged translation rollouts
 
 When translation work is explicitly staged for review in one locale, modify only the approved
