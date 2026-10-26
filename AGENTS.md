@@ -289,6 +289,10 @@ as real spaces relative to the YAML block indentation. After changing multiline 
 verify decoded line breaks, placeholders, and IRC controls are preserved. This applies to every
 key in bot-service catalogs, not only `help.*` values.
 
+Every new or modified service command must declare its argument structure and contextual syntax
+through the command validation system. Required and optional parameters must match runtime
+behavior. Include routing-level regression tests before considering the command complete.
+
 A new command is complete only when it is registered in the runtime command registry, appears in
 `HELP`, has translation keys in all 14 languages, and has a routing/HELP integration test. For an
 IRCop command, also register its permission in the service permission catalog and verify role-based
