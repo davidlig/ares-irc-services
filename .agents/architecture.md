@@ -227,3 +227,10 @@ Before completion verify:
 - `Shared` stayed small;
 - cross-context imports use public boundaries;
 - protocol state was not promoted into business Domain without business meaning.
+
+## Service command argument validation
+
+`Shared/Adapter/In/Irc/CommandArgument` is a narrowly scoped, pure transport grammar shared only by
+the four service inbound adapters. It owns no service policies, HELP presentation, translations,
+I/O or use cases. Service commands own their definitions. Domain and Application must not import
+this adapter layer. Deptrac enforces the dedicated `Service Command Arguments` boundary.
