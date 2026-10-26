@@ -576,6 +576,35 @@ composer cs-fix     # auto-fix
 composer cs-check   # check only
 ```
 
+### YAML formatting (Prettier)
+
+Node 24 and npm are development and CI requirements only; the production daemon does not
+need them. Install the exact locked Prettier dependency before formatting:
+
+```bash
+npm ci
+composer yaml-fix     # format config/, translations/, .github/workflows/, and root deptrac.yaml
+composer yaml-check   # check the same scope without writing files
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/yaml/tests -v
+```
+
+The equivalent npm commands are `npm run yaml:fix` and `npm run yaml:check`. They use the
+locally installed formatter, never an implicit download through `npx`. All three directories
+include nested `.yaml` and `.yml` files. Formatting uses two spaces, LF endings, preferred
+double quotes, and preserved prose wrapping. Check mode fails when normalization is needed.
+
+Run `composer yaml-fix` immediately after PHP-CS-Fixer, review the diff, and run
+`composer yaml-check` before completion. When normalizing existing YAML, compare before/after
+Symfony-parsed values, types and custom tags across the entire scope, including `deptrac.yaml`.
+Preserve IRC escapes, physical multiline blocks, `!irc` tags, placeholders, meaningful spaces
+and mail-body trailing newlines. Prettier-selected quoting is allowed only when parsed content
+is unchanged; retain double quotes where YAML escape decoding is required. Do not alter
+translated messages, Deptrac rules, workflow behavior/scripts/permissions, or the staged Spanish-first HELP rollout.
+
+Use identical English technical section comments at equivalent structural positions across
+locales. NickServ and ChanServ use `# --- HISTORY ---`, `# --- HISTORY MESSAGES ---`, and
+`# --- HISTORY EXTRA FIELDS ---` before `history`, `history.message`, and `history.extra`.
+
 ### Pre-commit verification chain
 
 ```bash
@@ -584,6 +613,8 @@ php bin/console lint:container                           # DI validation
 php bin/console lint:yaml . --exclude vendor/ --parse-tags  # YAML lint
 composer phpstan                                        # PHPStan level max
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php  # format
+composer yaml-fix                                       # normalize YAML immediately afterward
+composer yaml-check                                     # check without writing; review the diff
 composer architecture                                   # Deptrac architecture boundaries
 ./scripts/check-coverage.sh 100 --issues                 # tests + coverage floor (single run)
 ```

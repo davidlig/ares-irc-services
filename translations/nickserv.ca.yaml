@@ -646,7 +646,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — per %nickname% (%date%)"
     empty: "\x0307ℹ\x03 No hi ha patrons de vhost prohibits."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
   short: "Veure o gestionar l'historial d'accions del sobrenom."
@@ -697,6 +697,8 @@ history:
     help: "Elimina irreversiblement totes les entrades de l'historial del sobrenom."
     example: "%command_prefix%\x02\x0303HISTORY Usuari CLEAR\x03\x0F"
     success: "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'historial de \x02%nickname%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Compte activat"
   resend: "Correu de verificació reenviat"
@@ -709,6 +711,8 @@ history.message:
   email_changed_owner: "Correu canviat de %old_email% a %new_email%"
   email_changed_operator: "Correu canviat a %new_email% per l'operador"
   recover: "Contrasenya restablerta via token de correu"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Correu anterior: %value%"
   new_email: "Correu nou: %value%"

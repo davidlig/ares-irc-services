@@ -641,7 +641,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — por %nickname% (%date%)"
     empty: "\x0307ℹ\x03 Non hai patróns de vhost prohibidos."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <alcume> {ADD|DEL|VIEW|CLEAR}"
   short: "Ver ou xestionar o historial de accións do alcume."
@@ -692,6 +692,8 @@ history:
     help: "Elimina de forma irreversible todas as entradas do historial do alcume."
     example: "%command_prefix%\x02\x0303HISTORY Usuario CLEAR\x03\x0F"
     success: "\x0303✔\x03 Limpadas \x02%count%\x02 entradas do historial de \x02%nickname%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Conta activada"
   resend: "Correo de verificación reenviado"
@@ -704,6 +706,8 @@ history.message:
   email_changed_owner: "Correo electrónico cambiado de %old_email% a %new_email%"
   email_changed_operator: "Correo electrónico cambiado a %new_email% por un operador"
   recover: "Contrasinal restablecido mediante token por correo"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Correo-e anterior: %value%"
   new_email: "Novo correo-e: %value%"

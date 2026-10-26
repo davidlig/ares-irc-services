@@ -706,7 +706,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — %nickname%-(e)k (%date%)"
     empty: "\x0307ℹ\x03 Ez dago debekatutako vhost eredurik."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <ezizena> {ADD|DEL|VIEW|CLEAR}"
   short: "Ikusi edo kudeatu ezizenaren ekintza historia."
@@ -780,6 +780,8 @@ history:
     help: "Ezizenaren historiako sarrera guztiak modu itzulezinean ezabatzen ditu."
     example: "%command_prefix%\x02\x0303HISTORY Erabiltzailea CLEAR\x03\x0F"
     success: "\x0303✔\x03 \x02%count%\x02 historia sarrera garbitu dira \x02%nickname%\x02 ezizenarentzat."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Kontua aktibatu da"
   resend: "Egiaztapen-mezua berriz bidali da"
@@ -792,6 +794,8 @@ history.message:
   email_changed_owner: "Posta %old_email%-(e)tik %new_email%-(e)ra aldatua"
   email_changed_operator: "Posta %new_email%-(e)ra aldatua operadoreak"
   recover: "Pasahitza posta tokenaren bidez berrezarria"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Posta zaharra: %value%"
   new_email: "Posta berria: %value%"

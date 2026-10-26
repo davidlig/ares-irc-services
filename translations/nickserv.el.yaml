@@ -740,7 +740,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — από %nickname% (%date%)"
     empty: "\x0307ℹ\x03 Δεν υπάρχουν απαγορευμένα μοτίβα vhost."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
   short: "Προβολή ή διαχείριση ιστορικού ενεργειών ψευδωνύμου."
@@ -836,6 +836,8 @@ history:
       Παράδειγμα: HISTORY SomeNick CLEAR
     example: "%command_prefix%\x02\x0303HISTORY Χρήστης CLEAR\x03\x0F"
     success: "\x0303✔\x03 Εκκαθαρίστηκαν \x02%count%\x02 καταχωρήσεις ιστορικού για \x02%nickname%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Ο λογαριασμός ενεργοποιήθηκε"
   resend: "Το email επαλήθευσης στάλθηκε ξανά"
@@ -848,6 +850,8 @@ history.message:
   email_changed_owner: "Το email άλλαξε από %old_email% σε %new_email%"
   email_changed_operator: "Το email άλλαξε σε %new_email% από operator"
   recover: "Επαναφορά κωδικού μέσω token email"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Προηγούμενο email: %value%"
   new_email: "Νέο email: %value%"

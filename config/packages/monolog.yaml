@@ -1,91 +1,91 @@
 monolog:
-    channels:
-        - irc          # All IRC protocol traffic and link lifecycle events
-        - maintenance  # Maintenance cycles and task execution (purge expired, etc.)
-        - deprecation  # Symfony deprecation notices
-        - ircops       # IRCop commands across all services (KILL, GLINE, etc.)
+  channels:
+    - irc # All IRC protocol traffic and link lifecycle events
+    - maintenance # Maintenance cycles and task execution (purge expired, etc.)
+    - deprecation # Symfony deprecation notices
+    - ircops # IRCop commands across all services (KILL, GLINE, etc.)
 
-    handlers:
-        # -----------------------------------------------------------------------
-        # Maintenance channel — info level, daily rotation, 30-day retention
-        # All maintenance cycle and task logs in one place.
-        # -----------------------------------------------------------------------
-        maintenance_rotating:
-            type:      rotating_file
-            path:      '%kernel.logs_dir%/maintenance.log'
-            level:     info
-            max_files: 30
-            channels:  [maintenance]
+  handlers:
+    # -----------------------------------------------------------------------
+    # Maintenance channel — info level, daily rotation, 30-day retention
+    # All maintenance cycle and task logs in one place.
+    # -----------------------------------------------------------------------
+    maintenance_rotating:
+      type: rotating_file
+      path: "%kernel.logs_dir%/maintenance.log"
+      level: info
+      max_files: 30
+      channels: [maintenance]
 
-        # -----------------------------------------------------------------------
-        # IRC channel — debug level, daily rotation, 30-day retention
-        # Captures every incoming/outgoing message and connection event.
-        # -----------------------------------------------------------------------
-        irc_rotating:
-            type:      rotating_file
-            path:      '%kernel.logs_dir%/irc.log'
-            level:     debug
-            max_files: 30
-            channels:  [irc]
+    # -----------------------------------------------------------------------
+    # IRC channel — debug level, daily rotation, 30-day retention
+    # Captures every incoming/outgoing message and connection event.
+    # -----------------------------------------------------------------------
+    irc_rotating:
+      type: rotating_file
+      path: "%kernel.logs_dir%/irc.log"
+      level: debug
+      max_files: 30
+      channels: [irc]
 
-        # -----------------------------------------------------------------------
-        # Application log — info level, daily rotation, 30-day retention
-        # General app events (startup, errors, framework, etc.) excluding IRC
-        # traffic, Symfony deprecations and Doctrine SQL (e.g. Messenger polling).
-        # -----------------------------------------------------------------------
-        app_rotating:
-            type:      rotating_file
-            path:      '%kernel.logs_dir%/ares.log'
-            level:     info
-            max_files: 30
-            channels:  ['!irc', '!maintenance', '!deprecation', '!event', '!doctrine']
+    # -----------------------------------------------------------------------
+    # Application log — info level, daily rotation, 30-day retention
+    # General app events (startup, errors, framework, etc.) excluding IRC
+    # traffic, Symfony deprecations and Doctrine SQL (e.g. Messenger polling).
+    # -----------------------------------------------------------------------
+    app_rotating:
+      type: rotating_file
+      path: "%kernel.logs_dir%/ares.log"
+      level: info
+      max_files: 30
+      channels: ["!irc", "!maintenance", "!deprecation", "!event", "!doctrine"]
 
-        # -----------------------------------------------------------------------
-        # Error aggregation — error level, daily rotation, 30-day retention
-        # All channels feed into this file so critical issues are easy to find.
-        # -----------------------------------------------------------------------
-        error_rotating:
-            type:      rotating_file
-            path:      '%kernel.logs_dir%/error.log'
-            level:     error
-            max_files: 30
-            channels:  ['!event']
+    # -----------------------------------------------------------------------
+    # Error aggregation — error level, daily rotation, 30-day retention
+    # All channels feed into this file so critical issues are easy to find.
+    # -----------------------------------------------------------------------
+    error_rotating:
+      type: rotating_file
+      path: "%kernel.logs_dir%/error.log"
+      level: error
+      max_files: 30
+      channels: ["!event"]
 
-        # -----------------------------------------------------------------------
-        # IRCops channel — IRCop commands across all services.
-        # Weekly rotation, 26 weeks retention (~6 months).
-        # -----------------------------------------------------------------------
-        ircops_rotating:
-            type:      rotating_file
-            path:      '%kernel.logs_dir%/ircops.log'
-            level:     info
-            max_files: 26
-            channels:  [ircops]
+    # -----------------------------------------------------------------------
+    # IRCops channel — IRCop commands across all services.
+    # Weekly rotation, 26 weeks retention (~6 months).
+    # -----------------------------------------------------------------------
+    ircops_rotating:
+      type: rotating_file
+      path: "%kernel.logs_dir%/ircops.log"
+      level: info
+      max_files: 26
+      channels: [ircops]
 
 when@dev:
-    monolog:
-        handlers:
-            # Print all logs to the terminal in development
-            console:
-                type:                   console
-                process_psr_3_messages: false
-                channels:               ['!event']
-            # Override app log to debug level so nothing is hidden during dev
-            app_rotating:
-                type:      rotating_file
-                path:      '%kernel.logs_dir%/ares.log'
-                level:     debug
-                max_files: 30
-                channels:  ['!irc', '!deprecation', '!event', '!doctrine']
+  monolog:
+    handlers:
+      # Print all logs to the terminal in development
+      console:
+        type: console
+        process_psr_3_messages: false
+        channels: ["!event"]
+      # Override app log to debug level so nothing is hidden during dev
+      app_rotating:
+        type: rotating_file
+        path: "%kernel.logs_dir%/ares.log"
+        level: debug
+        max_files: 30
+        channels: ["!irc", "!deprecation", "!event", "!doctrine"]
 
 when@test:
-    monolog:
-        handlers:
-            main:
-                type:         fingers_crossed
-                action_level: error
-                handler:      nested
-            nested:
-                type:  stream
-                path:  '%kernel.logs_dir%/%kernel.environment%.log'
-                level: debug
+  monolog:
+    handlers:
+      main:
+        type: fingers_crossed
+        action_level: error
+        handler: nested
+      nested:
+        type: stream
+        path: "%kernel.logs_dir%/%kernel.environment%.log"
+        level: debug

@@ -641,7 +641,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — por %nickname% (%date%)"
     empty: "\x0307ℹ\x03 Nenhum padrão de vhost proibido."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
   short: "Ver ou gerir histórico de ações do nickname."
@@ -692,6 +692,8 @@ history:
     help: "Elimina irreversivelmente todas as entradas do histórico do nickname."
     example: "%command_prefix%\x02\x0303HISTORY Utilizador CLEAR\x03\x0F"
     success: "\x0303✔\x03 Eliminadas \x02%count%\x02 entradas de histórico de \x02%nickname%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Conta ativada"
   resend: "Email de verificação reenviado"
@@ -704,6 +706,8 @@ history.message:
   email_changed_owner: "Email alterado de %old_email% para %new_email%"
   email_changed_operator: "Email alterado para %new_email% pelo operador"
   recover: "Palavra-passe redefinida via token de email"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Email anterior: %value%"
   new_email: "Novo email: %value%"

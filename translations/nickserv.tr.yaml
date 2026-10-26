@@ -636,7 +636,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — ekleyen: %nickname% (%date%)"
     empty: "\x0307ℹ\x03 Yasaklı vhost kalıbı yok."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
   short: "Rumuz eylem geçmişini görüntüleyin veya yönetin."
@@ -688,6 +688,8 @@ history:
     help: "Takma adın tüm geçmiş kayıtlarını geri alınamaz biçimde siler."
     example: "%command_prefix%\x02\x0303HISTORY Kullanıcı CLEAR\x03\x0F"
     success: "\x0303✔\x03 \x02%nickname%\x02 için \x02%count%\x02 geçmiş girişi temizlendi."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Hesap etkinleştirildi"
   resend: "Doğrulama e-postası yeniden gönderildi"
@@ -700,6 +702,8 @@ history.message:
   email_changed_owner: "E-posta %old_email% yerine %new_email% olarak değiştirildi"
   email_changed_operator: "E-posta operatör tarafından %new_email% olarak değiştirildi"
   recover: "Şifre e-posta tokenı ile sıfırlandı"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Eski e-posta: %value%"
   new_email: "Yeni e-posta: %value%"

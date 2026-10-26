@@ -79,6 +79,8 @@
         "architecture": "deptrac analyse --config-file=deptrac.yaml --no-progress --fail-on-uncovered --report-uncovered",
         "cs-check": "php-cs-fixer fix --dry-run --diff",
         "cs-fix": "php-cs-fixer fix",
+        "yaml-fix": "npm run yaml:fix",
+        "yaml-check": "npm run yaml:check",
         "phpstan": "phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress"
     },
     "conflict": {

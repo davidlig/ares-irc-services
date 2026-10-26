@@ -626,7 +626,7 @@ unforbid:
 debug:
   founder_action: "Azione livello-fondatore"
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <#canale> {ADD|DEL|VIEW|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #canale ADD Revisione della moderazione\x03\x0F"
@@ -676,6 +676,8 @@ history:
     short: "Elimina tutte le voci di cronologia per un canale."
     help: "Elimina tutte le voci della cronologia del canale."
     success: "\x0303✔\x03 Eliminate \x02%count%\x02 voci di cronologia per \x02%channel%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   levels_set: "Livello di accesso modificato"
   levels_reset: "Livelli di accesso ripristinati"
@@ -705,6 +707,8 @@ history.message:
   access_del: "Accesso rimosso per %target_nickname%"
   akick_add: "AKICK aggiunto: %mask%"
   akick_del: "AKICK rimosso: %mask%"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   option: "Opzione: %value%"
   old_value: "Livello precedente: %value%"

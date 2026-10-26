@@ -4,7 +4,17 @@ on:
   pull_request_target:
     types: [opened, reopened, edited, synchronize, ready_for_review, closed]
   issues:
-    types: [opened, labeled, unlabeled, edited, transferred, deleted, closed, reopened]
+    types:
+      [
+        opened,
+        labeled,
+        unlabeled,
+        edited,
+        transferred,
+        deleted,
+        closed,
+        reopened,
+      ]
   issue_comment:
     types: [created, edited, deleted]
   label:
@@ -16,7 +26,7 @@ on:
     types: [completed]
   workflow_dispatch:
   schedule:
-    - cron: '7,22,37,52 * * * *'
+    - cron: "7,22,37,52 * * * *"
 
 permissions: {}
 
@@ -60,5 +70,5 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           CONTRIBUTION_CHECK_TOKEN: ${{ steps.contribution-app.outputs.token }}
           CONTRIBUTION_APP_ID: ${{ vars.CONTRIBUTION_APP_ID }}
-          PYTHONDONTWRITEBYTECODE: '1'
+          PYTHONDONTWRITEBYTECODE: "1"
         run: python3 scripts/contribution/reconcile.py

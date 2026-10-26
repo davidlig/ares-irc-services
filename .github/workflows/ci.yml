@@ -22,9 +22,17 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: "8.5"
           tools: composer:v2
           coverage: pcov
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install YAML formatter
+        run: npm ci
 
       - name: Validate composer.json
         run: composer validate --strict
@@ -34,6 +42,9 @@ jobs:
 
       - name: Install dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Test YAML formatting commands
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/yaml/tests -v
 
       - name: Test deployment infrastructure
         run: python3 -m unittest discover -s scripts/deploy/tests -v
@@ -55,6 +66,9 @@ jobs:
 
       - name: Check coding standards
         run: ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff
+
+      - name: Check YAML formatting
+        run: composer yaml-check
 
       - name: Run PHPStan at max level
         run: composer phpstan
@@ -143,7 +157,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: "8.5"
           tools: composer:v2
           extensions: pdo_mysql, pdo_pgsql
 

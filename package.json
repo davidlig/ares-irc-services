@@ -1,0 +1,11 @@
+{
+  "name": "ares-irc-services-dev",
+  "private": true,
+  "scripts": {
+    "yaml:fix": "prettier --write \"{config,translations,.github/workflows}/**/*.{yaml,yml}\" deptrac.yaml",
+    "yaml:check": "prettier --check \"{config,translations,.github/workflows}/**/*.{yaml,yml}\" deptrac.yaml"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

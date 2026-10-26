@@ -288,8 +288,14 @@ IRC-formatted messages use explicitly tagged literal blocks (`!irc |-`), loaded 
 Bootstrap IRC YAML translation loader. That loader decodes only `\x02`, `\x03`, and `\x0F`
 (case-insensitively), once and before parameter interpolation; other escape text and untagged
 values remain unchanged. Use physical newlines and real spaces inside these blocks, not `\n`,
-`\x0A`, or `\x20`. Single-line IRC strings remain double-quoted. Preserve intentional literal
-CTCP escapes and mail-body terminal newlines; do not tag or globally decode those values.
+`\x0A`, or `\x20`. Single-line IRC strings requiring YAML escape decoding remain double-quoted.
+Preserve intentional literal CTCP escapes and mail-body terminal newlines; do not tag or globally decode those values.
+Prefer double quotes, but allow Prettier-selected quoting only when parsed values and IRC
+escape semantics remain unchanged; retain double quotes wherever YAML escape decoding is required.
+Use identical English technical section comments at equivalent structural positions across
+locales. NickServ and ChanServ HISTORY sections use exactly `# --- HISTORY ---`,
+`# --- HISTORY MESSAGES ---`, and `# --- HISTORY EXTRA FIELDS ---` before `history`,
+`history.message`, and `history.extra`, respectively.
 For multi-line HELP examples, keep the first command as a single-line `example` scalar and
 put each remaining command in a single-line entry under a sibling `examples` YAML sequence; the
 service formatter renders entries separately, replaces `%command_prefix%` with the uncolored
@@ -474,11 +480,22 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags
 ./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress
 
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
+composer yaml-fix
+composer yaml-check
 
 ./scripts/check-coverage.sh 100 --issues
 ```
 
 Run any configured architecture dependency gate (for example Deptrac) at its project-defined step.
+
+Install the locked development formatter with `npm ci` (Node 24/npm; not production requirements).
+Run `composer yaml-fix` immediately after PHP-CS-Fixer. It formats all `.yaml` and `.yml` files
+under `config/`, `translations/` and `.github/workflows/`, plus root `deptrac.yaml`, using only
+the locally installed Prettier. Review formatting changes and run the non-mutating `composer yaml-check` before
+completion. For bulk normalization, compare before/after Symfony-parsed values, types and custom
+tags throughout that scope; preserve IRC escapes, placeholders, meaningful whitespace, mail-body
+trailing newlines, Deptrac rules and workflow behavior/scripts/permissions. Formatting does not authorize
+translation changes or expansion of the staged Spanish-first HELP rollout.
 
 Never claim a gate passed unless it was actually run.
 

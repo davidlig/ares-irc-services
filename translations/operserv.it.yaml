@@ -108,7 +108,6 @@ ircop:
 
 # --- ROLE ------------------------------------------------------------------
 role:
-
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
     syntax: "ROLE OPERCLASS {LIST|VIEW <ruolo>|SET <ruolo> [operclass]}"

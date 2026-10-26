@@ -651,7 +651,7 @@ unforbid:
 debug:
   founder_action: "Ενέργεια ιδρυτή-επιπέδου"
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #κανάλι ADD Έλεγχος συντονισμού\x03\x0F"
@@ -719,6 +719,8 @@ history:
     short: "Διαγραφή όλων των καταχωρήσεων ιστορικού για ένα κανάλι."
     help: "Διαγράφει όλες τις καταχωρήσεις ιστορικού του καναλιού."
     success: "\x0303✔\x03 Εκκαθαρίστηκαν \x02%count%\x02 καταχωρήσεις ιστορικού για \x02%channel%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   levels_set: "Το επίπεδο πρόσβασης άλλαξε"
   levels_reset: "Τα επίπεδα πρόσβασης επαναφέρθηκαν"
@@ -748,6 +750,8 @@ history.message:
   access_del: "Πρόσβαση αφαιρέθηκε για %target_nickname%"
   akick_add: "AKICK προστέθηκε: %mask%"
   akick_del: "AKICK αφαιρέθηκε: %mask%"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   option: "Επιλογή: %value%"
   old_value: "Προηγούμενο επίπεδο: %value%"
