@@ -17,6 +17,7 @@ use App\ChanServ\Domain\Exception\InsufficientAccessException;
 use App\Irc\Application\Port\In\ChannelModeSupportInterface;
 use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
 use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use DateTimeImmutable;
 
 use function in_array;
 use function sprintf;
@@ -158,6 +159,9 @@ final readonly class LevelsCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        if (null === $context->sender) {
+            return;
+        }
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
@@ -186,6 +190,8 @@ final readonly class LevelsCommand implements ChanServCommandInterface
             $context->isLevelFounder,
             $action,
             $this->visibleLevelKeys($modeSupport),
+            $context->sender->nick,
+            new DateTimeImmutable(),
             '' === $levelKey ? null : $levelKey,
             '' === $valueString ? null : (int) $valueString,
         ));

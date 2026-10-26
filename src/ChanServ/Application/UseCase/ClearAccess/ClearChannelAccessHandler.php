@@ -6,6 +6,7 @@ namespace App\ChanServ\Application\UseCase\ClearAccess;
 
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 
 use function strtolower;
 
@@ -14,6 +15,7 @@ final readonly class ClearChannelAccessHandler implements ClearChannelAccessHand
     public function __construct(
         private RegisteredChannelRepositoryInterface $channels,
         private ChannelAccessRepositoryInterface $access,
+        private ChannelHistoryService $history,
     ) {}
 
     public function handle(ClearChannelAccess $command): ClearChannelAccessResult
@@ -29,6 +31,14 @@ final readonly class ClearChannelAccessHandler implements ClearChannelAccessHand
         }
 
         $this->access->deleteByChannelId($channel->getId());
+        $this->history->recordWithExplicitMetadata(
+            channelId: $channel->getId(),
+            action: 'CLEARACCESS',
+            performedBy: $command->actorNickname,
+            performedByNickId: null,
+            performedAt: $command->occurredAt,
+            message: 'history.message.clearaccess',
+        );
 
         return new ClearChannelAccessResult(ClearChannelAccessOutcome::Cleared, $count);
     }

@@ -11,6 +11,7 @@ use App\ChanServ\Adapter\In\Irc\Command\ChanServArgumentDefinitionSupport;
 use App\ChanServ\Adapter\In\Irc\Command\HistoryCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Security\ChanServPermission;
@@ -36,6 +37,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use UnexpectedValueException;
 
 #[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(HistoryCommand::class)]
@@ -599,6 +601,73 @@ final class HistoryCommandTest extends TestCase
     }
 
     #[Test]
+    public function executeViewDisplaysApprovedLevelsBeforeAndAfterMetadata(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $entry = ChannelHistory::record(
+            new DateTimeImmutable(),
+            channelId: 1,
+            action: 'LEVELS_SET',
+            performedBy: 'Founder',
+            performedByNickId: null,
+            message: 'history.message.levels_set',
+            extraData: ['option' => 'AUTOOP', 'old_value' => 300, 'new_value' => 400],
+        );
+        $entry = self::historyWithId($entry, 1);
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(1);
+        $historyRepo->method('findByChannelId')->willReturn([$entry]);
+        $messages = [];
+        $translatedIds = [];
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id) use (&$translatedIds): string {
+            $translatedIds[] = $id;
+
+            return $id;
+        });
+        $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo, translatorOverride: $translator);
+
+        $this->createCommandWithRepos($channelRepo, $historyRepo)->execute($context);
+
+        self::assertContains('history.extra.option', $translatedIds);
+        self::assertContains('history.extra.old_value', $translatedIds);
+        self::assertContains('history.extra.new_value', $translatedIds);
+    }
+
+    #[Test]
+    public function malformedClearTransactionResultFailsClosedWithoutMutationOrReply(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->expects(self::never())->method('deleteByChannelId');
+        $historyRepo->expects(self::never())->method('save');
+        $transactions = $this->createStub(ChanTransactionBoundary::class);
+        $transactions->method('transactional')->willReturn('not-a-row-count');
+        $messages = [];
+        $context = $this->createContext(['#test', 'CLEAR'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+        $handler = new ManageChannelHistoryHandler(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(ChanUserAccountPort::class),
+            $transactions,
+        );
+
+        try {
+            new HistoryCommand($handler)->execute($context);
+            self::fail('Malformed transaction results must be rejected.');
+        } catch (UnexpectedValueException $exception) {
+            self::assertSame('Channel history transaction must return the deleted row count.', $exception->getMessage());
+        }
+
+        self::assertSame([], $messages);
+    }
+
+    #[Test]
     public function executeViewDisplaysHistoryWithUnknownOperator(): void
     {
         $channel = $this->createChannelWithId('#test', 1);
@@ -1011,8 +1080,24 @@ final class HistoryCommandTest extends TestCase
             $historyRepository,
             $historyService,
             $accountPort,
+            $this->transactionBoundary(),
             $historyViewLimit,
         ));
+    }
+
+    private function transactionBoundary(): ChanTransactionBoundary
+    {
+        return new class implements ChanTransactionBoundary {
+            public function transactional(callable $operation): mixed
+            {
+                return $operation();
+            }
+
+            public function afterCommit(callable $operation): void
+            {
+                $operation();
+            }
+        };
     }
 
     private function createCommand(): HistoryCommand
@@ -1070,6 +1155,7 @@ final class HistoryCommandTest extends TestCase
         ?RegisteredChannelRepositoryInterface $channelRepo = null,
         ?ChannelHistoryRepositoryInterface $historyRepo = null,
         ?ChanUserAccountPort $nickRepo = null,
+        ?TranslatorInterface $translatorOverride = null,
     ): ChanServContext {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $targetUid, string $message, string $type) use (&$messages): void {
@@ -1078,8 +1164,12 @@ final class HistoryCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        if (null === $translatorOverride) {
+            $translator = $this->createStub(TranslatorInterface::class);
+            $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        } else {
+            $translator = $translatorOverride;
+        }
 
         $historyRepoFinal = $historyRepo ?? $this->createStub(ChannelHistoryRepositoryInterface::class);
         $nickRepoFinal = $nickRepo ?? $this->createStub(ChanUserAccountPort::class);

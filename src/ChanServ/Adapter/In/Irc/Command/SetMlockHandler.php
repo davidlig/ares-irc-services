@@ -10,6 +10,7 @@ use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlock;
 use App\ChanServ\Application\UseCase\ConfigureMlock\ConfigureChannelMlockHandlerInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\ValueObject\ChannelModeLock;
+use DateTimeImmutable;
 
 use function array_map;
 use function implode;
@@ -25,6 +26,9 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
+        if (null === $context->sender) {
+            return;
+        }
         $normalized = strtoupper(trim($value));
         if ('ON' !== $normalized && 'OFF' !== $normalized) {
             $context->reply('error.syntax', ['syntax' => $context->trans('set.mlock.syntax')]);
@@ -33,7 +37,12 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
         }
         $on = 'ON' === $normalized;
         $modeLock = $on ? $this->modeLockFromCurrentChannelState($context, $channel) : ChannelModeLock::inactive();
-        $result = $this->configureMlock->handle(new ConfigureChannelMlock($channel, $modeLock));
+        $result = $this->configureMlock->handle(new ConfigureChannelMlock(
+            $channel,
+            $modeLock,
+            $context->sender->nick,
+            new DateTimeImmutable(),
+        ));
         $modesDisplay = '';
         if ($on) {
             $letters = array_map(
@@ -49,7 +58,7 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
             $context->reply('set.mlock.off');
         }
 
-        $nick = $context->sender->nick ?? '';
+        $nick = $context->sender->nick;
         if ('' !== $nick && $on) {
             $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->trans('set.mlock.notice_on', [
                 '%nickname%' => $nick,

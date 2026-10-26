@@ -37,9 +37,10 @@ final class SetMlockHandlerTest extends TestCase
         TranslatorInterface $translator,
         ?ChannelLookupPort $channelLookup = null,
         ?ChannelModeSupportInterface $modeSupport = null,
+        bool $withoutSender = false,
     ): ChanServContext {
         return new ChanServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             null,
             'SET',
             ['#test', 'MLOCK', 'on'],
@@ -74,6 +75,23 @@ final class SetMlockHandlerTest extends TestCase
         $handler->handle($this->createContext($notifier, $translator), $channel, 'maybe');
 
         self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function nullSenderDoesNotConfigureMlockOrReply(): void
+    {
+        $configureMlock = $this->createMock(ConfigureChannelMlockHandlerInterface::class);
+        $configureMlock->expects(self::never())->method('handle');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $notifier->expects(self::never())->method('sendNoticeToChannel');
+        $handler = new SetMlockHandler($configureMlock, new MlockStateFromChannelResolver());
+
+        $handler->handle(
+            $this->createContext($notifier, $this->createStub(TranslatorInterface::class), withoutSender: true),
+            $this->createStub(RegisteredChannel::class),
+            'ON',
+        );
     }
 
     #[Test]

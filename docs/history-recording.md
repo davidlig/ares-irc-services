@@ -1,6 +1,6 @@
-# NickServ HISTORY recording
+# NickServ and ChanServ HISTORY recording
 
-HISTORY is persistent account history, not raw command logging or IRCop
+HISTORY is persistent account/channel history, not raw command logging or IRCop
 security auditing. Only successful, explicitly included operations create new
 entries. Successful repetitions are included; validation failures, denied
 operations and rejected empty-clear outcomes are not. Existing command replies,
@@ -15,6 +15,14 @@ nickname. `USERIP` records the sender in the queried registered account's histor
 it does not record returned IP/host data or create accounts for unregistered
 queries. Existing recovery, password/email change and suspension history retain
 their existing metadata and are not duplicated.
+
+ChanServ records `SET DESC/URL/EMAIL/ENTRYMSG`, both ON/OFF states of
+`SET TOPICLOCK/MLOCK/SECURE/PRIVATE`, `LEVELS RESET`, successful `CLEARACCESS` and
+`CLEARUSERS`, and `NOEXPIRE/IRCOPONLY ON/OFF` with the sender nickname. Setting
+contents, MLOCK parameters and channel keys are not copied into history.
+`LEVELS SET` additionally records the option key and previous effective/new
+levels, including fallback to the default before an override exists. Existing
+founder/successor, ACCESS, AKICK, DELACCESS and suspension entries are unchanged.
 
 ## History management
 

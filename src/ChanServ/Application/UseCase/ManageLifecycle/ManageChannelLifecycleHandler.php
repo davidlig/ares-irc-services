@@ -10,6 +10,7 @@ use App\ChanServ\Application\PublishedEvent\ChannelSuspendedEvent;
 use App\ChanServ\Application\PublishedEvent\ChannelUnsuspendedEvent;
 use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelForbiddenService;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChannelSuspensionService;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Shared\Application\Time\RelativeExpiryParser;
@@ -25,6 +26,7 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         private ChannelForbiddenService $forbiddenService,
         private ChannelSuspensionService $suspensionService,
         private EventBusInterface $events,
+        private ChannelHistoryService $history,
     ) {}
 
     public function handle(ManageChannelLifecycle $command): ChannelLifecycleResult
@@ -119,6 +121,14 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
 
         $channel->changeNoExpire($enabled);
         $this->channels->save($channel);
+        $this->history->recordWithExplicitMetadata(
+            channelId: $channel->getId(),
+            action: 'NOEXPIRE_' . ($enabled ? 'ON' : 'OFF'),
+            performedBy: $command->actorNickname,
+            performedByNickId: null,
+            performedAt: $command->occurredAt,
+            message: 'history.message.noexpire_' . ($enabled ? 'on' : 'off'),
+        );
 
         return new ChannelLifecycleResult(
             $enabled ? ChannelLifecycleOutcome::NoExpireEnabled : ChannelLifecycleOutcome::NoExpireDisabled,
@@ -138,6 +148,14 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         $channel->configureIrcopOnly($enabled);
         $this->channels->save($channel);
         $this->events->dispatch(new ChannelIrcopOnlyUpdatedEvent($channel->getName()));
+        $this->history->recordWithExplicitMetadata(
+            channelId: $channel->getId(),
+            action: 'IRCOPONLY_' . ($enabled ? 'ON' : 'OFF'),
+            performedBy: $command->actorNickname,
+            performedByNickId: null,
+            performedAt: $command->occurredAt,
+            message: 'history.message.ircoponly_' . ($enabled ? 'on' : 'off'),
+        );
 
         return new ChannelLifecycleResult(
             $enabled ? ChannelLifecycleOutcome::IrcopOnlyEnabled : ChannelLifecycleOutcome::IrcopOnlyDisabled,

@@ -29,9 +29,10 @@ final class SetSecureHandlerTest extends TestCase
         ChanServNotifierInterface $notifier,
         TranslatorInterface $translator,
         string $value,
+        bool $withoutSender = false,
     ): ChanServContext {
         return new ChanServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             null,
             'SET',
             ['#test', 'SECURE', $value],
@@ -65,6 +66,23 @@ final class SetSecureHandlerTest extends TestCase
         $handler->handle($this->createContext($notifier, $translator, 'yes'), $channel, 'yes');
 
         self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function nullSenderDoesNotConfigureSecureOrReply(): void
+    {
+        $configureSecure = $this->createMock(ConfigureChannelSecureHandlerInterface::class);
+        $configureSecure->expects(self::never())->method('handle');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $notifier->expects(self::never())->method('sendNoticeToChannel');
+        $handler = new SetSecureHandler($configureSecure);
+
+        $handler->handle(
+            $this->createContext($notifier, $this->createStub(TranslatorInterface::class), 'ON', withoutSender: true),
+            $this->createStub(RegisteredChannel::class),
+            'ON',
+        );
     }
 
     #[Test]

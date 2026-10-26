@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\ChanServ\Application\UseCase\ManageLevels;
 
+use DateTimeImmutable;
+
 final readonly class ManageChannelLevels
 {
     /** @param list<string> $availableKeys */
@@ -13,6 +15,8 @@ final readonly class ManageChannelLevels
         public bool $founderEquivalent,
         public ManageChannelLevelsAction $action,
         public array $availableKeys,
+        public string $actorNickname,
+        public DateTimeImmutable $occurredAt,
         public ?string $levelKey = null,
         public ?int $value = null,
     ) {}

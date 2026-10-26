@@ -8,9 +8,11 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\SetEntrymsgHandler;
+use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\EmailDomainPolicy;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
+use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSetting;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingHandler;
 use App\ChanServ\Application\UseCase\UpdateSetting\UpdateChannelSettingResult;
@@ -127,6 +129,7 @@ final class SetEntrymsgHandlerTest extends TestCase
             $channels,
             $this->createStub(ChanUserAccountPort::class),
             $this->createStub(EventBusInterface::class),
+            new ChannelHistoryService($this->createStub(ChannelHistoryRepositoryInterface::class)),
         ));
     }
 

@@ -127,4 +127,24 @@ final class ChannelHistoryServiceTest extends TestCase
 
         self::assertSame($performedAt, $history->getPerformedAt());
     }
+
+    #[Test]
+    public function recordWithExplicitMetadataDoesNotEnrichWithIpOrHost(): void
+    {
+        $repo = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $repo->expects(self::once())->method('save');
+        $service = new ChannelHistoryService($repo);
+
+        $history = $service->recordWithExplicitMetadata(
+            channelId: 1,
+            action: 'LEVELS_SET',
+            performedBy: 'Founder',
+            performedByNickId: 2,
+            performedAt: new DateTimeImmutable('2026-01-02 03:04:05'),
+            message: 'history.message.levels_set',
+            extraData: ['option' => 'AUTOOP', 'old_value' => 5, 'new_value' => 10],
+        );
+
+        self::assertSame(['option' => 'AUTOOP', 'old_value' => 5, 'new_value' => 10], $history->getExtraData());
+    }
 }

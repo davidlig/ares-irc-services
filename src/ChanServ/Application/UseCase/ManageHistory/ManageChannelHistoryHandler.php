@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\ChanServ\Application\UseCase\ManageHistory;
 
 use App\ChanServ\Application\Port\Out\ChannelHistoryRepositoryInterface;
+use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\Service\ChannelHistoryService;
+use UnexpectedValueException;
 
 use function ceil;
+use function is_int;
 use function min;
 use function strtolower;
 
@@ -20,6 +23,7 @@ final readonly class ManageChannelHistoryHandler implements ManageChannelHistory
         private ChannelHistoryRepositoryInterface $historyRepository,
         private ChannelHistoryService $historyService,
         private ChanUserAccountPort $accountPort,
+        private ChanTransactionBoundary $transactions,
         private int $historyViewLimit = 40,
     ) {}
 
@@ -34,7 +38,7 @@ final readonly class ManageChannelHistoryHandler implements ManageChannelHistory
             ChannelHistoryAction::Add => $this->add($command, $channel->getId()),
             ChannelHistoryAction::Delete => $this->delete($command, $channel->getId()),
             ChannelHistoryAction::View => $this->view($command, $channel->getId()),
-            ChannelHistoryAction::Clear => $this->clear($channel->getId()),
+            ChannelHistoryAction::Clear => $this->clear($command, $channel->getId()),
         };
     }
 
@@ -103,9 +107,24 @@ final readonly class ManageChannelHistoryHandler implements ManageChannelHistory
         );
     }
 
-    private function clear(int $channelId): ManageChannelHistoryResult
+    private function clear(ManageChannelHistory $command, int $channelId): ManageChannelHistoryResult
     {
-        $count = $this->historyRepository->deleteByChannelId($channelId);
+        $count = $this->transactions->transactional(function () use ($command, $channelId): int {
+            $count = $this->historyRepository->deleteByChannelId($channelId);
+            $this->historyService->recordWithExplicitMetadata(
+                channelId: $channelId,
+                action: 'HISTORY_CLEAR',
+                performedBy: $command->actorNickname,
+                performedByNickId: null,
+                performedAt: $command->occurredAt,
+                message: 'history.message.history_clear',
+            );
+
+            return $count;
+        });
+        if (!is_int($count)) {
+            throw new UnexpectedValueException('Channel history transaction must return the deleted row count.');
+        }
 
         return new ManageChannelHistoryResult(ManageChannelHistoryOutcome::Cleared, total: $count);
     }
