@@ -6,6 +6,7 @@ namespace App\ChanServ\Adapter\In\Irc;
 
 use App\ChanServ\Adapter\In\Irc\Help\HelpableCommandInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 /**
  * Contract every ChanServ command module must implement.
@@ -18,6 +19,8 @@ interface ChanServCommandInterface extends HelpableCommandInterface
 
     /** @return string[] */
     public function getAliases(): array;
+
+    public function getArgumentDefinition(): CommandArgumentDefinition;
 
     public function getMinArgs(): int;
 

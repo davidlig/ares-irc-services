@@ -21,6 +21,7 @@ use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Application\Port\EventBusInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -29,6 +30,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 use function array_slice;
+use function array_values;
 use function base64_decode;
 use function count;
 use function implode;
@@ -197,9 +199,10 @@ final readonly class ChanServService
 
     private function validateDispatchContext(ChanServContext $context, ChanServCommandInterface $handler, bool $isLevelFounder): ?string
     {
-        if (count($context->args) < $handler->getMinArgs()) {
+        $validation = CommandArgumentValidator::validatePrefix($handler->getArgumentDefinition(), array_values($context->args));
+        if (!$validation->isValid()) {
             $context->reply('error.syntax', [
-                'syntax' => $context->trans($handler->getSyntaxKey()),
+                'syntax' => $context->trans($validation->syntaxKey ?? $handler->getSyntaxKey()),
             ]);
 
             return 'syntax';

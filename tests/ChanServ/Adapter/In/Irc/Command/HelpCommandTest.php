@@ -17,6 +17,7 @@ use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
+use App\Tests\ChanServ\Adapter\In\Irc\ChanServCommandDefinitionTestTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -74,6 +75,8 @@ final class HelpCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'HELP';
@@ -166,6 +169,8 @@ final class HelpCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'REGISTER';
@@ -279,6 +284,8 @@ final class HelpCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $registerHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'REGISTER';
@@ -372,6 +379,8 @@ final class HelpCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
         $handler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'HELP';
@@ -471,6 +480,8 @@ final class HelpCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $setHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'SET';
@@ -576,6 +587,8 @@ final class HelpCommandTest extends TestCase
         });
 
         $setHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'SET';
@@ -678,6 +691,8 @@ final class HelpCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $setHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'SET';
@@ -777,6 +792,8 @@ final class HelpCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $registerHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'REGISTER';
@@ -869,6 +886,8 @@ final class HelpCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $accessHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'ACCESS';
@@ -982,6 +1001,8 @@ final class HelpCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $akickHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'AKICK';

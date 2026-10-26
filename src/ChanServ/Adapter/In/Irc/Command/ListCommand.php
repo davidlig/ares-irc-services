@@ -15,9 +15,10 @@ use App\ChanServ\Domain\ValueObject\ChannelStatus;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function ceil;
-use function count;
 use function filter_var;
 use function max;
 
@@ -25,6 +26,8 @@ use const FILTER_VALIDATE_INT;
 
 final readonly class ListCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(private ListRegisteredChannelsHandlerInterface $handler) {}
 
     public function getName(): string
@@ -37,14 +40,16 @@ final readonly class ListCommand implements ChanServCommandInterface, IrcopAudit
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 1;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'list.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'list.syntax',
+            arguments: [
+                new Argument('pattern'),
+                new Argument('page', optional: true),
+            ],
+            allowExtra: false,
+        );
     }
 
     public function getHelpKey(): string
@@ -103,8 +108,8 @@ final readonly class ListCommand implements ChanServCommandInterface, IrcopAudit
             return CommandOutcome::rejected();
         }
 
-        if (1 > count($context->args) || 2 < count($context->args)) {
-            return $this->rejectSyntax($context);
+        if (!$this->validateArguments($context)) {
+            return CommandOutcome::rejected();
         }
 
         $page = 1;

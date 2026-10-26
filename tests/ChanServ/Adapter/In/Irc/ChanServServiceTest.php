@@ -13,6 +13,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\ChanServService;
 use App\ChanServ\Adapter\In\Irc\ChanServUserPresentationPreferences;
+use App\ChanServ\Adapter\In\Irc\Command\AccessCommand;
 use App\ChanServ\Adapter\In\Irc\Command\ListCommand;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChanUserAccountPort;
@@ -21,6 +22,7 @@ use App\ChanServ\Application\Security\ChanServPermission;
 use App\ChanServ\Application\UseCase\List\ListRegisteredChannels;
 use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsHandlerInterface;
 use App\ChanServ\Application\UseCase\List\ListRegisteredChannelsResult;
+use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessHandlerInterface;
 use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\ChanServ\Domain\Exception\ChannelAlreadyRegisteredException;
 use App\ChanServ\Domain\Exception\ChannelNotRegisteredException;
@@ -150,6 +152,8 @@ final class ChanServServiceTest extends TestCase
 
         $contextHolder = new ChanServTestContextHolder();
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -321,6 +325,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $permissionHandler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -517,12 +523,104 @@ final class ChanServServiceTest extends TestCase
     }
 
     #[Test]
+    public function dispatchUsesRecognizedAccessSyntaxAndRejectsBeforeUseCase(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $handler = $this->createMock(ManageChannelAccessHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []): string {
+                $syntax = $parameters['%syntax%'] ?? null;
+
+                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+            }
+        );
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturnCallback(
+            static fn (string $permission): bool => 'IDENTIFIED' === $permission,
+        );
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn(null);
+        $service = $this->createChanServService(
+            new ChanServCommandRegistry([new AccessCommand($handler)]),
+            $channelRepository,
+            $this->createStub(ChanUserAccountPort::class),
+            $notifier,
+            $this->createMessageTypeResolver(),
+            $translator,
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            authorizationChecker: $authorization,
+        );
+
+        $service->dispatch('ACCESS #test ADD TargetNick', $sender);
+
+        self::assertSame(['error.syntax|access.add.syntax'], $messages);
+    }
+
+    #[Test]
+    public function forbiddenChannelPolicyPrecedesAccessLeafSyntaxValidation(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $handler = $this->createMock(ManageChannelAccessHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isForbidden')->willReturn(true);
+        $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static fn (string $id): string => 'forbid.channel_forbidden' === $id ? 'Channel is forbidden' : $id,
+        );
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturnCallback(
+            static fn (string $permission): bool => 'IDENTIFIED' === $permission,
+        );
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
+        $service = $this->createChanServService(
+            new ChanServCommandRegistry([new AccessCommand($handler)]),
+            $channelRepository,
+            $this->createStub(ChanUserAccountPort::class),
+            $notifier,
+            $this->createMessageTypeResolver(),
+            $translator,
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            authorizationChecker: $authorization,
+        );
+
+        $service->dispatch('ACCESS #test ADD TargetNick', $sender);
+
+        self::assertSame(['Channel is forbidden'], $messages);
+    }
+
+    #[Test]
     public function blocksNormalCommandOnPendingDeletionChannel(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -648,6 +746,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $identifiedHandler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -765,6 +865,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $minArgsHandler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -878,6 +980,8 @@ final class ChanServServiceTest extends TestCase
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
 
         $throwingHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'THROW';
@@ -995,6 +1099,8 @@ final class ChanServServiceTest extends TestCase
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
 
         $throwingHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'FAIL';
@@ -1106,6 +1212,8 @@ final class ChanServServiceTest extends TestCase
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
 
         $throwingHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'FAIL';
@@ -1217,6 +1325,8 @@ final class ChanServServiceTest extends TestCase
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
 
         $throwingHandler = new class implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function getName(): string
             {
                 return 'FAIL';
@@ -1329,6 +1439,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $auditableHandler = new class($contextHolder) implements ChanServCommandInterface, IrcopAuditableCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -1471,6 +1583,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $nonAuditableHandler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -1594,6 +1708,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $auditableHandler = new class($contextHolder) implements ChanServCommandInterface, IrcopAuditableCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -1778,6 +1894,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -1903,6 +2021,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -2013,6 +2133,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -2129,6 +2251,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -2239,6 +2363,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -2373,6 +2499,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -2507,6 +2635,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -2674,6 +2804,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -2816,6 +2948,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -2957,6 +3091,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -3090,6 +3226,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -3224,6 +3362,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string
@@ -3382,6 +3522,8 @@ final class ChanServServiceTest extends TestCase
         $contextHolder = new ChanServTestContextHolder();
 
         $handler = new class($contextHolder) implements ChanServCommandInterface {
+            use ChanServCommandDefinitionTestTrait;
+
             public function __construct(private readonly ChanServTestContextHolder $holder) {}
 
             public function getName(): string

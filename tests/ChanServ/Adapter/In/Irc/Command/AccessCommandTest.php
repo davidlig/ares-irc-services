@@ -8,6 +8,7 @@ use App\ChanServ\Adapter\In\Irc\ChanServCommandRegistry;
 use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Adapter\In\Irc\ChanServNotifierInterface;
 use App\ChanServ\Adapter\In\Irc\Command\AccessCommand;
+use App\ChanServ\Adapter\In\Irc\Command\ChanServArgumentDefinitionSupport;
 use App\ChanServ\Adapter\Out\Event\SymfonyChanServEventPublisher;
 use App\ChanServ\Application\Model\ChanAccountView;
 use App\ChanServ\Application\Port\Out\ChannelAccessRepositoryInterface;
@@ -19,6 +20,7 @@ use App\ChanServ\Application\Service\ChanServAccessHelper;
 use App\ChanServ\Application\UseCase\ManageAccess\ChannelAccessEntryView;
 use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccess;
 use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessHandler;
+use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessHandlerInterface;
 use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessOutcome;
 use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessResult;
 use App\ChanServ\Domain\Entity\ChannelAccess;
@@ -35,13 +37,16 @@ use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Shared\Application\Port\EventBusInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function assert;
+use function is_string;
 
+#[CoversTrait(ChanServArgumentDefinitionSupport::class)]
 #[CoversClass(AccessCommand::class)]
 #[CoversClass(ManageChannelAccessHandler::class)]
 #[CoversClass(ManageChannelAccess::class)]
@@ -480,6 +485,33 @@ final class AccessCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '', '100'], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function recognizedAddWithMissingLevelUsesItsSyntaxWithoutCallingUseCase(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $handler = $this->createMock(ManageChannelAccessHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static function (string $id, array $parameters = []): string {
+                $syntax = $parameters['%syntax%'] ?? null;
+
+                return 'error.syntax' === $id && is_string($syntax) ? $id . '|' . $syntax : $id;
+            }
+        );
+
+        $command = new AccessCommand($handler);
+        $command->execute($this->createContext($sender, $account, ['#test', 'ADD', 'TargetNick'], $notifier, $translator));
+
+        self::assertSame(['error.syntax|access.add.syntax'], $messages);
     }
 
     #[Test]

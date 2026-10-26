@@ -13,9 +13,12 @@ use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandl
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 final class UnforbidCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
     use BuildsChannelLifecycleRequest;
 
     public function __construct(
@@ -32,14 +35,14 @@ final class UnforbidCommand implements ChanServCommandInterface, IrcopAuditableC
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 1;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'unforbid.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'unforbid.syntax',
+            arguments: [
+                new Argument('channel'),
+            ],
+        );
     }
 
     public function getHelpKey(): string

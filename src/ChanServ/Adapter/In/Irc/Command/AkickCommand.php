@@ -13,6 +13,8 @@ use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickHandlerInterf
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickOutcome;
 use App\ChanServ\Application\UseCase\ManageAkick\ManageChannelAkickResult;
 use App\ChanServ\Domain\Policy\AkickAdditionPolicy;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Application\Time\RelativeExpiryParser;
 use DateTimeImmutable;
 
@@ -33,6 +35,8 @@ use function trim;
  */
 final readonly class AkickCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(private ManageChannelAkickHandlerInterface $handler) {}
 
     public function getName(): string
@@ -45,14 +49,31 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'akick.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'akick.syntax',
+            arguments: [new Argument('channel'), new Argument('option')],
+            variants: [
+                'ADD' => new CommandArgumentDefinition(
+                    syntaxKey: 'akick.add.syntax',
+                    arguments: [
+                        new Argument('mask', nonBlank: true),
+                        new Argument('expiry', optional: true),
+                        new Argument('reason', optional: true, rest: true),
+                    ],
+                ),
+                'DEL' => new CommandArgumentDefinition(
+                    syntaxKey: 'akick.del.syntax',
+                    arguments: [
+                        new Argument('mask', nonBlank: true),
+                    ],
+                ),
+                'LIST' => new CommandArgumentDefinition(
+                    syntaxKey: 'akick.list.syntax',
+                ),
+            ],
+        );
     }
 
     public function getHelpKey(): string
@@ -118,6 +139,10 @@ final readonly class AkickCommand implements ChanServCommandInterface
             return;
         }
 
+        if (!$this->validateArguments($context)) {
+            return;
+        }
+
         $subcommand = strtoupper($context->args[1] ?? '');
         $result = $this->handler->handle($this->request($context, $channelName, $subcommand));
         $this->present($context, $channelName, $subcommand, $context->sender?->nick, $result);
@@ -141,7 +166,6 @@ final readonly class AkickCommand implements ChanServCommandInterface
             [$item, $expiresAt, $reason, $validRequest] = $this->parseAddition($context, $now);
         } elseif (ManageChannelAkickAction::Delete === $action) {
             $item = trim($context->args[2] ?? '');
-            $validRequest = 3 <= count($context->args) && '' !== $item;
         }
 
         $sender = $context->sender;
@@ -166,9 +190,6 @@ final readonly class AkickCommand implements ChanServCommandInterface
     private function parseAddition(ChanServContext $context, DateTimeImmutable $now): array
     {
         $mask = trim($context->args[2] ?? '');
-        if (3 > count($context->args) || '' === $mask) {
-            return [$mask, null, null, false];
-        }
         if (4 > count($context->args)) {
             return [$mask, null, null, true];
         }

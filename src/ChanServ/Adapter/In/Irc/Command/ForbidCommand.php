@@ -13,6 +13,8 @@ use App\ChanServ\Application\UseCase\ManageLifecycle\ManageChannelLifecycleHandl
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function array_slice;
 use function implode;
@@ -20,6 +22,7 @@ use function trim;
 
 final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
     use BuildsChannelLifecycleRequest;
 
     public function __construct(
@@ -36,14 +39,15 @@ final class ForbidCommand implements ChanServCommandInterface, IrcopAuditableCom
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'forbid.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'forbid.syntax',
+            arguments: [
+                new Argument('channel'),
+                new Argument('reason', rest: true),
+            ],
+        );
     }
 
     public function getHelpKey(): string

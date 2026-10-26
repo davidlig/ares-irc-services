@@ -12,6 +12,8 @@ use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessHandlerInte
 use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessOutcome;
 use App\ChanServ\Application\UseCase\ManageAccess\ManageChannelAccessResult;
 use App\ChanServ\Domain\Entity\ChannelAccess;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
 use function sprintf;
@@ -20,6 +22,8 @@ use function strtoupper;
 /** ACCESS <#channel> ADD|DEL|LIST [nickname] [level]. */
 final readonly class AccessCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(private ManageChannelAccessHandlerInterface $handler) {}
 
     public function getName(): string
@@ -32,14 +36,30 @@ final readonly class AccessCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'access.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'access.syntax',
+            arguments: [new Argument('channel'), new Argument('option')],
+            variants: [
+                'LIST' => new CommandArgumentDefinition(
+                    syntaxKey: 'access.list.syntax',
+                ),
+                'ADD' => new CommandArgumentDefinition(
+                    syntaxKey: 'access.add.syntax',
+                    arguments: [
+                        new Argument('nickname', nonBlank: true),
+                        new Argument('level', nonBlank: true),
+                    ],
+                ),
+                'DEL' => new CommandArgumentDefinition(
+                    syntaxKey: 'access.del.syntax',
+                    arguments: [
+                        new Argument('nickname', nonBlank: true),
+                    ],
+                ),
+            ],
+        );
     }
 
     public function getHelpKey(): string
@@ -102,6 +122,10 @@ final readonly class AccessCommand implements ChanServCommandInterface
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
+            return;
+        }
+
+        if (!$this->validateArguments($context)) {
             return;
         }
 

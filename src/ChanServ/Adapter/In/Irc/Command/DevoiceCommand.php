@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\ChanServ\Adapter\In\Irc\Command;
 
 use App\ChanServ\Adapter\In\Irc\ChanServCommandInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 /**
  * DEVOICE <#channel> <nickname>. ChanServ removes +v.
  */
 final readonly class DevoiceCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
     use ManualRankCommandPresentation;
 
     public function getName(): string
@@ -23,14 +26,15 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'devoice.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'devoice.syntax',
+            arguments: [
+                new Argument('channel'),
+                new Argument('nickname'),
+            ],
+        );
     }
 
     public function getHelpKey(): string

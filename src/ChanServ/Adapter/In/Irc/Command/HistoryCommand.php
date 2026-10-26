@@ -16,6 +16,8 @@ use App\ChanServ\Application\UseCase\ManageHistory\ManageChannelHistoryResult;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
 use App\Irc\Application\Port\In\Command\IrcopAuditableCommandInterface;
 use App\Irc\Application\Port\In\Command\IrcopAuditData;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -31,6 +33,8 @@ use function trim;
 
 final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(private ManageChannelHistoryHandlerInterface $handler) {}
 
     public function getName(): string
@@ -43,14 +47,35 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 2;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'history.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'history.syntax',
+            arguments: [new Argument('channel'), new Argument('option')],
+            variants: [
+                'ADD' => new CommandArgumentDefinition(
+                    syntaxKey: 'history.add.syntax',
+                    arguments: [
+                        new Argument('message', rest: true, nonBlank: true),
+                    ],
+                ),
+                'DEL' => new CommandArgumentDefinition(
+                    syntaxKey: 'history.del.syntax',
+                    arguments: [
+                        new Argument('id'),
+                    ],
+                ),
+                'VIEW' => new CommandArgumentDefinition(
+                    syntaxKey: 'history.view.syntax',
+                    arguments: [
+                        new Argument('page', optional: true),
+                    ],
+                ),
+                'CLEAR' => new CommandArgumentDefinition(
+                    syntaxKey: 'history.clear.syntax',
+                ),
+            ],
+        );
     }
 
     public function getHelpKey(): string
@@ -122,6 +147,10 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
             return CommandOutcome::rejected();
         }
 
+        if (!$this->validateArguments($context)) {
+            return CommandOutcome::rejected();
+        }
+
         $action = $this->parseAction($context);
         if (null === $action) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
@@ -135,18 +164,7 @@ final readonly class HistoryCommand implements ChanServCommandInterface, IrcopAu
         $showAll = false;
         if (ChannelHistoryAction::Add === $action) {
             $message = trim(implode(' ', array_slice($context->args, 2)));
-            if (count($context->args) < 3 || '' === $message) {
-                $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
-
-                return CommandOutcome::rejected();
-            }
         } elseif (ChannelHistoryAction::Delete === $action) {
-            if (count($context->args) < 3) {
-                $context->reply('error.syntax', ['syntax' => $context->trans('history.del.syntax')]);
-
-                return CommandOutcome::rejected();
-            }
-
             $entryId = (int) $context->args[2];
             if ($entryId <= 0) {
                 $context->reply('history.del.invalid_id', ['%id%' => $context->args[2]]);

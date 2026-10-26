@@ -9,12 +9,16 @@ use App\ChanServ\Adapter\In\Irc\ChanServContext;
 use App\ChanServ\Application\UseCase\PrepareInvite\PrepareChannelInvite;
 use App\ChanServ\Application\UseCase\PrepareInvite\PrepareChannelInviteHandlerInterface;
 use App\Irc\Application\Port\In\Command\CommandOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 /**
  * INVITE <#channel>. Invites the sender to the channel. Requires INVITE level.
  */
 final readonly class InviteCommand implements ChanServCommandInterface
 {
+    use ChanServArgumentDefinitionSupport;
+
     public function __construct(private PrepareChannelInviteHandlerInterface $handler) {}
 
     public function getName(): string
@@ -27,14 +31,14 @@ final readonly class InviteCommand implements ChanServCommandInterface
         return [];
     }
 
-    public function getMinArgs(): int
+    public function getArgumentDefinition(): CommandArgumentDefinition
     {
-        return 1;
-    }
-
-    public function getSyntaxKey(): string
-    {
-        return 'invite.syntax';
+        return new CommandArgumentDefinition(
+            syntaxKey: 'invite.syntax',
+            arguments: [
+                new Argument('channel'),
+            ],
+        );
     }
 
     public function getHelpKey(): string
