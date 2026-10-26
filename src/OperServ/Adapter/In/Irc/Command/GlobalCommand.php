@@ -12,6 +12,8 @@ use App\OperServ\Application\UseCase\Global\SendGlobalMessage;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageHandler;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageOutcome;
 use App\OperServ\Application\UseCase\Global\SendGlobalMessageResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -34,12 +36,21 @@ final readonly class GlobalCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 3;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('global.syntax', [
+            new Argument('sender'),
+            new Argument('delivery'),
+            new Argument('message', rest: true),
+        ]);
     }
 
     public function getSyntaxKey(): string
     {
-        return 'global.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

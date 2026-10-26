@@ -56,7 +56,7 @@ help:
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD|DEL|LIST} [poreclă] [rol]"
+  syntax: "IRCOP {ADD <poreclă> <rol>|DEL <poreclă>|LIST}"
   short: "Gestionați operatorii IRC ai rețelei."
   help: |-
     Gestionează operatorii IRC ai rețelei. ADD adaugă o poreclă înregistrată
@@ -111,7 +111,7 @@ role:
 
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
-    syntax: "ROLE OPERCLASS {LIST|VIEW|SET} [rol] [parametri]"
+    syntax: "ROLE OPERCLASS {LIST|VIEW <rol>|SET <rol> [operclass]}"
     short: "Gestionează clasa de operator UnrealIRCd."
     help: !irc |-
       Permite consultarea și configurarea operclass pentru un rol.
@@ -141,14 +141,14 @@ role:
       done: "\x0303✓\x03 Operclass configurată pentru rolul %role%."
       cleared: "\x0303✓\x03 Operclass eliminată pentru rolul %role%."
       not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 nu este disponibila in retea. Operclasses disponibile: %available%."
-  syntax: "ROLE <opțiune> [nume] [...]"
+  syntax: "ROLE <opțiune> [parametri]"
   short: "Gestionează rolurile operatorilor, permisiunile și configurarea lor."
   help: |-
     Gestionează rolurile operatorilor, permisiunile și configurarea lor.
 
     Rolurile ADMIN, OPER și PREOPER sunt protejate și nu pot fi șterse.
     Comandă rezervată utilizatorilor Root.
-  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <nume> ..."
+  syntax_operclass: "ROLE <opțiune> [parametri]"
   help_operclass: |-
     Gestionează rolurile de operator. ADD creează un nou rol, DEL îl șterge,
     LIST afișează toate rolurile, PERMS gestionează permisiunile unui rol, MODES gestionează modurile IRCOP,
@@ -199,7 +199,7 @@ role:
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
-    syntax: "ROLE PERMS {ADD|DEL|LIST|CLEAR} <rol> [parametri]"
+    syntax: "ROLE PERMS {{ADD|DEL} <rol> <permisiune>|{LIST|CLEAR} <rol>}"
     short: "Gestionează permisiunile rolului."
     help: !irc |-
       Gestionează permisiunile atribuite unui rol.
@@ -241,7 +241,7 @@ role:
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
-    syntax: "ROLE MODES {VIEW|SET} <rol> [moduri]"
+    syntax: "ROLE MODES {VIEW <rol>|SET <rol> [moduri]}"
     short: "Configurează modurile de utilizator ale rolului."
     help: !irc |-
       Gestionează modurile de utilizator IRCOP atribuite unui rol.
@@ -272,7 +272,7 @@ role:
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
-    syntax: "ROLE VHOST {VIEW|SET} <rol> [vhost]"
+    syntax: "ROLE VHOST {VIEW <rol>|SET <rol> [vhost]}"
     short: "Configurează tiparul de host virtual al rolului."
     help: !irc |-
       Configurează hostul virtual primit de operatorii unui rol la identificare,
@@ -323,7 +323,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [mască] [expirare] [motiv]"
+  syntax: "GLINE {ADD <mască> <expirare> <motiv>|DEL <mască|număr>|LIST [mască]}"
   short: "Gestionați G-line-urile la nivel de rețea."
   help: |-
     Gestionează G-line-uri (banuri globale) pentru rețea.
@@ -439,7 +439,7 @@ debug:
 # --- MOTD ------------------------------------------------------------------
 motd:
   short: "Gestionați mesajele MOTD de conectare trimise utilizatorilor la conectare."
-  syntax: "MOTD {ADD|DEL|LIST|CLEAN} [arg]"
+  syntax: "MOTD {ADD <destinație> {PRIVMSG|NOTICE} <expirare> <mesaj>|DEL <id>|LIST|CLEAN}"
   help: |-
     Gestionează mesajele zilei (MOTD) trimise utilizatorilor când se conectează la
     rețea.

@@ -11,6 +11,8 @@ use App\OperServ\Application\UseCase\Kill\KillNetworkUser;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserHandler;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserOutcome;
 use App\OperServ\Application\UseCase\Kill\KillNetworkUserResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
 use function array_slice;
@@ -33,12 +35,20 @@ final readonly class KillCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 2;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('kill.syntax', [
+            new Argument('nickname'),
+            new Argument('reason', rest: true),
+        ]);
     }
 
     public function getSyntaxKey(): string
     {
-        return 'kill.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

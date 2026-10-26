@@ -16,6 +16,7 @@ use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Tests\Shared\Translations\TranslationCatalog;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,6 +29,7 @@ use function dirname;
 use function is_array;
 use function is_scalar;
 use function is_string;
+use function strtolower;
 
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
@@ -380,12 +382,17 @@ final readonly class HelpFixtureCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 0;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition(strtolower($this->name) . '.syntax');
     }
 
     public function getSyntaxKey(): string
     {
-        return strtolower($this->name) . '.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

@@ -13,11 +13,12 @@ use App\OperServ\Application\UseCase\ManageMotd\ManageMotdOutcome;
 use App\OperServ\Application\UseCase\ManageMotd\ManageMotdResult;
 use App\OperServ\Application\UseCase\ManageMotd\MotdAction;
 use App\OperServ\Application\UseCase\ManageMotd\MotdListEntry;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use DateTimeImmutable;
 
 use function array_slice;
-use function count;
-use function ctype_digit;
 use function implode;
 use function sprintf;
 use function strtoupper;
@@ -40,12 +41,27 @@ final readonly class MotdCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('motd.syntax', [new Argument('action')], [
+            'ADD' => new CommandArgumentDefinition('motd.add.syntax', [
+                new Argument('target'),
+                new Argument('delivery'),
+                new Argument('expiry'),
+                new Argument('message', rest: true),
+            ]),
+            'DEL' => new CommandArgumentDefinition('motd.del.syntax', [new Argument('id')]),
+            'LIST' => new CommandArgumentDefinition('motd.list.syntax'),
+            'CLEAN' => new CommandArgumentDefinition('motd.clean.syntax'),
+        ]);
     }
 
     public function getSyntaxKey(): string
     {
-        return 'motd.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -94,6 +110,17 @@ final readonly class MotdCommand implements OperServCommandInterface
             return;
         }
 
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if ($validation->recognized && !$validation->isValid()) {
+            $syntaxKey = $validation->syntaxKey ?? $this->getSyntaxKey();
+            $hint = 'ADD' === strtoupper($context->args[0] ?? '')
+                ? 'motd.add.syntax_hint'
+                : 'motd.del.syntax_hint';
+            $context->reply($hint, ['%syntax%' => $context->trans($syntaxKey)]);
+
+            return;
+        }
+
         $subcommand = strtoupper($context->args[0] ?? '');
         $action = match ($subcommand) {
             'ADD' => MotdAction::Add,
@@ -128,7 +155,7 @@ final readonly class MotdCommand implements OperServCommandInterface
             ManageMotdOutcome::InvalidAddRequest => $context->reply('motd.add.syntax_hint', ['%syntax%' => $context->trans('motd.add.syntax')]),
             ManageMotdOutcome::InvalidMessageType => $context->reply('motd.add.invalid_type'),
             ManageMotdOutcome::InvalidExpiry => $context->reply('motd.add.invalid_expiry'),
-            ManageMotdOutcome::InvalidId, ManageMotdOutcome::NotFound => $this->presentDeleteFailure($context, $action),
+            ManageMotdOutcome::InvalidId, ManageMotdOutcome::NotFound => $context->reply('motd.del.not_found'),
             ManageMotdOutcome::ListEmpty => $context->reply('motd.list.empty'),
             ManageMotdOutcome::CleanEmpty => $context->reply('motd.clean.none'),
             ManageMotdOutcome::Added => $context->reply('motd.add.done', ['%id%' => (string) $result->id]),
@@ -136,22 +163,6 @@ final readonly class MotdCommand implements OperServCommandInterface
             ManageMotdOutcome::Listed => $this->presentList($context, $result),
             ManageMotdOutcome::Cleaned => $context->reply('motd.clean.done', ['%count%' => (string) $result->removedCount]),
         };
-    }
-
-    private function presentDeleteFailure(OperServContext $context, MotdAction $action): void
-    {
-        if (MotdAction::Delete === $action && count($context->args) < 2) {
-            $context->reply('motd.del.syntax_hint', ['%syntax%' => $context->trans('motd.del.syntax')]);
-
-            return;
-        }
-        if (MotdAction::Delete === $action && !ctype_digit(trim($context->args[1]))) {
-            $context->reply('motd.del.not_found');
-
-            return;
-        }
-
-        $context->reply('motd.del.not_found');
     }
 
     private function presentList(OperServContext $context, ManageMotdResult $result): void

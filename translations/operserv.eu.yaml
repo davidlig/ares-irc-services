@@ -55,7 +55,7 @@ help:
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD|DEL|LIST} [ezizena] [rola]"
+  syntax: "IRCOP {ADD <ezizena> <rola>|DEL <ezizena>|LIST}"
   short: "Kudeatu sareko IRC operadoreak."
   help: |-
     Sareko IRC operadoreak kudeatzen ditu. ADDk ezizen erregistratu bat gehitzen du
@@ -111,7 +111,7 @@ role:
 
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
-    syntax: "ROLE OPERCLASS {LIST|VIEW|SET} [rola] [parametroak]"
+    syntax: "ROLE OPERCLASS {LIST|VIEW <rola>|SET <rola> [operclass]}"
     short: "UnrealIRCd-eko operadore-klasea konfiguratzen du."
     help: !irc |-
       Rol baten operclass-a kontsultatu eta konfiguratzen du.
@@ -141,7 +141,7 @@ role:
       done: "\x0303✓\x03 Operclass-a ezarri zaio %role% rolari."
       cleared: "\x0303✓\x03 Operclass-a kendu zaio %role% rolari."
       not_available: "\x0304✗\x03 \x02%operclass%\x02 operclass ez dago erabilgarri sarean. Erabilgarri daudenak: %available%."
-  syntax: "ROLE <aukera> [izena] [...]"
+  syntax: "ROLE <aukera> [parametroak]"
   short: "Kudeatu operadore rolak."
   help: |-
     Operadore rolak kudeatzen ditu. ADDek rol berri bat sortzen du, DELek kentzen
@@ -151,7 +151,7 @@ role:
     VHOSTek rol baten behartutako vhost eredua kudeatzen du.
     Babestutako rolak (ADMIN, OPER, PREOPER) ezin dira ezabatu.
     Komando hau Root erabiltzaileentzat mugatuta dago.
-  syntax_operclass: "ROLE <aukera> [izena] [...]"
+  syntax_operclass: "ROLE <aukera> [parametroak]"
   help_operclass: |-
     Operadore rolak kudeatzen ditu. ADDek rol berri bat sortzen du, DELek kentzen du,
     LISTek rol guztiak erakusten ditu, PERMSek rol baten baimenak kudeatzen ditu, MODESek IRCOP moduak kudeatzen ditu,
@@ -202,7 +202,7 @@ role:
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
-    syntax: "ROLE PERMS {ADD|DEL|LIST|CLEAR} <rola> [parametroak]"
+    syntax: "ROLE PERMS {{ADD|DEL} <rola> <baimena>|{LIST|CLEAR} <rola>}"
     short: "Kudeatu rol baten baimenak."
     help: !irc |-
       Rol bati esleitutako baimenak kudeatzen ditu.
@@ -241,7 +241,7 @@ role:
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
-    syntax: "ROLE MODES {VIEW|SET} <rola> [moduak]"
+    syntax: "ROLE MODES {VIEW <rola>|SET <rola> [moduak]}"
     short: "Kudeatu rolerako IRCOP erabiltzaile moduak."
     help: !irc |-
       Rol bati esleitutako IRCOP erabiltzaile-moduak kudeatzen ditu.
@@ -272,7 +272,7 @@ role:
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
-    syntax: "ROLE VHOST {VIEW|SET} <rola> [vhost]"
+    syntax: "ROLE VHOST {VIEW <rola>|SET <rola> [vhost]}"
     short: "Kudeatu rol baten behartutako vhost eredua."
     help: !irc |-
       Rol bateko operadoreei identifikatzean ematen zaien ostalari birtuala
@@ -326,7 +326,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [maskara] [iraungitzea] [arrazoia]"
+  syntax: "GLINE {ADD <maskara> <iraungitzea> <arrazoia>|DEL <maskara|zenbakia>|LIST [maskara]}"
   short: "Kudeatu sare osoko G-lineak."
   help: |-
     Sare osoko G-lineak (debeku globalak) kudeatzen ditu.
@@ -457,7 +457,7 @@ debug:
 # --- MOTD ------------------------------------------------------------------
 motd:
   short: "Kudeatu konexio MOTD mezuak, erabiltzaileei konektatzean bidaliak."
-  syntax: "MOTD {ADD|DEL|LIST|CLEAN} [arg]"
+  syntax: "MOTD {ADD <helburua> {PRIVMSG|NOTICE} <iraungitzea> <mezua>|DEL <id>|LIST|CLEAN}"
   help: |-
     Kudeatu Eguneko Mezua sarrerak, erabiltzaileei sarera konektatzean bidaltzen
     zaizkienak.

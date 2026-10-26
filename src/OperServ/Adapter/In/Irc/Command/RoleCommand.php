@@ -12,6 +12,9 @@ use App\OperServ\Application\UseCase\ManageRole\ManageRoleHandlerInterface;
 use App\OperServ\Application\UseCase\ManageRole\ManageRoleResult;
 use App\OperServ\Application\UseCase\ManageRole\RoleAction;
 use App\OperServ\Application\UseCase\ManageRole\RoleOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use DateTimeImmutable;
 
 use function array_merge;
@@ -41,12 +44,57 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        $operclassSupported = $this->handler->supportsOperclass();
+        $variants = [
+            'LIST' => new CommandArgumentDefinition('role.list.syntax'),
+            'ADD' => new CommandArgumentDefinition('role.add.syntax', [
+                new Argument('role'),
+                new Argument('description', optional: true, rest: true),
+            ]),
+            'DEL' => new CommandArgumentDefinition('role.del.syntax', [new Argument('role')]),
+            'PERMS' => new CommandArgumentDefinition('role.perms.syntax', [new Argument('action')], [
+                'ADD' => new CommandArgumentDefinition('role.perms.syntax', [new Argument('role'), new Argument('permission')], allowExtra: false),
+                'DEL' => new CommandArgumentDefinition('role.perms.syntax', [new Argument('role'), new Argument('permission')], allowExtra: false),
+                'LIST' => new CommandArgumentDefinition('role.perms.syntax', [new Argument('role')], allowExtra: false),
+                'CLEAR' => new CommandArgumentDefinition('role.perms.syntax', [new Argument('role')], allowExtra: false),
+            ], unknownVariant: new CommandArgumentDefinition('role.perms.syntax', [new Argument('role')], allowExtra: false)),
+            'MODES' => new CommandArgumentDefinition('role.modes.syntax', [new Argument('action')], [
+                'VIEW' => new CommandArgumentDefinition('role.modes.syntax', [new Argument('role')], allowExtra: false),
+                'SET' => new CommandArgumentDefinition('role.modes.syntax', [new Argument('role'), new Argument('modes', optional: true)], allowExtra: false),
+            ], unknownVariant: new CommandArgumentDefinition('role.modes.syntax', [new Argument('role')])),
+            'VHOST' => new CommandArgumentDefinition('role.vhost.syntax', [new Argument('action')], [
+                'VIEW' => new CommandArgumentDefinition('role.vhost.syntax', [new Argument('role')], allowExtra: false),
+                'SET' => new CommandArgumentDefinition('role.vhost.syntax', [new Argument('role'), new Argument('vhost', optional: true)], allowExtra: false),
+            ], unknownVariant: new CommandArgumentDefinition('role.vhost.syntax', [new Argument('role')])),
+        ];
+        if ($operclassSupported) {
+            $variants['OPERCLASS'] = new CommandArgumentDefinition(
+                'role.operclass.syntax',
+                [new Argument('action')],
+                [
+                    'LIST' => new CommandArgumentDefinition('role.operclass.syntax', [], allowExtra: false),
+                    'VIEW' => new CommandArgumentDefinition('role.operclass.syntax', [new Argument('role')], allowExtra: false),
+                    'SET' => new CommandArgumentDefinition('role.operclass.syntax', [new Argument('role'), new Argument('operclass', optional: true)], allowExtra: false),
+                ],
+                unknownVariant: new CommandArgumentDefinition('role.operclass.syntax', [new Argument('role')]),
+            );
+        }
+
+        return new CommandArgumentDefinition(
+            $operclassSupported ? 'role.syntax_operclass' : 'role.syntax',
+            [new Argument('subcommand')],
+            $variants,
+        );
     }
 
     public function getSyntaxKey(): string
     {
-        return $this->handler->supportsOperclass() ? 'role.syntax_operclass' : 'role.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -100,7 +148,11 @@ final readonly class RoleCommand implements OperServCommandInterface
 
             return;
         }
-        $syntaxKey = $this->missingArgumentSyntax($c, $sub);
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $c->args);
+        $syntaxKey = $validation->syntaxKey;
+        if (!$validation->recognized && null === $syntaxKey) {
+            $syntaxKey = $this->syntaxForUnrecognizedVariant($c, $sub);
+        }
         if (null !== $syntaxKey) {
             $c->reply('error.syntax', ['%syntax%' => $c->trans($syntaxKey)]);
 
@@ -111,34 +163,25 @@ final readonly class RoleCommand implements OperServCommandInterface
         $this->present($c, $sub, $r, $role, $value);
     }
 
-    private function missingArgumentSyntax(OperServContext $c, string $sub): ?string
+    private function syntaxForUnrecognizedVariant(OperServContext $c, string $sub): ?string
     {
         $first = strtoupper(trim($c->args[1] ?? ''));
         $second = strtoupper(trim($c->args[2] ?? ''));
-        $value = trim($c->args[3] ?? '');
         $argumentCount = count($c->args);
 
         return match ($sub) {
-            'ADD' => '' === $first ? 'role.add.syntax' : null,
-            'DEL' => '' === $first ? 'role.del.syntax' : null,
-            'PERMS' => match ($first) {
-                'ADD', 'DEL' => '' === $second || '' === $value || 4 !== $argumentCount ? 'role.perms.syntax' : null,
-                'LIST' => '' === $second || 3 !== $argumentCount ? 'role.perms.syntax' : null,
-                'CLEAR' => '' === $second || 3 !== $argumentCount ? 'role.perms.syntax' : null,
-                default => '' === $first || '' === $second || in_array($second, ['ADD', 'DEL', 'LIST', 'CLEAR'], true) || 3 !== $argumentCount ? 'role.perms.syntax' : null,
-            },
-            'MODES' => in_array($first, ['VIEW', 'SET'], true)
-                ? ('' === $second || (('VIEW' === $first && 3 !== $argumentCount) || ('SET' === $first && $argumentCount > 4)) ? 'role.modes.syntax' : null)
-                : ('' === $first || '' === $second || in_array($second, ['VIEW', 'SET'], true) ? 'role.modes.syntax' : null),
-            'VHOST' => in_array($first, ['VIEW', 'SET'], true)
-                ? ('' === $second || (('VIEW' === $first && 3 !== $argumentCount) || ('SET' === $first && $argumentCount > 4)) ? 'role.vhost.syntax' : null)
-                : ('' === $first || '' === $second || in_array($second, ['VIEW', 'SET'], true) ? 'role.vhost.syntax' : null),
-            'OPERCLASS' => match ($first) {
-                'LIST' => 2 === $argumentCount ? null : 'role.operclass.syntax',
-                'VIEW' => '' === $second || 3 !== $argumentCount ? 'role.operclass.syntax' : null,
-                'SET' => '' === $second || $argumentCount > 4 ? 'role.operclass.syntax' : null,
-                default => '' === $first || '' === $second || in_array($second, ['VIEW', 'SET', 'LIST'], true) ? 'role.operclass.syntax' : null,
-            },
+            'PERMS' => '' === $first || '' === $second || in_array($second, ['ADD', 'DEL', 'LIST', 'CLEAR'], true) || 3 !== $argumentCount
+                ? 'role.perms.syntax'
+                : null,
+            'MODES' => '' === $first || '' === $second || in_array($second, ['VIEW', 'SET'], true)
+                ? 'role.modes.syntax'
+                : null,
+            'VHOST' => '' === $first || '' === $second || in_array($second, ['VIEW', 'SET'], true)
+                ? 'role.vhost.syntax'
+                : null,
+            'OPERCLASS' => '' === $first || '' === $second || in_array($second, ['VIEW', 'SET', 'LIST'], true)
+                ? 'role.operclass.syntax'
+                : null,
             default => null,
         };
     }

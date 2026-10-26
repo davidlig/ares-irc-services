@@ -69,6 +69,32 @@ final class GlineCommandTest extends TestCase
         self::assertSame('*@host.*', $handler->inputs[2]->listPattern);
     }
 
+    #[Test]
+    public function rejectsMissingAddOperandsBeforeCallingTheUseCase(): void
+    {
+        $handler = new RecordingGlineCommandHandler();
+        $notifier = new RecordingGlineCommandNotifier();
+
+        new GlineCommand($handler)->execute($this->context(['ADD', 'ident@host.test'], $notifier));
+
+        self::assertSame([], $handler->inputs);
+        self::assertSame(['error.syntax'], $notifier->messages);
+        self::assertSame('gline.add.syntax', $notifier->translations->parameters['error.syntax']['%syntax%']);
+    }
+
+    #[Test]
+    public function rejectsExtraDeleteOperandsBeforeCallingTheUseCase(): void
+    {
+        $handler = new RecordingGlineCommandHandler();
+        $notifier = new RecordingGlineCommandNotifier();
+
+        new GlineCommand($handler)->execute($this->context(['DEL', 'ident@host.test', 'ignored'], $notifier));
+
+        self::assertSame([], $handler->inputs);
+        self::assertSame(['error.syntax'], $notifier->messages);
+        self::assertSame('gline.del.syntax', $notifier->translations->parameters['error.syntax']['%syntax%']);
+    }
+
     /** @param list<string> $arguments */
     #[Test]
     #[DataProvider('simplePresentations')]
@@ -86,19 +112,19 @@ final class GlineCommandTest extends TestCase
     public static function simplePresentations(): iterable
     {
         yield 'unknown action' => [new ManageGlineResult(ManageGlineOutcome::UnknownAction), ['what'], 'gline.unknown_sub'];
-        yield 'invalid add' => [new ManageGlineResult(ManageGlineOutcome::InvalidRequest), ['ADD'], 'error.syntax'];
-        yield 'invalid delete' => [new ManageGlineResult(ManageGlineOutcome::InvalidRequest), ['DEL'], 'error.syntax'];
-        yield 'invalid mask' => [new ManageGlineResult(ManageGlineOutcome::InvalidMask), ['ADD'], 'gline.invalid_mask'];
-        yield 'missing user' => [new ManageGlineResult(ManageGlineOutcome::UserNotFound, mask: 'Missing'), ['ADD'], 'error.nick_not_online'];
-        yield 'global mask' => [new ManageGlineResult(ManageGlineOutcome::GlobalMask, mask: '*@*'), ['ADD'], 'gline.global_mask'];
-        yield 'dangerous mask' => [new ManageGlineResult(ManageGlineOutcome::DangerousMask, mask: '*@a'), ['ADD'], 'gline.dangerous_mask'];
-        yield 'protected user' => [new ManageGlineResult(ManageGlineOutcome::ProtectedUser, protectedNickname: 'Root'), ['ADD'], 'gline.protected_user'];
-        yield 'invalid expiry' => [new ManageGlineResult(ManageGlineOutcome::InvalidExpiry), ['ADD'], 'gline.invalid_expiry'];
-        yield 'duplicate' => [new ManageGlineResult(ManageGlineOutcome::AlreadyExists, mask: 'ident@host'), ['ADD'], 'gline.already_exists'];
-        yield 'limit' => [new ManageGlineResult(ManageGlineOutcome::LimitReached, limit: 1000), ['ADD'], 'gline.max_entries'];
-        yield 'not found' => [new ManageGlineResult(ManageGlineOutcome::NotFound, mask: 'missing'), ['DEL'], 'gline.not_found'];
+        yield 'invalid add' => [new ManageGlineResult(ManageGlineOutcome::InvalidRequest), ['ADD', 'ident@host', '1h', 'reason'], 'error.syntax'];
+        yield 'invalid delete' => [new ManageGlineResult(ManageGlineOutcome::InvalidRequest), ['DEL', 'ident@host'], 'error.syntax'];
+        yield 'invalid mask' => [new ManageGlineResult(ManageGlineOutcome::InvalidMask), ['ADD', 'ident@host', '1h', 'reason'], 'gline.invalid_mask'];
+        yield 'missing user' => [new ManageGlineResult(ManageGlineOutcome::UserNotFound, mask: 'Missing'), ['ADD', 'ident@host', '1h', 'reason'], 'error.nick_not_online'];
+        yield 'global mask' => [new ManageGlineResult(ManageGlineOutcome::GlobalMask, mask: '*@*'), ['ADD', '*@*', '1h', 'reason'], 'gline.global_mask'];
+        yield 'dangerous mask' => [new ManageGlineResult(ManageGlineOutcome::DangerousMask, mask: '*@a'), ['ADD', '*@a', '1h', 'reason'], 'gline.dangerous_mask'];
+        yield 'protected user' => [new ManageGlineResult(ManageGlineOutcome::ProtectedUser, protectedNickname: 'Root'), ['ADD', 'ident@host', '1h', 'reason'], 'gline.protected_user'];
+        yield 'invalid expiry' => [new ManageGlineResult(ManageGlineOutcome::InvalidExpiry), ['ADD', 'ident@host', 'invalid', 'reason'], 'gline.invalid_expiry'];
+        yield 'duplicate' => [new ManageGlineResult(ManageGlineOutcome::AlreadyExists, mask: 'ident@host'), ['ADD', 'ident@host', '1h', 'reason'], 'gline.already_exists'];
+        yield 'limit' => [new ManageGlineResult(ManageGlineOutcome::LimitReached, limit: 1000), ['ADD', 'ident@host', '1h', 'reason'], 'gline.max_entries'];
+        yield 'not found' => [new ManageGlineResult(ManageGlineOutcome::NotFound, mask: 'missing'), ['DEL', 'missing'], 'gline.not_found'];
         yield 'empty list' => [new ManageGlineResult(ManageGlineOutcome::ListEmpty), ['LIST'], 'gline.list.empty'];
-        yield 'deleted' => [new ManageGlineResult(ManageGlineOutcome::Deleted, mask: 'ident@host'), ['DEL'], 'gline.del.done'];
+        yield 'deleted' => [new ManageGlineResult(ManageGlineOutcome::Deleted, mask: 'ident@host'), ['DEL', 'ident@host'], 'gline.del.done'];
     }
 
     #[Test]
@@ -106,10 +132,10 @@ final class GlineCommandTest extends TestCase
     {
         $permanent = new RecordingGlineCommandNotifier();
         new GlineCommand(new RecordingGlineCommandHandler(new ManageGlineResult(ManageGlineOutcome::Added, 'ident@host', expiry: '0', reason: 'reason')))
-            ->execute($this->context(['ADD'], $permanent));
+            ->execute($this->context(['ADD', 'ident@host', '0', 'reason'], $permanent));
         $temporary = new RecordingGlineCommandNotifier();
         new GlineCommand(new RecordingGlineCommandHandler(new ManageGlineResult(ManageGlineOutcome::Added, 'ident@host', expiry: '1h', reason: 'reason')))
-            ->execute($this->context(['ADD'], $temporary));
+            ->execute($this->context(['ADD', 'ident@host', '1h', 'reason'], $temporary));
 
         self::assertSame('label.permanent_inline', $permanent->translations->parameters['gline.add.done']['%duration%']);
         self::assertSame('1h', $temporary->translations->parameters['gline.add.done']['%duration%']);

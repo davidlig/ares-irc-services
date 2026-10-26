@@ -7,6 +7,7 @@ namespace App\Tests\OperServ\Adapter\In\Irc;
 use App\OperServ\Adapter\In\Irc\OperServCommandInterface;
 use App\OperServ\Adapter\In\Irc\OperServCommandRegistry;
 use App\OperServ\Adapter\In\Irc\OperServContext;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -47,12 +48,17 @@ final readonly class RegistryCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 0;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('');
     }
 
     public function getSyntaxKey(): string
     {
-        return '';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

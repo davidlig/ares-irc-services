@@ -16,6 +16,7 @@ use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Application\Port\In\AuthorizationDecision;
 use App\OperServ\Application\Port\In\AuthorizationGrant;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -155,12 +156,17 @@ final readonly class FormatterCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 0;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('');
     }
 
     public function getSyntaxKey(): string
     {
-        return '';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

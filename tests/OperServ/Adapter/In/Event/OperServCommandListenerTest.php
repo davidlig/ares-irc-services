@@ -25,6 +25,8 @@ use App\OperServ\Adapter\In\Irc\OperServNotifierInterface;
 use App\OperServ\Adapter\In\Irc\OperServService;
 use App\OperServ\Application\Port\In\OperatorAuthorizationQuery;
 use App\OperServ\Application\Port\Out\ServiceUserPreferences;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -166,6 +168,11 @@ final class OperServCommandListenerTest extends TestCase
             public function getAliases(): array
             {
                 return [];
+            }
+
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
             }
 
             public function getMinArgs(): int

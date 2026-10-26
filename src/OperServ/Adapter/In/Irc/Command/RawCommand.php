@@ -9,6 +9,8 @@ use App\OperServ\Adapter\In\Irc\OperServContext;
 use App\OperServ\Application\Port\In\Audit\CommandAuditCategory;
 use App\OperServ\Application\Port\In\Audit\CommandAuditRecord;
 use App\OperServ\Application\Port\In\CommandAuditRecorder;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use DateTimeImmutable;
 
 final readonly class RawCommand implements OperServCommandInterface
@@ -30,12 +32,17 @@ final readonly class RawCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('raw.syntax', [new Argument('line', rest: true)]);
     }
 
     public function getSyntaxKey(): string
     {
-        return 'raw.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

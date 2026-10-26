@@ -75,6 +75,19 @@ final class MotdCommandTest extends TestCase
         self::assertSame('42', $handler->inputs[2]->id);
     }
 
+    #[Test]
+    public function rejectsIncompleteAddBeforeCallingTheUseCase(): void
+    {
+        $handler = new RecordingMotdCommandHandler();
+        $notifier = new RecordingMotdCommandNotifier();
+
+        new MotdCommand($handler)->execute($this->context(['ADD', 'NickServ', 'NOTICE', '1h'], $notifier));
+
+        self::assertSame([], $handler->inputs);
+        self::assertSame(['motd.add.syntax_hint'], $notifier->messages);
+        self::assertSame('motd.add.syntax', $notifier->translations->parameters['motd.add.syntax_hint']['%syntax%']);
+    }
+
     /** @param list<string> $arguments */
     #[Test]
     #[DataProvider('simplePresentations')]
@@ -91,14 +104,26 @@ final class MotdCommandTest extends TestCase
     public static function simplePresentations(): iterable
     {
         yield 'unknown' => [new ManageMotdResult(ManageMotdOutcome::UnknownAction), ['what'], 'motd.unknown_sub'];
-        yield 'invalid add' => [new ManageMotdResult(ManageMotdOutcome::InvalidAddRequest), ['ADD'], 'motd.add.syntax_hint'];
-        yield 'invalid type' => [new ManageMotdResult(ManageMotdOutcome::InvalidMessageType), ['ADD'], 'motd.add.invalid_type'];
-        yield 'invalid expiry' => [new ManageMotdResult(ManageMotdOutcome::InvalidExpiry), ['ADD'], 'motd.add.invalid_expiry'];
+        yield 'invalid add' => [new ManageMotdResult(ManageMotdOutcome::InvalidAddRequest), ['ADD', 'NickServ', 'NOTICE', '1h', 'message'], 'motd.add.syntax_hint'];
+        yield 'invalid type' => [new ManageMotdResult(ManageMotdOutcome::InvalidMessageType), ['ADD', 'NickServ', 'not-a-type', '1h', 'message'], 'motd.add.invalid_type'];
+        yield 'invalid expiry' => [new ManageMotdResult(ManageMotdOutcome::InvalidExpiry), ['ADD', 'NickServ', 'NOTICE', 'not-a-duration', 'message'], 'motd.add.invalid_expiry'];
         yield 'empty list' => [new ManageMotdResult(ManageMotdOutcome::ListEmpty), ['LIST'], 'motd.list.empty'];
         yield 'empty clean' => [new ManageMotdResult(ManageMotdOutcome::CleanEmpty), ['CLEAN'], 'motd.clean.none'];
-        yield 'added' => [new ManageMotdResult(ManageMotdOutcome::Added, 4), ['ADD'], 'motd.add.done'];
+        yield 'added' => [new ManageMotdResult(ManageMotdOutcome::Added, 4), ['ADD', 'NickServ', 'NOTICE', '1h', 'message'], 'motd.add.done'];
         yield 'deleted' => [new ManageMotdResult(ManageMotdOutcome::Deleted, 4), ['DEL', '4'], 'motd.del.done'];
         yield 'cleaned' => [new ManageMotdResult(ManageMotdOutcome::Cleaned, removedCount: 2), ['CLEAN'], 'motd.clean.done'];
+    }
+
+    #[Test]
+    public function missingDeleteIdDoesNotReachTheHandler(): void
+    {
+        $handler = $this->createMock(ManageMotdHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+        $notifier = new RecordingMotdCommandNotifier();
+
+        new MotdCommand($handler)->execute($this->context(['DEL'], $notifier));
+
+        self::assertSame(['motd.del.syntax_hint'], $notifier->messages);
     }
 
     #[Test]
@@ -187,9 +212,14 @@ final class RecordingMotdCommandHandler implements ManageMotdHandlerInterface
 
 final class RecordingMotdCommandTranslation implements TranslatorInterface
 {
+    /** @var array<string, array<string, mixed>> */
+    public array $parameters = [];
+
     /** @param array<string, mixed> $parameters */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
+        $this->parameters[$id] = $parameters;
+
         return $id;
     }
 

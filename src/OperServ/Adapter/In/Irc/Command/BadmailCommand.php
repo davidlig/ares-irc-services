@@ -11,6 +11,9 @@ use App\OperServ\Application\UseCase\Badmail\BadmailAction;
 use App\OperServ\Application\UseCase\Badmail\BadmailOutcome;
 use App\OperServ\Application\UseCase\Badmail\ManageBadmail;
 use App\OperServ\Application\UseCase\Badmail\ManageBadmailHandler;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use DateTimeImmutable;
 
 use function count;
@@ -32,12 +35,27 @@ final readonly class BadmailCommand implements OperServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
+    }
+
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('badmail.syntax', [new Argument('action', alternatives: ['ADD', 'DEL', 'LIST'])], [
+            'ADD' => new CommandArgumentDefinition('badmail.add.syntax', [
+                new Argument('domain'),
+                new Argument('reason', rest: true),
+            ]),
+            'DEL' => new CommandArgumentDefinition('badmail.del.syntax', [new Argument('id')], allowExtra: false),
+            'LIST' => new CommandArgumentDefinition('badmail.list.syntax', [
+                new Argument('pattern'),
+                new Argument('page', optional: true),
+            ], allowExtra: false),
+        ]);
     }
 
     public function getSyntaxKey(): string
     {
-        return 'badmail.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -91,16 +109,17 @@ final readonly class BadmailCommand implements OperServCommandInterface
         if (null === $sender) {
             return;
         }
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if ($validation->recognized && !$validation->isValid()) {
+            $this->syntax($context, $validation->syntaxKey ?? $this->getSyntaxKey());
+
+            return;
+        }
+
         $authorized = $context->isAuthorized(OperServPermission::BADMAIL);
         $input = $this->parse($context->args, $authorized, $sender->nick, new DateTimeImmutable());
         if (null === $input) {
-            $syntaxKey = match (strtoupper($context->args[0] ?? '')) {
-                'ADD' => 'badmail.add.syntax',
-                'DEL' => 'badmail.del.syntax',
-                'LIST' => 'badmail.list.syntax',
-                default => $this->getSyntaxKey(),
-            };
-            $context->reply('error.syntax', ['syntax' => $context->trans($syntaxKey)]);
+            $this->syntax($context, $this->syntaxKeyForArguments($context->args));
 
             return;
         }
@@ -134,6 +153,17 @@ final readonly class BadmailCommand implements OperServCommandInterface
                 default => 'badmail.cleared',
             }, ['domain' => $result->domain, 'id' => $input->id, 'total' => $result->total]);
         }
+    }
+
+    /** @param list<string> $args */
+    private function syntaxKeyForArguments(array $args): string
+    {
+        return $this->getArgumentDefinition()->variants[strtoupper($args[0] ?? '')]->syntaxKey ?? $this->getSyntaxKey();
+    }
+
+    private function syntax(OperServContext $context, string $syntaxKey): void
+    {
+        $context->reply('error.syntax', ['syntax' => $context->trans($syntaxKey)]);
     }
 
     /** @param list<string> $args */

@@ -55,7 +55,7 @@ help:
 
 # --- IRCOP -----------------------------------------------------------------
 ircop:
-  syntax: "IRCOP {ADD|DEL|LIST} [nickname] [cargo]"
+  syntax: "IRCOP {ADD <nickname> <cargo>|DEL <nickname>|LIST}"
   short: "Gerir operadores de IRC da rede."
   help: |-
     Gere os operadores de IRC da rede. ADD adiciona um nickname registado
@@ -110,7 +110,7 @@ role:
 
   # --- ROLE OPERCLASS ------------------------------------------------------
   operclass:
-    syntax: "ROLE OPERCLASS {LIST|VIEW|SET} [cargo] [parâmetros]"
+    syntax: "ROLE OPERCLASS {LIST|VIEW <cargo>|SET <cargo> [operclass]}"
     short: "Configura a classe de operador do UnrealIRCd."
     help: !irc |-
       Permite consultar e configurar a operclass de um cargo.
@@ -140,14 +140,14 @@ role:
       done: "\x0303✓\x03 Operclass configurada para o cargo %role%."
       cleared: "\x0303✓\x03 Operclass removida do cargo %role%."
       not_available: "\x0304✗\x03 A operclass \x02%operclass%\x02 nao esta disponivel na rede. Operclasses disponiveis: %available%."
-  syntax: "ROLE <opção> [nome] [...]"
+  syntax: "ROLE <opção> [parâmetros]"
   short: "Permite gerir os cargos dos operadores, as respetivas permissões e configuração."
   help: |-
     Permite gerir os cargos dos operadores, as respetivas permissões e configuração.
 
     Os cargos ADMIN, OPER e PREOPER estão protegidos e não podem ser eliminados.
     Comando reservado a utilizadores Root.
-  syntax_operclass: "ROLE <opção> [nome] [...]"
+  syntax_operclass: "ROLE <opção> [parâmetros]"
   help_operclass: |-
     Permite gerir os cargos dos operadores, as respetivas permissões e configuração.
 
@@ -197,7 +197,7 @@ role:
 
   # --- ROLE PERMS ----------------------------------------------------------
   perms:
-    syntax: "ROLE PERMS {ADD|DEL|LIST|CLEAR} <cargo> [parâmetros]"
+    syntax: "ROLE PERMS {{ADD|DEL} <cargo> <permissão>|{LIST|CLEAR} <cargo>}"
     short: "Gere as permissões do cargo."
     help: !irc |-
       Gere as permissões atribuídas a um cargo.
@@ -238,7 +238,7 @@ role:
 
   # --- ROLE MODES ----------------------------------------------------------
   modes:
-    syntax: "ROLE MODES {VIEW|SET} <cargo> [modos]"
+    syntax: "ROLE MODES {VIEW <cargo>|SET <cargo> [modos]}"
     short: "Configura os modos de utilizador do cargo."
     help: !irc |-
       Gere os modos de utilizador IRCOP atribuídos a um cargo.
@@ -269,7 +269,7 @@ role:
 
   # --- ROLE VHOST ----------------------------------------------------------
   vhost:
-    syntax: "ROLE VHOST {VIEW|SET} <cargo> [vhost]"
+    syntax: "ROLE VHOST {VIEW <cargo>|SET <cargo> [vhost]}"
     short: "Configura o padrão de host virtual do cargo."
     help: !irc |-
       Permite configurar o host virtual atribuído aos operadores de um cargo ao
@@ -319,7 +319,7 @@ kill:
 
 # --- GLINE -----------------------------------------------------------------
 gline:
-  syntax: "GLINE {ADD|DEL|LIST} [máscara] [expiração] [motivo]"
+  syntax: "GLINE {ADD <máscara> <expiração> <motivo>|DEL <máscara|número>|LIST [máscara]}"
   short: "Gerir G-lines globais da rede."
   help: |-
     Gere as G-lines (banimentos globais) da rede.
@@ -436,7 +436,7 @@ debug:
 # --- MOTD ------------------------------------------------------------------
 motd:
   short: "Gerir mensagens MOTD enviadas aos utilizadores ao ligar."
-  syntax: "MOTD {ADD|DEL|LIST|CLEAN} [args]"
+  syntax: "MOTD {ADD <destino> {PRIVMSG|NOTICE} <expiração> <mensagem>|DEL <id>|LIST|CLEAN}"
   help: |-
     Gere entradas da mensagem do dia (MOTD), enviadas quando um utilizador se
     liga à rede.
