@@ -9,13 +9,16 @@ final readonly class CommandArgumentDefinition
 {
     /**
      * @param list<Argument>      $arguments
-     * @param array<string, self> $variants  uppercase selectors, including accepted aliases
+     * @param array<string, self> $variants          uppercase selectors, including accepted aliases
+     * @param list<list<int>>     $alternativeOrders canonical token positions for accepted legacy layouts
      */
     public function __construct(
         public string $syntaxKey,
         public array $arguments = [],
         public array $variants = [],
         public bool $allowExtra = true,
+        public ?self $unknownVariant = null,
+        public array $alternativeOrders = [],
     ) {}
 
     /** The dispatch checkpoint checks only this node, never a deeper variant. */

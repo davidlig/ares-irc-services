@@ -179,7 +179,7 @@ final class LayerDependencyTest extends TestCase
             self::assertOnlyContainsDirectories($context, ['Adapter', 'Application', 'Domain']);
         }
 
-        self::assertOnlyContainsDirectories('Shared', ['Application', 'Domain']);
+        self::assertOnlyContainsDirectories('Shared', ['Adapter', 'Application', 'Domain']);
         self::assertFalse(is_dir(self::ROOT . '/src/Udb'), 'UDB is a protocol concern, not a bounded context');
 
         $protocolPath = self::ROOT . '/src/Irc/Adapter/Protocol';
@@ -231,6 +231,10 @@ final class LayerDependencyTest extends TestCase
     public function sharedKernelContainsOnlyApprovedGenericContracts(): void
     {
         $expected = [
+            'src/Shared/Adapter/In/Irc/CommandArgument/Argument.php',
+            'src/Shared/Adapter/In/Irc/CommandArgument/CommandArgumentDefinition.php',
+            'src/Shared/Adapter/In/Irc/CommandArgument/CommandArgumentValidator.php',
+            'src/Shared/Adapter/In/Irc/CommandArgument/ValidationResult.php',
             'src/Shared/Application/Audit/SafeAuditMetadata.php',
             'src/Shared/Application/EmailHintMasker.php',
             'src/Shared/Application/Mail/MailerInterface.php',

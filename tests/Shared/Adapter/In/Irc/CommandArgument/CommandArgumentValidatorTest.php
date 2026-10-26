@@ -86,4 +86,64 @@ final class CommandArgumentValidatorTest extends TestCase
         self::assertSame('exact.syntax', CommandArgumentValidator::validate($exact, ['one', 'two', 'three'])->syntaxKey);
         self::assertTrue(CommandArgumentValidator::validate(new CommandArgumentDefinition('empty.syntax'), [])->isValid());
     }
+
+    public function testConditionalChannelAndDigitArguments(): void
+    {
+        $definition = new CommandArgumentDefinition('read.syntax', [
+            new Argument('channel', optional: true, prefix: '#'),
+            new Argument('index', digits: true),
+        ]);
+        self::assertSame(1, $definition->minimumArgs());
+        foreach ([['3'], ['#room', '3'], ['0'], ['#room', '3', 'legacy']] as $args) {
+            self::assertTrue(CommandArgumentValidator::validate($definition, $args)->isValid());
+        }
+        foreach ([['#room'], ['bad'], ['#room', 'bad']] as $args) {
+            self::assertSame('read.syntax', CommandArgumentValidator::validate($definition, $args)->syntaxKey);
+        }
+        $union = new CommandArgumentDefinition('del.syntax', [new Argument('index', alternatives: ['ALL'], digits: true)]);
+        self::assertTrue(CommandArgumentValidator::validate($union, ['all'])->isValid());
+        self::assertTrue(CommandArgumentValidator::validate($union, ['42'])->isValid());
+        self::assertSame('del.syntax', CommandArgumentValidator::validate($union, ['no'])->syntaxKey);
+        self::assertSame('read.syntax', CommandArgumentValidator::validate($definition, [''])->syntaxKey);
+        $requiredPrefix = new CommandArgumentDefinition('channel.syntax', [new Argument('channel', prefix: '#')]);
+        self::assertSame('channel.syntax', CommandArgumentValidator::validate($requiredPrefix, ['nick'])->syntaxKey);
+    }
+
+    public function testUnknownVariantFallbackPreservesLegacyGenericErrors(): void
+    {
+        $definition = new CommandArgumentDefinition(
+            'set.syntax',
+            [new Argument('option')],
+            variants: ['PASSWORD' => new CommandArgumentDefinition('set.password.syntax', [new Argument('value', rest: true)])],
+            unknownVariant: new CommandArgumentDefinition('set.syntax', [new Argument('value', rest: true)]),
+        );
+        $missing = CommandArgumentValidator::validate($definition, ['UNKNOWN']);
+        self::assertFalse($missing->recognized);
+        self::assertSame('set.syntax', $missing->syntaxKey);
+        $unknown = CommandArgumentValidator::validate($definition, ['UNKNOWN', 'value']);
+        self::assertFalse($unknown->recognized);
+        self::assertNull($unknown->syntaxKey);
+    }
+
+    public function testAlternativeLayoutReusesCanonicalGrammar(): void
+    {
+        $definition = new CommandArgumentDefinition('ircop.syntax', [new Argument('action')], variants: [
+            'ADD' => new CommandArgumentDefinition('ircop.add.syntax', [new Argument('nick'), new Argument('role')]),
+            'DEL' => new CommandArgumentDefinition('ircop.del.syntax', [new Argument('nick')]),
+        ], alternativeOrders: [[1, 0]]);
+        $args = ['Alice', 'ADD', 'staff'];
+        self::assertTrue(CommandArgumentValidator::validate($definition, $args)->isValid());
+        self::assertSame('ircop.add.syntax', CommandArgumentValidator::validate($definition, ['Alice', 'ADD'])->syntaxKey);
+        self::assertTrue(CommandArgumentValidator::validate($definition, ['DEL', 'Alice'])->isValid());
+        self::assertFalse(CommandArgumentValidator::validate($definition, ['Alice', 'unknown'])->recognized);
+        self::assertFalse(CommandArgumentValidator::validate($definition, ['unknown'])->recognized);
+    }
+
+    public function testNonBlankRestMatchesJoinedTextRatherThanOnlyFirstToken(): void
+    {
+        $definition = new CommandArgumentDefinition('history.add.syntax', [new Argument('message', rest: true, nonBlank: true)]);
+        self::assertSame('history.add.syntax', CommandArgumentValidator::validate($definition, [' ', '  '])->syntaxKey);
+        self::assertTrue(CommandArgumentValidator::validate($definition, [' ', 'message'])->isValid());
+        self::assertTrue(CommandArgumentValidator::validate($definition, ['message', 'more'])->isValid());
+    }
 }

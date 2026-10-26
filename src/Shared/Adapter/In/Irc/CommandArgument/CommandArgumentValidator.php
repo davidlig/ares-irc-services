@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Shared\Adapter\In\Irc\CommandArgument;
 
+use function array_slice;
 use function count;
+use function ctype_digit;
+use function implode;
 use function in_array;
+use function str_starts_with;
 use function strtoupper;
+use function trim;
 
 /** Pure structural matching. Callers retain authorization and reply ownership. */
 final class CommandArgumentValidator
@@ -26,29 +31,70 @@ final class CommandArgumentValidator
     /** @param list<string> $args */
     private static function validateNode(CommandArgumentDefinition $definition, array $args, int $offset): ValidationResult
     {
+        $result = self::validateOrderedNode($definition, $args, $offset);
+        if ($result->recognized) {
+            return $result;
+        }
+        foreach ($definition->alternativeOrders as $order) {
+            $tail = array_slice($args, $offset);
+            $reordered = array_slice($args, 0, $offset);
+            foreach ($order as $index) {
+                if (isset($tail[$index])) {
+                    $reordered[] = $tail[$index];
+                }
+            }
+            foreach ($tail as $index => $value) {
+                if (!in_array($index, $order, true)) {
+                    $reordered[] = $value;
+                }
+            }
+            $alternative = self::validateOrderedNode($definition, $reordered, $offset);
+            if ($alternative->recognized) {
+                return $alternative;
+            }
+        }
+
+        return $result;
+    }
+
+    /** @param list<string> $args */
+    private static function validateOrderedNode(CommandArgumentDefinition $definition, array $args, int $offset): ValidationResult
+    {
+        $cursor = $offset;
         $consumesRest = false;
-        foreach ($definition->arguments as $index => $argument) {
-            $value = $args[$offset + $index] ?? null;
-            if (null === $value) {
+        $selector = '';
+        foreach ($definition->arguments as $argument) {
+            $value = isset($args[$cursor]) && $argument->rest ? implode(' ', array_slice($args, $cursor)) : ($args[$cursor] ?? null);
+            $selector = '';
+            if (null === $value || '' === $value || (null !== $argument->prefix && !str_starts_with($value, $argument->prefix))) {
                 if (!$argument->optional) {
                     return new ValidationResult(true, $definition->syntaxKey);
                 }
                 continue;
             }
-            if ([] !== $argument->alternatives && !in_array(strtoupper($value), $argument->alternatives, true)) {
+            if ($argument->nonBlank && '' === trim($value)) {
                 return new ValidationResult(true, $definition->syntaxKey);
             }
+            if (([] !== $argument->alternatives || $argument->digits)
+                && !in_array(strtoupper($value), $argument->alternatives, true)
+                && (!$argument->digits || !ctype_digit($value))) {
+                return new ValidationResult(true, $definition->syntaxKey);
+            }
+            $selector = strtoupper($value);
             $consumesRest = $argument->rest;
+            $cursor = $argument->rest ? count($args) : $cursor + 1;
         }
 
-        $nextOffset = $offset + count($definition->arguments);
         if ([] !== $definition->variants) {
-            $selector = strtoupper($args[$nextOffset - 1] ?? '');
             $variant = $definition->variants[$selector] ?? null;
+            if (null !== $variant) {
+                return self::validateNode($variant, $args, $cursor);
+            }
+            $fallback = null === $definition->unknownVariant ? null : self::validateNode($definition->unknownVariant, $args, $cursor)->syntaxKey;
 
-            return null === $variant ? new ValidationResult(false) : self::validateNode($variant, $args, $nextOffset);
+            return new ValidationResult(false, $fallback);
         }
 
-        return new ValidationResult(true, !$definition->allowExtra && !$consumesRest && count($args) > $nextOffset ? $definition->syntaxKey : null);
+        return new ValidationResult(true, !$definition->allowExtra && !$consumesRest && count($args) > $cursor ? $definition->syntaxKey : null);
     }
 }

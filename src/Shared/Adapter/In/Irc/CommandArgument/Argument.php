@@ -13,5 +13,8 @@ final readonly class Argument
         public bool $optional = false,
         public bool $rest = false,
         public array $alternatives = [],
+        public ?string $prefix = null,
+        public bool $digits = false,
+        public bool $nonBlank = false,
     ) {}
 }
