@@ -15,6 +15,8 @@ use App\NickServ\Application\UseCase\Rename\RenameNick;
 use App\NickServ\Application\UseCase\Rename\RenameNickHandlerInterface;
 use App\NickServ\Application\UseCase\Rename\RenameNickOutcome;
 use App\NickServ\Application\UseCase\Rename\RenameNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use Psr\Log\LoggerInterface;
 
 final readonly class RenameCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
@@ -36,14 +38,19 @@ final readonly class RenameCommand implements NickServCommandInterface, IrcopAud
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('rename.syntax', [new Argument('nickname')]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'rename.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

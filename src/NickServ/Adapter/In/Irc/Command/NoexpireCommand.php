@@ -14,8 +14,10 @@ use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNick;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandlerInterface;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickOutcome;
 use App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
-use function in_array;
 use function strtoupper;
 
 final readonly class NoexpireCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
@@ -32,14 +34,22 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('noexpire.syntax', [
+            new Argument('nickname'),
+            new Argument('action', alternatives: ['ON', 'OFF']),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 2;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'noexpire.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -88,13 +98,14 @@ final readonly class NoexpireCommand implements NickServCommandInterface, IrcopA
             return CommandOutcome::rejected();
         }
 
-        $action = strtoupper($context->args[1]);
-        if (!in_array($action, ['ON', 'OFF'], true)) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
 
             return CommandOutcome::rejected();
         }
 
+        $action = strtoupper($context->args[1]);
         $result = $this->handler->handle(new SetNoexpireNick(
             nickname: $context->args[0],
             noexpire: 'ON' === $action,

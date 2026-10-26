@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <opcja> <wartość>"
+  syntax: "SET <opcja> [wartość]"
   short: "Zmień opcje swojego nicka."
   help: |-
     Zmienia ustawienia Twojego pseudonimu. Aby zmienić te opcje, musisz być
@@ -335,7 +335,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <nick> <opcja> <wartość>"
+  syntax: "SASET <nick> <opcja> [wartość]"
   short: "Modyfikuj ustawienia innego nicka."
   help: |-
     Pozwala IRCop zmienić ustawienia innego zarejestrowanego pseudonimu. Nie

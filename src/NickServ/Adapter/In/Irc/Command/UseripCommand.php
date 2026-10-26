@@ -15,6 +15,8 @@ use App\NickServ\Application\UseCase\Userip\GetUserip;
 use App\NickServ\Application\UseCase\Userip\GetUseripHandlerInterface;
 use App\NickServ\Application\UseCase\Userip\GetUseripOutcome;
 use App\NickServ\Application\UseCase\Userip\GetUseripResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function base64_decode;
 use function bin2hex;
@@ -38,14 +40,19 @@ final readonly class UseripCommand implements NickServCommandInterface, IrcopAud
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('userip.syntax', [new Argument('nickname')]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'userip.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

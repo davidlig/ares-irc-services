@@ -204,7 +204,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <option> <value>"
+  syntax: "SET <option> [value]"
   short: "Change your nickname options."
   help: |-
     Changes your nickname settings. You must be identified to change these
@@ -334,7 +334,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <nickname> <option> <value>"
+  syntax: "SASET <nickname> <option> [value]"
   short: "Modify another nickname's settings."
   help: |-
     Allows an IRC operator to change another registered nickname's settings.

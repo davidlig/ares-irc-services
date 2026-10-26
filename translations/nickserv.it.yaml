@@ -202,7 +202,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <opzione> <valore>"
+  syntax: "SET <opzione> [valore]"
   short: "Cambiare le opzioni del tuo nickname."
   help: |-
     Modifica le impostazioni del tuo nickname. Per cambiare queste opzioni devi
@@ -334,7 +334,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <nickname> <opzione> <valore>"
+  syntax: "SASET <nickname> <opzione> [valore]"
   short: "Modificare le impostazioni di un altro nickname."
   help: |-
     Consente a un IRCop di modificare le impostazioni di un altro nickname

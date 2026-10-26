@@ -11,6 +11,8 @@ use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Application\UseCase\Register\RegisterNickHandlerInterface;
 use App\NickServ\Application\UseCase\Register\RegisterNickOutcome;
 use App\NickServ\Application\UseCase\Register\RegisterNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function ceil;
 
@@ -32,14 +34,22 @@ final readonly class RegisterCommand implements NickServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('register.syntax', [
+            new Argument('password'),
+            new Argument('email', optional: true),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'register.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

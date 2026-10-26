@@ -162,8 +162,8 @@ final class NoexpireCommandTest extends TestCase
     }
 
     /**
-     * @param string[] $messages
-     * @param string[] $args
+     * @param string[]     $messages
+     * @param list<string> $args
      */
     private function createContext(?SenderView $sender, array &$messages, array $args): NickServContext
     {

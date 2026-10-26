@@ -12,6 +12,8 @@ use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
 use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function strlen;
 
@@ -47,14 +49,23 @@ final readonly class HelpCommand implements NickServCommandInterface
         return ['?'];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('help.syntax', [
+            new Argument('command', optional: true),
+            new Argument('subcommand', optional: true),
+            new Argument('details', optional: true, rest: true),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 0;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'help.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

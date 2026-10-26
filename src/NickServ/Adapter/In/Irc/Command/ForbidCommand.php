@@ -13,6 +13,8 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Forbid\ForbidNick;
 use App\NickServ\Application\UseCase\Forbid\ForbidNickHandler;
 use App\NickServ\Application\UseCase\Forbid\ForbidNickOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function array_slice;
 use function implode;
@@ -34,14 +36,22 @@ final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCom
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('forbid.syntax', [
+            new Argument('nickname'),
+            new Argument('reason', rest: true),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 2;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'forbid.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

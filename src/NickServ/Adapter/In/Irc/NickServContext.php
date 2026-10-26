@@ -31,7 +31,7 @@ readonly class NickServContext implements IrcopAuthorizationSubject
         public ?SenderView $sender,
         public ?RegisteredNick $senderAccount,
         public string $command,
-        /** @var string[] */
+        /** @var list<string> */
         public array $args,
         private NickServNotifierInterface $notifier,
         private TranslatorInterface $translator,

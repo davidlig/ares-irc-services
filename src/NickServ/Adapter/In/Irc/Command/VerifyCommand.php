@@ -12,6 +12,8 @@ use App\NickServ\Application\UseCase\Verify\VerifyNick;
 use App\NickServ\Application\UseCase\Verify\VerifyNickHandlerInterface;
 use App\NickServ\Application\UseCase\Verify\VerifyNickOutcome;
 use App\NickServ\Application\UseCase\Verify\VerifyNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 final readonly class VerifyCommand implements NickServCommandInterface
 {
@@ -30,14 +32,19 @@ final readonly class VerifyCommand implements NickServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('verify.syntax', [new Argument('token')]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'verify.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

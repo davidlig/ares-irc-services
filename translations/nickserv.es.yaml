@@ -204,7 +204,7 @@ info:
 
 # --- SET --------------------------------------------------------------------
 set:
-  syntax:           "SET <opción> <valor>"
+  syntax:           "SET <opción> [valor]"
   short:            "Cambiar opciones de tu apodo."
   help: |-
     Modifica la configuración de tu apodo. Debes estar identificado para cambiar
@@ -334,7 +334,7 @@ set:
 
 # --- SASET (IRCop) --------------------------------------------------------------
 saset:
-  syntax:           "SASET <apodo> <opción> <valor>"
+  syntax:           "SASET <apodo> <opción> [valor]"
   short:            "Modifica la configuración de otro apodo."
   help: |-
     Permite a un IRCop cambiar la configuración de otro apodo registrado. No

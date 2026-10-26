@@ -208,7 +208,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <Option> <Wert>"
+  syntax: "SET <Option> [Wert]"
   short: "Optionen deines Nicknames ändern."
   help: |-
     Ändert die Einstellungen deines Nicknames. Du musst identifiziert sein, um
@@ -342,7 +342,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <Nickname> <Option> <Wert>"
+  syntax: "SASET <Nickname> <Option> [Wert]"
   short: "Einstellungen eines anderen Nicknames ändern."
   help: |-
     Ermöglicht IRC-Operatoren, die Einstellungen eines anderen registrierten

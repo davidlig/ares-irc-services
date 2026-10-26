@@ -14,15 +14,15 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Set\SetNickSetting;
 use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Application\UseCase\Set\SetNickSettingOption;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
 use function array_slice;
-use function count;
 use function sprintf;
 
 final readonly class SasetCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'VHOST'];
-
     public function __construct(private SetNickSettingHandlerInterface $handler) {}
 
     public function getName(): string
@@ -35,14 +35,30 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('saset.syntax', [
+            new Argument('nickname'),
+            new Argument('option'),
+        ], [
+            'PASSWORD' => new CommandArgumentDefinition('saset.password.syntax', [new Argument('value', rest: true)]),
+            'EMAIL' => new CommandArgumentDefinition('saset.email.syntax', [new Argument('value', rest: true)]),
+            'LANGUAGE' => new CommandArgumentDefinition('saset.language.syntax', [new Argument('value', rest: true)]),
+            'TIMEZONE' => new CommandArgumentDefinition('saset.timezone.syntax', [new Argument('value', rest: true)]),
+            'PRIVATE' => new CommandArgumentDefinition('saset.private.syntax', [new Argument('value', rest: true)]),
+            'MSG' => new CommandArgumentDefinition('saset.msg.syntax', [new Argument('value', rest: true)]),
+            'VHOST' => new CommandArgumentDefinition('saset.vhost.syntax', [new Argument('value', optional: true, rest: true)]),
+        ], unknownVariant: new CommandArgumentDefinition('saset.syntax', [new Argument('value', rest: true)]));
+    }
+
     public function getMinArgs(): int
     {
-        return 2;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'saset.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -67,13 +83,15 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
 
     public function getSubCommandHelp(): array
     {
+        $options = array_keys($this->getArgumentDefinition()->variants);
+
         return array_map(static fn (string $option): array => [
             'name' => $option,
             'desc_key' => 'saset.' . strtolower($option) . '.short',
             'help_key' => 'saset.' . strtolower($option) . '.help',
             'syntax_key' => 'saset.' . strtolower($option) . '.syntax',
             'example_key' => 'saset.' . strtolower($option) . '.example',
-        ], self::SUPPORTED_OPTIONS);
+        ], $options);
     }
 
     public function isOperOnly(): bool
@@ -98,8 +116,9 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
             return CommandOutcome::rejected();
         }
 
-        if (count($context->args) < 3 && !$this->isBareVhostClear($context->args)) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
 
             return CommandOutcome::rejected();
         }
@@ -110,7 +129,7 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
         if (null === $option) {
             $context->reply('saset.unknown_option', [
                 'option' => $rawOption,
-                'options' => implode(', ', self::SUPPORTED_OPTIONS),
+                'options' => implode(', ', array_keys($this->getArgumentDefinition()->variants)),
             ]);
 
             return CommandOutcome::rejected();
@@ -145,12 +164,6 @@ final readonly class SasetCommand implements NickServCommandInterface, IrcopAudi
                 default => $value,
             }],
         ));
-    }
-
-    /** @param array<string> $args */
-    private function isBareVhostClear(array $args): bool
-    {
-        return 2 === count($args) && SetNickSettingOption::Vhost->value === strtoupper($args[1]);
     }
 
     private static function decodeIp(string $ipBase64): string

@@ -12,6 +12,8 @@ use App\NickServ\Application\UseCase\Info\InfoNickHandlerInterface;
 use App\NickServ\Application\UseCase\Info\InfoNickOutcome;
 use App\NickServ\Application\UseCase\Info\InfoNickResult;
 use App\NickServ\Domain\ValueObject\NickStatus;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 final readonly class InfoCommand implements NickServCommandInterface
 {
@@ -30,14 +32,19 @@ final readonly class InfoCommand implements NickServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('info.syntax', [new Argument('nickname')]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'info.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

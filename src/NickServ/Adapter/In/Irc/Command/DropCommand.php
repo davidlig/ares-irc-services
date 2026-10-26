@@ -16,6 +16,8 @@ use App\NickServ\Application\UseCase\Drop\DropNick;
 use App\NickServ\Application\UseCase\Drop\DropNickHandlerInterface;
 use App\NickServ\Application\UseCase\Drop\DropNickOutcome;
 use App\NickServ\Application\UseCase\Drop\DropNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;
@@ -40,14 +42,22 @@ final readonly class DropCommand implements NickServCommandInterface, IrcopAudit
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('drop.syntax', [
+            new Argument('nickname'),
+            new Argument('force', optional: true),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'drop.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

@@ -12,6 +12,8 @@ use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\ServiceNicknameProviderInterface;
 use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
+use App\NickServ\Adapter\In\Irc\Command\SasetCommand;
+use App\NickServ\Adapter\In\Irc\Command\SetCommand;
 use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
 use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
 use App\NickServ\Adapter\In\Irc\NickServContext;
@@ -26,7 +28,10 @@ use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Application\UseCase\Set\SetNickSettingHandlerInterface;
 use App\NickServ\Domain\Entity\RegisteredNick;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -140,14 +145,19 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('dummy.syntax', [new Argument('argument')]);
+            }
+
             public function getMinArgs(): int
             {
-                return 1;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'dummy.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -326,14 +336,19 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -436,14 +451,19 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -546,14 +566,19 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('syntax.twoargs', [new Argument('first'), new Argument('second')]);
+            }
+
             public function getMinArgs(): int
             {
-                return 2;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'syntax.twoargs';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -632,6 +657,65 @@ final class NickServServiceTest extends TestCase
     }
 
     #[Test]
+    public function routesSetAndSasetPasswordSyntaxFromTheRecognizedOption(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
+        $messages = [];
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $authorizationChecker = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorizationChecker->method('isGranted')->willReturn(true);
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            return match ($id) {
+                'set.password.syntax' => 'SET PASSWORD <new_password>',
+                'saset.password.syntax' => 'SASET <nickname> PASSWORD <new_password>',
+                'error.syntax' => 'Syntax: ' . (is_string($parameters['%syntax%'] ?? null) ? $parameters['%syntax%'] : ''),
+                default => $id,
+            };
+        });
+        $dispatchedEvents = [];
+        $events = $this->createMock(EventBusInterface::class);
+        $events->expects(self::exactly(2))->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): void {
+            $dispatchedEvents[] = $event;
+        });
+
+        $service = new NickServService(
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            new NickServCommandRegistry([new SetCommand($handler), new SasetCommand($handler)]),
+            $repository,
+            new UserLanguageResolver($repository, new SessionLanguageRegistry(), 'en'),
+            $notifier,
+            new UserMessageTypeResolver($repository),
+            $translator,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+            $events,
+        );
+
+        $service->dispatch('SET PASSWORD', $sender);
+        $service->dispatch('SASET Target PASSWORD', $sender);
+
+        self::assertSame([
+            'Syntax: SET PASSWORD <new_password>',
+            'Syntax: SASET <nickname> PASSWORD <new_password>',
+        ], $messages);
+        self::assertCount(2, $dispatchedEvents);
+        foreach ($dispatchedEvents as $event) {
+            self::assertInstanceOf(CommandExecutedEvent::class, $event);
+            self::assertFalse($event->outcome?->success);
+        }
+    }
+
+    #[Test]
     public function clearsAuthorizationContextEvenWhenHandlerThrowsException(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
@@ -647,14 +731,19 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -746,14 +835,19 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -882,14 +976,19 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -1001,14 +1100,19 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -1120,14 +1224,19 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -1245,14 +1354,19 @@ final class NickServServiceTest extends TestCase
                     return [];
                 }
 
+                public function getArgumentDefinition(): CommandArgumentDefinition
+                {
+                    return new CommandArgumentDefinition('syntax');
+                }
+
                 public function getMinArgs(): int
                 {
-                    return 0;
+                    return $this->getArgumentDefinition()->minimumArgs();
                 }
 
                 public function getSyntaxKey(): string
                 {
-                    return 'syntax';
+                    return $this->getArgumentDefinition()->syntaxKey;
                 }
 
                 public function getHelpKey(): string

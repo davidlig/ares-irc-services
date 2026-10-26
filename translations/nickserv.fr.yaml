@@ -205,7 +205,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <option> <valeur>"
+  syntax: "SET <option> [valeur]"
   short: "Modifier les options de votre pseudo."
   help: |-
     Modifie les paramètres de votre pseudonyme. Vous devez être identifié pour
@@ -340,7 +340,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <surnom> <option> <valeur>"
+  syntax: "SASET <surnom> <option> [valeur]"
   short: "Modifier les paramètres d'un autre surnom."
   help: |-
     Permet à un IRCop de modifier les paramètres d’un autre pseudonyme enregistré.

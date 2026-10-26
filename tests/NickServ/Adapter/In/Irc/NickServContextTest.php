@@ -27,7 +27,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class NickServContextTest extends TestCase
 {
     /**
-     * @param string[] $args
+     * @param list<string> $args
      */
     private function createContext(
         ?SenderView $sender,

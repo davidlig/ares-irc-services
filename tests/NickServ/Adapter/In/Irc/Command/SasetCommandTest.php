@@ -44,7 +44,7 @@ final class SasetCommandTest extends TestCase
         self::assertSame(NickServPermission::SASET, $command->getRequiredPermission());
         self::assertSame([], $command->getHelpParams());
         self::assertCount(7, $command->getSubCommandHelp());
-        self::assertSame('VHOST', $command->getSubCommandHelp()[6]['name']);
+        self::assertSame(['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'VHOST'], array_column($command->getSubCommandHelp(), 'name'));
     }
 
     #[Test]
@@ -55,11 +55,27 @@ final class SasetCommandTest extends TestCase
         $command = new SasetCommand($handler);
 
         self::assertFalse($command->execute($this->context(null, []))->success);
-        self::assertFalse($command->execute($this->context($this->sender(), ['Target', 'PASSWORD']))->success);
+        $translations = [];
+        self::assertFalse($command->execute($this->context($this->sender(), ['Target', 'PASSWORD'], translationCalls: $translations))->success);
+        self::assertContains('saset.password.syntax', $translations);
+
+        $translations = [];
+        self::assertFalse($command->execute($this->context($this->sender(), ['Target', 'UNKNOWN'], translationCalls: $translations))->success);
+        self::assertContains('saset.syntax', $translations);
 
         $messages = [];
-        self::assertFalse($command->execute($this->context($this->sender(), ['Target', 'UNKNOWN', 'value'], $messages))->success);
+        $translations = [];
+        $translationParameters = [];
+        self::assertFalse($command->execute($this->context(
+            $this->sender(),
+            ['Target', 'UNKNOWN', 'value'],
+            $messages,
+            $translations,
+            $translationParameters,
+        ))->success);
         self::assertSame(['saset.unknown_option'], $messages);
+        self::assertSame(['saset.unknown_option'], $translations);
+        self::assertSame('PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST', $translationParameters[0]['%options%']);
     }
 
     #[Test]
@@ -170,19 +186,56 @@ final class SasetCommandTest extends TestCase
         self::assertStringNotContainsString('never-audit-token', serialize($outcome->auditData));
     }
 
-    /**
-     * @param list<string> $args
-     * @param list<string> $messages
-     */
-    private function context(?SenderView $sender, array $args, array &$messages = []): NickServContext
+    #[Test]
+    public function targetRootProtectionTakesPrecedenceOverAnInvalidBusinessMode(): void
     {
+        $handler = $this->createMock(SetNickSettingHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with(self::callback(
+            static fn (SetNickSetting $input): bool => 'Root' === $input->targetNickname
+                && SetNickSettingOption::PrivateMode === $input->option
+                && 'MAYBE' === $input->value,
+        ))->willReturn(new SetNickSettingResult(
+            SetNickSettingOutcome::TargetIsRoot,
+            SetNickSettingOption::PrivateMode,
+            'Root',
+        ));
+
+        $messages = [];
+        $outcome = new SasetCommand($handler)->execute($this->context(
+            $this->sender(),
+            ['Root', 'PRIVATE', 'MAYBE'],
+            $messages,
+        ));
+
+        self::assertFalse($outcome->success);
+        self::assertSame(['saset.cannot_modify_oper'], $messages);
+    }
+
+    /**
+     * @param list<string>               $args
+     * @param list<string>               $messages
+     * @param list<string>               $translationCalls
+     * @param list<array<string, mixed>> $translationParameters
+     */
+    private function context(
+        ?SenderView $sender,
+        array $args,
+        array &$messages = [],
+        array &$translationCalls = [],
+        array &$translationParameters = [],
+    ): NickServContext {
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('NickServ');
         $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
             $messages[] = $message;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []) use (&$translationCalls, &$translationParameters): string {
+            $translationCalls[] = $id;
+            $translationParameters[] = $parameters;
+
+            return $id;
+        });
         $provider = $this->createStub(ServiceNicknameProviderInterface::class);
         $provider->method('getServiceKey')->willReturn('nickserv');
         $provider->method('getNickname')->willReturn('NickServ');

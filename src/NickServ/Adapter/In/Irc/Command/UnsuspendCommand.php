@@ -14,6 +14,8 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNick;
 use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickHandler;
 use App\NickServ\Application\UseCase\Unsuspend\UnsuspendNickOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function sprintf;
 
@@ -31,14 +33,19 @@ final readonly class UnsuspendCommand implements NickServCommandInterface, Ircop
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('unsuspend.syntax', [new Argument('nickname')]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'unsuspend.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

@@ -14,8 +14,10 @@ use App\NickServ\Application\Security\NickServPermission;
 use App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeHandlerInterface;
 use App\NickServ\Application\UseCase\RegistrationMode\RegistrationModeInput;
 use App\NickServ\Domain\ValueObject\RegistrationMode;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
-use function count;
 use function strtolower;
 use function strtoupper;
 
@@ -33,14 +35,21 @@ final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAu
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('regmode.syntax', [
+            new Argument('action', alternatives: ['EMAIL', 'TOKEN', 'STATUS']),
+        ], allowExtra: false);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'regmode.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -89,13 +98,16 @@ final readonly class RegmodeCommand implements NickServCommandInterface, IrcopAu
         if (null === $sender) {
             return CommandOutcome::rejected();
         }
-        $action = strtoupper($context->args[0] ?? '');
-        $mode = RegistrationMode::tryFrom($action);
-        if (1 !== count($context->args) || (null === $mode && 'STATUS' !== $action)) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
 
             return CommandOutcome::rejected();
         }
+
+        $action = strtoupper($context->args[0] ?? '');
+        $mode = RegistrationMode::tryFrom($action);
         $authorized = $this->operatorAccess->hasPermission(
             strtolower($sender->nick),
             $context->getSenderAccountId(),

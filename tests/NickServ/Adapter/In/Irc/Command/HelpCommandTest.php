@@ -17,6 +17,8 @@ use App\NickServ\Adapter\In\Irc\TimezoneHelpProvider;
 use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
 use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\Port\Out\NickServOperatorAccess;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -50,7 +52,7 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
-     * @param string[] $args
+     * @param list<string> $args
      */
     private function createContext(
         ?SenderView $sender,
@@ -111,14 +113,19 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return '';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -197,14 +204,19 @@ final class HelpCommandTest extends TestCase
                 return ['?'];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('help.syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'help.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -297,14 +309,19 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('help.syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'help.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -404,14 +421,19 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('opercmd.syntax');
+            }
+
             public function getMinArgs(): int
             {
-                return 0;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'opercmd.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -490,14 +512,19 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('register.syntax', [new Argument('argument1'), new Argument('argument2')]);
+            }
+
             public function getMinArgs(): int
             {
-                return 2;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'register.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -576,14 +603,19 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('set.syntax', [new Argument('option')]);
+            }
+
             public function getMinArgs(): int
             {
-                return 1;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'set.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -687,14 +719,19 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('set.syntax', [new Argument('option')]);
+            }
+
             public function getMinArgs(): int
             {
-                return 1;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'set.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -824,14 +861,19 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('set.syntax', [new Argument('option')]);
+            }
+
             public function getMinArgs(): int
             {
-                return 1;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'set.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -948,14 +990,19 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('set.syntax', [new Argument('option')]);
+            }
+
             public function getMinArgs(): int
             {
-                return 1;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'set.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string
@@ -1074,14 +1121,19 @@ final class HelpCommandTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition('set.syntax', [new Argument('option')]);
+            }
+
             public function getMinArgs(): int
             {
-                return 1;
+                return $this->getArgumentDefinition()->minimumArgs();
             }
 
             public function getSyntaxKey(): string
             {
-                return 'set.syntax';
+                return $this->getArgumentDefinition()->syntaxKey;
             }
 
             public function getHelpKey(): string

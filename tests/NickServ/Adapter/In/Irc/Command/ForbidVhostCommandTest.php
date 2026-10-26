@@ -475,8 +475,8 @@ final class ForbidVhostCommandTest extends TestCase
     }
 
     /**
-     * @param string[] $args
-     * @param string[] $messages
+     * @param list<string> $args
+     * @param string[]     $messages
      */
     private function createContext(array $args, array &$messages): NickServContext
     {
@@ -508,8 +508,8 @@ final class ForbidVhostCommandTest extends TestCase
     }
 
     /**
-     * @param string[] $args
-     * @param string[] $messages
+     * @param list<string> $args
+     * @param string[]     $messages
      */
     private function createContextWithNullSender(array $args, array &$messages): NickServContext
     {
@@ -558,8 +558,8 @@ final class ForbidVhostCommandTest extends TestCase
     }
 
     /**
-     * @param string[] $args
-     * @param string[] $messages
+     * @param list<string> $args
+     * @param string[]     $messages
      */
     private function createContextWithSenderAccount(array $args, array &$messages, int $senderAccountId): NickServContext
     {

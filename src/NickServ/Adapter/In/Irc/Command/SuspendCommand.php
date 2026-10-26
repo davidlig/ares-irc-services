@@ -16,6 +16,9 @@ use App\NickServ\Application\UseCase\Suspend\SuspendNick;
 use App\NickServ\Application\UseCase\Suspend\SuspendNickHandler;
 use App\NickServ\Application\UseCase\Suspend\SuspendNickOutcome;
 use App\NickServ\Application\UseCase\Suspend\SuspendNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
 use function array_slice;
 use function sprintf;
@@ -34,14 +37,23 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('suspend.syntax', [
+            new Argument('nickname'),
+            new Argument('duration'),
+            new Argument('reason', rest: true, nonBlank: true),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 3;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'suspend.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -91,12 +103,14 @@ final readonly class SuspendCommand implements NickServCommandInterface, IrcopAu
             return CommandOutcome::rejected();
         }
 
-        $reason = trim(implode(' ', array_slice($context->args, 2)));
-        if ('' === $reason) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (null !== $validation->syntaxKey) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey)]);
 
             return CommandOutcome::rejected();
         }
+
+        $reason = trim(implode(' ', array_slice($context->args, 2)));
 
         $result = $this->handler->handle(new SuspendNick(
             $this->actor($context, $sender),

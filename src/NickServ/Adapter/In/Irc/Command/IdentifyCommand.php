@@ -16,6 +16,8 @@ use App\NickServ\Application\UseCase\Identify\IdentifyNick;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickHandlerInterface;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickOutcome;
 use App\NickServ\Application\UseCase\Identify\IdentifyNickResult;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function assert;
 use function ceil;
@@ -41,14 +43,26 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         return ['ID'];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        if ($this->usesNativeAuthentication()) {
+            return new CommandArgumentDefinition('identify.native_syntax');
+        }
+
+        return new CommandArgumentDefinition('identify.syntax', [
+            new Argument('nickname'),
+            new Argument('password'),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return $this->usesNativeAuthentication() ? 0 : 2;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return $this->usesNativeAuthentication() ? 'identify.native_syntax' : 'identify.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

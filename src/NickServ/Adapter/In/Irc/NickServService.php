@@ -15,6 +15,7 @@ use App\NickServ\Application\Port\In\UserMessagePreferenceQuery;
 use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
 use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Application\Port\EventBusInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -148,9 +149,10 @@ final readonly class NickServService
         $sender = $context->sender;
         assert(null !== $sender);
 
-        if (count($args) < $handler->getMinArgs()) {
+        $validation = CommandArgumentValidator::validatePrefix($handler->getArgumentDefinition(), $args);
+        if (null !== $validation->syntaxKey) {
             $context->reply('error.syntax', [
-                'syntax' => $context->trans($handler->getSyntaxKey()),
+                'syntax' => $context->trans($validation->syntaxKey),
             ]);
 
             return;

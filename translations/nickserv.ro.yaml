@@ -206,7 +206,7 @@ info:
 
 # --- SET -------------------------------------------------------------------
 set:
-  syntax: "SET <opțiune> <valoare>"
+  syntax: "SET <opțiune> [valoare]"
   short: "Schimbați opțiunile poreclei dumneavoastră."
   help: |-
     Modifică setările poreclei tale. Trebuie să fii identificat pentru a schimba
@@ -339,7 +339,7 @@ set:
 
 # --- SASET -----------------------------------------------------------------
 saset:
-  syntax: "SASET <poreclă> <opțiune> <valoare>"
+  syntax: "SASET <poreclă> <opțiune> [valoare]"
   short: "Modifică setările altei porecle."
   help: |-
     Permite unui IRCop să schimbe setările altei porecle înregistrate. Poreclele
