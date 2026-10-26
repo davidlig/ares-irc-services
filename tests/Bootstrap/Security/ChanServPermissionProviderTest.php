@@ -39,6 +39,8 @@ final class ChanServPermissionProviderTest extends TestCase
         self::assertSame(ChanServPermission::allIrcop(), $permission->getPermissions());
         self::assertContains('chanserv.ircoponly', $permission->getPermissions());
         self::assertContains(ChanServPermission::LIST, $permission->getPermissions());
+        self::assertContains(ChanServPermission::REGMODE, $permission->getPermissions());
+        self::assertContains(ChanServPermission::REGISTRATION_REVIEW, $permission->getPermissions());
     }
 
     #[Test]

@@ -92,6 +92,46 @@ final class ChannelProjectionResolverTest extends TestCase
         self::assertNull($resolver->findByName('#active')?->suspensionReason);
     }
 
+    #[Test]
+    public function omitsPendingAndRejectedChannelsFromAllAndNameProjections(): void
+    {
+        $pending = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#pending', 7, 'request');
+        $rejected = RegisteredChannel::createPendingRegistration(new DateTimeImmutable(), '#rejected', 8, 'request');
+        $rejected->rejectRegistration('No topic', 9, 'Reviewer', new DateTimeImmutable(), null);
+        $active = RegisteredChannel::register(new DateTimeImmutable(), '#active', 10, 'registered');
+        $suspended = RegisteredChannel::register(new DateTimeImmutable(), '#suspended', 11, 'registered');
+        $suspended->suspend('reason');
+        $forbidden = RegisteredChannel::createForbidden(new DateTimeImmutable(), '#forbidden', 'reason');
+        $pendingDeletion = RegisteredChannel::register(new DateTimeImmutable(), '#drop', 12, 'registered');
+        $pendingDeletion->markPendingDeletion(new DateTimeImmutable());
+        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($pending, 31);
+        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($rejected, 32);
+        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($active, 33);
+        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($suspended, 34);
+        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($forbidden, 35);
+        new ReflectionProperty(RegisteredChannel::class, 'id')->setValue($pendingDeletion, 36);
+
+        $channels = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channels->method('iterateAll')->willReturn([$pending, $rejected, $active, $suspended, $forbidden, $pendingDeletion]);
+        $channels->method('findByChannelName')->willReturnCallback(static fn (string $name): RegisteredChannel => match ($name) {
+            '#pending' => $pending,
+            '#rejected' => $rejected,
+            '#suspended' => $suspended,
+            '#forbidden' => $forbidden,
+            '#drop' => $pendingDeletion,
+            default => $active,
+        });
+        $resolver = new ChannelProjectionResolver($channels);
+
+        self::assertSame(['#active', '#suspended', '#forbidden', '#drop'], array_map(static fn (ChannelProjection $projection): string => $projection->name, $resolver->all()));
+        self::assertNull($resolver->findByName('#pending'));
+        self::assertNull($resolver->findByName('#rejected'));
+        self::assertSame('#active', $resolver->findByName('#active')?->name);
+        self::assertSame('#suspended', $resolver->findByName('#suspended')?->name);
+        self::assertSame('#forbidden', $resolver->findByName('#forbidden')?->name);
+        self::assertSame('#drop', $resolver->findByName('#drop')?->name);
+    }
+
     private static function assertProjection(ChannelProjection $expected, ChannelProjection $actual): void
     {
         self::assertSame($expected->id, $actual->id);

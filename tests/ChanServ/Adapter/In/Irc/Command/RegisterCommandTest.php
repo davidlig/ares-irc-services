@@ -14,8 +14,10 @@ use App\ChanServ\Application\Port\Out\ChannelAkickRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelLevelRepositoryInterface;
 use App\ChanServ\Application\Port\Out\ChannelRegisterThrottlePort;
 use App\ChanServ\Application\Port\Out\ChanServOperatorAccess;
+use App\ChanServ\Application\Port\Out\ChanTransactionBoundary;
 use App\ChanServ\Application\Port\Out\RegisteredChannelRepositoryInterface;
 use App\ChanServ\Application\PublishedEvent\ChannelRegisteredEvent;
+use App\ChanServ\Application\Service\ChannelRegistrationActivator;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannel;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandler;
 use App\ChanServ\Application\UseCase\RegisterChannel\RegisterChannelHandlerInterface;
@@ -132,6 +134,46 @@ final class RegisterCommandTest extends TestCase
     public function usesLevelFounderReturnsFalse(): void
     {
         self::assertFalse(new RegisterCommand($this->createStub(RegisterChannelHandlerInterface::class))->usesLevelFounder());
+    }
+
+    #[Test]
+    public function finiteRegistrationRestrictionIncludesRemainingWaitInSeconds(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = new ChanAccountView(1, 'User', 'en');
+        $handler = $this->createStub(RegisterChannelHandlerInterface::class);
+        $handler->method('handle')->willReturn(RegisterChannelResult::registrationRestricted(new DateTimeImmutable('+1 hour')));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translationParameters = [];
+        $translator->method('trans')->willReturnCallback(static function (string $key, array $parameters) use (&$translationParameters): string {
+            $translationParameters = $parameters;
+
+            return $key;
+        });
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($this->channelViewWithSenderPrefix('#test', 'UID1', ['o']));
+
+        new RegisterCommand($handler)->execute($this->createContext(
+            $sender,
+            $account,
+            ['#test', 'Description'],
+            $notifier,
+            $translator,
+            $channelLookup,
+        ));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('register.restricted_until', $messages[0]);
+        self::assertArrayHasKey('%remaining_seconds%', $translationParameters);
+        self::assertIsString($translationParameters['%remaining_seconds%']);
+        $remainingSeconds = (int) $translationParameters['%remaining_seconds%'];
+        self::assertGreaterThanOrEqual(0, $remainingSeconds);
+        self::assertLessThanOrEqual(3600, $remainingSeconds);
     }
 
     #[Test]
@@ -1163,11 +1205,11 @@ final class RegisterCommandTest extends TestCase
     ): RegisterCommand {
         return new RegisterCommand(new RegisterChannelHandler(
             $channelRepository,
-            $levelRepository,
-            $akickRepository ?? $this->createStub(ChannelAkickRepositoryInterface::class),
+            new ChannelRegistrationActivator($levelRepository, $akickRepository ?? $this->createStub(ChannelAkickRepositoryInterface::class)),
             $throttle,
             $events,
             $operatorAccess,
+            $this->createStub(ChanTransactionBoundary::class),
             $maxChannelsPerNick,
             $registerMinIntervalSeconds,
         ));

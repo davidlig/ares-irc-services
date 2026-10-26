@@ -104,7 +104,9 @@ policy used by registration and email changes, with explicit administrative exce
 ### ChanServ
 
 Manages channel registration, hierarchical access, policy, channel state, and channel recovery.
-IRCop permissions and each command's syntax are available through ChanServ HELP.
+IRCop permissions and each command's syntax are available through ChanServ HELP. REGMODE
+selects DIRECT registration (the default) or approval-based requests. IRCops review requests
+with CREG; STATUS reports lifecycle state without exposing pending requests through INFO.
 
 ### MemoServ
 
@@ -274,6 +276,7 @@ retrying, and use the deployment backup and maintenance procedure.
 | `CHANSERV_REALNAME` | `Channel Registration Services` | Bot realname |
 | `CHANSERV_MAX_CHANNELS_PER_NICK` | `3` | Max registered channels per nick |
 | `CHANSERV_REGISTER_MIN_INTERVAL` | `21600` | Seconds between channel registrations |
+| `CHANSERV_REJECT_COOLDOWN` | `24` | Non-negative integer hours a rejected channel cannot be requested again (`0` = indefinite until an IRCop releases it with DROP); fractions and invalid values are rejected |
 | `CHANSERV_INACTIVITY_EXPIRY_DAYS` | `45` | Drop after days of inactivity (`0` = disabled) |
 | `CHANSERV_DROP_GRACE_DAYS` | `7` | Days a manually dropped channel remains restorable (`0` = deletion on maintenance) |
 | `CHANSERV_LIST_PAGE_SIZE` | `50` | Matching registrations per IRCop LIST page |

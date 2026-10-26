@@ -135,8 +135,8 @@ final readonly class RegisteredChannelDoctrineRepository implements RegisteredCh
     public function iterateRegisteredInactiveSince(DateTimeImmutable $threshold): iterable
     {
         return $this->iterateMatching(
-            'COALESCE(c.lastUsedAt, c.createdAt) < :threshold AND c.noExpire = false',
-            ['threshold' => $threshold->format('Y-m-d H:i:s')],
+            'c.status = :activeStatus AND COALESCE(c.lastUsedAt, c.createdAt) < :threshold AND c.noExpire = false',
+            ['activeStatus' => ChannelStatus::Active, 'threshold' => $threshold->format('Y-m-d H:i:s')],
         );
     }
 

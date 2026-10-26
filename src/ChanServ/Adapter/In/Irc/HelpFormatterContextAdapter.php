@@ -18,7 +18,7 @@ use function strtolower;
 final readonly class HelpFormatterContextAdapter implements HelpFormatterContextInterface
 {
     private const array HELP_GROUPS = [
-        ['group_key' => 'help.group.registration_info', 'commands' => ['REGISTER', 'INFO', 'SET'], 'admin' => false, 'subgroup' => false],
+        ['group_key' => 'help.group.registration_info', 'commands' => ['REGISTER', 'INFO', 'STATUS', 'SET'], 'admin' => false, 'subgroup' => false],
         ['group_key' => 'help.group.access_levels', 'commands' => ['ACCESS', 'DELACCESS', 'AKICK', 'LEVELS'], 'admin' => false, 'subgroup' => false],
         ['group_key' => 'help.group.ranks_entry', 'commands' => ['OP', 'DEOP', 'VOICE', 'DEVOICE', 'ADMIN', 'DEADMIN', 'HALFOP', 'DEHALFOP', 'INVITE'], 'admin' => false, 'subgroup' => false],
         ['group_key' => 'help.ircop_group.channel_operations', 'commands' => ['CLEARUSERS', 'CLEARACCESS', 'IRCOPONLY'], 'admin' => true, 'subgroup' => true],
@@ -26,6 +26,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         ['group_key' => 'help.ircop_group.deletion', 'commands' => ['DROP', 'RESTORE'], 'admin' => true, 'subgroup' => true],
         ['group_key' => 'help.ircop_group.restrictions', 'commands' => ['SUSPEND', 'UNSUSPEND', 'FORBID', 'UNFORBID'], 'admin' => true, 'subgroup' => true],
         ['group_key' => 'help.ircop_group.lookup', 'commands' => ['HISTORY', 'LIST'], 'admin' => true, 'subgroup' => true],
+        ['group_key' => 'help.ircop_group.registration_approval', 'commands' => ['REGMODE', 'CREG'], 'admin' => true, 'subgroup' => true],
     ];
 
     /** Commands that require specific mode support to show (name => mode letter). */

@@ -55,6 +55,28 @@ final class MigrationOwnedSchemaListenerTest extends TestCase
         self::assertSame($actual->getColumns(), $event->getSchema()->getTable('registered_nicks')->getColumns());
     }
 
+    #[DataProvider('platforms')]
+    public function testAssignedSingletonPolicyIdsMatchOnlySqliteIntrospection(AbstractPlatform $platform): void
+    {
+        $schema = Schema::editor();
+        foreach (['nickserv_registration_policy', 'chanserv_registration_policy'] as $name) {
+            $schema->addTable(Table::editor()->setUnquotedName($name)
+                ->addColumn(Column::editor()->setUnquotedName('id')->setTypeName(Types::INTEGER)->create())->create());
+        }
+        $manager = $this->createStub(AbstractSchemaManager::class);
+        $manager->method('listTableNames')->willReturn([]);
+        $connection = $this->createStub(Connection::class);
+        $connection->method('createSchemaManager')->willReturn($manager);
+        $connection->method('getDatabasePlatform')->willReturn($platform);
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getConnection')->willReturn($connection);
+        $event = new GenerateSchemaEventArgs($em, $schema->create());
+        new MigrationOwnedSchemaListener()->postGenerateSchema($event);
+        foreach (['nickserv_registration_policy', 'chanserv_registration_policy'] as $name) {
+            self::assertSame($platform instanceof SQLitePlatform, $event->getSchema()->getTable($name)->getColumn('id')->getAutoincrement());
+        }
+    }
+
     /** @return iterable<string, array{AbstractPlatform}> */
     public static function platforms(): iterable
     {

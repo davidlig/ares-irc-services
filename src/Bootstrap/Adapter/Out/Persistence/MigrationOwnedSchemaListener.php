@@ -41,8 +41,11 @@ final class MigrationOwnedSchemaListener
         }
         // SQLite introspects an INTEGER PRIMARY KEY as autoincrement even for assigned IDs.
         // Keep the singleton's generator NONE; this changes only its portable schema representation.
-        if ($connection->getDatabasePlatform() instanceof SQLitePlatform && $schema->hasTable('nickserv_registration_policy')) {
-            $editor->modifyTableByUnquotedName('nickserv_registration_policy', static function (TableEditor $table): void {
+        foreach (['nickserv_registration_policy', 'chanserv_registration_policy'] as $policyTable) {
+            if (!$connection->getDatabasePlatform() instanceof SQLitePlatform || !$schema->hasTable($policyTable)) {
+                continue;
+            }
+            $editor->modifyTableByUnquotedName($policyTable, static function (TableEditor $table): void {
                 $table->modifyColumnByUnquotedName('id', static function (ColumnEditor $column): void {
                     $column->setAutoincrement(true);
                 });

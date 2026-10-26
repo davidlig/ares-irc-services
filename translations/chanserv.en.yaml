@@ -28,14 +28,80 @@ register:
   short: "Register a channel."
   help: |-
     Register and associate a channel to your nickname. You must be identified with
-    %nickserv%.
+    %nickserv%. In APPROVAL mode, an IRCop must approve the request.
   success: "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
+  awaiting_approval: "\x0307✔\x03 Registration request for \x02%channel%\x02 is awaiting IRCop approval."
+  restricted_indefinite: "\x0304✗\x03 New registration requests for \x02%channel%\x02 are blocked indefinitely."
+  restricted_until: "\x0304✗\x03 New registration requests for \x02%channel%\x02 are blocked until %date% (about %remaining_seconds% seconds remaining)."
   already_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is already registered."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
   pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."
   insufficient_channel_rank: "\x0304✗\x03 You must have at least operator status on \x02%channel%\x02 to register it."
   limit_exceeded: "\x0304✗\x03 You have reached the maximum of %max% registered channels."
   throttled: "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before registering another channel."
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  short: "Set or inspect channel registration mode."
+  help: |-
+    Set channel registration to DIRECT or APPROVAL, or use STATUS to inspect it.
+    DIRECT is the default and preserves immediate registration.
+  status: "\x0307ℹ\x03 Channel registration mode is \x02%mode%\x02."
+  changed: "\x0303✔\x03 Channel registration mode is now \x02%mode%\x02."
+
+# --- CREG ------------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <reason>}"
+  pending.syntax: "CREG PENDING [page]"
+  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.short: "List pending registration requests."
+  pending.help: "Lists pending requests on a bounded page."
+  accept.syntax: "CREG ACCEPT <#channel>"
+  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
+  accept.short: "Approve a channel registration request."
+  accept.help: "Revalidates the requester and activates a pending channel registration."
+  reject.syntax: "CREG REJECT <#channel> <reason>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Needs a public topic\x03\x0F"
+  reject.short: "Reject a channel registration request."
+  reject.help: "Rejects a pending request with a mandatory reason and cooldown."
+  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  short: "Review channel registration requests."
+  help: |-
+    List pending channel registration requests, or accept or reject a request.
+    Rejections require a reason. Only ACCEPT registers the channel.
+  pending_header: "\x0314Pending registrations (page %page%)\x03"
+  pending_item: "  %channel% — requester %requester%, submitted %submitted%: %description%"
+  accepted: "\x0303✔\x03 Registration for \x02%channel%\x02 was approved."
+  rejected: "\x0307✔\x03 Registration for \x02%channel%\x02 was rejected."
+  not_pending: "\x0304✗\x03 Channel \x02%channel%\x02 has no pending registration."
+  channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 is not on the network."
+  founder_limit: "\x0304✗\x03 The requester has reached the channel registration limit."
+  requester_inactive: "\x0304✗\x03 The requesting account is no longer active."
+  requester_ineligible: "\x0304✗\x03 The requester must currently have channel operator status."
+
+# --- STATUS ----------------------------------------------------------------
+status:
+  syntax: "STATUS <#channel>"
+  example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  short: "Show channel registration status."
+  help: |-
+    Show whether a channel is unregistered, pending approval, rejected or registered.
+    Rejection details are visible only to the requester and authorized IRCops.
+  unregistered: "\x0314%channel% is not registered.\x03"
+  pending: "\x0314%channel% is awaiting IRCop approval.\x03"
+  registered: "\x0314%channel% is registered.\x03"
+  suspended: "\x0314%channel% is registered but suspended.\x03"
+  forbidden: "\x0314%channel% is forbidden from registration.\x03"
+  pending_deletion: "\x0314%channel% is pending deletion.\x03"
+  rejected_private: "\x0314%channel% has a rejected registration request.\x03"
+  rejected: "\x0314%channel% registration was rejected.\x03"
+  rejection_reason: "  \x0314Reason\x03: %reason%"
+  rejection_audit: "  \x0314Rejected by\x03: %operator% on %date%"
+  restriction_indefinite: "  \x0314New requests are blocked indefinitely.\x03"
+  restriction_until: "  \x0314New requests are blocked until %date% (about %remaining_seconds% seconds remaining).\x03"
+  restriction_expired: "  \x0314The registration restriction ended at %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -107,6 +173,7 @@ help:
     deletion: "Deletion and restoration"
     restrictions: "Restrictions"
     lookup: "Lookup and investigation"
+    registration_approval: "Registration approval"
   ircop_header: "\x02 ■ Available commands for IRC Operators:\x02"
 
 # --- OP --------------------------------------------------------------------
@@ -517,6 +584,9 @@ drop:
   help: |-
     Deletes a registered channel from the database.
     FORCE permanently deletes a channel that is pending deletion.
+    DROP on a rejected request releases it only after its cooldown; an indefinite
+    restriction can be explicitly released by an authorized IRCop.
+  registration_restricted: "\x0304✗\x03 This registration request is restricted until %date%."
   force:
     short: "Permanently deletes a channel that is pending deletion."
   success: "\x0303✔\x03 Channel \x02%channel%\x02 has been marked for deletion and can be restored during the grace period."
@@ -692,6 +762,7 @@ history.message:
   founder_changed: "Founder changed from %old_founder% to %new_founder%"
   successor_changed: "Successor changed from %old_successor% to %new_successor%"
   successor_cleared: "Successor cleared"
+  registration_approved: "Channel registration approved"
   access_add: "Access added for %target_nickname% (level %level%)"
   access_del: "Access removed for %target_nickname%"
   akick_add: "AKICK added: %mask%"
@@ -752,3 +823,5 @@ list:
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
   empty: "No channels match the pattern %pattern%."
   status_active: "Active"
+  status_pending_registration: "Pending approval"
+  status_rejected_registration: "Rejected registration"

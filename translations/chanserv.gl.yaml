@@ -27,8 +27,9 @@ register:
   example: "%command_prefix%\x02\x0303REGISTER #canle Proxecto comunitario\x03\x0F"
   short: "Rexistrar unha canle."
   help: |-
-    Rexistra e asocia unha canle ao seu alcume. Debe estar identificado con
-    %nickserv%.
+    Rexistra unha canle e asóciana ao teu alcume. Debes estar
+    identificado con %nickserv%. No modo APPROVAL, un IRCop debe
+    aprobar a solicitude.
   success: "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada."
   already_registered: "\x0304✗\x03 O canal \x02%channel%\x02 xa está rexistrado."
   channel_not_on_network: "\x0304✗\x03 A canle \x02%channel%\x02 non existe na rede."
@@ -36,6 +37,75 @@ register:
   insufficient_channel_rank: "\x0304✗\x03 Debes ter polo menos estado de operador en \x02%channel%\x02 para rexistrala."
   limit_exceeded: "\x0304✗\x03 Alcanzou o máximo de %max% canles rexistradas."
   throttled: "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de rexistrar outra canle."
+
+  awaiting_approval: "\x0307✔\x03 A solicitude de %channel% agarda a aprobación dun IRCop."
+  restricted_indefinite: "\x0304✗\x03 As novas solicitudes para \x02%channel%\x02 están bloqueadas indefinidamente."
+  restricted_until: "\x0304✗\x03 As novas solicitudes para \x02%channel%\x02 están bloqueadas ata %date% (quedan aproximadamente %remaining_seconds% segundos)."
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  short: "Establecer ou consultar o modo de rexistro das canles."
+  help: |-
+    Establece DIRECT ou APPROVAL, ou consulta STATUS.
+    DIRECT é o modo predeterminado e mantén o rexistro inmediato.
+  status: "\x0307ℹ\x03 O modo de rexistro da canle é %mode%."
+  changed: "\x0303✔\x03 O modo de rexistro da canle agora é %mode%."
+
+# --- CREG ------------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <reason>}"
+  pending.syntax: "CREG PENDING [page]"
+  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.short: "Lista as solicitudes pendentes nunha páxina limitada."
+  pending.help: "Lista as solicitudes pendentes nunha páxina limitada."
+  accept.syntax: "CREG ACCEPT <#channel>"
+  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
+  accept.short: "Aprobar unha solicitude de rexistro de canle."
+  accept.help: "Volver validar a solicitude e activar o rexistro pendente."
+  reject.syntax: "CREG REJECT <#channel> <reason>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Precisa un tema público\x03\x0F"
+  reject.short: "Rexeitar unha solicitude de rexistro de canle."
+  reject.help: "Rexeita unha solicitude cun motivo obrigatorio e unha restrición."
+  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  short: "Revisar as solicitudes de rexistro de canles."
+  help: |-
+    Lista as solicitudes pendentes ou acepta ou rexeita unha.
+    Os rexeitamentos requiren un motivo. Só ACCEPT rexistra a canle.
+  pending_header: "\x0314Rexistros pendentes (páxina %page%)\x03"
+  pending_item: "  %channel% — solicitante %requester%, enviada o %submitted%: %description%"
+  accepted: "\x0303✔\x03 O rexistro de %channel% foi aprobado."
+  rejected: "\x0307✔\x03 O rexistro de %channel% foi rexeitado."
+  not_pending: "\x0304✗\x03 %channel% non ten ningunha solicitude de rexistro pendente."
+  channel_not_on_network: "\x0304✗\x03 A canle %channel% non está na rede."
+  founder_limit: "\x0304✗\x03 A persoa solicitante alcanzou o límite de rexistro de canles."
+  requester_inactive: "\x0304✗\x03 A conta solicitante xa non está activa."
+  requester_ineligible: "\x0304✗\x03 A persoa solicitante debe ter agora estado de operador na canle."
+
+# --- STATUS ----------------------------------------------------------------
+status:
+  syntax: "STATUS <#channel>"
+  example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  short: "Amosar o estado do rexistro da canle."
+  help: |-
+    Amosa se unha canle non está rexistrada, agarda aprobación,
+    foi rexeitada ou está rexistrada.
+    Os detalles do rexeitamento só son visibles para a persoa solicitante
+    e para IRCops autorizados.
+  unregistered: "\x0314%channel% non está rexistrada.\x03"
+  pending: "\x0314%channel% agarda a aprobación dun IRCop.\x03"
+  registered: "\x0314%channel% está rexistrada.\x03"
+  suspended: "\x0314%channel% está rexistrada pero suspendida.\x03"
+  forbidden: "\x0314%channel% non se pode rexistrar.\x03"
+  pending_deletion: "\x0314%channel% está pendente de eliminación.\x03"
+  rejected_private: "\x0314A solicitude de rexistro de %channel% foi rexeitada.\x03"
+  rejected: "\x0314A solicitude de rexistro de %channel% foi rexeitada.\x03"
+  rejection_reason: "  \x0314Motivo\x03: %reason%"
+  rejection_audit: "  \x0314Rexeitada por\x03: %operator% o %date%"
+  restriction_indefinite: "  \x0314As novas solicitudes están bloqueadas indefinidamente.\x03"
+  restriction_until: "  \x0314As novas solicitudes están bloqueadas ata %date% (quedan aproximadamente %remaining_seconds% segundos).\x03"
+  restriction_expired: "  \x0314A restrición de rexistro rematou o %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -108,6 +178,7 @@ help:
     deletion: "Eliminación e restauración"
     restrictions: "Restricións"
     lookup: "Consulta e investigación"
+    registration_approval: "Aprobación do rexistro"
   ircop_header: "\x02 ■ Comandos dispoñibles para IRCops:\x02"
 
 # --- OP --------------------------------------------------------------------
@@ -527,6 +598,9 @@ drop:
   help: |-
     Elimina unha canle rexistrada da base de datos.
     FORCE elimina permanentemente unha canle pendente de eliminación.
+    DROP libera unha solicitude rexeitada cando remata a restrición.
+    Un IRCop autorizado pode liberar expresamente unha restrición indefinida.
+  registration_restricted: "\x0304✗\x03 Esta solicitude de rexistro está restrinxida ata %date%."
   force:
     short: "Elimina permanentemente unha canle pendente de eliminación."
   success: "\x0303✔\x03 A canle \x02%channel%\x02 foi marcada para eliminación e pode ser restaurada durante o período de graza."
@@ -702,6 +776,7 @@ history.message:
   set_secure_off: "Opción SECURE desactivada"
   set_private_on: "Opción PRIVATE activada"
   set_private_off: "Opción PRIVATE desactivada"
+  registration_approved: "Rexistro da canle aprobado"
   founder_changed: "Fundador cambiado de %old_founder% a %new_founder%"
   successor_changed: "Sucesor cambiado de %old_successor% a %new_successor%"
   successor_cleared: "Sucesor limpado"
@@ -766,3 +841,5 @@ list:
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
   empty: "Ningunha canle coincide co patrón %pattern%."
   status_active: "Activa"
+  status_pending_registration: "Agardando aprobación"
+  status_rejected_registration: "Rexistro rexeitado"

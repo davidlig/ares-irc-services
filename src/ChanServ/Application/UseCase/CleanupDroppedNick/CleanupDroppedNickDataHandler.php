@@ -41,6 +41,18 @@ final readonly class CleanupDroppedNickDataHandler
 
     private function handleFounderDrop(RegisteredChannel $channel, DateTimeImmutable $occurredAt): void
     {
+        if ($channel->isRejectedRegistration()) {
+            $channel->orphanRejectedRegistrationRequester();
+            $this->channelRepository->save($channel);
+
+            return;
+        }
+        if ($channel->isPendingRegistration()) {
+            $this->channelRepository->delete($channel);
+
+            return;
+        }
+
         $channelId = $channel->getId();
         $channelName = $channel->getName();
         $channelNameLower = $channel->getNameLower();

@@ -12,6 +12,7 @@ use App\ChanServ\Application\Service\ChanDropService;
 use App\ChanServ\Application\Service\ChannelForbiddenService;
 use App\ChanServ\Application\Service\ChannelHistoryService;
 use App\ChanServ\Application\Service\ChannelSuspensionService;
+use App\ChanServ\Domain\Entity\RegisteredChannel;
 use App\Shared\Application\Port\EventBusInterface;
 use App\Shared\Application\Time\RelativeExpiryParser;
 use LogicException;
@@ -51,6 +52,23 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         if (null === $channel) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }
+        if ($channel->isPendingRegistration()) {
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
+        }
+        if ($channel->isRejectedRegistration()) {
+            $restrictedUntil = $channel->getRegistrationRestrictedUntil();
+            if (null !== $restrictedUntil && $command->occurredAt < $restrictedUntil) {
+                return new ChannelLifecycleResult(ChannelLifecycleOutcome::RegistrationRestricted, $restrictedUntil);
+            }
+            $this->dropService->hardDropChannel(
+                $channel,
+                $command->occurredAt,
+                'registration-restriction-released',
+                $command->actorNickname,
+            );
+
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::ForceDropped);
+        }
         if ($channel->isPendingDeletion() && !$command->force) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::PendingDeletion);
         }
@@ -68,6 +86,9 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
     private function forbid(ManageChannelLifecycle $command): ChannelLifecycleResult
     {
         $existing = $this->channels->findByChannelName($command->channelName);
+        if ($this->isRegistrationRequest($existing)) {
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
+        }
         $this->forbiddenService->forbid(
             $command->channelName,
             $command->reason ?? throw new LogicException('A forbid reason is required.'),
@@ -112,6 +133,9 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         if (null === $channel) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }
+        if ($this->isRegistrationRequest($channel)) {
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
+        }
         if ($channel->isForbidden()) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::ChannelForbidden);
         }
@@ -141,6 +165,9 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         if (null === $channel) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }
+        if ($this->isRegistrationRequest($channel)) {
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
+        }
         if ($channel->isForbidden()) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::ChannelForbidden);
         }
@@ -166,6 +193,9 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
     {
         $channel = $this->channels->findByChannelName($command->channelName);
         if (null === $channel) {
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
+        }
+        if ($this->isRegistrationRequest($channel)) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }
         if ($channel->isSuspended()) {
@@ -205,6 +235,9 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         if (null === $channel) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
         }
+        if ($this->isRegistrationRequest($channel)) {
+            return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotRegistered);
+        }
         if (!$channel->isSuspended()) {
             return new ChannelLifecycleResult(ChannelLifecycleOutcome::NotSuspended);
         }
@@ -223,5 +256,10 @@ final readonly class ManageChannelLifecycleHandler implements ManageChannelLifec
         ));
 
         return new ChannelLifecycleResult(ChannelLifecycleOutcome::Unsuspended);
+    }
+
+    private function isRegistrationRequest(?RegisteredChannel $channel): bool
+    {
+        return null !== $channel && ($channel->isPendingRegistration() || $channel->isRejectedRegistration());
     }
 }

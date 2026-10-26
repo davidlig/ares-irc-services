@@ -402,7 +402,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     public function definesChanServHelpGroupsAndLookupDescriptionsInEveryLocale(): void
     {
         $expectedPublicGroups = ['registration_info', 'access_levels', 'ranks_entry'];
-        $expectedIrcopGroups = ['channel_operations', 'channel_management', 'deletion', 'restrictions', 'lookup'];
+        $expectedIrcopGroups = ['channel_operations', 'channel_management', 'deletion', 'restrictions', 'lookup', 'registration_approval'];
 
         foreach (self::LOCALES as $locale) {
             $catalog = $this->loadCatalog($locale);

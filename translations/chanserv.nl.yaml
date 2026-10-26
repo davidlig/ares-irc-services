@@ -27,8 +27,9 @@ register:
   example: "%command_prefix%\x02\x0303REGISTER #kanaal Gemeenschapsproject\x03\x0F"
   short: "Registreer een kanaal."
   help: |-
-    Registreer en koppel een kanaal aan uw bijnaam. U moet geïdentificeerd zijn bij
+    Registreer een kanaal en koppel het aan je bijnaam. Identificeer jezelf met
     %nickserv%.
+    In de modus APPROVAL moet een IRCop de aanvraag goedkeuren.
   success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is geregistreerd."
   already_registered: "\x0304✗\x03 Kanaal \x02%channel%\x02 is al geregistreerd."
   channel_not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 bestaat niet op het netwerk."
@@ -36,6 +37,77 @@ register:
   insufficient_channel_rank: "\x0304✗\x03 Je moet minstens operatorstatus hebben op \x02%channel%\x02 om het kanaal te registreren."
   limit_exceeded: "\x0304✗\x03 U heeft het maximum van %max% geregistreerde kanalen bereikt."
   throttled: "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een ander kanaal registreert."
+
+  awaiting_approval: "\x0307✔\x03 Registratieaanvraag voor \x02%channel%\x02 wacht op goedkeuring door een IRCop."
+  restricted_indefinite: "\x0304✗\x03 Nieuwe aanvragen voor \x02%channel%\x02 zijn onbeperkt geblokkeerd."
+  restricted_until: "\x0304✗\x03 Nieuwe aanvragen voor \x02%channel%\x02 zijn geblokkeerd tot %date% (nog ongeveer %remaining_seconds% seconden)."
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  short: "Stel de registratiemodus voor kanalen in of bekijk deze."
+  help: |-
+    Stel registratie in op DIRECT of APPROVAL, of bekijk STATUS.
+    DIRECT is de standaardmodus en behoudt directe registratie.
+
+  status: "\x0307ℹ\x03 De kanaalregistratiemodus is \x02%mode%\x02."
+  changed: "\x0303✔\x03 De kanaalregistratiemodus is nu \x02%mode%\x02."
+
+# --- CREG ------------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [pagina]|ACCEPT <#kanaal>|REJECT <#kanaal> <reden>}"
+  pending.syntax: "CREG PENDING [pagina]"
+  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.short: "Toon openstaande registratieaanvragen."
+  pending.help: "Toont openstaande aanvragen op een begrensde pagina."
+  accept.syntax: "CREG ACCEPT <#kanaal>"
+  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #canal\x03\x0F"
+  accept.short: "Keur een kanaalregistratieaanvraag goed."
+  accept.help: "Controleert de aanvrager opnieuw en activeert de registratie."
+  reject.syntax: "CREG REJECT <#kanaal> <reden>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #canal Motivo público\x03\x0F"
+  reject.short: "Wijs een kanaalregistratieaanvraag af."
+  reject.help: "Wijst de aanvraag af met een verplichte reden en blokkering."
+  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  short: "Beoordeel registratieaanvragen voor kanalen."
+  help: |-
+    Toon openstaande aanvragen of keur een aanvraag goed of af.
+    Voor afwijzing is een reden vereist. Alleen ACCEPT registreert het kanaal.
+
+  pending_header: "\x0314Openstaande registraties (pagina %page%)\x03"
+  pending_item: "  %channel% — aanvrager %requester%, ingediend %submitted%: %description%"
+  accepted: "\x0303✔\x03 Registratie van \x02%channel%\x02 is goedgekeurd."
+  rejected: "\x0307✔\x03 Registratie van \x02%channel%\x02 is afgewezen."
+  not_pending: "\x0304✗\x03 Kanaal \x02%channel%\x02 heeft geen openstaande registratie."
+  channel_not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet op het netwerk."
+  founder_limit: "\x0304✗\x03 De aanvrager heeft de registratielimiet voor kanalen bereikt."
+  requester_inactive: "\x0304✗\x03 Het account van de aanvrager is niet meer actief."
+  requester_ineligible: "\x0304✗\x03 De aanvrager moet momenteel kanaaloperator zijn."
+
+# --- STATUS ----------------------------------------------------------------
+status:
+  syntax: "STATUS <#kanaal>"
+  example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  short: "Toon de registratiestatus van een kanaal."
+  help: |-
+    Toont of een kanaal niet geregistreerd is, op goedkeuring wacht, is
+    afgewezen of geregistreerd is.
+    Afwijsgegevens zijn alleen zichtbaar voor de aanvrager en bevoegde IRCops.
+
+  unregistered: "\x0314%channel% is niet geregistreerd.\x03"
+  pending: "\x0314%channel% wacht op goedkeuring door een IRCop.\x03"
+  registered: "\x0314%channel% is geregistreerd.\x03"
+  suspended: "\x0314%channel% is geregistreerd maar geschorst.\x03"
+  forbidden: "\x0314%channel% mag niet worden geregistreerd.\x03"
+  pending_deletion: "\x0314%channel% staat op het punt verwijderd te worden.\x03"
+  rejected_private: "\x0314%channel% heeft een afgewezen registratieaanvraag.\x03"
+  rejected: "\x0314Registratie van %channel% is afgewezen.\x03"
+  rejection_reason: "  \x0314Reden\x03: %reason%"
+  rejection_audit: "  \x0314Afgewezen door\x03: %operator% op %date%"
+  restriction_indefinite: "  \x0314Nieuwe aanvragen zijn onbeperkt geblokkeerd.\x03"
+  restriction_until: "  \x0314Nieuwe aanvragen zijn geblokkeerd tot %date% (nog circa %remaining_seconds% seconden).\x03"
+  restriction_expired: "  \x0314De registratiebeperking eindigde op %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -107,6 +179,7 @@ help:
     deletion: "Verwijderen en herstellen"
     restrictions: "Beperkingen"
     lookup: "Opzoeken en onderzoek"
+    registration_approval: "Registratiegoedkeuring"
   ircop_header: "\x02 ■ Beschikbare opdrachten voor IRC-operators:\x02"
 
 # --- OP --------------------------------------------------------------------
@@ -531,6 +604,9 @@ drop:
   help: |-
     Verwijdert een geregistreerd kanaal uit de database.
     FORCE verwijdert een kanaal dat op verwijdering wacht definitief.
+    DROP op een afgewezen aanvraag heft deze op na afloop van de blokkering.
+    Een bevoegde IRCop kan een onbeperkte blokkering expliciet opheffen.
+  registration_restricted: "\x0304✗\x03 Deze registratieaanvraag is beperkt tot %date%."
   force:
     short: "Verwijdert een kanaal dat op verwijdering wacht definitief."
   success: "\x0303✔\x03 Kanaal \x02%channel%\x02 is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
@@ -704,6 +780,7 @@ history.message:
   set_private_off: "Optie PRIVATE uitgeschakeld"
   founder_changed: "Oprichter gewijzigd van %old_founder% naar %new_founder%"
   successor_changed: "Opvolger gewijzigd van %old_successor% naar %new_successor%"
+  registration_approved: "Kanaalregistratie goedgekeurd"
   successor_cleared: "Opvolger gewist"
   access_add: "Toegang toegevoegd voor %target_nickname% (niveau %level%)"
   access_del: "Toegang verwijderd voor %target_nickname%"
@@ -766,4 +843,6 @@ list:
   header: "Kanaal | Oprichter | Registratie | Laatst gebruikt | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
   empty: "Geen kanalen komen overeen met patroon %pattern%."
+  status_pending_registration: "Goedkeuring in behandeling"
+  status_rejected_registration: "Registratie afgewezen"
   status_active: "Actief"

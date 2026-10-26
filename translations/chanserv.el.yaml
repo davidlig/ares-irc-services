@@ -27,8 +27,9 @@ register:
   example: "%command_prefix%\x02\x0303REGISTER #κανάλι Κοινοτικό έργο\x03\x0F"
   short: "Καταχώρηση καναλιού."
   help: |-
-    Καταχωρήστε και συσχετίστε ένα κανάλι με το ψευδώνυμό σας. Πρέπει να είστε
-    ταυτοποιημένοι με το %nickserv%.
+    Καταχωρίζει ένα κανάλι και το συνδέει με το ψευδώνυμό σας. Πρέπει
+    να έχετε ταυτοποιηθεί στο %nickserv%. Στη λειτουργία APPROVAL, ένας
+    IRCop πρέπει να εγκρίνει το αίτημα.
   success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει καταχωρηθεί."
   already_registered: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη καταχωρημένο."
   channel_not_on_network: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν υπάρχει στο δίκτυο."
@@ -36,6 +37,75 @@ register:
   insufficient_channel_rank: "\x0304✗\x03 Πρέπει να έχεις τουλάχιστον κατάσταση operator στο \x02%channel%\x02 για να το καταχωρήσεις."
   limit_exceeded: "\x0304✗\x03 Έχετε φτάσει το μέγιστο όριο των %max% καταχωρημένων καναλιών."
   throttled: "\x0304✗\x03 Πρέπει να περιμένετε \x02%minutes%\x02 λεπτό(ά) πριν καταχωρήσετε άλλο κανάλι."
+
+  awaiting_approval: "\x0307✔\x03 Το αίτημα για το %channel% αναμένει έγκριση από IRCop."
+  restricted_indefinite: "\x0304✗\x03 Τα νέα αιτήματα εγγραφής για \x02%channel%\x02 αποκλείονται επ’ αόριστον."
+  restricted_until: "\x0304✗\x03 Τα νέα αιτήματα εγγραφής για \x02%channel%\x02 αποκλείονται έως %date% (απομένουν περίπου %remaining_seconds% δευτερόλεπτα)."
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  short: "Ορισμός ή προβολή της λειτουργίας εγγραφής καναλιών."
+  help: |-
+    Ορίζει DIRECT ή APPROVAL ή εμφανίζει την κατάσταση με STATUS.
+    Το DIRECT είναι η προεπιλογή και διατηρεί την άμεση εγγραφή.
+  status: "\x0307ℹ\x03 Η λειτουργία εγγραφής καναλιών είναι %mode%."
+  changed: "\x0303✔\x03 Η λειτουργία εγγραφής καναλιών άλλαξε σε %mode%."
+
+# --- CREG ------------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [page]|ACCEPT <#channel>|REJECT <#channel> <reason>}"
+  pending.syntax: "CREG PENDING [page]"
+  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.short: "Εμφανίζει εκκρεμή αιτήματα σε περιορισμένη σελίδα."
+  pending.help: "Εμφανίζει εκκρεμή αιτήματα σε περιορισμένη σελίδα."
+  accept.syntax: "CREG ACCEPT <#channel>"
+  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #channel\x03\x0F"
+  accept.short: "Εγκρίνει αίτημα εγγραφής καναλιού."
+  accept.help: "Ελέγχει ξανά το αίτημα και ενεργοποιεί την εγγραφή."
+  reject.syntax: "CREG REJECT <#channel> <reason>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #channel Απαιτείται δημόσιο θέμα\x03\x0F"
+  reject.short: "Απορρίπτει αίτημα εγγραφής καναλιού."
+  reject.help: "Απορρίπτει αίτημα με υποχρεωτική αιτιολογία και περιορισμό."
+  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  short: "Έλεγχος αιτημάτων εγγραφής καναλιών."
+  help: |-
+    Εμφανίζει εκκρεμή αιτήματα ή αποδέχεται ή απορρίπτει ένα.
+    Η απόρριψη απαιτεί αιτιολογία. Μόνο το ACCEPT εγγράφει το κανάλι.
+  pending_header: "\x0314Εκκρεμείς εγγραφές (σελίδα %page%)\x03"
+  pending_item: "  %channel% — αιτών %requester%, υποβλήθηκε %submitted%: %description%"
+  accepted: "\x0303✔\x03 Η εγγραφή του %channel% εγκρίθηκε."
+  rejected: "\x0307✔\x03 Η εγγραφή του %channel% απορρίφθηκε."
+  not_pending: "\x0304✗\x03 Το %channel% δεν έχει εκκρεμές αίτημα εγγραφής."
+  channel_not_on_network: "\x0304✗\x03 Το κανάλι %channel% δεν βρίσκεται στο δίκτυο."
+  founder_limit: "\x0304✗\x03 Ο αιτών έφτασε το όριο εγγραφών καναλιών."
+  requester_inactive: "\x0304✗\x03 Ο λογαριασμός του αιτούντος δεν είναι πλέον ενεργός."
+  requester_ineligible: "\x0304✗\x03 Ο αιτών πρέπει τώρα να έχει δικαιώματα operator στο κανάλι."
+
+# --- STATUS ----------------------------------------------------------------
+status:
+  syntax: "STATUS <#channel>"
+  example: "%command_prefix%\x02\x0303STATUS #channel\x03\x0F"
+  short: "Προβολή κατάστασης εγγραφής καναλιού."
+  help: |-
+    Εμφανίζει αν το κανάλι δεν είναι εγγεγραμμένο, αναμένει έγκριση,
+    απορρίφθηκε ή είναι εγγεγραμμένο.
+    Οι λεπτομέρειες απόρριψης είναι ορατές μόνο στον αιτούντα και
+    στους εξουσιοδοτημένους IRCops.
+  unregistered: "\x0314Το %channel% δεν είναι εγγεγραμμένο.\x03"
+  pending: "\x0314Το %channel% αναμένει έγκριση από IRCop.\x03"
+  registered: "\x0314Το %channel% είναι εγγεγραμμένο.\x03"
+  suspended: "\x0314Το %channel% είναι εγγεγραμμένο αλλά σε αναστολή.\x03"
+  forbidden: "\x0314Το %channel% δεν επιτρέπεται να εγγραφεί.\x03"
+  pending_deletion: "\x0314Το %channel% εκκρεμεί προς διαγραφή.\x03"
+  rejected_private: "\x0314Το αίτημα εγγραφής του %channel% απορρίφθηκε.\x03"
+  rejected: "\x0314Το αίτημα εγγραφής του %channel% απορρίφθηκε.\x03"
+  rejection_reason: "  \x0314Αιτιολογία\x03: %reason%"
+  rejection_audit: "  \x0314Απορρίφθηκε από\x03: %operator% στις %date%"
+  restriction_indefinite: "  \x0314Τα νέα αιτήματα αποκλείονται επ’ αόριστον.\x03"
+  restriction_until: "  \x0314Τα νέα αιτήματα αποκλείονται έως %date% (απομένουν περίπου %remaining_seconds% δευτερόλεπτα).\x03"
+  restriction_expired: "  \x0314Ο περιορισμός εγγραφής έληξε στις %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -108,6 +178,7 @@ help:
     deletion: "Διαγραφή και επαναφορά"
     restrictions: "Περιορισμοί"
     lookup: "Αναζήτηση και διερεύνηση"
+    registration_approval: "Έγκριση εγγραφής"
   ircop_header: "\x02 ■ Διαθέσιμες εντολές για IRC operators:\x02"
 
 # --- OP --------------------------------------------------------------------
@@ -535,6 +606,9 @@ drop:
     Αυτή η εντολή απαιτεί άδεια IRCop: chanserv.drop.
     Το FORCE διαγράφει οριστικά ένα κανάλι σε αναμονή διαγραφής και απαιτεί άδεια
     IRCop: chanserv.drop.force.
+    Το DROP αποδεσμεύει απορριφθέν αίτημα μετά τη λήξη του περιορισμού.
+    Εξουσιοδοτημένος IRCop μπορεί να άρει ρητά έναν αόριστο περιορισμό.
+  registration_restricted: "\x0304✗\x03 Αυτό το αίτημα εγγραφής αποκλείεται έως %date%."
   force:
     short: "Διαγράφει οριστικά ένα κανάλι που εκκρεμεί προς διαγραφή."
   success: "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει επισημανθεί για διαγραφή και μπορεί να αποκατασταθεί κατά την περίοδο χάριτος."
@@ -743,6 +817,7 @@ history.message:
   set_secure_off: "Η επιλογή SECURE απενεργοποιήθηκε"
   set_private_on: "Η επιλογή PRIVATE ενεργοποιήθηκε"
   set_private_off: "Η επιλογή PRIVATE απενεργοποιήθηκε"
+  registration_approved: "Η εγγραφή καναλιού εγκρίθηκε"
   founder_changed: "Ο ιδρυτής άλλαξε από %old_founder% σε %new_founder%"
   successor_changed: "Ο διάδοχος άλλαξε από %old_successor% σε %new_successor%"
   successor_cleared: "Ο διάδοχος εκκαθαρίστηκε"
@@ -826,3 +901,5 @@ list:
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
   empty: "Κανένα κανάλι δεν ταιριάζει με το μοτίβο %pattern%."
   status_active: "Ενεργό"
+  status_pending_registration: "Σε αναμονή έγκρισης"
+  status_rejected_registration: "Απόρριψη εγγραφής"

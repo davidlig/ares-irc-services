@@ -27,8 +27,9 @@ register:
   example: "%command_prefix%\x02\x0303REGISTER #kanał Projekt społecznościowy\x03\x0F"
   short: "Zarejestruj kanał."
   help: |-
-    Rejestruje i przypisuje kanał do Twojego nicka. Musisz być zidentyfikowany z
+    Zarejestruj kanał i powiąż go ze swoim pseudonimem. Uwierzytelnij się przez
     %nickserv%.
+    W trybie APPROVAL IRCop musi zatwierdzić prośbę.
   success: "\x0303✔\x03 Kanał \x02%channel%\x02 został zarejestrowany."
   already_registered: "\x0304✗\x03 Kanał \x02%channel%\x02 jest już zarejestrowany."
   channel_not_on_network: "\x0304✗\x03 Kanał \x02%channel%\x02 nie istnieje w sieci."
@@ -36,6 +37,77 @@ register:
   insufficient_channel_rank: "\x0304✗\x03 Musisz mieć co najmniej status operatora na \x02%channel%\x02, aby zarejestrować kanał."
   limit_exceeded: "\x0304✗\x03 Osiągnąłeś maksymalną liczbę %max% zarejestrowanych kanałów."
   throttled: "\x0304✗\x03 Musisz poczekać \x02%minutes%\x02 minut(y) przed zarejestrowaniem kolejnego kanału."
+
+  awaiting_approval: "\x0307✔\x03 Prośba o rejestrację \x02%channel%\x02 oczekuje na zatwierdzenie IRCopa."
+  restricted_indefinite: "\x0304✗\x03 Nowe prośby dla \x02%channel%\x02 są bezterminowo zablokowane."
+  restricted_until: "\x0304✗\x03 Nowe prośby dla \x02%channel%\x02 są zablokowane do %date% (pozostało około %remaining_seconds% sekund)."
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  short: "Ustaw lub sprawdź tryb rejestracji kanałów."
+  help: |-
+    Ustaw tryb rejestracji na DIRECT lub APPROVAL albo sprawdź STATUS.
+    DIRECT to tryb domyślny, który zachowuje natychmiastową rejestrację.
+
+  status: "\x0307ℹ\x03 Tryb rejestracji kanałów to \x02%mode%\x02."
+  changed: "\x0303✔\x03 Tryb rejestracji kanałów zmieniono na \x02%mode%\x02."
+
+# --- CREG ------------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [strona]|ACCEPT <#kanał>|REJECT <#kanał> <powód>}"
+  pending.syntax: "CREG PENDING [strona]"
+  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.short: "Wyświetl oczekujące prośby o rejestrację."
+  pending.help: "Wyświetla oczekujące prośby na ograniczonej stronie."
+  accept.syntax: "CREG ACCEPT <#kanał>"
+  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #canal\x03\x0F"
+  accept.short: "Zatwierdź prośbę o rejestrację kanału."
+  accept.help: "Ponownie sprawdza wnioskodawcę i aktywuje oczekującą rejestrację."
+  reject.syntax: "CREG REJECT <#kanał> <powód>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #canal Motivo público\x03\x0F"
+  reject.short: "Odrzuć prośbę o rejestrację kanału."
+  reject.help: "Odrzuca prośbę z wymaganym powodem i ograniczeniem."
+  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  short: "Rozpatruj prośby o rejestrację kanałów."
+  help: |-
+    Wyświetla oczekujące prośby albo zatwierdza lub odrzuca prośbę.
+    Odrzucenie wymaga powodu. Kanał rejestruje tylko ACCEPT.
+
+  pending_header: "\x0314Oczekujące rejestracje (strona %page%)\x03"
+  pending_item: "  %channel% — wnioskodawca %requester%, wysłano %submitted%: %description%"
+  accepted: "\x0303✔\x03 Rejestracja \x02%channel%\x02 została zatwierdzona."
+  rejected: "\x0307✔\x03 Rejestracja \x02%channel%\x02 została odrzucona."
+  not_pending: "\x0304✗\x03 Kanał \x02%channel%\x02 nie ma oczekującej rejestracji."
+  channel_not_on_network: "\x0304✗\x03 Kanału \x02%channel%\x02 nie ma w sieci."
+  founder_limit: "\x0304✗\x03 Wnioskodawca osiągnął limit rejestracji kanałów."
+  requester_inactive: "\x0304✗\x03 Konto wnioskodawcy nie jest już aktywne."
+  requester_ineligible: "\x0304✗\x03 Wnioskodawca musi obecnie mieć uprawnienia operatora kanału."
+
+# --- STATUS ----------------------------------------------------------------
+status:
+  syntax: "STATUS <#kanał>"
+  example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  short: "Pokaż stan rejestracji kanału."
+  help: |-
+    Pokazuje, czy kanał jest niezarejestrowany, oczekuje na zatwierdzenie,
+    został odrzucony lub jest zarejestrowany.
+    Szczegóły odrzucenia widzi tylko wnioskodawca i uprawnieni IRCopowie.
+
+  unregistered: "\x0314%channel% nie jest zarejestrowany.\x03"
+  pending: "\x0314%channel% oczekuje na zatwierdzenie IRCopa.\x03"
+  registered: "\x0314%channel% jest zarejestrowany.\x03"
+  suspended: "\x0314%channel% jest zarejestrowany, ale zawieszony.\x03"
+  forbidden: "\x0314Rejestracja %channel% jest zabroniona.\x03"
+  pending_deletion: "\x0314%channel% oczekuje na usunięcie.\x03"
+  rejected_private: "\x0314Prośba o rejestrację %channel% została odrzucona.\x03"
+  rejected: "\x0314Rejestracja %channel% została odrzucona.\x03"
+  rejection_reason: "  \x0314Powód\x03: %reason%"
+  rejection_audit: "  \x0314Odrzucono przez\x03: %operator% dnia %date%"
+  restriction_indefinite: "  \x0314Nowe prośby są bezterminowo zablokowane.\x03"
+  restriction_until: "  \x0314Nowe prośby są zablokowane do %date% (pozostało około %remaining_seconds% sekund).\x03"
+  restriction_expired: "  \x0314Ograniczenie rejestracji wygasło %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -107,6 +179,7 @@ help:
     deletion: "Usuwanie i przywracanie"
     restrictions: "Ograniczenia"
     lookup: "Wyszukiwanie i dochodzenie"
+    registration_approval: "Zatwierdzanie rejestracji"
   ircop_header: "\x02 ■ Dostępne komendy dla operatorów IRC:\x02"
 
 # --- OP --------------------------------------------------------------------
@@ -519,6 +592,9 @@ drop:
   help: |-
     Usuwa zarejestrowany kanał z bazy danych.
     FORCE trwale usuwa kanał oczekujący na usunięcie.
+    DROP odrzuconej prośby usuwa ją po zakończeniu blokady.
+    Uprawniony IRCop może jawnie zdjąć blokadę bezterminową.
+  registration_restricted: "\x0304✗\x03 Ta prośba o rejestrację jest zablokowana do %date%."
   force:
     short: "Trwale usuwa kanał oczekujący na usunięcie."
   success: "\x0303✔\x03 Kanał \x02%channel%\x02 został oznaczony do usunięcia i może zostać przywrócony w okresie karencji."
@@ -693,6 +769,7 @@ history.message:
   set_private_off: "Opcja PRIVATE wyłączona"
   founder_changed: "Założyciel zmieniony z %old_founder% na %new_founder%"
   successor_changed: "Następca zmieniony z %old_successor% na %new_successor%"
+  registration_approved: "Zatwierdzono rejestrację kanału"
   successor_cleared: "Następca wyczyszczony"
   access_add: "Dostęp dodany dla %target_nickname% (poziom %level%)"
   access_del: "Dostęp usunięty dla %target_nickname%"
@@ -753,4 +830,6 @@ list:
   header: "Kanał | Założyciel | Rejestracja | Ostatnie użycie | Status"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
   empty: "Brak kanałów pasujących do wzorca %pattern%."
+  status_pending_registration: "Oczekuje na zatwierdzenie"
+  status_rejected_registration: "Rejestracja odrzucona"
   status_active: "Aktywny"

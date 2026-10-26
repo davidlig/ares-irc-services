@@ -27,8 +27,9 @@ register:
   example: "%command_prefix%\x02\x0303REGISTER #canal Proiect comunitar\x03\x0F"
   short: "Înregistrați un canal."
   help: |-
-    Înregistrați și asociați un canal cu porecla dumneavoastră. Trebuie să fiți
-    identificat cu %nickserv%.
+    Înregistrează un canal și asociază-l poreclei tale. Identifică-te cu
+    %nickserv%.
+    În modul APPROVAL, un IRCop trebuie să aprobe cererea.
   success: "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."
   already_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja înregistrat."
   channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu există în rețea."
@@ -36,6 +37,78 @@ register:
   insufficient_channel_rank: "\x0304✗\x03 Trebuie să ai cel puțin statut de operator pe \x02%channel%\x02 pentru a-l înregistra."
   limit_exceeded: "\x0304✗\x03 Ați atins limita maximă de %max% canale înregistrate."
   throttled: "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a înregistra alt canal."
+
+  awaiting_approval: "\x0307✔\x03 Cererea de înregistrare pentru \x02%channel%\x02 așteaptă aprobarea unui IRCop."
+  restricted_indefinite: "\x0304✗\x03 Cereri noi pentru \x02%channel%\x02 sunt blocate pe termen nelimitat."
+  restricted_until: "\x0304✗\x03 Cereri noi pentru \x02%channel%\x02 sunt blocate până la %date% (aproximativ %remaining_seconds% secunde rămase)."
+
+# --- REGMODE ---------------------------------------------------------------
+regmode:
+  syntax: "REGMODE {DIRECT|APPROVAL|STATUS}"
+  example: "%command_prefix%\x02\x0303REGMODE APPROVAL\x03\x0F"
+  short: "Setează sau verifică modul de înregistrare a canalelor."
+  help: |-
+    Setează înregistrarea la DIRECT sau APPROVAL ori verifică STATUS.
+    DIRECT este modul implicit și păstrează înregistrarea imediată.
+
+  status: "\x0307ℹ\x03 Modul de înregistrare a canalelor este \x02%mode%\x02."
+  changed: "\x0303✔\x03 Modul de înregistrare a canalelor este acum \x02%mode%\x02."
+
+# --- CREG ------------------------------------------------------------------
+creg:
+  syntax: "CREG {PENDING [pagină]|ACCEPT <#canal>|REJECT <#canal> <motiv>}"
+  pending.syntax: "CREG PENDING [pagină]"
+  pending.example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  pending.short: "Listează cererile de înregistrare în așteptare."
+  pending.help: "Listează cererile în așteptare într-o pagină limitată."
+  accept.syntax: "CREG ACCEPT <#canal>"
+  accept.example: "%command_prefix%\x02\x0303CREG ACCEPT #canal\x03\x0F"
+  accept.short: "Aprobă o cerere de înregistrare a canalului."
+  accept.help: "Verifică din nou solicitantul și activează înregistrarea."
+  reject.syntax: "CREG REJECT <#canal> <motiv>"
+  reject.example: "%command_prefix%\x02\x0303CREG REJECT #canal Motivo público\x03\x0F"
+  reject.short: "Respinge o cerere de înregistrare a canalului."
+  reject.help: "Respinge cererea cu motiv obligatoriu și restricție."
+  example: "%command_prefix%\x02\x0303CREG PENDING\x03\x0F"
+  short: "Revizuiește cererile de înregistrare a canalelor."
+  help: |-
+    Listează cererile în așteptare sau aprobă ori respinge o cerere.
+    Respingerea necesită un motiv. Numai ACCEPT înregistrează canalul.
+
+  pending_header: "\x0314Înregistrări în așteptare (pagina %page%)\x03"
+  pending_item: "  %channel% — solicitant %requester%, trimisă %submitted%: %description%"
+  accepted: "\x0303✔\x03 Înregistrarea pentru \x02%channel%\x02 a fost aprobată."
+  rejected: "\x0307✔\x03 Înregistrarea pentru \x02%channel%\x02 a fost respinsă."
+  not_pending: "\x0304✗\x03 Canalul \x02%channel%\x02 nu are o înregistrare în așteptare."
+  channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este în rețea."
+  founder_limit: "\x0304✗\x03 Solicitantul a atins limita de înregistrări de canale."
+  requester_inactive: "\x0304✗\x03 Contul solicitantului nu mai este activ."
+  requester_ineligible: "\x0304✗\x03 Solicitantul trebuie să aibă acum statut de operator pe canal."
+
+# --- STATUS ----------------------------------------------------------------
+status:
+  syntax: "STATUS <#canal>"
+  example: "%command_prefix%\x02\x0303STATUS #canal\x03\x0F"
+  short: "Afișează starea înregistrării canalului."
+  help: |-
+    Arată dacă un canal nu este înregistrat, așteaptă aprobarea, a fost respins
+    sau este înregistrat.
+    Detaliile respingerii sunt vizibile doar solicitantului și IRCopilor
+    autorizați.
+
+  unregistered: "\x0314%channel% nu este înregistrat.\x03"
+  pending: "\x0314%channel% așteaptă aprobarea unui IRCop.\x03"
+  registered: "\x0314%channel% este înregistrat.\x03"
+  suspended: "\x0314%channel% este înregistrat, dar suspendat.\x03"
+  forbidden: "\x0314Înregistrarea pentru %channel% este interzisă.\x03"
+  pending_deletion: "\x0314%channel% este în așteptarea ștergerii.\x03"
+  rejected_private: "\x0314%channel% are o cerere de înregistrare respinsă.\x03"
+  rejected: "\x0314Înregistrarea pentru %channel% a fost respinsă.\x03"
+  rejection_reason: "  \x0314Motiv\x03: %reason%"
+  rejection_audit: "  \x0314Respinsă de\x03: %operator% la %date%"
+  restriction_indefinite: "  \x0314Cererile noi sunt blocate pe termen nelimitat.\x03"
+  restriction_until: "  \x0314Cererile noi sunt blocate până la %date% (aproximativ %remaining_seconds% secunde rămase).\x03"
+  restriction_expired: "  \x0314Restricția de înregistrare s-a încheiat la %date%.\x03"
 
 # --- INFO ------------------------------------------------------------------
 info:
@@ -109,6 +182,7 @@ help:
     deletion: "Ștergere și restaurare"
     restrictions: "Restricții"
     lookup: "Căutare și investigare"
+    registration_approval: "Aprobarea înregistrării"
   ircop_header: "\x02 ■ Comenzi disponibile pentru IRCops:\x02"
 
 # --- OP --------------------------------------------------------------------
@@ -526,6 +600,9 @@ drop:
   help: |-
     Elimină din baza de date un canal înregistrat.
     FORCE șterge definitiv un canal aflat în așteptarea ștergerii.
+    DROP pentru o cerere respinsă o elimină după expirarea blocării.
+    Un IRCop autorizat poate elibera explicit o blocare nelimitată.
+  registration_restricted: "\x0304✗\x03 Această cerere de înregistrare este restricționată până la %date%."
   force:
     short: "Șterge definitiv un canal aflat în așteptarea ștergerii."
   success: "\x0303✔\x03 Canalul \x02%channel%\x02 a fost marcat pentru ștergere și poate fi restaurat în perioada de grație."
@@ -702,6 +779,7 @@ history.message:
   set_private_off: "Opțiunea PRIVATE dezactivată"
   founder_changed: "Fondator schimbat din %old_founder% în %new_founder%"
   successor_changed: "Succesor schimbat din %old_successor% în %new_successor%"
+  registration_approved: "Înregistrare de canal aprobată"
   successor_cleared: "Succesor șters"
   access_add: "Acces adăugat pentru %target_nickname% (nivel %level%)"
   access_del: "Acces eliminat pentru %target_nickname%"
@@ -762,4 +840,6 @@ list:
   header: "Canal | Fondator | Înregistrare | Ultima utilizare | Stare"
   row: "%channel% | %founder% | %registered% | %last_used% | %status%"
   empty: "Niciun canal nu corespunde modelului %pattern%."
+  status_pending_registration: "Aprobare în așteptare"
+  status_rejected_registration: "Înregistrare respinsă"
   status_active: "Activ"

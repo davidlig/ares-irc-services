@@ -88,6 +88,66 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
     }
 
     #[Test]
+    public function pendingAndRejectedRequestsCannotBeMutatedByLifecycleActions(): void
+    {
+        $pending = RegisteredChannel::createPendingRegistration($this->now, '#test', 7, 'description');
+        $rejected = RegisteredChannel::createPendingRegistration($this->now, '#test', 7, 'description');
+        $rejected->rejectRegistration('Reason', 9, 'Reviewer', $this->now, null);
+        $drops = $this->createMock(ChanDropService::class);
+        $drops->expects(self::never())->method('softDropChannel');
+        $forbidden = $this->createMock(ChannelForbiddenService::class);
+        $forbidden->expects(self::never())->method('forbid');
+        $suspensions = $this->createMock(ChannelSuspensionService::class);
+        $suspensions->expects(self::never())->method('enforceSuspension');
+        $events = $this->createMock(EventBusInterface::class);
+        $events->expects(self::never())->method('dispatch');
+        $historyRows = $this->createMock(ChannelHistoryRepositoryInterface::class);
+        $historyRows->expects(self::never())->method('save');
+
+        foreach ([$pending, $rejected] as $request) {
+            $commands = [
+                [$this->command(ChannelLifecycleAction::Forbid, reason: 'policy'), ChannelLifecycleOutcome::NotRegistered],
+                [$this->command(ChannelLifecycleAction::EnableNoExpire), ChannelLifecycleOutcome::NotRegistered],
+                [$this->command(ChannelLifecycleAction::EnableIrcopOnly), ChannelLifecycleOutcome::NotRegistered],
+                [$this->command(ChannelLifecycleAction::Suspend, reason: 'policy', duration: '0'), ChannelLifecycleOutcome::NotRegistered],
+                [$this->command(ChannelLifecycleAction::Unsuspend), ChannelLifecycleOutcome::NotRegistered],
+            ];
+            if ($request->isPendingRegistration()) {
+                $commands[] = [$this->command(ChannelLifecycleAction::Drop), ChannelLifecycleOutcome::NotRegistered];
+            }
+            foreach ($commands as [$command, $expected]) {
+                $channels = $this->createMock(RegisteredChannelRepositoryInterface::class);
+                $channels->method('findByChannelName')->willReturn($request);
+                $channels->expects(self::never())->method('save');
+                self::assertSame($expected, $this->handler(
+                    $channels,
+                    $drops,
+                    $forbidden,
+                    $suspensions,
+                    $events,
+                    new ChannelHistoryService($historyRows),
+                )->handle($command)->outcome);
+            }
+        }
+        self::assertTrue($pending->isPendingRegistration());
+        self::assertTrue($rejected->isRejectedRegistration());
+    }
+
+    #[Test]
+    public function rejectedDropIsRestrictedUntilFixedExpiryThenReleasesName(): void
+    {
+        $rejected = RegisteredChannel::createPendingRegistration($this->now, '#test', 7, 'description');
+        $rejected->rejectRegistration('Reason', 9, 'Reviewer', $this->now, $this->now->modify('+1 hour'));
+        $drops = $this->createMock(ChanDropService::class);
+        $drops->expects(self::once())->method('hardDropChannel')->with($rejected, $this->now->modify('+2 hours'), 'registration-restriction-released', 'Oper');
+        $channels = $this->channelsReturning($rejected);
+        $handler = $this->handler($channels, drops: $drops);
+
+        self::assertSame(ChannelLifecycleOutcome::RegistrationRestricted, $handler->handle($this->command(ChannelLifecycleAction::Drop))->outcome);
+        self::assertSame(ChannelLifecycleOutcome::ForceDropped, $handler->handle($this->command(ChannelLifecycleAction::Drop, occurredAt: $this->now->modify('+2 hours')))->outcome);
+    }
+
+    #[Test]
     public function dropRejectsChannelAlreadyPendingDeletionWithoutForce(): void
     {
         $channel = $this->channel();
@@ -455,12 +515,13 @@ final class ManageChannelLifecycleHandlerTest extends TestCase
         ?string $reason = null,
         ?string $duration = null,
         bool $force = false,
+        ?DateTimeImmutable $occurredAt = null,
     ): ManageChannelLifecycle {
         return new ManageChannelLifecycle(
             channelName: '#test',
             action: $action,
             actorNickname: 'Oper',
-            occurredAt: $this->now,
+            occurredAt: $occurredAt ?? $this->now,
             actorAccountId: 7,
             actorIp: '127.0.0.1',
             actorHost: 'ident@host',

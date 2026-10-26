@@ -196,3 +196,11 @@ help:
 notify:
   nick_pending: "Du hast \x02%count%\x02 ungelesene Nachricht(en). Nachrichten anzeigen: /msg %bot% \x0303LIST\x03"
   channel_pending: "Der Channel \x02%channel%\x02 hat \x02%count%\x02 ungelesene Nachricht(en). Nachrichten anzeigen: /msg %bot% \x0303LIST %channel%\x03"
+
+# --- CHANNEL REGISTRATION DECISIONS ---
+registration_decision:
+  accepted: "Deine Registrierungsanfrage für %channel% wurde von %operator% angenommen."
+  rejected: "Deine Registrierungsanfrage für %channel% wurde von %operator% abgelehnt."
+  reason: "Begründung: %reason%"
+  restriction: "Verbleibende Sperre: %remaining_seconds% Sekunden."
+  restriction_indefinite: "Dieser Channel ist dauerhaft gesperrt."

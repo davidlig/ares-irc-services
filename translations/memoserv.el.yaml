@@ -191,3 +191,11 @@ help:
 notify:
   nick_pending: "Έχετε \x02%count%\x02 μη αναγνωσμένο(α) μήνυμα(τα). Για λίστα: /msg %bot% \x0303LIST\x03"
   channel_pending: "Το κανάλι \x02%channel%\x02 έχει \x02%count%\x02 μη αναγνωσμένο(α) μήνυμα(τα). Ελέγξτε τα μηνύματα με /msg %bot% \x0303LIST %channel%\x03"
+
+# --- CHANNEL REGISTRATION DECISIONS ---
+registration_decision:
+  accepted: "Το αίτημα εγγραφής για το %channel% έγινε δεκτό από τον/την %operator%."
+  rejected: "Το αίτημα εγγραφής για το %channel% απορρίφθηκε από τον/την %operator%."
+  reason: "Αιτιολογία: %reason%"
+  restriction: "Υπόλοιπος περιορισμός: %remaining_seconds% δευτερόλεπτα."
+  restriction_indefinite: "Αυτό το κανάλι έχει περιορισμό επ’ αόριστον."

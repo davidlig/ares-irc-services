@@ -30,6 +30,10 @@ final readonly class ChanServPermission
 
     public const string LIST = 'chanserv.list';
 
+    public const string REGMODE = 'chanserv.regmode';
+
+    public const string REGISTRATION_REVIEW = 'chanserv.registration_review';
+
     /**
      * @return list<string>
      */
@@ -48,6 +52,8 @@ final readonly class ChanServPermission
             self::HISTORY,
             self::CLEARUSERS,
             self::LIST,
+            self::REGMODE,
+            self::REGISTRATION_REVIEW,
         ];
     }
 

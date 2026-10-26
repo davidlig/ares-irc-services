@@ -186,3 +186,11 @@ help:
 notify:
   nick_pending: "\x02%count%\x02 mezu irakurtzeke dituzu. Zerrendatzeko: /msg %bot% \x0303LIST\x03"
   channel_pending: "\x02%channel%\x02 kanalak \x02%count%\x02 mezu irakurtzeke ditu. Erabili /msg %bot% \x0303LIST %channel%\x03"
+
+# --- CHANNEL REGISTRATION DECISIONS ---
+registration_decision:
+  accepted: "%channel% kanalaren erregistro-eskaera %operator% erabiltzaileak onartu du."
+  rejected: "%channel% kanalaren erregistro-eskaera %operator% erabiltzaileak ukatu du."
+  reason: "Arrazoia: %reason%"
+  restriction: "Geratzen den murrizketa: %remaining_seconds% segundo."
+  restriction_indefinite: "Kanal honek mugagabeko murrizketa du."

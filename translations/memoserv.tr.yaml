@@ -189,3 +189,11 @@ help:
 notify:
   nick_pending: "Okunmayı bekleyen \x02%count%\x02 mesajınız var. Listelemek için: /msg %bot% \x0303LIST\x03"
   channel_pending: "\x02%channel%\x02 kanalında okunmayı bekleyen \x02%count%\x02 mesaj var. Mesajları görüntülemek için /msg %bot% \x0303LIST %channel%\x03"
+
+# --- CHANNEL REGISTRATION DECISIONS ---
+registration_decision:
+  accepted: "%channel% kayıt isteğin %operator% tarafından onaylandı."
+  rejected: "%channel% kayıt isteğin %operator% tarafından reddedildi."
+  reason: "Neden: %reason%"
+  restriction: "Kalan kısıtlama: %remaining_seconds% saniye."
+  restriction_indefinite: "Bu kanal süresiz olarak kısıtlandı."

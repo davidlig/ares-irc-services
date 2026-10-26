@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping https://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\ChanServ\Domain\Entity\RegistrationPolicy" table="chanserv_registration_policy">
+        <id name="id" type="integer"><generator strategy="NONE"/></id>
+        <field name="mode" type="string" length="8" enum-type="App\ChanServ\Domain\ValueObject\RegistrationMode"/>
+    </entity>
+</doctrine-mapping>
