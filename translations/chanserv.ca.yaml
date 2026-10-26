@@ -625,7 +625,7 @@ unforbid:
 debug:
   founder_action: "Acció de nivell de fundador"
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #canal ADD Revisió de moderació\x03\x0F"
@@ -675,6 +675,8 @@ history:
     short: "Esborrar totes les entrades d'historial d'un canal."
     help: "Elimina totes les entrades de l'historial del canal."
     success: "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'historial de \x02%channel%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   levels_set: "Nivell d’accés canviat"
   levels_reset: "Nivells d’accés restablerts"
@@ -704,6 +706,8 @@ history.message:
   access_del: "Accés tret per a %target_nickname%"
   akick_add: "AKICK afegit: %mask%"
   akick_del: "AKICK tret: %mask%"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   option: "Opció: %value%"
   old_value: "Nivell anterior: %value%"

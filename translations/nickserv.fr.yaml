@@ -653,7 +653,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — par %nickname% (%date%)"
     empty: "\x0307ℹ\x03 Aucun motif de vhost interdit."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <surnom> {ADD|DEL|VIEW|CLEAR}"
   short: "Consulter ou gérer l'historique des actions du surnom."
@@ -706,6 +706,8 @@ history:
     help: "Supprime de façon irréversible toutes les entrées de l’historique du pseudonyme."
     example: "%command_prefix%\x02\x0303HISTORY Utilisateur CLEAR\x03\x0F"
     success: "\x0303✔\x03 \x02%count%\x02 entrées d'historique effacées pour \x02%nickname%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Compte activé"
   resend: "Courriel de vérification renvoyé"
@@ -718,6 +720,8 @@ history.message:
   email_changed_owner: "E-mail changé de %old_email% à %new_email%"
   email_changed_operator: "E-mail changé en %new_email% par l'opérateur"
   recover: "Mot de passe réinitialisé via jeton e-mail"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Ancien e-mail : %value%"
   new_email: "Nouvel e-mail : %value%"

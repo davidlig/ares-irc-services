@@ -655,7 +655,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — von %nickname% (%date%)"
     empty: "\x0307ℹ\x03 Keine gesperrten VHost-Muster."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
   short: "Nickname-Aktionsverlauf anzeigen oder verwalten."
@@ -706,6 +706,8 @@ history:
     help: "Löscht unwiderruflich alle Verlaufseinträge des Nicknames."
     example: "%command_prefix%\x02\x0303HISTORY Benutzer CLEAR\x03\x0F"
     success: "\x0303✔\x03 \x02%count%\x02 Verlaufseinträge für \x02%nickname%\x02 gelöscht."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Konto aktiviert"
   resend: "Bestätigungs-E-Mail erneut gesendet"
@@ -718,6 +720,8 @@ history.message:
   email_changed_owner: "E-Mail von %old_email% zu %new_email% geändert"
   email_changed_operator: "E-Mail zu %new_email% von Operator geändert"
   recover: "Passwort via E-Mail-Token zurückgesetzt"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Alte E-Mail: %value%"
   new_email: "Neue E-Mail: %value%"

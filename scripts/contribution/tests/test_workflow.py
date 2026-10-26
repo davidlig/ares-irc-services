@@ -58,7 +58,7 @@ class WorkflowTests(unittest.TestCase):
     def test_grant_comment_and_issue_lifecycle_wakeups(self):
         workflow = self.policy()
         self.assertRegex(workflow, r"issue_comment:\s+types: \[created, edited, deleted\]")
-        self.assertRegex(workflow, r"issues:\s+types: \[[^\]]*closed[^\]]*reopened[^\]]*\]")
+        self.assertRegex(workflow, r"issues:\s+types:\s+\[[^\]]*closed[^\]]*reopened[^\]]*\]")
 
     def test_review_signal_has_no_privileges_checkout_artifacts_or_event_text(self):
         workflow = (ROOT / ".github/workflows/contribution-review-signal.yml").read_text()
@@ -68,7 +68,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("runs-on: ubuntu-latest", workflow)
         for forbidden in ("uses:", "secrets.", "github.event.", "artifact", "self-hosted", "checkout"):
             self.assertNotIn(forbidden, workflow)
-        self.assertEqual(["'true'"], re.findall(r"run: (.+)", workflow))
+        commands = re.findall(r"run: (.+)", workflow)
+        self.assertEqual(1, len(commands))
+        self.assertRegex(commands[0], r"""^(['"])true\1$""")
         subprocess.run(["bash", "-n"], input="true\n", text=True, capture_output=True, check=True)
 
     def test_ci_adds_only_policy_test_step_and_preserves_deploy_bytes(self):

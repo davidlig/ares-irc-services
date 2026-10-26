@@ -95,13 +95,32 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags
 ./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress
 
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
+composer yaml-fix
+composer yaml-check
 
 ./scripts/check-coverage.sh 100 --issues
 ```
 
 Also run the configured architecture dependency gate.
 
-Inspect formatting changes before completion.
+Install the pinned YAML formatter with `npm ci` using Node 24/npm for development and CI only.
+Run `composer yaml-fix` immediately after PHP-CS-Fixer. The npm equivalents are `npm run yaml:fix`
+and `npm run yaml:check`; they use the locally installed, locked Prettier without implicit downloads.
+Both commands cover all `.yaml` and `.yml` files under `config/`, `translations/` and
+`.github/workflows/`, plus root `deptrac.yaml`. Review formatting changes and run the non-mutating
+`composer yaml-check` before
+completion. For bulk formatting, compare before/after Symfony-parsed values, types and custom tags
+throughout the scope, check idempotence, and confirm check mode rejects violations without writing.
+Preserve physical multiline blocks, `!irc`, IRC escapes, placeholders, meaningful whitespace,
+mail-body terminal newlines, Deptrac rules and workflow behavior/scripts/permissions. Do not change
+translated messages or expand the
+staged Spanish-first HELP rollout.
+
+Use identical English technical section comments at equivalent structural positions across locales.
+NickServ and ChanServ HISTORY sections use `# --- HISTORY ---`, `# --- HISTORY MESSAGES ---`, and
+`# --- HISTORY EXTRA FIELDS ---` before `history`, `history.message`, and `history.extra`.
+Allow Prettier-selected quoting only when interpreted content is unchanged; retain double quotes
+where YAML escape decoding is required.
 
 Never report an unexecuted gate as passed.
 

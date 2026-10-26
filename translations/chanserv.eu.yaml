@@ -625,7 +625,7 @@ unforbid:
 debug:
   founder_action: "Sortzaile mailako ekintza"
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <#kanala> {ADD|DEL|VIEW|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #kanala ADD Moderazio-berrikuspena\x03\x0F"
@@ -675,6 +675,8 @@ history:
     short: "Ezabatu kanal baten historia sarrera guztiak."
     help: "Kanalaren historia-sarrera guztiak ezabatzen ditu."
     success: "\x0303✔\x03 \x02%count%\x02 historia sarrera garbitu dira \x02%channel%\x02 kanalean."
+
+# --- HISTORY MESSAGES ---
 history.message:
   levels_set: "Sarbide-maila aldatu da"
   levels_reset: "Sarbide-mailak berrezarri dira"
@@ -704,6 +706,8 @@ history.message:
   access_del: "Sarbidea kendua %target_nickname%-(r)entzat"
   akick_add: "AKICK gehitua: %mask%"
   akick_del: "AKICK kendua: %mask%"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   option: "Aukera: %value%"
   old_value: "Aurreko maila: %value%"

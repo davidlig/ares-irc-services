@@ -628,7 +628,7 @@ unforbid:
 debug:
   founder_action: "Acción de nivel-fundador"
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <#canle> {ADD|DEL|VIEW|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #canle ADD Revisión de moderación\x03\x0F"
@@ -678,6 +678,8 @@ history:
     short: "Eliminar todas as entradas do historial dunha canle."
     help: "Elimina todas as entradas do historial da canle."
     success: "\x0303✔\x03 Limpadas \x02%count%\x02 entradas do historial de \x02%channel%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   levels_set: "Nivel de acceso cambiado"
   levels_reset: "Niveis de acceso restablecidos"
@@ -707,6 +709,8 @@ history.message:
   access_del: "Acceso eliminado para %target_nickname%"
   akick_add: "AKICK engadida: %mask%"
   akick_del: "AKICK eliminada: %mask%"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   option: "Opción: %value%"
   old_value: "Nivel anterior: %value%"

@@ -641,7 +641,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — door %nickname% (%date%)"
     empty: "\x0307ℹ\x03 Geen verboden vhost-patronen."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <bijnaam> {ADD|DEL|VIEW|CLEAR}"
   short: "Bekijk of beheer bijnaamactiegeschiedenis."
@@ -693,6 +693,8 @@ history:
     help: "Verwijdert alle vermeldingen in de bijnaamgeschiedenis onherroepelijk."
     example: "%command_prefix%\x02\x0303HISTORY Gebruiker CLEAR\x03\x0F"
     success: "\x0303✔\x03 \x02%count%\x02 geschiedenisvermeldingen gewist voor \x02%nickname%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Account geactiveerd"
   resend: "Verificatiemail opnieuw verzonden"
@@ -705,6 +707,8 @@ history.message:
   email_changed_owner: "E-mail gewijzigd van %old_email% naar %new_email%"
   email_changed_operator: "E-mail gewijzigd naar %new_email% door operator"
   recover: "Wachtwoord gereset via e-mailtoken"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Oude e-mail: %value%"
   new_email: "Nieuwe e-mail: %value%"

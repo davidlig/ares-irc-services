@@ -625,7 +625,7 @@ unforbid:
 debug:
   founder_action: "Seviye-kurucu eylemi"
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #kanal ADD Moderasyon incelemesi\x03\x0F"
@@ -675,6 +675,8 @@ history:
     short: "Bir kanal için tüm geçmiş girişlerini silin."
     help: "Kanalın tüm geçmiş kayıtlarını siler."
     success: "\x0303✔\x03 \x02%channel%\x02 için \x02%count%\x02 geçmiş girişi temizlendi."
+
+# --- HISTORY MESSAGES ---
 history.message:
   levels_set: "Erişim seviyesi değiştirildi"
   levels_reset: "Erişim seviyeleri sıfırlandı"
@@ -704,6 +706,8 @@ history.message:
   access_del: "%target_nickname% için erişim kaldırıldı"
   akick_add: "AKICK eklendi: %mask%"
   akick_del: "AKICK kaldırıldı: %mask%"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   option: "Seçenek: %value%"
   old_value: "Önceki seviye: %value%"

@@ -647,7 +647,7 @@ forbidvhost:
     entry: "  %index%. \x0304%pattern%\x03 — de %nickname% (%date%)"
     empty: "\x0307ℹ\x03 Nu există modele de vhost interzise."
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <poreclă> {ADD|DEL|VIEW|CLEAR}"
   short: "Vizualizați sau gestionați istoricul de acțiuni al poreclei."
@@ -698,6 +698,8 @@ history:
     help: "Șterge ireversibil toate intrările din istoricul poreclei."
     example: "%command_prefix%\x02\x0303HISTORY Utilizator CLEAR\x03\x0F"
     success: "\x0303✔\x03 S-au șters \x02%count%\x02 intrări din istoricul poreclei \x02%nickname%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   verify: "Cont activat"
   resend: "Email de verificare retrimis"
@@ -710,6 +712,8 @@ history.message:
   email_changed_owner: "E-mail schimbat din %old_email% în %new_email%"
   email_changed_operator: "E-mail schimbat la %new_email% de operator"
   recover: "Parolă resetată prin token de e-mail"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   old_email: "Vechi e-mail: %value%"
   new_email: "Nou e-mail: %value%"

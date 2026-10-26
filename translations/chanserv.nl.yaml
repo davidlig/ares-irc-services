@@ -628,7 +628,7 @@ unforbid:
 debug:
   founder_action: "Niveau-oprichter actie"
 
-# --- HISTORY ---------------------------------------------------------------
+# --- HISTORY ---
 history:
   syntax: "HISTORY <#kanaal> {ADD|DEL|VIEW|CLEAR}"
   example: "%command_prefix%\x02\x0303HISTORY #kanaal ADD Moderatiecontrole\x03\x0F"
@@ -678,6 +678,8 @@ history:
     short: "Verwijder alle geschiedenisvermeldingen voor een kanaal."
     help: "Verwijdert alle geschiedenisitems van het kanaal."
     success: "\x0303✔\x03 \x02%count%\x02 geschiedenisvermeldingen gewist voor \x02%channel%\x02."
+
+# --- HISTORY MESSAGES ---
 history.message:
   levels_set: "Toegangsniveau gewijzigd"
   levels_reset: "Toegangsniveaus hersteld"
@@ -707,6 +709,8 @@ history.message:
   access_del: "Toegang verwijderd voor %target_nickname%"
   akick_add: "AKICK toegevoegd: %mask%"
   akick_del: "AKICK verwijderd: %mask%"
+
+# --- HISTORY EXTRA FIELDS ---
 history.extra:
   option: "Optie: %value%"
   old_value: "Vorig niveau: %value%"
