@@ -20,6 +20,8 @@ use App\MemoServ\Adapter\In\Irc\MemoServService;
 use App\MemoServ\Adapter\In\Irc\MemoServUserPresentationPreferences;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use App\Shared\Application\Port\EventBusInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -130,6 +132,11 @@ final class MemoServServiceTest extends TestCase
             public function getAliases(): array
             {
                 return [];
+            }
+
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
             }
 
             public function getMinArgs(): int
@@ -281,6 +288,11 @@ final class MemoServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
+            }
+
             public function getMinArgs(): int
             {
                 return 0;
@@ -394,6 +406,11 @@ final class MemoServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
+            }
+
             public function getMinArgs(): int
             {
                 return 0;
@@ -497,6 +514,11 @@ final class MemoServServiceTest extends TestCase
             public function getAliases(): array
             {
                 return [];
+            }
+
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
             }
 
             public function getMinArgs(): int
@@ -606,6 +628,11 @@ final class MemoServServiceTest extends TestCase
                 return [];
             }
 
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
+            }
+
             public function getMinArgs(): int
             {
                 return 0;
@@ -690,6 +717,11 @@ final class MemoServServiceTest extends TestCase
             public function getAliases(): array
             {
                 return [];
+            }
+
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
             }
 
             public function getMinArgs(): int
@@ -784,6 +816,11 @@ final class MemoServServiceTest extends TestCase
             public function getAliases(): array
             {
                 return [];
+            }
+
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
             }
 
             public function getMinArgs(): int

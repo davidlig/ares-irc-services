@@ -11,6 +11,9 @@ use App\MemoServ\Application\UseCase\Send\SendMemo;
 use App\MemoServ\Application\UseCase\Send\SendMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Send\SendMemoOutcome;
 use App\MemoServ\Domain\Entity\Memo;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use DateTimeImmutable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -39,14 +42,19 @@ final readonly class SendCommand implements MemoServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('send.syntax', [new Argument('target'), new Argument('message', rest: true)]);
+    }
+
     public function getMinArgs(): int
     {
-        return 2;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'send.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -93,14 +101,15 @@ final readonly class SendCommand implements MemoServCommandInterface
             return null;
         }
 
-        $targetArg = $context->args[0] ?? '';
-        $message = implode(' ', array_slice($context->args, 1));
-
-        if ('' === $message) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (!$validation->isValid()) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
 
             return null;
         }
+
+        $targetArg = $context->args[0] ?? '';
+        $message = implode(' ', array_slice($context->args, 1));
 
         if (mb_strlen($message) > Memo::MESSAGE_MAX_LENGTH) {
             $context->reply('send.message_too_long', ['max' => Memo::MESSAGE_MAX_LENGTH]);

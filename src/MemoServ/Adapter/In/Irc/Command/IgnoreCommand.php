@@ -10,10 +10,11 @@ use App\MemoServ\Application\UseCase\Ignore\IgnoreMemo;
 use App\MemoServ\Application\UseCase\Ignore\IgnoreMemoAction;
 use App\MemoServ\Application\UseCase\Ignore\IgnoreMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Ignore\IgnoreMemoOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 
-use function in_array;
 use function str_starts_with;
-use function strtolower;
 use function strtoupper;
 
 /**
@@ -23,8 +24,6 @@ use function strtoupper;
  */
 final readonly class IgnoreCommand implements MemoServCommandInterface
 {
-    private const array SUBCOMMANDS = ['ADD', 'DEL', 'LIST'];
-
     public function __construct(
         private IgnoreMemoHandlerInterface $ignoreMemoHandler,
         private int $ignoreListLimitNick,
@@ -41,14 +40,23 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('ignore.syntax', [new Argument('action')], variants: [
+            'ADD' => new CommandArgumentDefinition('ignore.add.syntax', [new Argument('channel', optional: true, prefix: '#'), new Argument('nickname')]),
+            'DEL' => new CommandArgumentDefinition('ignore.del.syntax', [new Argument('channel', optional: true, prefix: '#'), new Argument('nickname')]),
+            'LIST' => new CommandArgumentDefinition('ignore.list.syntax', [new Argument('channel', optional: true, prefix: '#')]),
+        ]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'ignore.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -74,9 +82,9 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'ADD', 'desc_key' => 'ignore.add.short', 'help_key' => 'ignore.add.help', 'syntax_key' => 'ignore.add.syntax', 'example_key' => 'ignore.add.example'],
-            ['name' => 'DEL', 'desc_key' => 'ignore.del.short', 'help_key' => 'ignore.del.help', 'syntax_key' => 'ignore.del.syntax', 'example_key' => 'ignore.del.example'],
-            ['name' => 'LIST', 'desc_key' => 'ignore.list.short', 'help_key' => 'ignore.list.help', 'syntax_key' => 'ignore.list.syntax', 'example_key' => 'ignore.list.example'],
+            ['name' => 'ADD', 'desc_key' => 'ignore.add.short', 'help_key' => 'ignore.add.help', 'syntax_key' => $this->getArgumentDefinition()->variants['ADD']->syntaxKey, 'example_key' => 'ignore.add.example'],
+            ['name' => 'DEL', 'desc_key' => 'ignore.del.short', 'help_key' => 'ignore.del.help', 'syntax_key' => $this->getArgumentDefinition()->variants['DEL']->syntaxKey, 'example_key' => 'ignore.del.example'],
+            ['name' => 'LIST', 'desc_key' => 'ignore.list.short', 'help_key' => 'ignore.list.help', 'syntax_key' => $this->getArgumentDefinition()->variants['LIST']->syntaxKey, 'example_key' => 'ignore.list.example'],
         ];
     }
 
@@ -99,13 +107,14 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
             return null;
         }
 
-        $sub = strtoupper($context->args[0] ?? '');
-        if (!in_array($sub, self::SUBCOMMANDS, true)) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (!$validation->isValid()) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
 
             return null;
         }
 
+        $sub = strtoupper($context->args[0] ?? '');
         if ('LIST' === $sub) {
             $arg1 = $context->args[1] ?? null;
             $targetChannel = null !== $arg1 && str_starts_with($arg1, '#') ? $arg1 : null;
@@ -116,12 +125,6 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
             $isChannel = null !== $arg1 && str_starts_with($arg1, '#');
             $targetChannel = $isChannel ? $arg1 : null;
             $nickToIgnore = $isChannel ? ($context->args[2] ?? '') : ($arg1 ?? '');
-
-            if ('' === $nickToIgnore) {
-                $context->reply('error.syntax', ['syntax' => $context->trans('ignore.' . strtolower($sub) . '.syntax')]);
-
-                return null;
-            }
 
             $action = 'ADD' === $sub ? IgnoreMemoAction::Add : IgnoreMemoAction::Del;
         }

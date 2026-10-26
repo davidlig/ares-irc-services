@@ -8,6 +8,8 @@ use App\MemoServ\Adapter\In\Irc\Help\UnifiedHelpFormatter;
 use App\MemoServ\Adapter\In\Irc\HelpFormatterContextAdapter;
 use App\MemoServ\Adapter\In\Irc\MemoServCommandInterface;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 
 use function array_find;
 use function implode;
@@ -33,14 +35,19 @@ final readonly class HelpCommand implements MemoServCommandInterface
         return ['?'];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('help.syntax', [new Argument('command', optional: true), new Argument('option', optional: true)]);
+    }
+
     public function getMinArgs(): int
     {
-        return 0;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'help.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string

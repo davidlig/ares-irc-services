@@ -9,9 +9,11 @@ use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Application\UseCase\Read\ReadMemo;
 use App\MemoServ\Application\UseCase\Read\ReadMemoHandlerInterface;
 use App\MemoServ\Application\UseCase\Read\ReadMemoOutcome;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use DateTimeImmutable;
 
-use function ctype_digit;
 use function str_starts_with;
 
 /**
@@ -34,14 +36,19 @@ final readonly class ReadCommand implements MemoServCommandInterface
         return [];
     }
 
+    public function getArgumentDefinition(): CommandArgumentDefinition
+    {
+        return new CommandArgumentDefinition('read.syntax', [new Argument('channel', optional: true, prefix: '#'), new Argument('index', digits: true)]);
+    }
+
     public function getMinArgs(): int
     {
-        return 1;
+        return $this->getArgumentDefinition()->minimumArgs();
     }
 
     public function getSyntaxKey(): string
     {
-        return 'read.syntax';
+        return $this->getArgumentDefinition()->syntaxKey;
     }
 
     public function getHelpKey(): string
@@ -88,16 +95,17 @@ final readonly class ReadCommand implements MemoServCommandInterface
             return null;
         }
 
+        $validation = CommandArgumentValidator::validate($this->getArgumentDefinition(), $context->args);
+        if (!$validation->isValid()) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($validation->syntaxKey ?? $this->getSyntaxKey())]);
+
+            return null;
+        }
+
         $first = $context->args[0] ?? '';
         $isChannel = str_starts_with($first, '#');
         $targetChannel = $isChannel ? $first : null;
         $indexArg = $isChannel ? ($context->args[1] ?? '') : $first;
-
-        if ('' === $indexArg || !ctype_digit($indexArg)) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-            return null;
-        }
 
         $index = (int) $indexArg;
 

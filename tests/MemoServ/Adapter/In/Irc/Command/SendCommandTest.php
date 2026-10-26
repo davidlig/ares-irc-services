@@ -50,8 +50,8 @@ final class SendCommandTest extends TestCase
     }
 
     /**
-     * @param string[] $args
-     * @param string[] $replies
+     * @param list<string> $args
+     * @param string[]     $replies
      */
     private function createContext(
         ?SenderView $sender,

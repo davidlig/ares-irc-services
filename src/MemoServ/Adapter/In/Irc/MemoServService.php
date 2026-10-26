@@ -10,6 +10,7 @@ use App\Irc\Application\Port\In\ServiceNicknameRegistry;
 use App\Irc\Application\PublishedEvent\CommandExecutedEvent;
 use App\MemoServ\Application\Port\Out\MemoUserAccountPort;
 use App\MemoServ\Domain\Exception\MemoDisabledException;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentValidator;
 use App\Shared\Application\Port\EventBusInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -107,9 +108,10 @@ final readonly class MemoServService
                 return;
             }
 
-            if (count($context->args) < $handler->getMinArgs()) {
+            $validation = CommandArgumentValidator::validatePrefix($handler->getArgumentDefinition(), $context->args);
+            if (null !== $validation->syntaxKey) {
                 $context->reply('error.syntax', [
-                    'syntax' => $context->trans($handler->getSyntaxKey()),
+                    'syntax' => $context->trans($validation->syntaxKey),
                 ]);
 
                 return;

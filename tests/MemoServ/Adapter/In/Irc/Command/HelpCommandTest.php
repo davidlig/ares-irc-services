@@ -14,6 +14,8 @@ use App\MemoServ\Adapter\In\Irc\MemoServCommandRegistry;
 use App\MemoServ\Adapter\In\Irc\MemoServContext;
 use App\MemoServ\Adapter\In\Irc\MemoServNotifierInterface;
 use App\MemoServ\Application\Model\MemoAccountView;
+use App\Shared\Adapter\In\Irc\CommandArgument\Argument;
+use App\Shared\Adapter\In\Irc\CommandArgument\CommandArgumentDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -48,7 +50,7 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
-     * @param string[]                           $args
+     * @param list<string>                       $args
      * @param string[]                           $replies
      * @param iterable<MemoServCommandInterface> $commands
      */
@@ -124,6 +126,11 @@ final class HelpCommandTest extends TestCase
             public function getAliases(): array
             {
                 return [];
+            }
+
+            public function getArgumentDefinition(): CommandArgumentDefinition
+            {
+                return new CommandArgumentDefinition($this->getSyntaxKey(), array_fill(0, $this->getMinArgs(), new Argument('argument')));
             }
 
             public function getMinArgs(): int
